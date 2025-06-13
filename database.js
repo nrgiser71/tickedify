@@ -10,6 +10,12 @@ const pool = new Pool({
 const initDatabase = async () => {
   try {
     console.log('🔧 Initializing database...');
+    console.log('📊 Using connection string from env vars...');
+    
+    // Test connection first
+    const client = await pool.connect();
+    console.log('✅ Database connection successful');
+    client.release();
     
     // Create tables
     await pool.query(`
@@ -53,6 +59,7 @@ const initDatabase = async () => {
     console.log('✅ Database initialized successfully');
   } catch (error) {
     console.error('❌ Database initialization error:', error);
+    console.error('📝 Available env vars:', Object.keys(process.env).filter(key => key.includes('POSTGRES') || key.includes('DATABASE')));
     throw error;
   }
 };
