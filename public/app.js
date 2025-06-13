@@ -429,9 +429,13 @@ class Taakbeheer {
             actie.afgewerkt = new Date().toISOString();
             
             // Verplaats naar afgewerkte taken
-            await this.verplaatsTaakNaarAfgewerkt(actie);
+            const success = await this.verplaatsTaakNaarAfgewerkt(actie);
+            if (!success) {
+                alert('Fout bij afwerken van taak. Probeer opnieuw.');
+                return;
+            }
             
-            // Verwijder uit acties lijst
+            // Verwijder uit acties lijst (alleen lokaal, database is al updated)
             const nieuweActies = acties.filter(a => a.id !== actieId);
             await fetch('/api/lijst/acties', {
                 method: 'POST',
@@ -833,32 +837,40 @@ class Taakbeheer {
         if (taak) {
             taak.afgewerkt = new Date().toISOString();
             
-            await this.verplaatsTaakNaarAfgewerkt(taak);
-            
-            this.taken = this.taken.filter(t => t.id !== id);
-            await this.slaLijstOp();
-            this.renderTaken();
-            await this.laadTellingen();
+            const success = await this.verplaatsTaakNaarAfgewerkt(taak);
+            if (success) {
+                this.taken = this.taken.filter(t => t.id !== id);
+                await this.slaLijstOp();
+                this.renderTaken();
+                await this.laadTellingen();
+            } else {
+                // Rollback the afgewerkt timestamp
+                delete taak.afgewerkt;
+                alert('Fout bij afwerken van taak. Probeer opnieuw.');
+            }
         }
     }
 
     async verplaatsTaakNaarAfgewerkt(taak) {
         try {
-            const response = await fetch('/api/lijst/afgewerkte-taken');
-            let afgewerkten = [];
-            if (response.ok) {
-                afgewerkten = await response.json();
+            // Use the new updateTask API to mark task as completed
+            const response = await fetch(`/api/taak/${taak.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    afgewerkt: taak.afgewerkt
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
             }
             
-            afgewerkten.push(taak);
-            
-            await fetch('/api/lijst/afgewerkte-taken', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(afgewerkten)
-            });
+            const result = await response.json();
+            return result.success;
         } catch (error) {
-            console.error('Fout bij verplaatsen naar afgewerkte taken:', error);
+            console.error('Fout bij afwerken van taak:', error);
+            return false;
         }
     }
 
