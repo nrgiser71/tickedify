@@ -1,0 +1,1116 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* macOS System Colors */
+    --macos-blue: #007AFF;
+    --macos-blue-hover: #0056CC;
+    --macos-green: #30D158;
+    --macos-green-hover: #28CD41;
+    --macos-red: #FF3B30;
+    --macos-orange: #FF9500;
+    --macos-purple: #AF52DE;
+    
+    /* macOS Gray Scale */
+    --macos-gray-1: #8E8E93;
+    --macos-gray-2: #AEAEB2;
+    --macos-gray-3: #C7C7CC;
+    --macos-gray-4: #D1D1D6;
+    --macos-gray-5: #E5E5EA;
+    --macos-gray-6: #F2F2F7;
+    
+    /* macOS Background Colors */
+    --macos-bg-primary: #FFFFFF;
+    --macos-bg-secondary: #F2F2F7;
+    --macos-bg-tertiary: #FFFFFF;
+    
+    /* macOS Text Colors */
+    --macos-text-primary: #000000;
+    --macos-text-secondary: #3C3C43;
+    --macos-text-tertiary: #3C3C4399;
+    
+    /* macOS Shadows */
+    --macos-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --macos-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --macos-shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.15);
+    
+    /* macOS Border Radius */
+    --macos-radius-small: 6px;
+    --macos-radius-medium: 8px;
+    --macos-radius-large: 12px;
+    --macos-radius-button: 6px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    background: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+    color: var(--macos-text-primary);
+    font-size: 13px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+}
+
+#app {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    width: 300px;
+    background: var(--macos-bg-secondary);
+    border-right: 1px solid var(--macos-gray-4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-search {
+    padding: 20px;
+    border-bottom: 1px solid var(--macos-gray-4);
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 8px;
+    font-size: 14px;
+    color: var(--macos-gray-1);
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 6px 12px 6px 28px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 0;
+}
+
+.lijst-sectie {
+    margin-bottom: 24px;
+}
+
+.sectie-header {
+    padding: 8px 20px;
+    color: var(--macos-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.dropdown-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    border-radius: var(--macos-radius-button);
+    margin: 0 12px;
+}
+
+.dropdown-header:hover {
+    background: var(--macos-gray-6);
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    margin-right: 8px;
+    transition: transform 0.2s ease;
+    color: var(--macos-text-secondary);
+}
+
+.dropdown-arrow.rotated {
+    transform: rotate(90deg);
+}
+
+.dropdown-content {
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+}
+
+.dropdown-content.open {
+    display: block;
+}
+
+.lijst-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0;
+    margin: 0 12px;
+    border-radius: var(--macos-radius-button);
+}
+
+.lijst-item:hover {
+    background: var(--macos-gray-6);
+}
+
+.lijst-item.actief {
+    background: var(--macos-blue);
+    color: white;
+}
+
+.lijst-item.actief .lijst-telling {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.lijst-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-right: 12px;
+}
+
+.lijst-naam {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.lijst-telling {
+    background: var(--macos-gray-4);
+    color: var(--macos-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+    flex: 1;
+    background: var(--macos-bg-primary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.main-header {
+    padding: 24px 32px 16px;
+    border-bottom: 1px solid var(--macos-gray-5);
+}
+
+.main-header h1 {
+    color: var(--macos-text-primary);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.content-area {
+    flex: 1;
+    padding: 24px 32px;
+    overflow-y: auto;
+}
+
+.taak-input-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.taken-container {
+    min-height: 200px;
+}
+
+#takenLijst {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== ACTIES TABLE STYLING ===== */
+.acties-filters {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--macos-gray-6);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-5);
+}
+
+.filter-groep {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-groep label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--macos-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-groep select,
+.filter-groep input {
+    padding: 4px 8px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    background: var(--macos-bg-primary);
+    font-size: 12px;
+    min-width: 120px;
+}
+
+.acties-table-container {
+    border: 1px solid var(--macos-gray-5);
+    border-radius: var(--macos-radius-medium);
+    overflow: hidden;
+    background: var(--macos-bg-primary);
+}
+
+.acties-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+.acties-table th:nth-child(1), /* Checkbox */
+.acties-table td:nth-child(1) {
+    width: 40px;
+    text-align: center;
+    padding: 10px 4px;
+}
+
+.acties-table th:nth-child(2), /* Taak */
+.acties-table td:nth-child(2) {
+    width: auto;
+    min-width: 200px;
+}
+
+.acties-table th:nth-child(3), /* Project */
+.acties-table td:nth-child(3) {
+    width: 120px;
+}
+
+.acties-table th:nth-child(4), /* Context */
+.acties-table td:nth-child(4) {
+    width: 100px;
+}
+
+.acties-table th:nth-child(5), /* Datum */
+.acties-table td:nth-child(5) {
+    width: 90px;
+}
+
+.acties-table th:nth-child(6), /* Duur */
+.acties-table td:nth-child(6) {
+    width: 70px;
+}
+
+.acties-table th:nth-child(7), /* Acties */
+.acties-table td:nth-child(7) {
+    width: 100px;
+}
+
+.acties-table th {
+    background: var(--macos-gray-6);
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    border-bottom: 1px solid var(--macos-gray-5);
+    font-size: 12px;
+}
+
+.acties-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.acties-table th.sortable:hover {
+    background: var(--macos-gray-5);
+}
+
+.acties-table th.sorted-asc,
+.acties-table th.sorted-desc {
+    background: var(--macos-blue);
+    color: white;
+}
+
+.sort-arrow {
+    font-size: 10px;
+    margin-left: 4px;
+}
+
+.acties-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--macos-gray-5);
+    vertical-align: middle;
+}
+
+.actie-row {
+    transition: background-color 0.2s ease;
+}
+
+.actie-row:hover {
+    background: var(--macos-gray-6);
+}
+
+.taak-naam-cell {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--macos-blue);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 0; /* Force text to use available space */
+}
+
+.taak-naam-cell:hover {
+    text-decoration: underline;
+}
+
+/* Andere kolommen met text overflow */
+.acties-table td:nth-child(3), /* Project */
+.acties-table td:nth-child(4)  /* Context */ {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.actie-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bewerk-btn,
+.verplaats-btn-small,
+.verwijder-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: var(--macos-radius-small);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.bewerk-btn:hover {
+    background: var(--macos-blue);
+    transform: scale(1.1);
+}
+
+.verplaats-btn-small:hover {
+    background: var(--macos-green);
+    transform: scale(1.1);
+}
+
+.verwijder-btn {
+    color: var(--macos-red);
+    font-weight: bold;
+}
+
+.verwijder-btn:hover {
+    background: var(--macos-red);
+    color: white;
+    transform: scale(1.1);
+}
+
+.verplaats-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.verplaats-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-medium);
+    box-shadow: var(--macos-shadow-medium);
+    z-index: 100;
+    min-width: 140px;
+    backdrop-filter: blur(20px);
+}
+
+.verplaats-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--macos-text-primary);
+    transition: background-color 0.2s ease;
+}
+
+.verplaats-menu button:hover {
+    background: var(--macos-blue);
+    color: white;
+}
+
+.verplaats-menu button:first-child {
+    border-radius: var(--macos-radius-medium) var(--macos-radius-medium) 0 0;
+}
+
+.verplaats-menu button:last-child {
+    border-radius: 0 0 var(--macos-radius-medium) var(--macos-radius-medium);
+}
+
+/* ===== PROJECTEN LIJST STYLING ===== */
+.projecten-container {
+    width: 100%;
+}
+
+.projecten-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--macos-gray-5);
+}
+
+.nieuw-btn {
+    background: var(--macos-green) !important;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: var(--macos-radius-button);
+}
+
+.nieuw-btn:hover {
+    background: var(--macos-green-hover) !important;
+}
+
+.projecten-lijst {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.project-wrapper {
+    border-radius: var(--macos-radius-medium);
+    overflow: hidden;
+}
+
+.project-item {
+    background: var(--macos-bg-primary);
+    padding: 16px 20px;
+    border: 1px solid var(--macos-gray-5);
+    border-left: 4px solid var(--macos-blue);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--macos-shadow-light);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.project-item:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-4);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.project-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.project-naam {
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+.project-info {
+    font-size: 12px;
+    color: var(--macos-text-secondary);
+    font-weight: 500;
+}
+
+.project-acties {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bewerk-project-btn {
+    background: none !important;
+    border: none !important;
+    padding: 6px !important;
+    cursor: pointer;
+    border-radius: var(--macos-radius-small);
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-shadow: none !important;
+}
+
+.bewerk-project-btn:hover {
+    background: var(--macos-blue) !important;
+    transform: scale(1.1);
+}
+
+.project-naam-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.project-expand-arrow {
+    font-size: 12px;
+    color: var(--macos-text-secondary);
+    transition: transform 0.2s ease;
+    user-select: none;
+}
+
+.project-expand-arrow.expanded {
+    transform: rotate(90deg);
+}
+
+/* Project taken styling */
+.project-taken-container {
+    background: var(--macos-gray-6);
+    border: 1px solid var(--macos-gray-5);
+    border-top: none;
+}
+
+.project-taken-lijst {
+    padding: 16px 20px;
+}
+
+.project-taken-sectie {
+    margin-bottom: 16px;
+}
+
+.project-taken-sectie:last-child {
+    margin-bottom: 0;
+}
+
+.project-taken-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--macos-text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.project-actie-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--macos-gray-4);
+}
+
+.project-actie-item:last-child {
+    border-bottom: none;
+}
+
+.project-actie-item.afgewerkt {
+    opacity: 0.6;
+}
+
+.actie-status {
+    padding-top: 2px;
+}
+
+.actie-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.actie-naam {
+    font-weight: 500;
+    color: var(--macos-blue);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.actie-naam:hover {
+    text-decoration: underline;
+}
+
+.actie-naam.afgewerkt {
+    color: var(--macos-text-secondary);
+    text-decoration: line-through;
+    cursor: default;
+}
+
+.actie-naam.afgewerkt:hover {
+    text-decoration: line-through;
+}
+
+.actie-details {
+    font-size: 12px;
+    color: var(--macos-text-secondary);
+    font-weight: 400;
+}
+
+.project-geen-acties {
+    text-align: center;
+    color: var(--macos-text-secondary);
+    font-style: italic;
+    padding: 20px 0;
+}
+
+.project-taken-loading,
+.project-taken-error {
+    text-align: center;
+    color: var(--macos-text-secondary);
+    padding: 16px;
+    font-style: italic;
+}
+
+.project-taken-error {
+    color: var(--macos-red);
+}
+
+/* ===== UITGESTELD LIJSTEN STYLING ===== */
+.uitgesteld-item {
+    border-left-color: var(--macos-orange);
+}
+
+.verplaats-btn-uitgesteld {
+    background: none !important;
+    border: none !important;
+    padding: 4px !important;
+    cursor: pointer;
+    border-radius: var(--macos-radius-small);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    box-shadow: none !important;
+}
+
+.verplaats-btn-uitgesteld:hover {
+    background: var(--macos-green) !important;
+    transform: scale(1.1);
+}
+
+
+
+
+#taakInput {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-medium);
+    font-size: 13px;
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    transition: all 0.2s ease;
+}
+
+#taakInput:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+select, button {
+    padding: 6px 12px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    background: var(--macos-bg-primary);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 400;
+    transition: all 0.2s ease;
+}
+
+button {
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    font-weight: 500;
+    box-shadow: var(--macos-shadow-light);
+}
+
+button:hover {
+    background: var(--macos-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: var(--macos-shadow-light);
+}
+
+
+.lijst-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.taken-container {
+    min-height: 200px;
+}
+
+#takenLijst {
+    list-style: none;
+}
+
+.taak-item {
+    background: var(--macos-bg-primary);
+    margin-bottom: 8px;
+    padding: 12px 16px;
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-5);
+    border-left: 3px solid var(--macos-blue);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--macos-shadow-light);
+    transition: all 0.2s ease;
+}
+
+.taak-item:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-4);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.taak-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.taak-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.taak-content {
+    flex: 1;
+}
+
+.taak-titel {
+    font-weight: 500;
+    margin-bottom: 2px;
+    color: var(--macos-text-primary);
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.taak-acties {
+    display: flex;
+    gap: 5px;
+}
+
+.taak-acties button {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.plan-btn {
+    background: var(--macos-green) !important;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: var(--macos-radius-small);
+}
+
+.plan-btn:hover {
+    background: var(--macos-green-hover) !important;
+    transform: translateY(-1px);
+}
+
+/* Popup styling */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.popup-content {
+    background: var(--macos-bg-primary);
+    padding: 24px;
+    border-radius: var(--macos-radius-large);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--macos-shadow-heavy);
+    border: 1px solid var(--macos-gray-5);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    from { 
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.keyboard-help {
+    background: var(--macos-blue);
+    background: linear-gradient(135deg, var(--macos-blue), #5AC8FA);
+    color: white;
+    padding: 12px 16px;
+    border-radius: var(--macos-radius-medium);
+    margin-bottom: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: var(--macos-shadow-light);
+    border: none;
+}
+
+.taak-preview {
+    background: var(--macos-gray-6);
+    padding: 12px 16px;
+    border-radius: var(--macos-radius-medium);
+    margin-bottom: 20px;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--macos-text-primary);
+    border: 1px solid var(--macos-gray-5);
+    border-left: 3px solid var(--macos-blue);
+}
+
+.planning-opties {
+    display: flex;
+    gap: 30px;
+}
+
+.optie-groep {
+    flex: 1;
+}
+
+.optie-groep h4 {
+    margin-bottom: 15px;
+    color: var(--macos-text-primary);
+    border-bottom: 1px solid var(--macos-gray-5);
+    padding-bottom: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.24px;
+}
+
+.form-groep {
+    margin-bottom: 15px;
+}
+
+.form-groep label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--macos-text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-groep input,
+.form-groep select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.form-groep input:focus,
+.form-groep select:focus,
+button:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+.form-groep input.invalid,
+.form-groep select.invalid,
+.form-groep input[data-touched="true"]:invalid {
+    border-color: var(--macos-red);
+    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+}
+
+/* Focus state heeft altijd prioriteit over invalid state */
+.form-groep input:focus,
+.form-groep select:focus {
+    border-color: var(--macos-blue) !important;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3) !important;
+}
+
+.select-met-toevoeg button:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+.select-met-toevoeg {
+    display: flex;
+    gap: 5px;
+}
+
+.select-met-toevoeg select {
+    flex: 1;
+}
+
+.select-met-toevoeg button {
+    width: 28px;
+    padding: 6px;
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: var(--macos-radius-button);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: var(--macos-shadow-light);
+    transition: all 0.2s ease;
+}
+
+.select-met-toevoeg button:hover {
+    background: var(--macos-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.actie-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--macos-green);
+    color: white;
+    border: none;
+    border-radius: var(--macos-radius-button);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 12px;
+    box-shadow: var(--macos-shadow-light);
+    transition: all 0.2s ease;
+}
+
+.actie-btn:hover:not(:disabled) {
+    background: var(--macos-green-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.actie-btn:disabled {
+    background: var(--macos-gray-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
+}
+
+.verplaats-knoppen {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.verplaats-btn {
+    padding: 8px 12px;
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: var(--macos-radius-button);
+    cursor: pointer;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: var(--macos-shadow-light);
+    transition: all 0.2s ease;
+}
+
+.verplaats-btn:hover {
+    background: var(--macos-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.verplaats-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+}
+
+.popup-acties {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.popup-acties button {
+    padding: 8px 16px;
+}

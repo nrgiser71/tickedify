@@ -1,0 +1,52 @@
+[
+  {
+    "id": "wcybkikznmbuweu0a",
+    "tekst": "Melk kopen",
+    "aangemaakt": "2025-06-13T14:24:00.874Z",
+    "projectId": "",
+    "verschijndatum": "2025-06-14",
+    "contextId": "ycqblpwsxmbuwfm9t",
+    "duur": 5,
+    "type": "actie"
+  },
+  {
+    "id": "d4h6eur0embusvwz1",
+    "tekst": "testtaak",
+    "aangemaakt": "2025-06-13T12:45:19.405Z",
+    "projectId": "vbzkbr1zsmbtxkrl9",
+    "verschijndatum": "2025-06-13",
+    "contextId": "rhmt3iawcmbtxkwtf",
+    "duur": 5,
+    "type": "actie"
+  },
+  {
+    "id": "svbe9lgbhmbug1w9a",
+    "tekst": "Taak 1",
+    "aangemaakt": "2025-06-13T06:46:03.406Z",
+    "projectId": "vbzkbr1zsmbtxkrl9",
+    "verschijndatum": "2025-06-13",
+    "contextId": "rhmt3iawcmbtxkwtf",
+    "duur": 5,
+    "type": "actie"
+  },
+  {
+    "id": "jcx8xu9m6mbuwey0t",
+    "tekst": "Poetsen",
+    "aangemaakt": "2025-06-13T14:24:06.077Z",
+    "projectId": "",
+    "verschijndatum": "2025-06-14",
+    "contextId": "rhmt3iawcmbtxkwtf",
+    "duur": 30,
+    "type": "actie"
+  },
+  {
+    "id": "au9bv3gq4mbuwew45",
+    "tekst": "Brood kopen",
+    "aangemaakt": "2025-06-13T14:24:03.605Z",
+    "projectId": "",
+    "verschijndatum": "2025-06-13",
+    "contextId": "rhmt3iawcmbtxkwtf",
+    "duur": 5,
+    "type": "actie"
+  }
+]

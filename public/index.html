@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickedify - Smart Task Management</title>
+    <meta name="description" content="Tickedify your tasks with smart task management. Get things done efficiently with projects, contexts, and smart scheduling.">
+    <meta name="keywords" content="task management, productivity, todo, gtd, project management">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-search">
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" placeholder="Zoeken" class="search-input">
+                    </div>
+                </div>
+
+                <div class="sidebar-content">
+                    <!-- Standaard lijsten -->
+                    <div class="lijst-sectie">
+                        <div class="lijst-item actief" data-lijst="inbox">
+                            <div class="lijst-icon">📥</div>
+                            <span class="lijst-naam">Inbox</span>
+                            <span class="lijst-telling" id="telling-inbox">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="acties">
+                            <div class="lijst-icon">📋</div>
+                            <span class="lijst-naam">Acties</span>
+                            <span class="lijst-telling" id="telling-acties">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="projecten">
+                            <div class="lijst-icon">📁</div>
+                            <span class="lijst-naam">Projecten</span>
+                            <span class="lijst-telling" id="telling-projecten">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="opvolgen">
+                            <div class="lijst-icon">⏳</div>
+                            <span class="lijst-naam">Opvolgen</span>
+                            <span class="lijst-telling" id="telling-opvolgen">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="afgewerkte-taken">
+                            <div class="lijst-icon">✅</div>
+                            <span class="lijst-naam">Afgewerkt</span>
+                            <span class="lijst-telling" id="telling-afgewerkte-taken">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Uitgesteld lijsten dropdown -->
+                    <div class="lijst-sectie">
+                        <div class="sectie-header dropdown-header" id="uitgesteld-dropdown">
+                            <span class="dropdown-arrow">▶</span>
+                            <span>Uitgesteld</span>
+                        </div>
+                        <div class="dropdown-content" id="uitgesteld-content" style="display: none;">
+                            <div class="lijst-item" data-lijst="uitgesteld-wekelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">Wekelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-wekelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-maandelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">Maandelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-maandelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-3maandelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">3-maandelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-3maandelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-6maandelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">6-maandelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-6maandelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-jaarlijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">Jaarlijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-jaarlijks">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main content -->
+            <main class="main-content">
+                <header class="main-header">
+                    <h1 id="page-title">Inbox</h1>
+                </header>
+
+                <div class="content-area">
+                    <div class="taak-input-container" id="taak-input-container">
+                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                        <button id="toevoegBtn">Toevoegen</button>
+                    </div>
+
+                    <div class="taken-container">
+                        <ul id="takenLijst"></ul>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Planning Popup -->
+    <div id="planningPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <h3>Taak plannen</h3>
+            <p class="keyboard-help">💡 Toetsenbord: Tab = navigeren, + = nieuw item, Esc = annuleren, Enter = opslaan</p>
+            
+            <div class="form-groep">
+                <label>Taaknaam:</label>
+                <input type="text" id="taakNaamInput" required>
+            </div>
+            
+            <div class="planning-opties">
+                <div class="optie-groep">
+                    <h4>Maak actie:</h4>
+                    <div class="form-groep">
+                        <label>Project:</label>
+                        <div class="select-met-toevoeg">
+                            <select id="projectSelect">
+                                <option value="">Geen project</option>
+                            </select>
+                            <button id="nieuwProjectBtn" type="button" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Verschijndatum:</label>
+                        <input type="date" id="verschijndatum" required>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Context:</label>
+                        <div class="select-met-toevoeg">
+                            <select id="contextSelect" required>
+                                <option value="">Selecteer context...</option>
+                            </select>
+                            <button id="nieuweContextBtn" type="button" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Geschatte duur (minuten):</label>
+                        <input type="number" id="duur" min="1" step="1" required>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Herhaling:</label>
+                        <select id="herhaling" disabled>
+                            <option value="">Geen herhaling</option>
+                        </select>
+                    </div>
+                    
+                    <button id="maakActieBtn" class="actie-btn">Maak actie</button>
+                </div>
+                
+                <div class="optie-groep">
+                    <h4>Of verplaats naar:</h4>
+                    <div class="verplaats-knoppen">
+                        <button class="verplaats-btn" data-lijst="opvolgen">Opvolgen</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-wekelijks">Wekelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-maandelijks">Maandelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">3-maandelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">6-maandelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Jaarlijks</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="popup-acties">
+                <button id="sluitPopupBtn">Annuleren</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
