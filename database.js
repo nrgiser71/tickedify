@@ -82,7 +82,19 @@ const db = {
       
       const params = (listName === 'projecten-lijst' || listName === 'contexten' || listName === 'afgewerkte-taken') ? [] : [listName];
       const result = await pool.query(query, params);
-      return result.rows;
+      
+      // Map database column names to frontend property names
+      return result.rows.map(row => {
+        if (row.project_id !== undefined) {
+          row.projectId = row.project_id;
+          delete row.project_id;
+        }
+        if (row.context_id !== undefined) {
+          row.contextId = row.context_id;
+          delete row.context_id;
+        }
+        return row;
+      });
     } catch (error) {
       console.error(`Error getting list ${listName}:`, error);
       return [];
