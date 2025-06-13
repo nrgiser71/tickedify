@@ -63,6 +63,21 @@ app.post('/api/lijst/:naam', async (req, res) => {
     }
 });
 
+app.put('/api/taak/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const success = await db.updateTask(id, req.body);
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+    } catch (error) {
+        console.error(`Error updating task ${id}:`, error);
+        res.status(500).json({ error: 'Fout bij updaten' });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);

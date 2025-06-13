@@ -1084,8 +1084,13 @@ class Taakbeheer {
                 type: 'actie'
             };
 
-            await this.verplaatsTaakNaarLijst(actie, 'acties');
-            this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+            const success = await this.verplaatsTaakNaarLijst(actie, 'acties');
+            if (success) {
+                this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+            } else {
+                alert('Fout bij plannen van taak. Probeer opnieuw.');
+                return;
+            }
         }
         
         this.sluitPopup();
@@ -1104,21 +1109,31 @@ class Taakbeheer {
 
     async verplaatsTaakNaarLijst(taak, lijstNaam) {
         try {
-            const response = await fetch(`/api/lijst/${lijstNaam}`);
-            let lijst = [];
-            if (response.ok) {
-                lijst = await response.json();
-            }
-            
-            lijst.push(taak);
-            
-            await fetch(`/api/lijst/${lijstNaam}`, {
-                method: 'POST',
+            // Use the new updateTask API for better database consistency
+            const response = await fetch(`/api/taak/${taak.id}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(lijst)
+                body: JSON.stringify({
+                    lijst: lijstNaam,
+                    tekst: taak.tekst,
+                    projectId: taak.projectId,
+                    contextId: taak.contextId,
+                    verschijndatum: taak.verschijndatum,
+                    duur: taak.duur,
+                    type: taak.type
+                })
             });
+            
+            if (response.ok) {
+                const result = await response.json();
+                return result.success;
+            } else {
+                console.error(`HTTP error ${response.status} bij verplaatsen naar ${lijstNaam}`);
+                return false;
+            }
         } catch (error) {
             console.error(`Fout bij verplaatsen naar ${lijstNaam}:`, error);
+            return false;
         }
     }
 

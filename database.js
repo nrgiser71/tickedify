@@ -142,6 +142,36 @@ const db = {
     }
   },
 
+  // Move/update a single task
+  async updateTask(taskId, updates) {
+    try {
+      const fields = [];
+      const values = [];
+      let paramIndex = 1;
+
+      Object.keys(updates).forEach(key => {
+        if (key === 'projectId') {
+          fields.push(`project_id = $${paramIndex}`);
+        } else if (key === 'contextId') {
+          fields.push(`context_id = $${paramIndex}`);
+        } else {
+          fields.push(`${key} = $${paramIndex}`);
+        }
+        values.push(updates[key]);
+        paramIndex++;
+      });
+
+      values.push(taskId);
+      const query = `UPDATE taken SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+      
+      const result = await pool.query(query, values);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error(`Error updating task ${taskId}:`, error);
+      return false;
+    }
+  },
+
   // Get counts for all lists
   async getCounts() {
     try {
