@@ -3,7 +3,39 @@
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
-## Current Status
+## CURRENT PRIORITY: Recurring Task Bug Debugging (June 2025)
+
+**ACTIVE ISSUE**: When completing a recurring task, a new instance is created but has NULL recurring values instead of copying the original task's recurring settings.
+
+**Symptoms observed by user:**
+- User completes "dagelijkse taak 5" 
+- System says it created new task for next day (16/6)
+- New task is not visible in acties list
+- Console shows tasks in acties have `herhalingActief: false` and `herhalingType: null`
+
+**What works:**
+- ✅ Basic recurring task creation and saving
+- ✅ Database has proper herhaling_* columns 
+- ✅ Recurring indicators show in UI
+- ✅ Task completion triggers new task creation
+
+**What's broken:**
+- ❌ New recurring task instances lose their recurring properties
+- ❌ New tasks have herhalingActief: false, herhalingType: null
+- ❌ New tasks don't appear with recurring indicators
+
+**Next debugging steps needed:**
+1. Add detailed logging to task completion workflow in public/app.js
+2. Log exactly what `originalTask` object contains when passed to `createNextRecurringTask`
+3. Trace where recurring properties are lost in the creation pipeline
+4. Fix the data transfer from completed task to new task instance
+
+**Setup status:**
+- ✅ Mac Mini fully configured with Claude Code, Node.js, project synced
+- ✅ Local development environment working on port 3001
+- ✅ Database connection configured and tested
+
+## Previous Status
 - ✅ App deployed to tickedify.com 
 - ✅ PostgreSQL database working
 - ✅ All task functionality working

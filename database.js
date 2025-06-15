@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Pool } = require('pg');
 
 // Database connection
@@ -324,6 +325,15 @@ const db = {
   async createRecurringTask(originalTask, newDate) {
     try {
       const newId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      
+      // Debug log the original task properties
+      console.log('🐛 DEBUG: originalTask properties:', Object.keys(originalTask));
+      console.log('🐛 DEBUG: originalTask full object:', originalTask);
+      console.log('🐛 DEBUG: recurring properties:', {
+        herhalingType: originalTask.herhalingType,
+        herhalingWaarde: originalTask.herhalingWaarde,
+        herhalingActief: originalTask.herhalingActief
+      });
       
       // Try with herhaling fields first
       try {
