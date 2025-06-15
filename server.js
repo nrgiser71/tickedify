@@ -268,6 +268,23 @@ app.post('/api/taak/recurring', async (req, res) => {
         
         const taskId = await db.createRecurringTask(originalTask, nextDate);
         if (taskId) {
+            // Debug: immediately check what's in acties list after creation
+            setTimeout(async () => {
+                try {
+                    const actiesTasks = await db.getTasks('acties');
+                    console.log('🔍 DEBUG: All tasks in acties after creation:', actiesTasks.length);
+                    const newTask = actiesTasks.find(t => t.id === taskId);
+                    if (newTask) {
+                        console.log('✅ DEBUG: New task found in acties list:', newTask);
+                    } else {
+                        console.log('❌ DEBUG: New task NOT found in acties list');
+                        console.log('🔍 DEBUG: All task IDs in acties:', actiesTasks.map(t => t.id));
+                    }
+                } catch (error) {
+                    console.log('Debug check failed:', error);
+                }
+            }, 1000);
+            
             res.json({ success: true, taskId });
         } else {
             res.status(500).json({ error: 'Fout bij aanmaken herhalende taak' });
