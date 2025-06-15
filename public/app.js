@@ -2128,16 +2128,37 @@ class Taakbeheer {
             // Vul form met actie data
             document.getElementById('taakNaamInput').value = actie.tekst;
             document.getElementById('projectSelect').value = actie.projectId || '';
-            document.getElementById('verschijndatum').value = actie.verschijndatum;
+            
+            // Format date correctly for date input (YYYY-MM-DD)
+            let dateValue = '';
+            if (actie.verschijndatum) {
+                if (typeof actie.verschijndatum === 'string') {
+                    // If it's already in YYYY-MM-DD format, use as-is
+                    if (actie.verschijndatum.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        dateValue = actie.verschijndatum;
+                    } else {
+                        // Convert ISO string or other format to YYYY-MM-DD
+                        const date = new Date(actie.verschijndatum);
+                        if (!isNaN(date.getTime())) {
+                            dateValue = date.toISOString().split('T')[0];
+                        }
+                    }
+                }
+            }
+            document.getElementById('verschijndatum').value = dateValue;
+            console.log('bewerkActie - loaded date:', actie.verschijndatum, '-> formatted:', dateValue);
+            
             document.getElementById('contextSelect').value = actie.contextId;
             document.getElementById('duur').value = actie.duur;
             const herhalingType = actie.herhalingType || '';
             document.getElementById('herhalingSelect').value = herhalingType;
+            console.log('bewerkActie - loaded herhalingType:', herhalingType, 'herhalingActief:', actie.herhalingActief);
             
             // Update display text - eerst de popup vorm laden, dan de tekst genereren
             this.parseHerhalingValue(herhalingType);
             const herhalingDisplay = this.generateHerhalingDisplayText();
             document.getElementById('herhalingDisplay').value = herhalingDisplay;
+            console.log('bewerkActie - generated display text:', herhalingDisplay);
             
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
