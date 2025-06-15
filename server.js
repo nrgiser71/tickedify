@@ -164,6 +164,49 @@ app.put('/api/taak/:id', async (req, res) => {
     }
 });
 
+// Endpoint to add missing recurring columns
+app.post('/api/admin/add-recurring-columns', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        console.log('🔧 Admin: Adding missing recurring columns...');
+        
+        // Add columns one by one to avoid conflicts
+        const columns = [
+            { name: 'herhaling_type', type: 'VARCHAR(30)' },
+            { name: 'herhaling_waarde', type: 'INTEGER' },
+            { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' }
+        ];
+        
+        const results = [];
+        
+        for (const col of columns) {
+            try {
+                await pool.query(`ALTER TABLE taken ADD COLUMN ${col.name} ${col.type}`);
+                console.log(`✅ Added column ${col.name}`);
+                results.push({ column: col.name, status: 'added' });
+            } catch (colError) {
+                if (colError.message.includes('already exists')) {
+                    console.log(`⚠️ Column ${col.name} already exists`);
+                    results.push({ column: col.name, status: 'already_exists' });
+                } else {
+                    console.log(`❌ Failed to add column ${col.name}:`, colError.message);
+                    results.push({ column: col.name, status: 'error', error: colError.message });
+                }
+            }
+        }
+        
+        console.log('✅ Recurring columns setup complete');
+        res.json({ success: true, results });
+        
+    } catch (error) {
+        console.error('❌ Failed to add recurring columns:', error);
+        res.status(500).json({ error: 'Failed to add columns', details: error.message });
+    }
+});
+
 // Debug endpoint to check task details
 app.get('/api/taak/:id', async (req, res) => {
     try {
