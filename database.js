@@ -179,14 +179,50 @@ const db = {
         // Clear and insert tasks for specific list
         await pool.query('DELETE FROM taken WHERE lijst = $1 AND afgewerkt IS NULL', [listName]);
         for (const item of items) {
-          await pool.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-          `, [
-            item.id, item.tekst, item.aangemaakt, listName,
-            item.projectId, item.verschijndatum, item.contextId, item.duur, item.type,
-            item.herhalingType, item.herhalingWaarde, item.herhalingActief
-          ]);
+          // Check if herhaling columns exist and fall back gracefully
+          try {
+            await pool.query(`
+              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            `, [
+              item.id, 
+              item.tekst, 
+              item.aangemaakt, 
+              listName,
+              item.projectId || null, 
+              item.verschijndatum || null, 
+              item.contextId || null, 
+              item.duur || null, 
+              item.type || null,
+              item.herhalingType || null, 
+              item.herhalingWaarde || null, 
+              item.herhalingActief || false
+            ]);
+          } catch (insertError) {
+            // Fall back to basic insert without herhaling fields
+            if (insertError.message.includes('herhaling_type') || 
+                insertError.message.includes('herhaling_waarde') || 
+                insertError.message.includes('herhaling_actief')) {
+              
+              console.log(`⚠️ DB: Falling back to basic insert for item ${item.id}`);
+              await pool.query(`
+                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+              `, [
+                item.id, 
+                item.tekst, 
+                item.aangemaakt, 
+                listName,
+                item.projectId || null, 
+                item.verschijndatum || null, 
+                item.contextId || null, 
+                item.duur || null, 
+                item.type || null
+              ]);
+            } else {
+              throw insertError;
+            }
+          }
         }
       }
       return true;

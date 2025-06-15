@@ -1402,13 +1402,26 @@ class Taakbeheer {
 
     async slaLijstOp() {
         try {
-            await fetch(`/api/lijst/${this.huidigeLijst}`, {
+            console.log('Saving list:', this.huidigeLijst, 'with tasks:', this.taken);
+            const response = await fetch(`/api/lijst/${this.huidigeLijst}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(this.taken)
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Server error saving list:', errorData);
+                alert(`Fout bij opslaan: ${errorData.error || 'Onbekende fout'}`);
+                return false;
+            }
+            
+            console.log('List saved successfully');
+            return true;
         } catch (error) {
             console.error('Fout bij opslaan lijst:', error);
+            alert(`Fout bij opslaan: ${error.message}`);
+            return false;
         }
     }
 
