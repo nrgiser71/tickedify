@@ -12,6 +12,11 @@
   - All standard recurrence patterns (daily, weekly, monthly, yearly)
   - Advanced patterns (first/last workday, specific weekdays of month)
   - **Event-based recurrence** (e.g., "10 days before next webinar")
+- ✅ **Production issues resolved (Dec 2025)**
+  - Fixed database schema synchronization between development and production
+  - Implemented robust database initialization with error handling
+  - Resolved 500/404 errors when creating recurring tasks
+  - Added diagnostic endpoints for production monitoring
 
 ## Next Features to Implement
 - **Email-to-Inbox functionality**
@@ -100,3 +105,34 @@ herhaling_actief BOOLEAN DEFAULT FALSE  -- Of de herhaling actief is
   - [x] Popup voor gebeurtenis-datum invoer bij event-gebaseerde herhalingen
   - [x] Uitgebreide date calculation algoritmes voor alle herhalingstypes
   - [x] Keyboard shortcuts en accessibility ondersteuning
+- [x] **Productie-issues opgelost (December 2025)**
+  - [x] Database schema synchronisatie probleem opgelost
+  - [x] Robuuste database initialisatie geïmplementeerd
+  - [x] 500/404 errors bij herhalende taken gefixed
+  - [x] Graceful error handling voor ontbrekende database kolommen
+  - [x] Diagnostische endpoints toegevoegd (/api/ping, /api/status, /api/db-test)
+  - [x] Server architecture vereenvoudigd voor betere betrouwbaarheid
+
+## Technische Troubleshooting - December 2025
+
+### Probleem: Productie 500/404 Errors
+**Symptomen:** App werkte lokaal perfect, maar productie gaf "Fout bij plannen taak" errors
+
+**Root Cause:** 
+- Database schema mismatch tussen development en production
+- Productie database miste `herhaling_*` kolommen
+- Complex logging en error handling veroorzaakte cascade failures
+
+**Oplossing:**
+1. **Database Schema Migration**: Verbeterde `initDatabase()` functie die graceful omgaat met missing columns
+2. **Incremental Server Rebuild**: Stap-voor-stap rebuild van server.js vanuit werkende simpele versie
+3. **Diagnostic Endpoints**: Toegevoegd `/api/ping`, `/api/status`, `/api/db-test` voor debugging
+4. **Robust Error Handling**: Database operations hebben fallback naar basic functionaliteit zonder recurring fields
+5. **Simplified Architecture**: Removed complex logging that was causing initialization failures
+
+### Lessons Learned
+- ✅ Database migrations in production require bulletproof backwards compatibility
+- ✅ Complex error handling can sometimes cause more problems than it solves
+- ✅ Incremental debugging with minimal servers is highly effective
+- ✅ Diagnostic endpoints are essential for production troubleshooting
+- ✅ Always test database schema changes in production-like environment first
