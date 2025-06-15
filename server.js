@@ -310,10 +310,21 @@ app.get('/api/debug/june16', async (req, res) => {
             ORDER BY aangemaakt DESC
         `);
         
+        // Also check recent tasks regardless of date
+        const recentResult = await pool.query(`
+            SELECT id, tekst, lijst, verschijndatum, herhaling_type, herhaling_actief, afgewerkt, aangemaakt
+            FROM taken 
+            WHERE aangemaakt > NOW() - INTERVAL '1 hour'
+            ORDER BY aangemaakt DESC
+        `);
+        
         console.log('🔍 DEBUG: All tasks for 2025-06-16:', result.rows);
+        console.log('🔍 DEBUG: Recent tasks (last hour):', recentResult.rows);
         res.json({ 
-            count: result.rows.length, 
-            tasks: result.rows 
+            june16_count: result.rows.length, 
+            june16_tasks: result.rows,
+            recent_count: recentResult.rows.length,
+            recent_tasks: recentResult.rows
         });
     } catch (error) {
         console.error('Debug june16 error:', error);
