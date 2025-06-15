@@ -232,19 +232,25 @@ app.get('/api/debug/lijst/:naam', async (req, res) => {
 app.get('/api/taak/:id', async (req, res) => {
     try {
         if (!db) {
+            console.log('🐛 DEBUG: Database not available for task lookup');
             return res.status(503).json({ error: 'Database not available' });
         }
         
         const { id } = req.params;
+        console.log('🐛 DEBUG: Looking up task with ID:', id);
+        
         const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        console.log('🐛 DEBUG: Query result rows count:', result.rows.length);
         
         if (result.rows.length > 0) {
+            console.log('🐛 DEBUG: Found task:', result.rows[0]);
             res.json(result.rows[0]);
         } else {
+            console.log('🐛 DEBUG: Task not found in database');
             res.status(404).json({ error: 'Task not found' });
         }
     } catch (error) {
-        console.error(`Error getting task ${req.params.id}:`, error);
+        console.error(`🐛 DEBUG: Error getting task ${req.params.id}:`, error);
         res.status(500).json({ error: 'Database error' });
     }
 });
