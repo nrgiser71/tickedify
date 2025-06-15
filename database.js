@@ -352,6 +352,16 @@ const db = {
         ]);
         
         console.log('✅ DEBUG: Insert successful, task ID:', newId);
+        
+        // Verify the insert worked by immediately querying it back
+        const verifyResult = await pool.query('SELECT id FROM taken WHERE id = $1', [newId]);
+        console.log('🔍 DEBUG: Verification query returned rows:', verifyResult.rows.length);
+        
+        if (verifyResult.rows.length === 0) {
+          console.error('❌ DEBUG: Task was not found immediately after insert!');
+          return null;
+        }
+        
         return newId;
       } catch (dbError) {
         // If herhaling columns don't exist, fall back to basic insert
