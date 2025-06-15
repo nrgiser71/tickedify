@@ -348,12 +348,12 @@ const db = {
         console.log('🐛 DEBUG: converted to ISO:', verschijndatumISO);
         
         await pool.query(`
-          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         `, [
           newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
           originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type,
-          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
+          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, null
         ]);
         
         console.log('✅ DEBUG: Insert successful, task ID:', newId);
