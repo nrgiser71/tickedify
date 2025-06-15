@@ -1591,6 +1591,9 @@ class Taakbeheer {
         const duur = parseInt(document.getElementById('duur').value) || 0;
         const herhalingType = document.getElementById('herhalingSelect').value;
 
+        console.log('maakActie - herhalingType:', herhalingType);
+        console.log('maakActie - herhalingActief:', !!herhalingType);
+
         if (!taakNaam || !verschijndatum || !contextId || !duur) {
             alert('Alle velden behalve project zijn verplicht!');
             return;
@@ -1673,6 +1676,8 @@ class Taakbeheer {
             if (taak.herhalingActief !== undefined) {
                 updateData.herhalingActief = taak.herhalingActief;
             }
+            
+            console.log(`Verplaatsen taak ${taak.id} naar ${lijstNaam}:`, updateData);
             
             // Use the new updateTask API for better database consistency
             const response = await fetch(`/api/taak/${taak.id}`, {
