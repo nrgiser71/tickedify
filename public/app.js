@@ -176,6 +176,14 @@ class Taakbeheer {
 
     openHerhalingPopup() {
         this.bindHerhalingEvents();
+        
+        // Als er nog geen herhaling is ingesteld, reset naar 'none'
+        const currentValue = document.getElementById('herhalingSelect').value;
+        if (!currentValue) {
+            document.getElementById('herhalingSelect').value = '';
+            document.getElementById('herhalingDisplay').value = 'Geen herhaling';
+        }
+        
         this.loadHerhalingFromValue();
         document.getElementById('herhalingPopup').style.display = 'flex';
     }
