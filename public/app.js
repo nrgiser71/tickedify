@@ -926,9 +926,19 @@ class Taakbeheer {
             // Update alleen de project tellingen, niet de hele lijst (om open staat te behouden)
             await this.updateProjectTellingen();
             
-            // Show confirmation for recurring task
+            // Show confirmation for recurring task and refresh lists
             if (nextRecurringTaskId) {
                 const nextDateFormatted = new Date(this.calculateNextRecurringDate(actie.verschijndatum, actie.herhalingType)).toLocaleDateString('nl-NL');
+                
+                // Refresh all lists to show the new recurring task
+                console.log('🔄 Refreshing lists after recurring task creation...');
+                await this.laadTellingen();
+                
+                // Refresh the current view if needed
+                if (this.huidigeLijst === 'acties') {
+                    await this.laadHuidigeLijst();
+                }
+                
                 setTimeout(() => {
                     alert(`✓ Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                 }, 100);
@@ -1349,9 +1359,19 @@ class Taakbeheer {
                 this.renderTaken();
                 await this.laadTellingen();
                 
-                // Show confirmation for recurring task
+                // Show confirmation for recurring task and refresh lists
                 if (nextRecurringTaskId) {
                     const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
+                    
+                    // Refresh all lists to show the new recurring task
+                    console.log('🔄 Refreshing lists after recurring task creation...');
+                    await this.laadTellingen();
+                    
+                    // If we're on the acties list, refresh it to show the new task
+                    if (this.huidigeLijst === 'acties') {
+                        await this.laadHuidigeLijst();
+                    }
+                    
                     setTimeout(() => {
                         alert(`✓ Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     }, 100);
@@ -2040,6 +2060,12 @@ class Taakbeheer {
 
     async createNextRecurringTask(originalTask, nextDate) {
         try {
+            console.log('🔄 Creating next recurring task:', {
+                originalTask: originalTask,
+                nextDate: nextDate,
+                targetList: originalTask.lijst
+            });
+            
             const response = await fetch('/api/taak/recurring', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2051,6 +2077,21 @@ class Taakbeheer {
             
             if (response.ok) {
                 const result = await response.json();
+                console.log('✅ New recurring task created with ID:', result.taskId);
+                
+                // Debug: Check what was actually created
+                setTimeout(async () => {
+                    try {
+                        const checkResponse = await fetch(`/api/taak/${result.taskId}`);
+                        if (checkResponse.ok) {
+                            const newTask = await checkResponse.json();
+                            console.log('🔍 DEBUG: New recurring task in database:', newTask);
+                        }
+                    } catch (error) {
+                        console.log('Debug check of new task failed:', error);
+                    }
+                }, 500);
+                
                 return result.taskId;
             } else {
                 console.error('Failed to create recurring task:', response.status);
