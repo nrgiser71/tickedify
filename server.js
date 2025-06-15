@@ -295,6 +295,29 @@ app.post('/api/taak/recurring', async (req, res) => {
     }
 });
 
+// Temporary debug endpoint to check what's actually in acties
+app.get('/api/debug/acties', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { pool } = require('./database');
+        const result = await pool.query(`
+            SELECT id, tekst, lijst, verschijndatum, herhaling_type, herhaling_actief, afgewerkt 
+            FROM taken 
+            WHERE lijst = 'acties' AND afgewerkt IS NULL 
+            ORDER BY verschijndatum DESC
+        `);
+        
+        console.log('🔍 DEBUG: Raw acties from database:', result.rows);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Debug acties error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
