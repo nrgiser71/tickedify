@@ -110,6 +110,70 @@ app.get('/api/lijst/:naam', async (req, res) => {
     }
 });
 
+app.post('/api/lijst/:naam', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { naam } = req.params;
+        const success = await db.saveList(naam, req.body);
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(500).json({ error: 'Fout bij opslaan' });
+        }
+    } catch (error) {
+        console.error(`Error saving list ${req.params.naam}:`, error);
+        res.status(500).json({ error: 'Fout bij opslaan' });
+    }
+});
+
+app.put('/api/taak/:id', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        console.log(`Updating task ${id}:`, req.body);
+        
+        const success = await db.updateTask(id, req.body);
+        
+        if (success) {
+            console.log(`Task ${id} updated successfully`);
+            res.json({ success: true });
+        } else {
+            console.log(`Task ${id} not found or update failed`);
+            res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+    } catch (error) {
+        console.error(`Error updating task ${id}:`, error);
+        res.status(500).json({ error: 'Fout bij updaten', details: error.message });
+    }
+});
+
+app.post('/api/taak/recurring', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { originalTask, nextDate } = req.body;
+        console.log('Creating recurring task:', { originalTask, nextDate });
+        
+        const taskId = await db.createRecurringTask(originalTask, nextDate);
+        if (taskId) {
+            res.json({ success: true, taskId });
+        } else {
+            res.status(500).json({ error: 'Fout bij aanmaken herhalende taak' });
+        }
+    } catch (error) {
+        console.error('Error creating recurring task:', error);
+        res.status(500).json({ error: 'Fout bij aanmaken herhalende taak' });
+    }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
