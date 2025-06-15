@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickedify - Smart Task Management</title>
+    <meta name="description" content="Tickedify your tasks with smart task management. Get things done efficiently with projects, contexts, and smart scheduling.">
+    <meta name="keywords" content="task management, productivity, todo, gtd, project management">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-search">
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" placeholder="Zoeken" class="search-input">
+                    </div>
+                </div>
+
+                <div class="sidebar-content">
+                    <!-- Standaard lijsten -->
+                    <div class="lijst-sectie">
+                        <div class="lijst-item actief" data-lijst="inbox">
+                            <div class="lijst-icon">📥</div>
+                            <span class="lijst-naam">Inbox</span>
+                            <span class="lijst-telling" id="telling-inbox">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="acties">
+                            <div class="lijst-icon">📋</div>
+                            <span class="lijst-naam">Acties</span>
+                            <span class="lijst-telling" id="telling-acties">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="projecten">
+                            <div class="lijst-icon">📁</div>
+                            <span class="lijst-naam">Projecten</span>
+                            <span class="lijst-telling" id="telling-projecten">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="opvolgen">
+                            <div class="lijst-icon">⏳</div>
+                            <span class="lijst-naam">Opvolgen</span>
+                            <span class="lijst-telling" id="telling-opvolgen">0</span>
+                        </div>
+                        <div class="lijst-item" data-lijst="afgewerkte-taken">
+                            <div class="lijst-icon">✅</div>
+                            <span class="lijst-naam">Afgewerkt</span>
+                            <span class="lijst-telling" id="telling-afgewerkte-taken">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Uitgesteld lijsten dropdown -->
+                    <div class="lijst-sectie">
+                        <div class="sectie-header dropdown-header" id="uitgesteld-dropdown">
+                            <span class="dropdown-arrow">▶</span>
+                            <span>Uitgesteld</span>
+                        </div>
+                        <div class="dropdown-content" id="uitgesteld-content" style="display: none;">
+                            <div class="lijst-item" data-lijst="uitgesteld-wekelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">Wekelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-wekelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-maandelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">Maandelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-maandelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-3maandelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">3-maandelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-3maandelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-6maandelijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">6-maandelijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-6maandelijks">0</span>
+                            </div>
+                            <div class="lijst-item" data-lijst="uitgesteld-jaarlijks">
+                                <div class="lijst-icon">📅</div>
+                                <span class="lijst-naam">Jaarlijks</span>
+                                <span class="lijst-telling" id="telling-uitgesteld-jaarlijks">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main content -->
+            <main class="main-content">
+                <header class="main-header">
+                    <h1 id="page-title">Inbox</h1>
+                </header>
+
+                <div class="content-area">
+                    <div class="taak-input-container" id="taak-input-container">
+                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                        <button id="toevoegBtn">Toevoegen</button>
+                    </div>
+
+                    <div class="taken-container">
+                        <ul id="takenLijst"></ul>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Planning Popup -->
+    <div id="planningPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <h3>Taak plannen</h3>
+            <p class="keyboard-help">💡 Toetsenbord: Tab = navigeren, + = nieuw item, Esc = annuleren, Enter = opslaan</p>
+            
+            <div class="form-groep">
+                <label>Taaknaam:</label>
+                <input type="text" id="taakNaamInput" required>
+            </div>
+            
+            <div class="planning-opties">
+                <div class="optie-groep">
+                    <h4>Maak actie:</h4>
+                    <div class="form-groep">
+                        <label>Project:</label>
+                        <div class="select-met-toevoeg">
+                            <select id="projectSelect">
+                                <option value="">Geen project</option>
+                            </select>
+                            <button id="nieuwProjectBtn" type="button" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Verschijndatum:</label>
+                        <input type="date" id="verschijndatum" required>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Context:</label>
+                        <div class="select-met-toevoeg">
+                            <select id="contextSelect" required>
+                                <option value="">Selecteer context...</option>
+                            </select>
+                            <button id="nieuweContextBtn" type="button" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Geschatte duur (minuten):</label>
+                        <input type="number" id="duur" min="1" step="1" required>
+                    </div>
+                    
+                    <div class="form-groep">
+                        <label>Herhaling:</label>
+                        <div class="herhaling-selectie">
+                            <input type="text" id="herhalingDisplay" readonly placeholder="Geen herhaling" onclick="app.openHerhalingPopup()">
+                            <button type="button" id="herhalingBtn" onclick="app.openHerhalingPopup()">Instellen</button>
+                            <input type="hidden" id="herhalingSelect" value="">
+                        </div>
+                    </div>
+                    
+                    <button id="maakActieBtn" class="actie-btn">Maak actie</button>
+                </div>
+                
+                <div class="optie-groep">
+                    <h4>Of verplaats naar:</h4>
+                    <div class="verplaats-knoppen">
+                        <button class="verplaats-btn" data-lijst="opvolgen">Opvolgen</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-wekelijks">Wekelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-maandelijks">Maandelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">3-maandelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">6-maandelijks</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Jaarlijks</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="popup-acties">
+                <button id="sluitPopupBtn">Annuleren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Herhaling Popup -->
+    <div id="herhalingPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content herhaling-popup">
+            <h3>Herhaling instellen</h3>
+            
+            <div class="herhaling-configuratie">
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingNone" name="herhalingType" value="" checked>
+                    <label for="herhalingNone">Geen herhaling</label>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingDaily" name="herhalingType" value="daily">
+                    <label for="herhalingDaily">Dagelijks - Elke</label>
+                    <input type="number" id="dailyInterval" min="1" max="30" value="1" disabled>
+                    <span>dagen</span>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingWorkdays" name="herhalingType" value="workdays">
+                    <label for="herhalingWorkdays">Elke werkdag (ma-vr)</label>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingWeekly" name="herhalingType" value="weekly">
+                    <label for="herhalingWeekly">Wekelijks - Elke</label>
+                    <input type="number" id="weeklyInterval" min="1" max="12" value="1" disabled>
+                    <span>weken op:</span>
+                    <div class="weekdag-checkboxes">
+                        <label><input type="checkbox" value="1" disabled> Ma</label>
+                        <label><input type="checkbox" value="2" disabled> Di</label>
+                        <label><input type="checkbox" value="3" disabled> Wo</label>
+                        <label><input type="checkbox" value="4" disabled> Do</label>
+                        <label><input type="checkbox" value="5" disabled> Vr</label>
+                        <label><input type="checkbox" value="6" disabled> Za</label>
+                        <label><input type="checkbox" value="0" disabled> Zo</label>
+                    </div>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingMonthly" name="herhalingType" value="monthly">
+                    <label for="herhalingMonthly">Maandelijks - Dag</label>
+                    <input type="number" id="monthlyDay" min="1" max="31" value="1" disabled>
+                    <span>van elke</span>
+                    <input type="number" id="monthlyInterval" min="1" max="12" value="1" disabled>
+                    <span>maanden</span>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingMonthlyWeekday" name="herhalingType" value="monthly-weekday">
+                    <label for="herhalingMonthlyWeekday">Maandelijks - De</label>
+                    <select id="monthlyWeekdayPosition" disabled>
+                        <option value="first">eerste</option>
+                        <option value="second">tweede</option>
+                        <option value="third">derde</option>
+                        <option value="fourth">vierde</option>
+                        <option value="last">laatste</option>
+                    </select>
+                    <select id="monthlyWeekdayDay" disabled>
+                        <option value="1">maandag</option>
+                        <option value="2">dinsdag</option>
+                        <option value="3">woensdag</option>
+                        <option value="4">donderdag</option>
+                        <option value="5">vrijdag</option>
+                        <option value="6">zaterdag</option>
+                        <option value="0">zondag</option>
+                        <option value="workday">werkdag</option>
+                    </select>
+                    <span>van elke</span>
+                    <input type="number" id="monthlyWeekdayInterval" min="1" max="12" value="1" disabled>
+                    <span>maanden</span>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingYearly" name="herhalingType" value="yearly">
+                    <label for="herhalingYearly">Jaarlijks - Elke</label>
+                    <select id="yearlyDay" disabled>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="20">20</option>
+                        <option value="21">21</option>
+                        <option value="22">22</option>
+                        <option value="23">23</option>
+                        <option value="24">24</option>
+                        <option value="25">25</option>
+                        <option value="26">26</option>
+                        <option value="27">27</option>
+                        <option value="28">28</option>
+                        <option value="29">29</option>
+                        <option value="30">30</option>
+                        <option value="31">31</option>
+                    </select>
+                    <select id="yearlyMonth" disabled>
+                        <option value="1">januari</option>
+                        <option value="2">februari</option>
+                        <option value="3">maart</option>
+                        <option value="4">april</option>
+                        <option value="5">mei</option>
+                        <option value="6">juni</option>
+                        <option value="7">juli</option>
+                        <option value="8">augustus</option>
+                        <option value="9">september</option>
+                        <option value="10">oktober</option>
+                        <option value="11">november</option>
+                        <option value="12">december</option>
+                    </select>
+                    <span>van elke</span>
+                    <input type="number" id="yearlyInterval" min="1" max="5" value="1" disabled>
+                    <span>jaar</span>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingYearlySpecial" name="herhalingType" value="yearly-special">
+                    <label for="herhalingYearlySpecial">Jaarlijks speciaal - De</label>
+                    <select id="yearlySpecialType" disabled>
+                        <option value="first-workday">eerste werkdag van het jaar</option>
+                        <option value="last-workday">laatste werkdag van het jaar</option>
+                    </select>
+                    <span>van elke</span>
+                    <input type="number" id="yearlySpecialInterval" min="1" max="5" value="1" disabled>
+                    <span>jaar</span>
+                </div>
+                
+                <div class="herhaling-optie-groep">
+                    <input type="radio" id="herhalingEvent" name="herhalingType" value="gebeurtenis-gebaseerd">
+                    <label for="herhalingEvent">Gebeurtenis-gebaseerd -</label>
+                    <input type="number" id="eventDays" min="1" max="365" value="1" disabled>
+                    <span>dagen</span>
+                    <select id="eventDirection" disabled>
+                        <option value="voor">voor</option>
+                        <option value="na">na</option>
+                    </select>
+                    <input type="text" id="eventName" placeholder="bijv. webinar, vergadering..." disabled>
+                </div>
+            </div>
+            
+            <div class="popup-acties">
+                <button id="herhalingOkBtn" class="actie-btn">OK</button>
+                <button id="sluitHerhalingPopupBtn">Annuleren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gebeurtenis Datum Popup -->
+    <div id="eventDatePopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <h3>Volgende gebeurtenis datum</h3>
+            <p id="eventPromptText">Wanneer is de volgende gebeurtenis?</p>
+            
+            <div class="form-groep">
+                <label>Gebeurtenis datum:</label>
+                <input type="date" id="nextEventDate" required>
+            </div>
+            
+            <div class="popup-acties">
+                <button id="eventDateOkBtn" class="actie-btn">OK</button>
+                <button id="eventDateCancelBtn">Annuleren</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

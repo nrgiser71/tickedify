@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /
+
+# Temporarily blocking all crawlers during development
+# Remove this file when ready to go public
