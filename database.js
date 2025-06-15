@@ -173,6 +173,9 @@ const db = {
 
   // Move/update a single task
   async updateTask(taskId, updates) {
+    console.log(`🔍 DB: updateTask called for taskId: ${taskId}`);
+    console.log(`📝 DB: Updates:`, JSON.stringify(updates, null, 2));
+    
     try {
       const fields = [];
       const values = [];
@@ -197,19 +200,27 @@ const db = {
         paramIndex++;
       });
 
+      console.log(`🔧 DB: Generated fields:`, fields);
+      console.log(`🎯 DB: Values:`, values);
+
       values.push(taskId);
       const query = `UPDATE taken SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+      console.log(`🗄️ DB: Executing query:`, query);
+      console.log(`🗄️ DB: With values:`, values);
       
       try {
         const result = await pool.query(query, values);
+        console.log(`✅ DB: Query successful, rowCount: ${result.rowCount}`);
         return result.rowCount > 0;
       } catch (dbError) {
+        console.log(`⚠️ DB: Query failed:`, dbError.message);
+        
         // If error is about missing column, try without herhaling fields
         if (dbError.message.includes('herhaling_type') || 
             dbError.message.includes('herhaling_waarde') || 
             dbError.message.includes('herhaling_actief')) {
           
-          console.log('Herhaling columns not found, falling back to basic update');
+          console.log('🔄 DB: Herhaling columns not found, falling back to basic update');
           
           // Retry without herhaling fields
           const basicFields = [];
@@ -224,6 +235,7 @@ const db = {
             } else if (!key.startsWith('herhaling')) {
               basicFields.push(`${key} = $${basicParamIndex}`);
             } else {
+              console.log(`⏭️ DB: Skipping herhaling field: ${key}`);
               return; // Skip herhaling fields
             }
             basicValues.push(updates[key]);
@@ -232,8 +244,11 @@ const db = {
 
           basicValues.push(taskId);
           const basicQuery = `UPDATE taken SET ${basicFields.join(', ')} WHERE id = $${basicParamIndex}`;
+          console.log(`🔄 DB: Fallback query:`, basicQuery);
+          console.log(`🔄 DB: Fallback values:`, basicValues);
           
           const basicResult = await pool.query(basicQuery, basicValues);
+          console.log(`✅ DB: Fallback successful, rowCount: ${basicResult.rowCount}`);
           return basicResult.rowCount > 0;
         }
         throw dbError;

@@ -8,6 +8,28 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 app.use(express.json());
 app.use(express.static('public'));
 
+// Request logging middleware
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`📡 ${timestamp} ${req.method} ${req.url}`);
+    
+    if (req.body && Object.keys(req.body).length > 0) {
+        console.log(`📦 Request body:`, JSON.stringify(req.body, null, 2));
+    }
+    
+    // Log response status
+    const originalSend = res.send;
+    res.send = function(data) {
+        console.log(`📤 Response ${res.statusCode} for ${req.method} ${req.url}`);
+        if (res.statusCode >= 400) {
+            console.log(`⚠️ Error response:`, data);
+        }
+        originalSend.call(this, data);
+    };
+    
+    next();
+});
+
 // Initialize database on startup (don't crash if it fails)
 initDatabase().catch(error => {
     console.error('⚠️ Database initialization failed, continuing without database:', error);
@@ -64,17 +86,27 @@ app.post('/api/lijst/:naam', async (req, res) => {
 });
 
 app.put('/api/taak/:id', async (req, res) => {
+    console.log(`🔄 PUT /api/taak/${req.params.id}`);
+    console.log('📝 Request body:', JSON.stringify(req.body, null, 2));
+    
     try {
         const { id } = req.params;
+        console.log(`🎯 Updating task with ID: ${id}`);
+        
         const success = await db.updateTask(id, req.body);
+        console.log(`✅ Update result: ${success}`);
+        
         if (success) {
+            console.log(`✅ Task ${id} updated successfully`);
             res.json({ success: true });
         } else {
+            console.log(`❌ Task ${id} not found or update failed`);
             res.status(404).json({ error: 'Taak niet gevonden' });
         }
     } catch (error) {
-        console.error(`Error updating task ${id}:`, error);
-        res.status(500).json({ error: 'Fout bij updaten' });
+        console.error(`💥 Error updating task ${req.params.id}:`, error);
+        console.error('Stack trace:', error.stack);
+        res.status(500).json({ error: 'Fout bij updaten', details: error.message });
     }
 });
 
