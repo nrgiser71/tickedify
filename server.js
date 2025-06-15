@@ -164,8 +164,8 @@ app.put('/api/taak/:id', async (req, res) => {
     }
 });
 
-// Endpoint to add missing recurring columns
-app.post('/api/admin/add-recurring-columns', async (req, res) => {
+// Endpoint to add missing recurring columns (GET for easy access)
+app.get('/api/admin/add-recurring-columns', async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
