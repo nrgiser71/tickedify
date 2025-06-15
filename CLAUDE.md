@@ -5,35 +5,55 @@
 
 ## CURRENT PRIORITY: Recurring Task Bug Debugging (June 2025)
 
-**ACTIVE ISSUE**: When completing a recurring task, a new instance is created but has NULL recurring values instead of copying the original task's recurring settings.
+**CRITICAL DISCOVERY**: Recurring tasks are NOT being created in the database despite "success" logs
 
-**Symptoms observed by user:**
-- User completes "dagelijkse taak 5" 
-- System says it created new task for next day (16/6)
-- New task is not visible in acties list
-- Console shows tasks in acties have `herhalingActief: false` and `herhalingType: null`
+**Debugging Status (Evening June 15, 2025):**
 
-**What works:**
-- ✅ Basic recurring task creation and saving
-- ✅ Database has proper herhaling_* columns 
-- ✅ Recurring indicators show in UI
-- ✅ Task completion triggers new task creation
+**✅ What we confirmed works:**
+- Task completion workflow correctly identifies recurring tasks
+- `originalTask` object contains correct recurring properties (`herhalingType: 'dagelijks', herhalingActief: true`)
+- `nextDate` parameter correctly calculated as `'2025-06-16'`
+- Database connection and pool working correctly
+- All logging shows "Insert successful" messages
 
-**What's broken:**
-- ❌ New recurring task instances lose their recurring properties
-- ❌ New tasks have herhalingActief: false, herhalingType: null
-- ❌ New tasks don't appear with recurring indicators
+**❌ REAL PROBLEM DISCOVERED:**
+- **New recurring tasks are NOT actually being saved to database**
+- Despite logs showing "✅ DEBUG: Insert successful, task ID: [id]", the tasks don't exist in database
+- Database query `/api/debug/june16` shows only 1 task for 2025-06-16 (manually created)
+- No new recurring tasks appear in `/api/debug/recent` despite multiple completion tests
 
-**Next debugging steps needed:**
-1. Add detailed logging to task completion workflow in public/app.js
-2. Log exactly what `originalTask` object contains when passed to `createNextRecurringTask`
-3. Trace where recurring properties are lost in the creation pipeline
-4. Fix the data transfer from completed task to new task instance
+**Key Evidence:**
+- All recent tasks in database have `verschijndatum: 2025-06-15` (original completed tasks)
+- NO tasks found with `verschijndatum: 2025-06-16` except the 1 manually created
+- Multiple "successful" task completion cycles should have created 10+ tasks for 2025-06-16
+- This proves the database INSERT is failing silently
 
-**Setup status:**
-- ✅ Mac Mini fully configured with Claude Code, Node.js, project synced
-- ✅ Local development environment working on port 3001
-- ✅ Database connection configured and tested
+**Database INSERT Issue:**
+- The `createRecurringTask` function reports success but doesn't actually insert
+- Likely either:
+  1. Database transaction rollback happening after "success" log
+  2. INSERT statement has syntax/parameter error that's not being caught
+  3. Database constraint violation causing silent failure
+  4. Connection pool issue causing lost transactions
+
+**Next Steps for Tomorrow:**
+1. **Add transaction logging** - wrap INSERT in explicit transaction with rollback detection
+2. **Add immediate verification** - query database immediately after INSERT to confirm presence
+3. **Check database constraints** - look for foreign key or other constraint violations
+4. **Add error logging** - capture any silent database errors that might be occurring
+5. **Test with minimal INSERT** - try creating basic task without recurring fields first
+
+**Files Modified During Debug Session:**
+- `database.js` - Added extensive debug logging, timezone fix, fallback INSERT fix
+- `server.js` - Added debug endpoints `/api/debug/june16` and `/api/debug/acties`
+- `public/app.js` - Enhanced debug logging for task creation
+
+**Debug Endpoints Created:**
+- `GET /api/debug/june16` - Shows all tasks for 2025-06-16
+- `GET /api/debug/acties` - Shows current acties list from database
+
+**Current Hypothesis:**
+The database INSERT is failing due to a constraint or transaction issue, but the error is not being properly caught or logged, leading to false "success" messages.
 
 ## Previous Status
 - ✅ App deployed to tickedify.com 
