@@ -1,7 +1,45 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { initDatabase, db } = require('./database');
 
 const app = express();
+
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, 'public', 'logs');
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+}
+
+const logFile = path.join(logsDir, 'debug.log');
+
+// Custom logger function
+function logToFile(message) {
+    const timestamp = new Date().toISOString();
+    const logLine = `${timestamp} ${message}\n`;
+    
+    // Write to file (append)
+    fs.appendFileSync(logFile, logLine);
+    
+    // Also log to console
+    console.log(message);
+}
+
+// Override console.log, console.error etc.
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+console.log = (...args) => {
+    const message = args.join(' ');
+    logToFile(message);
+    originalConsoleLog(...args);
+};
+
+console.error = (...args) => {
+    const message = 'ERROR: ' + args.join(' ');
+    logToFile(message);
+    originalConsoleError(...args);
+};
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -122,6 +160,33 @@ app.post('/api/taak/recurring', async (req, res) => {
     } catch (error) {
         console.error('Error creating recurring task:', error);
         res.status(500).json({ error: 'Fout bij aanmaken herhalende taak' });
+    }
+});
+
+// Debug endpoints for logs
+app.get('/api/debug/logs', (req, res) => {
+    try {
+        if (fs.existsSync(logFile)) {
+            const logs = fs.readFileSync(logFile, 'utf8');
+            res.setHeader('Content-Type', 'text/plain');
+            res.send(logs);
+        } else {
+            res.send('No logs found');
+        }
+    } catch (error) {
+        res.status(500).send('Error reading logs: ' + error.message);
+    }
+});
+
+app.post('/api/debug/clear-logs', (req, res) => {
+    try {
+        if (fs.existsSync(logFile)) {
+            fs.writeFileSync(logFile, '');
+        }
+        console.log('🗑️ Logs cleared');
+        res.json({ success: true, message: 'Logs cleared' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error clearing logs: ' + error.message });
     }
 });
 
