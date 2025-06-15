@@ -147,7 +147,7 @@ app.put('/api/taak/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        console.log(`Updating task ${id}:`, req.body);
+        console.log(`🔄 Server: Updating task ${id}:`, JSON.stringify(req.body, null, 2));
         
         const success = await db.updateTask(id, req.body);
         
@@ -161,6 +161,27 @@ app.put('/api/taak/:id', async (req, res) => {
     } catch (error) {
         console.error(`Error updating task ${id}:`, error);
         res.status(500).json({ error: 'Fout bij updaten', details: error.message });
+    }
+});
+
+// Debug endpoint to check task details
+app.get('/api/taak/:id', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        
+        if (result.rows.length > 0) {
+            res.json(result.rows[0]);
+        } else {
+            res.status(404).json({ error: 'Task not found' });
+        }
+    } catch (error) {
+        console.error(`Error getting task ${req.params.id}:`, error);
+        res.status(500).json({ error: 'Database error' });
     }
 });
 

@@ -1635,6 +1635,19 @@ class Taakbeheer {
 
             const success = await this.verplaatsTaakNaarLijst(actie, 'acties');
             if (success) {
+                // Debug: check what was actually saved in database
+                setTimeout(async () => {
+                    try {
+                        const checkResponse = await fetch(`/api/taak/${actie.id}`);
+                        if (checkResponse.ok) {
+                            const savedTask = await checkResponse.json();
+                            console.log('🔍 DEBUG: Task after saving in database:', savedTask);
+                        }
+                    } catch (error) {
+                        console.log('Debug check failed:', error);
+                    }
+                }, 500);
+                
                 this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
             } else {
                 alert('Fout bij plannen van taak. Probeer opnieuw.');
