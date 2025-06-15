@@ -239,7 +239,9 @@ app.get('/api/taak/:id', async (req, res) => {
         const { id } = req.params;
         console.log('🐛 DEBUG: Looking up task with ID:', id);
         
-        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        // Use same pool as database module to avoid connection issues
+        const { pool: dbPool } = require('./database');
+        const result = await dbPool.query('SELECT * FROM taken WHERE id = $1', [id]);
         console.log('🐛 DEBUG: Query result rows count:', result.rows.length);
         
         if (result.rows.length > 0) {
