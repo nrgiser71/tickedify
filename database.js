@@ -336,6 +336,12 @@ const db = {
       
       // Try with herhaling fields first
       try {
+        console.log('🐛 DEBUG: About to insert with values:', [
+          newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
+          originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
+          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
+        ]);
+        
         await pool.query(`
           INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -344,6 +350,8 @@ const db = {
           originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
           originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
         ]);
+        
+        console.log('✅ DEBUG: Insert successful, task ID:', newId);
         return newId;
       } catch (dbError) {
         // If herhaling columns don't exist, fall back to basic insert
