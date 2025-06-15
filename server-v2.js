@@ -36,15 +36,25 @@ app.get('/api/status', (req, res) => {
 // Try to import and initialize database
 let db = null;
 let pool = null;
+let dbInitialized = false;
+
+// Initialize database immediately
+try {
+    const dbModule = require('./database');
+    db = dbModule.db;
+    pool = dbModule.pool;
+    console.log('Database module imported successfully');
+} catch (error) {
+    console.error('Failed to import database module:', error);
+}
 
 app.get('/api/db-test', async (req, res) => {
     try {
         if (!db) {
-            // Try to import database module
-            const dbModule = require('./database');
-            db = dbModule.db;
-            pool = dbModule.pool;
-            console.log('Database module imported successfully');
+            return res.status(503).json({ 
+                status: 'database_module_not_loaded',
+                timestamp: new Date().toISOString()
+            });
         }
         
         // Test database connection
@@ -53,6 +63,7 @@ app.get('/api/db-test', async (req, res) => {
         
         res.json({ 
             status: 'database_connected',
+            initialized: dbInitialized,
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -191,11 +202,16 @@ app.listen(PORT, () => {
     // Initialize database after server starts
     setTimeout(async () => {
         try {
-            const { initDatabase } = require('./database');
-            await initDatabase();
-            console.log('✅ Database initialized successfully');
+            if (db) {
+                const { initDatabase } = require('./database');
+                await initDatabase();
+                dbInitialized = true;
+                console.log('✅ Database initialized successfully');
+            } else {
+                console.log('⚠️ Database module not available, skipping initialization');
+            }
         } catch (error) {
             console.error('⚠️ Database initialization failed:', error.message);
         }
-    }, 2000);
+    }, 1000);
 });
