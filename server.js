@@ -207,6 +207,27 @@ app.get('/api/admin/add-recurring-columns', async (req, res) => {
     }
 });
 
+// Debug endpoint to list all tasks in a specific list
+app.get('/api/debug/lijst/:naam', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { naam } = req.params;
+        const result = await pool.query('SELECT * FROM taken WHERE lijst = $1 AND afgewerkt IS NULL ORDER BY aangemaakt DESC', [naam]);
+        
+        res.json({
+            lijst: naam,
+            count: result.rows.length,
+            tasks: result.rows
+        });
+    } catch (error) {
+        console.error(`Error getting debug list ${req.params.naam}:`, error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // Debug endpoint to check task details
 app.get('/api/taak/:id', async (req, res) => {
     try {
