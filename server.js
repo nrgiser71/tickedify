@@ -295,6 +295,32 @@ app.post('/api/taak/recurring', async (req, res) => {
     }
 });
 
+// Debug endpoint to check all tasks for 16/06
+app.get('/api/debug/june16', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { pool } = require('./database');
+        const result = await pool.query(`
+            SELECT id, tekst, lijst, verschijndatum, herhaling_type, herhaling_actief, afgewerkt, aangemaakt
+            FROM taken 
+            WHERE verschijndatum::date = '2025-06-16'
+            ORDER BY aangemaakt DESC
+        `);
+        
+        console.log('🔍 DEBUG: All tasks for 2025-06-16:', result.rows);
+        res.json({ 
+            count: result.rows.length, 
+            tasks: result.rows 
+        });
+    } catch (error) {
+        console.error('Debug june16 error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Temporary debug endpoint to check what's actually in acties
 app.get('/api/debug/acties', async (req, res) => {
     try {
