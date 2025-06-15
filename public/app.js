@@ -2086,11 +2086,13 @@ class Taakbeheer {
                         if (checkResponse.ok) {
                             const newTask = await checkResponse.json();
                             console.log('🔍 DEBUG: New recurring task in database:', newTask);
+                        } else {
+                            console.log('🔍 DEBUG: Failed to fetch task, status:', checkResponse.status);
                         }
                     } catch (error) {
                         console.log('Debug check of new task failed:', error);
                     }
-                }, 500);
+                }, 2000);
                 
                 return result.taskId;
             } else {
