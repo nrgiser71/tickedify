@@ -387,11 +387,11 @@ const db = {
           console.log('Herhaling columns not found, creating basic task without recurrence');
           
           await pool.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           `, [
             newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-            originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type
+            originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, null
           ]);
           return newId;
         }
