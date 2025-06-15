@@ -341,6 +341,7 @@ const db = {
           originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
           originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
         ]);
+        console.log('🐛 DEBUG: newDate parameter received:', newDate, typeof newDate);
         
         await pool.query(`
           INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
