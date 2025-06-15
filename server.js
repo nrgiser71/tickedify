@@ -271,7 +271,7 @@ app.post('/api/taak/recurring', async (req, res) => {
             // Debug: immediately check what's in acties list after creation
             setTimeout(async () => {
                 try {
-                    const actiesTasks = await db.getTasks('acties');
+                    const actiesTasks = await db.getList('acties');
                     console.log('🔍 DEBUG: All tasks in acties after creation:', actiesTasks.length);
                     const newTask = actiesTasks.find(t => t.id === taskId);
                     if (newTask) {
