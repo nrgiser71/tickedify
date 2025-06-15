@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { initDatabase, db } = require('./database');
+const { initDatabase, db, pool } = require('./database');
 
 const app = express();
 
@@ -72,6 +72,48 @@ app.use((req, res, next) => {
 initDatabase().catch(error => {
     console.error('⚠️ Database initialization failed, continuing without database:', error);
 });
+
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+    try {
+        // Test database connection
+        const client = await pool.connect();
+        client.release();
+        
+        // Check if recurring columns exist
+        const hasRecurringColumns = await checkRecurringColumns();
+        
+        res.json({ 
+            status: 'healthy', 
+            database: 'connected',
+            recurringColumns: hasRecurringColumns,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(500).json({ 
+            status: 'unhealthy', 
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Function to check if recurring columns exist
+async function checkRecurringColumns() {
+    try {
+        const result = await pool.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'taken' 
+            AND column_name IN ('herhaling_type', 'herhaling_waarde', 'herhaling_actief')
+        `);
+        return result.rows.length === 3;
+    } catch (error) {
+        console.log('Could not check recurring columns:', error.message);
+        return false;
+    }
+}
 
 app.get('/api/lijsten', async (req, res) => {
     try {

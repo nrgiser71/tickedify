@@ -17,7 +17,7 @@ const initDatabase = async () => {
     console.log('✅ Database connection successful');
     client.release();
     
-    // Create tables
+    // Create base tables first
     await pool.query(`
       CREATE TABLE IF NOT EXISTS taken (
         id VARCHAR(50) PRIMARY KEY,
@@ -29,12 +29,37 @@ const initDatabase = async () => {
         context_id VARCHAR(50),
         duur INTEGER,
         type VARCHAR(20),
-        afgewerkt TIMESTAMP,
-        herhaling_type VARCHAR(30),
-        herhaling_waarde INTEGER,
-        herhaling_actief BOOLEAN DEFAULT FALSE
+        afgewerkt TIMESTAMP
       )
     `);
+
+    // Then try to add the recurring columns (they might not exist yet)
+    try {
+      await pool.query(`
+        ALTER TABLE taken 
+        ADD COLUMN IF NOT EXISTS herhaling_type VARCHAR(30),
+        ADD COLUMN IF NOT EXISTS herhaling_waarde INTEGER,
+        ADD COLUMN IF NOT EXISTS herhaling_actief BOOLEAN DEFAULT FALSE
+      `);
+      console.log('✅ Recurring task columns added/verified');
+    } catch (alterError) {
+      console.log('⚠️ Could not add recurring columns (might already exist):', alterError.message);
+      // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
+      const recurringColumns = [
+        { name: 'herhaling_type', type: 'VARCHAR(30)' },
+        { name: 'herhaling_waarde', type: 'INTEGER' },
+        { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' }
+      ];
+      
+      for (const col of recurringColumns) {
+        try {
+          await pool.query(`ALTER TABLE taken ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projecten (
