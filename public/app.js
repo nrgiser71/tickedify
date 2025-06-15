@@ -1642,19 +1642,30 @@ class Taakbeheer {
 
     async verplaatsTaakNaarLijst(taak, lijstNaam) {
         try {
+            // Prepare update data
+            const updateData = {
+                lijst: lijstNaam,
+                tekst: taak.tekst,
+                projectId: taak.projectId,
+                contextId: taak.contextId,
+                verschijndatum: taak.verschijndatum,
+                duur: taak.duur,
+                type: taak.type
+            };
+            
+            // Only add herhaling fields if they exist
+            if (taak.herhalingType !== undefined) {
+                updateData.herhalingType = taak.herhalingType;
+            }
+            if (taak.herhalingActief !== undefined) {
+                updateData.herhalingActief = taak.herhalingActief;
+            }
+            
             // Use the new updateTask API for better database consistency
             const response = await fetch(`/api/taak/${taak.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lijst: lijstNaam,
-                    tekst: taak.tekst,
-                    projectId: taak.projectId,
-                    contextId: taak.contextId,
-                    verschijndatum: taak.verschijndatum,
-                    duur: taak.duur,
-                    type: taak.type
-                })
+                body: JSON.stringify(updateData)
             });
             
             if (response.ok) {

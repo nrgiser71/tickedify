@@ -184,6 +184,7 @@ const db = {
         } else if (key === 'contextId') {
           fields.push(`context_id = $${paramIndex}`);
         } else if (key === 'herhalingType') {
+          // Check if column exists before trying to update
           fields.push(`herhaling_type = $${paramIndex}`);
         } else if (key === 'herhalingWaarde') {
           fields.push(`herhaling_waarde = $${paramIndex}`);
@@ -199,8 +200,44 @@ const db = {
       values.push(taskId);
       const query = `UPDATE taken SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
       
-      const result = await pool.query(query, values);
-      return result.rowCount > 0;
+      try {
+        const result = await pool.query(query, values);
+        return result.rowCount > 0;
+      } catch (dbError) {
+        // If error is about missing column, try without herhaling fields
+        if (dbError.message.includes('herhaling_type') || 
+            dbError.message.includes('herhaling_waarde') || 
+            dbError.message.includes('herhaling_actief')) {
+          
+          console.log('Herhaling columns not found, falling back to basic update');
+          
+          // Retry without herhaling fields
+          const basicFields = [];
+          const basicValues = [];
+          let basicParamIndex = 1;
+
+          Object.keys(updates).forEach(key => {
+            if (key === 'projectId') {
+              basicFields.push(`project_id = $${basicParamIndex}`);
+            } else if (key === 'contextId') {
+              basicFields.push(`context_id = $${basicParamIndex}`);
+            } else if (!key.startsWith('herhaling')) {
+              basicFields.push(`${key} = $${basicParamIndex}`);
+            } else {
+              return; // Skip herhaling fields
+            }
+            basicValues.push(updates[key]);
+            basicParamIndex++;
+          });
+
+          basicValues.push(taskId);
+          const basicQuery = `UPDATE taken SET ${basicFields.join(', ')} WHERE id = $${basicParamIndex}`;
+          
+          const basicResult = await pool.query(basicQuery, basicValues);
+          return basicResult.rowCount > 0;
+        }
+        throw dbError;
+      }
     } catch (error) {
       console.error(`Error updating task ${taskId}:`, error);
       return false;
@@ -212,16 +249,36 @@ const db = {
     try {
       const newId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
       
-      await pool.query(`
-        INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      `, [
-        newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-        originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
-        originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
-      ]);
-      
-      return newId;
+      // Try with herhaling fields first
+      try {
+        await pool.query(`
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `, [
+          newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
+          originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
+          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
+        ]);
+        return newId;
+      } catch (dbError) {
+        // If herhaling columns don't exist, fall back to basic insert
+        if (dbError.message.includes('herhaling_type') || 
+            dbError.message.includes('herhaling_waarde') || 
+            dbError.message.includes('herhaling_actief')) {
+          
+          console.log('Herhaling columns not found, creating basic task without recurrence');
+          
+          await pool.query(`
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          `, [
+            newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
+            originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type
+          ]);
+          return newId;
+        }
+        throw dbError;
+      }
     } catch (error) {
       console.error('Error creating recurring task:', error);
       return null;
