@@ -69,8 +69,25 @@ app.use((req, res, next) => {
 });
 
 // Initialize database on startup (don't crash if it fails)
-initDatabase().catch(error => {
-    console.error('⚠️ Database initialization failed, continuing without database:', error);
+setTimeout(() => {
+    initDatabase().catch(error => {
+        console.error('⚠️ Database initialization failed, continuing without database:', error);
+    });
+}, 1000); // Delay database init to ensure server starts first
+
+// Simple status endpoint first
+app.get('/api/status', (req, res) => {
+    console.log('📡 Status endpoint called');
+    res.json({ 
+        status: 'server-running', 
+        timestamp: new Date().toISOString(),
+        env: {
+            nodeEnv: process.env.NODE_ENV || 'unknown',
+            hasPostgresUrl: !!process.env.POSTGRES_URL,
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+            port: process.env.PORT || 'default'
+        }
+    });
 });
 
 // Health check endpoint
