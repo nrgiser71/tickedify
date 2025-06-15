@@ -354,8 +354,18 @@ const db = {
         console.log('✅ DEBUG: Insert successful, task ID:', newId);
         
         // Verify the insert worked by immediately querying it back
-        const verifyResult = await pool.query('SELECT id FROM taken WHERE id = $1', [newId]);
+        const verifyResult = await pool.query('SELECT * FROM taken WHERE id = $1', [newId]);
         console.log('🔍 DEBUG: Verification query returned rows:', verifyResult.rows.length);
+        if (verifyResult.rows.length > 0) {
+          console.log('🔍 DEBUG: Saved task details:', {
+            id: verifyResult.rows[0].id,
+            tekst: verifyResult.rows[0].tekst,
+            lijst: verifyResult.rows[0].lijst,
+            verschijndatum: verifyResult.rows[0].verschijndatum,
+            herhaling_type: verifyResult.rows[0].herhaling_type,
+            herhaling_actief: verifyResult.rows[0].herhaling_actief
+          });
+        }
         
         if (verifyResult.rows.length === 0) {
           console.error('❌ DEBUG: Task was not found immediately after insert!');
