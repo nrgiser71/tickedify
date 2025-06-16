@@ -1345,6 +1345,7 @@ class Taakbeheer {
             if (taak.herhalingActief && taak.herhalingType) {
                 console.log('🐛 DEBUG: Entering recurring task logic');
                 if (taak.herhalingType.startsWith('event-')) {
+                    console.log('🐛 DEBUG: Event-based recurrence detected');
                     // Handle event-based recurrence - ask for next event date
                     const nextEventDate = await this.askForNextEventDate(taak);
                     if (nextEventDate) {
@@ -1354,9 +1355,17 @@ class Taakbeheer {
                         }
                     }
                 } else {
+                    console.log('🐛 DEBUG: Regular recurrence detected, calculating next date');
+                    console.log('🐛 DEBUG: verschijndatum:', taak.verschijndatum);
+                    console.log('🐛 DEBUG: herhalingType:', taak.herhalingType);
                     const nextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
+                    console.log('🐛 DEBUG: calculated nextDate:', nextDate);
                     if (nextDate) {
+                        console.log('🐛 DEBUG: About to create recurring task');
                         nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
+                        console.log('🐛 DEBUG: createNextRecurringTask returned:', nextRecurringTaskId);
+                    } else {
+                        console.log('🐛 DEBUG: No next date calculated - recurring task NOT created');
                     }
                 }
             }
