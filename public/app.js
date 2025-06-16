@@ -908,13 +908,15 @@ class Taakbeheer {
                 return;
             }
             
-            // Verwijder uit acties lijst (alleen lokaal, database is al updated)
-            const nieuweActies = acties.filter(a => a.id !== actieId);
-            await fetch('/api/lijst/acties', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(nieuweActies)
-            });
+            // Only update actions list if no recurring task was created (to avoid overwriting)
+            if (!nextRecurringTaskId) {
+                const nieuweActies = acties.filter(a => a.id !== actieId);
+                await fetch('/api/lijst/acties', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nieuweActies)
+                });
+            }
             
             // Update tellingen in sidebar
             await this.laadTellingen();
@@ -1355,7 +1357,12 @@ class Taakbeheer {
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
             if (success) {
                 this.taken = this.taken.filter(t => t.id !== id);
-                await this.slaLijstOp();
+                
+                // Only save list if no recurring task was created (to avoid overwriting)
+                if (!nextRecurringTaskId) {
+                    await this.slaLijstOp();
+                }
+                
                 this.renderTaken();
                 await this.laadTellingen();
                 
