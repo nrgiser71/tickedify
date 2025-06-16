@@ -1952,6 +1952,24 @@ class Taakbeheer {
                 return this.getLastWorkdayOfNextYear(date);
             
             default:
+                // Handle complex recurring patterns
+                if (herhalingType.startsWith('weekly-')) {
+                    // Pattern: weekly-interval-day (e.g., weekly-1-4 = every week on Thursday)
+                    const parts = herhalingType.split('-');
+                    if (parts.length === 3) {
+                        const interval = parseInt(parts[1]);
+                        const targetDay = parseInt(parts[2]); // 1=Monday, 2=Tuesday, ..., 7=Sunday
+                        
+                        console.log('🐛 DEBUG: Parsing weekly pattern:', {interval, targetDay});
+                        
+                        if (!isNaN(interval) && !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7) {
+                            // Convert our day numbering (1-7) to JavaScript day numbering (0-6, Sunday=0)
+                            const jsTargetDay = targetDay === 7 ? 0 : targetDay; // 7=Sunday becomes 0, others stay same
+                            return this.getNextWeekdayWithInterval(date, jsTargetDay, interval);
+                        }
+                    }
+                }
+                
                 // Handle event-based recurrence
                 if (herhalingType.startsWith('event-')) {
                     // For event-based recurrence, we need to ask the user for the next event date
@@ -1975,6 +1993,19 @@ class Taakbeheer {
         const nextDate = new Date(date);
         nextDate.setDate(date.getDate() + daysToAdd);
         return nextDate.toISOString().split('T')[0];
+    }
+
+    getNextWeekdayWithInterval(date, targetDay, interval) {
+        // Find the next occurrence of targetDay, then add (interval-1) weeks
+        const nextDate = this.getNextWeekday(date, targetDay);
+        const finalDate = new Date(nextDate);
+        
+        // Add additional weeks based on interval (interval-1 because we already got next week)
+        if (interval > 1) {
+            finalDate.setDate(finalDate.getDate() + (interval - 1) * 7);
+        }
+        
+        return finalDate.toISOString().split('T')[0];
     }
 
     getFirstDayOfNextMonth(date) {
