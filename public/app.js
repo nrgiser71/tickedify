@@ -1330,13 +1330,20 @@ class Taakbeheer {
     }
 
     async taakAfwerken(id) {
+        console.log('🐛 DEBUG: taakAfwerken called with ID:', id);
         const taak = this.taken.find(t => t.id === id);
+        console.log('🐛 DEBUG: Found task:', taak);
         if (taak) {
+            console.log('🐛 DEBUG: herhalingActief:', taak.herhalingActief);
+            console.log('🐛 DEBUG: herhalingType:', taak.herhalingType);
+            console.log('🐛 DEBUG: Check condition:', taak.herhalingActief && taak.herhalingType);
+            
             taak.afgewerkt = new Date().toISOString();
             
             // Check if this is a recurring task and create next instance
             let nextRecurringTaskId = null;
             if (taak.herhalingActief && taak.herhalingType) {
+                console.log('🐛 DEBUG: Entering recurring task logic');
                 if (taak.herhalingType.startsWith('event-')) {
                     // Handle event-based recurrence - ask for next event date
                     const nextEventDate = await this.askForNextEventDate(taak);
