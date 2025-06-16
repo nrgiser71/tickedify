@@ -389,6 +389,15 @@ const db = {
         await client.query('COMMIT');
         console.log('✅ DEBUG: Transaction committed successfully');
         
+        // EXTRA DEBUG: Query the task again AFTER commit to verify persistence
+        const postCommitVerify = await pool.query('SELECT * FROM taken WHERE id = $1', [newId]);
+        console.log('🔍 DEBUG: Post-commit verification rows:', postCommitVerify.rows.length);
+        if (postCommitVerify.rows.length === 0) {
+          console.error('❌ DEBUG: CRITICAL - Task disappeared after commit!');
+        } else {
+          console.log('✅ DEBUG: Task confirmed persistent after commit');
+        }
+        
         return newId;
       } catch (dbError) {
         console.error('❌ DEBUG: Insert failed with error:', dbError.message);
