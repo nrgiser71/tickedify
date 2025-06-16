@@ -1970,6 +1970,45 @@ class Taakbeheer {
                     }
                 }
                 
+                if (herhalingType.startsWith('daily-')) {
+                    // Pattern: daily-interval (e.g., daily-3 = every 3 days)
+                    const parts = herhalingType.split('-');
+                    if (parts.length === 2) {
+                        const interval = parseInt(parts[1]);
+                        if (!isNaN(interval) && interval > 0) {
+                            const nextDate = new Date(date);
+                            nextDate.setDate(date.getDate() + interval);
+                            return nextDate.toISOString().split('T')[0];
+                        }
+                    }
+                }
+                
+                if (herhalingType.startsWith('monthly-day-')) {
+                    // Pattern: monthly-day-daynum-interval (e.g., monthly-day-15-2 = day 15 every 2 months)
+                    const parts = herhalingType.split('-');
+                    if (parts.length === 4) {
+                        const dayNum = parseInt(parts[2]);
+                        const interval = parseInt(parts[3]);
+                        if (!isNaN(dayNum) && !isNaN(interval) && dayNum >= 1 && dayNum <= 31) {
+                            return this.getNextMonthlyDay(date, dayNum, interval);
+                        }
+                    }
+                }
+                
+                if (herhalingType.startsWith('yearly-')) {
+                    // Pattern: yearly-day-month-interval (e.g., yearly-25-12-1 = Dec 25 every year)
+                    const parts = herhalingType.split('-');
+                    if (parts.length === 4) {
+                        const day = parseInt(parts[1]);
+                        const month = parseInt(parts[2]);
+                        const interval = parseInt(parts[3]);
+                        if (!isNaN(day) && !isNaN(month) && !isNaN(interval) && 
+                            day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+                            return this.getNextYearlyDate(date, day, month, interval);
+                        }
+                    }
+                }
+                
                 // Handle event-based recurrence
                 if (herhalingType.startsWith('event-')) {
                     // For event-based recurrence, we need to ask the user for the next event date
@@ -2006,6 +2045,34 @@ class Taakbeheer {
         }
         
         return finalDate.toISOString().split('T')[0];
+    }
+
+    getNextMonthlyDay(date, dayNum, interval) {
+        const nextDate = new Date(date);
+        nextDate.setMonth(date.getMonth() + interval);
+        nextDate.setDate(dayNum);
+        
+        // Handle months with fewer days (e.g., day 31 in February)
+        if (nextDate.getDate() !== dayNum) {
+            // Set to last day of month if target day doesn't exist
+            nextDate.setDate(0);
+        }
+        
+        return nextDate.toISOString().split('T')[0];
+    }
+
+    getNextYearlyDate(date, day, month, interval) {
+        const nextDate = new Date(date);
+        nextDate.setFullYear(date.getFullYear() + interval);
+        nextDate.setMonth(month - 1); // JavaScript months are 0-based
+        nextDate.setDate(day);
+        
+        // Handle leap year issues (e.g., Feb 29 in non-leap year)
+        if (nextDate.getDate() !== day) {
+            nextDate.setDate(0); // Last day of previous month
+        }
+        
+        return nextDate.toISOString().split('T')[0];
     }
 
     getFirstDayOfNextMonth(date) {
