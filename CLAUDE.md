@@ -73,6 +73,28 @@
 - Fixed fallback INSERT for databases without recurring columns
 - Added immediate verification within transaction scope
 
+**Changes Made to `public/app.js`:**
+- Fixed frontend overwriting bug in task completion functions
+- Added conditional `slaLijstOp()` skip when recurring tasks are created
+- Enhanced `calculateNextRecurringDate()` to support complex patterns
+- Added comprehensive parsing for all documented recurring patterns:
+  - `weekly-interval-day` (e.g., `weekly-1-4` = every week on Thursday) ✅ TESTED
+  - `daily-interval` (e.g., `daily-3` = every 3 days) ⚠️ NEEDS TESTING
+  - `monthly-day-daynum-interval` (e.g., `monthly-day-15-2` = day 15 every 2 months) ⚠️ NEEDS TESTING
+  - `yearly-day-month-interval` (e.g., `yearly-25-12-1` = Dec 25 every year) ⚠️ NEEDS TESTING
+
+**NEXT TESTING PHASE:**
+All complex recurring patterns have been implemented but need systematic testing:
+
+1. **Daily intervals**: Test `daily-2`, `daily-3`, `daily-7` patterns
+2. **Monthly patterns**: Test `monthly-day-15-1`, `monthly-day-31-2` patterns  
+3. **Yearly patterns**: Test `yearly-25-12-1`, `yearly-29-2-1` (leap year edge case)
+4. **Monthly weekday patterns**: Still need implementation (`monthly-weekday-first-1-1`)
+5. **Yearly special patterns**: Still need implementation (`yearly-special-first-workday-1`)
+6. **Event-based patterns**: Test `event-10-before-webinar` functionality
+
+**Status**: Weekly recurring tasks now work correctly. Other patterns implemented but require validation.
+
 ## Previous Status
 - ✅ App deployed to tickedify.com 
 - ✅ PostgreSQL database working
