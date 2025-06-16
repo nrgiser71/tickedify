@@ -95,6 +95,34 @@ All complex recurring patterns have been implemented but need systematic testing
 
 **Status**: Weekly recurring tasks now work correctly. Other patterns implemented but require validation.
 
+## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
+
+**Testing Capabilities Reminder:**
+When debugging or testing features in the future, remember that Claude can:
+
+1. **Direct API Testing**: Call endpoints directly instead of relying on UI testing
+   - `POST /api/lijst/acties` to create tasks with recurring properties
+   - `PUT /api/taak/{id}` to mark tasks completed and trigger recurring logic
+   - `GET /api/lijst/acties` to verify results
+   - `POST /api/taak/recurring` to test recurring task creation directly
+
+2. **Database Access**: Query database via API endpoints or custom endpoints
+   - Create debug endpoints like `/api/debug/query` for ad-hoc queries
+   - Use existing debug endpoints (`/api/debug/june16`, `/api/debug/acties`)
+   - Check data integrity and state directly
+
+3. **Automated Test Scripts**: Write and deploy test scripts
+   - Create test files that can be committed and run via endpoints
+   - Build comprehensive test suites for recurring patterns
+   - Validate edge cases programmatically
+
+4. **End-to-End Validation**: Complete workflow testing without UI
+   - Test entire recurring task lifecycle via API calls
+   - Verify date calculations, database persistence, and business logic
+   - Much faster than manual UI testing
+
+**This approach saves significant time and provides more thorough testing coverage.**
+
 ## Previous Status
 - ✅ App deployed to tickedify.com 
 - ✅ PostgreSQL database working
