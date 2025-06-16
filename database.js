@@ -322,7 +322,13 @@ const db = {
 
   // Create a new recurring task instance
   async createRecurringTask(originalTask, newDate) {
+    const client = await pool.connect();
+    
     try {
+      // Start explicit transaction
+      await client.query('BEGIN');
+      console.log('🔄 DEBUG: Started transaction');
+      
       const newId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
       
       // Debug log the original task properties
@@ -334,6 +340,10 @@ const db = {
         herhalingActief: originalTask.herhalingActief
       });
       
+      // Convert newDate string to proper ISO timestamp to avoid timezone issues (move outside try block)
+      const verschijndatumISO = newDate + 'T00:00:00.000Z';
+      console.log('🐛 DEBUG: converted to ISO:', verschijndatumISO);
+      
       // Try with herhaling fields first
       try {
         console.log('🐛 DEBUG: About to insert with values:', [
@@ -343,63 +353,98 @@ const db = {
         ]);
         console.log('🐛 DEBUG: newDate parameter received:', newDate, typeof newDate);
         
-        // Convert newDate string to proper ISO timestamp to avoid timezone issues
-        const verschijndatumISO = newDate + 'T00:00:00.000Z';
-        console.log('🐛 DEBUG: converted to ISO:', verschijndatumISO);
-        
-        await pool.query(`
+        const insertResult = await client.query(`
           INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          RETURNING id
         `, [
           newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
           originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type,
           originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, null
         ]);
         
-        console.log('✅ DEBUG: Insert successful, task ID:', newId);
+        console.log('✅ DEBUG: Insert successful, returned ID:', insertResult.rows[0]?.id);
         
-        // Verify the insert worked by immediately querying it back
-        const verifyResult = await pool.query('SELECT * FROM taken WHERE id = $1', [newId]);
+        // Verify the insert worked by immediately querying it back within transaction
+        const verifyResult = await client.query('SELECT * FROM taken WHERE id = $1', [newId]);
         console.log('🔍 DEBUG: Verification query returned rows:', verifyResult.rows.length);
-        if (verifyResult.rows.length > 0) {
-          console.log('🔍 DEBUG: Saved task details:', {
-            id: verifyResult.rows[0].id,
-            tekst: verifyResult.rows[0].tekst,
-            lijst: verifyResult.rows[0].lijst,
-            verschijndatum: verifyResult.rows[0].verschijndatum,
-            herhaling_type: verifyResult.rows[0].herhaling_type,
-            herhaling_actief: verifyResult.rows[0].herhaling_actief
-          });
-        }
         
         if (verifyResult.rows.length === 0) {
-          console.error('❌ DEBUG: Task was not found immediately after insert!');
+          console.error('❌ DEBUG: Task was not found immediately after insert within transaction!');
+          await client.query('ROLLBACK');
+          console.log('🔄 DEBUG: Transaction rolled back');
           return null;
         }
         
+        console.log('🔍 DEBUG: Saved task details within transaction:', {
+          id: verifyResult.rows[0].id,
+          tekst: verifyResult.rows[0].tekst,
+          lijst: verifyResult.rows[0].lijst,
+          verschijndatum: verifyResult.rows[0].verschijndatum,
+          herhaling_type: verifyResult.rows[0].herhaling_type,
+          herhaling_actief: verifyResult.rows[0].herhaling_actief
+        });
+        
+        // Commit the transaction
+        await client.query('COMMIT');
+        console.log('✅ DEBUG: Transaction committed successfully');
+        
         return newId;
       } catch (dbError) {
+        console.error('❌ DEBUG: Insert failed with error:', dbError.message);
+        
         // If herhaling columns don't exist, fall back to basic insert
         if (dbError.message.includes('herhaling_type') || 
             dbError.message.includes('herhaling_waarde') || 
             dbError.message.includes('herhaling_actief')) {
           
-          console.log('Herhaling columns not found, creating basic task without recurrence');
+          console.log('🔄 DEBUG: Herhaling columns not found, trying basic insert');
           
-          await pool.query(`
+          // Rollback the failed transaction and start new one
+          await client.query('ROLLBACK');
+          await client.query('BEGIN');
+          
+          const basicInsertResult = await client.query(`
             INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING id
           `, [
             newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
             originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, null
           ]);
+          
+          console.log('✅ DEBUG: Basic insert successful, returned ID:', basicInsertResult.rows[0]?.id);
+          
+          // Verify basic insert
+          const basicVerifyResult = await client.query('SELECT * FROM taken WHERE id = $1', [newId]);
+          
+          if (basicVerifyResult.rows.length === 0) {
+            console.error('❌ DEBUG: Basic task was not found after insert!');
+            await client.query('ROLLBACK');
+            return null;
+          }
+          
+          await client.query('COMMIT');
+          console.log('✅ DEBUG: Basic transaction committed successfully');
           return newId;
         }
+        
+        await client.query('ROLLBACK');
+        console.log('🔄 DEBUG: Transaction rolled back due to error');
         throw dbError;
       }
     } catch (error) {
-      console.error('Error creating recurring task:', error);
+      console.error('❌ DEBUG: Fatal error in createRecurringTask:', error);
+      try {
+        await client.query('ROLLBACK');
+        console.log('🔄 DEBUG: Transaction rolled back due to fatal error');
+      } catch (rollbackError) {
+        console.error('❌ DEBUG: Error during rollback:', rollbackError);
+      }
       return null;
+    } finally {
+      client.release();
+      console.log('🔌 DEBUG: Database client released');
     }
   },
 

@@ -52,8 +52,26 @@
 - `GET /api/debug/june16` - Shows all tasks for 2025-06-16
 - `GET /api/debug/acties` - Shows current acties list from database
 
-**Current Hypothesis:**
-The database INSERT is failing due to a constraint or transaction issue, but the error is not being properly caught or logged, leading to false "success" messages.
+**PROBLEM SOLVED (June 16, 2025):**
+
+**Root Cause Identified:**
+1. **Variable Scoping Bug**: `verschijndatumISO` was declared inside try-block but used in catch fallback block, causing ReferenceError
+2. **No Transaction Management**: Database operations weren't wrapped in explicit transactions, causing silent failures
+3. **Insufficient Error Detection**: Pool-based queries didn't properly detect constraint violations or rollbacks
+
+**Solution Implemented:**
+1. **Fixed Variable Scoping**: Moved `verschijndatumISO` declaration outside try-block 
+2. **Added Explicit Transactions**: Used dedicated client with BEGIN/COMMIT/ROLLBACK
+3. **Added RETURNING Clause**: INSERT now returns ID to confirm success
+4. **Immediate Verification**: Query inserted task within same transaction to verify persistence
+5. **Robust Error Handling**: Proper rollback on any failure, client cleanup in finally block
+6. **Enhanced Logging**: Detailed transaction state logging for debugging
+
+**Changes Made to `database.js`:**
+- `createRecurringTask()` function completely rewritten with proper transaction management
+- Added explicit client connection with transaction lifecycle
+- Fixed fallback INSERT for databases without recurring columns
+- Added immediate verification within transaction scope
 
 ## Previous Status
 - ✅ App deployed to tickedify.com 
