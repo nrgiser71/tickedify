@@ -505,6 +505,54 @@ app.post('/api/debug/test-save-recurring', async (req, res) => {
     }
 });
 
+// Alternative: Add single action without loading existing list
+app.post('/api/debug/add-single-action', async (req, res) => {
+    try {
+        if (!db) {
+            return res.json({ error: 'Database not available', success: false });
+        }
+        
+        const actionData = req.body;
+        console.log('🔧 SINGLE ACTION: Adding action:', actionData);
+        
+        // Insert directly without touching existing data
+        const result = await pool.query(`
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING id
+        `, [
+            actionData.id,
+            actionData.tekst,
+            actionData.aangemaakt,
+            'acties',
+            actionData.projectId || null,
+            actionData.verschijndatum || null,
+            actionData.contextId || null,
+            actionData.duur || null,
+            actionData.type || null,
+            actionData.herhalingType || null,
+            actionData.herhalingWaarde || null,
+            actionData.herhalingActief === true || actionData.herhalingActief === 'true',
+            null
+        ]);
+        
+        res.json({ 
+            success: true, 
+            message: 'Action added successfully',
+            insertedId: result.rows[0].id,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('🔧 SINGLE ACTION ERROR:', error);
+        res.json({ 
+            success: false, 
+            error: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Force database migration endpoint
 app.post('/api/debug/force-migration', async (req, res) => {
     try {
