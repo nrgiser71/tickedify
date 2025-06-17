@@ -811,7 +811,8 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     'monthly-day-': pattern.startsWith('monthly-day-'),
                     'yearly-': pattern.startsWith('yearly-'),
                     'monthly-weekday-': pattern.startsWith('monthly-weekday-'),
-                    'yearly-special-': pattern.startsWith('yearly-special-')
+                    'yearly-special-': pattern.startsWith('yearly-special-'),
+                    'nederlandse-werkdag': ['eerste-werkdag-maand', 'laatste-werkdag-maand', 'eerste-werkdag-jaar', 'laatste-werkdag-jaar'].includes(pattern)
                 },
                 monthlyWeekday: monthlyWeekdayDebug
             }
