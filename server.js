@@ -364,6 +364,41 @@ app.get('/api/debug/test-simple', (req, res) => {
     });
 });
 
+// Direct working implementation test
+app.get('/api/debug/test-second-wednesday', (req, res) => {
+    // Test pattern: monthly-weekday-second-3-1
+    // Base date: 2025-06-17
+    // Expected: 2025-07-09 (second Wednesday of July)
+    
+    const baseDate = '2025-06-17';
+    const date = new Date(baseDate);
+    const nextMonth = new Date(date);
+    nextMonth.setMonth(date.getMonth() + 1); // July 2025
+    nextMonth.setDate(1); // July 1st
+    
+    let wednesdayCount = 0;
+    while (wednesdayCount < 2) {
+        if (nextMonth.getDay() === 3) { // Wednesday
+            wednesdayCount++;
+            if (wednesdayCount === 2) {
+                break; // Found second Wednesday
+            }
+        }
+        nextMonth.setDate(nextMonth.getDate() + 1);
+    }
+    
+    const result = nextMonth.toISOString().split('T')[0];
+    
+    res.json({
+        baseDate,
+        pattern: 'monthly-weekday-second-3-1',
+        result,
+        expected: '2025-07-09',
+        matches: result === '2025-07-09',
+        message: `Working implementation gives: ${result}`
+    });
+});
+
 // Quick test for monthly-weekday pattern  
 app.get('/api/debug/quick-monthly-test', (req, res) => {
     // Direct test - what are the Wednesdays in July 2025?
