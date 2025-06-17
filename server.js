@@ -170,6 +170,27 @@ app.put('/api/taak/:id', async (req, res) => {
     }
 });
 
+// Debug endpoint to search for any task by ID
+app.get('/api/debug/find-task/:id', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        
+        if (result.rows.length > 0) {
+            res.json({ found: true, task: result.rows[0] });
+        } else {
+            res.json({ found: false, id: id });
+        }
+    } catch (error) {
+        console.error('Error searching for task:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Endpoint to add missing recurring columns (GET for easy access)
 app.get('/api/admin/add-recurring-columns', async (req, res) => {
     try {
