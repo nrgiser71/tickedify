@@ -569,6 +569,22 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             }
         }
         
+        // Special debug for monthly-weekday patterns
+        let monthlyWeekdayDebug = null;
+        if (pattern.startsWith('monthly-weekday-')) {
+            const parts = pattern.split('-');
+            monthlyWeekdayDebug = {
+                parts,
+                partsLength: parts.length,
+                position: parts[2],
+                targetDay: parseInt(parts[3]),
+                interval: parseInt(parts[4]),
+                positionCheck: parts[2] === 'first' || parts[2] === 'last',
+                targetDayCheck: !isNaN(parseInt(parts[3])) && parseInt(parts[3]) >= 1 && parseInt(parts[3]) <= 7,
+                intervalCheck: !isNaN(parseInt(parts[4])) && parseInt(parts[4]) > 0
+            };
+        }
+        
         res.json({
             pattern,
             baseDate,
@@ -584,7 +600,8 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     'yearly-': pattern.startsWith('yearly-'),
                     'monthly-weekday-': pattern.startsWith('monthly-weekday-'),
                     'yearly-special-': pattern.startsWith('yearly-special-')
-                }
+                },
+                monthlyWeekday: monthlyWeekdayDebug
             }
         });
         
