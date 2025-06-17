@@ -177,9 +177,17 @@ const db = {
         }
       } else {
         // Clear and insert tasks for specific list
+        console.log(`🔍 DB DEBUG: Deleting existing tasks for list ${listName}`);
         await pool.query('DELETE FROM taken WHERE lijst = $1 AND afgewerkt IS NULL', [listName]);
+        console.log(`🔍 DB DEBUG: Inserting ${items.length} items for list ${listName}`);
+        
         for (const item of items) {
           // Check if herhaling columns exist and fall back gracefully
+          console.log(`🔍 DB DEBUG: Inserting item ${item.id} with recurring:`, {
+            herhalingType: item.herhalingType,
+            herhalingActief: item.herhalingActief,
+            herhalingWaarde: item.herhalingWaarde
+          });
           try {
             await pool.query(`
               INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
@@ -198,7 +206,9 @@ const db = {
               item.herhalingWaarde || null, 
               item.herhalingActief || false
             ]);
+            console.log(`✅ DB DEBUG: Successfully inserted item ${item.id}`);
           } catch (insertError) {
+            console.error(`❌ DB DEBUG: Insert failed for item ${item.id}:`, insertError.message);
             // Fall back to basic insert without herhaling fields
             if (insertError.message.includes('herhaling_type') || 
                 insertError.message.includes('herhaling_waarde') || 
