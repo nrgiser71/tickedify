@@ -128,6 +128,12 @@ app.post('/api/lijst/:naam', async (req, res) => {
         }
         
         const { naam } = req.params;
+        
+        // Temporary: Log the exact data being sent by UI to identify the issue
+        if (naam === 'acties' && req.body.some(item => item.herhalingType)) {
+            console.log('🚨 UI DEBUG: Data causing 500 error:', JSON.stringify(req.body, null, 2));
+        }
+        
         const success = await db.saveList(naam, req.body);
         if (success) {
             res.json({ success: true });
