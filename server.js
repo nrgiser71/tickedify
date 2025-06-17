@@ -128,31 +128,14 @@ app.post('/api/lijst/:naam', async (req, res) => {
         }
         
         const { naam } = req.params;
-        console.log(`🔍 DEBUG: Saving list ${naam} with ${req.body.length} items`);
-        
-        // Debug: log items with recurring fields
-        req.body.forEach((item, index) => {
-            if (item.herhalingType || item.herhalingActief) {
-                console.log(`🔍 DEBUG: Item ${index} has recurring fields:`, {
-                    id: item.id,
-                    herhalingType: item.herhalingType,
-                    herhalingActief: item.herhalingActief,
-                    herhalingWaarde: item.herhalingWaarde
-                });
-            }
-        });
-        
         const success = await db.saveList(naam, req.body);
         if (success) {
-            console.log(`✅ DEBUG: Successfully saved list ${naam}`);
             res.json({ success: true });
         } else {
-            console.log(`❌ DEBUG: Failed to save list ${naam}`);
             res.status(500).json({ error: 'Fout bij opslaan' });
         }
     } catch (error) {
-        console.error(`❌ DEBUG: Error saving list ${req.params.naam}:`, error);
-        console.error(`❌ DEBUG: Error stack:`, error.stack);
+        console.error(`Error saving list ${req.params.naam}:`, error);
         res.status(500).json({ error: 'Fout bij opslaan' });
     }
 });
