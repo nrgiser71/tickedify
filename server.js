@@ -364,6 +364,26 @@ app.get('/api/debug/test-simple', (req, res) => {
     });
 });
 
+// Test pattern parsing
+app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
+    const { pattern } = req.params;
+    const parts = pattern.split('-');
+    
+    res.json({
+        pattern,
+        parts,
+        partCount: parts.length,
+        startsWithChecks: {
+            'daily-': pattern.startsWith('daily-'),
+            'weekly-': pattern.startsWith('weekly-'),
+            'monthly-day-': pattern.startsWith('monthly-day-'),
+            'yearly-': pattern.startsWith('yearly-'),
+            'monthly-weekday-': pattern.startsWith('monthly-weekday-'),
+            'yearly-special-': pattern.startsWith('yearly-special-')
+        }
+    });
+});
+
 // GET version of test-recurring for easier testing (date calculation only)
 app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
     try {
