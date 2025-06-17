@@ -364,6 +364,53 @@ app.get('/api/debug/test-simple', (req, res) => {
     });
 });
 
+// Quick test for monthly-weekday pattern
+app.get('/api/debug/quick-monthly-test', (req, res) => {
+    const pattern = 'monthly-weekday-first-1-1';
+    const baseDate = '2025-06-17';
+    
+    // Test the basic parsing
+    const parts = pattern.split('-');
+    const position = parts[2];
+    const targetDay = parseInt(parts[3]);
+    const interval = parseInt(parts[4]);
+    
+    // Run the actual calculation
+    let nextDate = null;
+    if (pattern.startsWith('monthly-weekday-') && parts.length === 5) {
+        if ((position === 'first' || position === 'last') && 
+            !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
+            !isNaN(interval) && interval > 0) {
+            
+            const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+            const date = new Date(baseDate);
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + interval);
+            
+            if (position === 'first') {
+                nextDateObj.setDate(1);
+                while (nextDateObj.getDay() !== jsTargetDay) {
+                    nextDateObj.setDate(nextDateObj.getDate() + 1);
+                }
+            }
+            
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        }
+    }
+    
+    res.json({
+        pattern,
+        baseDate,
+        parts,
+        position,
+        targetDay,
+        interval,
+        jsTargetDay: targetDay === 7 ? 0 : targetDay,
+        nextDate,
+        calculation: `First Monday of month after ${baseDate} should be ${nextDate}`
+    });
+});
+
 // Test pattern parsing
 app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
     const { pattern } = req.params;
