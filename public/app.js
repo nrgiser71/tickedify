@@ -1671,10 +1671,9 @@ class Taakbeheer {
                 verschijndatum: verschijndatum,
                 contextId: contextId,
                 duur: duur,
-                type: 'actie'
-                // Temporarily disable recurring fields to isolate the 500 error
-                // herhalingType: herhalingType,
-                // herhalingActief: !!herhalingType
+                type: 'actie',
+                herhalingType: herhalingType,
+                herhalingActief: !!herhalingType
             };
 
             // Save the new action via the list API (which handles creation properly)
