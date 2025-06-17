@@ -193,12 +193,9 @@ class Taakbeheer {
     }
 
     slaHerhalingOp() {
-        console.log('🔧 DEBUG: slaHerhalingOp() started');
         this.updateHerhalingValue();
         const herhalingValue = document.getElementById('herhalingSelect').value;
         const displayText = this.generateHerhalingDisplayText();
-        console.log('🔧 DEBUG: herhalingValue =', herhalingValue);
-        console.log('🔧 DEBUG: displayText =', displayText);
         document.getElementById('herhalingDisplay').value = displayText;
         this.sluitHerhalingPopup();
     }
@@ -344,7 +341,6 @@ class Taakbeheer {
 
     updateHerhalingValue() {
         const selectedType = document.querySelector('input[name="herhalingType"]:checked')?.value;
-        console.log('🔧 DEBUG: updateHerhalingValue() selectedType =', selectedType);
         let herhalingValue = '';
         
         switch (selectedType) {
@@ -373,9 +369,7 @@ class Taakbeheer {
                 const position = document.getElementById('monthlyWeekdayPosition').value;
                 const weekday = document.getElementById('monthlyWeekdayDay').value;
                 const monthlyWeekdayInterval = document.getElementById('monthlyWeekdayInterval').value;
-                console.log('🔧 DEBUG: monthly-weekday values - position:', position, 'weekday:', weekday, 'interval:', monthlyWeekdayInterval);
                 herhalingValue = `monthly-weekday-${position}-${weekday}-${monthlyWeekdayInterval}`;
-                console.log('🔧 DEBUG: generated herhalingValue =', herhalingValue);
                 break;
             case 'yearly':
                 const yearlyDay = document.getElementById('yearlyDay').value;
@@ -396,9 +390,7 @@ class Taakbeheer {
                 break;
         }
         
-        console.log('🔧 DEBUG: final herhalingValue before setting =', herhalingValue);
         document.getElementById('herhalingSelect').value = herhalingValue;
-        console.log('🔧 DEBUG: herhalingSelect field value after setting =', document.getElementById('herhalingSelect').value);
     }
 
     loadHerhalingFromValue() {
@@ -1684,23 +1676,30 @@ class Taakbeheer {
                 herhalingActief: !!herhalingType
             };
 
-            const success = await this.verplaatsTaakNaarLijst(actie, 'acties');
-            if (success) {
-                // Debug: check what was actually saved in database
-                setTimeout(async () => {
-                    try {
-                        const checkResponse = await fetch(`/api/taak/${actie.id}`);
-                        if (checkResponse.ok) {
-                            const savedTask = await checkResponse.json();
-                            console.log('🔍 DEBUG: Task after saving in database:', savedTask);
-                        }
-                    } catch (error) {
-                        console.log('Debug check failed:', error);
-                    }
-                }, 500);
+            // First add the action to the acties list in memory
+            this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+            
+            // Save the new action via the list API (which handles creation properly)
+            try {
+                const actiesLijst = await this.laadLijst('acties');
+                actiesLijst.push(actie);
                 
-                this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-            } else {
+                const response = await fetch('/api/lijst/acties', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(actiesLijst)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Actie succesvol opgeslagen met herhaling:', herhalingType);
+                    await this.laadTellingen();
+                } else {
+                    console.error('Fout bij opslaan actie:', response.status);
+                    alert('Fout bij plannen van taak. Probeer opnieuw.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error saving action:', error);
                 alert('Fout bij plannen van taak. Probeer opnieuw.');
                 return;
             }
