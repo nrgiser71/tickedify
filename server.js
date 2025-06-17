@@ -355,6 +355,15 @@ app.get('/api/debug/acties', async (req, res) => {
     }
 });
 
+// Simple test endpoint to check if new endpoints work
+app.get('/api/debug/test-simple', (req, res) => {
+    res.json({ 
+        message: 'Simple test endpoint works!', 
+        timestamp: new Date().toISOString(),
+        server: 'tickedify'
+    });
+});
+
 // Test endpoint for complex recurring patterns
 app.post('/api/debug/test-recurring', async (req, res) => {
     try {
