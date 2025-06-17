@@ -179,7 +179,14 @@
 1. ✅ Foutmelding bij opslaan "eerste werkdag van elke maand" - GEFIXED  
 2. ✅ Laatste werkdag afvinken maakt geen nieuwe taak - GEFIXED
 
-**KLAAR VOOR TESTEN**: Gebruiker kan nu beide werkdag patronen succesvol testen
+**VOLLEDIG VOLTOOID EN GETEST**: 
+- ✅ Beide werkdag problemen succesvol opgelost
+- ✅ End-to-end testing via debug endpoints bevestigt correcte werking:
+  * `monthly-weekday-first-workday-1` → 2025-07-01 (Dinsdag, eerste werkdag juli 2025)
+  * `monthly-weekday-last-workday-1` → 2025-07-31 (Donderdag, laatste werkdag juli 2025)
+- ✅ Server-side support voor 'workday' keyword in alle endpoints
+- ✅ Debug endpoint validatie uitgebreid om workday patterns te ondersteunen
+- ✅ Gebruiker kan nu beide patronen succesvol gebruiken in live applicatie
 
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
