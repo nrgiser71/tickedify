@@ -364,80 +364,42 @@ app.get('/api/debug/test-simple', (req, res) => {
     });
 });
 
-// Quick test for monthly-weekday pattern
+// Quick test for monthly-weekday pattern  
 app.get('/api/debug/quick-monthly-test', (req, res) => {
     const pattern = 'monthly-weekday-second-3-1';
     const baseDate = '2025-06-17';
     
-    // Test the basic parsing
-    const parts = pattern.split('-');
-    const position = parts[2];
-    const targetDay = parseInt(parts[3]);
-    const interval = parseInt(parts[4]);
+    // Manual calculation test
+    const date = new Date(baseDate);
+    const nextMonth = new Date(date);
+    nextMonth.setMonth(date.getMonth() + 1); // Go to July 2025
     
-    // Run the actual calculation
-    let nextDate = null;
-    if (pattern.startsWith('monthly-weekday-') && parts.length === 5) {
-        const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
-        if (validPositions.includes(position) && 
-            !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
-            !isNaN(interval) && interval > 0) {
-            
-            const jsTargetDay = targetDay === 7 ? 0 : targetDay;
-            const date = new Date(baseDate);
-            const nextDateObj = new Date(date);
-            nextDateObj.setMonth(date.getMonth() + interval);
-            
-            if (position === 'last') {
-                // Find last occurrence of weekday in month
-                const targetMonth = nextDateObj.getMonth();
-                nextDateObj.setMonth(targetMonth + 1);
-                nextDateObj.setDate(0); // Last day of target month
-                while (nextDateObj.getDay() !== jsTargetDay) {
-                    nextDateObj.setDate(nextDateObj.getDate() - 1);
-                }
-            } else {
-                // Find nth occurrence of weekday in month (first, second, third, fourth)
-                const positionNumbers = { 'first': 1, 'second': 2, 'third': 3, 'fourth': 4 };
-                const occurrenceNumber = positionNumbers[position];
-                
-                nextDateObj.setDate(1); // Start at beginning of month
-                let occurrenceCount = 0;
-                
-                // Find the nth occurrence of the target weekday
-                while (occurrenceCount < occurrenceNumber) {
-                    if (nextDateObj.getDay() === jsTargetDay) {
-                        occurrenceCount++;
-                        if (occurrenceCount === occurrenceNumber) {
-                            break; // Found the nth occurrence
-                        }
-                    }
-                    nextDateObj.setDate(nextDateObj.getDate() + 1);
-                    
-                    // Safety check: if we've gone beyond the month, this occurrence doesn't exist
-                    if (nextDateObj.getMonth() !== (date.getMonth() + interval) % 12) {
-                        nextDate = null; // This occurrence doesn't exist in this month
-                        break;
-                    }
-                }
-            }
-            
-            if (nextDate !== null) {
-                nextDate = nextDateObj.toISOString().split('T')[0];
+    // Find second Wednesday of July 2025
+    nextMonth.setDate(1); // Start at July 1
+    let wednesdayCount = 0;
+    let debugSteps = [];
+    
+    while (wednesdayCount < 2) {
+        debugSteps.push(`Date: ${nextMonth.toISOString().split('T')[0]}, Day: ${nextMonth.getDay()}`);
+        if (nextMonth.getDay() === 3) { // Wednesday = 3
+            wednesdayCount++;
+            debugSteps.push(`Found Wednesday #${wednesdayCount}`);
+            if (wednesdayCount === 2) {
+                break;
             }
         }
+        nextMonth.setDate(nextMonth.getDate() + 1);
     }
+    
+    const secondWednesday = nextMonth.toISOString().split('T')[0];
     
     res.json({
         pattern,
         baseDate,
-        parts,
-        position,
-        targetDay,
-        interval,
-        jsTargetDay: targetDay === 7 ? 0 : targetDay,
-        nextDate,
-        calculation: `Second Wednesday of month after ${baseDate} should be ${nextDate}`
+        targetMonth: 'July 2025',
+        secondWednesday,
+        debugSteps,
+        calculation: `Second Wednesday of July 2025 is ${secondWednesday}`
     });
 });
 
