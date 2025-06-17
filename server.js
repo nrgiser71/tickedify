@@ -411,6 +411,67 @@ app.get('/api/debug/quick-monthly-test', (req, res) => {
     });
 });
 
+// Raw JSON test for debugging
+app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    const { pattern, baseDate } = req.params;
+    
+    // Just test if monthly-weekday logic reaches the calculation
+    let reached = [];
+    
+    if (pattern.startsWith('monthly-weekday-')) {
+        reached.push('monthly-weekday check passed');
+        const parts = pattern.split('-');
+        if (parts.length === 5) {
+            reached.push('parts length check passed');
+            const position = parts[2];
+            const targetDay = parseInt(parts[3]);
+            const interval = parseInt(parts[4]);
+            
+            if ((position === 'first' || position === 'last') && 
+                !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
+                !isNaN(interval) && interval > 0) {
+                reached.push('validation passed');
+                
+                const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+                const date = new Date(baseDate);
+                const nextDateObj = new Date(date);
+                nextDateObj.setMonth(date.getMonth() + interval);
+                
+                if (position === 'first') {
+                    nextDateObj.setDate(1);
+                    while (nextDateObj.getDay() !== jsTargetDay) {
+                        nextDateObj.setDate(nextDateObj.getDate() + 1);
+                    }
+                    reached.push('calculation completed');
+                    
+                    const nextDate = nextDateObj.toISOString().split('T')[0];
+                    
+                    res.write(JSON.stringify({
+                        success: true,
+                        nextDate,
+                        reached
+                    }));
+                    res.end();
+                    return;
+                }
+            } else {
+                reached.push('validation failed');
+            }
+        } else {
+            reached.push('parts length check failed');
+        }
+    } else {
+        reached.push('monthly-weekday check failed');
+    }
+    
+    res.write(JSON.stringify({
+        success: false,
+        reached
+    }));
+    res.end();
+});
+
 // Test pattern parsing
 app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
     const { pattern } = req.params;
