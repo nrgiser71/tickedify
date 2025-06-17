@@ -476,50 +476,75 @@ app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
             const interval = parseInt(parts[4]);
             
             const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
+            // Allow 'workday' as special case for targetDay
+            const isValidTargetDay = parts[3] === 'workday' || (!isNaN(targetDay) && targetDay >= 1 && targetDay <= 7);
             if (validPositions.includes(position) && 
-                !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
+                isValidTargetDay && 
                 !isNaN(interval) && interval > 0) {
                 reached.push('validation passed');
                 
-                const jsTargetDay = targetDay === 7 ? 0 : targetDay;
                 const date = new Date(baseDate);
                 const nextDateObj = new Date(date);
                 nextDateObj.setMonth(date.getMonth() + interval);
                 
-                if (position === 'last') {
-                    // Find last occurrence of weekday in month
-                    const targetMonth = nextDateObj.getMonth();
-                    nextDateObj.setMonth(targetMonth + 1);
-                    nextDateObj.setDate(0); // Last day of target month
-                    while (nextDateObj.getDay() !== jsTargetDay) {
-                        nextDateObj.setDate(nextDateObj.getDate() - 1);
+                // Special handling for workday patterns
+                if (parts[3] === 'workday') {
+                    reached.push('workday pattern detected');
+                    
+                    if (position === 'first') {
+                        // First workday of month
+                        nextDateObj.setDate(1);
+                        while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                            nextDateObj.setDate(nextDateObj.getDate() + 1);
+                        }
+                    } else if (position === 'last') {
+                        // Last workday of month
+                        const targetMonth = nextDateObj.getMonth();
+                        nextDateObj.setMonth(targetMonth + 1);
+                        nextDateObj.setDate(0); // Last day of target month
+                        while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                            nextDateObj.setDate(nextDateObj.getDate() - 1);
+                        }
                     }
                 } else {
-                    // Find nth occurrence of weekday in month (first, second, third, fourth)
-                    const positionNumbers = { 'first': 1, 'second': 2, 'third': 3, 'fourth': 4 };
-                    const occurrenceNumber = positionNumbers[position];
+                    // Normal weekday patterns
+                    const jsTargetDay = targetDay === 7 ? 0 : targetDay;
                     
-                    nextDateObj.setDate(1); // Start at beginning of month
-                    let occurrenceCount = 0;
-                    
-                    // Find the nth occurrence of the target weekday
-                    while (occurrenceCount < occurrenceNumber) {
-                        if (nextDateObj.getDay() === jsTargetDay) {
-                            occurrenceCount++;
-                            if (occurrenceCount === occurrenceNumber) {
-                                break; // Found the nth occurrence
-                            }
+                    if (position === 'last') {
+                        // Find last occurrence of weekday in month
+                        const targetMonth = nextDateObj.getMonth();
+                        nextDateObj.setMonth(targetMonth + 1);
+                        nextDateObj.setDate(0); // Last day of target month
+                        while (nextDateObj.getDay() !== jsTargetDay) {
+                            nextDateObj.setDate(nextDateObj.getDate() - 1);
                         }
-                        nextDateObj.setDate(nextDateObj.getDate() + 1);
+                    } else {
+                        // Find nth occurrence of weekday in month (first, second, third, fourth)
+                        const positionNumbers = { 'first': 1, 'second': 2, 'third': 3, 'fourth': 4 };
+                        const occurrenceNumber = positionNumbers[position];
                         
-                        // Safety check: if we've gone beyond the month, this occurrence doesn't exist
-                        if (nextDateObj.getMonth() !== (date.getMonth() + interval) % 12) {
-                            res.write(JSON.stringify({
-                                success: false,
-                                reached: [...reached, 'occurrence does not exist in month']
-                            }));
-                            res.end();
-                            return;
+                        nextDateObj.setDate(1); // Start at beginning of month
+                        let occurrenceCount = 0;
+                        
+                        // Find the nth occurrence of the target weekday
+                        while (occurrenceCount < occurrenceNumber) {
+                            if (nextDateObj.getDay() === jsTargetDay) {
+                                occurrenceCount++;
+                                if (occurrenceCount === occurrenceNumber) {
+                                    break; // Found the nth occurrence
+                                }
+                            }
+                            nextDateObj.setDate(nextDateObj.getDate() + 1);
+                            
+                            // Safety check: if we've gone beyond the month, this occurrence doesn't exist
+                            if (nextDateObj.getMonth() !== (date.getMonth() + interval) % 12) {
+                                res.write(JSON.stringify({
+                                    success: false,
+                                    reached: [...reached, 'occurrence does not exist in month']
+                                }));
+                                res.end();
+                                return;
+                            }
                         }
                     }
                 }
