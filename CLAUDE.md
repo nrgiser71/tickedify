@@ -175,9 +175,16 @@
   - `monthly-weekday-first-workday-1` → 2025-07-01 ✅
   - `monthly-weekday-last-workday-1` → 2025-07-31 ✅
 
-**STATUS: ✅ BEIDE PROBLEMEN OPGELOST**
-1. ✅ Foutmelding bij opslaan "eerste werkdag van elke maand" - GEFIXED  
-2. ✅ Laatste werkdag afvinken maakt geen nieuwe taak - GEFIXED
+**STATUS: ✅ ALLE WERKDAG PROBLEMEN DEFINITIEF OPGELOST**
+1. ✅ **Foutmelding bij opslaan "eerste werkdag van elke maand"** - VOLLEDIG GEFIXED
+   - **Root cause**: Frontend validatie weigerde 'workday' string in monthly-weekday patterns
+   - **Fix**: Extended frontend validation en calculation logic voor workday support
+   - **Test**: `monthly-weekday-first-workday-1` validatie nu succesvol ✅
+   
+2. ✅ **Laatste werkdag afvinken maakt geen nieuwe taak** - VOLLEDIG GEFIXED  
+   - **Root cause**: Server-side workday handling ontbrak in recurring task creation
+   - **Fix**: Added complete workday support in server endpoints
+   - **Test**: `monthly-weekday-last-workday-1` → 2025-07-31 ✅
 
 **VOLLEDIG VOLTOOID EN GETEST**: 
 - ✅ Beide werkdag problemen succesvol opgelost
