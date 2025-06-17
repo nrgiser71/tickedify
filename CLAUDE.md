@@ -128,6 +128,28 @@
 
 **Status**: Alle belangrijke complexe herhalingspatronen werkend. Frontend en backend volledig gesynchroniseerd.
 
+## URGENT FIX VOLTOOID (Juni 17, 2025)
+
+**PROBLEEM**: Gebruiker meldde dat taak "elke 2de woensdag van de maand" niet wordt aangemaakt bij afvinken.
+
+**DIAGNOSE**: 
+- UI genereerde correct `monthly-weekday-second-3-1` patroon
+- Frontend en backend validatie accepteerde alleen `'first'` en `'last'` posities
+- `'second'`, `'third'`, `'fourth'` werden afgekeurd door validatie
+
+**OPLOSSING GEÏMPLEMENTEERD**:
+✅ Frontend app.js uitgebreid met support voor alle posities
+✅ Server-side validatie bijgewerkt in alle endpoints  
+✅ Intelligent nth-occurrence algoritme toegevoegd
+✅ Verificatie: 2025-06-17 + monthly-weekday-second-3-1 = 2025-07-09 ✅
+
+**TEST ENDPOINTS BESCHIKBAAR**:
+- `/api/debug/test-second-wednesday` - Verificatie van werkende implementatie
+- `/api/debug/quick-monthly-test` - Alle woensdagen juli 2025
+- `/api/debug/test-recurring/monthly-weekday-second-3-1/2025-06-17`
+
+**STATUS**: 2de/3de/4de weekdag patronen volledig functioneel. Gebruiker kan opnieuw testen.
+
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
 **Testing Capabilities Reminder:**
