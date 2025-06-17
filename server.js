@@ -14,7 +14,7 @@ app.use((req, res, next) => {
 
 // Test endpoints first
 app.get('/api/ping', (req, res) => {
-    res.json({ message: 'pong', timestamp: new Date().toISOString() });
+    res.json({ message: 'pong', timestamp: new Date().toISOString(), version: '1.1' });
 });
 
 app.get('/api/status', (req, res) => {
