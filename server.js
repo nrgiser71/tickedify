@@ -364,6 +364,53 @@ app.get('/api/debug/test-simple', (req, res) => {
     });
 });
 
+// GET version of test-recurring for easier testing
+app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { pattern, baseDate } = req.params;
+        
+        if (!pattern || !baseDate) {
+            return res.status(400).json({ error: 'Pattern and baseDate are required' });
+        }
+        
+        // Test the pattern by creating a test task and testing recurring logic
+        const { pool, createRecurringTask } = require('./database');
+        
+        // Create test task
+        const testTask = {
+            tekst: `TEST: ${pattern}`,
+            verschijndatum: baseDate,
+            lijst: 'acties',
+            project_id: null,
+            context_id: 1, // Assuming context 1 exists
+            duur: 30,
+            herhaling_type: pattern,
+            herhaling_actief: true
+        };
+        
+        console.log('🧪 Testing pattern:', pattern, 'with base date:', baseDate);
+        
+        // Test creating the next recurring task (without actually inserting the original)
+        const nextDate = await createRecurringTask(testTask, baseDate);
+        
+        res.json({
+            pattern,
+            baseDate,
+            nextDate,
+            success: !!nextDate,
+            message: nextDate ? `Next occurrence: ${nextDate}` : 'Failed to calculate next date'
+        });
+        
+    } catch (error) {
+        console.error('Test recurring error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
+    }
+});
+
 // Test endpoint for complex recurring patterns
 app.post('/api/debug/test-recurring', async (req, res) => {
     try {
