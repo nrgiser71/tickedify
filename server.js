@@ -491,14 +491,15 @@ app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
         const targetDay = parseInt(parts[3]);
         const interval = parseInt(parts[4]);
         
+        const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
         validationDetails = {
             position,
             targetDay,
             interval,
-            positionValid: position === 'first' || position === 'last',
+            positionValid: validPositions.includes(position),
             targetDayValid: !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7,
             intervalValid: !isNaN(interval) && interval > 0,
-            overallValid: (position === 'first' || position === 'last') && 
+            overallValid: validPositions.includes(position) && 
                          !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
                          !isNaN(interval) && interval > 0
         };
@@ -709,13 +710,14 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
         let monthlyWeekdayDebug = null;
         if (pattern.startsWith('monthly-weekday-')) {
             const parts = pattern.split('-');
+            const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
             monthlyWeekdayDebug = {
                 parts,
                 partsLength: parts.length,
                 position: parts[2],
                 targetDay: parseInt(parts[3]),
                 interval: parseInt(parts[4]),
-                positionCheck: parts[2] === 'first' || parts[2] === 'last',
+                positionCheck: validPositions.includes(parts[2]),
                 targetDayCheck: !isNaN(parseInt(parts[3])) && parseInt(parts[3]) >= 1 && parseInt(parts[3]) <= 7,
                 intervalCheck: !isNaN(parseInt(parts[4])) && parseInt(parts[4]) > 0
             };
