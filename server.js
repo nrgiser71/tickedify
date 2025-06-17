@@ -536,6 +536,16 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         const actionData = req.body;
         console.log('🔧 SINGLE ACTION: Adding action:', actionData);
         
+        // First check if task already exists
+        const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1', [actionData.id]);
+        if (existingCheck.rows.length > 0) {
+            console.log('🔧 SINGLE ACTION: Task already exists, updating instead');
+            
+            // Delete the existing task first
+            await pool.query('DELETE FROM taken WHERE id = $1', [actionData.id]);
+            console.log('🔧 SINGLE ACTION: Deleted existing task');
+        }
+        
         // Insert directly without touching existing data
         const result = await pool.query(`
             INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
@@ -556,6 +566,8 @@ app.post('/api/debug/add-single-action', async (req, res) => {
             actionData.herhalingActief === true || actionData.herhalingActief === 'true',
             null
         ]);
+        
+        console.log('🔧 SINGLE ACTION: Successfully inserted with ID:', result.rows[0].id);
         
         res.json({ 
             success: true, 
