@@ -1681,7 +1681,9 @@ class Taakbeheer {
             
             // Save the new action via the list API (which handles creation properly)
             try {
-                const actiesLijst = await this.laadLijst('acties');
+                // Load current acties list
+                const actiesResponse = await fetch('/api/lijst/acties');
+                const actiesLijst = actiesResponse.ok ? await actiesResponse.json() : [];
                 actiesLijst.push(actie);
                 
                 const response = await fetch('/api/lijst/acties', {
