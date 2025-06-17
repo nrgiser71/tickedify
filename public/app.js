@@ -193,9 +193,12 @@ class Taakbeheer {
     }
 
     slaHerhalingOp() {
+        console.log('🔧 DEBUG: slaHerhalingOp() started');
         this.updateHerhalingValue();
         const herhalingValue = document.getElementById('herhalingSelect').value;
         const displayText = this.generateHerhalingDisplayText();
+        console.log('🔧 DEBUG: herhalingValue =', herhalingValue);
+        console.log('🔧 DEBUG: displayText =', displayText);
         document.getElementById('herhalingDisplay').value = displayText;
         this.sluitHerhalingPopup();
     }
@@ -341,6 +344,7 @@ class Taakbeheer {
 
     updateHerhalingValue() {
         const selectedType = document.querySelector('input[name="herhalingType"]:checked')?.value;
+        console.log('🔧 DEBUG: updateHerhalingValue() selectedType =', selectedType);
         let herhalingValue = '';
         
         switch (selectedType) {
@@ -369,7 +373,9 @@ class Taakbeheer {
                 const position = document.getElementById('monthlyWeekdayPosition').value;
                 const weekday = document.getElementById('monthlyWeekdayDay').value;
                 const monthlyWeekdayInterval = document.getElementById('monthlyWeekdayInterval').value;
+                console.log('🔧 DEBUG: monthly-weekday values - position:', position, 'weekday:', weekday, 'interval:', monthlyWeekdayInterval);
                 herhalingValue = `monthly-weekday-${position}-${weekday}-${monthlyWeekdayInterval}`;
+                console.log('🔧 DEBUG: generated herhalingValue =', herhalingValue);
                 break;
             case 'yearly':
                 const yearlyDay = document.getElementById('yearlyDay').value;
@@ -390,7 +396,9 @@ class Taakbeheer {
                 break;
         }
         
+        console.log('🔧 DEBUG: final herhalingValue before setting =', herhalingValue);
         document.getElementById('herhalingSelect').value = herhalingValue;
+        console.log('🔧 DEBUG: herhalingSelect field value after setting =', document.getElementById('herhalingSelect').value);
     }
 
     loadHerhalingFromValue() {
