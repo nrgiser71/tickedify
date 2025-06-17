@@ -464,14 +464,19 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
         } else if (pattern.startsWith('monthly-weekday-')) {
             // Pattern: monthly-weekday-position-day-interval (e.g., monthly-weekday-first-1-1 = first Monday every month)
             const parts = pattern.split('-');
+            console.log('🧪 Monthly-weekday parts:', parts);
             if (parts.length === 5) {
                 const position = parts[2]; // 'first', 'last'
                 const targetDay = parseInt(parts[3]); // 1=Monday, ..., 7=Sunday
                 const interval = parseInt(parts[4]);
                 
+                console.log('🧪 Parsed values:', {position, targetDay, interval});
+                
                 if ((position === 'first' || position === 'last') && 
                     !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
                     !isNaN(interval) && interval > 0) {
+                    
+                    console.log('🧪 Validation passed, calculating date');
                     
                     const jsTargetDay = targetDay === 7 ? 0 : targetDay; // Convert to JS day numbering
                     const nextDateObj = new Date(date);
@@ -485,7 +490,8 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                         }
                     } else if (position === 'last') {
                         // Find last occurrence of weekday in month
-                        nextDateObj.setMonth(nextDateObj.getMonth() + 1);
+                        const targetMonth = nextDateObj.getMonth();
+                        nextDateObj.setMonth(targetMonth + 1);
                         nextDateObj.setDate(0); // Last day of target month
                         while (nextDateObj.getDay() !== jsTargetDay) {
                             nextDateObj.setDate(nextDateObj.getDate() - 1);
