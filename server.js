@@ -539,7 +539,17 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate,
             success: !!nextDate,
             message: nextDate ? `Next occurrence: ${nextDate}` : 'Failed to calculate next date',
-            calculation: nextDate ? `${baseDate} + ${pattern} = ${nextDate}` : 'Pattern not recognized'
+            calculation: nextDate ? `${baseDate} + ${pattern} = ${nextDate}` : 'Pattern not recognized',
+            debug: {
+                patternStartsWith: {
+                    'daily-': pattern.startsWith('daily-'),
+                    'weekly-': pattern.startsWith('weekly-'),
+                    'monthly-day-': pattern.startsWith('monthly-day-'),
+                    'yearly-': pattern.startsWith('yearly-'),
+                    'monthly-weekday-': pattern.startsWith('monthly-weekday-'),
+                    'yearly-special-': pattern.startsWith('yearly-special-')
+                }
+            }
         });
         
     } catch (error) {
