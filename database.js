@@ -190,8 +190,8 @@ const db = {
           });
           try {
             await pool.query(`
-              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             `, [
               item.id, 
               item.tekst, 
@@ -204,7 +204,8 @@ const db = {
               item.type || null,
               item.herhalingType || null, 
               item.herhalingWaarde || null, 
-              item.herhalingActief || false
+              item.herhalingActief === true || item.herhalingActief === 'true',
+              null  // afgewerkt
             ]);
             console.log(`✅ DB DEBUG: Successfully inserted item ${item.id}`);
           } catch (insertError) {
@@ -216,8 +217,8 @@ const db = {
               
               console.log(`⚠️ DB: Falling back to basic insert for item ${item.id}`);
               await pool.query(`
-                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
               `, [
                 item.id, 
                 item.tekst, 
@@ -227,7 +228,8 @@ const db = {
                 item.verschijndatum || null, 
                 item.contextId || null, 
                 item.duur || null, 
-                item.type || null
+                item.type || null,
+                null  // afgewerkt
               ]);
             } else {
               throw insertError;
