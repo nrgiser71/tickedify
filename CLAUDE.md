@@ -150,6 +150,30 @@
 
 **STATUS**: 2de/3de/4de weekdag patronen volledig functioneel. Gebruiker kan opnieuw testen.
 
+## TWEEDE URGENT FIX IN UITVOERING (Juni 17, 2025)
+
+**NIEUWE PROBLEMEN GEMELD**:
+1. ❌ **Foutmelding bij opslaan "eerste werkdag van elke maand"** 
+2. ❌ **Laatste werkdag afvinken maakt geen nieuwe taak aan**
+
+**DIAGNOSE & FIXES**:
+
+**Probleem 1: ✅ OPGELOST**
+- **Oorzaak**: Server-side ondersteuning ontbrak voor Nederlandse werkdag patronen
+- **Oplossing**: Toegevoegd aan server.js:
+  - `eerste-werkdag-maand` → Eerste werkdag van volgende maand  
+  - `laatste-werkdag-maand` → Laatste werkdag van volgende maand
+  - `eerste-werkdag-jaar` → Eerste werkdag van volgend jaar
+  - `laatste-werkdag-jaar` → Laatste werkdag van volgend jaar
+- **Status**: Server herkent nu alle Nederlandse werkdag patronen ✅
+
+**Probleem 2: 🔄 IN ONDERZOEK**
+- **Symptoom**: Taak afvinken met "laatste werkdag maand" → geen melding nieuwe taak
+- **Mogelijke oorzaak**: Frontend/backend synchronisatie issue
+- **Test endpoints beschikbaar**: `/api/debug/test-dutch-workdays`
+
+**VOLGENDE STAP**: End-to-end test van werkdag patronen via UI workflow
+
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
 **Testing Capabilities Reminder:**
