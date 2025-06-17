@@ -1,5 +1,8 @@
 # Tickedify Development Notes
 
+## Taal Instructie voor Claude
+**BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
+
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 

@@ -355,6 +355,133 @@ app.get('/api/debug/acties', async (req, res) => {
     }
 });
 
+// Test endpoint for complex recurring patterns
+app.post('/api/debug/test-recurring', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { pattern, baseDate, expectedDays } = req.body;
+        
+        if (!pattern || !baseDate) {
+            return res.status(400).json({ error: 'Pattern and baseDate are required' });
+        }
+        
+        // Test the pattern by creating a test task and marking it complete
+        const { pool, createRecurringTask } = require('./database');
+        
+        // Create test task
+        const testTask = {
+            tekst: `TEST: ${pattern}`,
+            verschijndatum: baseDate,
+            lijst: 'acties',
+            project_id: null,
+            context_id: 1, // Assuming context 1 exists
+            duur: 30,
+            herhaling_type: pattern,
+            herhaling_actief: true
+        };
+        
+        console.log('🧪 Creating test task:', testTask);
+        
+        const insertResult = await pool.query(`
+            INSERT INTO taken (tekst, verschijndatum, lijst, project_id, context_id, duur, herhaling_type, herhaling_actief)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id
+        `, [testTask.tekst, testTask.verschijndatum, testTask.lijst, testTask.project_id, testTask.context_id, testTask.duur, testTask.herhaling_type, testTask.herhaling_actief]);
+        
+        const taskId = insertResult.rows[0].id;
+        console.log('✅ Test task created with ID:', taskId);
+        
+        // Now test creating the next recurring task
+        const nextDate = await createRecurringTask(testTask, baseDate);
+        
+        let results = [];
+        if (nextDate) {
+            // Verify the next task was created
+            const verifyResult = await pool.query(`
+                SELECT id, tekst, verschijndatum, herhaling_type, herhaling_actief
+                FROM taken 
+                WHERE tekst = $1 AND verschijndatum = $2 AND lijst = 'acties'
+            `, [testTask.tekst, nextDate]);
+            
+            results = verifyResult.rows;
+        }
+        
+        // Clean up test tasks
+        await pool.query('DELETE FROM taken WHERE tekst LIKE $1', [`TEST: ${pattern}%`]);
+        
+        res.json({
+            pattern,
+            baseDate,
+            nextDate,
+            success: !!nextDate,
+            createdTasks: results,
+            message: nextDate ? `Next occurrence: ${nextDate}` : 'Failed to calculate next date'
+        });
+        
+    } catch (error) {
+        console.error('Test recurring error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
+    }
+});
+
+// Batch test endpoint for multiple patterns
+app.post('/api/debug/batch-test-recurring', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { patterns, baseDate } = req.body;
+        
+        if (!patterns || !Array.isArray(patterns) || !baseDate) {
+            return res.status(400).json({ error: 'Patterns array and baseDate are required' });
+        }
+        
+        const results = [];
+        
+        for (const pattern of patterns) {
+            try {
+                const response = await fetch(`http://localhost:${PORT}/api/debug/test-recurring`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pattern, baseDate })
+                });
+                
+                const result = await response.json();
+                results.push(result);
+                
+            } catch (error) {
+                results.push({
+                    pattern,
+                    baseDate,
+                    success: false,
+                    error: error.message
+                });
+            }
+            
+            // Small delay to prevent overwhelming the database
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        res.json({
+            baseDate,
+            totalPatterns: patterns.length,
+            results,
+            summary: {
+                successful: results.filter(r => r.success).length,
+                failed: results.filter(r => !r.success).length
+            }
+        });
+        
+    } catch (error) {
+        console.error('Batch test recurring error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Error handling
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
