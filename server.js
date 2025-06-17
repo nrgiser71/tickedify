@@ -364,45 +364,112 @@ app.get('/api/debug/test-simple', (req, res) => {
     });
 });
 
-// GET version of test-recurring for easier testing
+// GET version of test-recurring for easier testing (date calculation only)
 app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
     try {
-        if (!db) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-        
         const { pattern, baseDate } = req.params;
         
         if (!pattern || !baseDate) {
             return res.status(400).json({ error: 'Pattern and baseDate are required' });
         }
         
-        // Test the pattern by creating a test task and testing recurring logic
-        const { pool, createRecurringTask } = require('./database');
-        
-        // Create test task
-        const testTask = {
-            tekst: `TEST: ${pattern}`,
-            verschijndatum: baseDate,
-            lijst: 'acties',
-            project_id: null,
-            context_id: 1, // Assuming context 1 exists
-            duur: 30,
-            herhaling_type: pattern,
-            herhaling_actief: true
-        };
-        
         console.log('🧪 Testing pattern:', pattern, 'with base date:', baseDate);
         
-        // Test creating the next recurring task (without actually inserting the original)
-        const nextDate = await createRecurringTask(testTask, baseDate);
+        // Test date calculation logic directly (simulate frontend logic)
+        let nextDate = null;
+        const date = new Date(baseDate);
+        
+        if (pattern.startsWith('daily-')) {
+            // Pattern: daily-interval (e.g., daily-3 = every 3 days)
+            const parts = pattern.split('-');
+            if (parts.length === 2) {
+                const interval = parseInt(parts[1]);
+                if (!isNaN(interval) && interval > 0) {
+                    const nextDateObj = new Date(date);
+                    nextDateObj.setDate(date.getDate() + interval);
+                    nextDate = nextDateObj.toISOString().split('T')[0];
+                }
+            }
+        } else if (pattern.startsWith('weekly-')) {
+            // Pattern: weekly-interval-day (e.g., weekly-1-4 = every week on Thursday)
+            const parts = pattern.split('-');
+            if (parts.length === 3) {
+                const interval = parseInt(parts[1]);
+                const targetDay = parseInt(parts[2]); // 1=Monday, 2=Tuesday, ..., 7=Sunday
+                
+                if (!isNaN(interval) && !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7) {
+                    // Convert our day numbering (1-7) to JavaScript day numbering (0-6, Sunday=0)
+                    const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+                    
+                    // Find next occurrence of target day
+                    const currentDay = date.getDay();
+                    let daysToAdd = jsTargetDay - currentDay;
+                    
+                    if (daysToAdd <= 0) {
+                        daysToAdd += 7;
+                    }
+                    
+                    const nextOccurrence = new Date(date);
+                    nextOccurrence.setDate(date.getDate() + daysToAdd);
+                    
+                    // Add additional weeks based on interval
+                    if (interval > 1) {
+                        nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
+                    }
+                    
+                    nextDate = nextOccurrence.toISOString().split('T')[0];
+                }
+            }
+        } else if (pattern.startsWith('monthly-day-')) {
+            // Pattern: monthly-day-daynum-interval (e.g., monthly-day-15-2 = day 15 every 2 months)
+            const parts = pattern.split('-');
+            if (parts.length === 4) {
+                const dayNum = parseInt(parts[2]);
+                const interval = parseInt(parts[3]);
+                if (!isNaN(dayNum) && !isNaN(interval) && dayNum >= 1 && dayNum <= 31) {
+                    const nextDateObj = new Date(date);
+                    nextDateObj.setMonth(date.getMonth() + interval);
+                    nextDateObj.setDate(dayNum);
+                    
+                    // Handle months with fewer days
+                    if (nextDateObj.getDate() !== dayNum) {
+                        nextDateObj.setDate(0); // Last day of month
+                    }
+                    
+                    nextDate = nextDateObj.toISOString().split('T')[0];
+                }
+            }
+        } else if (pattern.startsWith('yearly-')) {
+            // Pattern: yearly-day-month-interval (e.g., yearly-25-12-1 = Dec 25 every year)
+            const parts = pattern.split('-');
+            if (parts.length === 4) {
+                const day = parseInt(parts[1]);
+                const month = parseInt(parts[2]);
+                const interval = parseInt(parts[3]);
+                if (!isNaN(day) && !isNaN(month) && !isNaN(interval) && 
+                    day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+                    const nextDateObj = new Date(date);
+                    nextDateObj.setFullYear(date.getFullYear() + interval);
+                    nextDateObj.setMonth(month - 1); // JavaScript months are 0-based
+                    nextDateObj.setDate(day);
+                    
+                    // Handle leap year issues
+                    if (nextDateObj.getDate() !== day) {
+                        nextDateObj.setDate(0); // Last day of previous month
+                    }
+                    
+                    nextDate = nextDateObj.toISOString().split('T')[0];
+                }
+            }
+        }
         
         res.json({
             pattern,
             baseDate,
             nextDate,
             success: !!nextDate,
-            message: nextDate ? `Next occurrence: ${nextDate}` : 'Failed to calculate next date'
+            message: nextDate ? `Next occurrence: ${nextDate}` : 'Failed to calculate next date',
+            calculation: nextDate ? `${baseDate} + ${pattern} = ${nextDate}` : 'Pattern not recognized'
         });
         
     } catch (error) {
