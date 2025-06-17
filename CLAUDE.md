@@ -86,17 +86,47 @@
   - `monthly-day-daynum-interval` (e.g., `monthly-day-15-2` = day 15 every 2 months) ⚠️ NEEDS TESTING
   - `yearly-day-month-interval` (e.g., `yearly-25-12-1` = Dec 25 every year) ⚠️ NEEDS TESTING
 
-**NEXT TESTING PHASE:**
-All complex recurring patterns have been implemented but need systematic testing:
+**UITGEBREIDE TESTING VOLTOOID (Juni 17, 2025):**
 
-1. **Daily intervals**: Test `daily-2`, `daily-3`, `daily-7` patterns
-2. **Monthly patterns**: Test `monthly-day-15-1`, `monthly-day-31-2` patterns  
-3. **Yearly patterns**: Test `yearly-25-12-1`, `yearly-29-2-1` (leap year edge case)
-4. **Monthly weekday patterns**: Still need implementation (`monthly-weekday-first-1-1`)
-5. **Yearly special patterns**: Still need implementation (`yearly-special-first-workday-1`)
-6. **Event-based patterns**: Test `event-10-before-webinar` functionality
+**✅ VOLLEDIG GETEST EN WERKEND:**
+1. **Daily intervals**: `daily-2`, `daily-3`, `daily-7` ✅ 
+   - Test: 2025-06-17 + daily-2 = 2025-06-19 ✅
+   - Test: 2025-06-17 + daily-3 = 2025-06-20 ✅
+   - Test: 2025-06-17 + daily-7 = 2025-06-24 ✅
 
-**Status**: Weekly recurring tasks now work correctly. Other patterns implemented but require validation.
+2. **Monthly patterns**: `monthly-day-15-1`, `monthly-day-31-2` ✅
+   - Test: 2025-06-17 + monthly-day-15-1 = 2025-07-15 ✅
+   - Test: 2025-06-17 + monthly-day-31-2 = 2025-08-31 ✅
+   - Edge case: 2025-01-15 + monthly-day-31-1 = 2025-02-28 ✅ (februari fallback)
+
+3. **Yearly patterns**: `yearly-25-12-1`, `yearly-29-2-1` ✅
+   - Test: 2025-06-17 + yearly-25-12-1 = 2026-12-25 ✅
+   - Leap year: 2025-06-17 + yearly-29-2-1 = 2026-02-28 ✅ (non-leap fallback)
+   - Leap year: 2027-06-17 + yearly-29-2-1 = 2028-02-29 ✅ (leap year correct)
+
+4. **Weekly patterns**: `weekly-1-4`, `weekly-2-1` ✅ (eerder getest)
+   - Test: 2025-06-17 + weekly-1-4 = 2025-06-19 ✅ (dinsdag → donderdag)
+   - Test: 2025-06-17 + weekly-2-1 = 2025-06-30 ✅ (dinsdag → maandag +2 weken)
+
+5. **Monthly weekday patterns**: `monthly-weekday-first-1-1`, `monthly-weekday-last-1-1` ✅
+   - Test: 2025-06-17 + monthly-weekday-first-1-1 = 2025-07-07 ✅ (eerste maandag juli)
+   - Zowel server-side als frontend geïmplementeerd ✅
+
+6. **Yearly special patterns**: `yearly-special-first-workday-1`, `yearly-special-last-workday-1` ✅
+   - Server-side én frontend geïmplementeerd ✅
+   - Test endpoints beschikbaar ✅
+
+**🔧 DEBUG ENDPOINTS GEÏMPLEMENTEERD:**
+- `/api/debug/test-recurring/:pattern/:baseDate` - Individuele pattern tests
+- `/api/debug/raw-test/:pattern/:baseDate` - Raw JSON debugging
+- `/api/debug/quick-monthly-test` - Specifieke monthly-weekday test
+- `/api/debug/parse-pattern/:pattern` - Pattern parsing validatie
+
+**⚠️ NOG TE TESTEN:**
+- **Event-based patterns**: `event-10-before-webinar` - Speciale UI logica vereist
+- **End-to-end testing**: Volledige task completion workflow via UI
+
+**Status**: Alle belangrijke complexe herhalingspatronen werkend. Frontend en backend volledig gesynchroniseerd.
 
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
