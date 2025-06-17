@@ -37,7 +37,7 @@ const initDatabase = async () => {
     try {
       await pool.query(`
         ALTER TABLE taken 
-        ADD COLUMN IF NOT EXISTS herhaling_type VARCHAR(30),
+        ADD COLUMN IF NOT EXISTS herhaling_type VARCHAR(50),
         ADD COLUMN IF NOT EXISTS herhaling_waarde INTEGER,
         ADD COLUMN IF NOT EXISTS herhaling_actief BOOLEAN DEFAULT FALSE
       `);
@@ -46,7 +46,7 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add recurring columns (might already exist):', alterError.message);
       // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
       const recurringColumns = [
-        { name: 'herhaling_type', type: 'VARCHAR(30)' },
+        { name: 'herhaling_type', type: 'VARCHAR(50)' },
         { name: 'herhaling_waarde', type: 'INTEGER' },
         { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' }
       ];
@@ -59,6 +59,14 @@ const initDatabase = async () => {
           console.log(`⚠️ Column ${col.name} might already exist:`, colError.message);
         }
       }
+    }
+
+    // Migrate existing herhaling_type column to larger size if needed
+    try {
+      await pool.query(`ALTER TABLE taken ALTER COLUMN herhaling_type TYPE VARCHAR(50)`);
+      console.log('✅ Migrated herhaling_type column to VARCHAR(50)');
+    } catch (migrateError) {
+      console.log('⚠️ Could not migrate herhaling_type column (might not exist yet):', migrateError.message);
     }
 
     await pool.query(`
