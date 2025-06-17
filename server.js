@@ -611,14 +611,15 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 }
             }
         } else if (pattern.startsWith('monthly-weekday-')) {
-            // Pattern: monthly-weekday-position-day-interval (e.g., monthly-weekday-first-1-1 = first Monday every month)
+            // Pattern: monthly-weekday-position-day-interval (e.g., monthly-weekday-second-3-1 = second Wednesday every month)
             const parts = pattern.split('-');
             if (parts.length === 5) {
-                const position = parts[2]; // 'first', 'last'
+                const position = parts[2]; // 'first', 'second', 'third', 'fourth', 'last'
                 const targetDay = parseInt(parts[3]); // 1=Monday, ..., 7=Sunday
                 const interval = parseInt(parts[4]);
                 
-                if ((position === 'first' || position === 'last') && 
+                const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
+                if (validPositions.includes(position) && 
                     !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
                     !isNaN(interval) && interval > 0) {
                     
@@ -626,13 +627,7 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     const nextDateObj = new Date(date);
                     nextDateObj.setMonth(date.getMonth() + interval);
                     
-                    if (position === 'first') {
-                        // Find first occurrence of weekday in month
-                        nextDateObj.setDate(1);
-                        while (nextDateObj.getDay() !== jsTargetDay) {
-                            nextDateObj.setDate(nextDateObj.getDate() + 1);
-                        }
-                    } else if (position === 'last') {
+                    if (position === 'last') {
                         // Find last occurrence of weekday in month
                         const targetMonth = nextDateObj.getMonth();
                         nextDateObj.setMonth(targetMonth + 1);
@@ -640,9 +635,35 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                         while (nextDateObj.getDay() !== jsTargetDay) {
                             nextDateObj.setDate(nextDateObj.getDate() - 1);
                         }
+                    } else {
+                        // Find nth occurrence of weekday in month (first, second, third, fourth)
+                        const positionNumbers = { 'first': 1, 'second': 2, 'third': 3, 'fourth': 4 };
+                        const occurrenceNumber = positionNumbers[position];
+                        
+                        nextDateObj.setDate(1); // Start at beginning of month
+                        let occurrenceCount = 0;
+                        
+                        // Find the nth occurrence of the target weekday
+                        while (occurrenceCount < occurrenceNumber) {
+                            if (nextDateObj.getDay() === jsTargetDay) {
+                                occurrenceCount++;
+                                if (occurrenceCount === occurrenceNumber) {
+                                    break; // Found the nth occurrence
+                                }
+                            }
+                            nextDateObj.setDate(nextDateObj.getDate() + 1);
+                            
+                            // Safety check: if we've gone beyond the month, this occurrence doesn't exist
+                            if (nextDateObj.getMonth() !== (date.getMonth() + interval) % 12) {
+                                nextDate = null; // This occurrence doesn't exist in this month
+                                break;
+                            }
+                        }
                     }
                     
-                    nextDate = nextDateObj.toISOString().split('T')[0];
+                    if (nextDate !== null) {
+                        nextDate = nextDateObj.toISOString().split('T')[0];
+                    }
                 }
             }
         } else if (pattern.startsWith('yearly-special-')) {
