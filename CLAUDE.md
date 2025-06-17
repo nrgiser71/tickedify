@@ -258,11 +258,20 @@ toast.info('Algemene informatie'); // Voor toekomstig gebruik
 
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
-**AUTOMATIC GIT PUSH REQUIRED:**
+**MANDATORY DEPLOYMENT WORKFLOW:**
+- ALWAYS update version number in package.json before any commit
 - ALWAYS commit and push changes to git after implementing features
+- ALWAYS wait for deployment confirmation via /api/version endpoint
+- ALWAYS run regression tests after deployment confirmation
+- ALWAYS report test results to user (success/failure)
 - User tests live on production (tickedify.com via Vercel deployment)
-- No need to ask permission - push immediately after completing work
 - Use descriptive commit messages following existing project style
+
+**VERSION TRACKING REQUIREMENTS:**
+- Every code change MUST increment package.json version
+- Format: "1.0.2" → "1.0.3" (patch level for features/fixes)
+- Version bump MUST be included in same commit as feature
+- Never deploy without version verification workflow
 
 **Testing Capabilities Reminder:**
 When debugging or testing features in the future, remember that Claude can:
@@ -416,8 +425,184 @@ class TestRunner {
 
 Claude moet proactief test coverage voorstellen om systeem betrouwbaarheid te waarborgen.
 
+## AUTOMATISCHE REGRESSIE TESTING SYSTEEM - TE IMPLEMENTEREN
+
+**Doel**: Voorkomen dat opgeloste bugs ongemerkt terugkeren door nieuwe features/aanpassingen
+**Trigger**: Na elke code wijziging automatisch testen uitvoeren
+**Timing**: Geen vaste delays - polling tot deployment confirmed
+
+### Post-Commit Workflow voor Claude
+
+**VERPLICHTE WORKFLOW bij ELKE code wijziging:**
+
+1. **Update Version Number**
+   ```javascript
+   // In package.json: verhoog versienummer
+   "version": "1.0.3" → "1.0.4"
+   ```
+
+2. **Git Commit & Push** 
+   ```bash
+   git add .
+   git commit -m "✨ Feature X + version bump for deployment tracking"
+   git push
+   ```
+
+3. **Wait for Deployment Confirmation**
+   ```javascript
+   // Poll /api/version endpoint tot nieuwe versie live is
+   await waitForVersion("1.0.4");
+   ```
+
+4. **Run Automatische Regression Tests**
+   ```javascript
+   // Trigger volledige test suite
+   const results = await fetch('/api/test/run-regression');
+   ```
+
+5. **Report Results**
+   - ✅ Success: "Deployment 1.0.4 verified - all regression tests passed"
+   - ❌ Failure: "🚨 REGRESSION DETECTED in deployment 1.0.4 - [failed tests]"
+
+### API Endpoints Te Implementeren
+
+**1. Version Check Endpoint**
+```javascript
+// GET /api/version
+{
+  "version": "1.0.4",
+  "commit_hash": "d1afa67",
+  "deployed_at": "2025-06-17T20:30:00Z",
+  "features": ["toast-notifications", "recurring-tasks", "test-dashboard"],
+  "environment": "production"
+}
+```
+
+**2. Regression Test Suite Endpoint**
+```javascript
+// GET /api/test/run-regression
+{
+  "status": "completed",
+  "version_tested": "1.0.4",
+  "total_tests": 15,
+  "passed": 15,
+  "failed": 0,
+  "duration_ms": 2341,
+  "critical_bugs_verified": [
+    "workday-patterns-june-2025",
+    "recurring-task-creation", 
+    "database-constraints",
+    "toast-notifications",
+    "task-completion-workflow"
+  ],
+  "cleanup_successful": true,
+  "test_data_created": 23,
+  "test_data_removed": 23
+}
+```
+
+**3. Deployment Status Check**
+```javascript
+// GET /api/deployment/status/{version}
+{
+  "version": "1.0.4",
+  "status": "deployed|pending|failed",
+  "deployment_time": "2025-06-17T20:30:00Z",
+  "vercel_deployment_id": "abc123"
+}
+```
+
+### Regression Test Categories
+
+**Kritieke Bug Prevention Tests** (Gebaseerd op opgeloste bugs):
+
+1. **🔄 Herhalende Taken Regression Tests**
+   - Werkdag patronen (alle 4 opgeloste variants juni 2025)
+   - Database constraint issues (VARCHAR(50) voor herhaling_type)
+   - Event-based recurrence edge cases
+   - Monthly weekday calculation (2de woensdag etc.)
+
+2. **💾 Database Integrity Regression Tests**
+   - Schema wijzigingen niet gebroken
+   - Foreign key constraints intact
+   - Transaction rollback mechanisme werkt
+   - Database connection pool stable
+
+3. **🎯 Critical Workflow Regression Tests**
+   - Task completion end-to-end
+   - Inbox → acties → afgewerkt flow
+   - Project/context operations
+   - Toast notification display
+
+4. **🔌 API Stability Regression Tests**
+   - Alle endpoints responderen correct
+   - Error handling niet gebroken
+   - Authentication (indien toegevoegd) werkt
+   - Response formats unchanged
+
+### Claude Implementation Requirements
+
+**MANDATORY WORKFLOW**:
+```javascript
+async function deploymentWorkflow() {
+  // 1. Update version in package.json
+  updatePackageVersion();
+  
+  // 2. Commit and push
+  await gitCommitAndPush();
+  
+  // 3. Wait for deployment (max 10 min timeout)
+  const deployed = await pollForDeployment(newVersion, maxWaitTime: 600000);
+  
+  if (!deployed) {
+    throw new Error("🚨 Deployment timeout - manual verification required");
+  }
+  
+  // 4. Run regression tests
+  const regressionResults = await runRegressionTests();
+  
+  // 5. Report via toast/console
+  if (regressionResults.failed > 0) {
+    toast.error(`🚨 REGRESSION DETECTED: ${regressionResults.failed} tests failed`);
+    console.error("Regression test failures:", regressionResults);
+  } else {
+    toast.success(`✅ Deployment ${newVersion} verified - all regression tests passed`);
+  }
+  
+  return regressionResults;
+}
+```
+
+**CRITICAL RULES for Claude**:
+- ❌ **NEVER deploy without version bump**
+- ❌ **NEVER skip regression testing**
+- ❌ **NEVER assume deployment succeeded without verification**
+- ✅ **ALWAYS wait for version confirmation before testing**
+- ✅ **ALWAYS report regression test results to user**
+- ✅ **ALWAYS cleanup test data even on failures**
+
+### Error Handling & Fallbacks
+
+**Deployment Verification Failures**:
+- Timeout na 10 minuten → manual verification required
+- Version endpoint niet bereikbaar → wait and retry
+- Verkeerde versie live → deployment issue, stop testing
+
+**Regression Test Failures**:
+- Critical tests fail → 🚨 urgent notification
+- Test data cleanup fails → emergency cleanup procedure
+- API unreachable → deployment rollback consideration
+
+**Benefits van dit Systeem**:
+- Onmiddellijke feedback op regressions
+- Geen verrassingen in productie
+- Geautomatiseerde verificatie van alle kritieke bugs
+- Betrouwbare deployment pipeline
+- Historische tracking van test success rates
+
 ## Next Features to Implement
 - **Test Dashboard Implementation** (Prioriteit 1)
+- **Automatische Regressie Testing** (Prioriteit 2)
 - **Email-to-Inbox functionality**
   - Use subdomain: `inbox.tickedify.com` (NOT tasks.tickedify.com)
   - Mailgun for email processing
