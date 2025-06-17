@@ -305,7 +305,119 @@ When debugging or testing features in the future, remember that Claude can:
   - Resolved 500/404 errors when creating recurring tasks
   - Added diagnostic endpoints for production monitoring
 
+## TEST DASHBOARD SYSTEEM - TE IMPLEMENTEREN
+
+**Doel**: Dashboard om kritieke functionaliteit te testen na elke deployment
+**Locatie**: `/admin/tests` of `/debug/health-check`
+**Gebruiker**: Alleen Jan (single-user systeem)
+
+### Test Data Management Strategie
+
+**Aanpak**: Test in productie database met gegarandeerde cleanup
+- **GEEN** aparte test tabellen of test omgevingen 
+- **WEL** real-time tracking van alle gemaakte test records
+- Automatische cleanup van alle test data na test suite
+
+**TestRunner Class Implementatie**:
+```javascript
+class TestRunner {
+    constructor() {
+        this.createdRecords = {
+            taken: [],      // Track task IDs 
+            acties: [],     // Track action IDs
+            projecten: [],  // Track project IDs  
+            contexten: []   // Track context IDs
+        };
+    }
+
+    // Track elke database insert voor cleanup
+    async createTestTask(data) {
+        const result = await db.insertTask(data);
+        this.createdRecords.taken.push(result.id);
+        return result;
+    }
+
+    // Cleanup in omgekeerde volgorde (foreign key constraints)
+    async cleanup() {
+        for (const taakId of this.createdRecords.taken) {
+            await db.query('DELETE FROM taken WHERE id = $1', [taakId]);
+        }
+        // Reset tracking
+        this.createdRecords = { taken: [], acties: [], projecten: [], contexten: [] };
+    }
+}
+```
+
+### Test Categorieën Te Implementeren
+
+1. **🔄 Herhalende Taken Tests**
+   - Dagelijks/wekelijks/maandelijks patroon berekening
+   - Werkdag patronen (eerste/laatste werkdag maand/jaar)
+   - Complexe weekdag patronen (2de woensdag van maand)
+   - Event-based herhalingen
+   - End-to-end: aanmaken → afvinken → verificeer nieuwe taak
+
+2. **💾 Database Integriteit Tests**
+   - Connectie test
+   - Schema integriteit check
+   - CRUD operaties voor alle tabellen
+   - Transactie rollback test
+   - Foreign key constraint verificatie
+
+3. **🔌 API Endpoint Tests**
+   - `/api/lijst/acties` GET/POST
+   - `/api/taak/{id}` PUT (task completion)
+   - `/api/taak/recurring` POST
+   - Error handling en response codes
+   - Authentication (indien later toegevoegd)
+
+4. **🎯 Business Logic Tests**
+   - Task completion workflow
+   - List management (inbox → acties → afgewerkt)
+   - Project/context operations
+   - Herhalings-logica end-to-end
+   - Data persistence verificatie
+
+### Dashboard Features
+
+**UI Components**:
+- ✅/❌ Status indicator per test met execution tijd
+- 🔄 "Run All Tests" button  
+- 📊 Test execution history/trends
+- 🚨 Detailed failure alerts met stack traces
+- 📱 Mobile responsive layout
+- 🧹 Manual cleanup button voor noodgevallen
+
+**Test Flow**:
+1. Start test suite → maak TestRunner instance
+2. Voer tests uit → track alle database changes
+3. Toon real-time resultaten in dashboard
+4. Einde test suite → automatische cleanup via `finally` block
+5. Log resultaten voor trend analysis
+
+**Error Handling**:
+- Bij test failure → nog steeds cleanup uitvoeren
+- Bij crash → cleanup in finally block
+- Emergency cleanup functie beschikbaar
+
+### Claude Autonomie voor Test Dashboard
+
+**BELANGRIJK**: Claude mag **zelfstandig voorstellen** doen voor nieuwe tests wanneer:
+- Nieuwe kritieke functionaliteit wordt toegevoegd
+- Bugs worden ontdekt die preventie behoeven  
+- Performance bottlenecks gedetecteerd worden
+- Security gevoelige features geïmplementeerd worden
+
+**Voorbeelden automatische test voorstellen**:
+- Bij email-to-inbox functionaliteit → email parsing tests
+- Bij user authentication → security tests  
+- Bij payment integratie → financial transaction tests
+- Bij export functionaliteit → data integrity tests
+
+Claude moet proactief test coverage voorstellen om systeem betrouwbaarheid te waarborgen.
+
 ## Next Features to Implement
+- **Test Dashboard Implementation** (Prioriteit 1)
 - **Email-to-Inbox functionality**
   - Use subdomain: `inbox.tickedify.com` (NOT tasks.tickedify.com)
   - Mailgun for email processing
