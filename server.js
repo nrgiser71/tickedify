@@ -366,7 +366,7 @@ app.get('/api/debug/test-simple', (req, res) => {
 
 // Quick test for monthly-weekday pattern
 app.get('/api/debug/quick-monthly-test', (req, res) => {
-    const pattern = 'monthly-weekday-first-1-1';
+    const pattern = 'monthly-weekday-second-3-1';
     const baseDate = '2025-06-17';
     
     // Test the basic parsing
@@ -378,7 +378,8 @@ app.get('/api/debug/quick-monthly-test', (req, res) => {
     // Run the actual calculation
     let nextDate = null;
     if (pattern.startsWith('monthly-weekday-') && parts.length === 5) {
-        if ((position === 'first' || position === 'last') && 
+        const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
+        if (validPositions.includes(position) && 
             !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
             !isNaN(interval) && interval > 0) {
             
@@ -387,14 +388,43 @@ app.get('/api/debug/quick-monthly-test', (req, res) => {
             const nextDateObj = new Date(date);
             nextDateObj.setMonth(date.getMonth() + interval);
             
-            if (position === 'first') {
-                nextDateObj.setDate(1);
+            if (position === 'last') {
+                // Find last occurrence of weekday in month
+                const targetMonth = nextDateObj.getMonth();
+                nextDateObj.setMonth(targetMonth + 1);
+                nextDateObj.setDate(0); // Last day of target month
                 while (nextDateObj.getDay() !== jsTargetDay) {
+                    nextDateObj.setDate(nextDateObj.getDate() - 1);
+                }
+            } else {
+                // Find nth occurrence of weekday in month (first, second, third, fourth)
+                const positionNumbers = { 'first': 1, 'second': 2, 'third': 3, 'fourth': 4 };
+                const occurrenceNumber = positionNumbers[position];
+                
+                nextDateObj.setDate(1); // Start at beginning of month
+                let occurrenceCount = 0;
+                
+                // Find the nth occurrence of the target weekday
+                while (occurrenceCount < occurrenceNumber) {
+                    if (nextDateObj.getDay() === jsTargetDay) {
+                        occurrenceCount++;
+                        if (occurrenceCount === occurrenceNumber) {
+                            break; // Found the nth occurrence
+                        }
+                    }
                     nextDateObj.setDate(nextDateObj.getDate() + 1);
+                    
+                    // Safety check: if we've gone beyond the month, this occurrence doesn't exist
+                    if (nextDateObj.getMonth() !== (date.getMonth() + interval) % 12) {
+                        nextDate = null; // This occurrence doesn't exist in this month
+                        break;
+                    }
                 }
             }
             
-            nextDate = nextDateObj.toISOString().split('T')[0];
+            if (nextDate !== null) {
+                nextDate = nextDateObj.toISOString().split('T')[0];
+            }
         }
     }
     
@@ -407,7 +437,7 @@ app.get('/api/debug/quick-monthly-test', (req, res) => {
         interval,
         jsTargetDay: targetDay === 7 ? 0 : targetDay,
         nextDate,
-        calculation: `First Monday of month after ${baseDate} should be ${nextDate}`
+        calculation: `Second Wednesday of month after ${baseDate} should be ${nextDate}`
     });
 });
 
