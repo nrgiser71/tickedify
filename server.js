@@ -550,7 +550,8 @@ app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
             'monthly-day-': pattern.startsWith('monthly-day-'),
             'yearly-': pattern.startsWith('yearly-'),
             'monthly-weekday-': pattern.startsWith('monthly-weekday-'),
-            'yearly-special-': pattern.startsWith('yearly-special-')
+            'yearly-special-': pattern.startsWith('yearly-special-'),
+            'nederlandse-werkdag': ['eerste-werkdag-maand', 'laatste-werkdag-maand', 'eerste-werkdag-jaar', 'laatste-werkdag-jaar'].includes(pattern)
         },
         validationDetails
     });
@@ -739,6 +740,44 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     nextDate = nextDateObj.toISOString().split('T')[0];
                 }
             }
+        } else if (pattern === 'eerste-werkdag-maand') {
+            // First workday of next month
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 1);
+            nextDateObj.setDate(1);
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() + 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'laatste-werkdag-maand') {
+            // Last workday of next month
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 2);
+            nextDateObj.setDate(0); // Last day of next month
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() - 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'eerste-werkdag-jaar') {
+            // First workday of next year
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDateObj.setMonth(0); // January
+            nextDateObj.setDate(1);
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() + 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'laatste-werkdag-jaar') {
+            // Last workday of next year
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDateObj.setMonth(11); // December
+            nextDateObj.setDate(31);
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() - 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
         }
         
         // Special debug for monthly-weekday patterns
