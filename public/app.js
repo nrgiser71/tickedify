@@ -1689,6 +1689,11 @@ class Taakbeheer {
                     // Only remove from inbox AFTER successful save
                     this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
                     await this.laadTellingen();
+                    
+                    // If we're currently viewing acties, refresh the list
+                    if (this.huidigeLijst === 'acties') {
+                        await this.laadHuidigeLijst();
+                    }
                 } else {
                     console.error('Fout bij opslaan actie:', response.status);
                     alert('Fout bij plannen van taak. Probeer opnieuw.');
