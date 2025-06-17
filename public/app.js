@@ -1676,17 +1676,12 @@ class Taakbeheer {
                 herhalingActief: !!herhalingType
             };
 
-            // Save the new action via the list API (which handles creation properly)
+            // Save the new action via direct single action API (bypasses list corruption issues)
             try {
-                // Load current acties list
-                const actiesResponse = await fetch('/api/lijst/acties');
-                const actiesLijst = actiesResponse.ok ? await actiesResponse.json() : [];
-                actiesLijst.push(actie);
-                
-                const response = await fetch('/api/lijst/acties', {
+                const response = await fetch('/api/debug/add-single-action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(actiesLijst)
+                    body: JSON.stringify(actie)
                 });
                 
                 if (response.ok) {
