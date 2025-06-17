@@ -240,7 +240,7 @@ const db = {
       return true;
     } catch (error) {
       console.error(`Error saving list ${listName}:`, error);
-      return false;
+      throw error; // Re-throw to get exact error in debug endpoint
     }
   },
 
