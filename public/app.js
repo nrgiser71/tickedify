@@ -2018,15 +2018,37 @@ class Taakbeheer {
                         const interval = parseInt(parts[4]);
                         
                         const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
+                        // Allow 'workday' as special case for targetDay
+                        const isValidTargetDay = parts[3] === 'workday' || (!isNaN(targetDay) && targetDay >= 1 && targetDay <= 7);
                         if (validPositions.includes(position) && 
-                            !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
+                            isValidTargetDay && 
                             !isNaN(interval) && interval > 0) {
                             
-                            const jsTargetDay = targetDay === 7 ? 0 : targetDay; // Convert to JS day numbering
                             const nextDateObj = new Date(date);
                             nextDateObj.setMonth(date.getMonth() + interval);
                             
-                            if (position === 'last') {
+                            // Special handling for workday patterns
+                            if (parts[3] === 'workday') {
+                                if (position === 'first') {
+                                    // First workday of month
+                                    nextDateObj.setDate(1);
+                                    while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                                        nextDateObj.setDate(nextDateObj.getDate() + 1);
+                                    }
+                                } else if (position === 'last') {
+                                    // Last workday of month
+                                    const targetMonth = nextDateObj.getMonth();
+                                    nextDateObj.setMonth(targetMonth + 1);
+                                    nextDateObj.setDate(0); // Last day of target month
+                                    while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                                        nextDateObj.setDate(nextDateObj.getDate() - 1);
+                                    }
+                                }
+                            } else {
+                                // Normal weekday patterns
+                                const jsTargetDay = targetDay === 7 ? 0 : targetDay; // Convert to JS day numbering
+                                
+                                if (position === 'last') {
                                 // Find last occurrence of weekday in month
                                 const targetMonth = nextDateObj.getMonth();
                                 nextDateObj.setMonth(targetMonth + 1);
@@ -2057,6 +2079,7 @@ class Taakbeheer {
                                         return null; // This occurrence doesn't exist in this month
                                     }
                                 }
+                            }
                             }
                             
                             return nextDateObj.toISOString().split('T')[0];
