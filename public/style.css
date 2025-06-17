@@ -42,6 +42,16 @@
     --macos-radius-medium: 8px;
     --macos-radius-large: 12px;
     --macos-radius-button: 6px;
+    
+    /* Toast Notification Colors */
+    --toast-success: #30D158;
+    --toast-success-bg: #30D15820;
+    --toast-error: #FF3B30;
+    --toast-error-bg: #FF3B3020;
+    --toast-info: #007AFF;
+    --toast-info-bg: #007AFF20;
+    --toast-warning: #FF9500;
+    --toast-warning-bg: #FF950020;
 }
 
 body {
@@ -1303,5 +1313,178 @@ button:focus {
 @media (max-width: 768px) {
     .herhaling-categorieën {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 320px;
+    max-width: 400px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--macos-radius-large);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--macos-shadow-medium);
+    pointer-events: all;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: toast-slide-in 0.3s ease;
+}
+
+.toast:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--macos-shadow-heavy);
+}
+
+.toast.toast-exit {
+    animation: toast-slide-out 0.3s ease forwards;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.toast-message {
+    flex: 1;
+    word-wrap: break-word;
+}
+
+/* Toast Types */
+.toast.success {
+    background: var(--toast-success-bg);
+    border-color: var(--toast-success);
+    color: var(--macos-text-primary);
+}
+
+.toast.success .toast-icon {
+    background: var(--toast-success);
+}
+
+.toast.success .toast-icon::after {
+    content: "✓";
+}
+
+.toast.error {
+    background: var(--toast-error-bg);
+    border-color: var(--toast-error);
+    color: var(--macos-text-primary);
+}
+
+.toast.error .toast-icon {
+    background: var(--toast-error);
+}
+
+.toast.error .toast-icon::after {
+    content: "✕";
+}
+
+.toast.info {
+    background: var(--toast-info-bg);
+    border-color: var(--toast-info);
+    color: var(--macos-text-primary);
+}
+
+.toast.info .toast-icon {
+    background: var(--toast-info);
+}
+
+.toast.info .toast-icon::after {
+    content: "i";
+}
+
+.toast.warning {
+    background: var(--toast-warning-bg);
+    border-color: var(--toast-warning);
+    color: var(--macos-text-primary);
+}
+
+.toast.warning .toast-icon {
+    background: var(--toast-warning);
+}
+
+.toast.warning .toast-icon::after {
+    content: "⚠";
+}
+
+/* Toast Animations */
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-slide-out {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        max-width: none;
+    }
+    
+    @keyframes toast-slide-in {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes toast-slide-out {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
     }
 }

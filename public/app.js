@@ -1,3 +1,75 @@
+// Toast Notification System
+class ToastManager {
+    constructor() {
+        this.container = document.getElementById('toast-container');
+        this.toasts = [];
+    }
+
+    show(message, type = 'info', duration = 4000) {
+        const toast = this.createToast(message, type);
+        this.container.appendChild(toast);
+        this.toasts.push(toast);
+
+        // Auto dismiss
+        const timeoutId = setTimeout(() => {
+            this.dismiss(toast);
+        }, duration);
+
+        // Click to dismiss
+        toast.addEventListener('click', () => {
+            clearTimeout(timeoutId);
+            this.dismiss(toast);
+        });
+
+        return toast;
+    }
+
+    createToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        toast.innerHTML = `
+            <div class="toast-icon"></div>
+            <div class="toast-message">${message}</div>
+        `;
+
+        return toast;
+    }
+
+    dismiss(toast) {
+        toast.classList.add('toast-exit');
+        
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+            const index = this.toasts.indexOf(toast);
+            if (index > -1) {
+                this.toasts.splice(index, 1);
+            }
+        }, 300); // Match animation duration
+    }
+
+    success(message, duration = 4000) {
+        return this.show(message, 'success', duration);
+    }
+
+    error(message, duration = 6000) {
+        return this.show(message, 'error', duration);
+    }
+
+    info(message, duration = 4000) {
+        return this.show(message, 'info', duration);
+    }
+
+    warning(message, duration = 5000) {
+        return this.show(message, 'warning', duration);
+    }
+}
+
+// Global toast instance
+const toast = new ToastManager();
+
 class Taakbeheer {
     constructor() {
         this.huidigeLijst = 'inbox';
@@ -904,7 +976,7 @@ class Taakbeheer {
             // Verplaats naar afgewerkte taken
             const success = await this.verplaatsTaakNaarAfgewerkt(actie);
             if (!success) {
-                alert('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
                 return;
             }
             
@@ -942,7 +1014,7 @@ class Taakbeheer {
                 }
                 
                 setTimeout(() => {
-                    alert(`✓ Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
+                    toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                 }, 100);
             }
             
@@ -1396,13 +1468,13 @@ class Taakbeheer {
                     }
                     
                     setTimeout(() => {
-                        alert(`✓ Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
+                        toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     }, 100);
                 }
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
-                alert('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
         }
     }
@@ -1455,7 +1527,7 @@ class Taakbeheer {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Server error saving list:', errorData);
-                alert(`Fout bij opslaan: ${errorData.error || 'Onbekende fout'}`);
+                toast.error(`Fout bij opslaan: ${errorData.error || 'Onbekende fout'}`);
                 return false;
             }
             
@@ -1463,7 +1535,7 @@ class Taakbeheer {
             return true;
         } catch (error) {
             console.error('Fout bij opslaan lijst:', error);
-            alert(`Fout bij opslaan: ${error.message}`);
+            toast.error(`Fout bij opslaan: ${error.message}`);
             return false;
         }
     }
@@ -1638,7 +1710,7 @@ class Taakbeheer {
         console.log('maakActie - herhalingActief:', !!herhalingType);
 
         if (!taakNaam || !verschijndatum || !contextId || !duur) {
-            alert('Alle velden behalve project zijn verplicht!');
+            toast.warning('Alle velden behalve project zijn verplicht!');
             return;
         }
 
@@ -1696,12 +1768,12 @@ class Taakbeheer {
                     }
                 } else {
                     console.error('Fout bij opslaan actie:', response.status);
-                    alert('Fout bij plannen van taak. Probeer opnieuw.');
+                    toast.error('Fout bij plannen van taak. Probeer opnieuw.');
                     return;
                 }
             } catch (error) {
                 console.error('Error saving action:', error);
-                alert('Fout bij plannen van taak. Probeer opnieuw.');
+                toast.error('Fout bij plannen van taak. Probeer opnieuw.');
                 return;
             }
         }
@@ -2628,7 +2700,7 @@ class Taakbeheer {
                 this.eventDateResolver = null;
             }
         } else {
-            alert('Voer een geldige datum in.');
+            toast.warning('Voer een geldige datum in.');
         }
     }
 
