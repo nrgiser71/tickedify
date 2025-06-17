@@ -475,6 +475,47 @@ app.get('/api/debug/quick-monthly-test', (req, res) => {
     });
 });
 
+// Debug endpoint to test saveList with recurring data
+app.post('/api/debug/test-save-recurring', async (req, res) => {
+    try {
+        const testData = [{
+            id: "debug-test-" + Date.now(),
+            tekst: "Debug test recurring",
+            aangemaakt: "2025-06-17T12:16:42.232Z",
+            projectId: "ghhnv0pdlmbvaix7s",
+            verschijndatum: "2025-06-17",
+            contextId: "95dfadbz9mbvaj0nt",
+            duur: 30,
+            type: "actie",
+            herhalingType: "monthly-weekday-first-workday-1",
+            herhalingActief: true
+        }];
+        
+        console.log('🔍 DEBUG ENDPOINT: Testing save with data:', testData);
+        
+        if (!db) {
+            return res.json({ error: 'Database not available', success: false });
+        }
+        
+        const success = await db.saveList('acties', testData);
+        
+        res.json({ 
+            success, 
+            message: success ? 'Save successful' : 'Save failed',
+            testData,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('🔍 DEBUG ENDPOINT ERROR:', error);
+        res.json({ 
+            success: false, 
+            error: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Raw JSON test for debugging
 app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
