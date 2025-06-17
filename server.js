@@ -369,6 +369,26 @@ app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
     const { pattern } = req.params;
     const parts = pattern.split('-');
     
+    let validationDetails = {};
+    
+    if (pattern.startsWith('monthly-weekday-') && parts.length === 5) {
+        const position = parts[2];
+        const targetDay = parseInt(parts[3]);
+        const interval = parseInt(parts[4]);
+        
+        validationDetails = {
+            position,
+            targetDay,
+            interval,
+            positionValid: position === 'first' || position === 'last',
+            targetDayValid: !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7,
+            intervalValid: !isNaN(interval) && interval > 0,
+            overallValid: (position === 'first' || position === 'last') && 
+                         !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
+                         !isNaN(interval) && interval > 0
+        };
+    }
+    
     res.json({
         pattern,
         parts,
@@ -380,7 +400,8 @@ app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
             'yearly-': pattern.startsWith('yearly-'),
             'monthly-weekday-': pattern.startsWith('monthly-weekday-'),
             'yearly-special-': pattern.startsWith('yearly-special-')
-        }
+        },
+        validationDetails
     });
 });
 
@@ -484,19 +505,14 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
         } else if (pattern.startsWith('monthly-weekday-')) {
             // Pattern: monthly-weekday-position-day-interval (e.g., monthly-weekday-first-1-1 = first Monday every month)
             const parts = pattern.split('-');
-            console.log('🧪 Monthly-weekday parts:', parts);
             if (parts.length === 5) {
                 const position = parts[2]; // 'first', 'last'
                 const targetDay = parseInt(parts[3]); // 1=Monday, ..., 7=Sunday
                 const interval = parseInt(parts[4]);
                 
-                console.log('🧪 Parsed values:', {position, targetDay, interval});
-                
                 if ((position === 'first' || position === 'last') && 
                     !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
                     !isNaN(interval) && interval > 0) {
-                    
-                    console.log('🧪 Validation passed, calculating date');
                     
                     const jsTargetDay = targetDay === 7 ? 0 : targetDay; // Convert to JS day numbering
                     const nextDateObj = new Date(date);
