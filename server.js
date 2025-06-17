@@ -399,6 +399,44 @@ app.get('/api/debug/test-second-wednesday', (req, res) => {
     });
 });
 
+// Test Nederlandse werkdag patronen direct
+app.get('/api/debug/test-dutch-workdays', (req, res) => {
+    const baseDate = '2025-06-17'; // Tuesday
+    const date = new Date(baseDate);
+    
+    // Test eerste-werkdag-maand (first workday of next month = July)
+    const nextMonth = new Date(date);
+    nextMonth.setMonth(date.getMonth() + 1); // July 2025
+    nextMonth.setDate(1); // July 1st
+    while (nextMonth.getDay() === 0 || nextMonth.getDay() === 6) {
+        nextMonth.setDate(nextMonth.getDate() + 1);
+    }
+    const eersteWerkdag = nextMonth.toISOString().split('T')[0];
+    
+    // Test laatste-werkdag-maand (last workday of next month = July)  
+    const lastMonth = new Date(date);
+    lastMonth.setMonth(date.getMonth() + 2); // August
+    lastMonth.setDate(0); // Last day of July
+    while (lastMonth.getDay() === 0 || lastMonth.getDay() === 6) {
+        lastMonth.setDate(lastMonth.getDate() - 1);
+    }
+    const laatsteWerkdag = lastMonth.toISOString().split('T')[0];
+    
+    res.json({
+        baseDate,
+        tests: {
+            'eerste-werkdag-maand': {
+                result: eersteWerkdag,
+                calculation: 'First workday of July 2025'
+            },
+            'laatste-werkdag-maand': {
+                result: laatsteWerkdag,
+                calculation: 'Last workday of July 2025'
+            }
+        }
+    });
+});
+
 // Quick test for monthly-weekday pattern  
 app.get('/api/debug/quick-monthly-test', (req, res) => {
     // Direct test - what are the Wednesdays in July 2025?
