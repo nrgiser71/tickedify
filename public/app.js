@@ -2009,6 +2009,75 @@ class Taakbeheer {
                     }
                 }
                 
+                if (herhalingType.startsWith('monthly-weekday-')) {
+                    // Pattern: monthly-weekday-position-day-interval (e.g., monthly-weekday-first-1-1 = first Monday every month)
+                    const parts = herhalingType.split('-');
+                    if (parts.length === 5) {
+                        const position = parts[2]; // 'first', 'last'
+                        const targetDay = parseInt(parts[3]); // 1=Monday, ..., 7=Sunday
+                        const interval = parseInt(parts[4]);
+                        
+                        if ((position === 'first' || position === 'last') && 
+                            !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
+                            !isNaN(interval) && interval > 0) {
+                            
+                            const jsTargetDay = targetDay === 7 ? 0 : targetDay; // Convert to JS day numbering
+                            const nextDateObj = new Date(date);
+                            nextDateObj.setMonth(date.getMonth() + interval);
+                            
+                            if (position === 'first') {
+                                // Find first occurrence of weekday in month
+                                nextDateObj.setDate(1);
+                                while (nextDateObj.getDay() !== jsTargetDay) {
+                                    nextDateObj.setDate(nextDateObj.getDate() + 1);
+                                }
+                            } else if (position === 'last') {
+                                // Find last occurrence of weekday in month
+                                const targetMonth = nextDateObj.getMonth();
+                                nextDateObj.setMonth(targetMonth + 1);
+                                nextDateObj.setDate(0); // Last day of target month
+                                while (nextDateObj.getDay() !== jsTargetDay) {
+                                    nextDateObj.setDate(nextDateObj.getDate() - 1);
+                                }
+                            }
+                            
+                            return nextDateObj.toISOString().split('T')[0];
+                        }
+                    }
+                }
+                
+                if (herhalingType.startsWith('yearly-special-')) {
+                    // Pattern: yearly-special-type-interval (e.g., yearly-special-first-workday-1)
+                    const parts = herhalingType.split('-');
+                    if (parts.length >= 4) {
+                        const specialType = parts.slice(2, -1).join('-'); // Everything except 'yearly', 'special' and interval
+                        const interval = parseInt(parts[parts.length - 1]);
+                        
+                        if (!isNaN(interval) && interval > 0) {
+                            const nextDateObj = new Date(date);
+                            nextDateObj.setFullYear(date.getFullYear() + interval);
+                            
+                            if (specialType === 'first-workday') {
+                                // First workday of the year
+                                nextDateObj.setMonth(0); // January
+                                nextDateObj.setDate(1);
+                                while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                                    nextDateObj.setDate(nextDateObj.getDate() + 1);
+                                }
+                            } else if (specialType === 'last-workday') {
+                                // Last workday of the year
+                                nextDateObj.setMonth(11); // December
+                                nextDateObj.setDate(31);
+                                while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                                    nextDateObj.setDate(nextDateObj.getDate() - 1);
+                                }
+                            }
+                            
+                            return nextDateObj.toISOString().split('T')[0];
+                        }
+                    }
+                }
+                
                 // Handle event-based recurrence
                 if (herhalingType.startsWith('event-')) {
                     // For event-based recurrence, we need to ask the user for the next event date
