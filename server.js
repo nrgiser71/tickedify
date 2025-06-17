@@ -366,40 +366,22 @@ app.get('/api/debug/test-simple', (req, res) => {
 
 // Quick test for monthly-weekday pattern  
 app.get('/api/debug/quick-monthly-test', (req, res) => {
-    const pattern = 'monthly-weekday-second-3-1';
-    const baseDate = '2025-06-17';
-    
-    // Manual calculation test
-    const date = new Date(baseDate);
-    const nextMonth = new Date(date);
-    nextMonth.setMonth(date.getMonth() + 1); // Go to July 2025
-    
-    // Find second Wednesday of July 2025
-    nextMonth.setDate(1); // Start at July 1
-    let wednesdayCount = 0;
-    let debugSteps = [];
-    
-    while (wednesdayCount < 2) {
-        debugSteps.push(`Date: ${nextMonth.toISOString().split('T')[0]}, Day: ${nextMonth.getDay()}`);
-        if (nextMonth.getDay() === 3) { // Wednesday = 3
-            wednesdayCount++;
-            debugSteps.push(`Found Wednesday #${wednesdayCount}`);
-            if (wednesdayCount === 2) {
-                break;
-            }
+    // Direct test - what are the Wednesdays in July 2025?
+    const july2025 = [];
+    for (let day = 1; day <= 31; day++) {
+        const date = new Date(2025, 6, day); // July = month 6 (0-indexed)
+        if (date.getDay() === 3) { // Wednesday
+            july2025.push(date.toISOString().split('T')[0]);
         }
-        nextMonth.setDate(nextMonth.getDate() + 1);
     }
     
-    const secondWednesday = nextMonth.toISOString().split('T')[0];
-    
     res.json({
-        pattern,
-        baseDate,
-        targetMonth: 'July 2025',
-        secondWednesday,
-        debugSteps,
-        calculation: `Second Wednesday of July 2025 is ${secondWednesday}`
+        allWednesdaysInJuly2025: july2025,
+        firstWednesday: july2025[0],
+        secondWednesday: july2025[1],
+        thirdWednesday: july2025[2],
+        fourthWednesday: july2025[3],
+        calculation: `Second Wednesday of July 2025 is ${july2025[1]}`
     });
 });
 
