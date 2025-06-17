@@ -428,7 +428,8 @@ app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
             const targetDay = parseInt(parts[3]);
             const interval = parseInt(parts[4]);
             
-            if ((position === 'first' || position === 'last') && 
+            const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
+            if (validPositions.includes(position) && 
                 !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7 && 
                 !isNaN(interval) && interval > 0) {
                 reached.push('validation passed');
@@ -438,23 +439,55 @@ app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
                 const nextDateObj = new Date(date);
                 nextDateObj.setMonth(date.getMonth() + interval);
                 
-                if (position === 'first') {
-                    nextDateObj.setDate(1);
+                if (position === 'last') {
+                    // Find last occurrence of weekday in month
+                    const targetMonth = nextDateObj.getMonth();
+                    nextDateObj.setMonth(targetMonth + 1);
+                    nextDateObj.setDate(0); // Last day of target month
                     while (nextDateObj.getDay() !== jsTargetDay) {
-                        nextDateObj.setDate(nextDateObj.getDate() + 1);
+                        nextDateObj.setDate(nextDateObj.getDate() - 1);
                     }
-                    reached.push('calculation completed');
+                } else {
+                    // Find nth occurrence of weekday in month (first, second, third, fourth)
+                    const positionNumbers = { 'first': 1, 'second': 2, 'third': 3, 'fourth': 4 };
+                    const occurrenceNumber = positionNumbers[position];
                     
-                    const nextDate = nextDateObj.toISOString().split('T')[0];
+                    nextDateObj.setDate(1); // Start at beginning of month
+                    let occurrenceCount = 0;
                     
-                    res.write(JSON.stringify({
-                        success: true,
-                        nextDate,
-                        reached
-                    }));
-                    res.end();
-                    return;
+                    // Find the nth occurrence of the target weekday
+                    while (occurrenceCount < occurrenceNumber) {
+                        if (nextDateObj.getDay() === jsTargetDay) {
+                            occurrenceCount++;
+                            if (occurrenceCount === occurrenceNumber) {
+                                break; // Found the nth occurrence
+                            }
+                        }
+                        nextDateObj.setDate(nextDateObj.getDate() + 1);
+                        
+                        // Safety check: if we've gone beyond the month, this occurrence doesn't exist
+                        if (nextDateObj.getMonth() !== (date.getMonth() + interval) % 12) {
+                            res.write(JSON.stringify({
+                                success: false,
+                                reached: [...reached, 'occurrence does not exist in month']
+                            }));
+                            res.end();
+                            return;
+                        }
+                    }
                 }
+                
+                reached.push('calculation completed');
+                
+                const nextDate = nextDateObj.toISOString().split('T')[0];
+                
+                res.write(JSON.stringify({
+                    success: true,
+                    nextDate,
+                    reached
+                }));
+                res.end();
+                return;
             } else {
                 reached.push('validation failed');
             }
