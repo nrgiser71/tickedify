@@ -1676,9 +1676,6 @@ class Taakbeheer {
                 herhalingActief: !!herhalingType
             };
 
-            // First add the action to the acties list in memory
-            this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-            
             // Save the new action via the list API (which handles creation properly)
             try {
                 // Load current acties list
@@ -1694,6 +1691,8 @@ class Taakbeheer {
                 
                 if (response.ok) {
                     console.log('✅ Actie succesvol opgeslagen met herhaling:', herhalingType);
+                    // Only remove from inbox AFTER successful save
+                    this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
                     await this.laadTellingen();
                 } else {
                     console.error('Fout bij opslaan actie:', response.status);
