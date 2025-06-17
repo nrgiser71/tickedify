@@ -516,6 +516,37 @@ app.post('/api/debug/test-save-recurring', async (req, res) => {
     }
 });
 
+// Force database migration endpoint
+app.post('/api/debug/force-migration', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.json({ error: 'Database pool not available', success: false });
+        }
+        
+        console.log('🔧 FORCE MIGRATION: Starting herhaling_type column migration');
+        
+        // Force migrate the column size
+        await pool.query(`ALTER TABLE taken ALTER COLUMN herhaling_type TYPE VARCHAR(50)`);
+        
+        console.log('✅ FORCE MIGRATION: Successfully migrated herhaling_type to VARCHAR(50)');
+        
+        res.json({ 
+            success: true, 
+            message: 'Migration completed successfully',
+            migration: 'herhaling_type VARCHAR(30) -> VARCHAR(50)',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ FORCE MIGRATION ERROR:', error);
+        res.json({ 
+            success: false, 
+            error: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Raw JSON test for debugging
 app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
