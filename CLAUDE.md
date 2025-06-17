@@ -167,12 +167,19 @@
   - `laatste-werkdag-jaar` → Laatste werkdag van volgend jaar
 - **Status**: Server herkent nu alle Nederlandse werkdag patronen ✅
 
-**Probleem 2: 🔄 IN ONDERZOEK**
-- **Symptoom**: Taak afvinken met "laatste werkdag maand" → geen melding nieuwe taak
-- **Mogelijke oorzaak**: Frontend/backend synchronisatie issue
-- **Test endpoints beschikbaar**: `/api/debug/test-dutch-workdays`
+**Probleem 2: ✅ OPGELOST**
+- **Oorzaak**: Server herkende `monthly-weekday-first-workday-1` patroon niet
+- **Root cause**: UI genereert 'workday' string, server verwachtte alleen numerieke waarden (1-7)
+- **Oplossing**: Speciale handling toegevoegd voor `targetDay === 'workday'`
+- **Verificatie**: 
+  - `monthly-weekday-first-workday-1` → 2025-07-01 ✅
+  - `monthly-weekday-last-workday-1` → 2025-07-31 ✅
 
-**VOLGENDE STAP**: End-to-end test van werkdag patronen via UI workflow
+**STATUS: ✅ BEIDE PROBLEMEN OPGELOST**
+1. ✅ Foutmelding bij opslaan "eerste werkdag van elke maand" - GEFIXED  
+2. ✅ Laatste werkdag afvinken maakt geen nieuwe taak - GEFIXED
+
+**KLAAR VOOR TESTEN**: Gebruiker kan nu beide werkdag patronen succesvol testen
 
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
