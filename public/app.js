@@ -2898,12 +2898,11 @@ class Taakbeheer {
             
             html += `
                 <div class="kalender-uur ${isOverboekt ? 'overboekt' : ''}" data-uur="${uur}">
-                    <div class="uur-label">${uur.toString().padStart(2, '0')}:00</div>
+                    <div class="uur-label">${uur.toString().padStart(2, '0')}:00 ${totaalMinuten > 0 ? `(${totaalMinuten} min${isOverboekt ? ' ⚠️' : ''})` : ''}</div>
                     <div class="uur-content" data-uur="${uur}">
                         <div class="uur-planning">
                             ${uurPlanning.map(p => this.renderPlanningItem(p)).join('')}
                         </div>
-                        <div class="uur-totaal">${totaalMinuten}min ${isOverboekt ? '⚠️' : ''}</div>
                     </div>
                 </div>
             `;
@@ -2914,15 +2913,20 @@ class Taakbeheer {
 
     renderPlanningItem(planningItem) {
         const typeIcon = {
-            'taak': '📋',
+            'taak': '✓',
             'geblokkeerd': '🚫',
             'pauze': '☕'
-        }[planningItem.type] || '📋';
+        }[planningItem.type] || '✓';
         
         const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
         
+        // Add checkbox for tasks (but not for blocked time or breaks)
+        const checkbox = planningItem.type === 'taak' && planningItem.actieId ? 
+            `<input type="checkbox" class="task-checkbox" data-actie-id="${planningItem.actieId}" onclick="app.completePlanningTask('${planningItem.actieId}', this)">` : '';
+        
         return `
             <div class="planning-item" data-planning-id="${planningItem.id}" data-type="${planningItem.type}">
+                ${checkbox}
                 <span class="planning-icon">${typeIcon}</span>
                 <span class="planning-naam">${naam}</span>
                 <span class="planning-duur">${planningItem.duurMinuten}min</span>
@@ -3027,7 +3031,12 @@ class Taakbeheer {
             } else if (data.type === 'actie') {
                 planningItem.actieId = data.actieId;
                 const actie = this.taken.find(t => t.id === data.actieId);
-                planningItem.naam = actie ? actie.tekst : 'Onbekende actie';
+                if (actie) {
+                    const projectNaam = this.getProjectNaam(actie.projectId);
+                    planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                } else {
+                    planningItem.naam = 'Onbekende actie';
+                }
             }
             
             const response = await fetch('/api/dagelijkse-planning', {
@@ -3063,6 +3072,48 @@ class Taakbeheer {
         } catch (error) {
             console.error('Error deleting planning item:', error);
             toast.error('Fout bij verwijderen planning item');
+        }
+    }
+
+    async completePlanningTask(actieId, checkboxElement) {
+        try {
+            // Find the task in our tasks array
+            const taak = this.taken.find(t => t.id === actieId);
+            if (!taak) {
+                toast.error('Taak niet gevonden');
+                checkboxElement.checked = false;
+                return;
+            }
+            
+            // Mark task as completed using existing completion workflow
+            const success = await this.verplaatsTaakNaarAfgewerkt(taak);
+            if (success) {
+                // Remove task from our local array 
+                this.taken = this.taken.filter(t => t.id !== actieId);
+                
+                // Refresh the daily planning view to update the actions list
+                await this.renderTaken();
+                await this.laadTellingen();
+                
+                // Show success message with task name
+                const projectNaam = this.getProjectNaam(taak.projectId);
+                const taskDisplay = projectNaam !== 'Geen project' ? `${taak.tekst} (${projectNaam})` : taak.tekst;
+                
+                // Handle recurring tasks
+                if (taak.herhalingActief && taak.herhalingType) {
+                    toast.success(`${taskDisplay} afgerond! Volgende herhaling wordt gepland.`);
+                } else {
+                    toast.success(`${taskDisplay} afgerond!`);
+                }
+            } else {
+                // Revert checkbox if completion failed
+                checkboxElement.checked = false;
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+            }
+        } catch (error) {
+            console.error('Error completing planning task:', error);
+            checkboxElement.checked = false;
+            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
         }
     }
 
