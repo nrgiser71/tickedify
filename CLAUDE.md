@@ -256,6 +256,69 @@ toast.info('Algemene informatie'); // Voor toekomstig gebruik
 
 **STATUS**: Toast notification systeem volledig operationeel in productie.
 
+## MODERN LOADING INDICATOR SYSTEEM GEÏMPLEMENTEERD (Juni 18, 2025) ✅
+
+**PROBLEEM OPGELOST**: Gebruiker had geen feedback wanneer app bezig was met achtergrond operaties
+**OPLOSSING**: Volledig modern loading indicator systeem geïmplementeerd
+
+**LOADING MANAGER FEATURES**:
+- ✅ **LoadingManager class** - Centraal beheer van alle loading states
+- ✅ **Global loading overlay** - Backdrop blur met spinning indicator
+- ✅ **Button loading states** - Spinners in knoppen tijdens async operaties
+- ✅ **Section loading indicators** - Lokale feedback voor specifieke componenten
+- ✅ **Skeleton loading** - Placeholder content met shimmer effects
+- ✅ **Progress bars** - Voor langere operaties (indeterminate & progress-based)
+- ✅ **Async wrapper functie** - Automatisch loading management
+
+**CSS STYLING**:
+- macOS-consistente design met var(--macos-blue) accent kleuren
+- Smooth spin animaties en loading-pulse effects  
+- Responsive loading states voor mobile devices
+- Backdrop filter blur effects voor professionele look
+- Performance optimized - geen onnodige re-renders
+
+**LOADING INTEGRATION VOLTOOID**:
+- ✅ **laadHuidigeLijst**: Global loading tijdens lijst laden
+- ✅ **maakActie**: Button loading + global overlay tijdens actie opslaan  
+- ✅ **handleDrop**: Global loading tijdens drag & drop naar dagplanning
+- ✅ **handleDropAtPosition**: Global loading voor position-based drops
+- ✅ **handlePlanningReorder**: Global loading tijdens herordening
+- ✅ **verplaatsTaakNaarAfgewerkt**: Loading tijdens task completion
+
+**DRAG & DROP LOADING FIX (v1.1.20)**:
+- **Probleem**: Loading indicators niet zichtbaar bij dagelijkse planning drag & drop
+- **Oorzaak**: showGlobal: false + incorrect section selector
+- **Oplossing**: Global loading enabled voor alle drag & drop operaties
+- **Resultaat**: Duidelijke feedback tijdens alle planning manipulaties
+
+**USER EXPERIENCE VERBETERING**:
+- Geen verrassende state changes meer - gebruiker ziet altijd wat er gebeurt
+- Moderne, professionele loading indicators zoals macOS apps
+- Automatisch loading management zonder handmatige state tracking
+- Smooth transitions en non-blocking interface tijdens korte operaties
+- Global blocking tijdens kritieke operaties (opslaan, drag & drop)
+
+**API ENDPOINTS VOOR LOADING**:
+```javascript
+// Gebruik in code:
+loading.withLoading(asyncFunction, {
+    operationId: 'unique-id',
+    showGlobal: true/false,
+    button: buttonElement,
+    section: sectionElement,
+    message: 'Laden...'
+});
+```
+
+**TESTING SCENARIOS**:
+- ✅ Lijst navigatie (global loading)
+- ✅ Actie opslaan (button + global loading)  
+- ✅ Drag & drop operaties (global loading met specifieke berichten)
+- ✅ Task completion (subtiele loading zonder blocking)
+- ✅ Planning herordening (global loading)
+
+**STATUS**: Modern loading indicator systeem volledig operationeel in productie (v1.1.20).
+
 ## IMPORTANT DEVELOPMENT NOTES FOR CLAUDE
 
 **MANDATORY DEPLOYMENT WORKFLOW:**

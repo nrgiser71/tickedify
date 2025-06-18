@@ -87,6 +87,30 @@ body {
     overflow: hidden;
 }
 
+.sidebar-header {
+    padding: 24px 20px 16px 20px;
+    border-bottom: 1px solid var(--macos-gray-4);
+    background: var(--macos-bg-primary);
+}
+
+.app-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-image {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.logo-image:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
 .sidebar-search {
     padding: 20px;
     border-bottom: 1px solid var(--macos-gray-4);
@@ -1859,6 +1883,14 @@ button:focus {
 
 /* Mobile responsive */
 @media (max-width: 768px) {
+    .sidebar-header {
+        padding: 16px 20px 12px 20px;
+    }
+    
+    .logo-image {
+        height: 28px;
+    }
+    
     .toast-container {
         top: 10px;
         right: 10px;
