@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -206,9 +207,17 @@ app.get('/api/version', (req, res) => {
     });
 });
 
-// Serve test dashboard
+// Serve test dashboard (multiple routes for accessibility)
 app.get('/admin/tests', (req, res) => {
-    res.sendFile(__dirname + '/public/test-dashboard.html');
+    res.sendFile(path.join(__dirname, 'public', 'test-dashboard.html'));
+});
+
+app.get('/test-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'test-dashboard.html'));
+});
+
+app.get('/tests', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'test-dashboard.html'));
 });
 
 // Run full regression test suite
