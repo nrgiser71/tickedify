@@ -3029,12 +3029,27 @@ class Taakbeheer {
                 planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
             } else if (data.type === 'actie') {
                 planningItem.actieId = data.actieId;
-                const actie = this.taken.find(t => t.id === data.actieId);
-                if (actie) {
-                    const projectNaam = this.getProjectNaam(actie.projectId);
-                    planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                
+                // Get fresh data from actions API to ensure we have the latest info
+                const actiesResponse = await fetch('/api/lijst/acties');
+                if (actiesResponse.ok) {
+                    const acties = await actiesResponse.json();
+                    const actie = acties.find(t => t.id === data.actieId);
+                    if (actie) {
+                        const projectNaam = this.getProjectNaam(actie.projectId);
+                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                    } else {
+                        planningItem.naam = 'Onbekende actie';
+                    }
                 } else {
-                    planningItem.naam = 'Onbekende actie';
+                    // Fallback to cached data
+                    const actie = this.taken.find(t => t.id === data.actieId);
+                    if (actie) {
+                        const projectNaam = this.getProjectNaam(actie.projectId);
+                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                    } else {
+                        planningItem.naam = 'Onbekende actie';
+                    }
                 }
             }
             

@@ -1461,8 +1461,8 @@ button:focus {
 }
 
 .planning-sidebar {
-    width: 400px;
-    min-width: 400px;
+    width: 600px;
+    min-width: 600px;
     background: var(--macos-bg-secondary);
     border-radius: var(--macos-radius-large);
     padding: 20px;
@@ -1645,6 +1645,7 @@ button:focus {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 2px solid var(--macos-gray-5);
+    gap: 20px;
 }
 
 .kalender-header h2 {
@@ -1655,11 +1656,13 @@ button:focus {
 
 .totaal-tijd {
     background: var(--macos-gray-6);
-    padding: 8px 32px;
+    padding: 12px 40px;
     border-radius: var(--macos-radius-medium);
     font-weight: 500;
     color: var(--macos-text-secondary);
-    min-width: 200px;
+    min-width: 250px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .kalender-grid {
