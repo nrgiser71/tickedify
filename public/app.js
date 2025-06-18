@@ -2844,6 +2844,10 @@ class Taakbeheer {
                                     <option value="">Alle contexten</option>
                                 </select>
                             </div>
+                            <div class="filter-groep">
+                                <label>Datum:</label>
+                                <input type="date" id="planningDatumFilter">
+                            </div>
                         </div>
                         <div class="acties-lijst" id="planningActiesLijst">
                             ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
@@ -2877,12 +2881,17 @@ class Taakbeheer {
             const projectNaam = this.getProjectNaam(actie.projectId);
             const contextNaam = this.getContextNaam(actie.contextId);
             
+            // Format date for display
+            const datumString = actie.verschijndatum ? 
+                new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'Geen datum';
+            
             return `
                 <div class="planning-actie-item" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-tekst">${actie.tekst}</div>
                     <div class="actie-details">
                         ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
                         ${contextNaam ? `<span class="context">${contextNaam}</span>` : ''}
+                        <span class="datum">${datumString}</span>
                         <span class="duur">${actie.duur || 60}min</span>
                     </div>
                 </div>
@@ -2960,10 +2969,12 @@ class Taakbeheer {
         const taakFilter = document.getElementById('planningTaakFilter');
         const projectFilter = document.getElementById('planningProjectFilter');
         const contextFilter = document.getElementById('planningContextFilter');
+        const datumFilter = document.getElementById('planningDatumFilter');
         
         if (taakFilter) taakFilter.addEventListener('input', () => this.filterPlanningActies());
         if (projectFilter) projectFilter.addEventListener('change', () => this.filterPlanningActies());
         if (contextFilter) contextFilter.addEventListener('change', () => this.filterPlanningActies());
+        if (datumFilter) datumFilter.addEventListener('change', () => this.filterPlanningActies());
         
         // Populate filter dropdowns
         this.populatePlanningFilters();
@@ -3141,6 +3152,7 @@ class Taakbeheer {
         const taakFilter = document.getElementById('planningTaakFilter')?.value.toLowerCase() || '';
         const projectFilter = document.getElementById('planningProjectFilter')?.value || '';
         const contextFilter = document.getElementById('planningContextFilter')?.value || '';
+        const datumFilter = document.getElementById('planningDatumFilter')?.value || '';
 
         document.querySelectorAll('.planning-actie-item').forEach(item => {
             const actieId = item.dataset.actieId;
@@ -3154,6 +3166,28 @@ class Taakbeheer {
             if (taakFilter && !actie.tekst.toLowerCase().includes(taakFilter)) tonen = false;
             if (projectFilter && actie.projectId !== projectFilter) tonen = false;
             if (contextFilter && actie.contextId !== contextFilter) tonen = false;
+            
+            // Date filter logic - same as in actions list
+            if (datumFilter && actie.verschijndatum) {
+                // Normalize task date to YYYY-MM-DD format for comparison
+                let taakDatum = '';
+                if (typeof actie.verschijndatum === 'string') {
+                    if (actie.verschijndatum.includes('T')) {
+                        // ISO format: "2025-06-17T00:00:00.000Z"
+                        taakDatum = actie.verschijndatum.split('T')[0];
+                    } else if (actie.verschijndatum.includes('/')) {
+                        // Dutch format: "17/06/2025" -> "2025-06-17"
+                        const parts = actie.verschijndatum.split('/');
+                        if (parts.length === 3) {
+                            taakDatum = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                        }
+                    } else {
+                        taakDatum = actie.verschijndatum;
+                    }
+                }
+                
+                if (taakDatum !== datumFilter) tonen = false;
+            }
             
             item.style.display = tonen ? '' : 'none';
         });
