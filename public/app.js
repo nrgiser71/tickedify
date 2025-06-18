@@ -1277,6 +1277,10 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
+                    <label>Taak:</label>
+                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
+                </div>
+                <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
                         <option value="">Alle projecten</option>
@@ -2454,10 +2458,12 @@ class Taakbeheer {
 
     bindActiesEvents() {
         // Filter event listeners
+        const taakFilter = document.getElementById('taakFilter');
         const projectFilter = document.getElementById('projectFilter');
         const contextFilter = document.getElementById('contextFilter');
         const datumFilter = document.getElementById('datumFilter');
 
+        if (taakFilter) taakFilter.addEventListener('input', () => this.filterActies());
         if (projectFilter) projectFilter.addEventListener('change', () => this.filterActies());
         if (contextFilter) contextFilter.addEventListener('change', () => this.filterActies());
         if (datumFilter) datumFilter.addEventListener('change', () => this.filterActies());
@@ -2564,9 +2570,10 @@ class Taakbeheer {
     }
 
     filterActies() {
-        const projectFilter = document.getElementById('projectFilter').value;
-        const contextFilter = document.getElementById('contextFilter').value;
-        const datumFilter = document.getElementById('datumFilter').value;
+        const taakFilter = document.getElementById('taakFilter')?.value.toLowerCase() || '';
+        const projectFilter = document.getElementById('projectFilter')?.value || '';
+        const contextFilter = document.getElementById('contextFilter')?.value || '';
+        const datumFilter = document.getElementById('datumFilter')?.value || '';
 
         document.querySelectorAll('.actie-row').forEach(row => {
             const actieId = row.dataset.id;
@@ -2574,6 +2581,10 @@ class Taakbeheer {
             
             let tonen = true;
             
+            // Taak tekst filter (contains search)
+            if (taakFilter && !actie.tekst.toLowerCase().includes(taakFilter)) tonen = false;
+            
+            // Bestaande filters
             if (projectFilter && actie.projectId !== projectFilter) tonen = false;
             if (contextFilter && actie.contextId !== contextFilter) tonen = false;
             if (datumFilter && actie.verschijndatum !== datumFilter) tonen = false;
