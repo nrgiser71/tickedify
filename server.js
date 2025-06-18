@@ -317,6 +317,91 @@ app.get('/api/test/run-business', async (req, res) => {
     }
 });
 
+// Dagelijkse Planning API endpoints
+app.get('/api/dagelijkse-planning/:datum', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { datum } = req.params;
+        const planning = await db.getDagelijksePlanning(datum);
+        res.json(planning);
+    } catch (error) {
+        console.error('Error getting dagelijkse planning:', error);
+        res.status(500).json({ error: 'Fout bij ophalen dagelijkse planning' });
+    }
+});
+
+app.post('/api/dagelijkse-planning', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const planningId = await db.addToDagelijksePlanning(req.body);
+        res.json({ success: true, id: planningId });
+    } catch (error) {
+        console.error('Error adding to dagelijkse planning:', error);
+        res.status(500).json({ error: 'Fout bij toevoegen aan dagelijkse planning' });
+    }
+});
+
+app.put('/api/dagelijkse-planning/:id', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const success = await db.updateDagelijksePlanning(id, req.body);
+        
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Planning item niet gevonden' });
+        }
+    } catch (error) {
+        console.error('Error updating dagelijkse planning:', error);
+        res.status(500).json({ error: 'Fout bij updaten dagelijkse planning' });
+    }
+});
+
+app.delete('/api/dagelijkse-planning/:id', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const success = await db.deleteDagelijksePlanning(id);
+        
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Planning item niet gevonden' });
+        }
+    } catch (error) {
+        console.error('Error deleting dagelijkse planning:', error);
+        res.status(500).json({ error: 'Fout bij verwijderen dagelijkse planning' });
+    }
+});
+
+app.get('/api/ingeplande-acties/:datum', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { datum } = req.params;
+        const ingeplandeActies = await db.getIngeplandeActies(datum);
+        res.json(ingeplandeActies);
+    } catch (error) {
+        console.error('Error getting ingeplande acties:', error);
+        res.status(500).json({ error: 'Fout bij ophalen ingeplande acties' });
+    }
+});
+
 // Emergency cleanup endpoint
 app.post('/api/test/emergency-cleanup', async (req, res) => {
     try {

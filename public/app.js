@@ -1155,6 +1155,8 @@ class Taakbeheer {
         
         if (this.huidigeLijst === 'acties') {
             this.renderActiesTable(container);
+        } else if (this.huidigeLijst === 'dagelijkse-planning') {
+            await this.renderDagelijksePlanning(container);
         } else if (this.huidigeLijst === 'projecten') {
             await this.renderProjectenLijst(container);
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
@@ -2766,6 +2768,371 @@ class Taakbeheer {
     isValidDate(dateString) {
         const date = new Date(dateString);
         return date instanceof Date && !isNaN(date) && dateString.match(/^\d{4}-\d{2}-\d{2}$/);
+    }
+
+    async renderDagelijksePlanning(container) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Laad acties lijst voor filtering en drag & drop
+        const actiesResponse = await fetch('/api/lijst/acties');
+        const acties = actiesResponse.ok ? await actiesResponse.json() : [];
+        
+        // Laad dagelijkse planning voor vandaag
+        const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+        const planning = planningResponse.ok ? await planningResponse.json() : [];
+        
+        // Laad ingeplande acties voor indicator
+        const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
+        const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
+        
+        // Get saved time range preference
+        const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
+        const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+        
+        container.innerHTML = `
+            <div class="dagelijkse-planning-layout">
+                <!-- Left column: Templates and Actions -->
+                <div class="planning-sidebar">
+                    <!-- Time range settings -->
+                    <div class="tijd-instellingen">
+                        <h3>Tijd Instellingen</h3>
+                        <div class="tijd-inputs">
+                            <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
+                            <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
+                        </div>
+                    </div>
+                    
+                    <!-- Templates -->
+                    <div class="templates-sectie">
+                        <h3>🚫 Geblokkeerde tijd</h3>
+                        <div class="template-items">
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">30 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">60 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">90 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">120 min</div>
+                        </div>
+                        
+                        <h3>☕ Pauzes</h3>
+                        <div class="template-items">
+                            <div class="template-item" draggable="true" data-type="pauze" data-duur="5">5 min</div>
+                            <div class="template-item" draggable="true" data-type="pauze" data-duur="10">10 min</div>
+                            <div class="template-item" draggable="true" data-type="pauze" data-duur="15">15 min</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions list -->
+                    <div class="acties-sectie">
+                        <h3>📋 Acties (deze week)</h3>
+                        <div class="acties-filters">
+                            <div class="filter-groep">
+                                <label>Taak:</label>
+                                <input type="text" id="planningTaakFilter" placeholder="Zoek...">
+                            </div>
+                            <div class="filter-groep">
+                                <label>Project:</label>
+                                <select id="planningProjectFilter">
+                                    <option value="">Alle projecten</option>
+                                </select>
+                            </div>
+                            <div class="filter-groep">
+                                <label>Context:</label>
+                                <select id="planningContextFilter">
+                                    <option value="">Alle contexten</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="acties-lijst" id="planningActiesLijst">
+                            ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right column: Day calendar -->
+                <div class="dag-kalender">
+                    <div class="kalender-header">
+                        <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                        <div class="totaal-tijd">
+                            <span id="totaalGeplandeTijd">Totaal: 0 min</span>
+                        </div>
+                    </div>
+                    <div class="kalender-grid" id="kalenderGrid">
+                        ${this.renderKalenderGrid(startUur, eindUur, planning)}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Bind events for dagelijkse planning
+        this.bindDagelijksePlanningEvents();
+        this.bindDragAndDropEvents();
+        this.updateTotaalTijd();
+    }
+
+    renderActiesVoorPlanning(acties, ingeplandeActies) {
+        return acties.map(actie => {
+            const isIngepland = ingeplandeActies.includes(actie.id);
+            const indicator = isIngepland ? '📅' : '';
+            const projectNaam = this.getProjectNaam(actie.projectId);
+            const contextNaam = this.getContextNaam(actie.contextId);
+            
+            return `
+                <div class="planning-actie-item" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
+                    <div class="actie-tekst">${indicator} ${actie.tekst}</div>
+                    <div class="actie-details">
+                        ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
+                        ${contextNaam ? `<span class="context">${contextNaam}</span>` : ''}
+                        <span class="duur">${actie.duur || 60}min</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderKalenderGrid(startUur, eindUur, planning) {
+        let html = '';
+        
+        for (let uur = startUur; uur < eindUur; uur++) {
+            const uurPlanning = planning.filter(p => p.uur === uur);
+            const totaalMinuten = uurPlanning.reduce((sum, p) => sum + p.duurMinuten, 0);
+            const isOverboekt = totaalMinuten > 60;
+            
+            html += `
+                <div class="kalender-uur ${isOverboekt ? 'overboekt' : ''}" data-uur="${uur}">
+                    <div class="uur-label">${uur.toString().padStart(2, '0')}:00</div>
+                    <div class="uur-content" data-uur="${uur}">
+                        <div class="uur-planning">
+                            ${uurPlanning.map(p => this.renderPlanningItem(p)).join('')}
+                        </div>
+                        <div class="uur-totaal">${totaalMinuten}min ${isOverboekt ? '⚠️' : ''}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return html;
+    }
+
+    renderPlanningItem(planningItem) {
+        const typeIcon = {
+            'taak': '📋',
+            'geblokkeerd': '🚫',
+            'pauze': '☕'
+        }[planningItem.type] || '📋';
+        
+        const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
+        
+        return `
+            <div class="planning-item" data-planning-id="${planningItem.id}" data-type="${planningItem.type}">
+                <span class="planning-icon">${typeIcon}</span>
+                <span class="planning-naam">${naam}</span>
+                <span class="planning-duur">${planningItem.duurMinuten}min</span>
+                <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
+            </div>
+        `;
+    }
+
+    bindDagelijksePlanningEvents() {
+        // Time range change handlers
+        const startUurInput = document.getElementById('startUur');
+        const eindUurInput = document.getElementById('eindUur');
+        
+        if (startUurInput) {
+            startUurInput.addEventListener('change', () => {
+                localStorage.setItem('dagplanning-start-uur', startUurInput.value);
+                this.renderTaken(); // Re-render with new time range
+            });
+        }
+        
+        if (eindUurInput) {
+            eindUurInput.addEventListener('change', () => {
+                localStorage.setItem('dagplanning-eind-uur', eindUurInput.value);
+                this.renderTaken(); // Re-render with new time range
+            });
+        }
+        
+        // Filter handlers
+        const taakFilter = document.getElementById('planningTaakFilter');
+        const projectFilter = document.getElementById('planningProjectFilter');
+        const contextFilter = document.getElementById('planningContextFilter');
+        
+        if (taakFilter) taakFilter.addEventListener('input', () => this.filterPlanningActies());
+        if (projectFilter) projectFilter.addEventListener('change', () => this.filterPlanningActies());
+        if (contextFilter) contextFilter.addEventListener('change', () => this.filterPlanningActies());
+        
+        // Populate filter dropdowns
+        this.populatePlanningFilters();
+    }
+
+    bindDragAndDropEvents() {
+        // Template drag start
+        document.querySelectorAll('.template-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'template',
+                    planningType: item.dataset.type,
+                    duurMinuten: parseInt(item.dataset.duur)
+                }));
+            });
+        });
+        
+        // Action drag start
+        document.querySelectorAll('.planning-actie-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'actie',
+                    actieId: item.dataset.actieId,
+                    duurMinuten: parseInt(item.dataset.duur)
+                }));
+            });
+        });
+        
+        // Drop zone handlers
+        document.querySelectorAll('.uur-content').forEach(dropZone => {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                if (!dropZone.contains(e.relatedTarget)) {
+                    dropZone.classList.remove('drag-over');
+                }
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const uur = parseInt(dropZone.dataset.uur);
+                
+                this.handleDrop(data, uur);
+            });
+        });
+    }
+
+    async handleDrop(data, uur) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        try {
+            const planningItem = {
+                datum: today,
+                uur: uur,
+                type: data.type === 'template' ? data.planningType : 'taak',
+                duurMinuten: data.duurMinuten
+            };
+            
+            if (data.type === 'template') {
+                planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
+            } else if (data.type === 'actie') {
+                planningItem.actieId = data.actieId;
+                const actie = this.taken.find(t => t.id === data.actieId);
+                planningItem.naam = actie ? actie.tekst : 'Onbekende actie';
+            }
+            
+            const response = await fetch('/api/dagelijkse-planning', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(planningItem)
+            });
+            
+            if (response.ok) {
+                await this.renderTaken(); // Refresh the view
+                toast.success('Planning item toegevoegd!');
+            } else {
+                toast.error('Fout bij toevoegen planning item');
+            }
+        } catch (error) {
+            console.error('Error handling drop:', error);
+            toast.error('Fout bij verwerken drag & drop');
+        }
+    }
+
+    async deletePlanningItem(planningId) {
+        try {
+            const response = await fetch(`/api/dagelijkse-planning/${planningId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                await this.renderTaken(); // Refresh the view
+                toast.success('Planning item verwijderd!');
+            } else {
+                toast.error('Fout bij verwijderen planning item');
+            }
+        } catch (error) {
+            console.error('Error deleting planning item:', error);
+            toast.error('Fout bij verwijderen planning item');
+        }
+    }
+
+    filterPlanningActies() {
+        const taakFilter = document.getElementById('planningTaakFilter')?.value.toLowerCase() || '';
+        const projectFilter = document.getElementById('planningProjectFilter')?.value || '';
+        const contextFilter = document.getElementById('planningContextFilter')?.value || '';
+
+        document.querySelectorAll('.planning-actie-item').forEach(item => {
+            const actieId = item.dataset.actieId;
+            const actie = this.taken.find(t => t.id === actieId);
+            
+            if (!actie) return;
+            
+            let tonen = true;
+            
+            if (taakFilter && !actie.tekst.toLowerCase().includes(taakFilter)) tonen = false;
+            if (projectFilter && actie.projectId !== projectFilter) tonen = false;
+            if (contextFilter && actie.contextId !== contextFilter) tonen = false;
+            
+            item.style.display = tonen ? '' : 'none';
+        });
+    }
+
+    populatePlanningFilters() {
+        // Populate project filter
+        const projectFilter = document.getElementById('planningProjectFilter');
+        if (projectFilter) {
+            this.projecten.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project.id;
+                option.textContent = project.naam;
+                projectFilter.appendChild(option);
+            });
+        }
+        
+        // Populate context filter
+        const contextFilter = document.getElementById('planningContextFilter');
+        if (contextFilter) {
+            this.contexten.forEach(context => {
+                const option = document.createElement('option');
+                option.value = context.id;
+                option.textContent = context.naam;
+                contextFilter.appendChild(option);
+            });
+        }
+    }
+
+    updateTotaalTijd() {
+        const uurTotalen = document.querySelectorAll('.uur-totaal');
+        let totaalMinuten = 0;
+        
+        uurTotalen.forEach(element => {
+            const match = element.textContent.match(/(\d+)min/);
+            if (match) {
+                totaalMinuten += parseInt(match[1]);
+            }
+        });
+        
+        const totaalElement = document.getElementById('totaalGeplandeTijd');
+        if (totaalElement) {
+            const uren = Math.floor(totaalMinuten / 60);
+            const minuten = totaalMinuten % 60;
+            
+            if (uren > 0) {
+                totaalElement.textContent = `Totaal: ${uren}u ${minuten}min`;
+            } else {
+                totaalElement.textContent = `Totaal: ${minuten}min`;
+            }
+        }
     }
 }
 

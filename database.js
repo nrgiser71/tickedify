@@ -85,11 +85,28 @@ const initDatabase = async () => {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS dagelijkse_planning (
+        id VARCHAR(50) PRIMARY KEY,
+        actie_id VARCHAR(50),
+        datum DATE NOT NULL,
+        uur INTEGER NOT NULL CHECK (uur >= 0 AND uur <= 23),
+        type VARCHAR(20) NOT NULL CHECK (type IN ('taak', 'geblokkeerd', 'pauze')),
+        naam TEXT,
+        duur_minuten INTEGER NOT NULL,
+        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (actie_id) REFERENCES taken(id) ON DELETE CASCADE
+      )
+    `);
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
       CREATE INDEX IF NOT EXISTS idx_taken_project ON taken(project_id);
       CREATE INDEX IF NOT EXISTS idx_taken_context ON taken(context_id);
+      CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum ON dagelijkse_planning(datum);
+      CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_actie ON dagelijkse_planning(actie_id);
+      CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum_uur ON dagelijkse_planning(datum, uur);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -499,6 +516,116 @@ const db = {
     } catch (error) {
       console.error('Error getting counts:', error);
       return {};
+    }
+  },
+
+  // Dagelijkse Planning functions
+  async getDagelijksePlanning(datum) {
+    try {
+      const result = await pool.query(`
+        SELECT dp.*, t.tekst as actie_tekst, t.project_id, t.context_id, t.duur as actie_duur
+        FROM dagelijkse_planning dp
+        LEFT JOIN taken t ON dp.actie_id = t.id
+        WHERE dp.datum = $1
+        ORDER BY dp.uur ASC, dp.aangemaakt ASC
+      `, [datum]);
+      
+      return result.rows.map(row => ({
+        id: row.id,
+        actieId: row.actie_id,
+        datum: row.datum,
+        uur: row.uur,
+        type: row.type,
+        naam: row.naam,
+        duurMinuten: row.duur_minuten,
+        aangemaakt: row.aangemaakt,
+        // Actie details (als beschikbaar)
+        actieTekst: row.actie_tekst,
+        projectId: row.project_id,
+        contextId: row.context_id,
+        actieDuur: row.actie_duur
+      }));
+    } catch (error) {
+      console.error('Error getting dagelijkse planning:', error);
+      return [];
+    }
+  },
+
+  async addToDagelijksePlanning(planningItem) {
+    try {
+      const id = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      
+      await pool.query(`
+        INSERT INTO dagelijkse_planning (id, actie_id, datum, uur, type, naam, duur_minuten)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [
+        id,
+        planningItem.actieId || null,
+        planningItem.datum,
+        planningItem.uur,
+        planningItem.type,
+        planningItem.naam || null,
+        planningItem.duurMinuten
+      ]);
+      
+      return id;
+    } catch (error) {
+      console.error('Error adding to dagelijkse planning:', error);
+      throw error;
+    }
+  },
+
+  async updateDagelijksePlanning(id, updates) {
+    try {
+      const fields = [];
+      const values = [];
+      let paramIndex = 1;
+
+      Object.keys(updates).forEach(key => {
+        if (key === 'actieId') {
+          fields.push(`actie_id = $${paramIndex}`);
+        } else if (key === 'duurMinuten') {
+          fields.push(`duur_minuten = $${paramIndex}`);
+        } else {
+          fields.push(`${key} = $${paramIndex}`);
+        }
+        values.push(updates[key]);
+        paramIndex++;
+      });
+
+      values.push(id);
+      const query = `UPDATE dagelijkse_planning SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+      
+      const result = await pool.query(query, values);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error updating dagelijkse planning:', error);
+      return false;
+    }
+  },
+
+  async deleteDagelijksePlanning(id) {
+    try {
+      const result = await pool.query('DELETE FROM dagelijkse_planning WHERE id = $1', [id]);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting dagelijkse planning:', error);
+      return false;
+    }
+  },
+
+  async getIngeplandeActies(datum) {
+    try {
+      const result = await pool.query(`
+        SELECT DISTINCT actie_id
+        FROM dagelijkse_planning
+        WHERE datum = $1 AND actie_id IS NOT NULL
+      `, [datum]);
+      
+      return result.rows.map(row => row.actie_id);
+    } catch (error) {
+      console.error('Error getting ingeplande acties:', error);
+      return [];
     }
   }
 };
