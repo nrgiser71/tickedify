@@ -3088,6 +3088,7 @@ class Taakbeheer {
             
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Stop event bubbling to prevent double handling
                 dropZone.classList.remove('drop-zone-active');
                 
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
