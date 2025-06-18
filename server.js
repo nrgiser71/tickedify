@@ -45,6 +45,14 @@ try {
     db = dbModule.db;
     pool = dbModule.pool;
     console.log('Database module imported successfully');
+    
+    // Run database initialization
+    dbModule.initDatabase().then(() => {
+        dbInitialized = true;
+        console.log('✅ Database initialization completed');
+    }).catch(error => {
+        console.error('❌ Database initialization failed:', error);
+    });
 } catch (error) {
     console.error('Failed to import database module:', error);
 }
@@ -71,6 +79,33 @@ app.get('/api/db-test', async (req, res) => {
         console.error('Database test failed:', error);
         res.status(500).json({ 
             status: 'database_error',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+app.post('/api/admin/init-database', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        console.log('🔧 Manual database initialization requested...');
+        const { initDatabase } = require('./database');
+        await initDatabase();
+        dbInitialized = true;
+        
+        console.log('✅ Manual database initialization completed');
+        res.json({ 
+            success: true, 
+            message: 'Database initialized successfully',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Manual database initialization failed:', error);
+        res.status(500).json({ 
+            success: false, 
             error: error.message,
             timestamp: new Date().toISOString()
         });
