@@ -402,6 +402,27 @@ app.put('/api/dagelijkse-planning/:id', async (req, res) => {
     }
 });
 
+app.put('/api/dagelijkse-planning/:id/reorder', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const { targetUur, targetPosition } = req.body;
+        const success = await db.reorderDagelijksePlanning(id, targetUur, targetPosition);
+        
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: 'Planning item niet gevonden' });
+        }
+    } catch (error) {
+        console.error('Error reordering dagelijkse planning:', error);
+        res.status(500).json({ error: 'Fout bij herordenen dagelijkse planning' });
+    }
+});
+
 app.delete('/api/dagelijkse-planning/:id', async (req, res) => {
     try {
         if (!db) {

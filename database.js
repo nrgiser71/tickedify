@@ -91,6 +91,7 @@ const initDatabase = async () => {
         actie_id VARCHAR(50),
         datum DATE NOT NULL,
         uur INTEGER NOT NULL CHECK (uur >= 0 AND uur <= 23),
+        positie INTEGER DEFAULT 0,
         type VARCHAR(20) NOT NULL CHECK (type IN ('taak', 'geblokkeerd', 'pauze')),
         naam TEXT,
         duur_minuten INTEGER NOT NULL,
@@ -98,6 +99,13 @@ const initDatabase = async () => {
         FOREIGN KEY (actie_id) REFERENCES taken(id) ON DELETE CASCADE
       )
     `);
+
+    // Add position column to existing tables if it doesn't exist
+    try {
+      await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
+    } catch (error) {
+      // Column might already exist, ignore error
+    }
 
     // Create indexes for performance
     await pool.query(`
@@ -527,7 +535,7 @@ const db = {
         FROM dagelijkse_planning dp
         LEFT JOIN taken t ON dp.actie_id = t.id
         WHERE dp.datum = $1
-        ORDER BY dp.uur ASC, dp.aangemaakt ASC
+        ORDER BY dp.uur ASC, dp.positie ASC, dp.aangemaakt ASC
       `, [datum]);
       
       return result.rows.map(row => ({
@@ -535,6 +543,7 @@ const db = {
         actieId: row.actie_id,
         datum: row.datum,
         uur: row.uur,
+        positie: row.positie || 0,
         type: row.type,
         naam: row.naam,
         duurMinuten: row.duur_minuten,
@@ -555,14 +564,35 @@ const db = {
     try {
       const id = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
       
+      // Calculate next position for this hour
+      let positie = planningItem.positie;
+      if (positie === undefined || positie === null) {
+        const maxPosResult = await pool.query(`
+          SELECT COALESCE(MAX(positie), -1) + 1 as next_position
+          FROM dagelijkse_planning 
+          WHERE datum = $1 AND uur = $2
+        `, [planningItem.datum, planningItem.uur]);
+        positie = maxPosResult.rows[0].next_position;
+      }
+
+      // If inserting at specific position, shift other items
+      if (planningItem.positie !== undefined && planningItem.positie !== null) {
+        await pool.query(`
+          UPDATE dagelijkse_planning 
+          SET positie = positie + 1 
+          WHERE datum = $1 AND uur = $2 AND positie >= $3
+        `, [planningItem.datum, planningItem.uur, planningItem.positie]);
+      }
+      
       await pool.query(`
-        INSERT INTO dagelijkse_planning (id, actie_id, datum, uur, type, naam, duur_minuten)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO dagelijkse_planning (id, actie_id, datum, uur, positie, type, naam, duur_minuten)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       `, [
         id,
         planningItem.actieId || null,
         planningItem.datum,
         planningItem.uur,
+        positie,
         planningItem.type,
         planningItem.naam || null,
         planningItem.duurMinuten
@@ -600,6 +630,67 @@ const db = {
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error updating dagelijkse planning:', error);
+      return false;
+    }
+  },
+
+  async reorderDagelijksePlanning(id, targetUur, targetPosition) {
+    try {
+      // Get current item info
+      const currentResult = await pool.query(`
+        SELECT datum, uur, positie FROM dagelijkse_planning WHERE id = $1
+      `, [id]);
+      
+      if (currentResult.rows.length === 0) {
+        return false;
+      }
+      
+      const current = currentResult.rows[0];
+      const datum = current.datum;
+      const currentUur = current.uur;
+      const currentPositie = current.positie;
+      
+      // If moving to different hour or specific position
+      if (currentUur !== targetUur || targetPosition !== null) {
+        // Remove from current position (shift items down)
+        await pool.query(`
+          UPDATE dagelijkse_planning 
+          SET positie = positie - 1 
+          WHERE datum = $1 AND uur = $2 AND positie > $3
+        `, [datum, currentUur, currentPositie]);
+        
+        // Determine target position
+        let finalPosition = targetPosition;
+        if (finalPosition === null || finalPosition === undefined) {
+          // Append to end of target hour
+          const maxPosResult = await pool.query(`
+            SELECT COALESCE(MAX(positie), -1) + 1 as next_position
+            FROM dagelijkse_planning 
+            WHERE datum = $1 AND uur = $2
+          `, [datum, targetUur]);
+          finalPosition = maxPosResult.rows[0].next_position;
+        } else {
+          // Insert at specific position, shift others up
+          await pool.query(`
+            UPDATE dagelijkse_planning 
+            SET positie = positie + 1 
+            WHERE datum = $1 AND uur = $2 AND positie >= $3
+          `, [datum, targetUur, finalPosition]);
+        }
+        
+        // Update item with new hour and position
+        await pool.query(`
+          UPDATE dagelijkse_planning 
+          SET uur = $1, positie = $2 
+          WHERE id = $3
+        `, [targetUur, finalPosition, id]);
+        
+        return true;
+      }
+      
+      return true; // No change needed
+    } catch (error) {
+      console.error('Error reordering dagelijkse planning:', error);
       return false;
     }
   },

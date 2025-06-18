@@ -3162,9 +3162,62 @@ class Taakbeheer {
     }
 
     async handleDropAtPosition(data, uur, position) {
-        // For new items, we'll need to implement position-based insertion
-        // For now, fall back to regular handleDrop
-        await this.handleDrop(data, uur);
+        const today = new Date().toISOString().split('T')[0];
+        
+        try {
+            const planningItem = {
+                datum: today,
+                uur: uur,
+                positie: position,
+                type: data.type === 'template' ? data.planningType : 'taak',
+                duurMinuten: data.duurMinuten
+            };
+            
+            if (data.type === 'template') {
+                planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
+            } else if (data.type === 'actie') {
+                planningItem.actieId = data.actieId;
+                
+                // Get fresh data from actions API to ensure we have the latest info
+                const actiesResponse = await fetch('/api/lijst/acties');
+                if (actiesResponse.ok) {
+                    const acties = await actiesResponse.json();
+                    const actie = acties.find(t => t.id === data.actieId);
+                    if (actie) {
+                        const projectNaam = this.getProjectNaam(actie.projectId);
+                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                    } else {
+                        planningItem.naam = 'Onbekende actie';
+                    }
+                } else {
+                    // Fallback to cached data
+                    const actie = this.taken.find(t => t.id === data.actieId);
+                    if (actie) {
+                        const projectNaam = this.getProjectNaam(actie.projectId);
+                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                    } else {
+                        planningItem.naam = 'Onbekende actie';
+                    }
+                }
+            }
+            
+            const response = await fetch('/api/dagelijkse-planning', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(planningItem)
+            });
+            
+            if (response.ok) {
+                await this.renderTaken(); // Refresh the view
+                this.updateTotaalTijd(); // Update total time
+                toast.success('Planning item toegevoegd!');
+            } else {
+                toast.error('Fout bij toevoegen planning item');
+            }
+        } catch (error) {
+            console.error('Error handling drop at position:', error);
+            toast.error('Fout bij verwerken drag & drop');
+        }
     }
 
     async handlePlanningReorder(data, targetUur, targetPosition) {
@@ -3176,15 +3229,16 @@ class Taakbeheer {
                 return;
             }
             
-            // Update the planning item with new hour (and potentially position)
-            const updateData = {
-                uur: targetUur
+            // Use the new reorder endpoint
+            const reorderData = {
+                targetUur: targetUur,
+                targetPosition: targetPosition
             };
             
-            const response = await fetch(`/api/dagelijkse-planning/${data.planningId}`, {
+            const response = await fetch(`/api/dagelijkse-planning/${data.planningId}/reorder`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updateData)
+                body: JSON.stringify(reorderData)
             });
             
             if (response.ok) {
