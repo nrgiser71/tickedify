@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Herhaling</title>
+</head>
+<body>
+    <h1>Test Herhaling Popup Logic</h1>
+    
+    <!-- Simplified herhaling popup elements -->
+    <div>
+        <input type="radio" id="herhalingMonthlyWeekday" name="herhalingType" value="monthly-weekday">
+        <label for="herhalingMonthlyWeekday">Monthly Weekday</label>
+        
+        <select id="monthlyWeekdayPosition">
+            <option value="first">eerste</option>
+            <option value="last">laatste</option>
+        </select>
+        
+        <select id="monthlyWeekdayDay">
+            <option value="1">maandag</option>
+            <option value="2">dinsdag</option>
+            <option value="workday">werkdag</option>
+        </select>
+        
+        <input type="number" id="monthlyWeekdayInterval" value="1">
+        
+        <input type="hidden" id="herhalingSelect" value="">
+        <input type="text" id="herhalingDisplay" readonly>
+    </div>
+    
+    <button onclick="testGeneratePattern()">Generate Pattern</button>
+    <button onclick="testParsePattern()">Parse Pattern</button>
+    <button onclick="testFullCycle()">Test Full Cycle</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        function testGeneratePattern() {
+            // Simulate user selecting "eerste werkdag"
+            document.getElementById('herhalingMonthlyWeekday').checked = true;
+            document.getElementById('monthlyWeekdayPosition').value = 'first';
+            document.getElementById('monthlyWeekdayDay').value = 'workday';
+            document.getElementById('monthlyWeekdayInterval').value = '1';
+            
+            // Generate pattern (simplified version of updateHerhalingValue)
+            const position = document.getElementById('monthlyWeekdayPosition').value;
+            const weekday = document.getElementById('monthlyWeekdayDay').value;
+            const interval = document.getElementById('monthlyWeekdayInterval').value;
+            const pattern = `monthly-weekday-${position}-${weekday}-${interval}`;
+            
+            document.getElementById('herhalingSelect').value = pattern;
+            
+            log(`Generated pattern: ${pattern}`);
+        }
+        
+        function testParsePattern() {
+            const pattern = document.getElementById('herhalingSelect').value;
+            log(`Parsing pattern: ${pattern}`);
+            
+            // Simplified version of parseHerhalingValue
+            if (pattern.startsWith('monthly-weekday-')) {
+                const parts = pattern.split('-');
+                if (parts.length >= 5) {
+                    document.getElementById('monthlyWeekdayPosition').value = parts[2];
+                    document.getElementById('monthlyWeekdayDay').value = parts[3];
+                    document.getElementById('monthlyWeekdayInterval').value = parts[4];
+                    
+                    log(`Parsed - Position: ${parts[2]}, Day: ${parts[3]}, Interval: ${parts[4]}`);
+                    log(`monthlyWeekdayDay field value: ${document.getElementById('monthlyWeekdayDay').value}`);
+                    log(`monthlyWeekdayDay selected option: ${document.getElementById('monthlyWeekdayDay').selectedOptions[0]?.text}`);
+                }
+            }
+        }
+        
+        function testFullCycle() {
+            log('=== FULL CYCLE TEST ===');
+            testGeneratePattern();
+            setTimeout(() => {
+                testParsePattern();
+            }, 100);
+        }
+        
+        function log(message) {
+            const results = document.getElementById('results');
+            results.innerHTML += '<div>' + message + '</div>';
+        }
+    </script>
+</body>
+</html>

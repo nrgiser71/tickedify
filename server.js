@@ -191,6 +191,149 @@ app.get('/api/debug/find-task/:id', async (req, res) => {
     }
 });
 
+// Test Dashboard Endpoints
+const testModule = require('./test-runner');
+
+// Version endpoint voor deployment tracking
+app.get('/api/version', (req, res) => {
+    const packageJson = require('./package.json');
+    res.json({
+        version: packageJson.version,
+        commit_hash: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'unknown',
+        deployed_at: new Date().toISOString(),
+        features: ['toast-notifications', 'recurring-tasks', 'test-dashboard'],
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Serve test dashboard
+app.get('/admin/tests', (req, res) => {
+    res.sendFile(__dirname + '/public/test-dashboard.html');
+});
+
+// Run full regression test suite
+app.get('/api/test/run-regression', async (req, res) => {
+    try {
+        console.log('🚀 Starting full regression test suite...');
+        const results = await testModule.runFullRegressionTests();
+        
+        console.log('✅ Regression tests completed:', {
+            total: results.total_tests,
+            passed: results.passed,
+            failed: results.failed,
+            duration: results.duration_ms
+        });
+        
+        res.json(results);
+    } catch (error) {
+        console.error('❌ Fatal error in regression tests:', error);
+        res.status(500).json({
+            error: 'Fatal error in regression tests',
+            details: error.message,
+            total_tests: 0,
+            passed: 0,
+            failed: 1,
+            duration_ms: 0,
+            cleanup_successful: false
+        });
+    }
+});
+
+// Run specific test categories
+app.get('/api/test/run-database', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runDatabaseIntegrityTests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+        
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+        
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Database tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-api', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runApiEndpointTests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+        
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+        
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-recurring', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runRecurringTaskTests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+        
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+        
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Recurring tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-business', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runBusinessLogicTests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+        
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+        
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Business logic tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Emergency cleanup endpoint
+app.post('/api/test/emergency-cleanup', async (req, res) => {
+    try {
+        console.log('🧹 Emergency cleanup initiated...');
+        
+        // Delete all test records
+        await pool.query("DELETE FROM taken WHERE id LIKE 'test_%'");
+        await pool.query("DELETE FROM projecten WHERE id LIKE 'test_project_%'");
+        await pool.query("DELETE FROM contexten WHERE id LIKE 'test_context_%'");
+        
+        console.log('✅ Emergency cleanup completed');
+        res.json({ 
+            success: true, 
+            message: 'Emergency cleanup completed successfully',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Emergency cleanup failed:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Endpoint to add missing recurring columns (GET for easy access)
 app.get('/api/admin/add-recurring-columns', async (req, res) => {
     try {
