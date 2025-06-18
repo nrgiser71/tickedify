@@ -283,6 +283,20 @@ toast.info('Algemene informatie'); // Voor toekomstig gebruik
 - Example: `curl -s -L -k https://tickedify.com/api/version`
 - NEVER use plain `curl` without these flags
 
+**COMMAND SUBSTITUTION PREVENTION:**
+- AVOID `$(date +%Y-%m-%d)` directly in curl URLs - triggers security prompts
+- USE pre-computed variables instead:
+  ```bash
+  TODAY=$(date +%Y-%m-%d)
+  curl -s -L -k "https://tickedify.com/api/dagelijkse-planning/$TODAY"
+  ```
+- OR use separate variable assignment:
+  ```bash
+  DATUM="2025-06-18"  # Hard-coded for testing
+  curl -s -L -k "https://tickedify.com/api/dagelijkse-planning/$DATUM"
+  ```
+- This prevents Terminal security prompts for command substitution
+
 **GIT CONFIGURATION REQUIREMENTS:**
 - Git user identity is pre-configured to prevent commit prompts
 - Username: "Jan Buskens" 
