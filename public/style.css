@@ -1461,8 +1461,8 @@ button:focus {
 }
 
 .planning-sidebar {
-    width: 600px;
-    min-width: 600px;
+    width: 750px;
+    min-width: 750px;
     background: var(--macos-bg-secondary);
     border-radius: var(--macos-radius-large);
     padding: 20px;
