@@ -2909,7 +2909,10 @@ class Taakbeheer {
             
             html += `
                 <div class="kalender-uur ${isOverboekt ? 'overboekt' : ''}" data-uur="${uur}">
-                    <div class="uur-label">${uur.toString().padStart(2, '0')}:00 ${totaalMinuten > 0 ? `(${totaalMinuten} min${isOverboekt ? ' ⚠️' : ''})` : ''}</div>
+                    <div class="uur-label">
+                        <div class="uur-tijd">${uur.toString().padStart(2, '0')}:00</div>
+                        ${totaalMinuten > 0 ? `<div class="uur-totaal-tijd">(${totaalMinuten} min${isOverboekt ? ' 🚨' : ''})</div>` : ''}
+                    </div>
                     <div class="uur-content" data-uur="${uur}">
                         <div class="uur-planning">
                             ${uurPlanning.map(p => this.renderPlanningItem(p)).join('')}
