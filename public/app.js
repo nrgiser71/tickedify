@@ -70,6 +70,157 @@ class ToastManager {
 // Global toast instance
 const toast = new ToastManager();
 
+// Loading Manager System
+class LoadingManager {
+    constructor() {
+        this.overlay = document.getElementById('loadingOverlay');
+        this.activeOperations = new Set();
+        this.loadingStates = new Map(); // Track loading state per component
+    }
+
+    // Global loading overlay
+    show(message = 'Laden...') {
+        this.overlay.classList.add('active');
+    }
+
+    hide() {
+        this.overlay.classList.remove('active');
+    }
+
+    // Operation-based loading (multiple concurrent operations)
+    startOperation(operationId, message = 'Laden...') {
+        this.activeOperations.add(operationId);
+        if (this.activeOperations.size === 1) {
+            this.show(message);
+        }
+    }
+
+    endOperation(operationId) {
+        this.activeOperations.delete(operationId);
+        if (this.activeOperations.size === 0) {
+            this.hide();
+        }
+    }
+
+    // Button loading state
+    setButtonLoading(button, loading = true) {
+        if (loading) {
+            button.classList.add('btn-loading');
+            button.disabled = true;
+        } else {
+            button.classList.remove('btn-loading');
+            button.disabled = false;
+        }
+    }
+
+    // Section loading state
+    setSectionLoading(element, loading = true) {
+        if (loading) {
+            element.classList.add('loading');
+            // Add inline spinner if not present
+            if (!element.querySelector('.loading-inline')) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'loading-inline';
+                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Laden...</span>';
+                element.appendChild(loadingDiv);
+            }
+        } else {
+            element.classList.remove('loading');
+            // Remove spinner
+            const spinner = element.querySelector('.loading-inline');
+            if (spinner) {
+                spinner.remove();
+            }
+        }
+    }
+
+    // Skeleton loading for lists
+    showSkeleton(container, itemCount = 3) {
+        container.innerHTML = '';
+        for (let i = 0; i < itemCount; i++) {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'loading-skeleton';
+            skeleton.innerHTML = `
+                <div class="loading-skeleton-icon loading-placeholder"></div>
+                <div class="loading-skeleton-text loading-placeholder"></div>
+                <div class="loading-skeleton-text-short loading-placeholder"></div>
+            `;
+            container.appendChild(skeleton);
+        }
+    }
+
+    // Progress bar for longer operations
+    showProgress(container, progress = 0) {
+        let progressBar = container.querySelector('.loading-progress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.className = 'loading-progress';
+            progressBar.innerHTML = '<div class="loading-progress-bar"></div>';
+            container.appendChild(progressBar);
+        }
+        
+        const bar = progressBar.querySelector('.loading-progress-bar');
+        bar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+    }
+
+    // Indeterminate progress
+    showIndeterminateProgress(container) {
+        let progressBar = container.querySelector('.loading-progress-indeterminate');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.className = 'loading-progress loading-progress-indeterminate';
+            container.appendChild(progressBar);
+        }
+    }
+
+    hideProgress(container) {
+        const progressBars = container.querySelectorAll('.loading-progress, .loading-progress-indeterminate');
+        progressBars.forEach(bar => bar.remove());
+    }
+
+    // Async wrapper with automatic loading management
+    async withLoading(asyncFunction, options = {}) {
+        const {
+            operationId = `op_${Date.now()}`,
+            showGlobal = true,
+            button = null,
+            section = null,
+            message = 'Laden...'
+        } = options;
+
+        try {
+            if (showGlobal) {
+                this.startOperation(operationId, message);
+            }
+            if (button) {
+                this.setButtonLoading(button, true);
+            }
+            if (section) {
+                this.setSectionLoading(section, true);
+            }
+
+            const result = await asyncFunction();
+            return result;
+        } catch (error) {
+            console.error('Loading operation failed:', error);
+            throw error;
+        } finally {
+            if (showGlobal) {
+                this.endOperation(operationId);
+            }
+            if (button) {
+                this.setButtonLoading(button, false);
+            }
+            if (section) {
+                this.setSectionLoading(section, false);
+            }
+        }
+    }
+}
+
+// Global loading instance
+const loading = new LoadingManager();
+
 class Taakbeheer {
     constructor() {
         this.huidigeLijst = 'inbox';
@@ -1104,28 +1255,33 @@ class Taakbeheer {
     }
 
     async laadHuidigeLijst() {
-        try {
-            if (this.huidigeLijst === 'projecten') {
-                // Voor projecten laden we de projecten lijst
-                const response = await fetch('/api/lijst/projecten-lijst');
-                if (response.ok) {
-                    this.projecten = await response.json();
-                }
-                this.taken = []; // Projecten hebben geen taken
-            } else {
-                const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
-                if (response.ok) {
-                    this.taken = await response.json();
+        return await loading.withLoading(async () => {
+            try {
+                if (this.huidigeLijst === 'projecten') {
+                    // Voor projecten laden we de projecten lijst
+                    const response = await fetch('/api/lijst/projecten-lijst');
+                    if (response.ok) {
+                        this.projecten = await response.json();
+                    }
+                    this.taken = []; // Projecten hebben geen taken
                 } else {
-                    this.taken = [];
+                    const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
+                    if (response.ok) {
+                        this.taken = await response.json();
+                    } else {
+                        this.taken = [];
+                    }
                 }
+                await this.renderTaken();
+            } catch (error) {
+                console.error('Fout bij laden lijst:', error);
+                this.taken = [];
+                await this.renderTaken();
             }
-            await this.renderTaken();
-        } catch (error) {
-            console.error('Fout bij laden lijst:', error);
-            this.taken = [];
-            await this.renderTaken();
-        }
+        }, {
+            operationId: 'load-list',
+            message: 'Lijst laden...'
+        });
     }
 
     async voegTaakToe() {
@@ -1487,7 +1643,7 @@ class Taakbeheer {
     }
 
     async verplaatsTaakNaarAfgewerkt(taak) {
-        try {
+        return await loading.withLoading(async () => {
             // Use the new updateTask API to mark task as completed
             const response = await fetch(`/api/taak/${taak.id}`, {
                 method: 'PUT',
@@ -1503,10 +1659,11 @@ class Taakbeheer {
             
             const result = await response.json();
             return result.success;
-        } catch (error) {
-            console.error('Fout bij afwerken van taak:', error);
-            return false;
-        }
+        }, {
+            operationId: 'complete-task',
+            showGlobal: false,
+            message: 'Taak afwerken...'
+        });
     }
 
     async verwijderTaak(id) {
@@ -1721,42 +1878,44 @@ class Taakbeheer {
             return;
         }
 
-        if (this.huidigeLijst === 'acties') {
-            // Bewerk bestaande actie
-            const actie = this.taken.find(t => t.id === this.huidigeTaakId);
-            if (actie) {
-                actie.tekst = taakNaam;
-                actie.projectId = projectId;
-                actie.verschijndatum = verschijndatum;
-                actie.contextId = contextId;
-                actie.duur = duur;
-                actie.herhalingType = herhalingType;
-                actie.herhalingActief = !!herhalingType;
-                
-                await this.slaLijstOp();
-                this.renderTaken();
-                await this.laadTellingen();
-            }
-        } else {
-            // Maak nieuwe actie van inbox taak
-            const taak = this.taken.find(t => t.id === this.huidigeTaakId);
-            if (!taak) return;
+        const maakActieBtn = document.getElementById('maakActieBtn');
+        
+        return await loading.withLoading(async () => {
+            if (this.huidigeLijst === 'acties') {
+                // Bewerk bestaande actie
+                const actie = this.taken.find(t => t.id === this.huidigeTaakId);
+                if (actie) {
+                    actie.tekst = taakNaam;
+                    actie.projectId = projectId;
+                    actie.verschijndatum = verschijndatum;
+                    actie.contextId = contextId;
+                    actie.duur = duur;
+                    actie.herhalingType = herhalingType;
+                    actie.herhalingActief = !!herhalingType;
+                    
+                    await this.slaLijstOp();
+                    this.renderTaken();
+                    await this.laadTellingen();
+                }
+            } else {
+                // Maak nieuwe actie van inbox taak
+                const taak = this.taken.find(t => t.id === this.huidigeTaakId);
+                if (!taak) return;
 
-            const actie = {
-                id: taak.id,
-                tekst: taakNaam,
-                aangemaakt: taak.aangemaakt,
-                projectId: projectId,
-                verschijndatum: verschijndatum,
-                contextId: contextId,
-                duur: duur,
-                type: 'actie',
-                herhalingType: herhalingType,
-                herhalingActief: !!herhalingType
-            };
+                const actie = {
+                    id: taak.id,
+                    tekst: taakNaam,
+                    aangemaakt: taak.aangemaakt,
+                    projectId: projectId,
+                    verschijndatum: verschijndatum,
+                    contextId: contextId,
+                    duur: duur,
+                    type: 'actie',
+                    herhalingType: herhalingType,
+                    herhalingActief: !!herhalingType
+                };
 
-            // Save the new action via direct single action API (bypasses list corruption issues)
-            try {
+                // Save the new action via direct single action API (bypasses list corruption issues)
                 const response = await fetch('/api/debug/add-single-action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1778,14 +1937,14 @@ class Taakbeheer {
                     toast.error('Fout bij plannen van taak. Probeer opnieuw.');
                     return;
                 }
-            } catch (error) {
-                console.error('Error saving action:', error);
-                toast.error('Fout bij plannen van taak. Probeer opnieuw.');
-                return;
             }
-        }
-        
-        this.sluitPopup();
+            
+            this.sluitPopup();
+        }, {
+            operationId: 'save-action',
+            button: maakActieBtn,
+            message: 'Actie opslaan...'
+        });
     }
 
     async verplaatsTaak(naarLijst) {
@@ -3107,7 +3266,7 @@ class Taakbeheer {
     async handleDrop(data, uur) {
         const today = new Date().toISOString().split('T')[0];
         
-        try {
+        return await loading.withLoading(async () => {
             const planningItem = {
                 datum: today,
                 uur: uur,
@@ -3156,16 +3315,18 @@ class Taakbeheer {
             } else {
                 toast.error('Fout bij toevoegen planning item');
             }
-        } catch (error) {
-            console.error('Error handling drop:', error);
-            toast.error('Fout bij verwerken drag & drop');
-        }
+        }, {
+            operationId: 'add-planning',
+            showGlobal: false,
+            section: document.querySelector('.dag-kalender'),
+            message: 'Item toevoegen...'
+        });
     }
 
     async handleDropAtPosition(data, uur, position) {
         const today = new Date().toISOString().split('T')[0];
         
-        try {
+        return await loading.withLoading(async () => {
             const planningItem = {
                 datum: today,
                 uur: uur,
@@ -3215,21 +3376,23 @@ class Taakbeheer {
             } else {
                 toast.error('Fout bij toevoegen planning item');
             }
-        } catch (error) {
-            console.error('Error handling drop at position:', error);
-            toast.error('Fout bij verwerken drag & drop');
-        }
+        }, {
+            operationId: 'add-planning-position',
+            showGlobal: false,
+            section: document.querySelector('.dag-kalender'),
+            message: 'Item toevoegen...'
+        });
     }
 
     async handlePlanningReorder(data, targetUur, targetPosition) {
         const today = new Date().toISOString().split('T')[0];
         
-        try {
-            // If moving within same hour and no position change, do nothing
-            if (data.currentUur === targetUur && targetPosition === null) {
-                return;
-            }
-            
+        // If moving within same hour and no position change, do nothing
+        if (data.currentUur === targetUur && targetPosition === null) {
+            return;
+        }
+        
+        return await loading.withLoading(async () => {
             // Use the new reorder endpoint
             const reorderData = {
                 targetUur: targetUur,
@@ -3254,10 +3417,12 @@ class Taakbeheer {
             } else {
                 toast.error('Fout bij verplaatsen item');
             }
-        } catch (error) {
-            console.error('Error handling planning reorder:', error);
-            toast.error('Fout bij verplaatsen item');
-        }
+        }, {
+            operationId: 'reorder-planning',
+            showGlobal: false,
+            section: document.querySelector('.dag-kalender'),
+            message: 'Item verplaatsen...'
+        });
     }
 
     async deletePlanningItem(planningId) {
