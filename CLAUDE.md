@@ -267,6 +267,13 @@ toast.info('Algemene informatie'); // Voor toekomstig gebruik
 - User tests live on production (tickedify.com via Vercel deployment)
 - Use descriptive commit messages following existing project style
 
+**DEPLOYMENT VERIFICATION TIMING:**
+- Start checking after 15 seconds (Vercel is usually deployed by then)
+- If version not updated: wait another 15 seconds and check again
+- Repeat every 15 seconds until version matches or 2 minutes total elapsed
+- After 2 minutes: report deployment timeout - likely an issue
+- Never use long sleep commands (like 120 seconds) - too inefficient
+
 **CURL COMMAND REQUIREMENTS:**
 - ALWAYS use `curl -s -L -k` flags for ALL API testing
 - `-s` = silent mode (no progress bars)
