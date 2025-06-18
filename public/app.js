@@ -2914,8 +2914,8 @@ class Taakbeheer {
                         ${totaalMinuten > 0 ? `<div class="uur-totaal-tijd">(${totaalMinuten} min${isOverboekt ? ' 🚨' : ''})</div>` : ''}
                     </div>
                     <div class="uur-content" data-uur="${uur}">
-                        <div class="uur-planning">
-                            ${uurPlanning.map(p => this.renderPlanningItem(p)).join('')}
+                        <div class="uur-planning" data-uur="${uur}">
+                            ${this.renderPlanningItemsWithDropZones(uurPlanning, uur)}
                         </div>
                     </div>
                 </div>
@@ -2939,7 +2939,12 @@ class Taakbeheer {
             `<input type="checkbox" class="task-checkbox" data-actie-id="${planningItem.actieId}" onclick="app.completePlanningTask('${planningItem.actieId}', this)">` : '';
         
         return `
-            <div class="planning-item" data-planning-id="${planningItem.id}" data-type="${planningItem.type}">
+            <div class="planning-item" 
+                 data-planning-id="${planningItem.id}" 
+                 data-type="${planningItem.type}"
+                 data-uur="${planningItem.uur}"
+                 data-duur="${planningItem.duurMinuten}"
+                 draggable="true">
                 ${checkbox}
                 <span class="planning-icon">${typeIcon}</span>
                 <span class="planning-naam">${naam}</span>
@@ -2947,6 +2952,22 @@ class Taakbeheer {
                 <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
             </div>
         `;
+    }
+
+    renderPlanningItemsWithDropZones(uurPlanning, uur) {
+        if (uurPlanning.length === 0) {
+            // Empty hour - just return a drop zone
+            return `<div class="drop-zone" data-uur="${uur}" data-position="0"></div>`;
+        }
+
+        let html = `<div class="drop-zone" data-uur="${uur}" data-position="0"></div>`;
+        
+        uurPlanning.forEach((item, index) => {
+            html += this.renderPlanningItem(item);
+            html += `<div class="drop-zone" data-uur="${uur}" data-position="${index + 1}"></div>`;
+        });
+        
+        return html;
     }
 
     bindDagelijksePlanningEvents() {
@@ -2995,7 +3016,7 @@ class Taakbeheer {
             });
         });
         
-        // Action drag start
+        // Action drag start (from actions list)
         document.querySelectorAll('.planning-actie-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', JSON.stringify({
@@ -3005,8 +3026,28 @@ class Taakbeheer {
                 }));
             });
         });
+
+        // Planning item drag start (internal reordering)
+        document.querySelectorAll('.planning-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'planning-reorder',
+                    planningId: item.dataset.planningId,
+                    currentUur: parseInt(item.dataset.uur),
+                    duurMinuten: parseInt(item.dataset.duur),
+                    planningType: item.dataset.type
+                }));
+                
+                // Visual feedback
+                item.classList.add('dragging');
+            });
+
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('dragging');
+            });
+        });
         
-        // Drop zone handlers
+        // Drop zone handlers for hour content
         document.querySelectorAll('.uur-content').forEach(dropZone => {
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -3026,7 +3067,38 @@ class Taakbeheer {
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
                 const uur = parseInt(dropZone.dataset.uur);
                 
-                this.handleDrop(data, uur);
+                if (data.type === 'planning-reorder') {
+                    this.handlePlanningReorder(data, uur, null); // null = append to end
+                } else {
+                    this.handleDrop(data, uur);
+                }
+            });
+        });
+
+        // Drop zone handlers for precise positioning
+        document.querySelectorAll('.drop-zone').forEach(dropZone => {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drop-zone-active');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                dropZone.classList.remove('drop-zone-active');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drop-zone-active');
+                
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const uur = parseInt(dropZone.dataset.uur);
+                const position = parseInt(dropZone.dataset.position);
+                
+                if (data.type === 'planning-reorder') {
+                    this.handlePlanningReorder(data, uur, position);
+                } else {
+                    this.handleDropAtPosition(data, uur, position);
+                }
             });
         });
     }
@@ -3086,6 +3158,50 @@ class Taakbeheer {
         } catch (error) {
             console.error('Error handling drop:', error);
             toast.error('Fout bij verwerken drag & drop');
+        }
+    }
+
+    async handleDropAtPosition(data, uur, position) {
+        // For new items, we'll need to implement position-based insertion
+        // For now, fall back to regular handleDrop
+        await this.handleDrop(data, uur);
+    }
+
+    async handlePlanningReorder(data, targetUur, targetPosition) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        try {
+            // If moving within same hour and no position change, do nothing
+            if (data.currentUur === targetUur && targetPosition === null) {
+                return;
+            }
+            
+            // Update the planning item with new hour (and potentially position)
+            const updateData = {
+                uur: targetUur
+            };
+            
+            const response = await fetch(`/api/dagelijkse-planning/${data.planningId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (response.ok) {
+                await this.renderTaken(); // Refresh the view
+                this.updateTotaalTijd(); // Update total time
+                
+                if (data.currentUur !== targetUur) {
+                    toast.success(`Item verplaatst naar ${targetUur.toString().padStart(2, '0')}:00`);
+                } else {
+                    toast.success('Item herordend!');
+                }
+            } else {
+                toast.error('Fout bij verplaatsen item');
+            }
+        } catch (error) {
+            console.error('Error handling planning reorder:', error);
+            toast.error('Fout bij verplaatsen item');
         }
     }
 

@@ -1773,6 +1773,36 @@ button:focus {
     cursor: pointer;
 }
 
+/* Drop zone styling */
+.drop-zone {
+    height: 2px;
+    margin: 2px 0;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+    opacity: 0;
+    background: transparent;
+}
+
+.uur-planning:hover .drop-zone,
+.drag-over .drop-zone {
+    opacity: 0.3;
+    background: var(--macos-gray-3);
+}
+
+.drop-zone-active {
+    height: 8px;
+    background: var(--macos-blue);
+    opacity: 1 !important;
+    margin: 4px 0;
+    box-shadow: 0 0 8px rgba(0, 122, 255, 0.3);
+}
+
+/* Dragging feedback */
+.planning-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
 .planning-icon {
     font-size: 14px;
 }
