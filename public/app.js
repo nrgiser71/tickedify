@@ -648,6 +648,7 @@ class Taakbeheer {
             'projecten': 'Projecten',
             'opvolgen': 'Opvolgen',
             'afgewerkte-taken': 'Afgewerkt',
+            'dagelijkse-planning': 'Dagelijkse Planning',
             'uitgesteld-wekelijks': 'Wekelijks',
             'uitgesteld-maandelijks': 'Maandelijks',
             'uitgesteld-3maandelijks': '3-maandelijks',
@@ -2869,15 +2870,13 @@ class Taakbeheer {
     }
 
     renderActiesVoorPlanning(acties, ingeplandeActies) {
-        return acties.map(actie => {
-            const isIngepland = ingeplandeActies.includes(actie.id);
-            const indicator = isIngepland ? '📅' : '';
+        return acties.filter(actie => !ingeplandeActies.includes(actie.id)).map(actie => {
             const projectNaam = this.getProjectNaam(actie.projectId);
             const contextNaam = this.getContextNaam(actie.contextId);
             
             return `
                 <div class="planning-actie-item" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
-                    <div class="actie-tekst">${indicator} ${actie.tekst}</div>
+                    <div class="actie-tekst">${actie.tekst}</div>
                     <div class="actie-details">
                         ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
                         ${contextNaam ? `<span class="context">${contextNaam}</span>` : ''}
@@ -2913,10 +2912,10 @@ class Taakbeheer {
 
     renderPlanningItem(planningItem) {
         const typeIcon = {
-            'taak': '✓',
-            'geblokkeerd': '🚫',
+            'taak': '⚡',
+            'geblokkeerd': '🔒',
             'pauze': '☕'
-        }[planningItem.type] || '✓';
+        }[planningItem.type] || '⚡';
         
         const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
         

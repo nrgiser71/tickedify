@@ -79,7 +79,7 @@ body {
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-    width: 300px;
+    width: 450px;
     background: var(--macos-bg-secondary);
     border-right: 1px solid var(--macos-gray-4);
     display: flex;
@@ -1655,10 +1655,11 @@ button:focus {
 
 .totaal-tijd {
     background: var(--macos-gray-6);
-    padding: 8px 16px;
+    padding: 8px 32px;
     border-radius: var(--macos-radius-medium);
     font-weight: 500;
     color: var(--macos-text-secondary);
+    min-width: 200px;
 }
 
 .kalender-grid {
