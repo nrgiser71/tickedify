@@ -3317,8 +3317,7 @@ class Taakbeheer {
             }
         }, {
             operationId: 'add-planning',
-            showGlobal: false,
-            section: document.querySelector('.dag-kalender'),
+            showGlobal: true,
             message: 'Item toevoegen...'
         });
     }
@@ -3378,9 +3377,8 @@ class Taakbeheer {
             }
         }, {
             operationId: 'add-planning-position',
-            showGlobal: false,
-            section: document.querySelector('.dag-kalender'),
-            message: 'Item toevoegen...'
+            showGlobal: true,
+            message: 'Item toevoegen op positie...'
         });
     }
 
@@ -3419,8 +3417,7 @@ class Taakbeheer {
             }
         }, {
             operationId: 'reorder-planning',
-            showGlobal: false,
-            section: document.querySelector('.dag-kalender'),
+            showGlobal: true,
             message: 'Item verplaatsen...'
         });
     }
