@@ -267,6 +267,15 @@ toast.info('Algemene informatie'); // Voor toekomstig gebruik
 - User tests live on production (tickedify.com via Vercel deployment)
 - Use descriptive commit messages following existing project style
 
+**CURL COMMAND REQUIREMENTS:**
+- ALWAYS use `curl -s -L -k` flags for ALL API testing
+- `-s` = silent mode (no progress bars)
+- `-L` = follow redirects automatically  
+- `-k` = skip certificate verification
+- This prevents macOS security prompts that interrupt deployment workflow
+- Example: `curl -s -L -k https://tickedify.com/api/version`
+- NEVER use plain `curl` without these flags
+
 **VERSION TRACKING REQUIREMENTS:**
 - Every code change MUST increment package.json version
 - Format: "1.0.2" → "1.0.3" (patch level for features/fixes)
