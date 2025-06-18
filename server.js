@@ -322,15 +322,23 @@ app.post('/api/test/emergency-cleanup', async (req, res) => {
     try {
         console.log('🧹 Emergency cleanup initiated...');
         
-        // Delete all test records
-        await pool.query("DELETE FROM taken WHERE id LIKE 'test_%'");
-        await pool.query("DELETE FROM projecten WHERE id LIKE 'test_project_%'");
-        await pool.query("DELETE FROM contexten WHERE id LIKE 'test_context_%'");
+        // Delete all test records (by ID pattern and by test names)
+        const deletedTasks = await pool.query("DELETE FROM taken WHERE id LIKE 'test_%' OR tekst IN ('Completion test', 'Test taak', 'Database CRUD Test', 'Updated Test Task', 'Rollback Test', 'FK Test Task', 'Dagelijkse test taak', 'Completion workflow test', 'List management test', 'Project context test') RETURNING id");
+        const deletedProjects = await pool.query("DELETE FROM projecten WHERE id LIKE 'test_project_%' OR naam IN ('Test Project', 'FK Test Project') RETURNING id");
+        const deletedContexts = await pool.query("DELETE FROM contexten WHERE id LIKE 'test_context_%' OR naam IN ('Test Context', 'FK Test Context') RETURNING id");
         
-        console.log('✅ Emergency cleanup completed');
+        const totalDeleted = deletedTasks.rows.length + deletedProjects.rows.length + deletedContexts.rows.length;
+        
+        console.log(`✅ Emergency cleanup completed - ${totalDeleted} records deleted`);
         res.json({ 
             success: true, 
-            message: 'Emergency cleanup completed successfully',
+            message: `Emergency cleanup completed successfully - ${totalDeleted} records deleted`,
+            deleted: {
+                tasks: deletedTasks.rows.length,
+                projects: deletedProjects.rows.length, 
+                contexts: deletedContexts.rows.length,
+                total: totalDeleted
+            },
             timestamp: new Date().toISOString()
         });
     } catch (error) {

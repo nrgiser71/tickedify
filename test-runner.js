@@ -374,6 +374,9 @@ async function runRecurringTaskTests(testRunner) {
         
         if (!newTaskId) throw new Error('New recurring task not created');
         
+        // BELANGRIJK: Track de nieuwe herhalende taak voor cleanup
+        testRunner.createdRecords.taken.push(newTaskId);
+        
         // Verificeer nieuwe taak
         const newTasks = await db.getList('acties');
         const newTask = newTasks.find(t => t.id === newTaskId);
@@ -387,9 +390,6 @@ async function runRecurringTaskTests(testRunner) {
         if (Math.abs(expectedDate.getTime() - actualDate.getTime()) > 24 * 60 * 60 * 1000) {
             throw new Error(`New task date incorrect: expected ${nextDate}, got ${newTask.verschijndatum}`);
         }
-        
-        // Track nieuwe taak voor cleanup
-        testRunner.createdRecords.taken.push(newTaskId);
     });
 }
 
