@@ -2587,7 +2587,25 @@ class Taakbeheer {
             // Bestaande filters
             if (projectFilter && actie.projectId !== projectFilter) tonen = false;
             if (contextFilter && actie.contextId !== contextFilter) tonen = false;
-            if (datumFilter && actie.verschijndatum !== datumFilter) tonen = false;
+            
+            // Datum filter - vergelijk correct geformatteerde datums
+            if (datumFilter && actie.verschijndatum) {
+                // Converteer database datum naar YYYY-MM-DD format voor vergelijking
+                let taakDatum = actie.verschijndatum;
+                
+                // Als de datum al een Date object is, converteer naar ISO string
+                if (actie.verschijndatum instanceof Date) {
+                    taakDatum = actie.verschijndatum.toISOString().split('T')[0];
+                } else if (typeof actie.verschijndatum === 'string') {
+                    // Als het een string is, probeer het te parsen naar YYYY-MM-DD
+                    const parsed = new Date(actie.verschijndatum);
+                    if (!isNaN(parsed.getTime())) {
+                        taakDatum = parsed.toISOString().split('T')[0];
+                    }
+                }
+                
+                if (taakDatum !== datumFilter) tonen = false;
+            }
             
             row.style.display = tonen ? '' : 'none';
         });

@@ -506,6 +506,50 @@ async function runBusinessLogicTests(testRunner) {
         const vergaderingTasks = createdTasks.filter(t => t.tekst.toLowerCase().includes('vergadering'));
         if (vergaderingTasks.length !== 1) throw new Error('Vergadering filter test task not found correctly');
     });
+
+    // Test 5: Datum filter functionaliteit (fix voor v1.0.10)
+    await testRunner.runTest('Date Filter Functionality', async () => {
+        // Maak taken met specifieke datums voor filter testing
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const todayISO = today.toISOString().split('T')[0];
+        const tomorrowISO = tomorrow.toISOString().split('T')[0];
+        
+        const taskToday = await testRunner.createTestTask({
+            tekst: 'Taak voor vandaag',
+            lijst: 'acties',
+            verschijndatum: todayISO
+        });
+        
+        const taskTomorrow = await testRunner.createTestTask({
+            tekst: 'Taak voor morgen',
+            lijst: 'acties', 
+            verschijndatum: tomorrowISO
+        });
+        
+        // Verificeer dat taken correct zijn aangemaakt met juiste datums
+        const acties = await db.getList('acties');
+        const todayTask = acties.find(t => t.id === taskToday.id);
+        const tomorrowTask = acties.find(t => t.id === taskTomorrow.id);
+        
+        if (!todayTask) throw new Error('Today task not found');
+        if (!tomorrowTask) throw new Error('Tomorrow task not found');
+        
+        // Test datum normalisatie (verschillende datum formaten moeten correct worden vergeleken)
+        const normalizeDate = (dateStr) => {
+            if (!dateStr) return null;
+            const parsed = new Date(dateStr);
+            return isNaN(parsed.getTime()) ? null : parsed.toISOString().split('T')[0];
+        };
+        
+        const normalizedTodayDate = normalizeDate(todayTask.verschijndatum);
+        const normalizedTomorrowDate = normalizeDate(tomorrowTask.verschijndatum);
+        
+        if (normalizedTodayDate !== todayISO) throw new Error(`Today task date mismatch: ${normalizedTodayDate} !== ${todayISO}`);
+        if (normalizedTomorrowDate !== tomorrowISO) throw new Error(`Tomorrow task date mismatch: ${normalizedTomorrowDate} !== ${tomorrowISO}`);
+    });
 }
 
 /**
