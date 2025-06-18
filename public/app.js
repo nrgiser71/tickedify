@@ -3061,6 +3061,7 @@ class Taakbeheer {
             
             if (response.ok) {
                 await this.renderTaken(); // Refresh the view
+                this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item toegevoegd!');
             } else {
                 toast.error('Fout bij toevoegen planning item');
@@ -3079,6 +3080,7 @@ class Taakbeheer {
             
             if (response.ok) {
                 await this.renderTaken(); // Refresh the view
+                this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item verwijderd!');
             } else {
                 toast.error('Fout bij verwijderen planning item');
@@ -3107,6 +3109,7 @@ class Taakbeheer {
                 
                 // Refresh the daily planning view to update the actions list
                 await this.renderTaken();
+                this.updateTotaalTijd(); // Update total time
                 await this.laadTellingen();
                 
                 // Show success message with task name
@@ -3177,11 +3180,12 @@ class Taakbeheer {
     }
 
     updateTotaalTijd() {
-        const uurTotalen = document.querySelectorAll('.uur-totaal');
+        const uurLabels = document.querySelectorAll('.uur-label');
         let totaalMinuten = 0;
         
-        uurTotalen.forEach(element => {
-            const match = element.textContent.match(/(\d+)min/);
+        uurLabels.forEach(element => {
+            // Extract minutes from labels like "10:00 (70 min ⚠️)"
+            const match = element.textContent.match(/\((\d+)\s*min/);
             if (match) {
                 totaalMinuten += parseInt(match[1]);
             }
