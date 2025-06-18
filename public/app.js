@@ -2778,6 +2778,9 @@ class Taakbeheer {
         const actiesResponse = await fetch('/api/lijst/acties');
         const acties = actiesResponse.ok ? await actiesResponse.json() : [];
         
+        // Store actions for filtering (make available to filter functions)
+        this.planningActies = acties;
+        
         // Laad dagelijkse planning voor vandaag
         const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
         const planning = planningResponse.ok ? await planningResponse.json() : [];
@@ -3141,7 +3144,8 @@ class Taakbeheer {
 
         document.querySelectorAll('.planning-actie-item').forEach(item => {
             const actieId = item.dataset.actieId;
-            const actie = this.taken.find(t => t.id === actieId);
+            // Use planningActies instead of this.taken for daily planning context
+            const actie = this.planningActies?.find(t => t.id === actieId);
             
             if (!actie) return;
             
@@ -3159,6 +3163,8 @@ class Taakbeheer {
         // Populate project filter
         const projectFilter = document.getElementById('planningProjectFilter');
         if (projectFilter) {
+            // Reset to default option first
+            projectFilter.innerHTML = '<option value="">Alle projecten</option>';
             this.projecten.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project.id;
@@ -3170,6 +3176,8 @@ class Taakbeheer {
         // Populate context filter
         const contextFilter = document.getElementById('planningContextFilter');
         if (contextFilter) {
+            // Reset to default option first
+            contextFilter.innerHTML = '<option value="">Alle contexten</option>';
             this.contexten.forEach(context => {
                 const option = document.createElement('option');
                 option.value = context.id;
