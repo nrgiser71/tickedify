@@ -276,6 +276,15 @@ toast.info('Algemene informatie'); // Voor toekomstig gebruik
 - Example: `curl -s -L -k https://tickedify.com/api/version`
 - NEVER use plain `curl` without these flags
 
+**GIT CONFIGURATION REQUIREMENTS:**
+- Git user identity is pre-configured to prevent commit prompts
+- Username: "Jan Buskens" 
+- Email: "jan@tickedify.com"
+- If git prompts appear, run these commands once:
+  - `git config --global user.name "Jan Buskens"`
+  - `git config --global user.email "jan@tickedify.com"`
+- This ensures smooth automated deployment workflow
+
 **VERSION TRACKING REQUIREMENTS:**
 - Every code change MUST increment package.json version
 - Format: "1.0.2" → "1.0.3" (patch level for features/fixes)
