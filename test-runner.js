@@ -472,6 +472,40 @@ async function runBusinessLogicTests(testRunner) {
         if (!projects.find(p => p.id === project.id)) throw new Error('Project not in projecten lijst');
         if (!contexts.find(c => c.id === context.id)) throw new Error('Context not in contexten lijst');
     });
+
+    // Test 4: Filter functionaliteit (nieuwe feature v1.0.8)
+    await testRunner.runTest('Task Filter Functionality', async () => {
+        // Maak taken met verschillende teksten voor filtering tests
+        const task1 = await testRunner.createTestTask({
+            tekst: 'Email versturen naar klanten',
+            lijst: 'acties'
+        });
+        
+        const task2 = await testRunner.createTestTask({
+            tekst: 'Vergadering voorbereiden',
+            lijst: 'acties'
+        });
+        
+        const task3 = await testRunner.createTestTask({
+            tekst: 'Factuur email versturen',
+            lijst: 'acties'
+        });
+        
+        // Test dat taken correct zijn aangemaakt
+        const acties = await db.getList('acties');
+        const createdTasks = acties.filter(t => 
+            t.id === task1.id || t.id === task2.id || t.id === task3.id
+        );
+        
+        if (createdTasks.length !== 3) throw new Error('Not all filter test tasks created');
+        
+        // Verificeer dat taken correcte tekst hebben voor filter testing
+        const emailTasks = createdTasks.filter(t => t.tekst.toLowerCase().includes('email'));
+        if (emailTasks.length !== 2) throw new Error('Email filter test tasks not found correctly');
+        
+        const vergaderingTasks = createdTasks.filter(t => t.tekst.toLowerCase().includes('vergadering'));
+        if (vergaderingTasks.length !== 1) throw new Error('Vergadering filter test task not found correctly');
+    });
 }
 
 /**
