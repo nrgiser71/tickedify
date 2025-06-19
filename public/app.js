@@ -3173,14 +3173,16 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
-                // Create invisible drag image using empty div
+                // Create semi-transparent drag image
                 const dragImage = document.createElement('div');
                 dragImage.style.position = 'absolute';
                 dragImage.style.top = '-1000px';
                 dragImage.style.width = '100px';
                 dragImage.style.height = '40px';
-                dragImage.style.background = 'transparent';
-                dragImage.style.opacity = '0';
+                dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
+                dragImage.style.borderRadius = '6px';
+                dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;">📋</div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
@@ -3209,14 +3211,16 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
-                // Create invisible drag image using empty div
+                // Create semi-transparent drag image
                 const dragImage = document.createElement('div');
                 dragImage.style.position = 'absolute';
                 dragImage.style.top = '-1000px';
                 dragImage.style.width = '100px';
                 dragImage.style.height = '40px';
-                dragImage.style.background = 'transparent';
-                dragImage.style.opacity = '0';
+                dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
+                dragImage.style.borderRadius = '6px';
+                dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;">📋</div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
@@ -3247,14 +3251,16 @@ class Taakbeheer {
                     planningType: item.dataset.type
                 }));
                 
-                // Create invisible drag image using empty div
+                // Create semi-transparent drag image
                 const dragImage = document.createElement('div');
                 dragImage.style.position = 'absolute';
                 dragImage.style.top = '-1000px';
                 dragImage.style.width = '100px';
                 dragImage.style.height = '40px';
-                dragImage.style.background = 'transparent';
-                dragImage.style.opacity = '0';
+                dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
+                dragImage.style.borderRadius = '6px';
+                dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;">📋</div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
