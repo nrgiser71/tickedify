@@ -112,6 +112,81 @@ app.post('/api/admin/init-database', async (req, res) => {
     }
 });
 
+// Database reset endpoint - DANGER: Deletes ALL data
+app.post('/api/admin/reset-database', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        console.log('🚨 DATABASE RESET REQUESTED - This will delete ALL data!');
+        
+        // Get counts before deletion for confirmation
+        const countQueries = [
+            { table: 'dagelijkse_planning', query: 'SELECT COUNT(*) as count FROM dagelijkse_planning' },
+            { table: 'taken', query: 'SELECT COUNT(*) as count FROM taken' },
+            { table: 'projecten', query: 'SELECT COUNT(*) as count FROM projecten' },
+            { table: 'contexten', query: 'SELECT COUNT(*) as count FROM contexten' }
+        ];
+        
+        const beforeCounts = {};
+        for (const countQuery of countQueries) {
+            try {
+                const result = await pool.query(countQuery.query);
+                beforeCounts[countQuery.table] = parseInt(result.rows[0].count);
+            } catch (error) {
+                console.log(`Could not count ${countQuery.table}:`, error.message);
+                beforeCounts[countQuery.table] = 0;
+            }
+        }
+        
+        console.log('📊 Records before deletion:', beforeCounts);
+        
+        // Delete in correct order (foreign key constraints)
+        const deleteQueries = [
+            'DELETE FROM dagelijkse_planning',
+            'DELETE FROM taken', 
+            'DELETE FROM projecten',
+            'DELETE FROM contexten'
+        ];
+        
+        const deletionResults = {};
+        
+        for (const deleteQuery of deleteQueries) {
+            try {
+                const result = await pool.query(deleteQuery);
+                const tableName = deleteQuery.split(' ')[2]; // Extract table name
+                deletionResults[tableName] = result.rowCount;
+                console.log(`✅ Deleted ${result.rowCount} records from ${tableName}`);
+            } catch (error) {
+                console.error(`❌ Error deleting from table:`, error);
+                throw error;
+            }
+        }
+        
+        console.log('🧹 Database reset completed successfully');
+        console.log('📊 Deleted records:', deletionResults);
+        
+        res.json({
+            success: true,
+            message: 'Database reset completed - ALL data has been deleted',
+            timestamp: new Date().toISOString(),
+            before_counts: beforeCounts,
+            deleted_records: deletionResults,
+            warning: 'This action cannot be undone'
+        });
+        
+    } catch (error) {
+        console.error('❌ Database reset failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Database reset failed',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {
     try {
