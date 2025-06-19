@@ -1,11 +1,15 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Basic middleware
 app.use(express.json());
 app.use(express.static('public'));
+
+// Multer for form-data parsing (Mailgun webhooks)
+const upload = multer();
 
 // Request logging (simplified)
 app.use((req, res, next) => {
@@ -183,6 +187,267 @@ app.post('/api/admin/reset-database', async (req, res) => {
             error: error.message,
             message: 'Database reset failed',
             timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Email Import System - Mailgun Webhook Handler
+app.post('/api/email/import', upload.none(), async (req, res) => {
+    try {
+        console.log('📧 Email import request received');
+        console.log('Headers:', req.headers);
+        console.log('Body keys:', Object.keys(req.body));
+        
+        // Mailgun sends form-data with these fields
+        const {
+            sender,
+            subject,
+            'body-plain': bodyPlain,
+            'body-html': bodyHtml,
+            'stripped-text': strippedText,
+            timestamp,
+            signature,
+            token
+        } = req.body;
+        
+        if (!sender || !subject) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required email fields (sender, subject)',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        console.log(`📨 Processing email from: ${sender}`);
+        console.log(`📋 Subject: ${subject}`);
+        
+        // Parse email content
+        const taskData = parseEmailToTask({
+            sender,
+            subject,
+            body: strippedText || bodyPlain || 'No body content',
+            timestamp
+        });
+        
+        // Create task in database
+        if (!pool) {
+            throw new Error('Database not available');
+        }
+        
+        const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        const result = await pool.query(`
+            INSERT INTO taken (
+                id, tekst, lijst, aangemaakt, project_id, context_id, 
+                verschijndatum, duur, type
+            ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5, $6, $7, $8)
+            RETURNING *
+        `, [
+            taskId,
+            taskData.tekst,
+            taskData.lijst || 'inbox',
+            taskData.projectId,
+            taskData.contextId,
+            taskData.verschijndatum,
+            taskData.duur,
+            'taak'
+        ]);
+        
+        const createdTask = result.rows[0];
+        
+        console.log('✅ Task created successfully:', {
+            id: createdTask.id,
+            tekst: createdTask.tekst,
+            lijst: createdTask.lijst
+        });
+        
+        // Send confirmation (would need Mailgun sending setup)
+        console.log('📤 Would send confirmation email to:', sender);
+        
+        res.json({
+            success: true,
+            message: 'Email imported successfully',
+            task: {
+                id: createdTask.id,
+                tekst: createdTask.tekst,
+                lijst: createdTask.lijst,
+                project: taskData.projectName,
+                context: taskData.contextName
+            },
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Email import failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Email import failed',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Email parsing helper function
+function parseEmailToTask(emailData) {
+    const { sender, subject, body, timestamp } = emailData;
+    
+    console.log('🔍 Parsing email content...');
+    
+    // Initialize task data
+    const taskData = {
+        tekst: subject, // Default to subject line
+        lijst: 'inbox',
+        projectId: null,
+        projectName: null,
+        contextId: null,
+        contextName: null,
+        verschijndatum: null,
+        duur: null,
+        originalSender: sender,
+        importedAt: timestamp
+    };
+    
+    // Parse subject line for project, context, and tags
+    // Format: [Project] Task title @context #tag
+    
+    // Extract project from [brackets]
+    const projectMatch = subject.match(/\[([^\]]+)\]/);
+    if (projectMatch) {
+        taskData.projectName = projectMatch[1].trim();
+        console.log('📁 Found project:', taskData.projectName);
+    }
+    
+    // Extract context from @mentions
+    const contextMatch = subject.match(/@([^\s#\]]+)/);
+    if (contextMatch) {
+        taskData.contextName = contextMatch[1].trim();
+        console.log('🏷️ Found context:', taskData.contextName);
+    }
+    
+    // Extract tags from #hashtags (for future use)
+    const tagMatches = subject.match(/#([^\s@\]]+)/g);
+    if (tagMatches) {
+        const tags = tagMatches.map(tag => tag.substring(1));
+        console.log('🏷️ Found tags:', tags);
+    }
+    
+    // Clean up task title (remove project, context, tags)
+    let cleanTitle = subject
+        .replace(/\[[^\]]+\]/g, '') // Remove [project]
+        .replace(/@[^\s#\]]+/g, '') // Remove @context
+        .replace(/#[^\s@\]]+/g, '') // Remove #tags
+        .trim();
+    
+    if (cleanTitle) {
+        taskData.tekst = cleanTitle;
+    }
+    
+    // Parse body for structured data
+    if (body && body.length > 10) {
+        console.log('📄 Parsing email body...');
+        
+        // Look for structured fields in body
+        const bodyLines = body.split('\n');
+        
+        for (const line of bodyLines) {
+            const trimmedLine = line.trim().toLowerCase();
+            
+            // Extract duration
+            if (trimmedLine.startsWith('duur:')) {
+                const duurMatch = line.match(/(\d+)/);
+                if (duurMatch) {
+                    taskData.duur = parseInt(duurMatch[1]);
+                    console.log('⏱️ Found duration:', taskData.duur, 'minutes');
+                }
+            }
+            
+            // Extract deadline
+            if (trimmedLine.startsWith('deadline:') || trimmedLine.startsWith('datum:')) {
+                const dateMatch = line.match(/(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch) {
+                    taskData.verschijndatum = dateMatch[1];
+                    console.log('📅 Found deadline:', taskData.verschijndatum);
+                }
+            }
+            
+            // Override project if specified in body
+            if (trimmedLine.startsWith('project:')) {
+                const projectName = line.split(':')[1]?.trim();
+                if (projectName) {
+                    taskData.projectName = projectName;
+                    console.log('📁 Found project in body:', taskData.projectName);
+                }
+            }
+            
+            // Override context if specified in body
+            if (trimmedLine.startsWith('context:')) {
+                const contextName = line.split(':')[1]?.trim();
+                if (contextName) {
+                    taskData.contextName = contextName;
+                    console.log('🏷️ Found context in body:', taskData.contextName);
+                }
+            }
+        }
+        
+        // If body has substantial content beyond structured fields, append to task
+        const bodyWithoutStructured = body
+            .split('\n')
+            .filter(line => {
+                const lower = line.trim().toLowerCase();
+                return !lower.startsWith('duur:') && 
+                       !lower.startsWith('deadline:') && 
+                       !lower.startsWith('datum:') &&
+                       !lower.startsWith('project:') &&
+                       !lower.startsWith('context:') &&
+                       line.trim() !== '' &&
+                       !line.trim().startsWith('---');
+            })
+            .join('\n')
+            .trim();
+            
+        if (bodyWithoutStructured && bodyWithoutStructured !== taskData.tekst) {
+            taskData.tekst += '\n\n' + bodyWithoutStructured;
+        }
+    }
+    
+    console.log('✅ Parsed task data:', {
+        tekst: taskData.tekst.substring(0, 50) + '...',
+        project: taskData.projectName,
+        context: taskData.contextName,
+        duur: taskData.duur,
+        deadline: taskData.verschijndatum
+    });
+    
+    return taskData;
+}
+
+// Test endpoint for email parsing (development only)
+app.post('/api/email/test', async (req, res) => {
+    try {
+        const { subject, body, sender } = req.body;
+        
+        if (!subject) {
+            return res.status(400).json({ error: 'Subject is required' });
+        }
+        
+        const taskData = parseEmailToTask({
+            sender: sender || 'test@example.com',
+            subject,
+            body: body || '',
+            timestamp: new Date().toISOString()
+        });
+        
+        res.json({
+            success: true,
+            parsed_task: taskData,
+            message: 'Email parsing test completed'
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 });
