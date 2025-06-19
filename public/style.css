@@ -1651,25 +1651,72 @@ button:focus {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-bottom: 15px;
 }
 
 .planning-actie-item {
-    padding: 12px;
-    border: 1px solid var(--macos-gray-5);
+    padding: 12px 12px 12px 20px;
+    border: 2px dashed var(--macos-gray-4);
     border-radius: var(--macos-radius-small);
     cursor: grab;
     background: var(--macos-bg-tertiary);
     transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    user-select: none;
+}
+
+.planning-actie-item::before {
+    content: "⋮⋮";
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--macos-gray-2);
+    line-height: 0.8;
+}
+
+.planning-actie-item::after {
+    content: "Sleep naar tijdslot →";
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: var(--macos-gray-1);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
 }
 
 .planning-actie-item:hover {
-    background: var(--macos-gray-6);
-    border-color: var(--macos-gray-3);
+    background: var(--macos-green);
+    border-color: var(--macos-green-hover);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(48, 209, 88, 0.3);
+}
+
+.planning-actie-item:hover::before {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.planning-actie-item:hover::after {
+    opacity: 1;
+    color: var(--macos-text-tertiary);
+}
+
+.planning-actie-item:hover .actie-tekst,
+.planning-actie-item:hover .actie-meta {
+    color: white;
 }
 
 .planning-actie-item:active {
     cursor: grabbing;
-    transform: scale(0.98);
+    transform: scale(0.95) translateY(-1px);
+    box-shadow: 0 6px 20px rgba(48, 209, 88, 0.4);
 }
 
 .actie-tekst {
