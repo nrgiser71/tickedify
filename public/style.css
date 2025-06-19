@@ -100,7 +100,7 @@ body {
 }
 
 .logo-image {
-    height: 32px;
+    height: 38px;
     width: auto;
     object-fit: contain;
     transition: transform 0.2s ease, opacity 0.2s ease;
