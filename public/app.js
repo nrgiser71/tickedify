@@ -3583,4 +3583,23 @@ class Taakbeheer {
     }
 }
 
+// Load version number on page load
+async function loadVersionNumber() {
+    try {
+        const response = await fetch('/api/version');
+        const data = await response.json();
+        const versionElement = document.getElementById('version-number');
+        if (versionElement && data.version) {
+            versionElement.textContent = `v${data.version}`;
+        }
+    } catch (error) {
+        console.log('Could not load version number:', error);
+        // Keep the hardcoded version if API fails
+    }
+}
+
+// Initialize app and load version
 const app = new Taakbeheer();
+
+// Load version number when page loads
+document.addEventListener('DOMContentLoaded', loadVersionNumber);
