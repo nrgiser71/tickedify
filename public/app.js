@@ -2967,12 +2967,12 @@ class Taakbeheer {
                     
                     <!-- Templates -->
                     <div class="templates-sectie">
-                        <h3>🚫 Geblokkeerde tijd</h3>
+                        <h3>🔒 Geblokkeerde tijd</h3>
                         <div class="template-items">
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">30 min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">60 min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">90 min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">120 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">🔒 90 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120 min</div>
                         </div>
                         
                         <h3>☕ Pauzes</h3>
@@ -3172,6 +3172,13 @@ class Taakbeheer {
                     planningType: item.dataset.type,
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
+                
+                // Visual feedback
+                item.classList.add('dragging');
+            });
+            
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('dragging');
             });
         });
         
@@ -3183,6 +3190,13 @@ class Taakbeheer {
                     actieId: item.dataset.actieId,
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
+                
+                // Visual feedback
+                item.classList.add('dragging');
+            });
+            
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('dragging');
             });
         });
 

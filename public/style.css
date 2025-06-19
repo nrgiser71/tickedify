@@ -1628,6 +1628,23 @@ button:focus {
     box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
 }
 
+.template-item.dragging {
+    opacity: 0.5;
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+    color: var(--macos-text-secondary);
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.template-item.dragging::before {
+    color: var(--macos-gray-2);
+}
+
+.template-item.dragging::after {
+    opacity: 0;
+}
+
 .acties-sectie {
     flex: 1;
     background: var(--macos-bg-primary);
@@ -1717,6 +1734,28 @@ button:focus {
     cursor: grabbing;
     transform: scale(0.95) translateY(-1px);
     box-shadow: 0 6px 20px rgba(48, 209, 88, 0.4);
+}
+
+.planning-actie-item.dragging {
+    opacity: 0.5;
+    background: var(--macos-bg-tertiary);
+    border-color: var(--macos-gray-3);
+    color: var(--macos-text-secondary);
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.planning-actie-item.dragging::before {
+    color: var(--macos-gray-2);
+}
+
+.planning-actie-item.dragging::after {
+    opacity: 0;
+}
+
+.planning-actie-item.dragging .actie-tekst,
+.planning-actie-item.dragging .actie-meta {
+    color: var(--macos-text-secondary);
 }
 
 .actie-tekst {
