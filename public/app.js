@@ -3173,14 +3173,12 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
-                // Create a transparent drag image
+                // Create a completely transparent drag image
                 const canvas = document.createElement('canvas');
                 canvas.width = 100;
                 canvas.height = 40;
                 const ctx = canvas.getContext('2d');
-                ctx.globalAlpha = 0.01;
-                ctx.fillStyle = 'rgba(0,0,0,0.01)';
-                ctx.fillRect(0, 0, 100, 40);
+                ctx.clearRect(0, 0, 100, 40); // Completely transparent
                 e.dataTransfer.setDragImage(canvas, 50, 20);
                 
                 // Visual feedback
@@ -3201,14 +3199,12 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
-                // Create a transparent drag image
+                // Create a completely transparent drag image
                 const canvas = document.createElement('canvas');
                 canvas.width = 100;
                 canvas.height = 40;
                 const ctx = canvas.getContext('2d');
-                ctx.globalAlpha = 0.01;
-                ctx.fillStyle = 'rgba(0,0,0,0.01)';
-                ctx.fillRect(0, 0, 100, 40);
+                ctx.clearRect(0, 0, 100, 40); // Completely transparent
                 e.dataTransfer.setDragImage(canvas, 50, 20);
                 
                 // Visual feedback
@@ -3231,14 +3227,12 @@ class Taakbeheer {
                     planningType: item.dataset.type
                 }));
                 
-                // Create a transparent drag image
+                // Create a completely transparent drag image
                 const canvas = document.createElement('canvas');
                 canvas.width = 100;
                 canvas.height = 40;
                 const ctx = canvas.getContext('2d');
-                ctx.globalAlpha = 0.01;
-                ctx.fillStyle = 'rgba(0,0,0,0.01)';
-                ctx.fillRect(0, 0, 100, 40);
+                ctx.clearRect(0, 0, 100, 40); // Completely transparent
                 e.dataTransfer.setDragImage(canvas, 50, 20);
                 
                 // Visual feedback
