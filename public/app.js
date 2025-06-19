@@ -3173,6 +3173,14 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
+                // Create a transparent drag image
+                const canvas = document.createElement('canvas');
+                canvas.width = 1;
+                canvas.height = 1;
+                const ctx = canvas.getContext('2d');
+                ctx.globalAlpha = 0.01;
+                e.dataTransfer.setDragImage(canvas, 0, 0);
+                
                 // Visual feedback
                 item.classList.add('dragging');
             });
@@ -3190,6 +3198,14 @@ class Taakbeheer {
                     actieId: item.dataset.actieId,
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
+                
+                // Create a transparent drag image
+                const canvas = document.createElement('canvas');
+                canvas.width = 1;
+                canvas.height = 1;
+                const ctx = canvas.getContext('2d');
+                ctx.globalAlpha = 0.01;
+                e.dataTransfer.setDragImage(canvas, 0, 0);
                 
                 // Visual feedback
                 item.classList.add('dragging');
@@ -3210,6 +3226,14 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur),
                     planningType: item.dataset.type
                 }));
+                
+                // Create a transparent drag image
+                const canvas = document.createElement('canvas');
+                canvas.width = 1;
+                canvas.height = 1;
+                const ctx = canvas.getContext('2d');
+                ctx.globalAlpha = 0.01;
+                e.dataTransfer.setDragImage(canvas, 0, 0);
                 
                 // Visual feedback
                 item.classList.add('dragging');
