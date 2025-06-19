@@ -3175,11 +3175,13 @@ class Taakbeheer {
                 
                 // Create a transparent drag image
                 const canvas = document.createElement('canvas');
-                canvas.width = 1;
-                canvas.height = 1;
+                canvas.width = 100;
+                canvas.height = 40;
                 const ctx = canvas.getContext('2d');
                 ctx.globalAlpha = 0.01;
-                e.dataTransfer.setDragImage(canvas, 0, 0);
+                ctx.fillStyle = 'rgba(0,0,0,0.01)';
+                ctx.fillRect(0, 0, 100, 40);
+                e.dataTransfer.setDragImage(canvas, 50, 20);
                 
                 // Visual feedback
                 item.classList.add('dragging');
@@ -3201,11 +3203,13 @@ class Taakbeheer {
                 
                 // Create a transparent drag image
                 const canvas = document.createElement('canvas');
-                canvas.width = 1;
-                canvas.height = 1;
+                canvas.width = 100;
+                canvas.height = 40;
                 const ctx = canvas.getContext('2d');
                 ctx.globalAlpha = 0.01;
-                e.dataTransfer.setDragImage(canvas, 0, 0);
+                ctx.fillStyle = 'rgba(0,0,0,0.01)';
+                ctx.fillRect(0, 0, 100, 40);
+                e.dataTransfer.setDragImage(canvas, 50, 20);
                 
                 // Visual feedback
                 item.classList.add('dragging');
@@ -3229,11 +3233,13 @@ class Taakbeheer {
                 
                 // Create a transparent drag image
                 const canvas = document.createElement('canvas');
-                canvas.width = 1;
-                canvas.height = 1;
+                canvas.width = 100;
+                canvas.height = 40;
                 const ctx = canvas.getContext('2d');
                 ctx.globalAlpha = 0.01;
-                e.dataTransfer.setDragImage(canvas, 0, 0);
+                ctx.fillStyle = 'rgba(0,0,0,0.01)';
+                ctx.fillRect(0, 0, 100, 40);
+                e.dataTransfer.setDragImage(canvas, 50, 20);
                 
                 // Visual feedback
                 item.classList.add('dragging');
