@@ -3173,13 +3173,23 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
-                // Create a completely transparent drag image
-                const canvas = document.createElement('canvas');
-                canvas.width = 100;
-                canvas.height = 40;
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, 100, 40); // Completely transparent
-                e.dataTransfer.setDragImage(canvas, 50, 20);
+                // Create invisible drag image using empty div
+                const dragImage = document.createElement('div');
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.width = '100px';
+                dragImage.style.height = '40px';
+                dragImage.style.background = 'transparent';
+                dragImage.style.opacity = '0';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 50, 20);
+                
+                // Clean up after drag
+                setTimeout(() => {
+                    if (dragImage.parentNode) {
+                        document.body.removeChild(dragImage);
+                    }
+                }, 100);
                 
                 // Visual feedback
                 item.classList.add('dragging');
@@ -3199,13 +3209,23 @@ class Taakbeheer {
                     duurMinuten: parseInt(item.dataset.duur)
                 }));
                 
-                // Create a completely transparent drag image
-                const canvas = document.createElement('canvas');
-                canvas.width = 100;
-                canvas.height = 40;
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, 100, 40); // Completely transparent
-                e.dataTransfer.setDragImage(canvas, 50, 20);
+                // Create invisible drag image using empty div
+                const dragImage = document.createElement('div');
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.width = '100px';
+                dragImage.style.height = '40px';
+                dragImage.style.background = 'transparent';
+                dragImage.style.opacity = '0';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 50, 20);
+                
+                // Clean up after drag
+                setTimeout(() => {
+                    if (dragImage.parentNode) {
+                        document.body.removeChild(dragImage);
+                    }
+                }, 100);
                 
                 // Visual feedback
                 item.classList.add('dragging');
@@ -3227,13 +3247,23 @@ class Taakbeheer {
                     planningType: item.dataset.type
                 }));
                 
-                // Create a completely transparent drag image
-                const canvas = document.createElement('canvas');
-                canvas.width = 100;
-                canvas.height = 40;
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, 100, 40); // Completely transparent
-                e.dataTransfer.setDragImage(canvas, 50, 20);
+                // Create invisible drag image using empty div
+                const dragImage = document.createElement('div');
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.width = '100px';
+                dragImage.style.height = '40px';
+                dragImage.style.background = 'transparent';
+                dragImage.style.opacity = '0';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 50, 20);
+                
+                // Clean up after drag
+                setTimeout(() => {
+                    if (dragImage.parentNode) {
+                        document.body.removeChild(dragImage);
+                    }
+                }, 100);
                 
                 // Visual feedback
                 item.classList.add('dragging');
