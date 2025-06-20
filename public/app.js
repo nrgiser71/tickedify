@@ -2976,8 +2976,12 @@ class Taakbeheer {
             this.eventDateResolver = resolve;
             
             // Set the prompt text
-            document.getElementById('eventPromptText').textContent = 
-                `Wanneer is de volgende "${eventName}"?`;
+            document.getElementById('eventPromptText').innerHTML = 
+                `Je hebt zojuist een herhalende taak afgevinkt die gebaseerd is op een gebeurtenis (<strong>${eventName}</strong>).<br><br>Om de datum van de volgende taak te berekenen, hebben we de datum van de volgende ${eventName} nodig.`;
+            
+            // Set the label text
+            document.getElementById('eventDateLabel').textContent = 
+                `Datum van volgende ${eventName}:`;
             
             // Clear the date input
             document.getElementById('nextEventDate').value = '';
