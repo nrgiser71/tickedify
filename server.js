@@ -223,17 +223,20 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         console.log(`📋 Subject: ${subject}`);
         
         // Parse email content
+        console.log('🔄 About to parse email...');
         const taskData = parseEmailToTask({
             sender,
             subject,
             body: strippedText || bodyPlain || 'No body content',
-            timestamp
+            timestamp: new Date().toISOString()
         });
+        console.log('✅ Email parsed successfully:', taskData);
         
         // Create task in database
         if (!pool) {
             throw new Error('Database not available');
         }
+        console.log('🔄 About to create task in database...');
         
         const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
