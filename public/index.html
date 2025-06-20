@@ -18,7 +18,7 @@
                         <img src="Tickedify logo.png" alt="Tickedify" class="logo-image">
                     </div>
                     <div class="version-info">
-                        <span class="version-number" id="version-number">v1.1.39</span>
+                        <span class="version-number" id="version-number">v1.1.40</span>
                     </div>
                 </div>
                 
@@ -379,6 +379,33 @@
     <!-- Global Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Custom Input Modal -->
+    <div id="inputModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <h3 id="inputModalTitle">Input</h3>
+            <div class="form-groep">
+                <label id="inputModalLabel">Voer waarde in:</label>
+                <input type="text" id="inputModalInput" required>
+            </div>
+            <div class="popup-acties">
+                <button id="inputModalCancel">Annuleren</button>
+                <button id="inputModalOk" class="actie-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirmModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <h3 id="confirmModalTitle">Bevestigen</h3>
+            <p id="confirmModalMessage">Weet je het zeker?</p>
+            <div class="popup-acties">
+                <button id="confirmModalCancel">Annuleren</button>
+                <button id="confirmModalOk" class="actie-btn">OK</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

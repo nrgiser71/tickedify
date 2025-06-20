@@ -70,6 +70,112 @@ class ToastManager {
 // Global toast instance
 const toast = new ToastManager();
 
+// Custom Modal System
+class InputModal {
+    constructor() {
+        this.modal = document.getElementById('inputModal');
+        this.titleEl = document.getElementById('inputModalTitle');
+        this.labelEl = document.getElementById('inputModalLabel');
+        this.inputEl = document.getElementById('inputModalInput');
+        this.cancelBtn = document.getElementById('inputModalCancel');
+        this.okBtn = document.getElementById('inputModalOk');
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        this.cancelBtn.addEventListener('click', () => this.hide(null));
+        this.okBtn.addEventListener('click', () => this.handleOk());
+        
+        // Enter/Escape keyboard shortcuts
+        this.inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.handleOk();
+            if (e.key === 'Escape') this.hide(null);
+        });
+        
+        // Click outside to cancel
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.hide(null);
+        });
+    }
+    
+    show(title, label, defaultValue = '') {
+        return new Promise((resolve) => {
+            this.resolve = resolve;
+            this.titleEl.textContent = title;
+            this.labelEl.textContent = label;
+            this.inputEl.value = defaultValue;
+            this.modal.style.display = 'flex';
+            this.inputEl.focus();
+            this.inputEl.select();
+        });
+    }
+    
+    hide(value) {
+        this.modal.style.display = 'none';
+        if (this.resolve) {
+            this.resolve(value);
+            this.resolve = null;
+        }
+    }
+    
+    handleOk() {
+        const value = this.inputEl.value.trim();
+        this.hide(value || null);
+    }
+}
+
+class ConfirmModal {
+    constructor() {
+        this.modal = document.getElementById('confirmModal');
+        this.titleEl = document.getElementById('confirmModalTitle');
+        this.messageEl = document.getElementById('confirmModalMessage');
+        this.cancelBtn = document.getElementById('confirmModalCancel');
+        this.okBtn = document.getElementById('confirmModalOk');
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        this.cancelBtn.addEventListener('click', () => this.hide(false));
+        this.okBtn.addEventListener('click', () => this.hide(true));
+        
+        // Escape to cancel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.style.display === 'flex') {
+                this.hide(false);
+            }
+        });
+        
+        // Click outside to cancel
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.hide(false);
+        });
+    }
+    
+    show(title, message) {
+        return new Promise((resolve) => {
+            this.resolve = resolve;
+            this.titleEl.textContent = title;
+            this.messageEl.textContent = message;
+            this.modal.style.display = 'flex';
+            this.cancelBtn.focus();
+        });
+    }
+    
+    hide(confirmed) {
+        this.modal.style.display = 'none';
+        if (this.resolve) {
+            this.resolve(confirmed);
+            this.resolve = null;
+        }
+    }
+}
+
+// Global modal instances
+const inputModal = new InputModal();
+const confirmModal = new ConfirmModal();
+
 // Loading Manager System
 class LoadingManager {
     constructor() {
@@ -933,7 +1039,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProjectViaLijst() {
-        const naam = prompt('Naam voor het nieuwe project:');
+        const naam = await inputModal.show('Nieuw Project', 'Naam voor het nieuwe project:');
         if (naam && naam.trim()) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -952,7 +1058,7 @@ class Taakbeheer {
         const project = this.projecten.find(p => p.id === id);
         if (!project) return;
         
-        const nieuweNaam = prompt('Nieuwe naam voor het project:', project.naam);
+        const nieuweNaam = await inputModal.show('Project Bewerken', 'Nieuwe naam voor het project:', project.naam);
         if (nieuweNaam && nieuweNaam.trim() && nieuweNaam.trim() !== project.naam) {
             project.naam = nieuweNaam.trim();
             await this.slaProjectenOp();
@@ -972,7 +1078,7 @@ class Taakbeheer {
             bevestigingsTekst += `\n\nLet op: Er zijn nog ${totaalActies} ${totaalActies === 1 ? 'actie' : 'acties'} gekoppeld aan dit project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt). Deze zullen hun projectkoppeling verliezen.`;
         }
         
-        const bevestiging = confirm(bevestigingsTekst);
+        const bevestiging = await confirmModal.show('Project Verwijderen', bevestigingsTekst);
         if (!bevestiging) return;
         
         this.projecten = this.projecten.filter(p => p.id !== id);
@@ -1670,7 +1776,7 @@ class Taakbeheer {
         const taak = this.taken.find(t => t.id === id);
         if (!taak) return;
         
-        const bevestiging = confirm(`Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
+        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
         
         this.taken = this.taken.filter(taak => taak.id !== id);
@@ -1829,7 +1935,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProject() {
-        const naam = prompt('Naam voor het nieuwe project:');
+        const naam = await inputModal.show('Nieuw Project', 'Naam voor het nieuwe project:');
         if (naam && naam.trim()) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -1845,7 +1951,7 @@ class Taakbeheer {
     }
 
     async maakNieuweContext() {
-        const naam = prompt('Naam voor de nieuwe context:');
+        const naam = await inputModal.show('Nieuwe Context', 'Naam voor de nieuwe context:');
         if (naam && naam.trim()) {
             const nieuweContext = {
                 id: this.generateId(),

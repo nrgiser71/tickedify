@@ -6,54 +6,89 @@
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
-## CURRENT STATUS: All Recurring Task Bugs Resolved (June 2025) ✅
+## CURRENT STATUS: Mailgun Email Import Setup in Progress (December 2025) ⏳
 
-**CRITICAL DISCOVERY**: Recurring tasks are NOT being created in the database despite "success" logs
+## MAILGUN EMAIL IMPORT SETUP STATUS (December 19, 2025)
 
-**Debugging Status (Evening June 15, 2025):**
+**🎯 DOEL:** Email-to-task import via `import@tickedify.com` werkend krijgen
 
-**✅ What we confirmed works:**
-- Task completion workflow correctly identifies recurring tasks
-- `originalTask` object contains correct recurring properties (`herhalingType: 'dagelijks', herhalingActief: true`)
-- `nextDate` parameter correctly calculated as `'2025-06-16'`
-- Database connection and pool working correctly
-- All logging shows "Insert successful" messages
+**📧 HUIDIGE CONFIGURATIE:**
+- **Email adres:** `import@tickedify.com` (hoofddomein gebruikt)
+- **Mailgun domain:** `tickedify.com` (gewijzigd van import.tickedify.com)
+- **Webhook URL:** `https://tickedify.com/api/email/import`
+- **DNS provider:** Vimexx (tickedify.com nameservers via Vercel, maar MX records via Vimexx)
 
-**❌ REAL PROBLEM DISCOVERED:**
-- **New recurring tasks are NOT actually being saved to database**
-- Despite logs showing "✅ DEBUG: Insert successful, task ID: [id]", the tasks don't exist in database
-- Database query `/api/debug/june16` shows only 1 task for 2025-06-16 (manually created)
-- No new recurring tasks appear in `/api/debug/recent` despite multiple completion tests
+**🔧 DNS RECORDS TOEGEVOEGD BIJ VIMEXX:**
+```
+Type: MX
+Host: @ (hoofddomein)
+Priority: 10  
+Value: mxa.mailgun.org
 
-**Key Evidence:**
-- All recent tasks in database have `verschijndatum: 2025-06-15` (original completed tasks)
-- NO tasks found with `verschijndatum: 2025-06-16` except the 1 manually created
-- Multiple "successful" task completion cycles should have created 10+ tasks for 2025-06-16
-- This proves the database INSERT is failing silently
+Type: MX
+Host: @ (hoofddomein)
+Priority: 10
+Value: mxb.mailgun.org
 
-**Database INSERT Issue:**
-- The `createRecurringTask` function reports success but doesn't actually insert
-- Likely either:
-  1. Database transaction rollback happening after "success" log
-  2. INSERT statement has syntax/parameter error that's not being caught
-  3. Database constraint violation causing silent failure
-  4. Connection pool issue causing lost transactions
+Type: TXT  
+Host: @ (hoofddomein)
+Value: v=spf1 include:mailgun.org ~all
+```
 
-**Next Steps for Tomorrow:**
-1. **Add transaction logging** - wrap INSERT in explicit transaction with rollback detection
-2. **Add immediate verification** - query database immediately after INSERT to confirm presence
-3. **Check database constraints** - look for foreign key or other constraint violations
-4. **Add error logging** - capture any silent database errors that might be occurring
-5. **Test with minimal INSERT** - try creating basic task without recurring fields first
+**✅ MAILGUN DOMAIN VERIFIED (December 20, 2025 8:30):** 
+DNS configuratie succesvol! Mailgun kan nu tickedify.com verifiëren.
 
-**Files Modified During Debug Session:**
-- `database.js` - Added extensive debug logging, timezone fix, fallback INSERT fix
-- `server.js` - Added debug endpoints `/api/debug/june16` and `/api/debug/acties`
-- `public/app.js` - Enhanced debug logging for task creation
+**🔧 OPGELOSTE DNS CONFIGURATIE:**
+1. **Nameservers gewijzigd:** Van Vercel (`ns1.vercel-dns.com`) naar Vimexx (`ns.zxcs.nl`)
+2. **A record toegevoegd:** @ → 76.76.19.61 (Vercel IP)
+3. **MX records correct:** @ → mxa.eu.mailgun.org + mxb.eu.mailgun.org (EU servers)
+4. **SPF record actief:** v=spf1 include:mailgun.org ~all
+5. **DKIM verified:** _domainkey TXT record geaccepteerd
+6. **AAAA records verwijderd:** IPv6 conflicts opgelost
 
-**Debug Endpoints Created:**
-- `GET /api/debug/june16` - Shows all tasks for 2025-06-16
-- `GET /api/debug/acties` - Shows current acties list from database
+**⏳ HUIDIGE STATUS (December 20, 2025 8:30):**
+- ✅ **Mailgun domein geverifieerd**
+- ✅ **DNS records correct geconfigureerd** 
+- ⏳ **DNS propagatie in uitvoering** (webapp tijdelijk niet bereikbaar)
+- 🎯 **Wachten op volledige propagatie** (15-60 minuten verwacht)
+
+**📋 VOLGENDE STAPPEN (na DNS propagatie):**
+1. **Controleer webapp toegankelijkheid** - https://tickedify.com moet laden
+2. **Test email import functionaliteit:**
+   - Handmatige test: email naar `import@tickedify.com`
+   - API test: `/api/email/test` endpoint
+3. **Verifieer email-to-task workflow** end-to-end
+4. **Update CLAUDE.md** met definitieve status
+
+**💻 CODE STATUS:**
+- ✅ Email import endpoint `/api/email/import` volledig geïmplementeerd
+- ✅ Email parsing logica voor subject/body parsen klaar
+- ✅ Database integration werkend
+- ✅ Test endpoint `/api/email/test` beschikbaar voor debugging
+- ⏳ Wacht alleen op DNS propagatie voor live testing
+
+**📁 RELEVANTE FILES:**
+- `server.js` - Email webhook endpoint en parsing logica  
+- `EMAIL-IMPORT-GUIDE.md` - Volledige documentatie en setup instructies
+
+## UI/UX VERBETERINGEN VOLTOOID (December 19, 2025) ✅
+
+**🎨 DRAG & DROP CURSOR IMPROVEMENTS:**
+- ✅ **Transparante items tijdens slepen:** 2% opacity voor gesleepte items
+- ✅ **Zichtbare drag cursor:** 50% transparante blauwe box met 📋 emoji
+- ✅ **Wereldbol cursor opgelost:** Custom drag image voorkomt browser fallback
+- ✅ **Visuele feedback:** Hover states met kleurcodering (blauw/groen)
+- ✅ **Responsive design:** Werkt op desktop en mobile
+
+**🔄 VERSIE GESCHIEDENIS VANDAAG:**
+- v1.1.35 → v1.1.39: Drag cursor iteraties en verbeteringen
+- **Huidige versie:** v1.1.39 (stabiel en getest)
+
+**🧩 TECHNISCHE IMPLEMENTATIE:**
+- Custom div-based drag image (100x40px) met semi-transparante styling
+- Automatische cleanup na drag operaties
+- CSS hover states voor visuele feedback tijdens hover/drag
+- Cross-browser compatibiliteit voor drag & drop API
 
 **PROBLEM SOLVED (June 16, 2025):**
 
