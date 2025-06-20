@@ -756,7 +756,7 @@ class Taakbeheer {
         document.getElementById('yearlySpecialType').value = 'first-workday';
         document.getElementById('yearlySpecialInterval').value = '1';
         document.getElementById('eventDays').value = '1';
-        document.getElementById('eventDirection').value = 'before';
+        document.getElementById('eventDirection').value = 'voor';
         document.getElementById('eventName').value = '';
         document.querySelectorAll('.weekdag-checkboxes input').forEach(cb => cb.checked = false);
         
@@ -3013,14 +3013,14 @@ class Taakbeheer {
         try {
             const parts = herhalingType.split('-');
             const days = parseInt(parts[1]);
-            const direction = parts[2]; // 'before' or 'after'
+            const direction = parts[2]; // 'voor' or 'na'
             
             const baseDate = new Date(eventDate);
             const taskDate = new Date(baseDate);
             
-            if (direction === 'before') {
+            if (direction === 'voor') {
                 taskDate.setDate(baseDate.getDate() - days);
-            } else { // 'after'
+            } else { // 'na'
                 taskDate.setDate(baseDate.getDate() + days);
             }
             
