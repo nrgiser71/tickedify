@@ -572,11 +572,11 @@ class Taakbeheer {
                 const yearlySpecialText = this.getYearlySpecialTypeText(yearlySpecialType);
                 const yearlyIntervalText = yearlySpecialInterval === '1' ? 'jaar' : `${yearlySpecialInterval} jaar`;
                 return `${yearlySpecialText} van elk ${yearlyIntervalText}`;
-            case 'event-based':
+            case 'gebeurtenis-gebaseerd':
                 const eventDays = document.getElementById('eventDays').value;
                 const eventDirection = document.getElementById('eventDirection').value;
                 const eventName = document.getElementById('eventName').value.trim();
-                const directionText = eventDirection === 'before' ? 'voor' : 'na';
+                const directionText = eventDirection === 'voor' ? 'voor' : 'na';
                 return eventName ? `${eventDays} dagen ${directionText} ${eventName}` : `${eventDays} dagen ${directionText} event`;
             default:
                 return 'Geen herhaling';
@@ -658,7 +658,7 @@ class Taakbeheer {
                 document.getElementById('yearlySpecialType').disabled = false;
                 document.getElementById('yearlySpecialInterval').disabled = false;
                 break;
-            case 'event-based':
+            case 'gebeurtenis-gebaseerd':
                 document.getElementById('eventDays').disabled = false;
                 document.getElementById('eventDirection').disabled = false;
                 document.getElementById('eventName').disabled = false;
@@ -711,7 +711,7 @@ class Taakbeheer {
                 const yearlySpecialInterval = document.getElementById('yearlySpecialInterval').value;
                 herhalingValue = `yearly-special-${yearlySpecialType}-${yearlySpecialInterval}`;
                 break;
-            case 'event-based':
+            case 'gebeurtenis-gebaseerd':
                 const eventDays = document.getElementById('eventDays').value;
                 const eventDirection = document.getElementById('eventDirection').value;
                 const eventName = document.getElementById('eventName').value.trim();
