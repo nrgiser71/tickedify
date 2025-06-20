@@ -192,28 +192,28 @@ app.post('/api/admin/reset-database', async (req, res) => {
 });
 
 // Email Import System - Mailgun Webhook Handler
-app.post('/api/email/import', upload.none(), async (req, res) => {
+app.post('/api/email/import', upload.any(), async (req, res) => {
     try {
         console.log('📧 Email import request received');
         console.log('Headers:', req.headers);
         console.log('Body keys:', Object.keys(req.body));
+        console.log('Files:', req.files?.length || 0);
+        console.log('Full body:', req.body);
         
-        // Mailgun sends form-data with these fields
-        const {
-            sender,
-            subject,
-            'body-plain': bodyPlain,
-            'body-html': bodyHtml,
-            'stripped-text': strippedText,
-            timestamp,
-            signature,
-            token
-        } = req.body;
+        // Try multiple field name variations for Mailgun compatibility
+        const sender = req.body.sender || req.body.from || req.body.From || '';
+        const subject = req.body.subject || req.body.Subject || '';
+        const bodyPlain = req.body['body-plain'] || req.body.text || req.body.body || '';
+        const bodyHtml = req.body['body-html'] || req.body.html || '';
+        const strippedText = req.body['stripped-text'] || req.body['stripped-plain'] || bodyPlain;
         
-        if (!sender || !subject) {
+        console.log('Extracted fields:', { sender, subject, bodyPlain: bodyPlain?.substring(0, 100) });
+        
+        if (!sender && !subject) {
             return res.status(400).json({
                 success: false,
                 error: 'Missing required email fields (sender, subject)',
+                receivedFields: Object.keys(req.body),
                 timestamp: new Date().toISOString()
             });
         }
