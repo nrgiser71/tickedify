@@ -6,6 +6,7 @@ const PORT = process.env.PORT || 3000;
 
 // Basic middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Add URL-encoded parsing for Mailgun
 app.use(express.static('public'));
 
 // Multer for form-data parsing (Mailgun webhooks)
