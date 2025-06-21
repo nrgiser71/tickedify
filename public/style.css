@@ -1700,7 +1700,7 @@ button:focus {
     flex-direction: column;
     min-height: 0; /* Allow flex shrinking */
     overflow: hidden; /* Prevent this container from scrolling */
-    max-height: 540px; /* Adjusted to match new actions list height */
+    max-height: 620px; /* Exact measurement from user */
 }
 
 .acties-sectie h3 {
