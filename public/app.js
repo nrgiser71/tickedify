@@ -3486,9 +3486,6 @@ class Taakbeheer {
     }
 
     async renderDagelijksePlanning(container) {
-        // Add CSS debugger for layout testing
-        this.addCSSDebugger();
-        
         const today = new Date().toISOString().split('T')[0];
         
         // Laad acties lijst voor filtering en drag & drop
@@ -3578,6 +3575,7 @@ class Taakbeheer {
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="totaal-tijd">
                             <span id="totaalGeplandeTijd">Totaal: 0 min</span>
+                            <button onclick="app.addCSSDebugger()" style="margin-left: 10px; font-size: 10px; padding: 2px 6px;">🔧 Debug</button>
                         </div>
                     </div>
                     <div class="kalender-grid" id="kalenderGrid">
