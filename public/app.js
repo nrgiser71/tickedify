@@ -3575,7 +3575,7 @@ class Taakbeheer {
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="totaal-tijd">
                             <span id="totaalGeplandeTijd">Totaal: 0 min</span>
-                            <button onclick="app.addCSSDebugger()" style="margin-left: 10px; font-size: 10px; padding: 2px 6px;">🔧 Debug</button>
+                            <button onclick="window.showCSSDebugger()" style="margin-left: 10px; font-size: 10px; padding: 2px 6px;">🔧 Debug</button>
                         </div>
                     </div>
                     <div class="kalender-grid" id="kalenderGrid">
@@ -4683,6 +4683,13 @@ async function loadVersionNumber() {
 // Initialize app and authentication
 const app = new Taakbeheer();
 const auth = new AuthManager();
+
+// Global CSS debugger function
+window.showCSSDebugger = function() {
+    if (app && app.addCSSDebugger) {
+        app.addCSSDebugger();
+    }
+};
 
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);
