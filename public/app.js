@@ -1842,10 +1842,16 @@ class Taakbeheer {
         const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
         
-        this.taken = this.taken.filter(taak => taak.id !== id);
-        await this.slaLijstOp();
-        this.renderTaken();
-        await this.laadTellingen();
+        await loading.withLoading(async () => {
+            this.taken = this.taken.filter(taak => taak.id !== id);
+            await this.slaLijstOp();
+            this.renderTaken();
+            await this.laadTellingen();
+        }, {
+            operationId: `delete-task-${id}`,
+            showGlobal: true,
+            message: 'Taak verwijderen...'
+        });
     }
 
     async slaLijstOp() {
