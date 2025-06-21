@@ -3486,6 +3486,9 @@ class Taakbeheer {
     }
 
     async renderDagelijksePlanning(container) {
+        // Add CSS debugger for layout testing
+        this.addCSSDebugger();
+        
         const today = new Date().toISOString().split('T')[0];
         
         // Laad acties lijst voor filtering en drag & drop
@@ -4542,6 +4545,125 @@ class AuthManager {
 
     isLoggedIn() {
         return this.isAuthenticated;
+    }
+
+    addCSSDebugger() {
+        // Only add once
+        if (document.getElementById('css-debugger')) return;
+        
+        const debugger = document.createElement('div');
+        debugger.id = 'css-debugger';
+        debugger.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 300px;
+            background: white;
+            border: 2px solid #007AFF;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 10000;
+            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            max-height: 80vh;
+            overflow-y: auto;
+        `;
+        
+        debugger.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; color: #007AFF;">CSS Layout Debugger</h3>
+            <button onclick="document.getElementById('css-debugger').remove()" style="float: right; margin-top: -25px;">×</button>
+            
+            <div style="margin-bottom: 10px;">
+                <label>dagelijkse-planning-layout height:</label><br>
+                <input type="range" min="400" max="1000" value="600" 
+                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.dagelijkse-planning-layout').style.height=this.value+'px'">
+                <span>600px</span>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label>planning-sidebar height:</label><br>
+                <input type="range" min="50" max="100" value="100" 
+                       oninput="this.nextElementSibling.textContent=this.value+'%'; document.querySelector('.planning-sidebar').style.height=this.value+'%'">
+                <span>100%</span>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label>acties-sectie max-height:</label><br>
+                <input type="range" min="200" max="800" value="400" 
+                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.acties-sectie').style.maxHeight=this.value+'px'">
+                <span>400px</span>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label>acties-lijst max-height:</label><br>
+                <input type="range" min="100" max="600" value="300" 
+                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.acties-lijst').style.maxHeight=this.value+'px'">
+                <span>300px</span>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label>tijd-instellingen height:</label><br>
+                <input type="range" min="40" max="120" value="80" 
+                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.tijd-instellingen').style.height=this.value+'px'">
+                <span>80px</span>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <label>templates-sectie height:</label><br>
+                <input type="range" min="100" max="300" value="200" 
+                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.templates-sectie').style.height=this.value+'px'">
+                <span>200px</span>
+            </div>
+            
+            <hr style="margin: 15px 0;">
+            
+            <button onclick="app.resetDebugger()" style="background: #FF3B30; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px;">Reset</button>
+            <button onclick="app.copyDebuggerValues()" style="background: #30D158; color: white; border: none; padding: 5px 10px; border-radius: 4px;">Copy Values</button>
+            
+            <div id="debug-output" style="margin-top: 10px; font-size: 11px; background: #f5f5f5; padding: 5px; border-radius: 4px; display: none;"></div>
+        `;
+        
+        document.body.appendChild(debugger);
+    }
+
+    resetDebugger() {
+        // Reset all sliders and styles
+        const debugger = document.getElementById('css-debugger');
+        const sliders = debugger.querySelectorAll('input[type="range"]');
+        
+        sliders.forEach(slider => {
+            slider.value = slider.getAttribute('value'); // Reset to default
+            slider.oninput({target: slider}); // Trigger change
+        });
+        
+        // Remove any inline styles
+        document.querySelector('.dagelijkse-planning-layout').style.height = '';
+        document.querySelector('.planning-sidebar').style.height = '';
+        document.querySelector('.acties-sectie').style.maxHeight = '';
+        document.querySelector('.acties-lijst').style.maxHeight = '';
+        document.querySelector('.tijd-instellingen').style.height = '';
+        document.querySelector('.templates-sectie').style.height = '';
+    }
+
+    copyDebuggerValues() {
+        const debugger = document.getElementById('css-debugger');
+        const sliders = debugger.querySelectorAll('input[type="range"]');
+        const output = document.getElementById('debug-output');
+        
+        let values = 'CSS Values:\n';
+        sliders.forEach(slider => {
+            const label = slider.previousElementSibling.textContent;
+            const value = slider.nextElementSibling.textContent;
+            values += `${label} ${value}\n`;
+        });
+        
+        output.style.display = 'block';
+        output.textContent = values;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(values).then(() => {
+            output.textContent += '\n✅ Copied to clipboard!';
+        });
     }
 }
 
