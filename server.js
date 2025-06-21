@@ -2529,6 +2529,59 @@ app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
+// Debug endpoint to clean up 'Thuis' endings
+app.get('/api/debug/clean-thuis', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = 'default-user-001';
+        
+        // Get all acties for the default user that end with 'Thuis'
+        const result = await pool.query(`
+            SELECT id, tekst FROM taken 
+            WHERE user_id = $1 
+            AND lijst = 'acties' 
+            AND tekst LIKE '%Thuis'
+            AND afgewerkt IS NULL
+        `, [userId]);
+        
+        const tasksToUpdate = result.rows;
+        let updatedCount = 0;
+        
+        for (const task of tasksToUpdate) {
+            const originalText = task.tekst;
+            const cleanedText = originalText.replace(/\s*Thuis\s*$/, '').trim();
+            
+            if (cleanedText !== originalText && cleanedText.length > 0) {
+                await pool.query(`
+                    UPDATE taken 
+                    SET tekst = $1, bijgewerkt = CURRENT_TIMESTAMP 
+                    WHERE id = $2
+                `, [cleanedText, task.id]);
+                
+                updatedCount++;
+            }
+        }
+        
+        res.json({
+            success: true,
+            found: tasksToUpdate.length,
+            updated: updatedCount,
+            tasks: tasksToUpdate.map(t => ({
+                id: t.id,
+                original: t.tekst,
+                cleaned: t.tekst.replace(/\s*Thuis\s*$/, '').trim()
+            }))
+        });
+        
+    } catch (error) {
+        console.error('Clean Thuis error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
     
