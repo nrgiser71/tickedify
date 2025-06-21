@@ -3522,10 +3522,18 @@ class Taakbeheer {
                     
                     <!-- Templates - fixed medium section -->
                     <div class="templates-sectie">
-                        <h3>🔒 Templates</h3>
+                        <h3>🔒 Geblokkeerd</h3>
                         <div class="template-items">
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30min</div>
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">🔒 90min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120min</div>
+                        </div>
+                        
+                        <h3>☕ Pauzes</h3>
+                        <div class="template-items">
+                            <div class="template-item" draggable="true" data-type="pauze" data-duur="5">☕ 5min</div>
+                            <div class="template-item" draggable="true" data-type="pauze" data-duur="10">☕ 10min</div>
                             <div class="template-item" draggable="true" data-type="pauze" data-duur="15">☕ 15min</div>
                         </div>
                     </div>

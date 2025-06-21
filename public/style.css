@@ -1522,7 +1522,7 @@ button:focus {
 .dagelijkse-planning-layout {
     display: flex;
     gap: 20px;
-    height: 700px; /* More height for better proportions */
+    height: calc(100vh - 120px); /* Full height minus header */
     margin: -24px -32px;
     padding: 16px;
 }
@@ -1535,15 +1535,16 @@ button:focus {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    height: 100%; /* Full height */
 }
 
-/* Time section - small fixed area */
+/* Time section - bit higher */
 .tijd-sectie {
     background: white;
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ddd;
-    height: 60px; /* Simple fixed height */
+    height: 80px; /* Higher as requested */
 }
 
 /* Compact sections for daily planning */
@@ -2168,13 +2169,14 @@ button:focus {
     font-size: 11px;
 }
 
-/* Templates section - small fixed area */
+/* Templates section - enough space for all content */
 .templates-sectie {
     background: white;
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ddd;
-    height: 100px; /* Bit more height */
+    height: 140px; /* More height for all templates */
+    overflow-y: auto; /* Scroll if needed */
 }
 
 .templates-sectie h3 {
@@ -2187,19 +2189,29 @@ button:focus {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
+    margin-bottom: 10px;
 }
 
 .template-item {
     background: #007AFF;
     color: white;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 11px;
     cursor: grab;
+    white-space: nowrap;
 }
 
 .template-item:hover {
     background: #0056CC;
+}
+
+.template-item[data-type="pauze"] {
+    background: #30D158;
+}
+
+.template-item[data-type="pauze"]:hover {
+    background: #28CD41;
 }
 
 /* Actions section - takes remaining space */
@@ -2225,7 +2237,7 @@ button:focus {
     border: 1px solid #eee;
     border-radius: 4px;
     padding: 10px;
-    min-height: 400px; /* Ensure minimum height for actions */
+    /* No min-height needed - flex will handle it */
 }
 
 /* ===== LOADING INDICATORS ===== */
