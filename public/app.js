@@ -1485,19 +1485,25 @@ class Taakbeheer {
         const tekst = input.value.trim();
         
         if (tekst) {
-            const nieuweTaak = {
-                id: this.generateId(),
-                tekst: tekst,
-                aangemaakt: new Date().toISOString()
-            };
-            
-            this.taken.push(nieuweTaak);
-            await this.slaLijstOp();
-            this.renderTaken();
-            await this.laadTellingen();
-            
-            input.value = '';
-            input.focus();
+            await loading.withLoading(async () => {
+                const nieuweTaak = {
+                    id: this.generateId(),
+                    tekst: tekst,
+                    aangemaakt: new Date().toISOString()
+                };
+                
+                this.taken.push(nieuweTaak);
+                await this.slaLijstOp();
+                this.renderTaken();
+                await this.laadTellingen();
+                
+                input.value = '';
+                input.focus();
+            }, {
+                operationId: 'add-task',
+                showGlobal: true,
+                message: 'Taak toevoegen...'
+            });
         }
     }
 
