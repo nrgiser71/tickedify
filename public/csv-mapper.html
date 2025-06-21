@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Notion → Tickedify Mapper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #007AFF;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .step {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+        }
+        
+        .step.active {
+            border-color: #007AFF;
+            background: #f0f7ff;
+        }
+        
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        
+        .preview-table {
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .mapping-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .column-list {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .column-item {
+            padding: 8px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .column-item:hover {
+            background: #f0f7ff;
+            border-color: #007AFF;
+        }
+        
+        .column-item.selected {
+            background: #007AFF;
+            color: white;
+            border-color: #007AFF;
+        }
+        
+        .tickedify-field {
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            transition: all 0.2s;
+        }
+        
+        .tickedify-field.drop-target {
+            border-color: #007AFF;
+            background: #f0f7ff;
+        }
+        
+        .tickedify-field.mapped {
+            border-color: #30D158;
+            background: #f0fff0;
+            border-style: solid;
+        }
+        
+        .field-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .mapped-column {
+            color: #30D158;
+            font-weight: 600;
+        }
+        
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: #0056CC;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .secondary-btn {
+            background: #6c757d;
+        }
+        
+        .secondary-btn:hover {
+            background: #5a6268;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #007AFF;
+            transition: width 0.3s;
+            width: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 CSV Notion → Tickedify Mapper</h1>
+        
+        <!-- Stap 1: CSV Data Invoeren -->
+        <div class="step active" id="step1">
+            <div class="step-title">🗂️ Stap 1: Plak je Notion CSV data</div>
+            <textarea id="csvInput" placeholder="Plak hier je volledige CSV export van Notion (inclusief headers)..."></textarea>
+            <button onclick="parseCsv()">Analyseer CSV</button>
+        </div>
+
+        <!-- Stap 2: Preview en Kolom Mapping -->
+        <div class="step" id="step2">
+            <div class="step-title">🔍 Stap 2: Preview en Kolom Mapping</div>
+            
+            <div id="previewSection">
+                <h4>Preview van je data:</h4>
+                <div class="preview-table" id="previewTable"></div>
+            </div>
+
+            <div class="mapping-container">
+                <div>
+                    <h4>📋 Notion Kolommen</h4>
+                    <div class="column-list" id="notionColumns"></div>
+                </div>
+                
+                <div>
+                    <h4>🎯 Tickedify Velden</h4>
+                    <div class="field-label">Taaknaam (verplicht)</div>
+                    <div class="tickedify-field" data-field="taaknaam" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <span>Sleep hier een kolom naartoe</span>
+                    </div>
+                    
+                    <div class="field-label">Project</div>
+                    <div class="tickedify-field" data-field="project" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <span>Sleep hier een kolom naartoe</span>
+                    </div>
+                    
+                    <div class="field-label">Context</div>
+                    <div class="tickedify-field" data-field="context" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <span>Sleep hier een kolom naartoe</span>
+                    </div>
+                    
+                    <div class="field-label">Deadline</div>
+                    <div class="tickedify-field" data-field="deadline" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <span>Sleep hier een kolom naartoe</span>
+                    </div>
+                    
+                    <div class="field-label">Duur (minuten)</div>
+                    <div class="tickedify-field" data-field="duur" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <span>Sleep hier een kolom naartoe</span>
+                    </div>
+                    
+                    <div class="field-label">Opmerkingen</div>
+                    <div class="tickedify-field" data-field="opmerkingen" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <span>Sleep hier een kolom naartoe</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="importTasks()" id="importBtn" disabled>🚀 Importeer Taken</button>
+            <button onclick="resetMapping()" class="secondary-btn">🔄 Reset Mapping</button>
+        </div>
+
+        <!-- Stap 3: Import Progress -->
+        <div class="step" id="step3">
+            <div class="step-title">⏳ Stap 3: Import Voortgang</div>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="progressText">Klaar om te importeren...</div>
+        </div>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        let csvData = [];
+        let headers = [];
+        let mapping = {};
+        
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (!response.ok) {
+                    showResult('❌ Je moet ingelogd zijn op Tickedify om taken te importeren. <a href="/" target="_blank">Log eerst in</a>', 'error');
+                    document.getElementById('importBtn').disabled = true;
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                showResult('❌ Kan niet verbinden met Tickedify. Controleer je verbinding.', 'error');
+                return false;
+            }
+        }
+        
+        function parseCsv() {
+            const csvText = document.getElementById('csvInput').value.trim();
+            if (!csvText) {
+                showResult('❌ Voer eerst CSV data in', 'error');
+                return;
+            }
+            
+            // Parse CSV
+            const lines = csvText.split('\n');
+            headers = parseCSVLine(lines[0]);
+            csvData = [];
+            
+            for (let i = 1; i < lines.length && i < 51; i++) { // Max 50 rows for preview
+                if (lines[i].trim()) {
+                    csvData.push(parseCSVLine(lines[i]));
+                }
+            }
+            
+            if (csvData.length === 0) {
+                showResult('❌ Geen data gevonden in CSV', 'error');
+                return;
+            }
+            
+            // Show preview
+            showPreview();
+            showNotionColumns();
+            
+            // Activate step 2
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            
+            showResult(`✅ CSV geanalyseerd: ${headers.length} kolommen, ${csvData.length} rijen preview`, 'success');
+        }
+        
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        current += '"';
+                        i++; // Skip next quote
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+        
+        function showPreview() {
+            const table = document.createElement('table');
+            
+            // Headers
+            const headerRow = document.createElement('tr');
+            headers.forEach((header, index) => {
+                const th = document.createElement('th');
+                th.textContent = `${index}: ${header}`;
+                th.title = header;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+            
+            // Data rows (max 5 for preview)
+            csvData.slice(0, 5).forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell || '';
+                    td.title = cell || '';
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            
+            document.getElementById('previewTable').innerHTML = '';
+            document.getElementById('previewTable').appendChild(table);
+        }
+        
+        function showNotionColumns() {
+            const container = document.getElementById('notionColumns');
+            container.innerHTML = '';
+            
+            headers.forEach((header, index) => {
+                const div = document.createElement('div');
+                div.className = 'column-item';
+                div.draggable = true;
+                div.textContent = `${index}: ${header}`;
+                div.dataset.index = index;
+                div.dataset.header = header;
+                
+                div.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        index: index,
+                        header: header
+                    }));
+                });
+                
+                container.appendChild(div);
+            });
+        }
+        
+        function allowDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drop-target');
+        }
+        
+        function drop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drop-target');
+            
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const field = e.currentTarget.dataset.field;
+            
+            // Update mapping
+            mapping[field] = data;
+            
+            // Update UI
+            e.currentTarget.classList.add('mapped');
+            e.currentTarget.innerHTML = `<span class="mapped-column">${data.header}</span>`;
+            
+            // Check if we can enable import
+            updateImportButton();
+        }
+        
+        // Remove drop-target class when dragging leaves
+        document.addEventListener('dragleave', (e) => {
+            if (e.target.classList.contains('tickedify-field')) {
+                e.target.classList.remove('drop-target');
+            }
+        });
+        
+        function updateImportButton() {
+            const hasRequiredField = mapping.taaknaam;
+            document.getElementById('importBtn').disabled = !hasRequiredField;
+        }
+        
+        function resetMapping() {
+            mapping = {};
+            document.querySelectorAll('.tickedify-field').forEach(field => {
+                field.classList.remove('mapped');
+                field.innerHTML = '<span>Sleep hier een kolom naartoe</span>';
+            });
+            updateImportButton();
+        }
+        
+        async function importTasks() {
+            if (!await checkAuth()) {
+                return;
+            }
+            
+            if (!mapping.taaknaam) {
+                showResult('❌ Taaknaam is verplicht voor import', 'error');
+                return;
+            }
+            
+            // Get all data (not just preview)
+            const allCsvText = document.getElementById('csvInput').value.trim();
+            const allLines = allCsvText.split('\n');
+            const allData = [];
+            
+            for (let i = 1; i < allLines.length; i++) {
+                if (allLines[i].trim()) {
+                    allData.push(parseCSVLine(allLines[i]));
+                }
+            }
+            
+            // Activate step 3
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.add('active');
+            
+            let imported = 0;
+            let failed = 0;
+            const total = allData.length;
+            
+            document.getElementById('progressText').textContent = `Importeren van ${total} taken...`;
+            
+            for (let i = 0; i < allData.length; i++) {
+                const row = allData[i];
+                
+                try {
+                    const task = buildTaskFromRow(row);
+                    
+                    const response = await fetch('/api/email/test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(task)
+                    });
+                    
+                    if (response.ok) {
+                        imported++;
+                    } else {
+                        failed++;
+                        console.error('Failed to import:', await response.text());
+                    }
+                } catch (error) {
+                    failed++;
+                    console.error('Error importing row:', error);
+                }
+                
+                // Update progress
+                const progress = ((i + 1) / total) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.getElementById('progressText').textContent = 
+                    `${i + 1}/${total} taken verwerkt (${imported} succesvol, ${failed} gefaald)`;
+                
+                // Small delay to prevent overwhelming the server
+                if (i % 10 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            
+            const message = `📊 Import voltooid!<br>✅ ${imported} taken geïmporteerd<br>❌ ${failed} taken gefaald<br><br>Ga naar <a href="/" target="_blank">Tickedify</a> om je geïmporteerde taken te bekijken.`;
+            showResult(message, failed === 0 ? 'success' : 'error');
+        }
+        
+        function buildTaskFromRow(row) {
+            let subject = '';
+            let body = '';
+            
+            // Build subject
+            const taaknaam = getValueFromMapping('taaknaam', row) || 'Unnamed Task';
+            subject = taaknaam;
+            
+            // Add project to subject if mapped
+            const project = getValueFromMapping('project', row);
+            if (project && project.trim()) {
+                subject = `[${project.trim()}] ${subject}`;
+            }
+            
+            // Add context to subject if mapped
+            const context = getValueFromMapping('context', row);
+            if (context && context.trim()) {
+                subject = `${subject} @${context.trim().replace('@', '')}`;
+            }
+            
+            // Build body with metadata
+            const opmerkingen = getValueFromMapping('opmerkingen', row);
+            if (opmerkingen && opmerkingen.trim()) {
+                body += opmerkingen.trim() + '\n\n';
+            }
+            
+            const duur = getValueFromMapping('duur', row);
+            if (duur && duur.trim() && !isNaN(duur)) {
+                body += `Duur: ${duur} minuten\n`;
+            }
+            
+            const deadline = getValueFromMapping('deadline', row);
+            if (deadline && deadline.trim()) {
+                // Try to parse and format date
+                const parsedDate = parseDate(deadline);
+                if (parsedDate) {
+                    body += `Deadline: ${parsedDate}\n`;
+                }
+            }
+            
+            return {
+                subject: subject,
+                body: body.trim(),
+                sender: 'csv-import@tickedify.com'
+            };
+        }
+        
+        function getValueFromMapping(field, row) {
+            if (!mapping[field]) return null;
+            const index = mapping[field].index;
+            return row[index] || null;
+        }
+        
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            // Try different date formats
+            const patterns = [
+                /(\d{4})-(\d{2})-(\d{2})/,  // YYYY-MM-DD
+                /(\d{2})\/(\d{2})\/(\d{4})/, // DD/MM/YYYY
+                /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // D/M/YYYY
+            ];
+            
+            for (const pattern of patterns) {
+                const match = dateStr.match(pattern);
+                if (match) {
+                    if (pattern.source.includes('(\\d{4})-')) {
+                        // YYYY-MM-DD
+                        return `${match[1]}-${match[2]}-${match[3]}`;
+                    } else {
+                        // DD/MM/YYYY or D/M/YYYY
+                        const day = match[1].padStart(2, '0');
+                        const month = match[2].padStart(2, '0');
+                        const year = match[3];
+                        return `${year}-${month}-${day}`;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            result.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Check auth on page load
+        checkAuth();
+    </script>
+</body>
+</html>
