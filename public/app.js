@@ -4551,9 +4551,9 @@ class AuthManager {
         // Only add once
         if (document.getElementById('css-debugger')) return;
         
-        const debugger = document.createElement('div');
-        debugger.id = 'css-debugger';
-        debugger.style.cssText = `
+        const debugPanel = document.createElement('div');
+        debugPanel.id = 'css-debugger';
+        debugPanel.style.cssText = `
             position: fixed;
             top: 10px;
             right: 10px;
@@ -4569,7 +4569,7 @@ class AuthManager {
             overflow-y: auto;
         `;
         
-        debugger.innerHTML = `
+        debugPanel.innerHTML = `
             <h3 style="margin: 0 0 10px 0; color: #007AFF;">CSS Layout Debugger</h3>
             <button onclick="document.getElementById('css-debugger').remove()" style="float: right; margin-top: -25px;">×</button>
             
@@ -4623,13 +4623,13 @@ class AuthManager {
             <div id="debug-output" style="margin-top: 10px; font-size: 11px; background: #f5f5f5; padding: 5px; border-radius: 4px; display: none;"></div>
         `;
         
-        document.body.appendChild(debugger);
+        document.body.appendChild(debugPanel);
     }
 
     resetDebugger() {
         // Reset all sliders and styles
-        const debugger = document.getElementById('css-debugger');
-        const sliders = debugger.querySelectorAll('input[type="range"]');
+        const debugPanel = document.getElementById('css-debugger');
+        const sliders = debugPanel.querySelectorAll('input[type="range"]');
         
         sliders.forEach(slider => {
             slider.value = slider.getAttribute('value'); // Reset to default
@@ -4646,8 +4646,8 @@ class AuthManager {
     }
 
     copyDebuggerValues() {
-        const debugger = document.getElementById('css-debugger');
-        const sliders = debugger.querySelectorAll('input[type="range"]');
+        const debugPanel = document.getElementById('css-debugger');
+        const sliders = debugPanel.querySelectorAll('input[type="range"]');
         const output = document.getElementById('debug-output');
         
         let values = 'CSS Values:\n';
