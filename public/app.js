@@ -355,7 +355,8 @@ class Taakbeheer {
                 // Validate that it's a known list
                 const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks', 
                                   'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
-                                  'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen'];
+                                  'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen',
+                                  'contextenbeheer'];
                 if (validLists.includes(saved)) {
                     console.log(`🔄 Restored last selected list: ${saved}`);
                     return saved;
@@ -950,11 +951,23 @@ class Taakbeheer {
     }
 
     async navigeerNaarLijst(lijst) {
-        // Update actieve lijst in sidebar
+        // If we're coming from contextenbeheer, restore normal structure
+        if (this.huidigeLijst === 'contextenbeheer' && lijst !== 'contextenbeheer') {
+            this.restoreNormalContainer();
+        }
+
+        // Update actieve lijst in sidebar - remove actief from both lijst items and tool items
         document.querySelectorAll('.lijst-item').forEach(item => {
             item.classList.remove('actief');
         });
-        document.querySelector(`[data-lijst="${lijst}"]`).classList.add('actief');
+        document.querySelectorAll('[data-tool]').forEach(item => {
+            item.classList.remove('actief');
+        });
+        
+        const listItem = document.querySelector(`[data-lijst="${lijst}"]`);
+        if (listItem) {
+            listItem.classList.add('actief');
+        }
 
         // Update hoofdtitel
         const titles = {
@@ -1992,6 +2005,32 @@ class Taakbeheer {
             option.textContent = context.naam;
             select.appendChild(option);
         });
+    }
+
+    updateContextSelects() {
+        // Update all context dropdowns throughout the app
+        const selects = document.querySelectorAll('select[id*="context"], select[name*="context"]');
+        selects.forEach(select => {
+            // Preserve current selection
+            const currentValue = select.value;
+            
+            // Clear and repopulate
+            select.innerHTML = '<option value="">Selecteer context...</option>';
+            this.contexten.forEach(context => {
+                const option = document.createElement('option');
+                option.value = context.id;
+                option.textContent = context.naam;
+                select.appendChild(option);
+            });
+            
+            // Restore selection if it still exists
+            if (currentValue && this.contexten.find(c => c.id === currentValue)) {
+                select.value = currentValue;
+            }
+        });
+        
+        // Also update the main context select specifically
+        this.vulContextSelect();
     }
 
     zetVandaagDatum() {
@@ -3172,10 +3211,27 @@ class Taakbeheer {
     }
 
     showContextenBeheer() {
-        // Update active list in sidebar
+        // Update active list in sidebar - remove all actief classes
         document.querySelectorAll('.lijst-item').forEach(item => {
             item.classList.remove('actief');
         });
+
+        // Highlight the contexten beheer tool item
+        const contextenbeheerItem = document.querySelector('[data-tool="contextenbeheer"]');
+        if (contextenbeheerItem) {
+            contextenbeheerItem.classList.add('actief');
+        }
+
+        // Ensure tools dropdown is open
+        const toolsContent = document.getElementById('tools-content');
+        const toolsDropdown = document.getElementById('tools-dropdown');
+        if (toolsContent && toolsDropdown) {
+            toolsContent.style.display = 'block';
+            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.textContent = '▼';
+            }
+        }
 
         // Update page title
         document.getElementById('page-title').textContent = 'Contexten Beheer';
@@ -3183,8 +3239,22 @@ class Taakbeheer {
         // Hide input container
         document.getElementById('taak-input-container').style.display = 'none';
 
+        // Set current list and save it
+        this.huidigeLijst = 'contextenbeheer';
+        this.saveCurrentList();
+
         // Show contexten beheer interface
         this.renderContextenBeheer();
+    }
+
+    restoreNormalContainer() {
+        // Restore the normal taken container structure
+        const container = document.getElementById('takenLijst').parentNode;
+        container.innerHTML = `
+            <div class="taken-container">
+                <ul id="takenLijst"></ul>
+            </div>
+        `;
     }
 
     async renderContextenBeheer() {
@@ -3238,6 +3308,9 @@ class Taakbeheer {
             await this.slaContextenOp();
             this.renderContextenBeheer();
             
+            // Update all context dropdowns throughout the app
+            this.updateContextSelects();
+            
             toast.success(`Context "${naam}" toegevoegd`);
         }, {
             operationId: 'add-context',
@@ -3259,6 +3332,9 @@ class Taakbeheer {
             
             await this.slaContextenOp();
             this.renderContextenBeheer();
+            
+            // Update all context dropdowns throughout the app
+            this.updateContextSelects();
             
             toast.success(`Context "${oudeNaam}" hernoemd naar "${nieuweNaam}"`);
         }, {
@@ -3282,6 +3358,9 @@ class Taakbeheer {
             this.contexten = this.contexten.filter(c => c.id !== contextId);
             await this.slaContextenOp();
             this.renderContextenBeheer();
+            
+            // Update all context dropdowns throughout the app
+            this.updateContextSelects();
             
             toast.success(`Context "${context.naam}" verwijderd`);
         }, {
