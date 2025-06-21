@@ -305,7 +305,7 @@ body {
 .taken-container {
     min-height: 200px;
     overflow-y: auto;
-    max-height: calc(100vh - 300px);
+    max-height: 100vh; /* Full viewport height */
 }
 
 #takenLijst {
@@ -862,7 +862,7 @@ button:active {
 .taken-container {
     min-height: 200px;
     overflow-y: auto;
-    max-height: calc(100vh - 300px);
+    max-height: 100vh; /* Full viewport height */
 }
 
 #takenLijst {
