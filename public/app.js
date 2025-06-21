@@ -1459,9 +1459,13 @@ class Taakbeheer {
             const dropdownOpties = this.getVerplaatsOpties(taak.id);
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak">🔄</span>' : '';
             
+            // Determine if checkbox should be checked (for completed tasks)
+            const isCompleted = taak.afgewerkt;
+            const checkboxChecked = isCompleted ? 'checked' : '';
+            
             li.innerHTML = `
                 <div class="taak-checkbox">
-                    <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
+                    <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
                 </div>
                 <div class="taak-content">
                     <div class="taak-titel">${taak.tekst}${recurringIndicator}</div>
@@ -1672,9 +1676,13 @@ class Taakbeheer {
                 `;
             }
             
+            // Determine if checkbox should be checked (for completed tasks)
+            const isCompleted = this.huidigeLijst === 'afgewerkte-taken' || taak.afgewerkt;
+            const checkboxChecked = isCompleted ? 'checked' : '';
+            
             li.innerHTML = `
                 <div class="taak-checkbox">
-                    <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
+                    <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
                 </div>
                 <div class="taak-content">
                     <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
