@@ -1354,10 +1354,15 @@ class Taakbeheer {
         }
         
         // Bewerk de actie
-        this.bewerkActie(actieId);
+        await this.bewerkActie(actieId);
         
         // Herstel de originele lijst
         this.huidigeLijst = huidigeOriginaleLijst;
+    }
+
+    // Wrapper functie voor onclick handlers
+    bewerkActieWrapper(id) {
+        this.bewerkActie(id);
     }
 
     async laadHuidigeLijst() {
@@ -1606,7 +1611,7 @@ class Taakbeheer {
                 <td title="Taak afwerken">
                     <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
                 </td>
-                <td class="taak-naam-cell" onclick="app.bewerkActie('${taak.id}')" title="${this.escapeHtml(taak.tekst)}">${taak.tekst}${recurringIndicator}</td>
+                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}">${taak.tekst}${recurringIndicator}</td>
                 <td title="${this.escapeHtml(projectNaam)}">${projectNaam}</td>
                 <td title="${this.escapeHtml(contextNaam)}">${contextNaam}</td>
                 <td title="${datum}">${datum}</td>
@@ -2751,7 +2756,7 @@ class Taakbeheer {
         });
     }
 
-    bewerkActie(id) {
+    async bewerkActie(id) {
         const actie = this.taken.find(t => t.id === id);
         if (actie) {
             this.huidigeTaakId = id;
@@ -2765,6 +2770,10 @@ class Taakbeheer {
                     field.removeAttribute('data-touched');
                 }
             });
+            
+            // Zorg ervoor dat projecten en contexten geladen zijn
+            await this.laadProjecten();
+            await this.laadContexten();
             
             // Vul form met actie data
             document.getElementById('taakNaamInput').value = actie.tekst;
