@@ -1539,7 +1539,9 @@ button:focus {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    height: 100%; /* Ensure full height */
+    /* Dynamic height calculation to fit properly on all screens */
+    height: calc(100vh - 120px); /* Subtract space for main header and margins */
+    max-height: calc(100vh - 120px);
 }
 
 .tijd-instellingen {
@@ -1548,6 +1550,9 @@ button:focus {
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--macos-gray-5);
     flex-shrink: 0; /* Don't shrink time settings */
+    /* Fixed height based on debugger optimal value */
+    height: 80px;
+    min-height: 80px;
 }
 
 /* Compact sections for daily planning */
@@ -1593,6 +1598,10 @@ button:focus {
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--macos-gray-5);
     flex-shrink: 0; /* Don't shrink templates */
+    /* Fixed height based on debugger optimal value */
+    height: 200px;
+    min-height: 200px;
+    overflow-y: auto; /* Allow scrolling if too many templates */
 }
 
 .templates-sectie h3 {
@@ -1700,6 +1709,8 @@ button:focus {
     flex-direction: column;
     min-height: 0; /* Allow flex shrinking */
     overflow: hidden; /* Prevent this container from scrolling */
+    /* Dynamic height calculation based on viewport and other components */
+    max-height: calc(100vh - 360px); /* Subtract header(120px), time-settings(80px), templates(160px) */
 }
 
 .acties-sectie h3 {
@@ -1720,6 +1731,8 @@ button:focus {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     min-height: 0; /* Allow flex shrinking */
+    /* Ensure list fits within calculated parent height minus header space */
+    max-height: calc(100vh - 430px); /* Parent max-height minus h3 header and padding */
 }
 
 /* Specific height constraints for daily planning */
