@@ -1691,7 +1691,7 @@ button:focus {
 }
 
 .acties-sectie {
-    flex: 0 1 auto; /* Don't grow, allow shrinking */
+    flex: 1; /* Take remaining space in sidebar */
     background: var(--macos-bg-primary);
     padding: 15px;
     border-radius: var(--macos-radius-medium);
@@ -1700,8 +1700,6 @@ button:focus {
     flex-direction: column;
     min-height: 0; /* Allow flex shrinking */
     overflow: hidden; /* Prevent this container from scrolling */
-    max-height: calc(100vh - 380px); /* Dynamic based on viewport - accounts for header, time settings, templates */
-    min-height: 300px; /* Minimum usable height for small screens */
 }
 
 .acties-sectie h3 {
@@ -1726,10 +1724,9 @@ button:focus {
 
 /* Specific height constraints for daily planning */
 .dagelijkse-planning-layout .acties-lijst {
-    /* Dynamic height based on available space in actions section */
-    max-height: calc(100vh - 480px); /* Accounts for all elements above the list */
-    min-height: 200px; /* Minimum usable height for small screens */
-    flex: 1 1 auto; /* Allow growing within available space */
+    /* Let flex handle the height within the constrained parent */
+    flex: 1; /* Take remaining space in actions section */
+    min-height: 0; /* Allow flex shrinking */
     overflow-y: auto;
     overflow-x: hidden;
 }
