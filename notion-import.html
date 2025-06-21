@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion → Tickedify Import Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #007AFF;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .description {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #007AFF;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #0056CC;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .bulk-import {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        
+        .example {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Notion → Tickedify Import Tool</h1>
+        
+        <div class="description">
+            <strong>🚀 Direct Import Tool</strong><br>
+            Importeer je Notion taken direct in Tickedify terwijl we wachten op de email fix. 
+            Kopieer gewoon je taak details hieronder en klik op "Importeren".
+        </div>
+
+        <form id="importForm">
+            <div class="form-group">
+                <label for="taskTitle">📝 Taaknaam *</label>
+                <input type="text" id="taskTitle" placeholder="bijv. Review presentatie slides" required>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="project">📁 Project</label>
+                    <input type="text" id="project" placeholder="bijv. Website, Marketing">
+                </div>
+                
+                <div class="form-group">
+                    <label for="context">🏷️ Context</label>
+                    <input type="text" id="context" placeholder="bijv. @kantoor, @development">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="duration">⏱️ Duur (minuten)</label>
+                    <input type="number" id="duration" placeholder="60">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deadline">📅 Deadline</label>
+                    <input type="date" id="deadline">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">📄 Beschrijving/Opmerkingen</label>
+                <textarea id="description" placeholder="Voeg extra details, links, of context toe..."></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">🚀 Importeer naar Tickedify</button>
+        </form>
+
+        <div id="result" class="result"></div>
+
+        <div class="bulk-import">
+            <h3>📊 Bulk Import (CSV Format)</h3>
+            <p>Voor meerdere taken tegelijk, kopieer uit Notion in dit formaat:</p>
+            <div class="example">
+Taaknaam,Project,Context,Duur,Deadline,Beschrijving
+Review slides,Marketing,kantoor,60,2025-06-22,Slides voor client meeting
+Fix bug,Website,development,90,2025-06-23,Login functie werkt niet
+Boodschappen,Persoonlijk,auto,30,,Melk en brood kopen
+            </div>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="bulkData">📝 CSV Data (met headers)</label>
+                <textarea id="bulkData" placeholder="Plak je CSV data hier..."></textarea>
+            </div>
+            
+            <button type="button" onclick="bulkImport()" id="bulkBtn">📦 Bulk Import</button>
+        </div>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+        
+        // Check if user is logged in
+        async function checkLogin() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (response.ok) {
+                    isLoggedIn = true;
+                    return true;
+                } else {
+                    showResult('❌ Je moet ingelogd zijn op Tickedify om taken te importeren. <a href="/" target="_blank">Log eerst in</a>', 'error');
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('bulkBtn').disabled = true;
+                    return false;
+                }
+            } catch (error) {
+                showResult('❌ Kan niet verbinden met Tickedify. Controleer of je verbonden bent.', 'error');
+                return false;
+            }
+        }
+        
+        document.getElementById('importForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isLoggedIn && !(await checkLogin())) {
+                return;
+            }
+            
+            const formData = {
+                subject: buildSubject(),
+                body: buildBody(),
+                sender: 'notion-import@tickedify.com'
+            };
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Importeren...';
+            
+            try {
+                const response = await fetch('/api/email/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(`✅ Taak "${result.parsed_task.tekst}" succesvol geïmporteerd naar Tickedify!<br>
+                               📁 Project: ${result.parsed_task.projectName || 'Geen'}<br>
+                               🏷️ Context: ${result.parsed_task.contextName || 'Geen'}<br>
+                               📅 Deadline: ${result.parsed_task.verschijndatum || 'Geen'}<br>
+                               ⏱️ Duur: ${result.parsed_task.duur || 'Niet ingesteld'} minuten`, 'success');
+                    document.getElementById('importForm').reset();
+                } else {
+                    showResult('❌ Import gefaald: ' + (result.error || 'Onbekende fout'), 'error');
+                }
+            } catch (error) {
+                showResult('❌ Netwerk fout: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Importeer naar Tickedify';
+            }
+        });
+        
+        function buildSubject() {
+            const title = document.getElementById('taskTitle').value;
+            const project = document.getElementById('project').value;
+            const context = document.getElementById('context').value;
+            
+            let subject = title;
+            if (project) subject = `[${project}] ${subject}`;
+            if (context) subject = `${subject} @${context.replace('@', '')}`;
+            
+            return subject;
+        }
+        
+        function buildBody() {
+            const description = document.getElementById('description').value;
+            const duration = document.getElementById('duration').value;
+            const deadline = document.getElementById('deadline').value;
+            
+            let body = description || '';
+            
+            if (duration || deadline) {
+                body += '\n\n';
+                if (duration) body += `Duur: ${duration} minuten\n`;
+                if (deadline) body += `Deadline: ${deadline}\n`;
+            }
+            
+            return body.trim();
+        }
+        
+        async function bulkImport() {
+            if (!isLoggedIn && !(await checkLogin())) {
+                return;
+            }
+            
+            const csvData = document.getElementById('bulkData').value.trim();
+            if (!csvData) {
+                showResult('❌ Voer CSV data in voor bulk import', 'error');
+                return;
+            }
+            
+            const lines = csvData.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const dataLines = lines.slice(1);
+            
+            const bulkBtn = document.getElementById('bulkBtn');
+            bulkBtn.disabled = true;
+            bulkBtn.textContent = '⏳ Bulk importeren...';
+            
+            let imported = 0;
+            let failed = 0;
+            
+            for (let i = 0; i < dataLines.length; i++) {
+                if (!dataLines[i].trim()) continue;
+                
+                const values = dataLines[i].split(',').map(v => v.trim());
+                const task = {};
+                
+                headers.forEach((header, index) => {
+                    task[header.toLowerCase()] = values[index] || '';
+                });
+                
+                const formData = {
+                    subject: buildBulkSubject(task),
+                    body: buildBulkBody(task),
+                    sender: 'notion-bulk-import@tickedify.com'
+                };
+                
+                try {
+                    const response = await fetch('/api/email/test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    if (response.ok) {
+                        imported++;
+                    } else {
+                        failed++;
+                    }
+                } catch (error) {
+                    failed++;
+                }
+                
+                // Update progress
+                bulkBtn.textContent = `⏳ ${i + 1}/${dataLines.length} taken...`;
+            }
+            
+            showResult(`📊 Bulk import voltooid!<br>✅ ${imported} taken geïmporteerd<br>❌ ${failed} taken gefaald`, 
+                      failed === 0 ? 'success' : 'error');
+            
+            bulkBtn.disabled = false;
+            bulkBtn.textContent = '📦 Bulk Import';
+            document.getElementById('bulkData').value = '';
+        }
+        
+        function buildBulkSubject(task) {
+            let subject = task.taaknaam || task.title || task.naam || '';
+            if (task.project) subject = `[${task.project}] ${subject}`;
+            if (task.context) subject = `${subject} @${task.context.replace('@', '')}`;
+            return subject;
+        }
+        
+        function buildBulkBody(task) {
+            let body = task.beschrijving || task.description || '';
+            if (task.duur) body += `\n\nDuur: ${task.duur} minuten`;
+            if (task.deadline) body += `\nDeadline: ${task.deadline}`;
+            return body.trim();
+        }
+        
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            
+            // Scroll to result
+            result.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Check login status on page load
+        checkLogin();
+    </script>
+</body>
+</html>
