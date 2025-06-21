@@ -232,6 +232,20 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         });
         console.log('✅ Email parsed successfully:', taskData);
         
+        // Resolve project and context IDs
+        console.log('🔄 Resolving project and context IDs...');
+        if (taskData.projectName) {
+            taskData.projectId = await findOrCreateProject(taskData.projectName);
+        }
+        if (taskData.contextName) {
+            taskData.contextId = await findOrCreateContext(taskData.contextName);
+        }
+        
+        console.log('✅ Project/Context resolution completed:', {
+            project: taskData.projectName ? `${taskData.projectName} → ${taskData.projectId}` : 'none',
+            context: taskData.contextName ? `${taskData.contextName} → ${taskData.contextId}` : 'none'
+        });
+        
         // Create task in database
         if (!pool) {
             throw new Error('Database not available');
@@ -291,6 +305,70 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         });
     }
 });
+
+// Helper function to find or create project
+async function findOrCreateProject(projectName) {
+    if (!projectName || !pool) return null;
+    
+    try {
+        // First try to find existing project (case-insensitive)
+        const existingProject = await pool.query(
+            'SELECT id FROM projecten WHERE LOWER(naam) = LOWER($1)',
+            [projectName]
+        );
+        
+        if (existingProject.rows.length > 0) {
+            console.log('📁 Found existing project:', projectName, '→', existingProject.rows[0].id);
+            return existingProject.rows[0].id;
+        }
+        
+        // Create new project if not found
+        const projectId = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        await pool.query(
+            'INSERT INTO projecten (id, naam) VALUES ($1, $2)',
+            [projectId, projectName]
+        );
+        
+        console.log('📁 Created new project:', projectName, '→', projectId);
+        return projectId;
+        
+    } catch (error) {
+        console.error('❌ Error finding/creating project:', error);
+        return null;
+    }
+}
+
+// Helper function to find or create context
+async function findOrCreateContext(contextName) {
+    if (!contextName || !pool) return null;
+    
+    try {
+        // First try to find existing context (case-insensitive)
+        const existingContext = await pool.query(
+            'SELECT id FROM contexten WHERE LOWER(naam) = LOWER($1)',
+            [contextName]
+        );
+        
+        if (existingContext.rows.length > 0) {
+            console.log('🏷️ Found existing context:', contextName, '→', existingContext.rows[0].id);
+            return existingContext.rows[0].id;
+        }
+        
+        // Create new context if not found
+        const contextId = 'context_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        await pool.query(
+            'INSERT INTO contexten (id, naam) VALUES ($1, $2)',
+            [contextId, contextName]
+        );
+        
+        console.log('🏷️ Created new context:', contextName, '→', contextId);
+        return contextId;
+        
+    } catch (error) {
+        console.error('❌ Error finding/creating context:', error);
+        return null;
+    }
+}
 
 // Email parsing helper function
 function parseEmailToTask(emailData) {

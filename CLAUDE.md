@@ -6,68 +6,36 @@
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
-## CURRENT STATUS: Mailgun Email Import Setup in Progress (December 2025) ⏳
+## CURRENT STATUS: Email Import System Working + DNS Fix In Progress (Juni 20, 2025) ⏳
 
-## MAILGUN EMAIL IMPORT SETUP STATUS (December 19, 2025)
+## EMAIL IMPORT STATUS (Juni 20, 2025)
 
-**🎯 DOEL:** Email-to-task import via `import@tickedify.com` werkend krijgen
+**✅ EMAIL-TO-TASK SYSTEEM WERKEND:**
+- Emails naar `import@tickedify.com` worden succesvol omgezet naar taken
+- Gmail webmail werkt perfect
+- Webhook parsing gecorrigeerd (express.urlencoded toegevoegd)  
+- Subject wordt taaknaam, landen in Inbox
+- **Versie:** v1.1.46 live met debug logging
 
-**📧 HUIDIGE CONFIGURATIE:**
-- **Email adres:** `import@tickedify.com` (hoofddomein gebruikt)
-- **Mailgun domain:** `tickedify.com` (gewijzigd van import.tickedify.com)
-- **Webhook URL:** `https://tickedify.com/api/email/import`
-- **DNS provider:** Vimexx (tickedify.com nameservers via Vercel, maar MX records via Vimexx)
+**❌ SMTP CLIENT EMAIL PROBLEEM:**
+- Direct email clients (MailMate, Outlook, etc.) falen met: "No such recipient here"
+- Gmail webmail werkt WEL - dit wijst op SPF record conflict
+- **Root oorzaak:** Dubbele conflicterende SPF records in DNS:
+  1. `"v=spf1 a mx -all"` (restrictief, blokkeert alles)
+  2. `"v=spf1 include:mailgun.org ~all"` (Mailgun toegestaan)
 
-**🔧 DNS RECORDS TOEGEVOEGD BIJ VIMEXX:**
-```
-Type: MX
-Host: @ (hoofddomein)
-Priority: 10  
-Value: mxa.mailgun.org
+**🔧 DNS FIX IN UITVOERING:**
+- Foute SPF record (`"v=spf1 a mx -all"`) wordt verwijderd door Vimexx
+- TTL: ~18000 seconden (nog ~5 uur propagatie tijd)
+- **Status morgen checken**: `dig TXT tickedify.com | grep "v=spf1"`
+- **Test wanneer gefixt**: Email sturen via MailMate naar import@tickedify.com
 
-Type: MX
-Host: @ (hoofddomein)
-Priority: 10
-Value: mxb.mailgun.org
-
-Type: TXT  
-Host: @ (hoofddomein)
-Value: v=spf1 include:mailgun.org ~all
-```
-
-**✅ MAILGUN DOMAIN VERIFIED (December 20, 2025 8:30):** 
-DNS configuratie succesvol! Mailgun kan nu tickedify.com verifiëren.
-
-**🔧 OPGELOSTE DNS CONFIGURATIE:**
-1. **Nameservers gewijzigd:** Van Vercel (`ns1.vercel-dns.com`) naar Vimexx (`ns.zxcs.nl`)
-2. **A record toegevoegd:** @ → 76.76.19.61 (Vercel IP)
-3. **MX records correct:** @ → mxa.eu.mailgun.org + mxb.eu.mailgun.org (EU servers)
-4. **SPF record actief:** v=spf1 include:mailgun.org ~all
-5. **DKIM verified:** _domainkey TXT record geaccepteerd
-6. **AAAA records verwijderd:** IPv6 conflicts opgelost
-
-**❌ MAILGUN IMPORT GEFAALD (December 20, 2025 12:30):**
-- ✅ **Mailgun domein geverifieerd**
-- ✅ **DNS records correct geconfigureerd** 
-- ✅ **Webhook endpoint functioneel** (`https://www.tickedify.com/api/email/import`)
-- ✅ **Route correct geconfigureerd** in Mailgun dashboard
-- ❌ **Emails komen niet aan bij Mailgun** - geen logs, geen delivery
-- ❌ **2+ dagen troubleshooting** zonder succes
-
-**🚨 BLOCKER ANALYSIS:**
-- **Root cause onbekend:** MX records correct, Mailgun verified, maar emails verdwijnen
-- **Mogelijke oorzaken:** 
-  - Mailgun EU server issues
-  - DNS propagatie problemen tussen providers
-  - ISP email filtering (Telenet)
-  - Mailgun receiving configuration missing
-
-**⏭️ AANBEVOLEN VOLGENDE STAP:**
-Implementeer **alternative email-to-task import** via:
-1. **IMAP polling** (monitor bestaand email account)
-2. **Zapier integration** (email trigger → webhook)
-3. **Direct SMTP server** (eigen email endpoint)
-4. **Manual import interface** (paste email content)
+**📧 EMAIL FORMAAT ONDERSTEUNING:**
+- **Basis**: `Subject: Nieuwe taak` → Taak "Nieuwe taak" in Inbox
+- **Met project**: `Subject: [Project] Taak naam` → Taak in specified project  
+- **Met context**: `Subject: Taak naam @context` → Taak met context
+- **Met deadline**: Body met `Datum: 2025-06-25` → Taak met verschijndatum
+- **Met duur**: Body met `Duur: 30` → Taak met 30 minuten geschatte duur
 
 **📋 VOLGENDE STAPPEN (na DNS propagatie):**
 1. **Controleer webapp toegankelijkheid** - https://tickedify.com moet laden
@@ -754,14 +722,96 @@ async function deploymentWorkflow() {
 - Betrouwbare deployment pipeline
 - Historische tracking van test success rates
 
-## Next Features to Implement
-- **Test Dashboard Implementation** (Prioriteit 1)
-- **Automatische Regressie Testing** (Prioriteit 2)
-- **Email-to-Inbox functionality**
-  - Use subdomain: `inbox.tickedify.com` (NOT tasks.tickedify.com)
-  - Mailgun for email processing
-  - Automatic user provisioning
-  - Each user gets: `user123@inbox.tickedify.com`
+## NIEUWE KILLER FEATURES GEÏDENTIFICEERD (Juni 20, 2025)
+
+### 🎯 Potentiële Eerste Betalende Klant Features
+**1. Complexe Herhalingspatronen (2-3 uur werk)**
+- Specifieke klantrequest: "Elke maandag na de eerste zondag van de maand"
+- Pattern: `monthly-weekday-after-first-0-1-1`
+- Uitbreiding bestaand recurring systeem
+
+**2. Outlook Agenda Integratie (10-15 uur werk)**
+- Microsoft Graph API voor calendar sync
+- OAuth2 flow voor klant authentication
+- Automatische meeting blocks in dagelijkse planning
+- Klant setup: 3 clicks (login → toestaan → sync)
+
+**Combinatie zou eerste betalende klant kunnen opleveren!**
+
+### 🧠 Mind Dump Feature (Killer Feature!)
+**Concept**: Gestructureerde brain dump met trigger woorden
+- **Standaard woorden**: Familie, Werk, Financiën, Huis, Gezondheid, Auto, etc.
+- **Aanpasbaar**: Gebruiker kan woorden toevoegen/verwijderen in instellingen
+- **Workflow**: Start → woord verschijnt → input → Tab/Enter → volgend woord
+- **Output**: Alle input direct naar Inbox
+- **Onderdeel van**: Wekelijkse Review stap 2 (Actualiseren)
+
+### 📋 Wekelijkse Optimalisatie Feature (Core Differentiator!)
+**Gebaseerd op "Baas Over Je Tijd" methodologie:**
+
+**1. OPRUIMEN**
+- Verzamelplaatsen legen (Inbox processing)
+- Email inbox leeg maken
+
+**2. ACTUALISEREN** 
+- Mind dump (met trigger woorden!)
+- Acties lijst reviewen
+- Agenda doorlopen voor komende week
+- Opvolgen lijst reviewen
+- Projecten lijst reviewen
+
+**3. VERBETEREN**
+- Uitgesteld lijst reviewen
+
+**UI Implementatie:**
+- "Wekelijkse Review" in sidebar naast Dagelijkse Planning
+- Guided step-by-step interface met progress indicator
+- Auto-detection: "23 items in Inbox - tijd om op te ruimen?"
+- Weekly reminder systeem
+
+### ⏱️ Tijd Tracking & Analytics
+**Simple maar waardevol:**
+- "Start taak" timer functionaliteit
+- Werkelijke vs geschatte tijd bijhouden
+- Analytics: "Je onderschat taken gemiddeld met 40%"
+- Productiviteitspatronen herkennen
+- **Voordeel**: Geen kosten, grote waarde voor klanten
+
+### 📱 Overige Ideeën Geëvalueerd
+**Telegram Bot** (als alternatief voor dure SMS)
+**Google Calendar** (na Outlook, voor marktcoverage)
+**AI Task Scheduling** (toekomst feature)
+**Team/Familie Mode** (voor uitbreiding naar meerdere gebruikers)
+
+## ACTIEPUNTEN VOOR MORGEN (Juni 21, 2025)
+
+### 🔥 Urgent - Email Import Fix
+1. **Check SPF record status**: `dig TXT tickedify.com | grep "v=spf1"`
+2. **Als gefixt**: Test email via MailMate naar import@tickedify.com
+3. **Als nog niet gefixt**: Wacht tot DNS propagatie compleet is
+
+### 💼 Business Development
+1. **Follow up potentiële klant**: Status check voor herhalingspatroon + Outlook integratie
+2. **Prioriteer features** gebaseerd op klant commitment
+
+### 🛠️ Development Planning
+1. **Wekelijkse Review**: UI mockup maken (hoogste prioriteit voor retention)
+2. **Mind Dump**: Standaard trigger woorden lijst opstellen
+3. **Herhalingspatroon**: Technische implementatie plannen als klant commitment heeft
+
+### 📊 Strategic Decisions
+- **Calendar integratie**: Start met Outlook OF Google (niet beide tegelijk)
+- **Feature volgorde**: Weekly Review → Mind Dump → Calendar → Time Tracking
+- **Customer validation**: Concrete commitment van eerste klant voor custom features
+
+## Next Features to Implement (Bijgewerkte Prioriteiten)
+1. **Email Import Fix** (DNS wachten op propagatie)
+2. **Wekelijkse Optimalisatie + Mind Dump** (Core differentiator, hoge retention)
+3. **Outlook Agenda Integratie** (Voor eerste betalende klant)
+4. **Complexe Herhalingspatronen** (Klant-specifiek)
+5. **Tijd Tracking & Analytics** (Eenvoudig, hoge waarde)
+6. **Test Dashboard Implementation** (Development tooling)
+7. **Automatische Regressie Testing** (Development tooling)
 
 ## Technical Stack
 - Frontend: Vanilla JavaScript
