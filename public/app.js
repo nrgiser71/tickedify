@@ -1621,7 +1621,7 @@ class Taakbeheer {
                 <td title="Taak afwerken">
                     <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
                 </td>
-                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}">${taak.tekst}${recurringIndicator}</td>
+                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}${taak.opmerkingen ? '\n\nOpmerkingen:\n' + this.escapeHtml(taak.opmerkingen) : ''}">${taak.tekst}${recurringIndicator}</td>
                 <td title="${this.escapeHtml(projectNaam)}">${projectNaam}</td>
                 <td title="${this.escapeHtml(contextNaam)}">${contextNaam}</td>
                 <td title="${datum}">${datum}</td>
@@ -1677,7 +1677,7 @@ class Taakbeheer {
                     <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
                 </div>
                 <div class="taak-content">
-                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="Klik om te bewerken">${taak.tekst}${recurringIndicator}</div>
+                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
                 </div>
                 ${acties}
             `;
@@ -1893,7 +1893,7 @@ class Taakbeheer {
             this.touchedFields.clear(); // Reset touched fields bij nieuwe popup
             
             // Remove alle invalid classes en touched state
-            ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur'].forEach(fieldId => {
+            ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur', 'opmerkingen'].forEach(fieldId => {
                 const field = document.getElementById(fieldId);
                 if (field) {
                     field.classList.remove('invalid');
@@ -1910,6 +1910,7 @@ class Taakbeheer {
             document.getElementById('projectSelect').value = taak.projectId || '';
             document.getElementById('contextSelect').value = taak.contextId || '';
             document.getElementById('duur').value = taak.duur || '';
+            document.getElementById('opmerkingen').value = taak.opmerkingen || '';
             
             // Format date correctly for date input (YYYY-MM-DD)
             let dateValue = '';
@@ -1953,6 +1954,7 @@ class Taakbeheer {
         document.getElementById('projectSelect').value = '';
         document.getElementById('contextSelect').value = '';
         document.getElementById('duur').value = '';
+        document.getElementById('opmerkingen').value = '';
         document.getElementById('herhalingSelect').value = '';
         document.getElementById('herhalingDisplay').value = 'Geen herhaling';
         
@@ -1960,7 +1962,7 @@ class Taakbeheer {
         
         // Reset touched fields en remove invalid classes
         this.touchedFields.clear();
-        ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur'].forEach(fieldId => {
+        ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur', 'opmerkingen'].forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {
                 field.classList.remove('invalid');
@@ -2023,6 +2025,7 @@ class Taakbeheer {
         const verschijndatum = document.getElementById('verschijndatum').value;
         const contextId = document.getElementById('contextSelect').value;
         const duur = parseInt(document.getElementById('duur').value) || 0;
+        const opmerkingen = document.getElementById('opmerkingen').value.trim();
         const herhalingType = document.getElementById('herhalingSelect').value;
 
         console.log('maakActie - herhalingType:', herhalingType);
@@ -2045,6 +2048,7 @@ class Taakbeheer {
                     actie.verschijndatum = verschijndatum;
                     actie.contextId = contextId;
                     actie.duur = duur;
+                    actie.opmerkingen = opmerkingen;
                     actie.herhalingType = herhalingType;
                     actie.herhalingActief = !!herhalingType;
                     
@@ -2065,6 +2069,7 @@ class Taakbeheer {
                     verschijndatum: verschijndatum,
                     contextId: contextId,
                     duur: duur,
+                    opmerkingen: opmerkingen,
                     type: 'actie',
                     herhalingType: herhalingType,
                     herhalingActief: !!herhalingType
@@ -2123,6 +2128,7 @@ class Taakbeheer {
                 contextId: taak.contextId,
                 verschijndatum: taak.verschijndatum,
                 duur: taak.duur,
+                opmerkingen: taak.opmerkingen,
                 type: taak.type
             };
             
@@ -2807,7 +2813,7 @@ class Taakbeheer {
             this.touchedFields.clear();
             
             // Remove alle invalid classes en touched state
-            ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur'].forEach(fieldId => {
+            ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur', 'opmerkingen'].forEach(fieldId => {
                 const field = document.getElementById(fieldId);
                 if (field) {
                     field.classList.remove('invalid');
@@ -2827,6 +2833,7 @@ class Taakbeheer {
             // Vul form met actie data
             document.getElementById('taakNaamInput').value = actie.tekst;
             document.getElementById('projectSelect').value = actie.projectId || '';
+            document.getElementById('opmerkingen').value = actie.opmerkingen || '';
             
             // Format date correctly for date input (YYYY-MM-DD)
             let dateValue = '';

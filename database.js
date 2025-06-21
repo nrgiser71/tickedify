@@ -39,16 +39,18 @@ const initDatabase = async () => {
         ALTER TABLE taken 
         ADD COLUMN IF NOT EXISTS herhaling_type VARCHAR(50),
         ADD COLUMN IF NOT EXISTS herhaling_waarde INTEGER,
-        ADD COLUMN IF NOT EXISTS herhaling_actief BOOLEAN DEFAULT FALSE
+        ADD COLUMN IF NOT EXISTS herhaling_actief BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS opmerkingen TEXT
       `);
-      console.log('✅ Recurring task columns added/verified');
+      console.log('✅ Recurring task columns and opmerkingen added/verified');
     } catch (alterError) {
       console.log('⚠️ Could not add recurring columns (might already exist):', alterError.message);
       // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
       const recurringColumns = [
         { name: 'herhaling_type', type: 'VARCHAR(50)' },
         { name: 'herhaling_waarde', type: 'INTEGER' },
-        { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' }
+        { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' },
+        { name: 'opmerkingen', type: 'TEXT' }
       ];
       
       for (const col of recurringColumns) {

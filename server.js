@@ -267,13 +267,14 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
 
         const result = await pool.query(`
             INSERT INTO taken (
-                id, tekst, lijst, aangemaakt, project_id, context_id, 
+                id, tekst, opmerkingen, lijst, aangemaakt, project_id, context_id, 
                 verschijndatum, duur, type
-            ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5, $6, $7, $8)
+            ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7, $8, $9)
             RETURNING *
         `, [
             taskId,
             taskData.tekst,
+            taskData.opmerkingen || null,
             taskData.lijst || 'inbox',
             taskData.projectId,
             taskData.contextId,
@@ -389,7 +390,8 @@ function parseEmailToTask(emailData) {
     
     // Initialize task data
     const taskData = {
-        tekst: subject, // Default to subject line
+        tekst: subject, // Will be cleaned up later to just task name
+        opmerkingen: '', // Will contain the email body content
         lijst: 'inbox',
         projectId: null,
         projectName: null,
@@ -483,7 +485,7 @@ function parseEmailToTask(emailData) {
             }
         }
         
-        // If body has substantial content beyond structured fields, append to task
+        // Extract body content as opmerkingen, excluding structured fields
         const bodyWithoutStructured = body
             .split('\n')
             .filter(line => {
@@ -499,8 +501,9 @@ function parseEmailToTask(emailData) {
             .join('\n')
             .trim();
             
-        if (bodyWithoutStructured && bodyWithoutStructured !== taskData.tekst) {
-            taskData.tekst += '\n\n' + bodyWithoutStructured;
+        if (bodyWithoutStructured) {
+            taskData.opmerkingen = bodyWithoutStructured;
+            console.log('📝 Found opmerkingen:', taskData.opmerkingen.substring(0, 50) + '...');
         }
     }
     
@@ -1290,12 +1293,13 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         
         // Insert directly without touching existing data
         const result = await pool.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING id
         `, [
             actionData.id,
             actionData.tekst,
+            actionData.opmerkingen || null,
             actionData.aangemaakt,
             'acties',
             actionData.projectId || null,

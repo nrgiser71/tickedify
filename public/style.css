@@ -1025,7 +1025,8 @@ button:active {
 }
 
 .form-groep input,
-.form-groep select {
+.form-groep select,
+.form-groep textarea {
     width: 100%;
     padding: 6px 10px;
     border: 1px solid var(--macos-gray-4);
@@ -1036,8 +1037,16 @@ button:active {
     transition: all 0.2s ease;
 }
 
+.form-groep textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    line-height: 1.4;
+}
+
 .form-groep input:focus,
 .form-groep select:focus,
+.form-groep textarea:focus,
 button:focus {
     outline: none;
     border-color: var(--macos-blue);
@@ -1046,14 +1055,17 @@ button:focus {
 
 .form-groep input.invalid,
 .form-groep select.invalid,
-.form-groep input[data-touched="true"]:invalid {
+.form-groep textarea.invalid,
+.form-groep input[data-touched="true"]:invalid,
+.form-groep textarea[data-touched="true"]:invalid {
     border-color: var(--macos-red);
     box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
 }
 
 /* Focus state heeft altijd prioriteit over invalid state */
 .form-groep input:focus,
-.form-groep select:focus {
+.form-groep select:focus,
+.form-groep textarea:focus {
     border-color: var(--macos-blue) !important;
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3) !important;
 }
