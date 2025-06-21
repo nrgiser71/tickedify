@@ -862,7 +862,19 @@ app.get('/api/admin/stats', async (req, res) => {
                 (SELECT COUNT(*) FROM contexten) as total_contexts
         `);
         
-        res.json(stats.rows[0] || {});
+        // Also check session table
+        let sessionCount = 0;
+        try {
+            const sessionStats = await pool.query('SELECT COUNT(*) as count FROM user_sessions');
+            sessionCount = parseInt(sessionStats.rows[0].count) || 0;
+        } catch (sessionError) {
+            console.log('Session table not available yet:', sessionError.message);
+        }
+        
+        const result = stats.rows[0] || {};
+        result.active_sessions = sessionCount;
+        
+        res.json(result);
         
     } catch (error) {
         console.error('Admin stats error:', error);
