@@ -1576,20 +1576,23 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         const actionData = req.body;
         console.log('🔧 SINGLE ACTION: Adding action:', actionData);
         
-        // First check if task already exists
-        const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1', [actionData.id]);
+        const userId = getCurrentUserId(req);
+        console.log('🔧 SINGLE ACTION: Using userId:', userId);
+        
+        // First check if task already exists for this user
+        const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
         if (existingCheck.rows.length > 0) {
             console.log('🔧 SINGLE ACTION: Task already exists, updating instead');
             
             // Delete the existing task first
-            await pool.query('DELETE FROM taken WHERE id = $1', [actionData.id]);
+            await pool.query('DELETE FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
             console.log('🔧 SINGLE ACTION: Deleted existing task');
         }
         
-        // Insert directly without touching existing data
+        // Insert directly without touching existing data - WITH user_id
         const result = await pool.query(`
-            INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING id
         `, [
             actionData.id,
@@ -1605,7 +1608,8 @@ app.post('/api/debug/add-single-action', async (req, res) => {
             actionData.herhalingType || null,
             actionData.herhalingWaarde || null,
             actionData.herhalingActief === true || actionData.herhalingActief === 'true',
-            null
+            null,
+            userId  // Add user_id
         ]);
         
         console.log('🔧 SINGLE ACTION: Successfully inserted with ID:', result.rows[0].id);
