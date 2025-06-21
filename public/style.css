@@ -1522,7 +1522,7 @@ button:focus {
 .dagelijkse-planning-layout {
     display: flex;
     gap: 20px;
-    height: calc(100vh - 120px); /* Full height minus header */
+    height: 100vh; /* Full viewport height */
     margin: -24px -32px;
     padding: 16px 16px 0 16px; /* Remove bottom padding to eliminate gap */
 }
