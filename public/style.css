@@ -1536,6 +1536,7 @@ button:focus {
     flex-direction: column;
     gap: 15px;
     height: 100%; /* Full height */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 /* Time section - bit higher */
@@ -2223,6 +2224,7 @@ button:focus {
     flex: 1; /* Takes remaining space */
     display: flex;
     flex-direction: column;
+    min-height: 0; /* Allow flex shrinking */
 }
 
 .acties-sectie h3 {
