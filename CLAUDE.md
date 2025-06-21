@@ -31,9 +31,50 @@
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
-## CURRENT STATUS: Opmerkingen Veld Geïmplementeerd (Juni 21, 2025) ✅
+## CURRENT STATUS: Notion Import Tools Geïmplementeerd (Juni 21, 2025) ✅
 
-**LAATSTE UPDATE**: Opmerkingen veld volledig geïmplementeerd in versie v1.1.54
+**LAATSTE UPDATE**: Complete Notion import tooling geïmplementeerd in versie v0.4.2
+
+## NOTION IMPORT TOOLS VOLLEDIG OPERATIONEEL (Juni 21, 2025) ✅
+
+**✅ TWEE IMPORT METHODEN BESCHIKBAAR:**
+
+### 🚀 **Methode 1: Smart CSV Mapper** - https://tickedify.com/csv-mapper.html
+- **Drag & Drop Interface**: Visuele mapping van Notion kolommen naar Tickedify velden
+- **CSV Preview**: Toont eerste 5 rijen van je data voor verificatie
+- **Bulk Import**: Honderden taken in één keer importeren
+- **Smart Parsing**: Automatische datum conversie en CSV quote handling
+- **Progress Tracking**: Real-time voortgang tijdens import
+- **Authentication Check**: Werkt met multi-user systeem
+
+### 📝 **Methode 2: Handmatige Tool** - https://tickedify.com/notion-import.html  
+- **Enkele Taken**: Voor individuele taken of kleine hoeveelheden
+- **Bulk CSV Input**: Plak CSV data direct in tekstveld
+- **Form Interface**: Guided input voor project, context, deadlines
+
+**🔧 NOTION CSV EXPORT INSTRUCTIES:**
+1. Open je Notion database → Klik "..." → Export
+2. Kies "CSV" format → Download
+3. Open in Excel/Numbers om kolommen te bekijken
+4. Gebruik Smart CSV Mapper voor beste ervaring
+
+**📊 ONDERSTEUNDE VELD MAPPING:**
+- `Description` → Taaknaam (verplicht)
+- `Project` → Project  
+- `Contexts` → Context
+- `Due Date` → Deadline (auto-parsed)
+- `Duration in minutes` → Duur
+- `Notes v3` → Opmerkingen
+- Alle andere Notion kolommen → Negeerbaar
+
+**🎯 WAAROM DEZE OPLOSSING PERFECT IS:**
+- **Geen Wachten**: Direct bruikbaar (geen DNS fixes nodig)
+- **Bulk Capable**: 20+ taken in minuten importeren  
+- **Intelligente Parsing**: Automatic project/context extractie
+- **Multi-User Safe**: Werkt met authentication systeem
+- **User Friendly**: Visual drag & drop interface
+
+**Status**: Notion → Tickedify migratie nu volledig mogelijk! 🎉
 
 ## OPMERKINGEN VELD IMPLEMENTATIE (Juni 21, 2025) ✅
 
