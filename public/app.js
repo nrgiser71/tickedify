@@ -1360,9 +1360,12 @@ class Taakbeheer {
         this.huidigeLijst = huidigeOriginaleLijst;
     }
 
-    // Wrapper functie voor onclick handlers
+    // Wrapper functie voor onclick handlers - zorg dat async werkt
     bewerkActieWrapper(id) {
-        this.bewerkActie(id);
+        // Use setTimeout to avoid blocking UI and allow async to work
+        setTimeout(async () => {
+            await this.bewerkActie(id);
+        }, 0);
     }
 
     async laadHuidigeLijst() {
@@ -2774,6 +2777,11 @@ class Taakbeheer {
             // Zorg ervoor dat projecten en contexten geladen zijn
             await this.laadProjecten();
             await this.laadContexten();
+            
+            console.log('🐛 DEBUG bewerkActie - Projecten geladen:', this.projecten.length);
+            console.log('🐛 DEBUG bewerkActie - Contexten geladen:', this.contexten.length);
+            console.log('🐛 DEBUG bewerkActie - Actie projectId:', actie.projectId);
+            console.log('🐛 DEBUG bewerkActie - Actie contextId:', actie.contextId);
             
             // Vul form met actie data
             document.getElementById('taakNaamInput').value = actie.tekst;
