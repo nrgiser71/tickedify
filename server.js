@@ -2524,11 +2524,6 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error', message: err.message });
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
 // Debug endpoint to clean up 'Thuis' endings
 app.get('/api/debug/clean-thuis', async (req, res) => {
     try {
@@ -2580,6 +2575,11 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
         console.error('Clean Thuis error:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
 app.listen(PORT, () => {
