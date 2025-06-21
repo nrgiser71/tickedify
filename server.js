@@ -254,6 +254,17 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         
         const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
+        // Convert verschijndatum to proper format for PostgreSQL DATE field
+        let verschijndatumForDb = null;
+        if (taskData.verschijndatum) {
+            // Ensure it's in YYYY-MM-DD format for PostgreSQL DATE type
+            const dateMatch = taskData.verschijndatum.match(/(\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) {
+                verschijndatumForDb = dateMatch[1];
+                console.log('📅 Converted deadline for database:', verschijndatumForDb);
+            }
+        }
+
         const result = await pool.query(`
             INSERT INTO taken (
                 id, tekst, lijst, aangemaakt, project_id, context_id, 
@@ -266,7 +277,7 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
             taskData.lijst || 'inbox',
             taskData.projectId,
             taskData.contextId,
-            taskData.verschijndatum,
+            verschijndatumForDb,
             taskData.duur,
             'taak'
         ]);
