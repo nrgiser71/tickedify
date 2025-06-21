@@ -2577,7 +2577,7 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
             if (cleanedText !== originalText && cleanedText.length > 0) {
                 await pool.query(`
                     UPDATE taken 
-                    SET tekst = $1, bijgewerkt = CURRENT_TIMESTAMP 
+                    SET tekst = $1 
                     WHERE id = $2
                 `, [cleanedText, task.id]);
                 
