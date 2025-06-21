@@ -1521,8 +1521,12 @@ button:focus {
 /* ===== DAGELIJKSE PLANNING STYLING ===== */
 .dagelijkse-planning-layout {
     display: flex;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 140px); /* More conservative space for header + padding */
+    max-height: calc(100vh - 140px); /* Prevent overflow */
     gap: 20px;
+    overflow: hidden; /* Prevent layout from causing page scroll */
+    margin: -24px -32px; /* Counteract content-area padding */
+    padding: 16px; /* Add back smaller padding */
 }
 
 .planning-sidebar {
@@ -1720,8 +1724,9 @@ button:focus {
 
 /* Specific height constraints for daily planning */
 .dagelijkse-planning-layout .acties-lijst {
-    max-height: calc(100vh - 500px); /* Reserve space for other elements */
+    /* Let flex handle the height automatically within constrained parent */
     min-height: 200px; /* Minimum usable height */
+    flex: 1 1 auto; /* Allow growing and shrinking within available space */
 }
 
 .planning-actie-item {
