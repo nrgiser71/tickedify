@@ -255,6 +255,37 @@
             background: #c82333;
             transform: translateY(-1px);
         }
+        
+        .field-clear-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        
+        .field-clear-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+        
+        .tickedify-field {
+            position: relative;
+        }
+        
+        .tickedify-field.mapped .field-clear-btn {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -288,31 +319,37 @@
                     <div class="field-label">Taaknaam (verplicht)</div>
                     <div class="tickedify-field" data-field="taaknaam" ondrop="drop(event)" ondragover="allowDrop(event)">
                         <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('taaknaam')" title="Mapping verwijderen">×</button>
                     </div>
                     
                     <div class="field-label">Project</div>
                     <div class="tickedify-field" data-field="project" ondrop="drop(event)" ondragover="allowDrop(event)">
                         <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('project')" title="Mapping verwijderen">×</button>
                     </div>
                     
                     <div class="field-label">Context</div>
                     <div class="tickedify-field" data-field="context" ondrop="drop(event)" ondragover="allowDrop(event)">
                         <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('context')" title="Mapping verwijderen">×</button>
                     </div>
                     
                     <div class="field-label">Deadline</div>
                     <div class="tickedify-field" data-field="deadline" ondrop="drop(event)" ondragover="allowDrop(event)">
                         <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('deadline')" title="Mapping verwijderen">×</button>
                     </div>
                     
                     <div class="field-label">Duur (minuten)</div>
                     <div class="tickedify-field" data-field="duur" ondrop="drop(event)" ondragover="allowDrop(event)">
                         <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('duur')" title="Mapping verwijderen">×</button>
                     </div>
                     
                     <div class="field-label">Opmerkingen</div>
                     <div class="tickedify-field" data-field="opmerkingen" ondrop="drop(event)" ondragover="allowDrop(event)">
                         <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('opmerkingen')" title="Mapping verwijderen">×</button>
                     </div>
                 </div>
             </div>
@@ -501,7 +538,10 @@
             
             // Update UI
             e.currentTarget.classList.add('mapped');
-            e.currentTarget.innerHTML = `<span class="mapped-column">${data.header}</span>`;
+            e.currentTarget.innerHTML = `
+                <span class="mapped-column">${data.header}</span>
+                <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+            `;
             
             // Check if we can enable import
             updateImportButton();
@@ -519,11 +559,37 @@
             document.getElementById('importBtn').disabled = !hasRequiredField;
         }
         
+        function clearMapping(field) {
+            if (mapping[field]) {
+                // Remove from mapping object
+                delete mapping[field];
+                
+                // Update UI - reset field to empty state
+                const fieldElement = document.querySelector(`[data-field="${field}"]`);
+                if (fieldElement) {
+                    fieldElement.classList.remove('mapped');
+                    fieldElement.innerHTML = `
+                        <span>Sleep hier een kolom naartoe</span>
+                        <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                    `;
+                }
+                
+                // Update import button state
+                updateImportButton();
+                
+                showResult(`✅ Mapping voor "${field}" verwijderd`, 'success');
+            }
+        }
+        
         function resetMapping() {
             mapping = {};
             document.querySelectorAll('.tickedify-field').forEach(field => {
+                const fieldName = field.dataset.field;
                 field.classList.remove('mapped');
-                field.innerHTML = '<span>Sleep hier een kolom naartoe</span>';
+                field.innerHTML = `
+                    <span>Sleep hier een kolom naartoe</span>
+                    <button class="field-clear-btn" onclick="clearMapping('${fieldName}')" title="Mapping verwijderen">×</button>
+                `;
             });
             updateImportButton();
         }
@@ -738,7 +804,10 @@
                 const fieldElement = document.querySelector(`[data-field="${field}"]`);
                 if (fieldElement) {
                     fieldElement.classList.add('mapped');
-                    fieldElement.innerHTML = `<span class="mapped-column">${mapping[field].header}</span>`;
+                    fieldElement.innerHTML = `
+                        <span class="mapped-column">${mapping[field].header}</span>
+                        <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                    `;
                 }
             });
             
@@ -834,7 +903,10 @@
                         const fieldElement = document.querySelector(`[data-field="${field}"]`);
                         if (fieldElement) {
                             fieldElement.classList.add('mapped');
-                            fieldElement.innerHTML = `<span class="mapped-column">${headers[index]}</span>`;
+                            fieldElement.innerHTML = `
+                                <span class="mapped-column">${headers[index]}</span>
+                                <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                            `;
                         }
                         
                         autoMapped++;
