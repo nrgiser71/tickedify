@@ -1518,41 +1518,32 @@ button:focus {
     }
 }
 
-/* ===== DAGELIJKSE PLANNING STYLING ===== */
+/* ===== SIMPLE DAILY PLANNING ===== */
 .dagelijkse-planning-layout {
     display: flex;
-    height: calc(100vh - 140px); /* More conservative space for header + padding */
-    max-height: calc(100vh - 140px); /* Prevent overflow */
     gap: 20px;
-    overflow: hidden; /* Prevent layout from causing page scroll */
-    margin: -24px -32px; /* Counteract content-area padding */
-    padding: 16px; /* Add back smaller padding */
+    height: 600px; /* Simple fixed height */
+    margin: -24px -32px;
+    padding: 16px;
 }
 
 .planning-sidebar {
-    width: 750px;
-    min-width: 750px;
-    background: var(--macos-bg-secondary);
-    border-radius: var(--macos-radius-large);
-    padding: 20px;
-    overflow-y: hidden; /* Remove scroll from parent */
+    width: 300px; /* Simple fixed width */
+    background: #f0f0f0; /* Simple gray background */
+    border-radius: 8px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    /* Dynamic height calculation to fit properly on all screens */
-    height: calc(100vh - 120px); /* Subtract space for main header and margins */
-    max-height: calc(100vh - 120px);
+    gap: 15px;
 }
 
-.tijd-instellingen {
-    background: var(--macos-bg-primary);
-    padding: 15px;
-    border-radius: var(--macos-radius-medium);
-    border: 1px solid var(--macos-gray-5);
-    flex-shrink: 0; /* Don't shrink time settings */
-    /* Fixed height based on debugger optimal value */
-    height: 80px;
-    min-height: 80px;
+/* Time section - small fixed area */
+.tijd-sectie {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    height: 60px; /* Simple fixed height */
 }
 
 /* Compact sections for daily planning */
@@ -2150,10 +2141,90 @@ button:focus {
         min-width: auto;
         order: 2;
     }
-    
-    .dag-kalender {
-        order: 1;
-    }
+}
+
+/* SIMPLE CSS FOR PLANNING LAYOUT */
+.tijd-sectie h3 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.tijd-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.tijd-inputs label {
+    font-size: 11px;
+    color: #888;
+}
+
+.tijd-inputs input {
+    width: 40px;
+    padding: 3px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+/* Templates section - small fixed area */
+.templates-sectie {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    height: 80px; /* Simple fixed height */
+}
+
+.templates-sectie h3 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.template-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.template-item {
+    background: #007AFF;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: grab;
+}
+
+.template-item:hover {
+    background: #0056CC;
+}
+
+/* Actions section - takes remaining space */
+.acties-sectie {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    flex: 1; /* Takes remaining space */
+    display: flex;
+    flex-direction: column;
+}
+
+.acties-sectie h3 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.acties-container {
+    flex: 1; /* Takes remaining space in actions section */
+    overflow-y: auto; /* Simple scrolling */
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 5px;
 }
 
 /* ===== LOADING INDICATORS ===== */

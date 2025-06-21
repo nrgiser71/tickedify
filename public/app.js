@@ -3509,61 +3509,31 @@ class Taakbeheer {
         
         container.innerHTML = `
             <div class="dagelijkse-planning-layout">
-                <!-- Left column: Templates and Actions -->
+                <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
-                    <!-- Time range settings -->
-                    <div class="tijd-instellingen">
-                        <h3>Tijd Instellingen</h3>
+                    <!-- Time settings - fixed small section -->
+                    <div class="tijd-sectie">
+                        <h3>⏰ Tijd</h3>
                         <div class="tijd-inputs">
                             <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
                             <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
                         </div>
                     </div>
                     
-                    <!-- Templates -->
+                    <!-- Templates - fixed medium section -->
                     <div class="templates-sectie">
-                        <h3>🔒 Geblokkeerde tijd</h3>
+                        <h3>🔒 Templates</h3>
                         <div class="template-items">
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30 min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60 min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">🔒 90 min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120 min</div>
-                        </div>
-                        
-                        <h3>☕ Pauzes</h3>
-                        <div class="template-items">
-                            <div class="template-item" draggable="true" data-type="pauze" data-duur="5">5 min</div>
-                            <div class="template-item" draggable="true" data-type="pauze" data-duur="10">10 min</div>
-                            <div class="template-item" draggable="true" data-type="pauze" data-duur="15">15 min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60min</div>
+                            <div class="template-item" draggable="true" data-type="pauze" data-duur="15">☕ 15min</div>
                         </div>
                     </div>
                     
-                    <!-- Actions list -->
+                    <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
-                        <h3>📋 Acties (deze week)</h3>
-                        <div class="acties-filters">
-                            <div class="filter-groep">
-                                <label>Taak:</label>
-                                <input type="text" id="planningTaakFilter" placeholder="Zoek...">
-                            </div>
-                            <div class="filter-groep">
-                                <label>Project:</label>
-                                <select id="planningProjectFilter">
-                                    <option value="">Alle projecten</option>
-                                </select>
-                            </div>
-                            <div class="filter-groep">
-                                <label>Context:</label>
-                                <select id="planningContextFilter">
-                                    <option value="">Alle contexten</option>
-                                </select>
-                            </div>
-                            <div class="filter-groep">
-                                <label>Datum:</label>
-                                <input type="date" id="planningDatumFilter">
-                            </div>
-                        </div>
-                        <div class="acties-lijst" id="planningActiesLijst">
+                        <h3>📋 Acties</h3>
+                        <div class="acties-container" id="planningActiesLijst">
                             ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
                         </div>
                     </div>
