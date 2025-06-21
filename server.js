@@ -520,10 +520,18 @@ app.post('/api/email/test', async (req, res) => {
             timestamp: new Date().toISOString()
         });
         
+        // Also resolve project and context IDs for complete test
+        if (taskData.projectName) {
+            taskData.projectId = await findOrCreateProject(taskData.projectName);
+        }
+        if (taskData.contextName) {
+            taskData.contextId = await findOrCreateContext(taskData.contextName);
+        }
+        
         res.json({
             success: true,
             parsed_task: taskData,
-            message: 'Email parsing test completed'
+            message: 'Email parsing test completed (with project/context resolution)'
         });
         
     } catch (error) {
