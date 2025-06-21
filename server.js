@@ -784,6 +784,64 @@ app.get('/api/auth/me', (req, res) => {
     });
 });
 
+// Admin endpoints (for user management)
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Get all users with basic info (without password hashes)
+        const result = await pool.query(`
+            SELECT 
+                id, 
+                email, 
+                naam, 
+                rol, 
+                aangemaakt, 
+                laatste_login, 
+                actief,
+                (SELECT COUNT(*) FROM taken WHERE user_id = users.id AND afgewerkt IS NULL) as active_tasks,
+                (SELECT COUNT(*) FROM taken WHERE user_id = users.id AND afgewerkt IS NOT NULL) as completed_tasks
+            FROM users 
+            ORDER BY aangemaakt DESC
+        `);
+        
+        res.json({
+            users: result.rows,
+            total: result.rows.length
+        });
+        
+    } catch (error) {
+        console.error('Admin users error:', error);
+        res.status(500).json({ error: 'Fout bij ophalen gebruikers' });
+    }
+});
+
+app.get('/api/admin/stats', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const stats = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM users WHERE actief = true) as active_users,
+                (SELECT COUNT(*) FROM users) as total_users,
+                (SELECT COUNT(*) FROM taken WHERE afgewerkt IS NULL) as active_tasks,
+                (SELECT COUNT(*) FROM taken WHERE afgewerkt IS NOT NULL) as completed_tasks,
+                (SELECT COUNT(*) FROM projecten) as total_projects,
+                (SELECT COUNT(*) FROM contexten) as total_contexts
+        `);
+        
+        res.json(stats.rows[0] || {});
+        
+    } catch (error) {
+        console.error('Admin stats error:', error);
+        res.status(500).json({ error: 'Fout bij ophalen statistieken' });
+    }
+});
+
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {
     try {
