@@ -2274,3 +2274,176 @@ button:focus {
     opacity: 0.8;
     pointer-events: none;
 }
+
+/* ===== AUTHENTICATION UI ===== */
+.user-section {
+    margin: 16px 0;
+    padding: 12px;
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-4);
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+}
+
+.btn-auth {
+    padding: 8px 16px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-auth:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.btn-login {
+    background: var(--macos-blue);
+    color: white;
+    border-color: var(--macos-blue);
+}
+
+.btn-login:hover {
+    background: var(--macos-blue-hover);
+    border-color: var(--macos-blue-hover);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--macos-gray-5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.user-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+}
+
+.user-email {
+    font-size: 11px;
+    color: var(--macos-text-secondary);
+}
+
+.btn-logout {
+    padding: 4px 8px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+    background: var(--macos-red);
+    color: white;
+    border-color: var(--macos-red);
+}
+
+/* Auth Modal Styles */
+.auth-modal {
+    width: 400px;
+    max-width: 90vw;
+}
+
+.auth-modal .form-group {
+    margin-bottom: 16px;
+}
+
+.auth-modal label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--macos-text-primary);
+}
+
+.auth-modal input[type="text"],
+.auth-modal input[type="email"],
+.auth-modal input[type="password"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    font-size: 13px;
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    transition: border-color 0.2s ease;
+}
+
+.auth-modal input[type="text"]:focus,
+.auth-modal input[type="email"]:focus,
+.auth-modal input[type="password"]:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.auth-modal .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.auth-modal .popup-acties button {
+    padding: 8px 16px;
+    border-radius: var(--macos-radius-button);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auth-modal .popup-acties button[type="button"] {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+.auth-modal .popup-acties button[type="button"]:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.auth-modal .popup-acties .actie-btn {
+    background: var(--macos-blue);
+    border: 1px solid var(--macos-blue);
+    color: white;
+}
+
+.auth-modal .popup-acties .actie-btn:hover {
+    background: var(--macos-blue-hover);
+    border-color: var(--macos-blue-hover);
+}

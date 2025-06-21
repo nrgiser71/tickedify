@@ -17,6 +17,21 @@
                     <div class="app-logo">
                         <img src="Tickedify logo.png" alt="Tickedify" class="logo-image">
                     </div>
+                    <div class="user-section" id="user-section">
+                        <!-- Will be populated by JavaScript based on auth state -->
+                        <div class="auth-buttons" id="auth-buttons">
+                            <button class="btn-auth btn-login" id="btn-login">Inloggen</button>
+                            <button class="btn-auth btn-register" id="btn-register">Registreren</button>
+                        </div>
+                        <div class="user-info" id="user-info" style="display: none;">
+                            <div class="user-avatar">👤</div>
+                            <div class="user-details">
+                                <span class="user-name" id="user-name"></span>
+                                <span class="user-email" id="user-email"></span>
+                            </div>
+                            <button class="btn-logout" id="btn-logout">Uitloggen</button>
+                        </div>
+                    </div>
                     <div class="version-info">
                         <span class="version-number" id="version-number">v1.1.46</span>
                     </div>
@@ -410,6 +425,56 @@
                 <button id="confirmModalCancel">Annuleren</button>
                 <button id="confirmModalOk" class="actie-btn">OK</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content auth-modal">
+            <h3>Inloggen</h3>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Wachtwoord:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <div class="popup-acties">
+                    <button type="button" id="loginCancel">Annuleren</button>
+                    <button type="submit" class="actie-btn">Inloggen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content auth-modal">
+            <h3>Account Aanmaken</h3>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Naam:</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email:</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Wachtwoord:</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPasswordConfirm">Wachtwoord bevestigen:</label>
+                    <input type="password" id="registerPasswordConfirm" required>
+                </div>
+                <div class="popup-acties">
+                    <button type="button" id="registerCancel">Annuleren</button>
+                    <button type="submit" class="actie-btn">Account Aanmaken</button>
+                </div>
+            </form>
         </div>
     </div>
 

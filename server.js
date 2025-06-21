@@ -1,8 +1,22 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'tickedify-development-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    }
+}));
 
 // Basic middleware
 app.use(express.json());
@@ -603,11 +617,172 @@ app.post('/api/email/test', async (req, res) => {
     }
 });
 
-// Temporary userId helper (until authentication is implemented)
-function getCurrentUserId(req) {
-    // TODO: Extract from session/JWT token when authentication is ready
-    return 'default-user-001'; // Hardcoded for now
+// Authentication middleware
+function requireAuth(req, res, next) {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+    next();
 }
+
+// Optional auth middleware (allows both authenticated and guest access)
+function optionalAuth(req, res, next) {
+    // For endpoints that can work with or without authentication
+    next();
+}
+
+// Get current user ID from session or fallback to default
+function getCurrentUserId(req) {
+    // Return user from session if authenticated, otherwise default user
+    return req.session.userId || 'default-user-001';
+}
+
+// Authentication API endpoints
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { email, naam, wachtwoord } = req.body;
+        
+        if (!email || !naam || !wachtwoord) {
+            return res.status(400).json({ error: 'Email, naam en wachtwoord zijn verplicht' });
+        }
+        
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Check if user already exists
+        const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (existingUser.rows.length > 0) {
+            return res.status(409).json({ error: 'Email adres al in gebruik' });
+        }
+        
+        // Hash password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(wachtwoord, saltRounds);
+        
+        // Create user
+        const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        await pool.query(`
+            INSERT INTO users (id, email, naam, wachtwoord_hash, rol, aangemaakt, actief)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
+        `, [userId, email, naam, hashedPassword, 'user', true]);
+        
+        // Start session
+        req.session.userId = userId;
+        req.session.userEmail = email;
+        req.session.userNaam = naam;
+        
+        console.log(`✅ New user registered: ${email} (${userId})`);
+        
+        res.json({
+            success: true,
+            message: 'Account succesvol aangemaakt',
+            user: {
+                id: userId,
+                email,
+                naam,
+                rol: 'user'
+            }
+        });
+        
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Fout bij aanmaken account' });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, wachtwoord } = req.body;
+        
+        if (!email || !wachtwoord) {
+            return res.status(400).json({ error: 'Email en wachtwoord zijn verplicht' });
+        }
+        
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Find user
+        const userResult = await pool.query(
+            'SELECT id, email, naam, wachtwoord_hash, rol, actief FROM users WHERE email = $1',
+            [email]
+        );
+        
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({ error: 'Ongeldige email of wachtwoord' });
+        }
+        
+        const user = userResult.rows[0];
+        
+        if (!user.actief) {
+            return res.status(401).json({ error: 'Account is gedeactiveerd' });
+        }
+        
+        // Verify password
+        const isValidPassword = await bcrypt.compare(wachtwoord, user.wachtwoord_hash);
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Ongeldige email of wachtwoord' });
+        }
+        
+        // Update last login
+        await pool.query(
+            'UPDATE users SET laatste_login = CURRENT_TIMESTAMP WHERE id = $1',
+            [user.id]
+        );
+        
+        // Start session
+        req.session.userId = user.id;
+        req.session.userEmail = user.email;
+        req.session.userNaam = user.naam;
+        
+        console.log(`✅ User logged in: ${email} (${user.id})`);
+        
+        res.json({
+            success: true,
+            message: 'Succesvol ingelogd',
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                rol: user.rol
+            }
+        });
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Fout bij inloggen' });
+    }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    const userEmail = req.session.userEmail;
+    
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).json({ error: 'Fout bij uitloggen' });
+        }
+        
+        console.log(`✅ User logged out: ${userEmail}`);
+        res.json({ success: true, message: 'Succesvol uitgelogd' });
+    });
+});
+
+app.get('/api/auth/me', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    res.json({
+        authenticated: true,
+        user: {
+            id: req.session.userId,
+            email: req.session.userEmail,
+            naam: req.session.userNaam
+        }
+    });
+});
 
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {

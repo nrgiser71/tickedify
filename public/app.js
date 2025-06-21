@@ -3832,6 +3832,273 @@ class Taakbeheer {
     }
 }
 
+// Authentication Manager
+class AuthManager {
+    constructor() {
+        this.currentUser = null;
+        this.isAuthenticated = false;
+        this.setupEventListeners();
+        this.checkAuthStatus();
+    }
+
+    setupEventListeners() {
+        // Login modal
+        const loginBtn = document.getElementById('btn-login');
+        const loginModal = document.getElementById('loginModal');
+        const loginForm = document.getElementById('loginForm');
+        const loginCancel = document.getElementById('loginCancel');
+
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => this.showLoginModal());
+        }
+        if (loginCancel) {
+            loginCancel.addEventListener('click', () => this.hideLoginModal());
+        }
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+
+        // Register modal
+        const registerBtn = document.getElementById('btn-register');
+        const registerModal = document.getElementById('registerModal');
+        const registerForm = document.getElementById('registerForm');
+        const registerCancel = document.getElementById('registerCancel');
+
+        if (registerBtn) {
+            registerBtn.addEventListener('click', () => this.showRegisterModal());
+        }
+        if (registerCancel) {
+            registerCancel.addEventListener('click', () => this.hideRegisterModal());
+        }
+        if (registerForm) {
+            registerForm.addEventListener('submit', (e) => this.handleRegister(e));
+        }
+
+        // Logout button
+        const logoutBtn = document.getElementById('btn-logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+
+        // Close modals on outside click
+        [loginModal, registerModal].forEach(modal => {
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.hideLoginModal();
+                        this.hideRegisterModal();
+                    }
+                });
+            }
+        });
+    }
+
+    showLoginModal() {
+        const modal = document.getElementById('loginModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.getElementById('loginEmail').focus();
+        }
+    }
+
+    hideLoginModal() {
+        const modal = document.getElementById('loginModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.getElementById('loginForm').reset();
+        }
+    }
+
+    showRegisterModal() {
+        const modal = document.getElementById('registerModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.getElementById('registerName').focus();
+        }
+    }
+
+    hideRegisterModal() {
+        const modal = document.getElementById('registerModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.getElementById('registerForm').reset();
+        }
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) {
+            toast.warning('Voer email en wachtwoord in.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, wachtwoord: password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.currentUser = data.user;
+                this.isAuthenticated = true;
+                this.updateUI();
+                this.hideLoginModal();
+                
+                toast.success(`Welkom terug, ${data.user.naam}!`);
+                
+                // Reload the current list to show user-specific data
+                if (app) {
+                    app.laadHuidigeLijst();
+                }
+            } else {
+                toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            toast.error('Er ging iets mis bij het inloggen. Probeer opnieuw.');
+        }
+    }
+
+    async handleRegister(e) {
+        e.preventDefault();
+        
+        const naam = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+
+        if (!naam || !email || !password || !passwordConfirm) {
+            toast.warning('Vul alle velden in.');
+            return;
+        }
+
+        if (password !== passwordConfirm) {
+            toast.warning('Wachtwoorden komen niet overeen.');
+            return;
+        }
+
+        if (password.length < 6) {
+            toast.warning('Wachtwoord moet minimaal 6 karakters lang zijn.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ naam, email, wachtwoord: password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.currentUser = data.user;
+                this.isAuthenticated = true;
+                this.updateUI();
+                this.hideRegisterModal();
+                
+                toast.success(`Account aangemaakt! Welkom ${data.user.naam}!`);
+                
+                // Reload the current list to show user-specific data
+                if (app) {
+                    app.laadHuidigeLijst();
+                }
+            } else {
+                toast.error(data.error || 'Registratie mislukt. Probeer opnieuw.');
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            toast.error('Er ging iets mis bij het registreren. Probeer opnieuw.');
+        }
+    }
+
+    async handleLogout() {
+        try {
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                this.currentUser = null;
+                this.isAuthenticated = false;
+                this.updateUI();
+                
+                toast.info('Je bent uitgelogd.');
+                
+                // Reload the current list to show guest mode
+                if (app) {
+                    app.laadHuidigeLijst();
+                }
+            } else {
+                toast.error('Uitloggen mislukt. Probeer opnieuw.');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            toast.error('Er ging iets mis bij het uitloggen.');
+        }
+    }
+
+    async checkAuthStatus() {
+        try {
+            const response = await fetch('/api/auth/me');
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.currentUser = data.user;
+                this.isAuthenticated = true;
+            } else {
+                this.currentUser = null;
+                this.isAuthenticated = false;
+            }
+            
+            this.updateUI();
+        } catch (error) {
+            console.error('Auth check error:', error);
+            this.currentUser = null;
+            this.isAuthenticated = false;
+            this.updateUI();
+        }
+    }
+
+    updateUI() {
+        const authButtons = document.getElementById('auth-buttons');
+        const userInfo = document.getElementById('user-info');
+        const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
+
+        if (this.isAuthenticated && this.currentUser) {
+            // Show user info, hide auth buttons
+            if (authButtons) authButtons.style.display = 'none';
+            if (userInfo) userInfo.style.display = 'flex';
+            if (userName) userName.textContent = this.currentUser.naam;
+            if (userEmail) userEmail.textContent = this.currentUser.email;
+        } else {
+            // Show auth buttons, hide user info
+            if (authButtons) authButtons.style.display = 'flex';
+            if (userInfo) userInfo.style.display = 'none';
+        }
+    }
+
+    getCurrentUserId() {
+        return this.isAuthenticated && this.currentUser ? this.currentUser.id : null;
+    }
+
+    isLoggedIn() {
+        return this.isAuthenticated;
+    }
+}
+
 // Load version number on page load
 async function loadVersionNumber() {
     try {
@@ -3847,8 +4114,9 @@ async function loadVersionNumber() {
     }
 }
 
-// Initialize app and load version
+// Initialize app and authentication
 const app = new Taakbeheer();
+const auth = new AuthManager();
 
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);
