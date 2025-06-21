@@ -4076,17 +4076,36 @@ class AuthManager {
         const userInfo = document.getElementById('user-info');
         const userName = document.getElementById('user-name');
         const userEmail = document.getElementById('user-email');
+        
+        // Get app content elements
+        const sidebarContent = document.querySelector('.sidebar-content');
+        const mainContent = document.querySelector('.main-content');
+        const sidebarSearch = document.querySelector('.sidebar-search');
+        const welcomeMessage = document.getElementById('welcome-message');
 
         if (this.isAuthenticated && this.currentUser) {
-            // Show user info, hide auth buttons
+            // Authenticated state - show full app
             if (authButtons) authButtons.style.display = 'none';
             if (userInfo) userInfo.style.display = 'flex';
             if (userName) userName.textContent = this.currentUser.naam;
             if (userEmail) userEmail.textContent = this.currentUser.email;
+            
+            // Show app content, hide welcome
+            if (sidebarContent) sidebarContent.style.display = 'block';
+            if (mainContent) mainContent.style.display = 'block';
+            if (sidebarSearch) sidebarSearch.style.display = 'block';
+            if (welcomeMessage) welcomeMessage.style.display = 'none';
+            
         } else {
-            // Show auth buttons, hide user info
+            // Unauthenticated state - show welcome message and login/register
             if (authButtons) authButtons.style.display = 'flex';
             if (userInfo) userInfo.style.display = 'none';
+            
+            // Hide app content, show welcome
+            if (sidebarContent) sidebarContent.style.display = 'none';
+            if (mainContent) mainContent.style.display = 'none';
+            if (sidebarSearch) sidebarSearch.style.display = 'none';
+            if (welcomeMessage) welcomeMessage.style.display = 'block';
         }
     }
 

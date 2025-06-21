@@ -2447,3 +2447,164 @@ button:focus {
     background: var(--macos-blue-hover);
     border-color: var(--macos-blue-hover);
 }
+
+/* ===== WELCOME MESSAGE ===== */
+.welcome-message {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-content {
+    text-align: center;
+    max-width: 350px;
+    padding: 40px 20px;
+}
+
+.welcome-content h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    margin-bottom: 12px;
+}
+
+.welcome-content p {
+    font-size: 14px;
+    color: var(--macos-text-secondary);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-5);
+    font-size: 13px;
+    color: var(--macos-text-primary);
+}
+
+.feature-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.login-prompt {
+    font-size: 14px;
+    color: var(--macos-text-primary);
+    font-weight: 500;
+}
+
+.login-prompt strong {
+    color: var(--macos-blue);
+}
+
+/* User section styling */
+.user-section {
+    margin-top: 16px;
+}
+
+.auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btn-auth {
+    padding: 8px 16px;
+    border-radius: var(--macos-radius-button);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--macos-gray-4);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+}
+
+.btn-auth:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.btn-login {
+    background: var(--macos-blue);
+    border-color: var(--macos-blue);
+    color: white;
+}
+
+.btn-login:hover {
+    background: var(--macos-blue-hover);
+    border-color: var(--macos-blue-hover);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-4);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--macos-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.user-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+}
+
+.user-email {
+    font-size: 11px;
+    color: var(--macos-text-secondary);
+}
+
+.btn-logout {
+    padding: 4px 8px;
+    border-radius: var(--macos-radius-small);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--macos-gray-4);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-secondary);
+}
+
+.btn-logout:hover {
+    background: var(--macos-red);
+    border-color: var(--macos-red);
+    color: white;
+}
