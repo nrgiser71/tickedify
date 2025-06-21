@@ -286,8 +286,20 @@
                 </div>
             </div>
             
+            <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+                <h4>💾 Mapping Opslaan & Laden</h4>
+                <div style="margin: 10px 0;">
+                    <input type="text" id="mappingName" placeholder="Naam voor mapping (bijv. Notion-standaard)" style="width: 200px; margin-right: 10px;">
+                    <button onclick="saveMapping()" class="secondary-btn">💾 Opslaan</button>
+                    <button onclick="loadMapping()" class="secondary-btn">📂 Laden</button>
+                    <button onclick="showSavedMappings()" class="secondary-btn">📋 Lijst</button>
+                </div>
+                <div id="savedMappingsList" style="margin-top: 10px; display: none;"></div>
+            </div>
+            
             <button onclick="importTasks()" id="importBtn" disabled>🚀 Importeer Taken</button>
             <button onclick="resetMapping()" class="secondary-btn">🔄 Reset Mapping</button>
+            <button onclick="autoSuggestMapping()" class="secondary-btn">🤖 Auto-Mapping</button>
         </div>
 
         <!-- Stap 3: Import Progress -->
@@ -353,7 +365,12 @@
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step2').classList.add('active');
             
-            showResult(`✅ CSV geanalyseerd: ${headers.length} kolommen, ${csvData.length} rijen preview`, 'success');
+            // Try auto-mapping
+            setTimeout(() => {
+                autoSuggestMapping();
+            }, 500);
+            
+            showResult(`✅ CSV geanalyseerd: ${headers.length} kolommen, ${csvData.length} rijen preview. Auto-mapping proberen...`, 'success');
         }
         
         function parseCSVLine(line) {
@@ -640,6 +657,157 @@
             result.scrollIntoView({ behavior: 'smooth' });
         }
         
+        function saveMapping() {
+            const mappingName = document.getElementById('mappingName').value.trim();
+            if (!mappingName) {
+                showResult('❌ Voer een naam in voor de mapping', 'error');
+                return;
+            }
+            
+            if (Object.keys(mapping).length === 0) {
+                showResult('❌ Geen mapping om op te slaan. Map eerst kolommen naar velden.', 'error');
+                return;
+            }
+            
+            // Save to localStorage
+            const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
+            savedMappings[mappingName] = {
+                mapping: mapping,
+                savedAt: new Date().toISOString(),
+                description: `${Object.keys(mapping).length} velden gemapped`
+            };
+            
+            localStorage.setItem('csvMappings', JSON.stringify(savedMappings));
+            
+            showResult(`✅ Mapping "${mappingName}" opgeslagen! Je kunt deze nu laden bij toekomstige imports.`, 'success');
+            document.getElementById('mappingName').value = '';
+        }
+        
+        function loadMapping() {
+            const mappingName = document.getElementById('mappingName').value.trim();
+            if (!mappingName) {
+                showResult('❌ Voer de naam van de mapping in om te laden', 'error');
+                return;
+            }
+            
+            const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
+            if (!savedMappings[mappingName]) {
+                showResult(`❌ Mapping "${mappingName}" niet gevonden`, 'error');
+                return;
+            }
+            
+            // Reset current mapping
+            resetMapping();
+            
+            // Load saved mapping
+            mapping = savedMappings[mappingName].mapping;
+            
+            // Update UI
+            Object.keys(mapping).forEach(field => {
+                const fieldElement = document.querySelector(`[data-field="${field}"]`);
+                if (fieldElement) {
+                    fieldElement.classList.add('mapped');
+                    fieldElement.innerHTML = `<span class="mapped-column">${mapping[field].header}</span>`;
+                }
+            });
+            
+            updateImportButton();
+            showResult(`✅ Mapping "${mappingName}" geladen! ${Object.keys(mapping).length} velden ingesteld.`, 'success');
+        }
+        
+        function showSavedMappings() {
+            const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
+            const listDiv = document.getElementById('savedMappingsList');
+            
+            if (Object.keys(savedMappings).length === 0) {
+                listDiv.innerHTML = '<p><em>Geen opgeslagen mappings gevonden</em></p>';
+            } else {
+                let html = '<h5>💾 Opgeslagen Mappings:</h5>';
+                Object.keys(savedMappings).forEach(name => {
+                    const mapping = savedMappings[name];
+                    const savedDate = new Date(mapping.savedAt).toLocaleDateString('nl-NL');
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #eee; border-radius: 4px; margin: 5px 0; background: white;">
+                            <div>
+                                <strong>${name}</strong><br>
+                                <small>${mapping.description} - Opgeslagen: ${savedDate}</small>
+                            </div>
+                            <div>
+                                <button onclick="quickLoadMapping('${name}')" style="padding: 4px 8px; margin: 0 2px; font-size: 12px;">📂 Laden</button>
+                                <button onclick="deleteMapping('${name}')" style="padding: 4px 8px; margin: 0 2px; font-size: 12px; background: #dc3545;">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                listDiv.innerHTML = html;
+            }
+            
+            listDiv.style.display = listDiv.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function quickLoadMapping(name) {
+            document.getElementById('mappingName').value = name;
+            loadMapping();
+            document.getElementById('savedMappingsList').style.display = 'none';
+        }
+        
+        function deleteMapping(name) {
+            if (confirm(`Weet je zeker dat je mapping "${name}" wilt verwijderen?`)) {
+                const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
+                delete savedMappings[name];
+                localStorage.setItem('csvMappings', JSON.stringify(savedMappings));
+                showResult(`✅ Mapping "${name}" verwijderd`, 'success');
+                showSavedMappings(); // Refresh list
+            }
+        }
+        
+        function autoSuggestMapping() {
+            // Auto-suggest mapping based on common Notion column names
+            if (!headers || headers.length === 0) return;
+            
+            const suggestions = {
+                'taaknaam': ['Description', 'Title', 'Name', 'Task', 'Taak'],
+                'project': ['Project', 'Projecten'],
+                'context': ['Context', 'Contexts', 'Contexten'],
+                'deadline': ['Due Date', 'Deadline', 'Due', 'Verschijndatum'],
+                'duur': ['Duration in minutes', 'Duration', 'Duur', 'Time'],
+                'opmerkingen': ['Notes v3', 'Notes', 'Opmerkingen', 'Description', 'Body']
+            };
+            
+            let autoMapped = 0;
+            Object.keys(suggestions).forEach(field => {
+                if (mapping[field]) return; // Already mapped
+                
+                for (const suggestion of suggestions[field]) {
+                    const index = headers.findIndex(header => 
+                        header.toLowerCase().includes(suggestion.toLowerCase()) ||
+                        suggestion.toLowerCase().includes(header.toLowerCase())
+                    );
+                    
+                    if (index !== -1) {
+                        mapping[field] = {
+                            index: index,
+                            header: headers[index]
+                        };
+                        
+                        const fieldElement = document.querySelector(`[data-field="${field}"]`);
+                        if (fieldElement) {
+                            fieldElement.classList.add('mapped');
+                            fieldElement.innerHTML = `<span class="mapped-column">${headers[index]}</span>`;
+                        }
+                        
+                        autoMapped++;
+                        break;
+                    }
+                }
+            });
+            
+            if (autoMapped > 0) {
+                updateImportButton();
+                showResult(`🤖 Auto-mapping toegepast: ${autoMapped} velden automatisch gekoppeld. Controleer en pas aan indien nodig.`, 'success');
+            }
+        }
+
         // Check auth on page load
         checkAuth();
     </script>
