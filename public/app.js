@@ -342,11 +342,24 @@ class Taakbeheer {
 
     init() {
         this.bindEvents();
-        this.laadTellingen();
-        this.laadHuidigeLijst();
-        this.laadProjecten();
-        this.laadContexten();
         this.zetVandaagDatum();
+        // Data loading happens after authentication check in AuthManager
+    }
+
+    getCurrentUserId() {
+        return auth && auth.getCurrentUserId() ? auth.getCurrentUserId() : null;
+    }
+
+    isLoggedIn() {
+        return auth && auth.isLoggedIn() ? true : false;
+    }
+
+    async loadUserData() {
+        // Called by AuthManager after successful login
+        await this.laadTellingen();
+        await this.laadHuidigeLijst();
+        await this.laadProjecten();
+        await this.laadContexten();
     }
 
     bindEvents() {
@@ -928,6 +941,20 @@ class Taakbeheer {
     }
 
     async laadTellingen() {
+        // Only load counts if user is logged in
+        if (!this.isLoggedIn()) {
+            // Reset all counts to 0 for unauthenticated users
+            ['inbox', 'acties', 'projecten', 'opvolgen', 'afgewerkte-taken', 
+             'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
+             'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks'].forEach(lijst => {
+                const element = document.getElementById(`telling-${lijst}`);
+                if (element) {
+                    element.textContent = '0';
+                }
+            });
+            return;
+        }
+
         try {
             const response = await fetch('/api/tellingen');
             if (response.ok) {
@@ -1376,6 +1403,13 @@ class Taakbeheer {
     }
 
     async laadHuidigeLijst() {
+        // Only load data if user is logged in
+        if (!this.isLoggedIn()) {
+            this.taken = [];
+            await this.renderTaken();
+            return;
+        }
+
         return await loading.withLoading(async () => {
             try {
                 if (this.huidigeLijst === 'projecten') {
@@ -1407,6 +1441,12 @@ class Taakbeheer {
 
     async voegTaakToe() {
         if (this.huidigeLijst !== 'inbox') return;
+        
+        // Check if user is logged in
+        if (!this.isLoggedIn()) {
+            toast.warning('Log in om taken toe te voegen.');
+            return;
+        }
         
         const input = document.getElementById('taakInput');
         const tekst = input.value.trim();
@@ -1835,6 +1875,12 @@ class Taakbeheer {
 
     // Planning popup methods (aangepast van originele code)
     async laadProjecten() {
+        if (!this.isLoggedIn()) {
+            this.projecten = [];
+            this.vulProjectSelect();
+            return;
+        }
+
         try {
             const response = await fetch('/api/lijst/projecten-lijst');
             if (response.ok) {
@@ -1847,6 +1893,12 @@ class Taakbeheer {
     }
 
     async laadContexten() {
+        if (!this.isLoggedIn()) {
+            this.contexten = [];
+            this.vulContextSelect();
+            return;
+        }
+
         try {
             const response = await fetch('/api/lijst/contexten');
             if (response.ok) {
@@ -1894,6 +1946,11 @@ class Taakbeheer {
 
     async planTaak(id) {
         if (this.huidigeLijst !== 'inbox') return;
+        
+        if (!this.isLoggedIn()) {
+            toast.warning('Log in om taken te plannen.');
+            return;
+        }
         
         const taak = this.taken.find(t => t.id === id);
         if (taak) {
@@ -3963,9 +4020,9 @@ class AuthManager {
                 
                 toast.success(`Welkom terug, ${data.user.naam}!`);
                 
-                // Reload the current list to show user-specific data
+                // Load user-specific data
                 if (app) {
-                    app.laadHuidigeLijst();
+                    await app.loadUserData();
                 }
             } else {
                 toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
@@ -4018,9 +4075,9 @@ class AuthManager {
                 
                 toast.success(`Account aangemaakt! Welkom ${data.user.naam}!`);
                 
-                // Reload the current list to show user-specific data
+                // Load user-specific data
                 if (app) {
-                    app.laadHuidigeLijst();
+                    await app.loadUserData();
                 }
             } else {
                 toast.error(data.error || 'Registratie mislukt. Probeer opnieuw.');
@@ -4044,9 +4101,13 @@ class AuthManager {
                 
                 toast.info('Je bent uitgelogd.');
                 
-                // Reload the current list to show guest mode
+                // Clear data and reload UI for guest mode
                 if (app) {
-                    app.laadHuidigeLijst();
+                    app.taken = [];
+                    app.projecten = [];
+                    app.contexten = [];
+                    await app.laadHuidigeLijst();
+                    await app.laadTellingen();
                 }
             } else {
                 toast.error('Uitloggen mislukt. Probeer opnieuw.');
@@ -4066,10 +4127,9 @@ class AuthManager {
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 
-                // Reload current list with authenticated user context
+                // Load user-specific data
                 if (app) {
-                    await app.laadHuidigeLijst();
-                    await app.laadTellingen();
+                    await app.loadUserData();
                 }
             } else {
                 this.currentUser = null;
