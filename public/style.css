@@ -1522,13 +1522,13 @@ button:focus {
 .dagelijkse-planning-layout {
     display: flex;
     gap: 20px;
-    height: 600px; /* Simple fixed height */
+    height: 700px; /* More height for better proportions */
     margin: -24px -32px;
     padding: 16px;
 }
 
 .planning-sidebar {
-    width: 300px; /* Simple fixed width */
+    width: 450px; /* Better width */
     background: #f0f0f0; /* Simple gray background */
     border-radius: 8px;
     padding: 15px;
@@ -2174,7 +2174,7 @@ button:focus {
     padding: 10px;
     border-radius: 6px;
     border: 1px solid #ddd;
-    height: 80px; /* Simple fixed height */
+    height: 100px; /* Bit more height */
 }
 
 .templates-sectie h3 {
@@ -2224,7 +2224,8 @@ button:focus {
     overflow-y: auto; /* Simple scrolling */
     border: 1px solid #eee;
     border-radius: 4px;
-    padding: 5px;
+    padding: 10px;
+    min-height: 400px; /* Ensure minimum height for actions */
 }
 
 /* ===== LOADING INDICATORS ===== */
