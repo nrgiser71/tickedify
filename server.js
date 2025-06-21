@@ -2551,6 +2551,77 @@ app.get('/api/debug/all-tasks', async (req, res) => {
     }
 });
 
+// Debug endpoint to force clean up 'Thuis' endings with verification
+app.get('/api/debug/force-clean-thuis', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const client = await pool.connect();
+        
+        try {
+            await client.query('BEGIN');
+            
+            // Get all tasks that end with 'Thuis'
+            const result = await client.query(`
+                SELECT t.id, t.tekst, t.lijst, t.user_id, u.email 
+                FROM taken t
+                JOIN users u ON t.user_id = u.id
+                WHERE t.tekst LIKE '%Thuis'
+                AND t.afgewerkt IS NULL
+            `);
+            
+            const tasksToUpdate = result.rows;
+            let updatedCount = 0;
+            const updateResults = [];
+            
+            for (const task of tasksToUpdate) {
+                const originalText = task.tekst;
+                const cleanedText = originalText.replace(/\s*Thuis\s*$/, '').trim();
+                
+                if (cleanedText !== originalText && cleanedText.length > 0) {
+                    // Update the task
+                    const updateResult = await client.query(`
+                        UPDATE taken 
+                        SET tekst = $1 
+                        WHERE id = $2
+                        RETURNING id, tekst
+                    `, [cleanedText, task.id]);
+                    
+                    updateResults.push({
+                        id: task.id,
+                        original: originalText,
+                        updated: updateResult.rows[0].tekst,
+                        success: true
+                    });
+                    
+                    updatedCount++;
+                }
+            }
+            
+            await client.query('COMMIT');
+            
+            res.json({
+                success: true,
+                found: tasksToUpdate.length,
+                updated: updatedCount,
+                updateResults: updateResults
+            });
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('Force clean Thuis error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to clean up 'Thuis' endings
 app.get('/api/debug/clean-thuis', async (req, res) => {
     try {
@@ -2575,12 +2646,16 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
             const cleanedText = originalText.replace(/\s*Thuis\s*$/, '').trim();
             
             if (cleanedText !== originalText && cleanedText.length > 0) {
-                await pool.query(`
+                console.log(`Updating task ${task.id}: "${originalText}" -> "${cleanedText}"`);
+                
+                const updateResult = await pool.query(`
                     UPDATE taken 
                     SET tekst = $1 
                     WHERE id = $2
+                    RETURNING tekst
                 `, [cleanedText, task.id]);
                 
+                console.log(`Update result for ${task.id}:`, updateResult.rows[0]);
                 updatedCount++;
             }
         }
