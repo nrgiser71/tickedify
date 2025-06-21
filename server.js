@@ -1007,6 +1007,45 @@ app.get('/api/debug/all-users-data', async (req, res) => {
     }
 });
 
+// Database cleanup endpoint - removes all task data but keeps users
+app.post('/api/debug/clean-database', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Count current data before cleanup
+        const tasksCount = await pool.query('SELECT COUNT(*) as count FROM taken');
+        const projectsCount = await pool.query('SELECT COUNT(*) as count FROM projecten');
+        const contextsCount = await pool.query('SELECT COUNT(*) as count FROM contexten');
+        const planningCount = await pool.query('SELECT COUNT(*) as count FROM dagelijkse_planning');
+        
+        // Clean all task-related data (but keep users and sessions)
+        await pool.query('DELETE FROM dagelijkse_planning');
+        await pool.query('DELETE FROM taken');
+        await pool.query('DELETE FROM projecten');
+        await pool.query('DELETE FROM contexten');
+        
+        console.log('✅ Database cleaned - all task data removed');
+        
+        res.json({
+            message: 'Database successfully cleaned',
+            removed: {
+                tasks: parseInt(tasksCount.rows[0].count),
+                projects: parseInt(projectsCount.rows[0].count),
+                contexts: parseInt(contextsCount.rows[0].count),
+                planning: parseInt(planningCount.rows[0].count)
+            },
+            timestamp: new Date().toISOString(),
+            note: 'Users and sessions preserved'
+        });
+        
+    } catch (error) {
+        console.error('Database cleanup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {
     try {
