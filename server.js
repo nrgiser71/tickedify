@@ -2558,15 +2558,14 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
-        const userId = 'default-user-001';
-        
-        // Get all tasks for the default user that end with 'Thuis'
+        // Get all tasks for ALL users that end with 'Thuis'
         const result = await pool.query(`
-            SELECT id, tekst, lijst FROM taken 
-            WHERE user_id = $1 
-            AND tekst LIKE '%Thuis'
-            AND afgewerkt IS NULL
-        `, [userId]);
+            SELECT t.id, t.tekst, t.lijst, t.user_id, u.email 
+            FROM taken t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.tekst LIKE '%Thuis'
+            AND t.afgewerkt IS NULL
+        `);
         
         const tasksToUpdate = result.rows;
         let updatedCount = 0;
@@ -2592,6 +2591,7 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
             updated: updatedCount,
             tasks: tasksToUpdate.map(t => ({
                 id: t.id,
+                user_email: t.email,
                 lijst: t.lijst,
                 original: t.tekst,
                 cleaned: t.tekst.replace(/\s*Thuis\s*$/, '').trim()
