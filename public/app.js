@@ -1368,6 +1368,13 @@ class Taakbeheer {
         }, 0);
     }
 
+    // Wrapper functie voor planTaak async calls
+    planTaakWrapper(id) {
+        setTimeout(async () => {
+            await this.planTaak(id);
+        }, 0);
+    }
+
     async laadHuidigeLijst() {
         return await loading.withLoading(async () => {
             try {
@@ -1653,7 +1660,7 @@ class Taakbeheer {
             if (this.huidigeLijst === 'inbox') {
                 acties = `
                     <div class="taak-acties">
-                        <button onclick="app.planTaak('${taak.id}')" class="plan-btn">Plan</button>
+                        <button onclick="app.planTaakWrapper('${taak.id}')" class="plan-btn">Plan</button>
                         <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                     </div>
                 `;
@@ -1877,7 +1884,7 @@ class Taakbeheer {
         }
     }
 
-    planTaak(id) {
+    async planTaak(id) {
         if (this.huidigeLijst !== 'inbox') return;
         
         const taak = this.taken.find(t => t.id === id);
@@ -1894,7 +1901,41 @@ class Taakbeheer {
                 }
             });
             
+            // Zorg ervoor dat projecten en contexten geladen zijn
+            await this.laadProjecten();
+            await this.laadContexten();
+            
+            // Vul alle velden in met taak data
             document.getElementById('taakNaamInput').value = taak.tekst;
+            document.getElementById('projectSelect').value = taak.projectId || '';
+            document.getElementById('contextSelect').value = taak.contextId || '';
+            document.getElementById('duur').value = taak.duur || '';
+            
+            // Format date correctly for date input (YYYY-MM-DD)
+            let dateValue = '';
+            if (taak.verschijndatum) {
+                if (typeof taak.verschijndatum === 'string') {
+                    // If it's already in YYYY-MM-DD format, use as-is
+                    if (taak.verschijndatum.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                        dateValue = taak.verschijndatum;
+                    } else {
+                        // Convert ISO string or other format to YYYY-MM-DD
+                        const date = new Date(taak.verschijndatum);
+                        if (!isNaN(date.getTime())) {
+                            dateValue = date.toISOString().split('T')[0];
+                        }
+                    }
+                }
+            }
+            document.getElementById('verschijndatum').value = dateValue;
+            
+            // Handle recurring task settings if present
+            const herhalingType = taak.herhalingType || '';
+            document.getElementById('herhalingSelect').value = herhalingType;
+            this.parseHerhalingValue(herhalingType);
+            const herhalingDisplay = this.generateHerhalingDisplayText();
+            document.getElementById('herhalingDisplay').value = herhalingDisplay;
+            
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
