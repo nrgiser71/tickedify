@@ -517,7 +517,7 @@
                 try {
                     const task = buildTaskFromRow(row);
                     
-                    const response = await fetch('/api/email/test', {
+                    const response = await fetch('/api/email/import-real', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(task)

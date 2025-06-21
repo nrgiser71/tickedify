@@ -645,6 +645,75 @@ app.post('/api/email/test', async (req, res) => {
     }
 });
 
+// Real import endpoint that actually saves tasks
+app.post('/api/email/import-real', async (req, res) => {
+    try {
+        const { subject, body, sender } = req.body;
+        const userId = getCurrentUserId(req);
+        
+        if (!subject) {
+            return res.status(400).json({ error: 'Subject is required' });
+        }
+        
+        // Parse email to task data
+        const taskData = parseEmailToTask({
+            sender: sender || 'import@tickedify.com',
+            subject,
+            body: body || '',
+            timestamp: new Date().toISOString()
+        });
+        
+        // Resolve project and context IDs
+        if (taskData.projectName) {
+            taskData.projectId = await findOrCreateProject(taskData.projectName, userId);
+        }
+        if (taskData.contextName) {
+            taskData.contextId = await findOrCreateContext(taskData.contextName, userId);
+        }
+        
+        // Create the actual task
+        const task = {
+            id: generateId(),
+            tekst: taskData.tekst,
+            lijst: 'inbox',
+            aangemaakt: new Date().toISOString(),
+            projectId: taskData.projectId || null,
+            contextId: taskData.contextId || null,
+            verschijndatum: taskData.verschijndatum || null,
+            duur: taskData.duur || null,
+            opmerkingen: taskData.opmerkingen || null,
+            user_id: userId
+        };
+        
+        // Save to database - get current inbox and add task
+        const currentInbox = await db.getList('inbox', userId) || [];
+        currentInbox.push(task);
+        
+        const success = await db.saveList('inbox', currentInbox, userId);
+        
+        if (success) {
+            res.json({
+                success: true,
+                task: task,
+                message: 'Task successfully imported to inbox'
+            });
+        } else {
+            res.status(500).json({ error: 'Failed to save task to database' });
+        }
+        
+    } catch (error) {
+        console.error('Real import error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+function generateId() {
+    return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 // Authentication middleware
 function requireAuth(req, res, next) {
     if (!req.session.userId) {

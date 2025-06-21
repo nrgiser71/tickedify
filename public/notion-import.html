@@ -236,7 +236,7 @@ Boodschappen,Persoonlijk,auto,30,,Melk en brood kopen
             submitBtn.textContent = '⏳ Importeren...';
             
             try {
-                const response = await fetch('/api/email/test', {
+                const response = await fetch('/api/email/import-real', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -331,7 +331,7 @@ Boodschappen,Persoonlijk,auto,30,,Melk en brood kopen
                 };
                 
                 try {
-                    const response = await fetch('/api/email/test', {
+                    const response = await fetch('/api/email/import-real', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(formData)
