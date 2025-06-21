@@ -3257,16 +3257,49 @@ class Taakbeheer {
 
     restoreNormalContainer() {
         // Restore the normal taken container structure
-        const container = document.getElementById('takenLijst').parentNode;
-        container.innerHTML = `
-            <div class="taken-container">
-                <ul id="takenLijst"></ul>
-            </div>
-        `;
+        const takenLijst = document.getElementById('takenLijst');
+        if (!takenLijst) {
+            // If takenLijst doesn't exist, find the content area and restore structure
+            const contentArea = document.querySelector('.content-area');
+            if (contentArea) {
+                // Find any existing container that's not the input container
+                const existingContainer = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout');
+                if (existingContainer && !existingContainer.classList.contains('taak-input-container')) {
+                    existingContainer.outerHTML = `
+                        <div class="taken-container">
+                            <ul id="takenLijst"></ul>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            // Normal case - takenLijst exists
+            const container = takenLijst.parentNode;
+            container.innerHTML = `
+                <div class="taken-container">
+                    <ul id="takenLijst"></ul>
+                </div>
+            `;
+        }
     }
 
     async renderContextenBeheer() {
-        const container = document.getElementById('takenLijst').parentNode;
+        // Find the container for contexten beheer
+        let container;
+        const takenLijst = document.getElementById('takenLijst');
+        if (takenLijst) {
+            container = takenLijst.parentNode;
+        } else {
+            // If takenLijst doesn't exist, find the content area
+            const contentArea = document.querySelector('.content-area');
+            container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout');
+            if (!container) {
+                // Create a new container if none exists
+                container = document.createElement('div');
+                container.className = 'taken-container';
+                contentArea.appendChild(container);
+            }
+        }
         
         // Ensure we have the latest context data
         await this.laadContexten();
