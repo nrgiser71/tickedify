@@ -3,10 +3,68 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## Claude Development & Testing Autonomie
+**KRITIEK BELANGRIJK**: Jan is momenteel de ENIGE gebruiker van Tickedify. Het systeem is NIET live voor publiek gebruik.
+
+**VOLLEDIGE AUTONOMIE TOEGESTAAN:**
+- ✅ **Code aanpassingen**: Vrijelijk alle bestanden bewerken zonder toestemming
+- ✅ **Database manipulatie**: Test data aanmaken, wijzigen, verwijderen zoals nodig
+- ✅ **API testing**: Alle endpoints testen met echte data
+- ✅ **Live testing**: Tests uitvoeren op https://tickedify.com productie omgeving
+- ✅ **Data experimenten**: Taken aanmaken/bewerken/verplaatsen voor testing doeleinden
+- ✅ **Complete implementaties**: Van development tot testing zonder tussentijdse toestemming
+
+**NIET NODIG OM TOESTEMMING TE VRAGEN VOOR:**
+- PUT/POST/DELETE requests op tickedify.com
+- Database schema wijzigingen
+- Test data manipulatie
+- Verificatie van implementaties
+- End-to-end workflow testing
+
+**ALLEEN VRAGEN OM TOESTEMMING BIJ:**
+- Destructieve acties die het hele systeem kunnen breken
+- Externe service wijzigingen (DNS, Mailgun, GitHub settings)
+- Grote architecturale beslissingen
+
+**Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
+
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
-## CURRENT STATUS: Email Import System Working + DNS Fix In Progress (Juni 20, 2025) ⏳
+## CURRENT STATUS: Opmerkingen Veld Geïmplementeerd (Juni 21, 2025) ✅
+
+**LAATSTE UPDATE**: Opmerkingen veld volledig geïmplementeerd in versie v1.1.54
+
+## OPMERKINGEN VELD IMPLEMENTATIE (Juni 21, 2025) ✅
+
+**✅ VOLLEDIG GEÏMPLEMENTEERD:**
+- **Database schema**: `opmerkingen TEXT` kolom toegevoegd aan taken tabel
+- **Email import workflow**: Subject → taaknaam, body → opmerkingen (na filtering structured data)
+- **UI integration**: Opmerkingen textarea in planning popup met CSS styling
+- **JavaScript functionaliteit**: Alle CRUD functies ondersteunen opmerkingen veld
+- **API endpoints**: Volledige opmerkingen support in alle endpoints
+- **Visual feedback**: Tooltips tonen opmerkingen in alle lijstweergaven
+- **Backward compatibility**: Bestaande taken behouden, nieuwe taken krijgen opmerkingen
+
+**📧 VERBETERDE EMAIL FORMAAT ONDERSTEUNING:**
+- **Basis**: `Subject: Nieuwe taak` + body → Taak "Nieuwe taak" met body als opmerkingen
+- **Met project**: `Subject: [Project] Taak naam` + body → Taak in specified project met opmerkingen
+- **Met context**: `Subject: Taak naam @context` + body → Taak met context en opmerkingen
+- **Met structured data**: Body met `Datum: 2025-06-25` + `Duur: 30` → Geparsed + rest als opmerkingen
+
+**🧪 TESTING RESULTATEN:**
+- ✅ Email-to-task met opmerkingen: Subject parsing + body → opmerkingen
+- ✅ Database persistence: Opmerkingen correct opgeslagen en opgehaald
+- ✅ UI workflow: Planning popup toont en bewaart opmerkingen
+- ✅ API operations: PUT/POST/GET operaties met opmerkingen werken
+- ✅ Cross-list compatibility: Opmerkingen blijven behouden bij lijst verplaatsingen
+
+**📂 GEWIJZIGDE BESTANDEN:**
+- `database.js`: Schema uitbreiding + opmerkingen support in alle DB functies
+- `server.js`: API endpoints uitgebreid met opmerkingen veld
+- `public/app.js`: JavaScript functies bijgewerkt voor opmerkingen handling
+- `public/index.html`: Opmerkingen textarea toegevoegd aan planning popup
+- `public/style.css`: Styling voor textarea elementen
 
 ## EMAIL IMPORT STATUS (Juni 20, 2025)
 
