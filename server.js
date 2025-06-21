@@ -918,6 +918,95 @@ app.get('/api/debug/user-data/:userId', async (req, res) => {
     }
 });
 
+// Debug endpoint to search ALL data in database
+app.get('/api/debug/database-search/:searchTerm', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { searchTerm } = req.params;
+        
+        // Search all tasks
+        const allTasks = await pool.query(`
+            SELECT id, tekst, lijst, user_id, aangemaakt, project_id, context_id, afgewerkt 
+            FROM taken 
+            WHERE tekst ILIKE $1 OR id ILIKE $1 OR lijst ILIKE $1
+            ORDER BY aangemaakt DESC
+        `, [`%${searchTerm}%`]);
+        
+        // Search all projects  
+        const allProjects = await pool.query(`
+            SELECT id, naam, user_id, aangemaakt
+            FROM projecten 
+            WHERE naam ILIKE $1 OR id ILIKE $1
+            ORDER BY aangemaakt DESC
+        `, [`%${searchTerm}%`]);
+        
+        // Search all contexts
+        const allContexts = await pool.query(`
+            SELECT id, naam, user_id, aangemaakt  
+            FROM contexten
+            WHERE naam ILIKE $1 OR id ILIKE $1
+            ORDER BY aangemaakt DESC
+        `, [`%${searchTerm}%`]);
+        
+        res.json({
+            searchTerm,
+            tasks: allTasks.rows,
+            projects: allProjects.rows,
+            contexts: allContexts.rows,
+            total: allTasks.rows.length + allProjects.rows.length + allContexts.rows.length
+        });
+        
+    } catch (error) {
+        console.error('Database search error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to show ALL data by user
+app.get('/api/debug/all-users-data', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Get all data grouped by user
+        const tasks = await pool.query(`
+            SELECT user_id, lijst, COUNT(*) as count, array_agg(tekst) as sample_tasks
+            FROM taken 
+            WHERE afgewerkt IS NULL
+            GROUP BY user_id, lijst
+            ORDER BY user_id, lijst
+        `);
+        
+        const projects = await pool.query(`
+            SELECT user_id, COUNT(*) as count, array_agg(naam) as project_names
+            FROM projecten
+            GROUP BY user_id
+            ORDER BY user_id
+        `);
+        
+        const contexts = await pool.query(`
+            SELECT user_id, COUNT(*) as count, array_agg(naam) as context_names  
+            FROM contexten
+            GROUP BY user_id
+            ORDER BY user_id
+        `);
+        
+        res.json({
+            tasks: tasks.rows,
+            projects: projects.rows,
+            contexts: contexts.rows
+        });
+        
+    } catch (error) {
+        console.error('All users data error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {
     try {
