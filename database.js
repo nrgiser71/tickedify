@@ -17,7 +17,21 @@ const initDatabase = async () => {
     console.log('✅ Database connection successful');
     client.release();
     
-    // Create base tables first
+    // Create users table first
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(50) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        naam VARCHAR(255) NOT NULL,
+        wachtwoord_hash VARCHAR(255) NOT NULL,
+        rol VARCHAR(20) DEFAULT 'user',
+        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        laatste_login TIMESTAMP,
+        actief BOOLEAN DEFAULT TRUE
+      )
+    `);
+
+    // Create base tables with user_id
     await pool.query(`
       CREATE TABLE IF NOT EXISTS taken (
         id VARCHAR(50) PRIMARY KEY,
@@ -29,7 +43,8 @@ const initDatabase = async () => {
         context_id VARCHAR(50),
         duur INTEGER,
         type VARCHAR(20),
-        afgewerkt TIMESTAMP
+        afgewerkt TIMESTAMP,
+        user_id VARCHAR(50) REFERENCES users(id)
       )
     `);
 
@@ -40,7 +55,8 @@ const initDatabase = async () => {
         ADD COLUMN IF NOT EXISTS herhaling_type VARCHAR(50),
         ADD COLUMN IF NOT EXISTS herhaling_waarde INTEGER,
         ADD COLUMN IF NOT EXISTS herhaling_actief BOOLEAN DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS opmerkingen TEXT
+        ADD COLUMN IF NOT EXISTS opmerkingen TEXT,
+        ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id)
       `);
       console.log('✅ Recurring task columns and opmerkingen added/verified');
     } catch (alterError) {
@@ -50,7 +66,8 @@ const initDatabase = async () => {
         { name: 'herhaling_type', type: 'VARCHAR(50)' },
         { name: 'herhaling_waarde', type: 'INTEGER' },
         { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' },
-        { name: 'opmerkingen', type: 'TEXT' }
+        { name: 'opmerkingen', type: 'TEXT' },
+        { name: 'user_id', type: 'VARCHAR(50) REFERENCES users(id)' }
       ];
       
       for (const col of recurringColumns) {
@@ -75,7 +92,8 @@ const initDatabase = async () => {
       CREATE TABLE IF NOT EXISTS projecten (
         id VARCHAR(50) PRIMARY KEY,
         naam TEXT NOT NULL,
-        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_id VARCHAR(50) REFERENCES users(id)
       )
     `);
 
@@ -83,7 +101,8 @@ const initDatabase = async () => {
       CREATE TABLE IF NOT EXISTS contexten (
         id VARCHAR(50) PRIMARY KEY,
         naam TEXT NOT NULL,
-        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_id VARCHAR(50) REFERENCES users(id)
       )
     `);
 
@@ -98,6 +117,7 @@ const initDatabase = async () => {
         naam TEXT,
         duur_minuten INTEGER NOT NULL,
         aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_id VARCHAR(50) REFERENCES users(id),
         FOREIGN KEY (actie_id) REFERENCES taken(id) ON DELETE CASCADE
       )
     `);
@@ -109,14 +129,30 @@ const initDatabase = async () => {
       // Column might already exist, ignore error
     }
 
+    // Add user_id columns to existing tables if they don't exist
+    try {
+      await pool.query('ALTER TABLE projecten ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id)');
+      await pool.query('ALTER TABLE contexten ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id)');
+      await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id)');
+      console.log('✅ User ID columns added to existing tables');
+    } catch (error) {
+      console.log('⚠️ Could not add user_id columns (might already exist):', error.message);
+    }
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
       CREATE INDEX IF NOT EXISTS idx_taken_project ON taken(project_id);
       CREATE INDEX IF NOT EXISTS idx_taken_context ON taken(context_id);
+      CREATE INDEX IF NOT EXISTS idx_taken_user ON taken(user_id);
+      CREATE INDEX IF NOT EXISTS idx_taken_user_lijst ON taken(user_id, lijst);
+      CREATE INDEX IF NOT EXISTS idx_projecten_user ON projecten(user_id);
+      CREATE INDEX IF NOT EXISTS idx_contexten_user ON contexten(user_id);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum ON dagelijkse_planning(datum);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_actie ON dagelijkse_planning(actie_id);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum_uur ON dagelijkse_planning(datum, uur);
+      CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_user ON dagelijkse_planning(user_id);
+      CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_user_datum ON dagelijkse_planning(user_id, datum);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -129,21 +165,31 @@ const initDatabase = async () => {
 
 // Database helper functions
 const db = {
-  // Get all items from a specific list
-  async getList(listName) {
+  // Get all items from a specific list for a specific user
+  async getList(listName, userId) {
     try {
+      if (!userId) {
+        console.warn('⚠️ getList called without userId - this will return empty results');
+        return [];
+      }
+
       let query;
+      let params;
+      
       if (listName === 'projecten-lijst') {
-        query = 'SELECT * FROM projecten ORDER BY aangemaakt DESC';
+        query = 'SELECT * FROM projecten WHERE user_id = $1 ORDER BY aangemaakt DESC';
+        params = [userId];
       } else if (listName === 'contexten') {
-        query = 'SELECT * FROM contexten ORDER BY aangemaakt DESC';
+        query = 'SELECT * FROM contexten WHERE user_id = $1 ORDER BY aangemaakt DESC';
+        params = [userId];
       } else if (listName === 'afgewerkte-taken') {
-        query = 'SELECT * FROM taken WHERE afgewerkt IS NOT NULL ORDER BY afgewerkt DESC';
+        query = 'SELECT * FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL ORDER BY afgewerkt DESC';
+        params = [userId];
       } else {
-        query = 'SELECT * FROM taken WHERE lijst = $1 AND afgewerkt IS NULL ORDER BY aangemaakt DESC';
+        query = 'SELECT * FROM taken WHERE user_id = $1 AND lijst = $2 AND afgewerkt IS NULL ORDER BY aangemaakt DESC';
+        params = [userId, listName];
       }
       
-      const params = (listName === 'projecten-lijst' || listName === 'contexten' || listName === 'afgewerkte-taken') ? [] : [listName];
       const result = await pool.query(query, params);
       
       // Map database column names to frontend property names
@@ -177,49 +223,54 @@ const db = {
   },
 
   // Save entire list (for compatibility with existing code)
-  async saveList(listName, items) {
+  async saveList(listName, items, userId) {
     try {
+      if (!userId) {
+        console.warn('⚠️ saveList called without userId - operation cancelled');
+        return false;
+      }
+
       if (listName === 'projecten-lijst') {
-        // Clear and insert projects
-        await pool.query('DELETE FROM projecten');
+        // Clear and insert projects for this user
+        await pool.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
         for (const item of items) {
           await pool.query(
-            'INSERT INTO projecten (id, naam, aangemaakt) VALUES ($1, $2, $3)',
-            [item.id, item.naam, item.aangemaakt]
+            'INSERT INTO projecten (id, naam, aangemaakt, user_id) VALUES ($1, $2, $3, $4)',
+            [item.id, item.naam, item.aangemaakt, userId]
           );
         }
       } else if (listName === 'contexten') {
-        // Clear and insert contexts
-        await pool.query('DELETE FROM contexten');
+        // Clear and insert contexts for this user
+        await pool.query('DELETE FROM contexten WHERE user_id = $1', [userId]);
         for (const item of items) {
           await pool.query(
-            'INSERT INTO contexten (id, naam, aangemaakt) VALUES ($1, $2, $3)',
-            [item.id, item.naam, item.aangemaakt]
+            'INSERT INTO contexten (id, naam, aangemaakt, user_id) VALUES ($1, $2, $3, $4)',
+            [item.id, item.naam, item.aangemaakt, userId]
           );
         }
       } else if (listName === 'afgewerkte-taken') {
-        // Update completed tasks
-        await pool.query('DELETE FROM taken WHERE afgewerkt IS NOT NULL');
+        // Update completed tasks for this user
+        await pool.query('DELETE FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL', [userId]);
         for (const item of items) {
           await pool.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, herhaling_type, herhaling_waarde, herhaling_actief)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           `, [
             item.id, item.tekst, item.aangemaakt, item.lijst || 'afgewerkt',
             item.projectId, item.verschijndatum, item.contextId, item.duur, item.type, item.afgewerkt,
-            item.herhalingType, item.herhalingWaarde, item.herhalingActief
+            item.herhalingType, item.herhalingWaarde, item.herhalingActief, item.opmerkingen, userId
           ]);
         }
       } else {
-        // Clear and insert tasks for specific list
-        await pool.query('DELETE FROM taken WHERE lijst = $1 AND afgewerkt IS NULL', [listName]);
+        // Clear and insert tasks for specific list for this user
+        await pool.query('DELETE FROM taken WHERE user_id = $1 AND lijst = $2 AND afgewerkt IS NULL', [userId, listName]);
         
         for (const item of items) {
           // Check if herhaling columns exist and fall back gracefully
           try {
             await pool.query(`
-              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             `, [
               item.id, 
               item.tekst, 
@@ -233,7 +284,9 @@ const db = {
               item.herhalingType || null, 
               item.herhalingWaarde || null, 
               item.herhalingActief === true || item.herhalingActief === 'true',
-              null  // afgewerkt
+              item.opmerkingen || null,
+              null,  // afgewerkt
+              userId
             ]);
           } catch (insertError) {
             // Fall back to basic insert without herhaling fields
@@ -243,8 +296,8 @@ const db = {
               
               console.log(`⚠️ DB: Falling back to basic insert for item ${item.id}`);
               await pool.query(`
-                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
               `, [
                 item.id, 
                 item.tekst, 
@@ -255,7 +308,9 @@ const db = {
                 item.contextId || null, 
                 item.duur || null, 
                 item.type || null,
-                null  // afgewerkt
+                item.opmerkingen || null,
+                null,  // afgewerkt
+                userId
               ]);
             } else {
               throw insertError;
@@ -271,9 +326,14 @@ const db = {
   },
 
   // Move/update a single task
-  async updateTask(taskId, updates) {
-    console.log(`🔍 DB: updateTask called for taskId: ${taskId}`);
+  async updateTask(taskId, updates, userId) {
+    console.log(`🔍 DB: updateTask called for taskId: ${taskId}, userId: ${userId}`);
     console.log(`📝 DB: Updates:`, JSON.stringify(updates, null, 2));
+    
+    if (!userId) {
+      console.warn('⚠️ updateTask called without userId - operation cancelled');
+      return false;
+    }
     
     try {
       const fields = [];
@@ -303,7 +363,8 @@ const db = {
       console.log(`🎯 DB: Values:`, values);
 
       values.push(taskId);
-      const query = `UPDATE taken SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+      values.push(userId);
+      const query = `UPDATE taken SET ${fields.join(', ')} WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}`;
       console.log(`🗄️ DB: Executing query:`, query);
       console.log(`🗄️ DB: With values:`, values);
       
@@ -342,7 +403,8 @@ const db = {
           });
 
           basicValues.push(taskId);
-          const basicQuery = `UPDATE taken SET ${basicFields.join(', ')} WHERE id = $${basicParamIndex}`;
+          basicValues.push(userId);
+          const basicQuery = `UPDATE taken SET ${basicFields.join(', ')} WHERE id = $${basicParamIndex} AND user_id = $${basicParamIndex + 1}`;
           console.log(`🔄 DB: Fallback query:`, basicQuery);
           console.log(`🔄 DB: Fallback values:`, basicValues);
           
@@ -359,8 +421,13 @@ const db = {
   },
 
   // Create a new recurring task instance
-  async createRecurringTask(originalTask, newDate) {
+  async createRecurringTask(originalTask, newDate, userId) {
     const client = await pool.connect();
+    
+    if (!userId) {
+      console.warn('⚠️ createRecurringTask called without userId - operation cancelled');
+      return null;
+    }
     
     try {
       // Start explicit transaction
@@ -392,13 +459,13 @@ const db = {
         console.log('🐛 DEBUG: newDate parameter received:', newDate, typeof newDate);
         
         const insertResult = await client.query(`
-          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           RETURNING id
         `, [
           newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
           originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type,
-          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, null
+          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, originalTask.opmerkingen, null, userId
         ]);
         
         console.log('✅ DEBUG: Insert successful, returned ID:', insertResult.rows[0]?.id);
@@ -452,12 +519,12 @@ const db = {
           await client.query('BEGIN');
           
           const basicInsertResult = await client.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING id
           `, [
             newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-            originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, null
+            originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, originalTask.opmerkingen, null, userId
           ]);
           
           console.log('✅ DEBUG: Basic insert successful, returned ID:', basicInsertResult.rows[0]?.id);
@@ -495,9 +562,14 @@ const db = {
     }
   },
 
-  // Get counts for all lists
-  async getCounts() {
+  // Get counts for all lists for a specific user
+  async getCounts(userId) {
     try {
+      if (!userId) {
+        console.warn('⚠️ getCounts called without userId - returning empty counts');
+        return {};
+      }
+
       const result = await pool.query(`
         SELECT 
           COUNT(*) FILTER (WHERE lijst = 'inbox' AND afgewerkt IS NULL) as inbox,
@@ -509,10 +581,10 @@ const db = {
           COUNT(*) FILTER (WHERE lijst = 'uitgesteld-3maandelijks' AND afgewerkt IS NULL) as "uitgesteld-3maandelijks",
           COUNT(*) FILTER (WHERE lijst = 'uitgesteld-6maandelijks' AND afgewerkt IS NULL) as "uitgesteld-6maandelijks",
           COUNT(*) FILTER (WHERE lijst = 'uitgesteld-jaarlijks' AND afgewerkt IS NULL) as "uitgesteld-jaarlijks"
-        FROM taken
-      `);
+        FROM taken WHERE user_id = $1
+      `, [userId]);
       
-      const projectCount = await pool.query('SELECT COUNT(*) as count FROM projecten');
+      const projectCount = await pool.query('SELECT COUNT(*) as count FROM projecten WHERE user_id = $1', [userId]);
       
       const counts = result.rows[0];
       counts['projecten-lijst'] = projectCount.rows[0].count;
@@ -530,15 +602,20 @@ const db = {
   },
 
   // Dagelijkse Planning functions
-  async getDagelijksePlanning(datum) {
+  async getDagelijksePlanning(datum, userId) {
     try {
+      if (!userId) {
+        console.warn('⚠️ getDagelijksePlanning called without userId - returning empty results');
+        return [];
+      }
+
       const result = await pool.query(`
         SELECT dp.*, t.tekst as actie_tekst, t.project_id, t.context_id, t.duur as actie_duur
         FROM dagelijkse_planning dp
         LEFT JOIN taken t ON dp.actie_id = t.id
-        WHERE dp.datum = $1
+        WHERE dp.datum = $1 AND dp.user_id = $2
         ORDER BY dp.uur ASC, dp.positie ASC, dp.aangemaakt ASC
-      `, [datum]);
+      `, [datum, userId]);
       
       return result.rows.map(row => ({
         id: row.id,
@@ -562,33 +639,38 @@ const db = {
     }
   },
 
-  async addToDagelijksePlanning(planningItem) {
+  async addToDagelijksePlanning(planningItem, userId) {
     try {
+      if (!userId) {
+        console.warn('⚠️ addToDagelijksePlanning called without userId - operation cancelled');
+        return null;
+      }
+
       const id = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
       
-      // Calculate next position for this hour
+      // Calculate next position for this hour for this user
       let positie = planningItem.positie;
       if (positie === undefined || positie === null) {
         const maxPosResult = await pool.query(`
           SELECT COALESCE(MAX(positie), -1) + 1 as next_position
           FROM dagelijkse_planning 
-          WHERE datum = $1 AND uur = $2
-        `, [planningItem.datum, planningItem.uur]);
+          WHERE datum = $1 AND uur = $2 AND user_id = $3
+        `, [planningItem.datum, planningItem.uur, userId]);
         positie = maxPosResult.rows[0].next_position;
       }
 
-      // If inserting at specific position, shift other items
+      // If inserting at specific position, shift other items for this user
       if (planningItem.positie !== undefined && planningItem.positie !== null) {
         await pool.query(`
           UPDATE dagelijkse_planning 
           SET positie = positie + 1 
-          WHERE datum = $1 AND uur = $2 AND positie >= $3
-        `, [planningItem.datum, planningItem.uur, planningItem.positie]);
+          WHERE datum = $1 AND uur = $2 AND positie >= $3 AND user_id = $4
+        `, [planningItem.datum, planningItem.uur, planningItem.positie, userId]);
       }
       
       await pool.query(`
-        INSERT INTO dagelijkse_planning (id, actie_id, datum, uur, positie, type, naam, duur_minuten)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO dagelijkse_planning (id, actie_id, datum, uur, positie, type, naam, duur_minuten, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       `, [
         id,
         planningItem.actieId || null,
@@ -597,7 +679,8 @@ const db = {
         positie,
         planningItem.type,
         planningItem.naam || null,
-        planningItem.duurMinuten
+        planningItem.duurMinuten,
+        userId
       ]);
       
       return id;
@@ -607,8 +690,13 @@ const db = {
     }
   },
 
-  async updateDagelijksePlanning(id, updates) {
+  async updateDagelijksePlanning(id, updates, userId) {
     try {
+      if (!userId) {
+        console.warn('⚠️ updateDagelijksePlanning called without userId - operation cancelled');
+        return false;
+      }
+
       const fields = [];
       const values = [];
       let paramIndex = 1;
@@ -626,7 +714,8 @@ const db = {
       });
 
       values.push(id);
-      const query = `UPDATE dagelijkse_planning SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+      values.push(userId);
+      const query = `UPDATE dagelijkse_planning SET ${fields.join(', ')} WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}`;
       
       const result = await pool.query(query, values);
       return result.rowCount > 0;
@@ -636,12 +725,17 @@ const db = {
     }
   },
 
-  async reorderDagelijksePlanning(id, targetUur, targetPosition) {
+  async reorderDagelijksePlanning(id, targetUur, targetPosition, userId) {
     try {
-      // Get current item info
+      if (!userId) {
+        console.warn('⚠️ reorderDagelijksePlanning called without userId - operation cancelled');
+        return false;
+      }
+
+      // Get current item info with user verification
       const currentResult = await pool.query(`
-        SELECT datum, uur, positie FROM dagelijkse_planning WHERE id = $1
-      `, [id]);
+        SELECT datum, uur, positie FROM dagelijkse_planning WHERE id = $1 AND user_id = $2
+      `, [id, userId]);
       
       if (currentResult.rows.length === 0) {
         return false;
@@ -654,38 +748,38 @@ const db = {
       
       // If moving to different hour or specific position
       if (currentUur !== targetUur || targetPosition !== null) {
-        // Remove from current position (shift items down)
+        // Remove from current position (shift items down) - only for this user
         await pool.query(`
           UPDATE dagelijkse_planning 
           SET positie = positie - 1 
-          WHERE datum = $1 AND uur = $2 AND positie > $3
-        `, [datum, currentUur, currentPositie]);
+          WHERE datum = $1 AND uur = $2 AND positie > $3 AND user_id = $4
+        `, [datum, currentUur, currentPositie, userId]);
         
         // Determine target position
         let finalPosition = targetPosition;
         if (finalPosition === null || finalPosition === undefined) {
-          // Append to end of target hour
+          // Append to end of target hour for this user
           const maxPosResult = await pool.query(`
             SELECT COALESCE(MAX(positie), -1) + 1 as next_position
             FROM dagelijkse_planning 
-            WHERE datum = $1 AND uur = $2
-          `, [datum, targetUur]);
+            WHERE datum = $1 AND uur = $2 AND user_id = $3
+          `, [datum, targetUur, userId]);
           finalPosition = maxPosResult.rows[0].next_position;
         } else {
-          // Insert at specific position, shift others up
+          // Insert at specific position, shift others up - only for this user
           await pool.query(`
             UPDATE dagelijkse_planning 
             SET positie = positie + 1 
-            WHERE datum = $1 AND uur = $2 AND positie >= $3
-          `, [datum, targetUur, finalPosition]);
+            WHERE datum = $1 AND uur = $2 AND positie >= $3 AND user_id = $4
+          `, [datum, targetUur, finalPosition, userId]);
         }
         
         // Update item with new hour and position
         await pool.query(`
           UPDATE dagelijkse_planning 
           SET uur = $1, positie = $2 
-          WHERE id = $3
-        `, [targetUur, finalPosition, id]);
+          WHERE id = $3 AND user_id = $4
+        `, [targetUur, finalPosition, id, userId]);
         
         return true;
       }

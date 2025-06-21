@@ -90,6 +90,50 @@ app.get('/api/db-test', async (req, res) => {
     }
 });
 
+// Create default user if not exists
+app.post('/api/admin/create-default-user', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const defaultUserId = 'default-user-001';
+        const defaultEmail = 'jan@tickedify.com';
+        const defaultNaam = 'Jan Buskens';
+        
+        // Check if user already exists
+        const existingUser = await pool.query('SELECT id FROM users WHERE id = $1', [defaultUserId]);
+        
+        if (existingUser.rows.length > 0) {
+            return res.json({ 
+                success: true, 
+                message: 'Default user already exists',
+                userId: defaultUserId
+            });
+        }
+        
+        // Create default user
+        await pool.query(`
+            INSERT INTO users (id, email, naam, wachtwoord_hash, rol, aangemaakt, actief)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
+        `, [defaultUserId, defaultEmail, defaultNaam, 'temp-hash', 'admin', true]);
+        
+        console.log('✅ Default user created successfully');
+        
+        res.json({ 
+            success: true, 
+            message: 'Default user created successfully',
+            userId: defaultUserId,
+            email: defaultEmail,
+            naam: defaultNaam
+        });
+        
+    } catch (error) {
+        console.error('Error creating default user:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/admin/init-database', async (req, res) => {
     try {
         if (!pool) {
@@ -232,13 +276,14 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         });
         console.log('✅ Email parsed successfully:', taskData);
         
-        // Resolve project and context IDs
-        console.log('🔄 Resolving project and context IDs...');
+        // Resolve project and context IDs  
+        const userId = 'default-user-001'; // TODO: Get from authentication when implemented
+        console.log('🔄 Resolving project and context IDs for user:', userId);
         if (taskData.projectName) {
-            taskData.projectId = await findOrCreateProject(taskData.projectName);
+            taskData.projectId = await findOrCreateProject(taskData.projectName, userId);
         }
         if (taskData.contextName) {
-            taskData.contextId = await findOrCreateContext(taskData.contextName);
+            taskData.contextId = await findOrCreateContext(taskData.contextName, userId);
         }
         
         console.log('✅ Project/Context resolution completed:', {
@@ -268,8 +313,8 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         const result = await pool.query(`
             INSERT INTO taken (
                 id, tekst, opmerkingen, lijst, aangemaakt, project_id, context_id, 
-                verschijndatum, duur, type
-            ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7, $8, $9)
+                verschijndatum, duur, type, user_id
+            ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7, $8, $9, $10)
             RETURNING *
         `, [
             taskId,
@@ -280,7 +325,8 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
             taskData.contextId,
             verschijndatumForDb,
             taskData.duur,
-            'taak'
+            'taak',
+            userId
         ]);
         
         const createdTask = result.rows[0];
@@ -319,14 +365,14 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
 });
 
 // Helper function to find or create project
-async function findOrCreateProject(projectName) {
+async function findOrCreateProject(projectName, userId = 'default-user-001') {
     if (!projectName || !pool) return null;
     
     try {
-        // First try to find existing project (case-insensitive)
+        // First try to find existing project (case-insensitive) for this user
         const existingProject = await pool.query(
-            'SELECT id FROM projecten WHERE LOWER(naam) = LOWER($1)',
-            [projectName]
+            'SELECT id FROM projecten WHERE LOWER(naam) = LOWER($1) AND user_id = $2',
+            [projectName, userId]
         );
         
         if (existingProject.rows.length > 0) {
@@ -337,8 +383,8 @@ async function findOrCreateProject(projectName) {
         // Create new project if not found
         const projectId = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         await pool.query(
-            'INSERT INTO projecten (id, naam) VALUES ($1, $2)',
-            [projectId, projectName]
+            'INSERT INTO projecten (id, naam, user_id) VALUES ($1, $2, $3)',
+            [projectId, projectName, userId]
         );
         
         console.log('📁 Created new project:', projectName, '→', projectId);
@@ -351,14 +397,14 @@ async function findOrCreateProject(projectName) {
 }
 
 // Helper function to find or create context
-async function findOrCreateContext(contextName) {
+async function findOrCreateContext(contextName, userId = 'default-user-001') {
     if (!contextName || !pool) return null;
     
     try {
-        // First try to find existing context (case-insensitive)
+        // First try to find existing context (case-insensitive) for this user
         const existingContext = await pool.query(
-            'SELECT id FROM contexten WHERE LOWER(naam) = LOWER($1)',
-            [contextName]
+            'SELECT id FROM contexten WHERE LOWER(naam) = LOWER($1) AND user_id = $2',
+            [contextName, userId]
         );
         
         if (existingContext.rows.length > 0) {
@@ -369,8 +415,8 @@ async function findOrCreateContext(contextName) {
         // Create new context if not found
         const contextId = 'context_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         await pool.query(
-            'INSERT INTO contexten (id, naam) VALUES ($1, $2)',
-            [contextId, contextName]
+            'INSERT INTO contexten (id, naam, user_id) VALUES ($1, $2, $3)',
+            [contextId, contextName, userId]
         );
         
         console.log('🏷️ Created new context:', contextName, '→', contextId);
@@ -535,11 +581,12 @@ app.post('/api/email/test', async (req, res) => {
         });
         
         // Also resolve project and context IDs for complete test
+        const userId = 'default-user-001'; // Use same hardcoded userId for consistency
         if (taskData.projectName) {
-            taskData.projectId = await findOrCreateProject(taskData.projectName);
+            taskData.projectId = await findOrCreateProject(taskData.projectName, userId);
         }
         if (taskData.contextName) {
-            taskData.contextId = await findOrCreateContext(taskData.contextName);
+            taskData.contextId = await findOrCreateContext(taskData.contextName, userId);
         }
         
         res.json({
@@ -555,6 +602,12 @@ app.post('/api/email/test', async (req, res) => {
         });
     }
 });
+
+// Temporary userId helper (until authentication is implemented)
+function getCurrentUserId(req) {
+    // TODO: Extract from session/JWT token when authentication is ready
+    return 'default-user-001'; // Hardcoded for now
+}
 
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {
@@ -578,7 +631,8 @@ app.get('/api/tellingen', async (req, res) => {
             return res.json({}); // Return empty if database not available
         }
         
-        const tellingen = await db.getCounts();
+        const userId = getCurrentUserId(req);
+        const tellingen = await db.getCounts(userId);
         res.json(tellingen);
     } catch (error) {
         console.error('Error getting counts:', error);
@@ -593,7 +647,8 @@ app.get('/api/lijst/:naam', async (req, res) => {
         }
         
         const { naam } = req.params;
-        const data = await db.getList(naam);
+        const userId = getCurrentUserId(req);
+        const data = await db.getList(naam, userId);
         res.json(data);
     } catch (error) {
         console.error(`Error getting list ${req.params.naam}:`, error);
@@ -608,13 +663,14 @@ app.post('/api/lijst/:naam', async (req, res) => {
         }
         
         const { naam } = req.params;
+        const userId = getCurrentUserId(req);
         
         // Temporary: Log the exact data being sent by UI to identify the issue
         if (naam === 'acties' && req.body.some(item => item.herhalingType)) {
             console.log('🚨 UI DEBUG: Data causing 500 error:', JSON.stringify(req.body, null, 2));
         }
         
-        const success = await db.saveList(naam, req.body);
+        const success = await db.saveList(naam, req.body, userId);
         if (success) {
             res.json({ success: true });
         } else {
@@ -633,9 +689,10 @@ app.put('/api/taak/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        console.log(`🔄 Server: Updating task ${id}:`, JSON.stringify(req.body, null, 2));
+        const userId = getCurrentUserId(req);
+        console.log(`🔄 Server: Updating task ${id} for user ${userId}:`, JSON.stringify(req.body, null, 2));
         
-        const success = await db.updateTask(id, req.body);
+        const success = await db.updateTask(id, req.body, userId);
         
         if (success) {
             console.log(`Task ${id} updated successfully`);
@@ -804,7 +861,8 @@ app.get('/api/dagelijkse-planning/:datum', async (req, res) => {
         }
         
         const { datum } = req.params;
-        const planning = await db.getDagelijksePlanning(datum);
+        const userId = getCurrentUserId(req);
+        const planning = await db.getDagelijksePlanning(datum, userId);
         res.json(planning);
     } catch (error) {
         console.error('Error getting dagelijkse planning:', error);
@@ -818,7 +876,8 @@ app.post('/api/dagelijkse-planning', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
-        const planningId = await db.addToDagelijksePlanning(req.body);
+        const userId = getCurrentUserId(req);
+        const planningId = await db.addToDagelijksePlanning(req.body, userId);
         res.json({ success: true, id: planningId });
     } catch (error) {
         console.error('Error adding to dagelijkse planning:', error);
@@ -833,7 +892,8 @@ app.put('/api/dagelijkse-planning/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        const success = await db.updateDagelijksePlanning(id, req.body);
+        const userId = getCurrentUserId(req);
+        const success = await db.updateDagelijksePlanning(id, req.body, userId);
         
         if (success) {
             res.json({ success: true });
@@ -854,7 +914,8 @@ app.put('/api/dagelijkse-planning/:id/reorder', async (req, res) => {
         
         const { id } = req.params;
         const { targetUur, targetPosition } = req.body;
-        const success = await db.reorderDagelijksePlanning(id, targetUur, targetPosition);
+        const userId = getCurrentUserId(req);
+        const success = await db.reorderDagelijksePlanning(id, targetUur, targetPosition, userId);
         
         if (success) {
             res.json({ success: true });
@@ -1036,14 +1097,15 @@ app.post('/api/taak/recurring', async (req, res) => {
         }
         
         const { originalTask, nextDate } = req.body;
-        console.log('Creating recurring task:', { originalTask, nextDate });
+        const userId = getCurrentUserId(req);
+        console.log('Creating recurring task for user', userId, ':', { originalTask, nextDate });
         
-        const taskId = await db.createRecurringTask(originalTask, nextDate);
+        const taskId = await db.createRecurringTask(originalTask, nextDate, userId);
         if (taskId) {
             // Debug: immediately check what's in acties list after creation
             setTimeout(async () => {
                 try {
-                    const actiesTasks = await db.getList('acties');
+                    const actiesTasks = await db.getList('acties', userId);
                     console.log('🔍 DEBUG: All tasks in acties after creation:', actiesTasks.length);
                     const newTask = actiesTasks.find(t => t.id === taskId);
                     if (newTask) {
