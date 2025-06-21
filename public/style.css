@@ -352,7 +352,9 @@ body {
 .acties-table-container {
     border: 1px solid var(--macos-gray-5);
     border-radius: var(--macos-radius-medium);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(100vh - 400px);
     background: var(--macos-bg-primary);
 }
 
