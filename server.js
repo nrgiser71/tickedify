@@ -2524,6 +2524,33 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error', message: err.message });
 });
 
+// Debug endpoint to view all tasks
+app.get('/api/debug/all-tasks', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = 'default-user-001';
+        const result = await pool.query(`
+            SELECT id, tekst, lijst, afgewerkt IS NOT NULL as completed 
+            FROM taken 
+            WHERE user_id = $1 
+            ORDER BY lijst, tekst
+        `, [userId]);
+        
+        res.json({
+            success: true,
+            total: result.rows.length,
+            tasks: result.rows
+        });
+        
+    } catch (error) {
+        console.error('All tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to clean up 'Thuis' endings
 app.get('/api/debug/clean-thuis', async (req, res) => {
     try {
@@ -2533,11 +2560,10 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
         
         const userId = 'default-user-001';
         
-        // Get all acties for the default user that end with 'Thuis'
+        // Get all tasks for the default user that end with 'Thuis'
         const result = await pool.query(`
-            SELECT id, tekst FROM taken 
+            SELECT id, tekst, lijst FROM taken 
             WHERE user_id = $1 
-            AND lijst = 'acties' 
             AND tekst LIKE '%Thuis'
             AND afgewerkt IS NULL
         `, [userId]);
@@ -2566,6 +2592,7 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
             updated: updatedCount,
             tasks: tasksToUpdate.map(t => ({
                 id: t.id,
+                lijst: t.lijst,
                 original: t.tekst,
                 cleaned: t.tekst.replace(/\s*Thuis\s*$/, '').trim()
             }))
