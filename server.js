@@ -6,17 +6,8 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Session configuration
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'tickedify-development-secret-change-in-production',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    }
-}));
+// Import PostgreSQL session store
+const pgSession = require('connect-pg-simple')(session);
 
 // Basic middleware
 app.use(express.json());
@@ -65,6 +56,27 @@ try {
     pool = dbModule.pool;
     console.log('Database module imported successfully');
     
+    // Configure session store immediately with pool
+    app.use(session({
+        store: new pgSession({
+            pool: pool,
+            tableName: 'user_sessions',
+            createTableIfMissing: true
+        }),
+        secret: process.env.SESSION_SECRET || 'tickedify-development-secret-change-in-production',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: 'auto', // Let express-session auto-detect HTTPS
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            sameSite: 'lax' // Better compatibility with modern browsers
+        },
+        name: 'tickedify.sid' // Custom session name for better identification
+    }));
+    
+    console.log('✅ Session store configured with PostgreSQL');
+    
     // Run database initialization
     dbModule.initDatabase().then(() => {
         dbInitialized = true;
@@ -74,6 +86,22 @@ try {
     });
 } catch (error) {
     console.error('Failed to import database module:', error);
+    
+    // Fallback to memory store if database module fails to load
+    app.use(session({
+        secret: process.env.SESSION_SECRET || 'tickedify-development-secret-change-in-production',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: 'auto',
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: 'lax'
+        },
+        name: 'tickedify.sid'
+    }));
+    
+    console.log('⚠️ Using fallback memory session store');
 }
 
 app.get('/api/db-test', async (req, res) => {
