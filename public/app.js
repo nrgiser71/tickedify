@@ -396,14 +396,20 @@ class Taakbeheer {
     }
 
     bindEvents() {
-        // Sidebar navigatie
-        document.querySelectorAll('.lijst-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const lijst = e.currentTarget.dataset.lijst;
+        // Prevent multiple event listeners
+        if (this.eventsAlreadyBound) return;
+        this.eventsAlreadyBound = true;
+
+        // Sidebar navigatie - use event delegation to avoid issues with dynamic content
+        document.addEventListener('click', (e) => {
+            const listItem = e.target.closest('.lijst-item[data-lijst]');
+            if (listItem && !e.defaultPrevented) {
+                e.preventDefault();
+                const lijst = listItem.dataset.lijst;
                 if (lijst) {
                     this.navigeerNaarLijst(lijst);
                 }
-            });
+            }
         });
 
         // Dropdown functionaliteit
@@ -416,12 +422,14 @@ class Taakbeheer {
             this.toggleDropdown('tools');
         });
 
-        // Tools menu items
-        document.querySelectorAll('[data-tool]').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const tool = e.currentTarget.dataset.tool;
+        // Tools menu items - use event delegation
+        document.addEventListener('click', (e) => {
+            const toolItem = e.target.closest('[data-tool]');
+            if (toolItem && !e.defaultPrevented) {
+                e.preventDefault();
+                const tool = toolItem.dataset.tool;
                 this.openTool(tool);
-            });
+            }
         });
 
         // Taak toevoegen (alleen voor inbox)
