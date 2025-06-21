@@ -2551,6 +2551,39 @@ app.get('/api/debug/all-tasks', async (req, res) => {
     }
 });
 
+// Debug endpoint to force refresh user data (clear any server-side caching)
+app.get('/api/debug/force-refresh/:userId', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = req.params.userId;
+        
+        // Get fresh data directly from database
+        const result = await pool.query(`
+            SELECT id, tekst, lijst, afgewerkt IS NOT NULL as completed
+            FROM taken 
+            WHERE user_id = $1 
+            AND afgewerkt IS NULL
+            ORDER BY lijst, tekst
+        `, [userId]);
+        
+        res.json({
+            success: true,
+            userId: userId,
+            freshData: true,
+            tasks: result.rows,
+            total: result.rows.length,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('Force refresh error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to force clean up 'Thuis' endings with verification
 app.get('/api/debug/force-clean-thuis', async (req, res) => {
     try {
@@ -2563,12 +2596,12 @@ app.get('/api/debug/force-clean-thuis', async (req, res) => {
         try {
             await client.query('BEGIN');
             
-            // Get all tasks that end with 'Thuis'
+            // Get all tasks that contain 'Thuis' (more aggressive search)
             const result = await client.query(`
                 SELECT t.id, t.tekst, t.lijst, t.user_id, u.email 
                 FROM taken t
                 JOIN users u ON t.user_id = u.id
-                WHERE t.tekst LIKE '%Thuis'
+                WHERE (t.tekst LIKE '%Thuis%' OR t.tekst LIKE '%thuis%')
                 AND t.afgewerkt IS NULL
             `);
             
@@ -2578,7 +2611,11 @@ app.get('/api/debug/force-clean-thuis', async (req, res) => {
             
             for (const task of tasksToUpdate) {
                 const originalText = task.tekst;
-                const cleanedText = originalText.replace(/\s*Thuis\s*$/, '').trim();
+                // More aggressive cleanup - remove 'Thuis' or 'thuis' anywhere it appears at the end
+                let cleanedText = originalText
+                    .replace(/\s*[Tt]huis\s*$/g, '')
+                    .replace(/\s+$/, '') // Remove trailing whitespace
+                    .trim();
                 
                 if (cleanedText !== originalText && cleanedText.length > 0) {
                     // Update the task
