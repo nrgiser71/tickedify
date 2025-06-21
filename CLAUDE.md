@@ -33,7 +33,7 @@
 
 ## CURRENT STATUS: Notion Import Tools Geïmplementeerd (Juni 21, 2025) ✅
 
-**LAATSTE UPDATE**: Complete Notion import tooling geïmplementeerd in versie v0.4.2
+**LAATSTE UPDATE**: Complete Notion import tooling + mapping save/load geïmplementeerd in versie v0.4.4
 
 ## NOTION IMPORT TOOLS VOLLEDIG OPERATIONEEL (Juni 21, 2025) ✅
 
@@ -41,6 +41,8 @@
 
 ### 🚀 **Methode 1: Smart CSV Mapper** - https://tickedify.com/csv-mapper.html
 - **Drag & Drop Interface**: Visuele mapping van Notion kolommen naar Tickedify velden
+- **💾 Mapping Save/Load**: Opslaan en hergebruiken van kolom mappings
+- **🤖 Auto-Mapping**: Intelligente suggesties voor Notion kolomnamen
 - **CSV Preview**: Toont eerste 5 rijen van je data voor verificatie
 - **Bulk Import**: Honderden taken in één keer importeren
 - **Smart Parsing**: Automatische datum conversie en CSV quote handling
@@ -74,7 +76,19 @@
 - **Multi-User Safe**: Werkt met authentication systeem
 - **User Friendly**: Visual drag & drop interface
 
-**Status**: Notion → Tickedify migratie nu volledig mogelijk! 🎉
+**💾 MAPPING SAVE/LOAD FUNCTIONALITEIT:**
+- **Eenmalige Setup**: Map je Notion kolommen één keer, hergebruik daarna
+- **Auto-Mapping**: Herkent automatisch Notion kolomnamen (Description, Project, etc.)
+- **Opslaan & Beheren**: Bewaar meerdere mappings voor verschillende Notion databases
+- **Quick Load**: Één-klik laden van eerder opgeslagen mappings
+- **Persistent**: Mappings blijven bewaard tussen browser sessies
+
+**🎯 WORKFLOW VERBETERING:**
+- **Eerste Import**: 2-3 minuten setup (mapping + import)
+- **Volgende Imports**: 30 seconden (load mapping + import)
+- **Geen Herwerk**: Nooit meer handmatig kolommen mappen
+
+**Status**: Notion → Tickedify migratie nu volledig mogelijk + efficient! 🎉
 
 ## OPMERKINGEN VELD IMPLEMENTATIE (Juni 21, 2025) ✅
 
