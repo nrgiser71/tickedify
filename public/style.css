@@ -1686,22 +1686,29 @@ button:focus {
 .acties-lijst {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding-bottom: 15px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 .planning-actie-item {
     padding: 12px 12px 12px 20px;
     border: 2px dashed var(--macos-gray-4);
     border-radius: var(--macos-radius-small);
-    cursor: grab;
+    cursor: default; /* Default cursor for scrolling */
     background: var(--macos-bg-tertiary);
     transition: all 0.2s ease;
     position: relative;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     user-select: none;
+}
+
+.planning-actie-item[draggable="true"] {
+    cursor: grab; /* Only show grab cursor when actually draggable */
 }
 
 .planning-actie-item::before {

@@ -3600,7 +3600,7 @@ class Taakbeheer {
                 new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'Geen datum';
             
             return `
-                <div class="planning-actie-item" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
+                <div class="planning-actie-item" draggable="false" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-tekst">${actie.tekst}</div>
                     <div class="actie-details">
                         ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
@@ -3757,9 +3757,40 @@ class Taakbeheer {
             });
         });
         
-        // Action drag start (from actions list)
+        // Action drag functionality (from actions list) - improved to not interfere with scroll
         document.querySelectorAll('.planning-actie-item').forEach(item => {
+            let isDragAllowed = false;
+            let dragStartTimer = null;
+            
+            // Only allow drag after a short delay to prioritize scroll
+            item.addEventListener('mousedown', (e) => {
+                // Reset drag permission
+                isDragAllowed = false;
+                item.draggable = false;
+                
+                // Set a small delay before allowing drag
+                dragStartTimer = setTimeout(() => {
+                    isDragAllowed = true;
+                    item.draggable = true;
+                }, 150); // 150ms delay
+            });
+            
+            item.addEventListener('mouseup', (e) => {
+                clearTimeout(dragStartTimer);
+                item.draggable = false;
+            });
+            
+            item.addEventListener('mouseleave', (e) => {
+                clearTimeout(dragStartTimer);
+                item.draggable = false;
+            });
+            
             item.addEventListener('dragstart', (e) => {
+                if (!isDragAllowed) {
+                    e.preventDefault();
+                    return;
+                }
+                
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     type: 'actie',
                     actieId: item.dataset.actieId,
@@ -3792,6 +3823,7 @@ class Taakbeheer {
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                item.draggable = false;
             });
         });
 
