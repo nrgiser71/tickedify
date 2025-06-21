@@ -329,7 +329,8 @@ const loading = new LoadingManager();
 
 class Taakbeheer {
     constructor() {
-        this.huidigeLijst = 'inbox';
+        // Restore last selected list from localStorage, default to inbox
+        this.huidigeLijst = this.restoreCurrentList();
         this.taken = [];
         this.projecten = [];
         this.contexten = [];
@@ -346,6 +347,34 @@ class Taakbeheer {
         // Data loading happens after authentication check in AuthManager
     }
 
+    // LocalStorage helpers for remembering current list
+    restoreCurrentList() {
+        try {
+            const saved = localStorage.getItem('tickedify-current-list');
+            if (saved) {
+                // Validate that it's a known list
+                const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks', 
+                                  'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
+                                  'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen'];
+                if (validLists.includes(saved)) {
+                    console.log(`🔄 Restored last selected list: ${saved}`);
+                    return saved;
+                }
+            }
+        } catch (error) {
+            console.warn('Could not restore current list from localStorage:', error);
+        }
+        return 'inbox'; // default fallback
+    }
+
+    saveCurrentList() {
+        try {
+            localStorage.setItem('tickedify-current-list', this.huidigeLijst);
+        } catch (error) {
+            console.warn('Could not save current list to localStorage:', error);
+        }
+    }
+
     getCurrentUserId() {
         return auth && auth.getCurrentUserId() ? auth.getCurrentUserId() : null;
     }
@@ -357,7 +386,10 @@ class Taakbeheer {
     async loadUserData() {
         // Called by AuthManager after successful login
         await this.laadTellingen();
-        await this.laadHuidigeLijst();
+        
+        // Navigate to the restored current list (includes sidebar update)
+        await this.navigeerNaarLijst(this.huidigeLijst);
+        
         await this.laadProjecten();
         await this.laadContexten();
     }
@@ -937,6 +969,7 @@ class Taakbeheer {
 
         // Laad lijst data
         this.huidigeLijst = lijst;
+        this.saveCurrentList(); // Remember the selected list
         await this.laadHuidigeLijst();
     }
 
