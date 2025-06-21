@@ -1524,7 +1524,7 @@ button:focus {
     gap: 20px;
     height: calc(100vh - 120px); /* Full height minus header */
     margin: -24px -32px;
-    padding: 16px;
+    padding: 16px 16px 0 16px; /* Remove bottom padding to eliminate gap */
 }
 
 .planning-sidebar {
