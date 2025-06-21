@@ -4057,9 +4057,21 @@ class AuthManager {
                 const data = await response.json();
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
+                
+                // Reload current list with authenticated user context
+                if (app) {
+                    await app.laadHuidigeLijst();
+                    await app.laadTellingen();
+                }
             } else {
                 this.currentUser = null;
                 this.isAuthenticated = false;
+                
+                // Clear data for unauthenticated state
+                if (app) {
+                    app.taken = [];
+                    app.renderTaken();
+                }
             }
             
             this.updateUI();
