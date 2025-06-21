@@ -2611,9 +2611,12 @@ app.get('/api/debug/force-clean-thuis', async (req, res) => {
             
             for (const task of tasksToUpdate) {
                 const originalText = task.tekst;
-                // More aggressive cleanup - remove 'Thuis' or 'thuis' anywhere it appears at the end
+                // More aggressive cleanup - remove 'Thuis' or 'thuis' anywhere it appears
                 let cleanedText = originalText
-                    .replace(/\s*[Tt]huis\s*$/g, '')
+                    .replace(/\s*[Tt]huis\s*,/g, ',') // Remove 'Thuis,' 
+                    .replace(/\s*[Tt]huis\s*$/g, '') // Remove 'Thuis' at end
+                    .replace(/\s*[Tt]huis\s+/g, ' ') // Remove 'Thuis ' in middle
+                    .replace(/\s+/g, ' ') // Normalize multiple spaces
                     .replace(/\s+$/, '') // Remove trailing whitespace
                     .trim();
                 
