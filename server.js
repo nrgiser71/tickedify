@@ -882,6 +882,42 @@ app.get('/api/admin/stats', async (req, res) => {
     }
 });
 
+// Debug endpoint to check user data
+app.get('/api/debug/user-data/:userId', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { userId } = req.params;
+        
+        // Get all tasks for this user
+        const tasks = await pool.query(`
+            SELECT lijst, COUNT(*) as count, array_agg(tekst) as sample_tasks
+            FROM taken 
+            WHERE user_id = $1 AND afgewerkt IS NULL
+            GROUP BY lijst
+            ORDER BY lijst
+        `, [userId]);
+        
+        // Get projects and contexts
+        const projects = await pool.query('SELECT * FROM projecten WHERE user_id = $1', [userId]);
+        const contexts = await pool.query('SELECT * FROM contexten WHERE user_id = $1', [userId]);
+        
+        res.json({
+            userId,
+            tasks: tasks.rows,
+            projects: projects.rows,
+            contexts: contexts.rows,
+            totalTasks: tasks.rows.reduce((sum, row) => sum + parseInt(row.count), 0)
+        });
+        
+    } catch (error) {
+        console.error('Debug user data error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Basic API endpoints
 app.get('/api/lijsten', async (req, res) => {
     try {
