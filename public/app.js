@@ -407,7 +407,20 @@ class Taakbeheer {
 
         // Dropdown functionaliteit
         document.getElementById('uitgesteld-dropdown').addEventListener('click', () => {
-            this.toggleDropdown();
+            this.toggleDropdown('uitgesteld');
+        });
+
+        // Tools dropdown functionaliteit
+        document.getElementById('tools-dropdown').addEventListener('click', () => {
+            this.toggleDropdown('tools');
+        });
+
+        // Tools menu items
+        document.querySelectorAll('[data-tool]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const tool = e.currentTarget.dataset.tool;
+                this.openTool(tool);
+            });
         });
 
         // Taak toevoegen (alleen voor inbox)
@@ -3128,9 +3141,9 @@ class Taakbeheer {
         }
     }
 
-    toggleDropdown() {
-        const content = document.getElementById('uitgesteld-content');
-        const arrow = document.querySelector('.dropdown-arrow');
+    toggleDropdown(type = 'uitgesteld') {
+        const content = document.getElementById(`${type}-content`);
+        const arrow = document.querySelector(`#${type}-dropdown .dropdown-arrow`);
         
         if (content.style.display === 'none') {
             content.style.display = 'block';
@@ -3139,6 +3152,143 @@ class Taakbeheer {
             content.style.display = 'none';
             arrow.classList.remove('rotated');
         }
+    }
+
+    openTool(tool) {
+        // Handle tool navigation
+        switch(tool) {
+            case 'contextenbeheer':
+                this.showContextenBeheer();
+                break;
+            case 'csv-import':
+                window.open('/csv-mapper.html', '_blank');
+                break;
+            case 'notion-import':
+                window.open('/notion-import.html', '_blank');
+                break;
+            default:
+                console.log('Unknown tool:', tool);
+        }
+    }
+
+    showContextenBeheer() {
+        // Update active list in sidebar
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+
+        // Update page title
+        document.getElementById('page-title').textContent = 'Contexten Beheer';
+
+        // Hide input container
+        document.getElementById('taak-input-container').style.display = 'none';
+
+        // Show contexten beheer interface
+        this.renderContextenBeheer();
+    }
+
+    async renderContextenBeheer() {
+        const container = document.getElementById('takenLijst').parentNode;
+        
+        // Ensure we have the latest context data
+        await this.laadContexten();
+        
+        container.innerHTML = `
+            <div class="contexten-beheer">
+                <div class="beheer-header">
+                    <h3>🏷️ Contexten Beheer</h3>
+                    <button onclick="app.voegContextToe()" class="primary-btn">
+                        ➕ Nieuwe Context
+                    </button>
+                </div>
+                
+                <div class="contexten-lijst" id="contextenLijst">
+                    ${this.contexten.length === 0 ? 
+                        '<p class="geen-items">Nog geen contexten aangemaakt. Klik op "Nieuwe Context" om te beginnen.</p>' :
+                        this.contexten.map(context => `
+                            <div class="context-item" data-id="${context.id}">
+                                <div class="context-content">
+                                    <span class="context-naam">${context.naam}</span>
+                                    <small class="context-info">Aangemaakt: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
+                                </div>
+                                <div class="context-acties">
+                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Bewerken">✏️</button>
+                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Verwijderen">🗑️</button>
+                                </div>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            </div>
+        `;
+    }
+
+    async voegContextToe() {
+        const naam = await inputModal.show('Nieuwe Context', 'Contextnaam:', '');
+        if (!naam || !naam.trim()) return;
+
+        await loading.withLoading(async () => {
+            const nieuweContext = {
+                id: this.generateId(),
+                naam: naam.trim(),
+                aangemaakt: new Date().toISOString()
+            };
+
+            this.contexten.push(nieuweContext);
+            await this.slaContextenOp();
+            this.renderContextenBeheer();
+            
+            toast.success(`Context "${naam}" toegevoegd`);
+        }, {
+            operationId: 'add-context',
+            showGlobal: true,
+            message: 'Context toevoegen...'
+        });
+    }
+
+    async bewerkeContext(contextId) {
+        const context = this.contexten.find(c => c.id === contextId);
+        if (!context) return;
+
+        const nieuweNaam = await inputModal.show('Context Bewerken', 'Nieuwe naam:', context.naam);
+        if (!nieuweNaam || !nieuweNaam.trim() || nieuweNaam.trim() === context.naam) return;
+
+        await loading.withLoading(async () => {
+            const oudeNaam = context.naam;
+            context.naam = nieuweNaam.trim();
+            
+            await this.slaContextenOp();
+            this.renderContextenBeheer();
+            
+            toast.success(`Context "${oudeNaam}" hernoemd naar "${nieuweNaam}"`);
+        }, {
+            operationId: 'edit-context',
+            showGlobal: true,
+            message: 'Context bewerken...'
+        });
+    }
+
+    async verwijderContext(contextId) {
+        const context = this.contexten.find(c => c.id === contextId);
+        if (!context) return;
+
+        const bevestiging = await confirmModal.show(
+            'Context Verwijderen', 
+            `Weet je zeker dat je context "${context.naam}" wilt verwijderen?\n\nDeze actie kan niet ongedaan worden gemaakt.`
+        );
+        if (!bevestiging) return;
+
+        await loading.withLoading(async () => {
+            this.contexten = this.contexten.filter(c => c.id !== contextId);
+            await this.slaContextenOp();
+            this.renderContextenBeheer();
+            
+            toast.success(`Context "${context.naam}" verwijderd`);
+        }, {
+            operationId: 'delete-context',
+            showGlobal: true,
+            message: 'Context verwijderen...'
+        });
     }
 
     // Event-based recurrence methods

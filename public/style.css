@@ -2617,3 +2617,118 @@ button:focus {
     border-color: var(--macos-red);
     color: white;
 }
+
+/* ===== CONTEXTENBEHEER STYLING ===== */
+.contexten-beheer {
+    max-width: 800px;
+}
+
+.beheer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--macos-gray-5);
+}
+
+.beheer-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+}
+
+.primary-btn {
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--macos-radius-button);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+    background: var(--macos-blue-hover);
+    transform: translateY(-1px);
+}
+
+.contexten-lijst {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.context-item {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-5);
+    border-radius: var(--macos-radius-medium);
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.context-item:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-4);
+    transform: translateY(-1px);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.context-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.context-naam {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+}
+
+.context-info {
+    font-size: 12px;
+    color: var(--macos-text-secondary);
+}
+
+.context-acties {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: var(--macos-radius-small);
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+    background: var(--macos-blue);
+    transform: scale(1.1);
+}
+
+.delete-btn:hover {
+    background: var(--macos-red);
+    transform: scale(1.1);
+}
+
+.geen-items {
+    text-align: center;
+    color: var(--macos-text-secondary);
+    font-style: italic;
+    padding: 40px 20px;
+    background: var(--macos-bg-secondary);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-5);
+}
