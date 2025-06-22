@@ -3648,24 +3648,25 @@ button:focus {
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid var(--macos-gray-5);
-    margin-left: -6px;
-    margin-right: -6px;
-    padding-left: 6px;
-    padding-right: 6px;
+    margin-left: -8px;
+    margin-right: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .import-label {
     font-size: 11px;
     color: var(--macos-text-secondary);
     font-weight: 500;
-    display: block;
-    margin-bottom: 4px;
+    white-space: nowrap;
+    margin-right: 6px;
 }
 
 .import-email-container {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    width: 100%;
 }
 
 .import-email-link {
