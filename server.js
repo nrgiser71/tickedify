@@ -1373,7 +1373,7 @@ app.post('/api/external/add-task', async (req, res) => {
         const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const task = {
             id: taskId,
-            beschrijving: tekst,
+            tekst: tekst,  // Database field is 'tekst', not 'beschrijving'
             project: project,
             context: context,
             verschijndatum: today,
