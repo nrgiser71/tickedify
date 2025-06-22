@@ -2125,11 +2125,20 @@ class Taakbeheer {
                 const checkbox = document.querySelector(`input[onchange*="${id}"]`);
                 const rowElement = checkbox?.closest('tr, li, .project-actie-item');
                 if (rowElement) {
+                    // Save scroll position before animation
+                    const scrollContainer = document.querySelector('.acties-lijst, .taak-lijst, .main-content');
+                    const scrollPosition = scrollContainer?.scrollTop || 0;
+                    
                     rowElement.style.opacity = '0.5';
                     rowElement.style.transition = 'opacity 0.3s';
                     setTimeout(() => {
                         if (rowElement.parentNode) {
                             rowElement.parentNode.removeChild(rowElement);
+                            
+                            // Restore scroll position after element removal
+                            if (scrollContainer) {
+                                scrollContainer.scrollTop = scrollPosition;
+                            }
                         }
                     }, 300);
                 }
