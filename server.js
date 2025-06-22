@@ -340,6 +340,57 @@ app.post('/api/user/regenerate-import-code', (req, res) => {
     }
 });
 
+// Debug endpoint to check last email import attempts
+app.get('/api/debug/last-imports', (req, res) => {
+    try {
+        // In production, you'd want to secure this endpoint
+        const userId = getCurrentUserId(req);
+        if (!userId) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+        
+        // For now, just return a message about checking server logs
+        res.json({
+            message: 'Check server logs for IMPORT_LOG entries',
+            hint: 'Look for recipient field with import+code pattern',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Test import code extraction
+app.get('/api/debug/test-import-code/:recipient', async (req, res) => {
+    try {
+        const recipient = req.params.recipient;
+        console.log('Testing recipient:', recipient);
+        
+        const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@/);
+        if (importCodeMatch) {
+            const importCode = importCodeMatch[1];
+            const user = await db.getUserByImportCode(importCode);
+            
+            res.json({
+                recipient: recipient,
+                importCodeFound: true,
+                importCode: importCode,
+                userFound: !!user,
+                user: user ? { id: user.id, email: user.email } : null
+            });
+        } else {
+            res.json({
+                recipient: recipient,
+                importCodeFound: false,
+                message: 'No import code pattern found'
+            });
+        }
+    } catch (error) {
+        console.error('Error in test import code:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Helper function to get user ID by email address
 async function getUserIdByEmail(email) {
     try {
@@ -380,6 +431,15 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         console.log('Body keys:', Object.keys(req.body));
         console.log('Files:', req.files?.length || 0);
         console.log('Full body:', req.body);
+        
+        // Log to a file we can check later
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            headers: req.headers,
+            body: req.body,
+            bodyKeys: Object.keys(req.body)
+        };
+        console.log('IMPORT_LOG:', JSON.stringify(logEntry));
         
         // Try multiple field name variations for Mailgun compatibility
         const sender = req.body.sender || req.body.from || req.body.From || '';
