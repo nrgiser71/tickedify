@@ -5717,6 +5717,12 @@ class AuthManager {
                         importEmailLink.textContent = data.user.importEmail;
                         importEmailLink.href = `mailto:${data.user.importEmail}?subject=Nieuwe taak`;
                         
+                        // Ensure mailto link works correctly
+                        importEmailLink.onclick = (e) => {
+                            // Don't prevent default - let the browser handle the mailto link
+                            console.log('Import email link clicked:', importEmailLink.href);
+                        };
+                        
                         // Add copy functionality
                         if (btnCopyImport) {
                             btnCopyImport.onclick = () => this.copyToClipboard(data.user.importEmail);
