@@ -1693,13 +1693,22 @@ class Taakbeheer {
         let container = document.getElementById('takenLijst');
         
         if (!container) {
+            console.log('renderTaken: takenLijst not found, attempting to restore normal container...');
             // Restore normal structure if coming from daily planning or search
             this.restoreNormalContainer();
             container = document.getElementById('takenLijst');
             
             if (!container) {
                 console.error('renderTaken: could not restore takenLijst container');
+                console.log('DOM state after restore attempt:', {
+                    contentArea: !!document.querySelector('.content-area'),
+                    mainContent: !!document.querySelector('.main-content'),
+                    dailyPlanning: !!document.querySelector('.dagelijkse-planning-layout'),
+                    takenContainer: !!document.querySelector('.taken-container')
+                });
                 return;
+            } else {
+                console.log('renderTaken: successfully restored takenLijst container');
             }
         }
         
@@ -4155,15 +4164,27 @@ class Taakbeheer {
     }
 
     restoreNormalContainer() {
+        console.log('restoreNormalContainer: starting restoration...');
         // Restore the normal taken container structure
         const takenLijst = document.getElementById('takenLijst');
         if (!takenLijst) {
+            console.log('restoreNormalContainer: takenLijst not found, checking DOM state...');
             // If takenLijst doesn't exist, find the content area and restore structure
             const contentArea = document.querySelector('.content-area');
+            const mainContent = document.querySelector('.main-content');
+            const dailyPlanning = document.querySelector('.dagelijkse-planning-layout');
+            
+            console.log('restoreNormalContainer: DOM check:', {
+                contentArea: !!contentArea,
+                mainContent: !!mainContent,
+                dailyPlanning: !!dailyPlanning,
+                dailyPlanningInMain: !!(mainContent && mainContent.querySelector('.dagelijkse-planning-layout'))
+            });
+            
             if (contentArea) {
                 // Check if we're coming from daily planning (main-content was replaced)
-                const mainContent = document.querySelector('.main-content');
                 if (mainContent && mainContent.querySelector('.dagelijkse-planning-layout')) {
+                    console.log('restoreNormalContainer: detected daily planning layout, restoring main-content...');
                     // Daily planning completely replaced main-content structure
                     const header = mainContent.querySelector('.main-header');
                     const headerHTML = header ? header.outerHTML : '<header class="main-header"><h1 id="page-title">Inbox</h1></header>';
@@ -4180,6 +4201,7 @@ class Taakbeheer {
                             </div>
                         </div>
                     `;
+                    console.log('restoreNormalContainer: main-content restored');
                     return;
                 }
                 
