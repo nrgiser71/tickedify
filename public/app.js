@@ -3532,6 +3532,9 @@ class Taakbeheer {
     openTool(tool) {
         // Handle tool navigation
         switch(tool) {
+            case 'global-search':
+                this.showGlobalSearch();
+                break;
             case 'contextenbeheer':
                 this.showContextenBeheer();
                 break;
@@ -3544,6 +3547,516 @@ class Taakbeheer {
             default:
                 console.log('Unknown tool:', tool);
         }
+    }
+
+    showGlobalSearch() {
+        // Update active list in sidebar - remove all actief classes
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+
+        // Highlight the global search tool item
+        const globalSearchItem = document.querySelector('[data-tool="global-search"]');
+        if (globalSearchItem) {
+            globalSearchItem.classList.add('actief');
+        }
+
+        // Ensure tools dropdown is open
+        const toolsContent = document.getElementById('tools-content');
+        const toolsDropdown = document.getElementById('tools-dropdown');
+        if (toolsContent && toolsDropdown) {
+            toolsContent.style.display = 'block';
+            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.textContent = '▼';
+            }
+        }
+
+        // Update page title
+        document.getElementById('page-title').textContent = 'Zoeken';
+
+        // Hide input container
+        document.getElementById('taak-input-container').style.display = 'none';
+
+        // Set current list and save it
+        this.huidigeLijst = 'global-search';
+        this.saveCurrentList();
+
+        // Show global search interface
+        this.renderGlobalSearch();
+    }
+
+    async renderGlobalSearch() {
+        // Find the container for global search
+        let container;
+        const takenLijst = document.getElementById('takenLijst');
+        if (takenLijst) {
+            container = takenLijst.parentNode;
+        } else {
+            // If takenLijst doesn't exist, find the content area
+            const contentArea = document.querySelector('.content-area');
+            container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
+            if (!container) {
+                // Create a new container if none exists
+                container = document.createElement('div');
+                container.className = 'taken-container';
+                contentArea.appendChild(container);
+            }
+        }
+        
+        // Initialize search state
+        this.searchResults = [];
+        this.searchQuery = '';
+        this.searchFilters = {
+            status: 'all', // 'active', 'completed', 'all'
+            lists: [], // empty = all lists
+            project: '',
+            context: '',
+            dateFrom: '',
+            dateTo: '',
+            includeRecurring: true
+        };
+        
+        // Ensure we have the latest project and context data
+        await this.laadProjecten();
+        await this.laadContexten();
+        
+        container.innerHTML = `
+            <div class="global-search">
+                <div class="search-header">
+                    <h3>🔍 Zoeken in Alle Taken</h3>
+                </div>
+                
+                <!-- Search Input Section -->
+                <div class="search-input-section">
+                    <div class="search-main">
+                        <input type="text" id="globalSearchInput" placeholder="Zoek in alle taken..." class="search-input">
+                        <button onclick="app.performGlobalSearch()" class="search-btn" id="searchBtn">
+                            🔍 Zoeken
+                        </button>
+                    </div>
+                    
+                    <!-- Advanced Filters (collapsible) -->
+                    <div class="search-filters" id="searchFilters" style="display: none;">
+                        <div class="filters-row">
+                            <div class="filter-group">
+                                <label>Status:</label>
+                                <select id="searchStatusFilter">
+                                    <option value="all">Alle taken</option>
+                                    <option value="active">Alleen actieve taken</option>
+                                    <option value="completed">Alleen afgewerkte taken</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Project:</label>
+                                <select id="searchProjectFilter">
+                                    <option value="">Alle projecten</option>
+                                    ${this.projecten.map(project => 
+                                        `<option value="${project.id}">${project.naam}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Context:</label>
+                                <select id="searchContextFilter">
+                                    <option value="">Alle contexten</option>
+                                    ${this.contexten.map(context => 
+                                        `<option value="${context.id}">${context.naam}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filters-row">
+                            <div class="filter-group">
+                                <label>Van datum:</label>
+                                <input type="date" id="searchDateFrom">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Tot datum:</label>
+                                <input type="date" id="searchDateTo">
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="includeRecurring" checked>
+                                    Herhalende taken
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="app.toggleSearchFilters()" class="toggle-filters-btn" id="toggleFiltersBtn">
+                        ⚙️ Geavanceerde filters
+                    </button>
+                </div>
+                
+                <!-- Search Results Section -->
+                <div class="search-results-section" id="searchResultsSection" style="display: none;">
+                    <div class="search-stats" id="searchStats"></div>
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+                
+                <!-- Search History Section -->
+                <div class="search-history-section" id="searchHistorySection">
+                    <h4>🕒 Recente Zoekopdrachten</h4>
+                    <div class="search-history" id="searchHistory">
+                        <p class="no-history">Nog geen zoekopdrachten uitgevoerd.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Bind events
+        this.bindGlobalSearchEvents();
+        
+        // Load search history
+        this.loadSearchHistory();
+    }
+
+    bindGlobalSearchEvents() {
+        // Enter key in search input
+        const searchInput = document.getElementById('globalSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.performGlobalSearch();
+                }
+            });
+        }
+        
+        // Filter change events
+        const filterElements = [
+            'searchStatusFilter', 'searchProjectFilter', 'searchContextFilter',
+            'searchDateFrom', 'searchDateTo', 'includeRecurring'
+        ];
+        
+        filterElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', () => {
+                    // Auto-search if we already have results
+                    if (this.searchResults.length > 0 || this.searchQuery) {
+                        this.performGlobalSearch();
+                    }
+                });
+            }
+        });
+    }
+
+    toggleSearchFilters() {
+        const filtersDiv = document.getElementById('searchFilters');
+        const toggleBtn = document.getElementById('toggleFiltersBtn');
+        
+        if (filtersDiv.style.display === 'none') {
+            filtersDiv.style.display = 'block';
+            toggleBtn.textContent = '⚙️ Verberg filters';
+        } else {
+            filtersDiv.style.display = 'none';
+            toggleBtn.textContent = '⚙️ Geavanceerde filters';
+        }
+    }
+
+    async performGlobalSearch() {
+        const searchInput = document.getElementById('globalSearchInput');
+        const searchQuery = searchInput?.value.trim() || '';
+        
+        if (!searchQuery) {
+            toast.warning('Voer een zoekterm in');
+            return;
+        }
+        
+        // Collect filter values
+        const filters = {
+            status: document.getElementById('searchStatusFilter')?.value || 'all',
+            project: document.getElementById('searchProjectFilter')?.value || '',
+            context: document.getElementById('searchContextFilter')?.value || '',
+            dateFrom: document.getElementById('searchDateFrom')?.value || '',
+            dateTo: document.getElementById('searchDateTo')?.value || '',
+            includeRecurring: document.getElementById('includeRecurring')?.checked || false
+        };
+        
+        return await loading.withLoading(async () => {
+            try {
+                // Build query parameters
+                const params = new URLSearchParams({
+                    query: searchQuery,
+                    ...filters
+                });
+                
+                const response = await fetch(`/api/search?${params.toString()}`);
+                if (!response.ok) {
+                    throw new Error(`Search failed: ${response.status}`);
+                }
+                
+                const results = await response.json();
+                
+                // Store search state
+                this.searchQuery = searchQuery;
+                this.searchResults = results.tasks || [];
+                this.searchFilters = filters;
+                
+                // Save to search history
+                this.saveSearchToHistory(searchQuery, filters);
+                
+                // Display results
+                this.displaySearchResults(results);
+                
+                toast.success(`${results.totalCount || 0} resultaten gevonden`);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                toast.error('Fout bij zoeken. Probeer opnieuw.');
+            }
+        }, {
+            operationId: 'global-search',
+            showGlobal: true,
+            message: 'Zoeken...'
+        });
+    }
+
+    displaySearchResults(results) {
+        const resultsSection = document.getElementById('searchResultsSection');
+        const statsDiv = document.getElementById('searchStats');
+        const resultsDiv = document.getElementById('searchResults');
+        const historySection = document.getElementById('searchHistorySection');
+        
+        if (!resultsSection || !statsDiv || !resultsDiv) return;
+        
+        // Show results section, hide history
+        resultsSection.style.display = 'block';
+        if (historySection) historySection.style.display = 'none';
+        
+        // Display stats
+        const totalCount = results.totalCount || 0;
+        const executionTime = results.executionTime || 0;
+        const distribution = results.distribution || {};
+        
+        statsDiv.innerHTML = `
+            <div class="search-stats-content">
+                <span class="results-count">${totalCount} resultaten gevonden in ${executionTime}ms</span>
+                ${Object.keys(distribution).length > 0 ? `
+                    <span class="results-distribution">
+                        Gevonden in: ${Object.entries(distribution)
+                            .filter(([list, count]) => count > 0)
+                            .map(([list, count]) => `${count} ${this.getListDisplayName(list)}`)
+                            .join(', ')}
+                    </span>
+                ` : ''}
+            </div>
+        `;
+        
+        // Display results
+        if (totalCount === 0) {
+            resultsDiv.innerHTML = '<p class="no-results">Geen resultaten gevonden voor deze zoekopdracht.</p>';
+            return;
+        }
+        
+        // Render results in table format similar to actions list
+        resultsDiv.innerHTML = `
+            <div class="search-results-container">
+                <table class="taken-table">
+                    <thead>
+                        <tr>
+                            <th>Taak</th>
+                            <th>Project</th>
+                            <th>Context</th>
+                            <th>Lijst</th>
+                            <th>Datum</th>
+                            <th>Status</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody id="searchResultsTableBody">
+                        ${this.renderSearchResultRows(results.tasks || [])}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    renderSearchResultRows(tasks) {
+        return tasks.map(taak => {
+            const projectNaam = this.getProjectNaam(taak.projectId);
+            const contextNaam = this.getContextNaam(taak.contextId);
+            const listDisplayName = this.getListDisplayName(taak.lijst);
+            
+            // Format date
+            const datumString = taak.verschijndatum ? 
+                new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            
+            // Status
+            const isCompleted = taak.afgewerkt;
+            const statusText = isCompleted ? 'Afgewerkt' : 'Actief';
+            const statusClass = isCompleted ? 'status-completed' : 'status-active';
+            
+            // Recurring indicator
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak">🔄</span>' : '';
+            
+            return `
+                <tr class="search-result-row ${isCompleted ? 'completed-task' : ''}">
+                    <td class="task-name" onclick="app.openTaskFromSearch('${taak.id}')" title="Klik om te bewerken">
+                        ${this.highlightSearchTerm(taak.tekst, this.searchQuery)}${recurringIndicator}
+                    </td>
+                    <td>${projectNaam}</td>
+                    <td>${contextNaam}</td>
+                    <td><span class="list-badge list-${taak.lijst}">${listDisplayName}</span></td>
+                    <td>${datumString}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="search-result-actions">
+                            <button onclick="app.openTaskFromSearch('${taak.id}')" class="action-btn edit-btn" title="Bewerken">✏️</button>
+                            <button onclick="app.moveTaskFromSearch('${taak.id}')" class="action-btn move-btn" title="Verplaatsen">📂</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    highlightSearchTerm(text, searchTerm) {
+        if (!searchTerm || !text) return this.escapeHtml(text);
+        
+        const regex = new RegExp(`(${this.escapeRegex(searchTerm)})`, 'gi');
+        return this.escapeHtml(text).replace(regex, '<mark>$1</mark>');
+    }
+
+    escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    getListDisplayName(listKey) {
+        const listNames = {
+            'inbox': 'Inbox',
+            'acties': 'Acties',
+            'opvolgen': 'Opvolgen',
+            'uitgesteld-wekelijks': 'Uitgesteld (week)',
+            'uitgesteld-maandelijks': 'Uitgesteld (maand)',
+            'uitgesteld-3maandelijks': 'Uitgesteld (3 maand)',
+            'uitgesteld-6maandelijks': 'Uitgesteld (6 maand)',
+            'uitgesteld-jaarlijks': 'Uitgesteld (jaar)',
+            'afgewerkte-taken': 'Afgewerkt'
+        };
+        return listNames[listKey] || listKey;
+    }
+
+    // Search history management
+    saveSearchToHistory(query, filters) {
+        const searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+        
+        const searchEntry = {
+            query,
+            filters,
+            timestamp: new Date().toISOString(),
+            id: Date.now().toString()
+        };
+        
+        // Remove existing identical search
+        const filteredHistory = searchHistory.filter(entry => 
+            entry.query !== query || JSON.stringify(entry.filters) !== JSON.stringify(filters)
+        );
+        
+        // Add to beginning and limit to 10
+        filteredHistory.unshift(searchEntry);
+        const limitedHistory = filteredHistory.slice(0, 10);
+        
+        localStorage.setItem('searchHistory', JSON.stringify(limitedHistory));
+        this.loadSearchHistory();
+    }
+
+    loadSearchHistory() {
+        const searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+        const historyDiv = document.getElementById('searchHistory');
+        
+        if (!historyDiv) return;
+        
+        if (searchHistory.length === 0) {
+            historyDiv.innerHTML = '<p class="no-history">Nog geen zoekopdrachten uitgevoerd.</p>';
+            return;
+        }
+        
+        historyDiv.innerHTML = searchHistory.map(entry => `
+            <div class="search-history-item" onclick="app.repeatSearch('${entry.id}')">
+                <div class="history-query">"${entry.query}"</div>
+                <div class="history-meta">
+                    ${new Date(entry.timestamp).toLocaleDateString('nl-NL')} om ${new Date(entry.timestamp).toLocaleTimeString('nl-NL', {hour: '2-digit', minute: '2-digit'})}
+                    ${this.getActiveFiltersText(entry.filters)}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    getActiveFiltersText(filters) {
+        const activeFilters = [];
+        if (filters.status && filters.status !== 'all') activeFilters.push(`Status: ${filters.status}`);
+        if (filters.project) activeFilters.push('Project geselecteerd');
+        if (filters.context) activeFilters.push('Context geselecteerd');
+        if (filters.dateFrom || filters.dateTo) activeFilters.push('Datum filter');
+        if (!filters.includeRecurring) activeFilters.push('Geen herhalende taken');
+        
+        return activeFilters.length > 0 ? ` (${activeFilters.join(', ')})` : '';
+    }
+
+    repeatSearch(searchId) {
+        const searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+        const searchEntry = searchHistory.find(entry => entry.id === searchId);
+        
+        if (!searchEntry) return;
+        
+        // Fill in the search form
+        const searchInput = document.getElementById('globalSearchInput');
+        if (searchInput) searchInput.value = searchEntry.query;
+        
+        // Apply filters
+        const filterMappings = {
+            'searchStatusFilter': searchEntry.filters.status,
+            'searchProjectFilter': searchEntry.filters.project,
+            'searchContextFilter': searchEntry.filters.context,
+            'searchDateFrom': searchEntry.filters.dateFrom,
+            'searchDateTo': searchEntry.filters.dateTo,
+            'includeRecurring': searchEntry.filters.includeRecurring
+        };
+        
+        Object.entries(filterMappings).forEach(([elementId, value]) => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else {
+                    element.value = value || '';
+                }
+            }
+        });
+        
+        // Perform the search
+        this.performGlobalSearch();
+    }
+
+    // Task actions from search results
+    async openTaskFromSearch(taskId) {
+        // Find the task in search results
+        const task = this.searchResults.find(t => t.id === taskId);
+        if (!task) {
+            toast.error('Taak niet gevonden in zoekresultaten');
+            return;
+        }
+        
+        // For now, we'll use the existing planning popup
+        // In the future, we might want a dedicated task edit modal
+        
+        // Switch to the appropriate list first
+        await this.laadLijst(task.lijst);
+        
+        // Then open the task for editing
+        await this.planTaak(taskId);
+    }
+
+    async moveTaskFromSearch(taskId) {
+        // TODO: Implement bulk move functionality
+        toast.info('Verplaats functionaliteit komt binnenkort');
     }
 
     showContextenBeheer() {
