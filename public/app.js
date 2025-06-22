@@ -1686,7 +1686,10 @@ class Taakbeheer {
         if (this.huidigeLijst === 'acties') {
             this.renderActiesTable(container);
         } else if (this.huidigeLijst === 'dagelijkse-planning') {
-            await this.renderDagelijksePlanning(container);
+            // For daily planning, use the main content container instead of takenLijst
+            // because renderDagelijksePlanning replaces the entire structure
+            const mainContainer = document.querySelector('.main-content') || container;
+            await this.renderDagelijksePlanning(mainContainer);
         } else if (this.huidigeLijst === 'projecten') {
             await this.renderProjectenLijst(container);
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
@@ -3811,6 +3814,11 @@ class Taakbeheer {
     }
 
     async renderDagelijksePlanning(container) {
+        if (!container) {
+            console.error('renderDagelijksePlanning: container is null');
+            return;
+        }
+        
         const today = new Date().toISOString().split('T')[0];
         
         // Laad acties lijst voor filtering en drag & drop
