@@ -1352,11 +1352,10 @@ app.post('/api/external/add-task', async (req, res) => {
         
         // Map API keys to user IDs (multi-user support)
         const apiKeyToUser = {
-            'tickedify-jan-2025': 'default-user-001',  // Jan's personal API key (update with actual user ID)
-            'tickedify-external-2025': 'default-user-001'  // Legacy fallback
+            'tickedify-jan-2025': 'info@baasoverjetijd.be',  // Jan's personal API key for info@baasoverjetijd.be
+            'tickedify-jan-alt-2025': 'jan@buskens.be',      // Jan's alternative account
+            'tickedify-external-2025': 'default-user-001'    // Legacy fallback
         };
-        
-        // TODO: Update 'default-user-001' with Jan's actual user ID from the users table
         
         const userId = apiKeyToUser[apiKey];
         if (!userId) {
