@@ -3573,10 +3573,16 @@ class Taakbeheer {
         }
 
         // Update page title
-        document.getElementById('page-title').textContent = 'Zoeken';
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = 'Zoeken';
+        }
 
         // Hide input container
-        document.getElementById('taak-input-container').style.display = 'none';
+        const inputContainer = document.getElementById('taak-input-container');
+        if (inputContainer) {
+            inputContainer.style.display = 'none';
+        }
 
         // Set current list and save it
         this.huidigeLijst = 'global-search';
@@ -3595,12 +3601,17 @@ class Taakbeheer {
         } else {
             // If takenLijst doesn't exist, find the content area
             const contentArea = document.querySelector('.content-area');
-            container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
-            if (!container) {
-                // Create a new container if none exists
-                container = document.createElement('div');
-                container.className = 'taken-container';
-                contentArea.appendChild(container);
+            if (contentArea) {
+                container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
+                if (!container) {
+                    // Create a new container if none exists
+                    container = document.createElement('div');
+                    container.className = 'taken-container';
+                    contentArea.appendChild(container);
+                }
+            } else {
+                console.error('Could not find content area for global search');
+                return;
             }
         }
         
