@@ -162,27 +162,31 @@
 - `public/index.html`: Opmerkingen textarea toegevoegd aan planning popup
 - `public/style.css`: Styling voor textarea elementen
 
-## EMAIL IMPORT STATUS (Juni 20, 2025)
+## EMAIL IMPORT SYSTEEM VOLLEDIG OPERATIONEEL (Juni 22, 2025) ✅
 
-**✅ EMAIL-TO-TASK SYSTEEM WERKEND:**
-- Emails naar `import@tickedify.com` worden succesvol omgezet naar taken
-- Gmail webmail werkt perfect
-- Webhook parsing gecorrigeerd (express.urlencoded toegevoegd)  
-- Subject wordt taaknaam, landen in Inbox
-- **Versie:** v1.1.46 live met debug logging
+**🎉 COMPLETE EMAIL-TO-TASK WORKFLOW SUCCESVOL:**
+- Multi-user email import systeem volledig geïmplementeerd
+- Gmail-style plus-addressing: `import+[unieke-code]@tickedify.com`
+- Elke gebruiker heeft eigen persoonlijke import email adres
+- **Versie:** v0.5.23 met gegarandeerde unieke codes
 
-**❌ SMTP CLIENT EMAIL PROBLEEM:**
-- Direct email clients (MailMate, Outlook, etc.) falen met: "No such recipient here"
-- Gmail webmail werkt WEL - dit wijst op SPF record conflict
-- **Root oorzaak:** Dubbele conflicterende SPF records in DNS:
-  1. `"v=spf1 a mx -all"` (restrictief, blokkeert alles)
-  2. `"v=spf1 include:mailgun.org ~all"` (Mailgun toegestaan)
+**✅ MULTI-USER ONDERSTEUNING:**
+- **Automatische code generatie** bij gebruiker registratie
+- **Unieke import codes** met collision detection algoritme (4.7 quintiljoen mogelijke codes)
+- **Plus-addressing routing** via Mailgun configuratie
+- **User isolation** - emails gaan naar correcte gebruiker account
 
-**🔧 DNS FIX IN UITVOERING:**
-- Foute SPF record (`"v=spf1 a mx -all"`) wordt verwijderd door Vimexx
-- TTL: ~18000 seconden (nog ~5 uur propagatie tijd)
-- **Status morgen checken**: `dig TXT tickedify.com | grep "v=spf1"`
-- **Test wanneer gefixt**: Email sturen via MailMate naar import@tickedify.com
+**🔒 SECURITY & BETROUWBAARHEID:**
+- **Gegarandeerde uniekheid**: 36^12 = 4,738,381,338,321,616,896 mogelijke codes
+- **Collision detection**: Retry logic met maximum 10 pogingen
+- **Database constraints**: UNIQUE kolom als fallback bescherming
+- **Error handling**: Graceful failure in plaats van duplicate codes
+
+**📧 EMAIL IMPORT WORKFLOW:**
+1. **Registratie** → Automatische generatie unieke import code
+2. **Header UI** → Import email zichtbaar met mailto link + copy functie
+3. **Email versturen** → `import+[code]@tickedify.com`
+4. **Automatische verwerking** → Taak verschijnt in gebruiker's inbox
 
 **📧 EMAIL FORMAAT ONDERSTEUNING:**
 - **Basis**: `Subject: Nieuwe taak` → Taak "Nieuwe taak" in Inbox
@@ -190,25 +194,35 @@
 - **Met context**: `Subject: Taak naam @context` → Taak met context
 - **Met deadline**: Body met `Datum: 2025-06-25` → Taak met verschijndatum
 - **Met duur**: Body met `Duur: 30` → Taak met 30 minuten geschatte duur
+- **Opmerkingen**: Email body (na filtering structured data) → Opmerkingen veld
 
-**📋 VOLGENDE STAPPEN (na DNS propagatie):**
-1. **Controleer webapp toegankelijkheid** - https://tickedify.com moet laden
-2. **Test email import functionaliteit:**
-   - Handmatige test: email naar `import@tickedify.com`
-   - API test: `/api/email/test` endpoint
-3. **Verifieer email-to-task workflow** end-to-end
-4. **Update CLAUDE.md** met definitieve status
+**🎨 UI INTEGRATIE VOLTOOID:**
+- **Import email in header** naast gebruiker info met volledige breedte layout
+- **Mailto link functionaliteit** - opent email client met juiste TO/subject  
+- **Copy-to-clipboard knop** met toast feedback
+- **Responsive design** consistent met macOS styling
+- **Professional layout** - label links, email centrum, copy knop rechts
 
-**💻 CODE STATUS:**
-- ✅ Email import endpoint `/api/email/import` volledig geïmplementeerd
-- ✅ Email parsing logica voor subject/body parsen klaar
-- ✅ Database integration werkend
-- ✅ Test endpoint `/api/email/test` beschikbaar voor debugging
-- ⏳ Wacht alleen op DNS propagatie voor live testing
+**💻 TECHNISCHE IMPLEMENTATIE:**
+- **Plus-addressing regex**: `match_recipient("^import\\+(.*)@tickedify.com$")`
+- **API endpoints**: `/api/user/info`, `/api/email/import`
+- **Database schema**: `email_import_code VARCHAR(20) UNIQUE`
+- **Multi-user routing**: Import code → User ID lookup
+- **Automatic fallback**: Sender email matching als backup
 
 **📁 RELEVANTE FILES:**
-- `server.js` - Email webhook endpoint en parsing logica  
-- `EMAIL-IMPORT-GUIDE.md` - Volledige documentatie en setup instructies
+- `server.js` - Email webhook endpoint en multi-user routing
+- `database.js` - Unieke code generatie met collision detection
+- `public/app.js` - UI integration en copy functionaliteit
+- `public/index.html` - Header layout met import email sectie
+- `public/style.css` - Professional styling voor import UI
+
+**🧪 DEBUG ENDPOINTS:**
+- `/api/debug/users-import-codes` - Alle gebruikers en hun codes
+- `/api/debug/email-imported-tasks` - Recent geïmporteerde taken
+- `/api/debug/inbox-tasks/:userId` - Inbox taken per gebruiker
+
+**STATUS**: Email import systeem production-ready en volledig multi-user compatible! 🚀
 
 ## UI/UX VERBETERINGEN VOLTOOID (December 19, 2025) ✅
 
