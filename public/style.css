@@ -3011,16 +3011,16 @@ button:focus {
 }
 
 .search-input-section {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
+    margin-bottom: 40px;
+    padding-bottom: 32px;
     border-bottom: 1px solid var(--macos-gray-5);
 }
 
 .search-input-container {
     display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-bottom: 24px;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 32px;
 }
 
 .search-input-container input {
@@ -3032,7 +3032,7 @@ button:focus {
     background: var(--macos-bg-primary);
     color: var(--macos-text-primary);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .search-input-container input:focus {
@@ -3056,7 +3056,7 @@ button:focus {
     cursor: pointer;
     transition: background-color 0.2s ease;
     white-space: nowrap;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .search-button:hover {
@@ -3073,7 +3073,7 @@ button:focus {
     border: 1px solid var(--macos-gray-5);
     border-radius: var(--macos-radius-medium);
     padding: 24px;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
 }
 
 .filters-header {
