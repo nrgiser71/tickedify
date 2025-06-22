@@ -2013,22 +2013,18 @@ class Taakbeheer {
     }
 
     async taakAfwerken(id) {
-        console.log('🐛 DEBUG: taakAfwerken called with ID:', id);
         const taak = this.taken.find(t => t.id === id);
-        console.log('🐛 DEBUG: Found task:', taak);
-        if (taak) {
-            console.log('🐛 DEBUG: herhalingActief:', taak.herhalingActief);
-            console.log('🐛 DEBUG: herhalingType:', taak.herhalingType);
-            console.log('🐛 DEBUG: Check condition:', taak.herhalingActief && taak.herhalingType);
-            
+        if (!taak) return;
+        
+        const isRecurring = taak.herhalingActief && taak.herhalingType;
+        
+        return await loading.withLoading(async () => {
             taak.afgewerkt = new Date().toISOString();
             
-            // Check if this is a recurring task and create next instance
+            // Handle recurring tasks
             let nextRecurringTaskId = null;
-            if (taak.herhalingActief && taak.herhalingType) {
-                console.log('🐛 DEBUG: Entering recurring task logic');
+            if (isRecurring) {
                 if (taak.herhalingType.startsWith('event-')) {
-                    console.log('🐛 DEBUG: Event-based recurrence detected');
                     // Handle event-based recurrence - ask for next event date
                     const nextEventDate = await this.askForNextEventDate(taak);
                     if (nextEventDate) {
@@ -2038,56 +2034,62 @@ class Taakbeheer {
                         }
                     }
                 } else {
-                    console.log('🐛 DEBUG: Regular recurrence detected, calculating next date');
-                    console.log('🐛 DEBUG: verschijndatum:', taak.verschijndatum);
-                    console.log('🐛 DEBUG: herhalingType:', taak.herhalingType);
                     const nextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
-                    console.log('🐛 DEBUG: calculated nextDate:', nextDate);
                     if (nextDate) {
-                        console.log('🐛 DEBUG: About to create recurring task');
                         nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
-                        console.log('🐛 DEBUG: createNextRecurringTask returned:', nextRecurringTaskId);
-                    } else {
-                        console.log('🐛 DEBUG: No next date calculated - recurring task NOT created');
                     }
                 }
             }
             
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
             if (success) {
+                // Remove from local array immediately for instant UI feedback
                 this.taken = this.taken.filter(t => t.id !== id);
                 
-                // Only save list if no recurring task was created (to avoid overwriting)
-                if (!nextRecurringTaskId) {
-                    await this.slaLijstOp();
+                // Fast UI update - just remove the element without full re-render
+                const checkbox = document.querySelector(`input[onchange*="${id}"]`);
+                const rowElement = checkbox?.closest('tr, li, .project-actie-item');
+                if (rowElement) {
+                    rowElement.style.opacity = '0.5';
+                    rowElement.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        if (rowElement.parentNode) {
+                            rowElement.parentNode.removeChild(rowElement);
+                        }
+                    }, 300);
                 }
                 
-                this.renderTaken();
-                await this.laadTellingen();
+                // Background updates (don't await these for faster response)
+                if (!nextRecurringTaskId) {
+                    this.slaLijstOp().catch(console.error);
+                }
+                this.laadTellingen().catch(console.error);
                 
-                // Show confirmation for recurring task and refresh lists
-                if (nextRecurringTaskId) {
+                // Show success message
+                if (isRecurring && nextRecurringTaskId) {
                     const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
+                    toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
-                    // Refresh all lists to show the new recurring task
-                    console.log('🔄 Refreshing lists after recurring task creation...');
-                    await this.laadTellingen();
-                    
-                    // If we're on the acties list, refresh it to show the new task
-                    if (this.huidigeLijst === 'acties') {
-                        await this.laadHuidigeLijst();
-                    }
-                    
+                    // For recurring tasks, do refresh lists to show new task
                     setTimeout(() => {
-                        toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
-                    }, 100);
+                        this.laadTellingen();
+                        if (this.huidigeLijst === 'acties') {
+                            this.laadHuidigeLijst();
+                        }
+                    }, 500);
+                } else {
+                    toast.success('Taak afgewerkt!');
                 }
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
-        }
+        }, {
+            operationId: `complete-task-${id}`,
+            showGlobal: false,
+            message: 'Taak afwerken...'
+        });
     }
 
     async verplaatsTaakNaarAfgewerkt(taak) {
