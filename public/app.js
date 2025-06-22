@@ -4011,40 +4011,9 @@ class Taakbeheer {
             });
         });
         
-        // Action drag functionality (from actions list) - improved to not interfere with scroll
+        // Action drag functionality (from actions list)
         document.querySelectorAll('.planning-actie-item').forEach(item => {
-            let isDragAllowed = false;
-            let dragStartTimer = null;
-            
-            // Only allow drag after a short delay to prioritize scroll
-            item.addEventListener('mousedown', (e) => {
-                // Reset drag permission
-                isDragAllowed = false;
-                item.draggable = false;
-                
-                // Set a small delay before allowing drag
-                dragStartTimer = setTimeout(() => {
-                    isDragAllowed = true;
-                    item.draggable = true;
-                }, 150); // 150ms delay
-            });
-            
-            item.addEventListener('mouseup', (e) => {
-                clearTimeout(dragStartTimer);
-                item.draggable = false;
-            });
-            
-            item.addEventListener('mouseleave', (e) => {
-                clearTimeout(dragStartTimer);
-                item.draggable = false;
-            });
-            
             item.addEventListener('dragstart', (e) => {
-                if (!isDragAllowed) {
-                    e.preventDefault();
-                    return;
-                }
-                
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     type: 'actie',
                     actieId: item.dataset.actieId,
@@ -4077,7 +4046,6 @@ class Taakbeheer {
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                item.draggable = false;
             });
         });
 
