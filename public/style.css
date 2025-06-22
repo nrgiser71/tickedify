@@ -3640,6 +3640,69 @@ button:focus {
     color: var(--macos-text-secondary);
 }
 
+/* Import Email Styling */
+.user-import-email {
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px solid var(--macos-gray-5);
+}
+
+.import-label {
+    font-size: 10px;
+    color: var(--macos-text-tertiary);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.import-email-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.import-email-link {
+    font-size: 10px;
+    color: var(--macos-blue);
+    text-decoration: none;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    padding: 2px 4px;
+    background: var(--macos-gray-6);
+    border-radius: var(--macos-radius-small);
+    transition: all 0.2s ease;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.import-email-link:hover {
+    background: var(--macos-blue);
+    color: white;
+}
+
+.btn-copy {
+    background: var(--macos-gray-5);
+    border: none;
+    border-radius: var(--macos-radius-small);
+    padding: 2px 4px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--macos-text-secondary);
+    line-height: 1;
+}
+
+.btn-copy:hover {
+    background: var(--macos-blue);
+    color: white;
+    transform: scale(1.05);
+}
+
+.btn-copy:active {
+    transform: scale(0.95);
+}
+
 .btn-logout {
     padding: 4px 8px;
     border-radius: var(--macos-radius-small);

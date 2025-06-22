@@ -5652,11 +5652,14 @@ class AuthManager {
         }
     }
 
-    updateUI() {
+    async updateUI() {
         const authButtons = document.getElementById('auth-buttons');
         const userInfo = document.getElementById('user-info');
         const userName = document.getElementById('user-name');
         const userEmail = document.getElementById('user-email');
+        const userImportEmail = document.getElementById('user-import-email');
+        const importEmailLink = document.getElementById('import-email-link');
+        const btnCopyImport = document.getElementById('btn-copy-import');
         
         // Get app content elements
         const sidebarContent = document.querySelector('.sidebar-content');
@@ -5671,6 +5674,9 @@ class AuthManager {
             if (userName) userName.textContent = this.currentUser.naam;
             if (userEmail) userEmail.textContent = this.currentUser.email;
             
+            // Load full user info including import code
+            await this.loadUserImportInfo();
+            
             // Show app content, hide welcome
             if (sidebarContent) sidebarContent.style.display = 'block';
             if (mainContent) mainContent.style.display = 'block';
@@ -5681,12 +5687,81 @@ class AuthManager {
             // Unauthenticated state - show welcome message and login/register
             if (authButtons) authButtons.style.display = 'flex';
             if (userInfo) userInfo.style.display = 'none';
+            if (userImportEmail) userImportEmail.style.display = 'none';
             
             // Hide app content, show welcome
             if (sidebarContent) sidebarContent.style.display = 'none';
             if (mainContent) mainContent.style.display = 'none';
             if (sidebarSearch) sidebarSearch.style.display = 'none';
             if (welcomeMessage) welcomeMessage.style.display = 'block';
+        }
+    }
+
+    async loadUserImportInfo() {
+        try {
+            const response = await fetch('/api/user/info', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.user) {
+                    // Update user info elements
+                    const userImportEmail = document.getElementById('user-import-email');
+                    const importEmailLink = document.getElementById('import-email-link');
+                    const btnCopyImport = document.getElementById('btn-copy-import');
+
+                    if (userImportEmail && importEmailLink && data.user.importEmail) {
+                        userImportEmail.style.display = 'block';
+                        importEmailLink.textContent = data.user.importEmail;
+                        importEmailLink.href = `mailto:${data.user.importEmail}?subject=Nieuwe taak`;
+                        
+                        // Add copy functionality
+                        if (btnCopyImport) {
+                            btnCopyImport.onclick = () => this.copyToClipboard(data.user.importEmail);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading user import info:', error);
+        }
+    }
+
+    copyToClipboard(text) {
+        // Use modern clipboard API if available
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                toast.success('Import email gekopieerd naar clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                this.fallbackCopyToClipboard(text);
+            });
+        } else {
+            this.fallbackCopyToClipboard(text);
+        }
+    }
+
+    fallbackCopyToClipboard(text) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            toast.success('Import email gekopieerd naar clipboard!');
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            toast.error('Kopiëren naar clipboard mislukt');
+        } finally {
+            document.body.removeChild(textArea);
         }
     }
 

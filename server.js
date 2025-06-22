@@ -906,6 +906,53 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
     }
 });
 
+// API endpoint voor huidige gebruiker info inclusief import code
+app.get('/api/user/info', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+        
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Get user info including import code
+        const result = await pool.query(`
+            SELECT id, email, naam, email_import_code, rol, aangemaakt
+            FROM users 
+            WHERE id = $1 AND actief = TRUE
+        `, [userId]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Gebruiker niet gevonden' });
+        }
+        
+        const user = result.rows[0];
+        
+        // Generate import code if it doesn't exist
+        let importCode = user.email_import_code;
+        if (!importCode) {
+            importCode = await db.generateEmailImportCode(userId);
+            console.log(`📧 Generated missing import code for user ${userId}: ${importCode}`);
+        }
+        
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                rol: user.rol,
+                importCode: importCode,
+                importEmail: `import+${importCode}@tickedify.com`
+            }
+        });
+        
+    } catch (error) {
+        console.error('Get user info error:', error);
+        res.status(500).json({ error: 'Fout bij ophalen gebruiker gegevens' });
+    }
+});
+
 // Debug endpoint om huidige gebruiker te checken
 app.get('/api/debug/current-user', (req, res) => {
     const userId = getCurrentUserId(req);
@@ -1122,12 +1169,16 @@ app.post('/api/auth/register', async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
         `, [userId, email, naam, hashedPassword, 'user', true]);
         
+        // Generate email import code for new user
+        const importCode = await db.generateEmailImportCode(userId);
+        console.log(`📧 Generated import code for new user: ${importCode}`);
+        
         // Start session
         req.session.userId = userId;
         req.session.userEmail = email;
         req.session.userNaam = naam;
         
-        console.log(`✅ New user registered: ${email} (${userId})`);
+        console.log(`✅ New user registered: ${email} (${userId}) with import code: ${importCode}`);
         
         res.json({
             success: true,
@@ -1136,7 +1187,9 @@ app.post('/api/auth/register', async (req, res) => {
                 id: userId,
                 email,
                 naam,
-                rol: 'user'
+                rol: 'user',
+                importCode: importCode,
+                importEmail: `import+${importCode}@tickedify.com`
             }
         });
         
