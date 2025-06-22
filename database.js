@@ -88,6 +88,14 @@ const initDatabase = async () => {
       console.log('⚠️ Could not migrate herhaling_type column (might not exist yet):', migrateError.message);
     }
 
+    // Add email import code column to users table if it doesn't exist
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS email_import_code VARCHAR(20) UNIQUE');
+      console.log('✅ Added email_import_code column to users table');
+    } catch (migrateError) {
+      console.log('⚠️ Could not add email_import_code column:', migrateError.message);
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projecten (
         id VARCHAR(50) PRIMARY KEY,
@@ -813,6 +821,69 @@ const db = {
     } catch (error) {
       console.error('Error getting ingeplande acties:', error);
       return [];
+    }
+  },
+
+  // Email import code functions
+  async generateEmailImportCode(userId) {
+    try {
+      // Generate a unique 12-character code
+      const code = Math.random().toString(36).substring(2, 14);
+      
+      await pool.query(
+        'UPDATE users SET email_import_code = $1 WHERE id = $2',
+        [code, userId]
+      );
+      
+      return code;
+    } catch (error) {
+      console.error('Error generating email import code:', error);
+      return null;
+    }
+  },
+
+  async getUserByImportCode(code) {
+    try {
+      if (!code) return null;
+      
+      const result = await pool.query(
+        'SELECT id, email, naam FROM users WHERE email_import_code = $1 AND actief = TRUE',
+        [code]
+      );
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error getting user by import code:', error);
+      return null;
+    }
+  },
+
+  async getEmailImportCode(userId) {
+    try {
+      const result = await pool.query(
+        'SELECT email_import_code FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+      
+      let code = result.rows[0].email_import_code;
+      
+      // Generate code if it doesn't exist
+      if (!code) {
+        code = await this.generateEmailImportCode(userId);
+      }
+      
+      return code;
+    } catch (error) {
+      console.error('Error getting email import code:', error);
+      return null;
     }
   }
 };

@@ -278,6 +278,68 @@ app.post('/api/admin/reset-database', async (req, res) => {
     }
 });
 
+// Get user's email import code
+app.get('/api/user/email-import-code', (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+        
+        if (!userId) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+        
+        db.getEmailImportCode(userId).then(code => {
+            if (code) {
+                res.json({
+                    success: true,
+                    importCode: code,
+                    importEmail: `import+${code}@tickedify.com`,
+                    instructions: 'Send emails to this address from any email account'
+                });
+            } else {
+                res.status(500).json({ error: 'Could not generate import code' });
+            }
+        }).catch(error => {
+            console.error('Error getting import code:', error);
+            res.status(500).json({ error: 'Database error' });
+        });
+        
+    } catch (error) {
+        console.error('Error in email import code endpoint:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Generate new email import code for user
+app.post('/api/user/regenerate-import-code', (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+        
+        if (!userId) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+        
+        db.generateEmailImportCode(userId).then(code => {
+            if (code) {
+                res.json({
+                    success: true,
+                    importCode: code,
+                    importEmail: `import+${code}@tickedify.com`,
+                    message: 'New import code generated'
+                });
+            } else {
+                res.status(500).json({ error: 'Could not generate new import code' });
+            }
+        }).catch(error => {
+            console.error('Error generating new import code:', error);
+            res.status(500).json({ error: 'Database error' });
+        });
+        
+    } catch (error) {
+        console.error('Error in regenerate import code endpoint:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Helper function to get user ID by email address
 async function getUserIdByEmail(email) {
     try {
@@ -321,12 +383,13 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         
         // Try multiple field name variations for Mailgun compatibility
         const sender = req.body.sender || req.body.from || req.body.From || '';
+        const recipient = req.body.recipient || req.body.to || req.body.To || '';
         const subject = req.body.subject || req.body.Subject || '';
         const bodyPlain = req.body['body-plain'] || req.body.text || req.body.body || '';
         const bodyHtml = req.body['body-html'] || req.body.html || '';
         const strippedText = req.body['stripped-text'] || req.body['stripped-plain'] || bodyPlain;
         
-        console.log('Extracted fields:', { sender, subject, bodyPlain: bodyPlain?.substring(0, 100) });
+        console.log('Extracted fields:', { sender, recipient, subject, bodyPlain: bodyPlain?.substring(0, 100) });
         
         if (!sender && !subject) {
             return res.status(400).json({
@@ -350,19 +413,47 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         });
         console.log('✅ Email parsed successfully:', taskData);
         
-        // Get user ID based on sender email address
-        const userId = await getUserIdByEmail(sender);
-        if (!userId) {
-            console.log(`❌ No user found for email: ${sender}`);
-            return res.status(404).json({
-                success: false,
-                error: `No user account found for email address: ${sender}`,
-                hint: 'Make sure you have an account in Tickedify with this email address',
-                timestamp: new Date().toISOString()
-            });
+        // Get user ID based on import code in recipient address
+        let userId = null;
+        
+        // Try to extract import code from recipient (e.g., import+abc123@tickedify.com)
+        if (recipient) {
+            const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@/);
+            if (importCodeMatch) {
+                const importCode = importCodeMatch[1];
+                console.log(`🔍 Found import code: ${importCode}`);
+                
+                const user = await db.getUserByImportCode(importCode);
+                if (user) {
+                    userId = user.id;
+                    console.log(`✅ Found user ID: ${userId} (${user.email}) for import code: ${importCode}`);
+                } else {
+                    console.log(`❌ No user found for import code: ${importCode}`);
+                    return res.status(404).json({
+                        success: false,
+                        error: `Invalid import code: ${importCode}`,
+                        hint: 'Check your personal import email address in Tickedify settings',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            }
         }
         
-        console.log(`✅ Found user ID: ${userId} for email: ${sender}`);
+        // Fallback to sender email matching if no import code found
+        if (!userId) {
+            console.log('⚠️ No import code found, falling back to sender email matching');
+            userId = await getUserIdByEmail(sender);
+            if (!userId) {
+                console.log(`❌ No user found for email: ${sender}`);
+                return res.status(404).json({
+                    success: false,
+                    error: `No user account found for email address: ${sender}`,
+                    hint: 'Use your personal import email address: import+yourcode@tickedify.com (get code from settings)',
+                    timestamp: new Date().toISOString()
+                });
+            }
+            console.log(`✅ Found user ID: ${userId} for email: ${sender} (fallback method)`);
+        }
         console.log('🔄 Resolving project and context IDs for user:', userId);
         if (taskData.projectName) {
             taskData.projectId = await findOrCreateProject(taskData.projectName, userId);
