@@ -1053,14 +1053,19 @@ class Taakbeheer {
             'uitgesteld-6maandelijks': '6-maandelijks',
             'uitgesteld-jaarlijks': 'Jaarlijks'
         };
-        document.getElementById('page-title').textContent = titles[lijst] || lijst;
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = titles[lijst] || lijst;
+        }
 
         // Update input visibility (alleen inbox heeft input)
         const inputContainer = document.getElementById('taak-input-container');
-        if (lijst === 'inbox') {
-            inputContainer.style.display = 'flex';
-        } else {
-            inputContainer.style.display = 'none';
+        if (inputContainer) {
+            if (lijst === 'inbox') {
+                inputContainer.style.display = 'flex';
+            } else {
+                inputContainer.style.display = 'none';
+            }
         }
 
         // Laad lijst data
@@ -1111,6 +1116,10 @@ class Taakbeheer {
     }
 
     async renderProjectenLijst(container) {
+        if (!container) {
+            console.error('renderProjectenLijst: container is null');
+            return;
+        }
         container.innerHTML = `
             <div class="projecten-container">
                 <div class="projecten-header">
@@ -1683,6 +1692,11 @@ class Taakbeheer {
     async renderTaken() {
         const container = document.getElementById('takenLijst');
         
+        if (!container) {
+            console.error('renderTaken: container (takenLijst) not found');
+            return;
+        }
+        
         if (this.huidigeLijst === 'acties') {
             this.renderActiesTable(container);
         } else if (this.huidigeLijst === 'dagelijkse-planning') {
@@ -1704,6 +1718,10 @@ class Taakbeheer {
     }
 
     renderUitgesteldLijst(container) {
+        if (!container) {
+            console.error('renderUitgesteldLijst: container is null');
+            return;
+        }
         // Use same rich table format as actions list
         container.innerHTML = `
             <div class="acties-filters">
@@ -1934,6 +1952,10 @@ class Taakbeheer {
     }
 
     renderActiesTable(container) {
+        if (!container) {
+            console.error('renderActiesTable: container is null');
+            return;
+        }
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
@@ -2049,6 +2071,10 @@ class Taakbeheer {
     }
 
     renderStandaardLijst(container) {
+        if (!container) {
+            console.error('renderStandaardLijst: container is null');
+            return;
+        }
         container.innerHTML = '';
 
         this.taken.forEach(taak => {
