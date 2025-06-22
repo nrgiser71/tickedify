@@ -1382,12 +1382,10 @@ app.post('/api/external/add-task', async (req, res) => {
         
         // Map API keys to user IDs (multi-user support)
         const apiKeyToUser = {
-            'tickedify-jan-2025': 'default-user-001',        // Jan's personal API key (temporarily mapped to default)
-            'tickedify-jan-alt-2025': 'jan@buskens.be',      // Jan's alternative account
-            'tickedify-external-2025': 'default-user-001'    // Legacy fallback
+            'tickedify-jan-2025': 'user_1750506689312_16hqhim0k',  // Jan's actual user ID from database
+            'tickedify-jan-alt-2025': 'jan@buskens.be',            // Jan's alternative account (needs real ID)
+            'tickedify-external-2025': 'default-user-001'          // Legacy fallback
         };
-        
-        // TODO: Find correct user ID for info@baasoverjetijd.be account
         
         const userId = apiKeyToUser[apiKey];
         if (!userId) {
