@@ -1559,6 +1559,53 @@ class Taakbeheer {
         }
     }
 
+    // Helper function to preserve planning filter state during re-renders
+    preservePlanningFilters(callback) {
+        // Save current filter values
+        const savedFilters = {
+            taakFilter: document.getElementById('planningTaakFilter')?.value || '',
+            projectFilter: document.getElementById('planningProjectFilter')?.value || '',
+            contextFilter: document.getElementById('planningContextFilter')?.value || '',
+            datumFilter: document.getElementById('planningDatumFilter')?.value || '',
+            duurFilter: document.getElementById('planningDuurFilter')?.value || '',
+            toekomstToggle: document.getElementById('planningToekomstToggle')?.checked || false
+        };
+        
+        const result = callback();
+        
+        const restoreFilters = () => {
+            // Restore filter values after re-render
+            const taakFilter = document.getElementById('planningTaakFilter');
+            const projectFilter = document.getElementById('planningProjectFilter');
+            const contextFilter = document.getElementById('planningContextFilter');
+            const datumFilter = document.getElementById('planningDatumFilter');
+            const duurFilter = document.getElementById('planningDuurFilter');
+            const toekomstToggle = document.getElementById('planningToekomstToggle');
+            
+            if (taakFilter) taakFilter.value = savedFilters.taakFilter;
+            if (projectFilter) projectFilter.value = savedFilters.projectFilter;
+            if (contextFilter) contextFilter.value = savedFilters.contextFilter;
+            if (datumFilter) datumFilter.value = savedFilters.datumFilter;
+            if (duurFilter) duurFilter.value = savedFilters.duurFilter;
+            if (toekomstToggle) toekomstToggle.checked = savedFilters.toekomstToggle;
+            
+            // Re-apply filters
+            this.filterPlanningActies();
+        };
+        
+        if (result && typeof result.then === 'function') {
+            // If callback returns a promise
+            return result.then((value) => {
+                setTimeout(restoreFilters, 50);
+                return value;
+            });
+        } else {
+            // If callback is synchronous
+            setTimeout(restoreFilters, 50);
+            return result;
+        }
+    }
+
     async laadHuidigeLijst() {
         // Only load data if user is logged in
         if (!this.isLoggedIn()) {
@@ -4222,7 +4269,7 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.renderTaken(); // Refresh the view
+                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
                 this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item toegevoegd!');
             } else {
@@ -4282,7 +4329,7 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.renderTaken(); // Refresh the view
+                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
                 this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item toegevoegd!');
             } else {
@@ -4317,7 +4364,7 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.renderTaken(); // Refresh the view
+                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
                 this.updateTotaalTijd(); // Update total time
                 
                 if (data.currentUur !== targetUur) {
@@ -4342,7 +4389,7 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.renderTaken(); // Refresh the view
+                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
                 this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item verwijderd!');
             } else {
@@ -4388,7 +4435,7 @@ class Taakbeheer {
                 }
                 
                 // Refresh the daily planning view to update the actions list
-                await this.renderTaken();
+                await this.preservePlanningFilters(() => this.renderTaken());
                 this.updateTotaalTijd(); // Update total time
                 await this.laadTellingen();
                 
