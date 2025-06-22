@@ -1244,7 +1244,7 @@ app.get('/api/version', (req, res) => {
         version: packageJson.version,
         commit_hash: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'unknown',
         deployed_at: new Date().toISOString(),
-        features: ['toast-notifications', 'recurring-tasks', 'test-dashboard'],
+        features: ['toast-notifications', 'recurring-tasks', 'test-dashboard', 'smart-date-filtering'],
         environment: process.env.NODE_ENV || 'development'
     });
 });
