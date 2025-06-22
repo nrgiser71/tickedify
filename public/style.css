@@ -3069,6 +3069,65 @@ button:focus {
     cursor: not-allowed;
 }
 
+/* Search Main Container for proper button spacing */
+.search-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.search-input {
+    padding: 12px 16px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-medium);
+    font-size: 14px;
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.search-btn {
+    padding: 12px 24px;
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: var(--macos-radius-medium);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.search-btn:hover {
+    background: var(--macos-blue-hover);
+}
+
+.toggle-filters-btn {
+    padding: 10px 20px;
+    background: var(--macos-bg-secondary);
+    color: var(--macos-text-primary);
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-medium);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    margin-top: 16px;
+}
+
+.toggle-filters-btn:hover {
+    background: var(--macos-gray-5);
+    border-color: var(--macos-gray-3);
+}
+
 .search-filters {
     background: var(--macos-bg-secondary);
     border: 1px solid var(--macos-gray-5);
