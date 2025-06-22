@@ -1644,9 +1644,11 @@ class Taakbeheer {
                 <td class="actie-datum">${datum}</td>
                 <td class="actie-duur">${duurText}</td>
                 <td class="actie-buttons">
-                    <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
-                    <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
-                        ${this.getVerplaatsOptiesUitgesteld(taak.id)}
+                    <div class="verplaats-dropdown">
+                        <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
+                        <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
+                            ${this.getVerplaatsOptiesUitgesteld(taak.id)}
+                        </div>
                     </div>
                 </td>
             `;
