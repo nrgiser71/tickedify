@@ -1302,6 +1302,66 @@ app.get('/api/lijst/:naam', async (req, res) => {
     }
 });
 
+// External API endpoint for adding tasks (for Keyboard Maestro, etc.)
+app.post('/api/external/add-task', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Simple API key authentication for external access
+        const apiKey = req.headers['x-api-key'] || req.query.api_key;
+        const validApiKey = 'tickedify-external-2025'; // Simple API key for now
+        
+        if (apiKey !== validApiKey) {
+            return res.status(401).json({ error: 'Invalid API key' });
+        }
+        
+        const { tekst, project = '', context = '', lijst = 'inbox' } = req.body;
+        
+        if (!tekst) {
+            return res.status(400).json({ error: 'Task text (tekst) is required' });
+        }
+        
+        // Use default user for external API access
+        const userId = 'default-user-001';
+        
+        // Create task object
+        const today = new Date().toISOString().split('T')[0];
+        const task = {
+            beschrijving: tekst,
+            project: project,
+            context: context,
+            verschijndatum: today,
+            duur: 0,
+            deadline: null,
+            opmerkingen: '',
+            herhalingType: null,
+            herhalingWaarde: null,
+            herhalingActief: false
+        };
+        
+        // Get current list
+        const currentList = await db.getList(lijst, userId);
+        
+        // Add new task to the list
+        const updatedList = [...currentList, task];
+        
+        // Save updated list
+        await db.saveList(lijst, updatedList, userId);
+        
+        res.json({ 
+            success: true, 
+            message: `Task added to ${lijst}`,
+            task: task 
+        });
+        
+    } catch (error) {
+        console.error('External API error:', error);
+        res.status(500).json({ error: 'Failed to add task' });
+    }
+});
+
 app.post('/api/lijst/:naam', async (req, res) => {
     try {
         if (!db) {
