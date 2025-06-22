@@ -2087,7 +2087,7 @@ class Taakbeheer {
             }
         }, {
             operationId: `complete-task-${id}`,
-            showGlobal: false,
+            showGlobal: true,
             message: 'Taak afwerken...'
         });
     }
