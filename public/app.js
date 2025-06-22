@@ -1641,15 +1641,21 @@ class Taakbeheer {
             return;
         }
 
-        await this.verplaatsTaakNaarLijst(taak, naarLijst);
-        
-        // Verwijder uit huidige lijst
-        this.taken = this.taken.filter(t => t.id !== id);
-        await this.slaLijstOp();
-        
-        // Update UI
-        await this.renderTaken();
-        await this.laadTellingen();
+        await loading.withLoading(async () => {
+            await this.verplaatsTaakNaarLijst(taak, naarLijst);
+            
+            // Verwijder uit huidige lijst
+            this.taken = this.taken.filter(t => t.id !== id);
+            await this.slaLijstOp();
+            
+            // Update UI
+            await this.renderTaken();
+            await this.laadTellingen();
+        }, {
+            operationId: 'verplaats-uitgestelde-taak',
+            showGlobal: true,
+            message: `Taak wordt verplaatst naar ${naarLijst}...`
+        });
         
         // Sluit dropdown
         this.sluitAlleDropdowns();
@@ -2283,8 +2289,15 @@ class Taakbeheer {
         const taak = this.taken.find(t => t.id === this.huidigeTaakId);
         if (!taak) return;
 
-        await this.verplaatsTaakNaarLijst(taak, naarLijst);
-        this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+        await loading.withLoading(async () => {
+            await this.verplaatsTaakNaarLijst(taak, naarLijst);
+            this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+        }, {
+            operationId: 'verplaats-taak',
+            showGlobal: true,
+            message: `Taak wordt verplaatst naar ${naarLijst}...`
+        });
+        
         this.sluitPopup();
     }
 
@@ -3061,11 +3074,17 @@ class Taakbeheer {
         const actie = this.taken.find(t => t.id === id);
         if (!actie) return;
 
-        await this.verplaatsTaakNaarLijst(actie, naarLijst);
-        this.taken = this.taken.filter(t => t.id !== id);
-        await this.slaLijstOp();
-        this.renderTaken();
-        await this.laadTellingen();
+        await loading.withLoading(async () => {
+            await this.verplaatsTaakNaarLijst(actie, naarLijst);
+            this.taken = this.taken.filter(t => t.id !== id);
+            await this.slaLijstOp();
+            this.renderTaken();
+            await this.laadTellingen();
+        }, {
+            operationId: 'verplaats-actie',
+            showGlobal: true,
+            message: `Actie wordt verplaatst naar ${naarLijst}...`
+        });
         
         // Sluit dropdown
         const menu = document.getElementById(`verplaats-${id}`);
