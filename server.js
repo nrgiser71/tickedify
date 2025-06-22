@@ -292,8 +292,16 @@ app.get('/api/user/email-import-code', (req, res) => {
                 res.json({
                     success: true,
                     importCode: code,
-                    importEmail: `import+${code}@tickedify.com`,
-                    instructions: 'Send emails to this address from any email account'
+                    importEmail: `import@tickedify.com`,
+                    instructions: [
+                        'Option 1: Add [CODE:' + code + '] to your email subject',
+                        'Option 2: Add CODE:' + code + ' as the first line in your email body',
+                        'Option 3: If Mailgun supports it, use import+' + code + '@tickedify.com'
+                    ],
+                    examples: {
+                        subject: '[CODE:' + code + '] Buy milk',
+                        body: 'CODE:' + code + '\nThis is my task description'
+                    }
                 });
             } else {
                 res.status(500).json({ error: 'Could not generate import code' });
@@ -413,29 +421,55 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         });
         console.log('✅ Email parsed successfully:', taskData);
         
-        // Get user ID based on import code in recipient address
+        // Get user ID based on import code in various places
         let userId = null;
+        let importCode = null;
         
         // Try to extract import code from recipient (e.g., import+abc123@tickedify.com)
         if (recipient) {
             const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@/);
             if (importCodeMatch) {
-                const importCode = importCodeMatch[1];
-                console.log(`🔍 Found import code: ${importCode}`);
-                
-                const user = await db.getUserByImportCode(importCode);
-                if (user) {
-                    userId = user.id;
-                    console.log(`✅ Found user ID: ${userId} (${user.email}) for import code: ${importCode}`);
-                } else {
-                    console.log(`❌ No user found for import code: ${importCode}`);
-                    return res.status(404).json({
-                        success: false,
-                        error: `Invalid import code: ${importCode}`,
-                        hint: 'Check your personal import email address in Tickedify settings',
-                        timestamp: new Date().toISOString()
-                    });
-                }
+                importCode = importCodeMatch[1];
+                console.log(`🔍 Found import code in recipient: ${importCode}`);
+            }
+        }
+        
+        // Try to extract import code from subject line (e.g., "[CODE:abc123] Task title")
+        if (!importCode && subject) {
+            const subjectCodeMatch = subject.match(/\[CODE:([a-zA-Z0-9]+)\]/);
+            if (subjectCodeMatch) {
+                importCode = subjectCodeMatch[1];
+                console.log(`🔍 Found import code in subject: ${importCode}`);
+                // Remove the code from the subject for cleaner task title
+                taskData.tekst = subject.replace(/\[CODE:[a-zA-Z0-9]+\]\s*/, '');
+            }
+        }
+        
+        // Try to extract import code from body first line (e.g., "CODE:abc123")
+        if (!importCode && bodyPlain) {
+            const bodyCodeMatch = bodyPlain.match(/^CODE:([a-zA-Z0-9]+)/);
+            if (bodyCodeMatch) {
+                importCode = bodyCodeMatch[1];
+                console.log(`🔍 Found import code in body: ${importCode}`);
+                // Remove the code line from body
+                taskData.body = bodyPlain.replace(/^CODE:[a-zA-Z0-9]+\n?/, '');
+            }
+        }
+        
+        // If we found an import code, use it to find the user
+        if (importCode) {
+            const user = await db.getUserByImportCode(importCode);
+            if (user) {
+                userId = user.id;
+                console.log(`✅ Found user ID: ${userId} (${user.email}) for import code: ${importCode}`);
+            } else {
+                console.log(`❌ No user found for import code: ${importCode}`);
+                return res.status(404).json({
+                    success: false,
+                    error: `Invalid import code: ${importCode}`,
+                    hint: 'Add your import code to subject like [CODE:yourcode] or as first line in body like CODE:yourcode',
+                    timestamp: new Date().toISOString()
+                });
             }
         }
         
