@@ -4048,7 +4048,8 @@ class Taakbeheer {
         // In the future, we might want a dedicated task edit modal
         
         // Switch to the appropriate list first
-        await this.laadLijst(task.lijst);
+        this.huidigeOverzicht = task.lijst;
+        await this.laadHuidigeLijst();
         
         // Then open the task for editing
         await this.planTaak(taskId);
