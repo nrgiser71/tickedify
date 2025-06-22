@@ -585,7 +585,7 @@ body {
 .filter-checkbox label {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
     font-size: 13px;
     cursor: pointer;
     white-space: nowrap; /* Prevent text wrapping */
