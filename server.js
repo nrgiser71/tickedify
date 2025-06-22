@@ -278,6 +278,38 @@ app.post('/api/admin/reset-database', async (req, res) => {
     }
 });
 
+// Helper function to get user ID by email address
+async function getUserIdByEmail(email) {
+    try {
+        if (!email) {
+            console.log('getUserIdByEmail: empty email provided');
+            return null;
+        }
+        
+        // Clean up email address (remove any brackets, spaces, etc.)
+        const cleanEmail = email.trim().toLowerCase();
+        console.log(`🔍 Looking up user for email: ${cleanEmail}`);
+        
+        const result = await pool.query(
+            'SELECT id FROM users WHERE LOWER(email) = $1 AND actief = TRUE',
+            [cleanEmail]
+        );
+        
+        if (result.rows.length === 0) {
+            console.log(`❌ No active user found for email: ${cleanEmail}`);
+            return null;
+        }
+        
+        const userId = result.rows[0].id;
+        console.log(`✅ Found user ID: ${userId} for email: ${cleanEmail}`);
+        return userId;
+        
+    } catch (error) {
+        console.error('Error looking up user by email:', error);
+        return null;
+    }
+}
+
 // Email Import System - Mailgun Webhook Handler
 app.post('/api/email/import', upload.any(), async (req, res) => {
     try {
@@ -318,8 +350,19 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         });
         console.log('✅ Email parsed successfully:', taskData);
         
-        // Resolve project and context IDs  
-        const userId = 'default-user-001'; // TODO: Get from authentication when implemented
+        // Get user ID based on sender email address
+        const userId = await getUserIdByEmail(sender);
+        if (!userId) {
+            console.log(`❌ No user found for email: ${sender}`);
+            return res.status(404).json({
+                success: false,
+                error: `No user account found for email address: ${sender}`,
+                hint: 'Make sure you have an account in Tickedify with this email address',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        console.log(`✅ Found user ID: ${userId} for email: ${sender}`);
         console.log('🔄 Resolving project and context IDs for user:', userId);
         if (taskData.projectName) {
             taskData.projectId = await findOrCreateProject(taskData.projectName, userId);
