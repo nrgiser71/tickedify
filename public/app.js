@@ -1690,11 +1690,17 @@ class Taakbeheer {
     }
 
     async renderTaken() {
-        const container = document.getElementById('takenLijst');
+        let container = document.getElementById('takenLijst');
         
         if (!container) {
-            console.error('renderTaken: container (takenLijst) not found');
-            return;
+            // Restore normal structure if coming from daily planning or search
+            this.restoreNormalContainer();
+            container = document.getElementById('takenLijst');
+            
+            if (!container) {
+                console.error('renderTaken: could not restore takenLijst container');
+                return;
+            }
         }
         
         if (this.huidigeLijst === 'acties') {
@@ -4156,24 +4162,23 @@ class Taakbeheer {
             const contentArea = document.querySelector('.content-area');
             if (contentArea) {
                 // Find any existing container that's not the input container
-                const existingContainer = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout');
+                const existingContainer = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
                 if (existingContainer && !existingContainer.classList.contains('taak-input-container')) {
                     existingContainer.outerHTML = `
                         <div class="taken-container">
                             <ul id="takenLijst"></ul>
                         </div>
                     `;
+                } else {
+                    // Create new taken-container if none exists
+                    const newContainer = document.createElement('div');
+                    newContainer.className = 'taken-container';
+                    newContainer.innerHTML = '<ul id="takenLijst"></ul>';
+                    contentArea.appendChild(newContainer);
                 }
             }
-        } else {
-            // Normal case - takenLijst exists
-            const container = takenLijst.parentNode;
-            container.innerHTML = `
-                <div class="taken-container">
-                    <ul id="takenLijst"></ul>
-                </div>
-            `;
         }
+        // If takenLijst already exists, don't modify anything
     }
 
     async renderContextenBeheer() {
