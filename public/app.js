@@ -3553,7 +3553,6 @@ class Taakbeheer {
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="totaal-tijd">
                             <span id="totaalGeplandeTijd">Totaal: 0 min</span>
-                            <button onclick="window.showCSSDebugger()" style="margin-left: 10px; font-size: 10px; padding: 2px 6px;">🔧 Debug</button>
                         </div>
                     </div>
                     <div class="kalender-grid" id="kalenderGrid">
