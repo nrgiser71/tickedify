@@ -3541,6 +3541,15 @@ class Taakbeheer {
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
                         <h3>📋 Acties</h3>
+                        <div class="planning-acties-filters">
+                            <input type="text" id="planningTaakFilter" placeholder="Zoek taak..." class="filter-input">
+                            <select id="planningProjectFilter" class="filter-select">
+                                <option value="">Alle projecten</option>
+                            </select>
+                            <select id="planningContextFilter" class="filter-select">
+                                <option value="">Alle contexten</option>
+                            </select>
+                        </div>
                         <div class="acties-container" id="planningActiesLijst">
                             ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
                         </div>
@@ -3566,6 +3575,9 @@ class Taakbeheer {
         this.bindDagelijksePlanningEvents();
         this.bindDragAndDropEvents();
         this.updateTotaalTijd();
+        
+        // Populate filter dropdowns
+        this.populatePlanningFilters();
     }
 
     renderActiesVoorPlanning(acties, ingeplandeActies) {

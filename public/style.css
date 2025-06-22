@@ -2242,6 +2242,34 @@ button:focus {
     /* No min-height needed - flex will handle it */
 }
 
+/* Planning actions filters */
+.planning-acties-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.planning-acties-filters .filter-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.planning-acties-filters .filter-select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    background: white;
+    min-width: 120px;
+}
+
 /* ===== LOADING INDICATORS ===== */
 
 /* Global loading overlay */
