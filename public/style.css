@@ -3012,6 +3012,7 @@ button:focus {
 
 .search-input-section {
     margin-bottom: 40px;
+    padding-top: 16px;
     padding-bottom: 32px;
     border-bottom: 1px solid var(--macos-gray-5);
 }
@@ -3032,7 +3033,7 @@ button:focus {
     background: var(--macos-bg-primary);
     color: var(--macos-text-primary);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    margin-bottom: 0;
+    margin-bottom: 16px;
 }
 
 .search-input-container input:focus {
@@ -3056,7 +3057,7 @@ button:focus {
     cursor: pointer;
     transition: background-color 0.2s ease;
     white-space: nowrap;
-    margin-bottom: 0;
+    margin-bottom: 16px;
 }
 
 .search-button:hover {
