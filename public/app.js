@@ -3850,7 +3850,7 @@ class Taakbeheer {
             }
             
             return `
-                <div class="${itemClass}" draggable="false" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
+                <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
                     <div class="actie-details">
                         ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
