@@ -1761,28 +1761,59 @@ class Taakbeheer {
                     <input type="date" id="datumFilter">
                 </div>
             </div>
-            <div class="acties-table-container">
-                <table class="acties-table">
-                    <thead>
-                        <tr>
-                            <th>✓</th>
-                            <th class="sortable" data-sort="tekst">Taak</th>
-                            <th class="sortable" data-sort="project">Project</th>
-                            <th class="sortable" data-sort="context">Context</th>
-                            <th class="sortable" data-sort="verschijndatum">Datum</th>
-                            <th class="sortable" data-sort="duur">Duur</th>
-                            <th>Acties</th>
-                        </tr>
-                    </thead>
-                    <tbody id="uitgesteld-tbody">
-                    </tbody>
-                </table>
-            </div>
+            <ul id="uitgesteld-lijst" class="taak-lijst"></ul>
         `;
 
         this.vulFilterDropdowns();
-        this.renderUitgesteldRows();
+        this.renderUitgesteldItems();
         this.bindActiesEvents(); // Same events as actions table
+    }
+
+    renderUitgesteldItems() {
+        const lijst = document.getElementById('uitgesteld-lijst');
+        if (!lijst) return;
+
+        lijst.innerHTML = '';
+
+        this.taken.forEach(taak => {
+            const li = document.createElement('li');
+            li.className = 'taak-item actie-item';
+            
+            const projectNaam = this.getProjectNaam(taak.projectId);
+            const contextNaam = this.getContextNaam(taak.contextId);
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak">🔄</span>' : '';
+            
+            // Build extra info line
+            let extraInfo = [];
+            if (projectNaam) extraInfo.push(`📁 ${projectNaam}`);
+            if (contextNaam) extraInfo.push(`🏷️ ${contextNaam}`);
+            if (datum) extraInfo.push(`📅 ${datum}`);
+            if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
+            
+            const extraInfoHtml = extraInfo.length > 0 ? 
+                `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';
+            
+            // Determine if checkbox should be checked (for completed tasks)
+            const isCompleted = taak.afgewerkt;
+            const checkboxChecked = isCompleted ? 'checked' : '';
+            
+            li.innerHTML = `
+                <div class="taak-checkbox">
+                    <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
+                </div>
+                <div class="taak-content">
+                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
+                    ${extraInfoHtml}
+                </div>
+                <div class="taak-acties">
+                    <button onclick="app.planTaakWrapper('${taak.id}')" class="plan-btn">Plan</button>
+                    <button onclick="app.verwijderTaak('${taak.id}')">×</button>
+                </div>
+            `;
+            
+            lijst.appendChild(li);
+        });
     }
     
     renderUitgesteldRows() {
@@ -1971,6 +2002,8 @@ class Taakbeheer {
             console.error('renderActiesTable: container is null');
             return;
         }
+        
+        // Add filters at the top
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
@@ -2000,28 +2033,72 @@ class Taakbeheer {
                     </label>
                 </div>
             </div>
-            <div class="acties-table-container">
-                <table class="acties-table">
-                    <thead>
-                        <tr>
-                            <th>✓</th>
-                            <th class="sortable" data-sort="tekst">Taak</th>
-                            <th class="sortable" data-sort="project">Project</th>
-                            <th class="sortable" data-sort="context">Context</th>
-                            <th class="sortable" data-sort="verschijndatum">Datum</th>
-                            <th class="sortable" data-sort="duur">Duur</th>
-                            <th>Acties</th>
-                        </tr>
-                    </thead>
-                    <tbody id="acties-tbody">
-                    </tbody>
-                </table>
-            </div>
+            <ul id="acties-lijst" class="taak-lijst"></ul>
         `;
 
         this.vulFilterDropdowns();
-        this.renderActiesRows();
+        this.renderActiesLijst();
         this.bindActiesEvents();
+    }
+
+    renderActiesLijst() {
+        const lijst = document.getElementById('acties-lijst');
+        if (!lijst) return;
+
+        lijst.innerHTML = '';
+
+        this.taken.forEach(taak => {
+            const li = document.createElement('li');
+            li.className = 'taak-item actie-item';
+            
+            const projectNaam = this.getProjectNaam(taak.projectId);
+            const contextNaam = this.getContextNaam(taak.contextId);
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak">🔄</span>' : '';
+            
+            // Datum status indicator
+            const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
+            let datumIndicator = '';
+            let extraClass = '';
+            
+            if (datumStatus === 'verleden') {
+                datumIndicator = '⚠️';
+                extraClass = ' overdue';
+            } else if (datumStatus === 'vandaag') {
+                datumIndicator = '📅';
+                extraClass = ' today';
+            } else if (datumStatus === 'toekomst') {
+                datumIndicator = '🔮';
+                extraClass = ' future';
+            }
+            
+            li.className += extraClass;
+            
+            // Build extra info line
+            let extraInfo = [];
+            if (projectNaam) extraInfo.push(`📁 ${projectNaam}`);
+            if (contextNaam) extraInfo.push(`🏷️ ${contextNaam}`);
+            if (datum) extraInfo.push(`${datumIndicator} ${datum}`);
+            if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
+            
+            const extraInfoHtml = extraInfo.length > 0 ? 
+                `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';
+            
+            li.innerHTML = `
+                <div class="taak-checkbox">
+                    <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
+                </div>
+                <div class="taak-content">
+                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
+                    ${extraInfoHtml}
+                </div>
+                <div class="taak-acties">
+                    <button onclick="app.verwijderTaak('${taak.id}')">×</button>
+                </div>
+            `;
+            
+            lijst.appendChild(li);
+        });
     }
 
     renderActiesRows() {
