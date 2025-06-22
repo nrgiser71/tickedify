@@ -4161,6 +4161,28 @@ class Taakbeheer {
             // If takenLijst doesn't exist, find the content area and restore structure
             const contentArea = document.querySelector('.content-area');
             if (contentArea) {
+                // Check if we're coming from daily planning (main-content was replaced)
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent && mainContent.querySelector('.dagelijkse-planning-layout')) {
+                    // Daily planning completely replaced main-content structure
+                    const header = mainContent.querySelector('.main-header');
+                    const headerHTML = header ? header.outerHTML : '<header class="main-header"><h1 id="page-title">Inbox</h1></header>';
+                    
+                    mainContent.innerHTML = `
+                        ${headerHTML}
+                        <div class="content-area">
+                            <div class="taak-input-container" id="taak-input-container">
+                                <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                                <button id="toevoegBtn">Toevoegen</button>
+                            </div>
+                            <div class="taken-container">
+                                <ul id="takenLijst"></ul>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
                 // Find any existing container that's not the input container
                 const existingContainer = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
                 if (existingContainer && !existingContainer.classList.contains('taak-input-container')) {
