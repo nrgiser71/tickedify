@@ -4356,8 +4356,22 @@ class Taakbeheer {
 
     async completePlanningTask(actieId, checkboxElement) {
         try {
-            // Find the task in our tasks array
-            const taak = this.taken.find(t => t.id === actieId);
+            // Find the task in planning actions array first, then fall back to main tasks
+            let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
+            
+            if (!taak) {
+                // If not found locally, fetch from API
+                try {
+                    const actiesResponse = await fetch('/api/lijst/acties');
+                    if (actiesResponse.ok) {
+                        const acties = await actiesResponse.json();
+                        taak = acties.find(t => t.id === actieId);
+                    }
+                } catch (error) {
+                    console.error('Error fetching task from API:', error);
+                }
+            }
+            
             if (!taak) {
                 toast.error('Taak niet gevonden');
                 checkboxElement.checked = false;
@@ -4367,8 +4381,11 @@ class Taakbeheer {
             // Mark task as completed using existing completion workflow
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
             if (success) {
-                // Remove task from our local array 
+                // Remove task from both arrays if present
                 this.taken = this.taken.filter(t => t.id !== actieId);
+                if (this.planningActies) {
+                    this.planningActies = this.planningActies.filter(t => t.id !== actieId);
+                }
                 
                 // Refresh the daily planning view to update the actions list
                 await this.renderTaken();
