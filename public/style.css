@@ -2270,6 +2270,14 @@ button:focus {
     min-width: 120px;
 }
 
+.planning-acties-filters .filter-input-number {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    width: 100px;
+}
+
 /* ===== LOADING INDICATORS ===== */
 
 /* Global loading overlay */

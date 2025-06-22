@@ -3549,6 +3549,7 @@ class Taakbeheer {
                             <select id="planningContextFilter" class="filter-select">
                                 <option value="">Alle contexten</option>
                             </select>
+                            <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
                         </div>
                         <div class="acties-container" id="planningActiesLijst">
                             ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
@@ -3698,11 +3699,13 @@ class Taakbeheer {
         const projectFilter = document.getElementById('planningProjectFilter');
         const contextFilter = document.getElementById('planningContextFilter');
         const datumFilter = document.getElementById('planningDatumFilter');
+        const duurFilter = document.getElementById('planningDuurFilter');
         
         if (taakFilter) taakFilter.addEventListener('input', () => this.filterPlanningActies());
         if (projectFilter) projectFilter.addEventListener('change', () => this.filterPlanningActies());
         if (contextFilter) contextFilter.addEventListener('change', () => this.filterPlanningActies());
         if (datumFilter) datumFilter.addEventListener('change', () => this.filterPlanningActies());
+        if (duurFilter) duurFilter.addEventListener('input', () => this.filterPlanningActies());
         
         // Populate filter dropdowns
         this.populatePlanningFilters();
@@ -4140,6 +4143,7 @@ class Taakbeheer {
         const projectFilter = document.getElementById('planningProjectFilter')?.value || '';
         const contextFilter = document.getElementById('planningContextFilter')?.value || '';
         const datumFilter = document.getElementById('planningDatumFilter')?.value || '';
+        const duurFilter = document.getElementById('planningDuurFilter')?.value || '';
 
         document.querySelectorAll('.planning-actie-item').forEach(item => {
             const actieId = item.dataset.actieId;
@@ -4153,6 +4157,13 @@ class Taakbeheer {
             if (taakFilter && !actie.tekst.toLowerCase().includes(taakFilter)) tonen = false;
             if (projectFilter && actie.projectId !== projectFilter) tonen = false;
             if (contextFilter && actie.contextId !== contextFilter) tonen = false;
+            
+            // Duration filter - show only tasks with duration <= filter value
+            if (duurFilter) {
+                const maxDuur = parseInt(duurFilter);
+                const actieDuur = parseInt(actie.duur) || 0;
+                if (actieDuur > maxDuur) tonen = false;
+            }
             
             // Date filter logic - same as in actions list
             if (datumFilter && actie.verschijndatum) {
