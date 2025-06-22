@@ -1302,6 +1302,36 @@ app.get('/api/lijst/:naam', async (req, res) => {
     }
 });
 
+// Debug endpoint to find main user (the one with most tasks)
+app.get('/api/debug/find-main-user', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Get task count per user
+        const taskCounts = await pool.query(`
+            SELECT user_id, COUNT(*) as task_count
+            FROM taken 
+            GROUP BY user_id
+            ORDER BY task_count DESC
+        `);
+        
+        // Get all users info
+        const users = await pool.query('SELECT id, email, name, created_at FROM users ORDER BY created_at');
+        
+        res.json({
+            taskCountsByUser: taskCounts.rows,
+            allUsers: users.rows,
+            mainUser: taskCounts.rows[0] // User with most tasks
+        });
+        
+    } catch (error) {
+        console.error('Find main user error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to find user ID by email
 app.get('/api/debug/user-by-email/:email', async (req, res) => {
     try {
