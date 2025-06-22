@@ -1302,6 +1302,44 @@ app.get('/api/lijst/:naam', async (req, res) => {
     }
 });
 
+// Debug endpoint to find user ID by email
+app.get('/api/debug/user-by-email/:email', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { email } = req.params;
+        
+        // Find user by email
+        const result = await pool.query('SELECT id, email, name FROM users WHERE email = $1', [email]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const user = result.rows[0];
+        
+        // Get some task counts for verification
+        const taskCounts = await pool.query(`
+            SELECT lijst, COUNT(*) as count
+            FROM taken 
+            WHERE user_id = $1 AND afgewerkt IS NULL
+            GROUP BY lijst
+            ORDER BY lijst
+        `, [user.id]);
+        
+        res.json({
+            user: user,
+            taskCounts: taskCounts.rows
+        });
+        
+    } catch (error) {
+        console.error('User lookup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // External API endpoint for adding tasks (for Keyboard Maestro, etc.)
 app.post('/api/external/add-task', async (req, res) => {
     try {
@@ -1309,11 +1347,19 @@ app.post('/api/external/add-task', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
-        // Simple API key authentication for external access
+        // API key authentication with user mapping
         const apiKey = req.headers['x-api-key'] || req.query.api_key;
-        const validApiKey = 'tickedify-external-2025'; // Simple API key for now
         
-        if (apiKey !== validApiKey) {
+        // Map API keys to user IDs (multi-user support)
+        const apiKeyToUser = {
+            'tickedify-jan-2025': 'default-user-001',  // Jan's personal API key (update with actual user ID)
+            'tickedify-external-2025': 'default-user-001'  // Legacy fallback
+        };
+        
+        // TODO: Update 'default-user-001' with Jan's actual user ID from the users table
+        
+        const userId = apiKeyToUser[apiKey];
+        if (!userId) {
             return res.status(401).json({ error: 'Invalid API key' });
         }
         
@@ -1322,9 +1368,6 @@ app.post('/api/external/add-task', async (req, res) => {
         if (!tekst) {
             return res.status(400).json({ error: 'Task text (tekst) is required' });
         }
-        
-        // Use default user for external API access
-        const userId = 'default-user-001';
         
         // Create task object
         const today = new Date().toISOString().split('T')[0];
