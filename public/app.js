@@ -344,6 +344,8 @@ class Taakbeheer {
     init() {
         this.bindEvents();
         this.zetVandaagDatum();
+        // Add document click listener to close dropdowns
+        document.addEventListener('click', (event) => this.handleDocumentClick(event));
         // Data loading happens after authentication check in AuthManager
     }
 
@@ -1704,7 +1706,18 @@ class Taakbeheer {
         // Toggle de specifieke dropdown
         const menu = document.getElementById(`verplaats-uitgesteld-${id}`);
         if (menu) {
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                // Position the menu below the button using fixed positioning
+                const button = menu.previousElementSibling;
+                const rect = button.getBoundingClientRect();
+                
+                menu.style.position = 'fixed';
+                menu.style.top = (rect.bottom + 2) + 'px';
+                menu.style.left = (rect.right - 140) + 'px'; // Align right edge
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
         }
     }
 
@@ -1749,6 +1762,16 @@ class Taakbeheer {
         document.querySelectorAll('.verplaats-menu').forEach(menu => {
             menu.style.display = 'none';
         });
+    }
+
+    // Close dropdowns when clicking outside
+    handleDocumentClick(event) {
+        const isVerplaatsButton = event.target.closest('.verplaats-btn-small');
+        const isVerplaatsMenu = event.target.closest('.verplaats-menu');
+        
+        if (!isVerplaatsButton && !isVerplaatsMenu) {
+            this.sluitAlleDropdowns();
+        }
     }
 
     renderActiesTable(container) {
@@ -3146,7 +3169,18 @@ class Taakbeheer {
         // Toggle de specifieke dropdown
         const menu = document.getElementById(`verplaats-${id}`);
         if (menu) {
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            if (menu.style.display === 'none' || menu.style.display === '') {
+                // Position the menu below the button using fixed positioning
+                const button = menu.previousElementSibling;
+                const rect = button.getBoundingClientRect();
+                
+                menu.style.position = 'fixed';
+                menu.style.top = (rect.bottom + 2) + 'px';
+                menu.style.left = (rect.right - 140) + 'px'; // Align right edge
+                menu.style.display = 'block';
+            } else {
+                menu.style.display = 'none';
+            }
         }
     }
 

@@ -524,14 +524,12 @@ body {
 }
 
 .verplaats-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
+    position: fixed;
     background: var(--macos-bg-primary);
     border: 1px solid var(--macos-gray-4);
     border-radius: var(--macos-radius-medium);
     box-shadow: var(--macos-shadow-medium);
-    z-index: 100;
+    z-index: 9999;
     min-width: 140px;
     backdrop-filter: blur(20px);
 }
