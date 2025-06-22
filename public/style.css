@@ -3104,6 +3104,8 @@ button:focus {
     cursor: pointer;
     transition: background-color 0.2s ease;
     white-space: nowrap;
+    align-self: flex-start;
+    width: auto;
 }
 
 .search-btn:hover {
@@ -3121,6 +3123,8 @@ button:focus {
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
     margin-top: 16px;
+    align-self: flex-start;
+    width: auto;
 }
 
 .toggle-filters-btn:hover {
