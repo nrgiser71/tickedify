@@ -4665,24 +4665,230 @@ class AuthManager {
     }
 }
 
-// Load version number on page load
-async function loadVersionNumber() {
-    try {
-        const response = await fetch('/api/version');
-        const data = await response.json();
-        const versionElement = document.getElementById('version-number');
-        if (versionElement && data.version) {
-            versionElement.textContent = `v${data.version}`;
-        }
-    } catch (error) {
-        console.log('Could not load version number:', error);
-        // Keep the hardcoded version if API fails
+// Update Manager Class
+class UpdateManager {
+    constructor() {
+        this.currentVersion = null;
+        this.pollInterval = null;
+        this.isPolling = false;
+        this.hasUnsavedChanges = false;
+        this.updateAvailable = false;
+        this.newVersion = null;
+        
+        this.init();
     }
+    
+    async init() {
+        // Load initial version
+        await this.loadCurrentVersion();
+        
+        // Start polling after 30 seconds
+        setTimeout(() => {
+            this.startVersionPolling();
+        }, 30000);
+        
+        // Track unsaved changes
+        this.setupChangeTracking();
+    }
+    
+    async loadCurrentVersion() {
+        try {
+            const response = await fetch('/api/version');
+            const data = await response.json();
+            this.currentVersion = data.version;
+            
+            // Update UI
+            const versionElement = document.getElementById('version-number');
+            if (versionElement && data.version) {
+                versionElement.textContent = `v${data.version}`;
+            }
+            
+            return data.version;
+        } catch (error) {
+            console.log('Could not load version number:', error);
+            return null;
+        }
+    }
+    
+    startVersionPolling() {
+        if (this.isPolling) return;
+        
+        this.isPolling = true;
+        this.pollInterval = setInterval(async () => {
+            await this.checkForUpdates();
+        }, 30000); // Check every 30 seconds
+        
+        console.log('Update polling started');
+    }
+    
+    stopVersionPolling() {
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+            this.isPolling = false;
+            console.log('Update polling stopped');
+        }
+    }
+    
+    async checkForUpdates() {
+        try {
+            const response = await fetch('/api/version');
+            const data = await response.json();
+            
+            if (data.version && data.version !== this.currentVersion) {
+                this.newVersion = data.version;
+                this.updateAvailable = true;
+                this.showUpdateNotification();
+            }
+        } catch (error) {
+            console.log('Version check failed:', error);
+        }
+    }
+    
+    setupChangeTracking() {
+        // Track form inputs and editable content
+        let changeTimeout;
+        
+        const trackChanges = () => {
+            this.hasUnsavedChanges = true;
+            this.updateVersionIndicator();
+            
+            // Reset after 10 seconds of no activity
+            clearTimeout(changeTimeout);
+            changeTimeout = setTimeout(() => {
+                this.hasUnsavedChanges = false;
+                this.updateVersionIndicator();
+            }, 10000);
+        };
+        
+        // Monitor various input types
+        document.addEventListener('input', trackChanges);
+        document.addEventListener('change', trackChanges);
+        
+        // Reset on successful API calls (save operations)
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const response = await originalFetch.apply(this, args);
+            
+            if (response.ok && args[0].includes('/api/') && 
+                (args[1]?.method === 'POST' || args[1]?.method === 'PUT')) {
+                this.hasUnsavedChanges = false;
+                this.updateVersionIndicator();
+            }
+            
+            return response;
+        };
+    }
+    
+    showUpdateNotification() {
+        // Only show if no unsaved changes
+        if (this.hasUnsavedChanges) {
+            console.log('Update available but user has unsaved changes');
+            this.updateVersionIndicator();
+            return;
+        }
+        
+        // Show toast notification
+        this.showUpdateToast();
+        this.updateVersionIndicator();
+    }
+    
+    showUpdateToast() {
+        // Remove existing update toast if any
+        const existingToast = document.querySelector('.update-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = 'update-toast';
+        toast.innerHTML = `
+            <div class="update-toast-content">
+                <div class="update-toast-icon">✨</div>
+                <div class="update-toast-text">
+                    <div class="update-toast-title">Nieuwe versie beschikbaar</div>
+                    <div class="update-toast-subtitle">v${this.newVersion} is klaar om te laden</div>
+                </div>
+                <div class="update-toast-actions">
+                    <button class="update-btn-refresh" onclick="updateManager.refreshApp()">Nu verversen</button>
+                    <button class="update-btn-later" onclick="updateManager.dismissUpdate()">Later</button>
+                </div>
+                <button class="update-toast-close" onclick="updateManager.dismissUpdate()">×</button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        // Auto-dismiss after 15 seconds
+        setTimeout(() => {
+            this.dismissUpdate();
+        }, 15000);
+    }
+    
+    updateVersionIndicator() {
+        const versionElement = document.getElementById('version-number');
+        if (!versionElement) return;
+        
+        if (this.updateAvailable && this.hasUnsavedChanges) {
+            // Update available but user has unsaved changes
+            versionElement.classList.add('update-pending');
+            versionElement.title = 'Update beschikbaar - sla je werk eerst op';
+        } else if (this.updateAvailable) {
+            // Update available and safe to refresh
+            versionElement.classList.add('update-available');
+            versionElement.title = 'Klik om te vernieuwen naar v' + this.newVersion;
+            versionElement.onclick = () => this.refreshApp();
+        } else {
+            // No update or normal state
+            versionElement.classList.remove('update-available', 'update-pending');
+            versionElement.title = '';
+            versionElement.onclick = null;
+        }
+    }
+    
+    refreshApp() {
+        // Final safety check
+        if (this.hasUnsavedChanges) {
+            if (!confirm('Je hebt mogelijk onopgeslagen wijzigingen. Weet je zeker dat je wilt vernieuwen?')) {
+                return;
+            }
+        }
+        
+        // Show loading indicator
+        if (window.loading) {
+            loading.showGlobal('App wordt bijgewerkt...');
+        }
+        
+        // Refresh the page
+        window.location.reload();
+    }
+    
+    dismissUpdate() {
+        const toast = document.querySelector('.update-toast');
+        if (toast) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }
+    }
+}
+
+// Load version number on page load (legacy function for compatibility)
+async function loadVersionNumber() {
+    // This is now handled by UpdateManager
+    return;
 }
 
 // Initialize app and authentication
 const app = new Taakbeheer();
 const auth = new AuthManager();
+const updateManager = new UpdateManager();
 
 // Global CSS debugger function
 window.showCSSDebugger = function() {

@@ -2278,6 +2278,206 @@ button:focus {
     width: 100px;
 }
 
+/* ===== UPDATE NOTIFICATIONS ===== */
+
+/* Version indicator states */
+.version-number.update-available {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    animation: pulse-green 2s infinite;
+    position: relative;
+}
+
+.version-number.update-available::after {
+    content: '✨';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 12px;
+    animation: bounce 1s infinite;
+}
+
+.version-number.update-pending {
+    background: linear-gradient(135deg, #ed8936, #dd6b20);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    cursor: help;
+    animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+    }
+    50% { 
+        box-shadow: 0 0 0 6px rgba(72, 187, 120, 0);
+    }
+}
+
+@keyframes pulse-orange {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(237, 137, 54, 0.7);
+    }
+    50% { 
+        box-shadow: 0 0 0 6px rgba(237, 137, 54, 0);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-3px);
+    }
+    60% {
+        transform: translateY(-2px);
+    }
+}
+
+/* Update toast notification */
+.update-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+}
+
+.update-toast.show {
+    transform: translateX(0);
+}
+
+.update-toast-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e2e8f0;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 320px;
+    position: relative;
+}
+
+.update-toast-icon {
+    font-size: 24px;
+    animation: bounce 2s infinite;
+}
+
+.update-toast-text {
+    flex: 1;
+}
+
+.update-toast-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 2px;
+}
+
+.update-toast-subtitle {
+    font-size: 14px;
+    color: #718096;
+}
+
+.update-toast-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.update-btn-refresh {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.update-btn-refresh:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.update-btn-later {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.update-btn-later:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.update-toast-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #a0aec0;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.update-toast-close:hover {
+    background: #edf2f7;
+    color: #4a5568;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .update-toast {
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
+        transform: translateY(400px);
+    }
+    
+    .update-toast.show {
+        transform: translateY(0);
+    }
+    
+    .update-toast-content {
+        min-width: auto;
+        padding: 12px;
+    }
+    
+    .update-toast-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .update-btn-refresh,
+    .update-btn-later {
+        width: 100%;
+        text-align: center;
+    }
+}
+
 /* ===== LOADING INDICATORS ===== */
 
 /* Global loading overlay */
