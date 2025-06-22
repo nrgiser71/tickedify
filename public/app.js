@@ -3945,12 +3945,14 @@ class Taakbeheer {
             
             return `
                 <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
-                    <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
-                    <div class="actie-details">
-                        ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
-                        ${contextNaam ? `<span class="context">${contextNaam}</span>` : ''}
-                        <span class="datum">${datumString}</span>
-                        <span class="duur">${actie.duur || 60}min</span>
+                    <div class="actie-row">
+                        <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
+                        <div class="actie-meta">
+                            ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
+                            ${contextNaam ? `<span class="meta-context">${contextNaam}</span>` : ''}
+                            <span class="meta-datum">${datumString}</span>
+                            <span class="meta-duur">${actie.duur || 60}min</span>
+                        </div>
                     </div>
                 </div>
             `;

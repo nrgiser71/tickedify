@@ -1877,11 +1877,31 @@ button:focus {
     color: var(--macos-text-secondary);
 }
 
+/* Horizontal layout for planning actions */
+.actie-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
 .actie-tekst {
     font-weight: 500;
     color: var(--macos-text-primary);
-    margin-bottom: 4px;
     font-size: 13px;
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actie-meta {
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+    align-items: center;
+    flex-shrink: 0; /* Prevent meta info from shrinking */
 }
 
 .actie-details {
@@ -1891,6 +1911,39 @@ button:focus {
     color: var(--macos-text-tertiary);
 }
 
+/* Meta info styling for horizontal layout */
+.meta-project,
+.meta-context,
+.meta-datum,
+.meta-duur {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.meta-project {
+    background: var(--macos-blue);
+    color: white;
+}
+
+.meta-context {
+    background: var(--macos-orange);
+    color: white;
+}
+
+.meta-datum {
+    background: var(--macos-gray-5);
+    color: var(--macos-text-secondary);
+}
+
+.meta-duur {
+    background: var(--macos-gray-4);
+    color: var(--macos-text-secondary);
+}
+
+/* Legacy styling for other lists that still use actie-details */
 .actie-details .project {
     background: var(--macos-blue);
     color: white;
