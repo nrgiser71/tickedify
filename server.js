@@ -800,6 +800,150 @@ function parseEmailToTask(emailData) {
     return taskData;
 }
 
+// Debug endpoint to check all users and their import codes
+app.get('/api/debug/users-import-codes', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const result = await pool.query(`
+            SELECT id, email, naam, email_import_code, actief 
+            FROM users 
+            ORDER BY aangemaakt
+        `);
+        
+        res.json({
+            success: true,
+            userCount: result.rows.length,
+            users: result.rows,
+            message: 'Alle gebruikers met hun import codes'
+        });
+        
+    } catch (error) {
+        console.error('Debug users error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check tasks created via email import
+app.get('/api/debug/email-imported-tasks', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Get tasks created in last 24 hours via email import (those with opmerkingen containing email patterns)
+        const result = await pool.query(`
+            SELECT t.id, t.tekst, t.lijst, t.user_id, t.aangemaakt, t.opmerkingen, u.email as user_email, u.naam as user_naam
+            FROM taken t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.aangemaakt > NOW() - INTERVAL '24 hours'
+            AND (t.opmerkingen LIKE '%Datum:%' OR t.opmerkingen LIKE '%Duur:%' OR t.id LIKE 'task_%')
+            ORDER BY t.aangemaakt DESC
+            LIMIT 20
+        `);
+        
+        res.json({
+            success: true,
+            count: result.rows.length,
+            tasks: result.rows,
+            message: 'Recent email imported tasks'
+        });
+        
+    } catch (error) {
+        console.error('Debug email imported tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to fix import code for actual user
+app.post('/api/debug/fix-user-import-code', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Find the actual user (not default-user-001)
+        const result = await pool.query(`
+            SELECT id, email, naam, email_import_code 
+            FROM users 
+            WHERE email = 'jan@tickedify.com' 
+            AND id != 'default-user-001'
+        `);
+        
+        if (result.rows.length === 0) {
+            return res.json({
+                success: false,
+                message: 'No actual user found with email jan@tickedify.com'
+            });
+        }
+        
+        const actualUser = result.rows[0];
+        
+        // Generate new import code for actual user
+        const newCode = await db.generateEmailImportCode(actualUser.id);
+        
+        res.json({
+            success: true,
+            user: {
+                id: actualUser.id,
+                email: actualUser.email,
+                naam: actualUser.naam,
+                oldImportCode: actualUser.email_import_code,
+                newImportCode: newCode
+            },
+            importEmail: `import+${newCode}@tickedify.com`,
+            message: 'Import code updated for actual user'
+        });
+        
+    } catch (error) {
+        console.error('Fix import code error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check all inbox tasks
+app.get('/api/debug/inbox-tasks/:userId?', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = req.params.userId;
+        
+        let query = `
+            SELECT t.id, t.tekst, t.lijst, t.user_id, t.aangemaakt, u.email as user_email, u.naam as user_naam
+            FROM taken t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.lijst = 'inbox' 
+            AND t.afgewerkt IS NULL
+        `;
+        
+        const params = [];
+        if (userId) {
+            query += ' AND t.user_id = $1';
+            params.push(userId);
+        }
+        
+        query += ' ORDER BY t.aangemaakt DESC';
+        
+        const result = await pool.query(query, params);
+        
+        res.json({
+            success: true,
+            count: result.rows.length,
+            userId: userId || 'all users',
+            tasks: result.rows,
+            message: userId ? `Inbox tasks for user ${userId}` : 'All inbox tasks'
+        });
+        
+    } catch (error) {
+        console.error('Debug inbox tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test endpoint for email parsing (development only)
 app.post('/api/email/test', async (req, res) => {
     try {
