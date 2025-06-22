@@ -864,18 +864,21 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
+        const { email } = req.body;
+        const targetEmail = email || 'info@BaasOverJeTijd.be';
+        
         // Find the actual user (not default-user-001)
         const result = await pool.query(`
             SELECT id, email, naam, email_import_code 
             FROM users 
-            WHERE email = 'jan@tickedify.com' 
+            WHERE email = $1 
             AND id != 'default-user-001'
-        `);
+        `, [targetEmail]);
         
         if (result.rows.length === 0) {
             return res.json({
                 success: false,
-                message: 'No actual user found with email jan@tickedify.com'
+                message: `No actual user found with email ${targetEmail}`
             });
         }
         
@@ -901,6 +904,23 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
         console.error('Fix import code error:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+// Debug endpoint om huidige gebruiker te checken
+app.get('/api/debug/current-user', (req, res) => {
+    const userId = getCurrentUserId(req);
+    const sessionData = req.session || {};
+    
+    res.json({
+        currentUserId: userId,
+        sessionData: {
+            id: sessionData.id,
+            userId: sessionData.userId,
+            cookie: sessionData.cookie
+        },
+        isAuthenticated: !!sessionData.userId,
+        message: 'Current user info based on session'
+    });
 });
 
 // Debug endpoint to check all inbox tasks
