@@ -1644,9 +1644,9 @@ class Taakbeheer {
                 <td class="actie-datum">${datum}</td>
                 <td class="actie-duur">${duurText}</td>
                 <td class="actie-buttons">
-                    <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdown('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
-                    <div class="verplaats-menu" id="verplaats-${taak.id}" style="display: none;">
-                        ${this.getVerplaatsOpties(taak.id)}
+                    <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
+                    <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
+                        ${this.getVerplaatsOptiesUitgesteld(taak.id)}
                     </div>
                 </td>
             `;
@@ -1660,6 +1660,24 @@ class Taakbeheer {
     getVerplaatsOpties(taakId) {
         const alleOpties = [
             { key: 'inbox', label: 'Inbox' },
+            { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
+            { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
+            { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
+            { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
+            { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+        ];
+
+        return alleOpties
+            .filter(optie => optie.key !== this.huidigeLijst)
+            .map(optie => `<button onclick="app.verplaatsUitgesteldeTaak('${taakId}', '${optie.key}')">${optie.label}</button>`)
+            .join('');
+    }
+
+    getVerplaatsOptiesUitgesteld(taakId) {
+        const alleOpties = [
+            { key: 'inbox', label: 'Inbox' },
+            { key: 'acties', label: 'Acties' },
+            { key: 'opvolgen', label: 'Opvolgen' },
             { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
             { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
             { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
