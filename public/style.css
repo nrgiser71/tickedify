@@ -595,6 +595,21 @@ body {
     margin: 0;
 }
 
+/* Planning toekomst toggle styling */
+.planning-toekomst-toggle {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: auto; /* Push to the right */
+}
+
+.planning-toekomst-toggle input[type="checkbox"] {
+    margin: 0;
+}
+
 /* ===== PROJECTEN LIJST STYLING ===== */
 .projecten-container {
     width: 100%;

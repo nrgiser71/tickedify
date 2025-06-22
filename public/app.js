@@ -415,9 +415,10 @@ class Taakbeheer {
     }
 
     // Filter taken based on date and toggle
-    filterTakenOpDatum(taken) {
-        if (this.huidigeLijst !== 'acties') {
-            return taken; // Only apply date filter to actions list
+    filterTakenOpDatum(taken, forceDateFilter = false) {
+        // Apply date filter to actions list or when explicitly requested (planning)
+        if (this.huidigeLijst !== 'acties' && !forceDateFilter) {
+            return taken; // Only apply date filter to actions list or planning
         }
 
         return taken.filter(taak => {
@@ -1841,6 +1842,17 @@ class Taakbeheer {
         this.saveToekomstToggle();
         // Reload the current list to apply the filter
         await this.laadHuidigeLijst();
+    }
+
+    // Toggle future tasks display for planning
+    async togglePlanningToekomstigeTaken() {
+        this.toonToekomstigeTaken = !this.toonToekomstigeTaken;
+        this.saveToekomstToggle();
+        // Re-render daily planning to apply the filter
+        const container = document.querySelector('.main-content');
+        if (container) {
+            await this.renderDagelijksePlanning(container);
+        }
     }
 
     renderActiesTable(container) {
@@ -3717,7 +3729,10 @@ class Taakbeheer {
         
         // Laad acties lijst voor filtering en drag & drop
         const actiesResponse = await fetch('/api/lijst/acties');
-        const acties = actiesResponse.ok ? await actiesResponse.json() : [];
+        let acties = actiesResponse.ok ? await actiesResponse.json() : [];
+        
+        // Apply date filtering to planning actions (same as main actions list)
+        acties = this.filterTakenOpDatum(acties, true);
         
         // Store actions for filtering (make available to filter functions)
         this.planningActies = acties;
@@ -3777,6 +3792,10 @@ class Taakbeheer {
                                 <option value="">Alle contexten</option>
                             </select>
                             <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
+                            <label class="planning-toekomst-toggle">
+                                <input type="checkbox" id="planningToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
+                                Toon toekomstige taken
+                            </label>
                         </div>
                         <div class="acties-container" id="planningActiesLijst">
                             ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
@@ -3817,9 +3836,22 @@ class Taakbeheer {
             const datumString = actie.verschijndatum ? 
                 new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'Geen datum';
             
+            // Datum status indicator
+            const datumStatus = this.getTaakDatumStatus(actie.verschijndatum);
+            let datumIndicator = '';
+            let itemClass = 'planning-actie-item';
+            
+            if (datumStatus === 'verleden') {
+                datumIndicator = '<span class="datum-indicator overtijd" title="Overtijd - vervaldatum gepasseerd">⚠️</span>';
+                itemClass += ' taak-overtijd';
+            } else if (datumStatus === 'toekomst') {
+                datumIndicator = '<span class="datum-indicator toekomst" title="Toekomstige taak">⏳</span>';
+                itemClass += ' taak-toekomst';
+            }
+            
             return `
-                <div class="planning-actie-item" draggable="false" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
-                    <div class="actie-tekst">${actie.tekst}</div>
+                <div class="${itemClass}" draggable="false" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
+                    <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
                     <div class="actie-details">
                         ${projectNaam ? `<span class="project">${projectNaam}</span>` : ''}
                         ${contextNaam ? `<span class="context">${contextNaam}</span>` : ''}
@@ -3927,12 +3959,14 @@ class Taakbeheer {
         const contextFilter = document.getElementById('planningContextFilter');
         const datumFilter = document.getElementById('planningDatumFilter');
         const duurFilter = document.getElementById('planningDuurFilter');
+        const toekomstToggle = document.getElementById('planningToekomstToggle');
         
         if (taakFilter) taakFilter.addEventListener('input', () => this.filterPlanningActies());
         if (projectFilter) projectFilter.addEventListener('change', () => this.filterPlanningActies());
         if (contextFilter) contextFilter.addEventListener('change', () => this.filterPlanningActies());
         if (datumFilter) datumFilter.addEventListener('change', () => this.filterPlanningActies());
         if (duurFilter) duurFilter.addEventListener('input', () => this.filterPlanningActies());
+        if (toekomstToggle) toekomstToggle.addEventListener('change', () => this.togglePlanningToekomstigeTaken());
         
         // Populate filter dropdowns
         this.populatePlanningFilters();
