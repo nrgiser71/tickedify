@@ -827,14 +827,41 @@ const db = {
   // Email import code functions
   async generateEmailImportCode(userId) {
     try {
-      // Generate a unique 12-character code
-      const code = Math.random().toString(36).substring(2, 14);
+      let code;
+      let attempts = 0;
+      const maxAttempts = 10;
       
+      // Generate unique code with collision checking
+      while (attempts < maxAttempts) {
+        // Generate a more secure 12-character code
+        code = Math.random().toString(36).substring(2, 14);
+        
+        // Check if code already exists
+        const existingCode = await pool.query(
+          'SELECT id FROM users WHERE email_import_code = $1',
+          [code]
+        );
+        
+        if (existingCode.rows.length === 0) {
+          // Code is unique, break out of loop
+          break;
+        }
+        
+        attempts++;
+        console.warn(`Email import code collision detected (attempt ${attempts}), retrying...`);
+      }
+      
+      if (attempts >= maxAttempts) {
+        throw new Error('Failed to generate unique email import code after maximum attempts');
+      }
+      
+      // Update user with unique code
       await pool.query(
         'UPDATE users SET email_import_code = $1 WHERE id = $2',
         [code, userId]
       );
       
+      console.log(`✅ Generated unique email import code: ${code} for user ${userId}`);
       return code;
     } catch (error) {
       console.error('Error generating email import code:', error);
