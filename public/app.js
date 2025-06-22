@@ -1632,9 +1632,6 @@ class Taakbeheer {
             const isCompleted = taak.afgewerkt;
             const checkboxChecked = isCompleted ? 'checked' : '';
             
-            const verplaatsOpties = this.getVerplaatsOptiesUitgesteld(taak.id);
-            console.log('🐛 Generated verplaats opties for', taak.id, ':', verplaatsOpties);
-            
             tr.innerHTML = `
                 <td>
                     <input type="checkbox" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
@@ -1649,12 +1646,10 @@ class Taakbeheer {
                 <td class="actie-buttons">
                     <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
                     <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
-                        ${verplaatsOpties}
+                        ${this.getVerplaatsOptiesUitgesteld(taak.id)}
                     </div>
                 </td>
             `;
-            
-            console.log('🐛 Added menu with id: verplaats-uitgesteld-' + taak.id);
 
             tbody.appendChild(tr);
         });
@@ -1679,8 +1674,6 @@ class Taakbeheer {
     }
 
     getVerplaatsOptiesUitgesteld(taakId) {
-        console.log('🐛 getVerplaatsOptiesUitgesteld called for:', taakId, 'current list:', this.huidigeLijst);
-        
         const alleOpties = [
             { key: 'inbox', label: 'Inbox' },
             { key: 'acties', label: 'Acties' },
@@ -1692,20 +1685,13 @@ class Taakbeheer {
             { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
         ];
 
-        const gefilterd = alleOpties.filter(optie => optie.key !== this.huidigeLijst);
-        console.log('🐛 Filtered options:', gefilterd);
-        
-        const result = gefilterd
+        return alleOpties
+            .filter(optie => optie.key !== this.huidigeLijst)
             .map(optie => `<button onclick="app.verplaatsUitgesteldeTaak('${taakId}', '${optie.key}')">${optie.label}</button>`)
             .join('');
-        
-        console.log('🐛 Final HTML result:', result);
-        return result;
     }
 
     toggleVerplaatsDropdownUitgesteld(id) {
-        console.log('🐛 toggleVerplaatsDropdownUitgesteld called with id:', id);
-        
         // Sluit alle andere dropdowns
         document.querySelectorAll('.verplaats-menu').forEach(menu => {
             if (menu.id !== `verplaats-uitgesteld-${id}`) {
@@ -1714,20 +1700,9 @@ class Taakbeheer {
         });
 
         // Toggle de specifieke dropdown
-        const menuId = `verplaats-uitgesteld-${id}`;
-        console.log('🐛 Looking for menu with id:', menuId);
-        
-        const menu = document.getElementById(menuId);
-        console.log('🐛 Found menu element:', menu);
-        
+        const menu = document.getElementById(`verplaats-uitgesteld-${id}`);
         if (menu) {
-            const currentDisplay = menu.style.display;
-            console.log('🐛 Current display:', currentDisplay);
-            menu.style.display = currentDisplay === 'none' ? 'block' : 'none';
-            console.log('🐛 New display:', menu.style.display);
-        } else {
-            console.error('🐛 Menu element not found! Available elements with class verplaats-menu:', 
-                document.querySelectorAll('.verplaats-menu'));
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
         }
     }
 
