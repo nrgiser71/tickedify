@@ -3602,7 +3602,7 @@ button:focus {
 
 .user-info {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 12px;
     background: var(--macos-bg-primary);
@@ -3620,6 +3620,8 @@ button:focus {
     align-items: center;
     justify-content: center;
     font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 2px; /* Align with first line of text */
 }
 
 .user-details {
@@ -3627,6 +3629,7 @@ button:focus {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0; /* Allow content to shrink */
 }
 
 .user-name {
@@ -3642,38 +3645,43 @@ button:focus {
 
 /* Import Email Styling */
 .user-import-email {
-    margin-top: 6px;
-    padding-top: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid var(--macos-gray-5);
+    margin-left: -6px;
+    margin-right: -6px;
+    padding-left: 6px;
+    padding-right: 6px;
 }
 
 .import-label {
-    font-size: 10px;
-    color: var(--macos-text-tertiary);
+    font-size: 11px;
+    color: var(--macos-text-secondary);
     font-weight: 500;
     display: block;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .import-email-container {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .import-email-link {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--macos-blue);
     text-decoration: none;
     font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-    padding: 2px 4px;
+    padding: 3px 6px;
     background: var(--macos-gray-6);
     border-radius: var(--macos-radius-small);
     transition: all 0.2s ease;
-    max-width: 180px;
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
 }
 
 .import-email-link:hover {
@@ -3682,25 +3690,30 @@ button:focus {
 }
 
 .btn-copy {
-    background: var(--macos-gray-5);
+    background: transparent;
     border: none;
     border-radius: var(--macos-radius-small);
-    padding: 2px 4px;
-    font-size: 10px;
+    padding: 4px;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.2s ease;
     color: var(--macos-text-secondary);
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
 }
 
 .btn-copy:hover {
-    background: var(--macos-blue);
-    color: white;
-    transform: scale(1.05);
+    background: var(--macos-gray-5);
+    color: var(--macos-text-primary);
 }
 
 .btn-copy:active {
-    transform: scale(0.95);
+    background: var(--macos-gray-4);
 }
 
 .btn-logout {
@@ -3713,6 +3726,8 @@ button:focus {
     border: 1px solid var(--macos-gray-4);
     background: var(--macos-bg-primary);
     color: var(--macos-text-secondary);
+    align-self: flex-start;
+    margin-top: 2px; /* Align with first line of text */
 }
 
 .btn-logout:hover {
