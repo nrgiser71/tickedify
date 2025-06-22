@@ -1562,42 +1562,99 @@ class Taakbeheer {
     }
 
     renderUitgesteldLijst(container) {
-        container.innerHTML = '';
+        // Use same rich table format as actions list
+        container.innerHTML = `
+            <div class="acties-filters">
+                <div class="filter-groep">
+                    <label>Taak:</label>
+                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
+                </div>
+                <div class="filter-groep">
+                    <label>Project:</label>
+                    <select id="projectFilter">
+                        <option value="">Alle projecten</option>
+                    </select>
+                </div>
+                <div class="filter-groep">
+                    <label>Context:</label>
+                    <select id="contextFilter">
+                        <option value="">Alle contexten</option>
+                    </select>
+                </div>
+                <div class="filter-groep">
+                    <label>Datum:</label>
+                    <input type="date" id="datumFilter">
+                </div>
+            </div>
+            <div class="acties-table-container">
+                <table class="acties-table">
+                    <thead>
+                        <tr>
+                            <th>✓</th>
+                            <th class="sortable" data-sort="tekst">Taak</th>
+                            <th class="sortable" data-sort="project">Project</th>
+                            <th class="sortable" data-sort="context">Context</th>
+                            <th class="sortable" data-sort="verschijndatum">Datum</th>
+                            <th class="sortable" data-sort="duur">Duur</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody id="uitgesteld-tbody">
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        this.vulFilterDropdowns();
+        this.renderUitgesteldRows();
+        this.bindActiesEvents(); // Same events as actions table
+    }
+    
+    renderUitgesteldRows() {
+        const tbody = document.getElementById('uitgesteld-tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
 
         this.taken.forEach(taak => {
-            const li = document.createElement('li');
-            li.className = 'taak-item uitgesteld-item';
+            const tr = document.createElement('tr');
+            tr.className = 'actie-row';
+            tr.dataset.id = taak.id;
             
-            // Bouw dropdown opties dynamisch (exclusief huidige lijst)
-            const dropdownOpties = this.getVerplaatsOpties(taak.id);
+            const projectNaam = this.getProjectNaam(taak.projectId);
+            const contextNaam = this.getContextNaam(taak.contextId);
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak">🔄</span>' : '';
+            const duurText = taak.duur ? `${taak.duur} min` : '';
+            const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
             
             // Determine if checkbox should be checked (for completed tasks)
             const isCompleted = taak.afgewerkt;
             const checkboxChecked = isCompleted ? 'checked' : '';
             
-            li.innerHTML = `
-                <div class="taak-checkbox">
-                    <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
-                </div>
-                <div class="taak-content">
-                    <div class="taak-titel">${taak.tekst}${recurringIndicator}</div>
-                </div>
-                <div class="taak-acties">
-                    <div class="verplaats-dropdown">
-                        <button class="verplaats-btn-uitgesteld" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats taak">↗️</button>
-                        <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
-                            ${dropdownOpties}
-                        </div>
+            tr.innerHTML = `
+                <td>
+                    <input type="checkbox" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
+                </td>
+                <td class="actie-tekst" onclick="app.bewerk('${taak.id}')" title="${tooltipContent}">
+                    ${taak.tekst}${recurringIndicator}
+                </td>
+                <td class="actie-project">${projectNaam}</td>
+                <td class="actie-context">${contextNaam}</td>
+                <td class="actie-datum">${datum}</td>
+                <td class="actie-duur">${duurText}</td>
+                <td class="actie-buttons">
+                    <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdown('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
+                    <div class="verplaats-menu" id="verplaats-${taak.id}" style="display: none;">
+                        ${this.getVerplaatsOpties(taak.id)}
                     </div>
-                    <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
-                </div>
+                </td>
             `;
-            container.appendChild(li);
+
+            tbody.appendChild(tr);
         });
 
-        // Bind click-outside event voor dropdowns
-        this.bindUitgesteldDropdownEvents();
+        this.slaLijstOp();
     }
 
     getVerplaatsOpties(taakId) {
