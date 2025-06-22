@@ -2342,7 +2342,7 @@ button:focus {
 /* Update toast notification */
 .update-toast {
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     z-index: 10000;
     transform: translateX(400px);
@@ -2453,8 +2453,8 @@ button:focus {
     .update-toast {
         right: 10px;
         left: 10px;
-        bottom: 10px;
-        transform: translateY(400px);
+        top: 10px;
+        transform: translateY(-400px);
     }
     
     .update-toast.show {

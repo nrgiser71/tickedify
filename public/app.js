@@ -4735,9 +4735,16 @@ class UpdateManager {
             const response = await fetch('/api/version');
             const data = await response.json();
             
+            console.log('Update check:', {
+                currentVersion: this.currentVersion,
+                serverVersion: data.version,
+                updateAvailable: data.version !== this.currentVersion
+            });
+            
             if (data.version && data.version !== this.currentVersion) {
                 this.newVersion = data.version;
                 this.updateAvailable = true;
+                console.log('Update detected! Showing notification for version:', data.version);
                 this.showUpdateNotification();
             }
         } catch (error) {
@@ -4766,9 +4773,9 @@ class UpdateManager {
         document.addEventListener('change', trackChanges);
         
         // Reset on successful API calls (save operations)
-        const originalFetch = window.fetch;
+        const originalFetch = window.fetch.bind(window);
         window.fetch = async (...args) => {
-            const response = await originalFetch.apply(this, args);
+            const response = await originalFetch(...args);
             
             if (response.ok && args[0].includes('/api/') && 
                 (args[1]?.method === 'POST' || args[1]?.method === 'PUT')) {
