@@ -338,6 +338,7 @@ class Taakbeheer {
         this.isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         this.touchedFields = new Set(); // Bijhouden welke velden al geïnteracteerd zijn
         this.sortDirection = {}; // Bijhouden van sorteer richting per kolom
+        this.toonToekomstigeTaken = this.restoreToekomstToggle(); // Toggle voor toekomstige taken
         this.init();
     }
 
@@ -376,6 +377,64 @@ class Taakbeheer {
         } catch (error) {
             console.warn('Could not save current list to localStorage:', error);
         }
+    }
+
+    restoreToekomstToggle() {
+        try {
+            const saved = localStorage.getItem('tickedify-toon-toekomst');
+            return saved === 'true';
+        } catch (error) {
+            console.warn('Could not restore toekomst toggle from localStorage:', error);
+            return false;
+        }
+    }
+
+    saveToekomstToggle() {
+        try {
+            localStorage.setItem('tickedify-toon-toekomst', this.toonToekomstigeTaken.toString());
+        } catch (error) {
+            console.warn('Could not save toekomst toggle to localStorage:', error);
+        }
+    }
+
+    // Helper functions for date comparisons
+    getVandaagDatum() {
+        const vandaag = new Date();
+        return vandaag.toISOString().split('T')[0]; // YYYY-MM-DD format
+    }
+
+    getTaakDatumStatus(verschijndatum) {
+        if (!verschijndatum) return 'geen-datum';
+        
+        const vandaag = this.getVandaagDatum();
+        const taakDatum = verschijndatum.split('T')[0]; // Ensure YYYY-MM-DD format
+        
+        if (taakDatum < vandaag) return 'verleden';
+        if (taakDatum > vandaag) return 'toekomst';
+        return 'vandaag';
+    }
+
+    // Filter taken based on date and toggle
+    filterTakenOpDatum(taken) {
+        if (this.huidigeLijst !== 'acties') {
+            return taken; // Only apply date filter to actions list
+        }
+
+        return taken.filter(taak => {
+            const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
+            
+            // Always show tasks without date, today's tasks, and past tasks
+            if (datumStatus === 'geen-datum' || datumStatus === 'vandaag' || datumStatus === 'verleden') {
+                return true;
+            }
+            
+            // Show future tasks only if toggle is enabled
+            if (datumStatus === 'toekomst') {
+                return this.toonToekomstigeTaken;
+            }
+            
+            return true;
+        });
     }
 
     getCurrentUserId() {
@@ -1491,7 +1550,9 @@ class Taakbeheer {
                 } else {
                     const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
                     if (response.ok) {
-                        this.taken = await response.json();
+                        let taken = await response.json();
+                        // Apply date filter for actions list
+                        this.taken = this.filterTakenOpDatum(taken);
                     } else {
                         this.taken = [];
                     }
@@ -1774,6 +1835,14 @@ class Taakbeheer {
         }
     }
 
+    // Toggle future tasks display
+    async toggleToekomstigeTaken() {
+        this.toonToekomstigeTaken = !this.toonToekomstigeTaken;
+        this.saveToekomstToggle();
+        // Reload the current list to apply the filter
+        await this.laadHuidigeLijst();
+    }
+
     renderActiesTable(container) {
         container.innerHTML = `
             <div class="acties-filters">
@@ -1796,6 +1865,12 @@ class Taakbeheer {
                 <div class="filter-groep">
                     <label>Datum:</label>
                     <input type="date" id="datumFilter">
+                </div>
+                <div class="filter-groep filter-checkbox">
+                    <label>
+                        <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
+                        Toon toekomstige taken
+                    </label>
                 </div>
             </div>
             <div class="acties-table-container">
@@ -1835,14 +1910,29 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = new Date(taak.verschijndatum).toLocaleDateString('nl-NL');
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak">🔄</span>' : '';
+            
+            // Datum status indicator
+            const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
+            let datumIndicator = '';
+            let rowClass = 'actie-row';
+            
+            if (datumStatus === 'verleden') {
+                datumIndicator = '<span class="datum-indicator overtijd" title="Overtijd - vervaldatum gepasseerd">⚠️</span>';
+                rowClass += ' taak-overtijd';
+            } else if (datumStatus === 'toekomst') {
+                datumIndicator = '<span class="datum-indicator toekomst" title="Toekomstige taak">⏳</span>';
+                rowClass += ' taak-toekomst';
+            }
+            
+            tr.className = rowClass;
             
             tr.innerHTML = `
                 <td title="Taak afwerken">
                     <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
                 </td>
-                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}${taak.opmerkingen ? '\n\nOpmerkingen:\n' + this.escapeHtml(taak.opmerkingen) : ''}">${taak.tekst}${recurringIndicator}</td>
+                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}${taak.opmerkingen ? '\n\nOpmerkingen:\n' + this.escapeHtml(taak.opmerkingen) : ''}">${datumIndicator}${taak.tekst}${recurringIndicator}</td>
                 <td title="${this.escapeHtml(projectNaam)}">${projectNaam}</td>
                 <td title="${this.escapeHtml(contextNaam)}">${contextNaam}</td>
                 <td title="${datum}">${datum}</td>
@@ -3071,11 +3161,13 @@ class Taakbeheer {
         const projectFilter = document.getElementById('projectFilter');
         const contextFilter = document.getElementById('contextFilter');
         const datumFilter = document.getElementById('datumFilter');
+        const toekomstToggle = document.getElementById('toonToekomstToggle');
 
         if (taakFilter) taakFilter.addEventListener('input', () => this.filterActies());
         if (projectFilter) projectFilter.addEventListener('change', () => this.filterActies());
         if (contextFilter) contextFilter.addEventListener('change', () => this.filterActies());
         if (datumFilter) datumFilter.addEventListener('change', () => this.filterActies());
+        if (toekomstToggle) toekomstToggle.addEventListener('change', () => this.toggleToekomstigeTaken());
 
         // Sort event listeners
         document.querySelectorAll('.sortable').forEach(th => {

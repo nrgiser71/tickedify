@@ -560,6 +560,38 @@ body {
     border-radius: 0 0 var(--macos-radius-medium) var(--macos-radius-medium);
 }
 
+/* ===== DATUM STATUS INDICATORS ===== */
+.datum-indicator {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.taak-overtijd {
+    background-color: #fee;
+    border-left: 3px solid #ff3b30;
+}
+
+.taak-toekomst {
+    background-color: #fffbf0;
+    color: #666;
+}
+
+.filter-checkbox {
+    align-items: center;
+}
+
+.filter-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    margin: 0;
+}
+
 /* ===== PROJECTEN LIJST STYLING ===== */
 .projecten-container {
     width: 100%;
