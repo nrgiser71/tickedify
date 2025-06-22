@@ -868,7 +868,9 @@ body {
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
 }
 
-select, button {
+/* General form controls - exclude table buttons */
+select:not(.acties-table select):not(.actie-buttons button),
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn) {
     padding: 6px 12px;
     border: 1px solid var(--macos-gray-4);
     border-radius: var(--macos-radius-button);
@@ -879,7 +881,8 @@ select, button {
     transition: all 0.2s ease;
 }
 
-button {
+/* General button styling - exclude table buttons */
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn) {
     background: var(--macos-blue);
     color: white;
     border: none;
@@ -887,13 +890,15 @@ button {
     box-shadow: var(--macos-shadow-light);
 }
 
-button:hover {
+/* General button hover - exclude table buttons */
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):hover {
     background: var(--macos-blue-hover);
     transform: translateY(-1px);
     box-shadow: var(--macos-shadow-medium);
 }
 
-button:active {
+/* General button active - exclude table buttons */
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):active {
     transform: translateY(0);
     box-shadow: var(--macos-shadow-light);
 }
