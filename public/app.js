@@ -4181,29 +4181,30 @@ class Taakbeheer {
                 dailyPlanningInMain: !!(mainContent && mainContent.querySelector('.dagelijkse-planning-layout'))
             });
             
-            if (contentArea) {
-                // Check if we're coming from daily planning (main-content was replaced)
-                if (mainContent && mainContent.querySelector('.dagelijkse-planning-layout')) {
-                    console.log('restoreNormalContainer: detected daily planning layout, restoring main-content...');
-                    // Daily planning completely replaced main-content structure
-                    const header = mainContent.querySelector('.main-header');
-                    const headerHTML = header ? header.outerHTML : '<header class="main-header"><h1 id="page-title">Inbox</h1></header>';
-                    
-                    mainContent.innerHTML = `
-                        ${headerHTML}
-                        <div class="content-area">
-                            <div class="taak-input-container" id="taak-input-container">
-                                <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
-                                <button id="toevoegBtn">Toevoegen</button>
-                            </div>
-                            <div class="taken-container">
-                                <ul id="takenLijst"></ul>
-                            </div>
+            // Check if we're coming from daily planning FIRST (before checking contentArea)
+            if (mainContent && mainContent.querySelector('.dagelijkse-planning-layout')) {
+                console.log('restoreNormalContainer: detected daily planning layout, restoring main-content...');
+                // Daily planning completely replaced main-content structure
+                const header = mainContent.querySelector('.main-header');
+                const headerHTML = header ? header.outerHTML : '<header class="main-header"><h1 id="page-title">Inbox</h1></header>';
+                
+                mainContent.innerHTML = `
+                    ${headerHTML}
+                    <div class="content-area">
+                        <div class="taak-input-container" id="taak-input-container">
+                            <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                            <button id="toevoegBtn">Toevoegen</button>
                         </div>
-                    `;
-                    console.log('restoreNormalContainer: main-content restored');
-                    return;
-                }
+                        <div class="taken-container">
+                            <ul id="takenLijst"></ul>
+                        </div>
+                    </div>
+                `;
+                console.log('restoreNormalContainer: main-content restored');
+                return;
+            }
+
+            if (contentArea) {
                 
                 // Find any existing container that's not the input container
                 const existingContainer = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
