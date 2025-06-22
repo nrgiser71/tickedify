@@ -2344,6 +2344,14 @@ class Taakbeheer {
         }
     }
 
+    // Helper function to set button text based on context
+    setActionButtonText(isNewAction = true) {
+        const button = document.getElementById('maakActieBtn');
+        if (button) {
+            button.textContent = isNewAction ? 'Maak actie' : 'Aanpassingen opslaan';
+        }
+    }
+
     async planTaak(id) {
         if (this.huidigeLijst !== 'inbox') return;
         
@@ -2401,6 +2409,9 @@ class Taakbeheer {
             this.parseHerhalingValue(herhalingType);
             const herhalingDisplay = this.generateHerhalingDisplayText();
             document.getElementById('herhalingDisplay').value = herhalingDisplay;
+            
+            // Set button text for new action (from inbox)
+            this.setActionButtonText(true);
             
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
@@ -3344,6 +3355,9 @@ class Taakbeheer {
             const herhalingDisplay = this.generateHerhalingDisplayText();
             document.getElementById('herhalingDisplay').value = herhalingDisplay;
             console.log('bewerkActie - generated display text:', herhalingDisplay);
+            
+            // Set button text for editing existing action
+            this.setActionButtonText(false);
             
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
