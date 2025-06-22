@@ -1531,6 +1531,34 @@ class Taakbeheer {
         }, 0);
     }
 
+    // Helper function to preserve scroll position during re-renders
+    preserveScrollPosition(callback) {
+        const scrollContainer = document.querySelector('.acties-lijst, .taak-lijst, .main-content');
+        const scrollPosition = scrollContainer?.scrollTop || 0;
+        
+        const result = callback();
+        
+        if (result && typeof result.then === 'function') {
+            // If callback returns a promise
+            return result.then((value) => {
+                if (scrollContainer) {
+                    setTimeout(() => {
+                        scrollContainer.scrollTop = scrollPosition;
+                    }, 50);
+                }
+                return value;
+            });
+        } else {
+            // If callback is synchronous
+            if (scrollContainer) {
+                setTimeout(() => {
+                    scrollContainer.scrollTop = scrollPosition;
+                }, 50);
+            }
+            return result;
+        }
+    }
+
     async laadHuidigeLijst() {
         // Only load data if user is logged in
         if (!this.isLoggedIn()) {
@@ -2070,11 +2098,11 @@ class Taakbeheer {
                     const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
                     toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
-                    // For recurring tasks, do refresh lists to show new task
+                    // For recurring tasks, refresh lists but preserve scroll position
                     setTimeout(() => {
                         this.laadTellingen();
                         if (this.huidigeLijst === 'acties') {
-                            this.laadHuidigeLijst();
+                            this.preserveScrollPosition(() => this.laadHuidigeLijst());
                         }
                     }, 500);
                 } else {
