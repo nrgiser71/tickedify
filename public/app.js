@@ -5114,10 +5114,12 @@ class Taakbeheer {
 
     async completePlanningTask(actieId, checkboxElement) {
         console.log('🎯 completePlanningTask called with actieId:', actieId);
-        try {
-            // Find the task in planning actions array first, then fall back to main tasks
-            let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
-            console.log('📋 Local task found:', taak ? 'Yes' : 'No');
+        
+        return await loading.withLoading(async () => {
+            try {
+                // Find the task in planning actions array first, then fall back to main tasks
+                let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
+                console.log('📋 Local task found:', taak ? 'Yes' : 'No');
             
             if (!taak) {
                 console.log('🔍 Task not found locally, fetching from API...');
@@ -5293,12 +5295,17 @@ class Taakbeheer {
                 // Revert checkbox if completion failed
                 checkboxElement.checked = false;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+            } catch (error) {
+                console.error('Error completing planning task:', error);
+                checkboxElement.checked = false;
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
-        } catch (error) {
-            console.error('Error completing planning task:', error);
-            checkboxElement.checked = false;
-            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
-        }
+        }, {
+            operationId: 'complete-planning-task',
+            showGlobal: true,
+            button: checkboxElement?.closest('.task-checkbox'),
+            message: 'Taak afwerken...'
+        });
     }
 
     filterPlanningActies() {
