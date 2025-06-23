@@ -4794,6 +4794,21 @@ class Taakbeheer {
     }
 
     bindDragAndDropEvents() {
+        console.log('🔗 DEBUG: bindDragAndDropEvents called', {
+            timestamp: new Date().toISOString(),
+            templateItems: document.querySelectorAll('.template-item').length,
+            actieItems: document.querySelectorAll('[data-actie-id]').length,
+            dropZones: document.querySelectorAll('.uur-content').length
+        });
+        
+        // IMPORTANT: Track if events are being bound to prevent racing conditions
+        if (this.bindingInProgress) {
+            console.log('🔗 DEBUG: Binding already in progress, skipping to prevent race condition');
+            return;
+        }
+        
+        this.bindingInProgress = true;
+        
         // Template drag start
         document.querySelectorAll('.template-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
@@ -4965,6 +4980,10 @@ class Taakbeheer {
                 }
             });
         });
+        
+        // Reset binding flag
+        this.bindingInProgress = false;
+        console.log('🔗 DEBUG: bindDragAndDropEvents completed successfully');
     }
 
     async handleDrop(data, uur) {
@@ -4973,6 +4992,14 @@ class Taakbeheer {
     
     async handleDropInternal(data, uur, position) {
         const today = new Date().toISOString().split('T')[0];
+        
+        console.log('🎯 DEBUG: handleDropInternal called', {
+            actieId: data.actieId,
+            type: data.type,
+            uur: uur,
+            position: position,
+            timestamp: new Date().toISOString()
+        });
         
         return await loading.withLoading(async () => {
             const planningItem = {
@@ -5018,10 +5045,22 @@ class Taakbeheer {
                 }
             }
             
+            console.log('📡 DEBUG: Sending API request', {
+                planningItem,
+                url: '/api/dagelijkse-planning',
+                method: 'POST'
+            });
+            
             const response = await fetch('/api/dagelijkse-planning', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(planningItem)
+            });
+            
+            console.log('📡 DEBUG: API response received', {
+                status: response.status,
+                ok: response.ok,
+                timestamp: new Date().toISOString()
             });
             
             if (response.ok) {
@@ -5050,9 +5089,17 @@ class Taakbeheer {
     }
     
     updatePlanningLocally(planningItem, serverResponse) {
+        console.log('🔄 DEBUG: updatePlanningLocally called', {
+            planningItem,
+            serverResponse,
+            currentDataLength: this.currentPlanningData?.length || 0,
+            timestamp: new Date().toISOString()
+        });
+        
         // Update local planning data immediately for fast visual feedback
         if (!this.currentPlanningData) {
             this.currentPlanningData = [];
+            console.log('🔄 DEBUG: Initialized empty currentPlanningData');
         }
         
         // Add the new planning item to local data
@@ -5062,7 +5109,16 @@ class Taakbeheer {
             ...serverResponse // Merge any additional server data
         };
         
+        console.log('🔄 DEBUG: Adding new item to currentPlanningData', {
+            newItem,
+            currentLength: this.currentPlanningData.length
+        });
+        
         this.currentPlanningData.push(newItem);
+        
+        console.log('🔄 DEBUG: After push, currentPlanningData length:', this.currentPlanningData.length);
+        console.log('🔄 DEBUG: Items for hour', planningItem.uur, ':', 
+            this.currentPlanningData.filter(p => p.uur === planningItem.uur).length);
         
         // Update only the affected hour in the calendar
         this.updateSingleHourDisplay(planningItem.uur);
