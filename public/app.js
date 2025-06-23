@@ -4939,23 +4939,30 @@ class Taakbeheer {
             const taakText = `${text} (Mind dump: ${currentWord})`;
             
             await loading.withLoading(async () => {
-                // Create task directly
+                // Create task directly for inbox
                 const nieuweTaak = {
                     id: this.generateId(),
                     tekst: taakText,
                     aangemaakt: new Date().toISOString()
                 };
                 
+                // Temporarily switch to inbox for saving
+                const originalList = this.huidigeLijst;
+                this.huidigeLijst = 'inbox';
+                
+                // Load inbox tasks first
+                await this.laadLijst('inbox');
+                
                 // Add to tasks array
                 this.taken.push(nieuweTaak);
                 
-                // Save to database/storage
+                // Save to inbox
                 await this.slaLijstOp();
                 
-                // Update UI counts if we're on inbox screen
-                if (this.huidigeLijst === 'inbox') {
-                    this.renderTaken();
-                }
+                // Restore original list
+                this.huidigeLijst = originalList;
+                
+                // Update counts
                 await this.laadTellingen();
                 
             }, {
