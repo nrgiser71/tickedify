@@ -3467,26 +3467,65 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
     }
 });
 
-// Mind dump preferences endpoints (BEFORE 404 handler!)
-app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
+// Debug endpoint for mind dump table
+app.get('/api/debug/mind-dump-table', requireAuth, async (req, res) => {
     try {
         if (!db) {
             return res.status(500).json({ error: 'Database not available' });
         }
 
+        // Check if table exists
+        const tableCheck = await db.query(`
+            SELECT table_name FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = 'mind_dump_preferences'
+        `);
+        
+        const tableExists = tableCheck.rows.length > 0;
+        
+        let tableData = [];
+        if (tableExists) {
+            const dataResult = await db.query('SELECT * FROM mind_dump_preferences LIMIT 5');
+            tableData = dataResult.rows;
+        }
+
+        res.json({
+            tableExists,
+            tableData,
+            userId: req.session.user.id
+        });
+    } catch (error) {
+        console.error('Debug mind dump table error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Mind dump preferences endpoints (BEFORE 404 handler!)
+app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            console.error('Mind dump GET: Database not available');
+            return res.status(500).json({ error: 'Database not available' });
+        }
+
         const userId = req.session.user.id;
+        console.log('Mind dump GET: Loading preferences for user:', userId);
+        
         const result = await db.query(
             'SELECT preferences, custom_words FROM mind_dump_preferences WHERE user_id = $1',
             [userId]
         );
 
+        console.log('Mind dump GET: Query result rows:', result.rows.length);
+        
         if (result.rows.length > 0) {
             const row = result.rows[0];
+            console.log('Mind dump GET: Found preferences for user');
             res.json({
                 preferences: row.preferences || {},
                 customWords: row.custom_words || []
             });
         } else {
+            console.log('Mind dump GET: No preferences found, returning defaults');
             // Return empty for new users
             res.json({
                 preferences: {},
@@ -3495,7 +3534,7 @@ app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
         }
     } catch (error) {
         console.error('Error loading mind dump preferences:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + error.message });
     }
 });
 
