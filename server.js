@@ -3467,12 +3467,7 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
     }
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
-// Mind dump preferences endpoints
+// Mind dump preferences endpoints (BEFORE 404 handler!)
 app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
     try {
         if (!db) {
@@ -3529,6 +3524,11 @@ app.post('/api/mind-dump/preferences', requireAuth, async (req, res) => {
         console.error('Error saving mind dump preferences:', error);
         res.status(500).json({ error: 'Server error' });
     }
+});
+
+// 404 handler (AFTER all routes!)
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
 app.listen(PORT, () => {
