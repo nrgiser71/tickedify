@@ -4314,7 +4314,37 @@ class Taakbeheer {
                 console.log('restoreNormalContainer: detected daily planning layout, restoring main-content...');
                 // Daily planning completely replaced main-content structure
                 const header = mainContent.querySelector('.main-header');
-                const headerHTML = header ? header.outerHTML : '<header class="main-header"><h1 id="page-title">Inbox</h1></header>';
+                
+                // Get the correct title for the current list
+                const titles = {
+                    'inbox': 'Inbox',
+                    'acties': 'Acties',
+                    'projecten': 'Projecten',
+                    'opvolgen': 'Opvolgen',
+                    'afgewerkte-taken': 'Afgewerkt',
+                    'dagelijkse-planning': 'Dagelijkse Planning',
+                    'global-search': 'Zoeken',
+                    'contextenbeheer': 'Contexten Beheer',
+                    'uitgesteld-wekelijks': 'Wekelijks',
+                    'uitgesteld-maandelijks': 'Maandelijks',
+                    'uitgesteld-3maandelijks': '3-maandelijks',
+                    'uitgesteld-6maandelijks': '6-maandelijks',
+                    'uitgesteld-jaarlijks': 'Jaarlijks'
+                };
+                const currentTitle = titles[this.huidigeLijst] || 'Inbox';
+                
+                let headerHTML;
+                if (header) {
+                    // Update existing header with correct title
+                    const titleElement = header.querySelector('#page-title');
+                    if (titleElement) {
+                        titleElement.textContent = currentTitle;
+                    }
+                    headerHTML = header.outerHTML;
+                } else {
+                    // Create new header with correct title
+                    headerHTML = `<header class="main-header"><h1 id="page-title">${currentTitle}</h1></header>`;
+                }
                 
                 // Only show input container for inbox
                 const inputContainerHTML = this.huidigeLijst === 'inbox' ? `
