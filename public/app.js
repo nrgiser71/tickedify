@@ -5181,21 +5181,38 @@ class Taakbeheer {
                     
                     // Also refresh the calendar to remove completed tasks from planning items
                     console.log('🗓️ Refreshing calendar with updated planning data...');
-                    const planningResponse = await fetch(`/api/dagelijkse-planning/${new Date().toISOString().split('T')[0]}`);
+                    const today = new Date().toISOString().split('T')[0];
+                    console.log('📅 Fetching planning data for date:', today);
+                    
+                    const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+                    console.log('📡 Planning API response status:', planningResponse.status);
+                    
                     if (planningResponse.ok) {
                         const updatedPlanning = await planningResponse.json();
+                        console.log('📋 Updated planning data received:', updatedPlanning.length, 'items');
+                        console.log('🔍 Planning items for completed task:', updatedPlanning.filter(p => p.actieId === actieId));
                         
                         // Re-render calendar section with filtered data
                         const kalenderContainer = document.querySelector('.kalender-container');
+                        console.log('🎯 Kalender container found:', !!kalenderContainer);
+                        
                         if (kalenderContainer) {
                             // Get current time range preferences
                             const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
                             const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+                            console.log('⏰ Time range:', startUur, 'to', eindUur);
                             
-                            kalenderContainer.innerHTML = this.renderKalenderGrid(startUur, eindUur, updatedPlanning);
+                            const newHTML = this.renderKalenderGrid(startUur, eindUur, updatedPlanning);
+                            console.log('🏗️ Generated new calendar HTML length:', newHTML.length);
+                            
+                            kalenderContainer.innerHTML = newHTML;
                             this.bindDragAndDropEvents(); // Re-bind events for calendar too
                             console.log('✅ Calendar updated with filtered planning data');
+                        } else {
+                            console.error('❌ Kalender container not found in DOM');
                         }
+                    } else {
+                        console.error('❌ Failed to fetch updated planning data:', planningResponse.status);
                     }
                 } else {
                     console.log('🔄 Re-rendering normal view...');
