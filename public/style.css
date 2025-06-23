@@ -2251,7 +2251,7 @@ button:focus {
 }
 
 /* Tablet and iPad responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .hamburger-menu {
         display: flex;
     }
@@ -2375,7 +2375,7 @@ button:focus {
 }
 
 /* Desktop - ensure sidebar always visible */
-@media (min-width: 1025px) {
+@media (min-width: 1201px) {
     .sidebar {
         display: flex !important;
         width: 450px !important;
