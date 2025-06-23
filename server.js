@@ -3036,6 +3036,65 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate = nextDateObj.toISOString().split('T')[0];
         }
         
+        // Ensure the calculated date is in the future
+        // If the calculated date is still in the past, keep calculating until we get a future date
+        if (nextDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time for date comparison
+            
+            let calculatedDate = nextDate;
+            let iterations = 0;
+            const maxIterations = 100; // Prevent infinite loops
+            
+            while (new Date(calculatedDate) <= today && iterations < maxIterations) {
+                console.log(`🔄 Server: Date ${calculatedDate} is in past, calculating next occurrence...`);
+                iterations++;
+                
+                // Recalculate from the current calculated date using a simplified recursive approach
+                const nextBaseDate = new Date(calculatedDate);
+                
+                if (pattern.startsWith('weekly-')) {
+                    const parts = pattern.split('-');
+                    const interval = parseInt(parts[1]);
+                    const targetDay = parseInt(parts[2]);
+                    const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+                    
+                    const currentDay = nextBaseDate.getDay();
+                    let daysToAdd = jsTargetDay - currentDay;
+                    if (daysToAdd <= 0) {
+                        daysToAdd += 7;
+                    }
+                    
+                    const nextOccurrence = new Date(nextBaseDate);
+                    nextOccurrence.setDate(nextBaseDate.getDate() + daysToAdd);
+                    
+                    if (interval > 1) {
+                        nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
+                    }
+                    
+                    calculatedDate = nextOccurrence.toISOString().split('T')[0];
+                } else if (pattern.startsWith('daily-')) {
+                    const parts = pattern.split('-');
+                    const interval = parseInt(parts[1]);
+                    const nextOccurrence = new Date(nextBaseDate);
+                    nextOccurrence.setDate(nextBaseDate.getDate() + interval);
+                    calculatedDate = nextOccurrence.toISOString().split('T')[0];
+                } else {
+                    // For other patterns, just break to avoid infinite loops
+                    console.log('⚠️ Server: Complex pattern, stopping iteration');
+                    break;
+                }
+            }
+            
+            if (iterations >= maxIterations) {
+                console.error('❌ Server: Max iterations reached in recurring date calculation');
+                nextDate = null;
+            } else {
+                nextDate = calculatedDate;
+                console.log(`✅ Server: Final calculated date: ${nextDate} (after ${iterations} iterations)`);
+            }
+        }
+        
         // Special debug for monthly-weekday patterns
         let monthlyWeekdayDebug = null;
         if (pattern.startsWith('monthly-weekday-')) {
