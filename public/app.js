@@ -5162,11 +5162,11 @@ class Taakbeheer {
                 }
                 console.log('📊 Arrays updated, current list type:', this.huidigeLijst);
                 
-                // Refresh the daily planning view to update the actions list
+                // Refresh the daily planning view to update both actions list and calendar
                 if (this.huidigeLijst === 'dagelijkse-planning') {
-                    console.log('🔄 Updating daily planning actions list...');
-                    // For daily planning, just refresh the actions list with updated local data
-                    // instead of re-rendering the entire view to avoid race conditions
+                    console.log('🔄 Updating daily planning - both calendar and actions list...');
+                    
+                    // Update actions list with local data (for immediate feedback)
                     const actiesContainer = document.getElementById('planningActiesLijst');
                     if (actiesContainer) {
                         const today = new Date().toISOString().split('T')[0];
@@ -5175,15 +5175,26 @@ class Taakbeheer {
                         
                         // Use local planningActies array which has been updated
                         actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
-                        // Re-bind drag and drop events for the updated actions list
                         this.bindDragAndDropEvents();
-                        console.log('✅ Daily planning actions list updated with local data');
-                    } else {
-                        console.log('🔄 Actions container not found, falling back to full re-render...');
-                        // Fallback to full re-render if container not found
-                        const mainContainer = document.querySelector('.main-content');
-                        if (mainContainer) {
-                            await this.renderDagelijksePlanning(mainContainer);
+                        console.log('✅ Actions list updated with local data');
+                    }
+                    
+                    // Also refresh the calendar to remove completed tasks from planning items
+                    console.log('🗓️ Refreshing calendar with updated planning data...');
+                    const planningResponse = await fetch(`/api/dagelijkse-planning/${new Date().toISOString().split('T')[0]}`);
+                    if (planningResponse.ok) {
+                        const updatedPlanning = await planningResponse.json();
+                        
+                        // Re-render calendar section with filtered data
+                        const kalenderContainer = document.querySelector('.kalender-container');
+                        if (kalenderContainer) {
+                            // Get current time range preferences
+                            const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
+                            const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+                            
+                            kalenderContainer.innerHTML = this.renderKalenderGrid(startUur, eindUur, updatedPlanning);
+                            this.bindDragAndDropEvents(); // Re-bind events for calendar too
+                            console.log('✅ Calendar updated with filtered planning data');
                         }
                     }
                 } else {
