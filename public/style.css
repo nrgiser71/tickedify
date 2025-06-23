@@ -4093,3 +4093,118 @@ button:focus {
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--macos-gray-5);
 }
+
+/* ===== WEKELIJKSE OPTIMALISATIE STYLES ===== */
+.wekelijkse-optimalisatie-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.optimalisatie-sectie {
+    background: var(--macos-bg-secondary);
+    border-radius: var(--macos-radius-large);
+    margin-bottom: 20px;
+    padding: 20px;
+    box-shadow: var(--macos-shadow-light);
+}
+
+.sectie-titel {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--macos-orange);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sectie-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.optimalisatie-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-button);
+    border: 1px solid var(--macos-gray-5);
+    transition: all 0.2s ease;
+}
+
+.optimalisatie-item:hover {
+    border-color: var(--macos-gray-4);
+    box-shadow: var(--macos-shadow-light);
+}
+
+.optimalisatie-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.optimalisatie-item label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--macos-text-primary);
+    cursor: pointer;
+}
+
+.optimalisatie-item .actie-knop {
+    padding: 6px 12px;
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: var(--macos-radius-button);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.optimalisatie-item .actie-knop:hover {
+    background: var(--macos-blue-hover);
+}
+
+.voortgang-sectie {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--macos-bg-secondary);
+    border-radius: var(--macos-radius-large);
+    box-shadow: var(--macos-shadow-light);
+}
+
+.voortgang-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--macos-text-secondary);
+}
+
+#voortgang-percentage {
+    font-weight: 600;
+    color: var(--macos-blue);
+    font-size: 16px;
+}
+
+.voortgang-balk {
+    width: 100%;
+    height: 20px;
+    background: var(--macos-gray-5);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.voortgang-vulling {
+    height: 100%;
+    background: linear-gradient(90deg, var(--macos-blue) 0%, var(--macos-green) 100%);
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}

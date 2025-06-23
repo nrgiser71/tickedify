@@ -4617,19 +4617,131 @@ class Taakbeheer {
     async renderWekelijkseOptimalisatie() {
         const container = document.getElementById('taken-container');
         
-        // For now, show a placeholder message
         container.innerHTML = `
-            <div style="padding: 20px; text-align: center; color: #666;">
-                <h2>Wekelijkse Optimalisatie</h2>
-                <p>Deze functie wordt binnenkort geïmplementeerd.</p>
-                <p>Hier komt de complete workflow voor:</p>
-                <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
-                    <li>1. OPRUIMEN - Verzamelplaatsen legen</li>
-                    <li>2. ACTUALISEREN - Mind dump met trigger woorden</li>
-                    <li>3. VERBETEREN - Lijsten reviewen</li>
-                </ul>
+            <div class="wekelijkse-optimalisatie-container">
+                <!-- 1. OPRUIMEN -->
+                <div class="optimalisatie-sectie">
+                    <h2 class="sectie-titel">1. OPRUIMEN</h2>
+                    <div class="sectie-content">
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="verzamel-papieren" class="optimalisatie-checkbox">
+                            <label for="verzamel-papieren">Verzamel losse papieren en materialen</label>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="verzamelplaatsen-leeg" class="optimalisatie-checkbox">
+                            <label for="verzamelplaatsen-leeg">Maak al je verzamelplaatsen leeg</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ACTUALISEREN -->
+                <div class="optimalisatie-sectie">
+                    <h2 class="sectie-titel">2. ACTUALISEREN</h2>
+                    <div class="sectie-content">
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="mind-dump" class="optimalisatie-checkbox">
+                            <label for="mind-dump">Doe een mind dump</label>
+                            <button class="actie-knop" onclick="app.startMindDump()">Start</button>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-acties" class="optimalisatie-checkbox">
+                            <label for="bekijk-acties">Bekijk je acties lijst</label>
+                            <button class="actie-knop" onclick="app.navigateToList('acties')">Ga naar Acties</button>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="blader-agenda" class="optimalisatie-checkbox">
+                            <label for="blader-agenda">Blader door je agenda</label>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-opvolgen" class="optimalisatie-checkbox">
+                            <label for="bekijk-opvolgen">Bekijk je opvolgen lijst</label>
+                            <button class="actie-knop" onclick="app.navigateToList('opvolgen')">Ga naar Opvolgen</button>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-projecten" class="optimalisatie-checkbox">
+                            <label for="bekijk-projecten">Bekijk je projecten lijst</label>
+                            <button class="actie-knop" onclick="app.navigateToList('projecten')">Ga naar Projecten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. VERBETEREN -->
+                <div class="optimalisatie-sectie">
+                    <h2 class="sectie-titel">3. VERBETEREN</h2>
+                    <div class="sectie-content">
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-uitgesteld" class="optimalisatie-checkbox">
+                            <label for="bekijk-uitgesteld">Bekijk je uitgesteld lijst</label>
+                            <button class="actie-knop dropdown-trigger" onclick="app.toggleUitgesteldDropdown()">Toon Uitgesteld Lijsten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voortgang sectie -->
+                <div class="voortgang-sectie">
+                    <div class="voortgang-info">
+                        <span>Voortgang: </span>
+                        <span id="voortgang-percentage">0%</span>
+                        <span id="voortgang-items">(0 van 8 items voltooid)</span>
+                    </div>
+                    <div class="voortgang-balk">
+                        <div id="voortgang-vulling" class="voortgang-vulling"></div>
+                    </div>
+                </div>
             </div>
         `;
+
+        // Bind checkbox change events voor voortgang tracking
+        this.bindWekelijkseOptimalisatieEvents();
+    }
+
+    bindWekelijkseOptimalisatieEvents() {
+        // Track checkbox changes for progress
+        const checkboxes = document.querySelectorAll('.optimalisatie-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => this.updateWekelijkseVoortgang());
+        });
+
+        // Initialize progress
+        this.updateWekelijkseVoortgang();
+    }
+
+    updateWekelijkseVoortgang() {
+        const checkboxes = document.querySelectorAll('.optimalisatie-checkbox');
+        const total = checkboxes.length;
+        const checked = document.querySelectorAll('.optimalisatie-checkbox:checked').length;
+        const percentage = Math.round((checked / total) * 100);
+
+        document.getElementById('voortgang-percentage').textContent = `${percentage}%`;
+        document.getElementById('voortgang-items').textContent = `(${checked} van ${total} items voltooid)`;
+        document.getElementById('voortgang-vulling').style.width = `${percentage}%`;
+    }
+
+    navigateToList(lijst) {
+        // Navigate to specified list
+        this.huidigeLijst = lijst;
+        this.saveCurrentList();
+        this.laadHuidigeLijst();
+    }
+
+    toggleUitgesteldDropdown() {
+        // Toggle the uitgesteld dropdown in the sidebar
+        const uitgesteldContent = document.getElementById('uitgesteld-content');
+        const uitgesteldDropdown = document.getElementById('uitgesteld-dropdown');
+        
+        if (uitgesteldContent && uitgesteldDropdown) {
+            const isOpen = uitgesteldContent.style.display === 'block';
+            uitgesteldContent.style.display = isOpen ? 'none' : 'block';
+            const arrow = uitgesteldDropdown.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.textContent = isOpen ? '▶' : '▼';
+            }
+        }
+    }
+
+    startMindDump() {
+        // Placeholder for mind dump functionality
+        toast.info('Mind dump functionaliteit komt binnenkort!');
     }
 
     async voegContextToe() {
