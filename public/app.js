@@ -4557,6 +4557,9 @@ class Taakbeheer {
         const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
         const planning = planningResponse.ok ? await planningResponse.json() : [];
         
+        // Store planning data locally for fast updates
+        this.currentPlanningData = planning;
+        
         // Laad ingeplande acties voor indicator
         const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
         const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
@@ -4965,6 +4968,10 @@ class Taakbeheer {
     }
 
     async handleDrop(data, uur) {
+        return this.handleDropInternal(data, uur, null);
+    }
+    
+    async handleDropInternal(data, uur, position) {
         const today = new Date().toISOString().split('T')[0];
         
         return await loading.withLoading(async () => {
@@ -4975,28 +4982,36 @@ class Taakbeheer {
                 duurMinuten: data.duurMinuten
             };
             
+            // Add position if specified
+            if (position !== null) {
+                planningItem.positie = position;
+            }
+            
             if (data.type === 'template') {
                 planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
             } else if (data.type === 'actie') {
                 planningItem.actieId = data.actieId;
                 
-                // Get fresh data from actions API to ensure we have the latest info
-                const actiesResponse = await fetch('/api/lijst/acties');
-                if (actiesResponse.ok) {
-                    const acties = await actiesResponse.json();
-                    const actie = acties.find(t => t.id === data.actieId);
-                    if (actie) {
-                        const projectNaam = this.getProjectNaam(actie.projectId);
-                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
-                    } else {
-                        planningItem.naam = 'Onbekende actie';
-                    }
+                // Use cached data first for speed (avoid API call)
+                let actie = this.planningActies?.find(t => t.id === data.actieId) || 
+                           this.taken.find(t => t.id === data.actieId);
+                
+                if (actie) {
+                    const projectNaam = this.getProjectNaam(actie.projectId);
+                    planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
                 } else {
-                    // Fallback to cached data
-                    const actie = this.taken.find(t => t.id === data.actieId);
-                    if (actie) {
-                        const projectNaam = this.getProjectNaam(actie.projectId);
-                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                    // Only fetch from API if not found in cache
+                    console.log('🔍 Task not in cache, fetching from API...');
+                    const actiesResponse = await fetch('/api/lijst/acties');
+                    if (actiesResponse.ok) {
+                        const acties = await actiesResponse.json();
+                        actie = acties.find(t => t.id === data.actieId);
+                        if (actie) {
+                            const projectNaam = this.getProjectNaam(actie.projectId);
+                            planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                        } else {
+                            planningItem.naam = 'Onbekende actie';
+                        }
                     } else {
                         planningItem.naam = 'Onbekende actie';
                     }
@@ -5010,77 +5025,81 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
+                // Fast local update instead of full refresh
+                this.updatePlanningLocally(planningItem, await response.json());
                 this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item toegevoegd!');
             } else {
                 toast.error('Fout bij toevoegen planning item');
             }
         }, {
-            operationId: 'add-planning',
-            showGlobal: true,
-            message: 'Item toevoegen...'
+            operationId: position !== null ? 'add-planning-position' : 'add-planning',
+            showGlobal: false, // Make it less intrusive
+            message: 'Toevoegen...'
         });
     }
 
     async handleDropAtPosition(data, uur, position) {
-        const today = new Date().toISOString().split('T')[0];
+        return this.handleDropInternal(data, uur, position);
+    }
+    
+    updatePlanningLocally(planningItem, serverResponse) {
+        // Update local planning data immediately for fast visual feedback
+        if (!this.currentPlanningData) {
+            this.currentPlanningData = [];
+        }
         
-        return await loading.withLoading(async () => {
-            const planningItem = {
-                datum: today,
-                uur: uur,
-                positie: position,
-                type: data.type === 'template' ? data.planningType : 'taak',
-                duurMinuten: data.duurMinuten
-            };
+        // Add the new planning item to local data
+        const newItem = {
+            ...planningItem,
+            id: serverResponse.id || Math.random().toString(36), // Use server ID if available
+            ...serverResponse // Merge any additional server data
+        };
+        
+        this.currentPlanningData.push(newItem);
+        
+        // Update only the affected hour in the calendar
+        this.updateSingleHourDisplay(planningItem.uur);
+    }
+    
+    updateSingleHourDisplay(uur) {
+        const uurElement = document.querySelector(`[data-uur="${uur}"] .uur-planning`);
+        if (!uurElement) return;
+        
+        // Get planning for this specific hour
+        const uurPlanning = this.currentPlanningData?.filter(p => p.uur === uur) || [];
+        
+        // Update the content
+        uurElement.innerHTML = this.renderPlanningItemsWithDropZones(uurPlanning, uur);
+        
+        // Update hour label with new totals
+        const totaalMinuten = uurPlanning.reduce((sum, p) => sum + p.duurMinuten, 0);
+        const isOverboekt = totaalMinuten > 60;
+        
+        const uurContainer = document.querySelector(`[data-uur="${uur}"]`);
+        if (uurContainer) {
+            uurContainer.className = `kalender-uur ${isOverboekt ? 'overboekt' : ''}`;
             
-            if (data.type === 'template') {
-                planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
-            } else if (data.type === 'actie') {
-                planningItem.actieId = data.actieId;
-                
-                // Get fresh data from actions API to ensure we have the latest info
-                const actiesResponse = await fetch('/api/lijst/acties');
-                if (actiesResponse.ok) {
-                    const acties = await actiesResponse.json();
-                    const actie = acties.find(t => t.id === data.actieId);
-                    if (actie) {
-                        const projectNaam = this.getProjectNaam(actie.projectId);
-                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
-                    } else {
-                        planningItem.naam = 'Onbekende actie';
-                    }
+            const uurTotaalElement = uurContainer.querySelector('.uur-totaal-tijd');
+            const uurLabelElement = uurContainer.querySelector('.uur-label');
+            
+            if (totaalMinuten > 0) {
+                if (uurTotaalElement) {
+                    uurTotaalElement.textContent = `(${totaalMinuten} min${isOverboekt ? ' 🚨' : ''})`;
                 } else {
-                    // Fallback to cached data
-                    const actie = this.taken.find(t => t.id === data.actieId);
-                    if (actie) {
-                        const projectNaam = this.getProjectNaam(actie.projectId);
-                        planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
-                    } else {
-                        planningItem.naam = 'Onbekende actie';
-                    }
+                    // Add totaal tijd element if it doesn't exist
+                    const newTotaalElement = document.createElement('div');
+                    newTotaalElement.className = 'uur-totaal-tijd';
+                    newTotaalElement.textContent = `(${totaalMinuten} min${isOverboekt ? ' 🚨' : ''})`;
+                    uurLabelElement.appendChild(newTotaalElement);
                 }
+            } else if (uurTotaalElement) {
+                uurTotaalElement.remove();
             }
-            
-            const response = await fetch('/api/dagelijkse-planning', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(planningItem)
-            });
-            
-            if (response.ok) {
-                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
-                this.updateTotaalTijd(); // Update total time
-                toast.success('Planning item toegevoegd!');
-            } else {
-                toast.error('Fout bij toevoegen planning item');
-            }
-        }, {
-            operationId: 'add-planning-position',
-            showGlobal: true,
-            message: 'Item toevoegen op positie...'
-        });
+        }
+        
+        // Re-bind drag and drop events for new elements
+        this.bindDragAndDropEvents();
     }
 
     async handlePlanningReorder(data, targetUur, targetPosition) {
@@ -5105,7 +5124,8 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
+                // Fast local update instead of full refresh
+                this.updateReorderLocally(data, targetUur, targetPosition);
                 this.updateTotaalTijd(); // Update total time
                 
                 if (data.currentUur !== targetUur) {
@@ -5118,9 +5138,31 @@ class Taakbeheer {
             }
         }, {
             operationId: 'reorder-planning',
-            showGlobal: true,
-            message: 'Item verplaatsen...'
+            showGlobal: false, // Make less intrusive
+            message: 'Verplaatsen...'
         });
+    }
+    
+    updateReorderLocally(data, targetUur, targetPosition) {
+        if (!this.currentPlanningData) return;
+        
+        // Find and update the planning item
+        const item = this.currentPlanningData.find(p => p.id === data.planningId);
+        if (item) {
+            const oldUur = item.uur;
+            
+            // Update the item properties
+            item.uur = targetUur;
+            if (targetPosition !== null) {
+                item.positie = targetPosition;
+            }
+            
+            // Update both affected hours
+            this.updateSingleHourDisplay(oldUur);
+            if (oldUur !== targetUur) {
+                this.updateSingleHourDisplay(targetUur);
+            }
+        }
     }
 
     async deletePlanningItem(planningId) {

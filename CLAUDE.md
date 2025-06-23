@@ -6,6 +6,8 @@
 ## Claude Development & Testing Autonomie
 **KRITIEK BELANGRIJK**: Jan is momenteel de ENIGE gebruiker van Tickedify. Het systeem is NIET live voor publiek gebruik.
 
+**SYSTEEM ARCHITECTUUR**: Tickedify is technisch gezien een **multi-user systeem** met database schema en code ondersteuning voor meerdere gebruikers, maar wordt momenteel alleen door Jan gebruikt voor development en testing doeleinden.
+
 **VOLLEDIGE AUTONOMIE TOEGESTAAN:**
 - ✅ **Code aanpassingen**: Vrijelijk alle bestanden bewerken zonder toestemming
 - ✅ **Database manipulatie**: Test data aanmaken, wijzigen, verwijderen zoals nodig
