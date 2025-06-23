@@ -2211,6 +2211,89 @@ button:focus {
     background: rgba(255, 149, 0, 0.1);
 }
 
+/* Tablet and iPad responsive */
+@media (max-width: 1024px) {
+    .app-layout {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        min-height: 200px;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid var(--macos-gray-4);
+        overflow-y: auto;
+    }
+    
+    .sidebar-content {
+        padding: 10px 20px;
+    }
+    
+    .main-content {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    .lijst-sectie {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .lijst-item {
+        flex: 0 0 auto;
+        min-width: 120px;
+        padding: 8px 12px;
+        text-align: center;
+        border-radius: var(--macos-radius-small);
+        background: var(--macos-bg-primary);
+    }
+    
+    .lijst-item.actief {
+        background: var(--macos-blue);
+        color: white;
+    }
+    
+    .dropdown-content {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .dropdown-header {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    /* Daily planning responsive for tablets */
+    .dagelijkse-planning-layout {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+    }
+    
+    .planning-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 50vh;
+        order: 1;
+        overflow-y: auto;
+    }
+    
+    .dag-kalender {
+        order: 2;
+        overflow-y: auto;
+    }
+    
+    .planning-acties .acties-lijst {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
     .sidebar-header {
