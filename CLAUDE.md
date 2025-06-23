@@ -30,6 +30,29 @@
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## CHANGELOG SYSTEEM GEÏMPLEMENTEERD (Juni 23, 2025) ✅
+
+**📋 AUTOMATISCHE CHANGELOG ONDERHOUD:**
+- Echte changelog gebaseerd op werkelijke development geschiedenis uit CLAUDE.md
+- Alle datums gecorrigeerd naar juiste tijdlijn (juni 2025) 
+- Versienummers gebaseerd op echte progressie (v0.5.x reeks)
+- Features accuraat beschreven op basis van daadwerkelijke implementatie
+
+**🎯 CHANGELOG PROCES:**
+- Bij elke nieuwe feature/bugfix → automatisch changelog entry toevoegen
+- Emoji-categorisering: 🔄 fixes, ✨ features, 🎯 improvements, ⚡ performance
+- macOS-stijl design consistent met app
+- Link in versie notificaties: "📋 Bekijk wat er nieuw is"
+
+**📁 FILES:**
+- `public/changelog.html` - Main changelog pagina
+- `public/app.js` - Versie notificatie met changelog link  
+- `public/style.css` - Changelog styling
+
+**🚀 DEPLOYMENT:**
+- Versie 0.5.52 gedeployed met correcte changelog
+- Ready voor demo vanavond met werkende changelog systeem
+
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
