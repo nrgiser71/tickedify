@@ -3472,6 +3472,65 @@ app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
+// Mind dump preferences endpoints
+app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(500).json({ error: 'Database not available' });
+        }
+
+        const userId = req.session.user.id;
+        const result = await db.query(
+            'SELECT preferences, custom_words FROM mind_dump_preferences WHERE user_id = $1',
+            [userId]
+        );
+
+        if (result.rows.length > 0) {
+            const row = result.rows[0];
+            res.json({
+                preferences: row.preferences || {},
+                customWords: row.custom_words || []
+            });
+        } else {
+            // Return empty for new users
+            res.json({
+                preferences: {},
+                customWords: []
+            });
+        }
+    } catch (error) {
+        console.error('Error loading mind dump preferences:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/mind-dump/preferences', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(500).json({ error: 'Database not available' });
+        }
+
+        const userId = req.session.user.id;
+        const { preferences, customWords } = req.body;
+
+        // Upsert preferences
+        await db.query(`
+            INSERT INTO mind_dump_preferences (user_id, preferences, custom_words, updated_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET 
+                preferences = EXCLUDED.preferences,
+                custom_words = EXCLUDED.custom_words,
+                updated_at = NOW()
+        `, [userId, JSON.stringify(preferences), JSON.stringify(customWords)]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error saving mind dump preferences:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
     

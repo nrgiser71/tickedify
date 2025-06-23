@@ -4885,12 +4885,39 @@ class Taakbeheer {
             'Buurt', 'Buren', 'Scholen', 'Maatschappelijke betrokkenheid'
         ];
         
-        // Load user preferences from localStorage (temporary solution)
-        const savedPreferences = localStorage.getItem('mindDumpPreferences');
-        if (savedPreferences) {
-            this.mindDumpPreferences = JSON.parse(savedPreferences);
-        } else {
-            // Default: all enabled
+        // Load user preferences from database (per user)
+        try {
+            const response = await fetch('/api/mind-dump/preferences');
+            if (response.ok) {
+                const data = await response.json();
+                this.mindDumpPreferences = data.preferences || {};
+                
+                // Add custom words from database
+                if (data.customWords && data.customWords.length > 0) {
+                    // Add custom words that aren't already in the default list
+                    data.customWords.forEach(word => {
+                        if (!this.mindDumpWords.includes(word)) {
+                            this.mindDumpWords.push(word);
+                        }
+                    });
+                }
+                
+                // Add any new default words that user doesn't have yet
+                this.mindDumpWords.forEach(word => {
+                    if (this.mindDumpPreferences[word] === undefined) {
+                        this.mindDumpPreferences[word] = true;
+                    }
+                });
+            } else {
+                // Default: all enabled for new users
+                this.mindDumpPreferences = {};
+                this.mindDumpWords.forEach(word => {
+                    this.mindDumpPreferences[word] = true;
+                });
+            }
+        } catch (error) {
+            console.error('Error loading mind dump preferences:', error);
+            // Fallback to all enabled
             this.mindDumpPreferences = {};
             this.mindDumpWords.forEach(word => {
                 this.mindDumpPreferences[word] = true;
@@ -4934,9 +4961,8 @@ class Taakbeheer {
                 return;
             }
             
-            // Add to inbox
-            const currentWord = this.activeMindDumpWords[this.currentWordIndex];
-            const taakText = `${text} (Mind dump: ${currentWord})`;
+            // Add to inbox - just the text without extra info
+            const taakText = text;
             
             await loading.withLoading(async () => {
                 // Create task directly for inbox
@@ -5096,17 +5122,35 @@ class Taakbeheer {
         }
     }
 
-    saveMindDumpConfig() {
-        // Save preferences to localStorage
-        localStorage.setItem('mindDumpPreferences', JSON.stringify(this.mindDumpPreferences));
-        
-        // Update active words
-        this.activeMindDumpWords = this.mindDumpWords.filter(word => this.mindDumpPreferences[word]);
-        
-        const enabledCount = this.activeMindDumpWords.length;
-        toast.success(`Configuratie opgeslagen! ${enabledCount} woorden geselecteerd.`);
-        
-        this.closeMindDumpConfig();
+    async saveMindDumpConfig() {
+        try {
+            // Save preferences to database per user
+            const response = await fetch('/api/mind-dump/preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    preferences: this.mindDumpPreferences,
+                    customWords: this.mindDumpWords // Include custom words
+                })
+            });
+
+            if (response.ok) {
+                // Update active words
+                this.activeMindDumpWords = this.mindDumpWords.filter(word => this.mindDumpPreferences[word]);
+                
+                const enabledCount = this.activeMindDumpWords.length;
+                toast.success(`Configuratie opgeslagen! ${enabledCount} woorden geselecteerd.`);
+                
+                this.closeMindDumpConfig();
+            } else {
+                toast.error('Fout bij opslaan configuratie.');
+            }
+        } catch (error) {
+            console.error('Error saving mind dump config:', error);
+            toast.error('Fout bij opslaan configuratie.');
+        }
     }
 
     closeMindDumpConfig() {

@@ -130,6 +130,17 @@ const initDatabase = async () => {
       )
     `);
 
+    // Create mind dump preferences table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS mind_dump_preferences (
+        user_id VARCHAR(50) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        preferences JSONB NOT NULL DEFAULT '{}',
+        custom_words JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add position column to existing tables if it doesn't exist
     try {
       await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
