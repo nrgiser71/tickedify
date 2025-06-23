@@ -2507,6 +2507,26 @@ button:focus {
     color: #718096;
 }
 
+.update-toast-changelog {
+    margin-top: 8px;
+}
+
+.changelog-link {
+    color: var(--macos-blue);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+}
+
+.changelog-link:hover {
+    color: var(--macos-blue-hover);
+    text-decoration: underline;
+}
+
 .update-toast-actions {
     display: flex;
     gap: 8px;

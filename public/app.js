@@ -6370,6 +6370,9 @@ class UpdateManager {
                 <div class="update-toast-text">
                     <div class="update-toast-title">Nieuwe versie beschikbaar</div>
                     <div class="update-toast-subtitle">v${this.newVersion} is klaar om te laden</div>
+                    <div class="update-toast-changelog">
+                        <a href="/changelog.html" target="_blank" class="changelog-link">📋 Bekijk wat er nieuw is</a>
+                    </div>
                 </div>
                 <div class="update-toast-actions">
                     <button class="update-btn-refresh" onclick="updateManager.refreshApp()">Nu verversen</button>
