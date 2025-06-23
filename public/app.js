@@ -5175,7 +5175,8 @@ class Taakbeheer {
                         
                         // Use local planningActies array which has been updated
                         actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
-                        this.bindPlanningEventListeners();
+                        // Re-bind drag and drop events for the updated actions list
+                        this.bindDragAndDropEvents();
                         console.log('✅ Daily planning actions list updated with local data');
                     } else {
                         console.log('🔄 Actions container not found, falling back to full re-render...');
