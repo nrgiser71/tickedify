@@ -5141,11 +5141,38 @@ class Taakbeheer {
                 return;
             }
             
-            console.log('📝 Found task:', { id: taak.id, tekst: taak.tekst, afgewerkt: taak.afgewerkt });
+            console.log('📝 Found task:', { id: taak.id, tekst: taak.tekst, afgewerkt: taak.afgewerkt, herhalingActief: taak.herhalingActief, herhalingType: taak.herhalingType });
+            
+            // Check if this is a recurring task
+            const isRecurring = taak.herhalingActief && taak.herhalingType;
+            console.log('🔄 Is recurring task:', isRecurring);
             
             // Mark task as completed with current timestamp
             taak.afgewerkt = new Date().toISOString();
             console.log('⏰ Marked task as completed at:', taak.afgewerkt);
+            
+            // Handle recurring tasks - create next instance BEFORE marking as completed
+            let nextRecurringTaskId = null;
+            if (isRecurring) {
+                console.log('🔁 Creating next recurring task...');
+                if (taak.herhalingType.startsWith('event-')) {
+                    // Handle event-based recurrence - ask for next event date
+                    const nextEventDate = await this.askForNextEventDate(taak);
+                    if (nextEventDate) {
+                        const nextTaskDate = this.calculateEventBasedDate(nextEventDate, taak.herhalingType);
+                        if (nextTaskDate) {
+                            nextRecurringTaskId = await this.createNextRecurringTask(taak, nextTaskDate);
+                            console.log('✨ Event-based recurring task created:', nextRecurringTaskId);
+                        }
+                    }
+                } else {
+                    const nextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
+                    if (nextDate) {
+                        nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
+                        console.log('✨ Recurring task created:', nextRecurringTaskId);
+                    }
+                }
+            }
             
             // Mark task as completed using existing completion workflow
             console.log('🚀 Calling verplaatsTaakNaarAfgewerkt...');
@@ -5228,7 +5255,36 @@ class Taakbeheer {
                 const taskDisplay = projectNaam !== 'Geen project' ? `${taak.tekst} (${projectNaam})` : taak.tekst;
                 
                 // Handle recurring tasks
-                if (taak.herhalingActief && taak.herhalingType) {
+                if (isRecurring && nextRecurringTaskId) {
+                    const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
+                    toast.success(`${taskDisplay} afgerond! Volgende herhaling gepland voor ${nextDateFormatted}`);
+                    
+                    // Refresh all data to show the new recurring task
+                    console.log('🔄 Refreshing all data after recurring task creation...');
+                    await this.laadTellingen();
+                    
+                    // For daily planning, refresh the actions list to show the new task
+                    if (this.huidigeLijst === 'dagelijkse-planning') {
+                        console.log('📋 Refreshing actions list to show new recurring task...');
+                        // Re-fetch actions from API to get the new recurring task
+                        const actiesResponse = await fetch('/api/lijst/acties');
+                        if (actiesResponse.ok) {
+                            const refreshedActies = await actiesResponse.json();
+                            this.planningActies = this.filterTakenOpDatum(refreshedActies, true);
+                            console.log('✅ Planning actions refreshed with new recurring task');
+                            
+                            // Update the actions list display
+                            const actiesContainer = document.getElementById('planningActiesLijst');
+                            if (actiesContainer) {
+                                const today = new Date().toISOString().split('T')[0];
+                                const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
+                                const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
+                                actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies, ingeplandeActies);
+                                this.bindDragAndDropEvents();
+                            }
+                        }
+                    }
+                } else if (taak.herhalingActief && taak.herhalingType) {
                     toast.success(`${taskDisplay} afgerond! Volgende herhaling wordt gepland.`);
                 } else {
                     toast.success(`${taskDisplay} afgerond!`);
