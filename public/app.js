@@ -624,9 +624,17 @@ class Taakbeheer {
             }
         });
 
-        // Weekday checkboxes
+        // Weekday checkboxes - only one can be selected at a time
         document.querySelectorAll('.weekdag-checkboxes input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    // Uncheck all other weekday checkboxes
+                    document.querySelectorAll('.weekdag-checkboxes input[type="checkbox"]').forEach(otherBox => {
+                        if (otherBox !== e.target) {
+                            otherBox.checked = false;
+                        }
+                    });
+                }
                 this.updateHerhalingValue();
             });
         });
