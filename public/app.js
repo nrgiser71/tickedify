@@ -5113,17 +5113,21 @@ class Taakbeheer {
     }
 
     async completePlanningTask(actieId, checkboxElement) {
+        console.log('🎯 completePlanningTask called with actieId:', actieId);
         try {
             // Find the task in planning actions array first, then fall back to main tasks
             let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
+            console.log('📋 Local task found:', taak ? 'Yes' : 'No');
             
             if (!taak) {
+                console.log('🔍 Task not found locally, fetching from API...');
                 // If not found locally, fetch from API
                 try {
                     const actiesResponse = await fetch('/api/lijst/acties');
                     if (actiesResponse.ok) {
                         const acties = await actiesResponse.json();
                         taak = acties.find(t => t.id === actieId);
+                        console.log('🌐 Task found via API:', taak ? 'Yes' : 'No');
                     }
                 } catch (error) {
                     console.error('Error fetching task from API:', error);
@@ -5131,33 +5135,52 @@ class Taakbeheer {
             }
             
             if (!taak) {
+                console.error('❌ Task not found anywhere:', actieId);
                 toast.error('Taak niet gevonden');
                 checkboxElement.checked = false;
                 return;
             }
             
+            console.log('📝 Found task:', { id: taak.id, tekst: taak.tekst, afgewerkt: taak.afgewerkt });
+            
+            // Mark task as completed with current timestamp
+            taak.afgewerkt = new Date().toISOString();
+            console.log('⏰ Marked task as completed at:', taak.afgewerkt);
+            
             // Mark task as completed using existing completion workflow
+            console.log('🚀 Calling verplaatsTaakNaarAfgewerkt...');
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
+            console.log('✅ verplaatsTaakNaarAfgewerkt result:', success);
             if (success) {
+                console.log('🎉 Task successfully marked as completed in database');
+                
                 // Remove task from both arrays if present
+                console.log('🗑️ Removing task from local arrays...');
                 this.taken = this.taken.filter(t => t.id !== actieId);
                 if (this.planningActies) {
                     this.planningActies = this.planningActies.filter(t => t.id !== actieId);
                 }
+                console.log('📊 Arrays updated, current list type:', this.huidigeLijst);
                 
                 // Refresh the daily planning view to update the actions list
                 if (this.huidigeLijst === 'dagelijkse-planning') {
+                    console.log('🔄 Re-rendering daily planning view...');
                     // For daily planning, re-render the daily planning view
                     const mainContainer = document.querySelector('.main-content');
                     if (mainContainer) {
                         await this.renderDagelijksePlanning(mainContainer);
+                        console.log('✅ Daily planning view re-rendered');
+                    } else {
+                        console.error('❌ Main container not found for daily planning');
                     }
                 } else {
+                    console.log('🔄 Re-rendering normal view...');
                     // For other views, use normal renderTaken
                     await this.preservePlanningFilters(() => this.renderTaken());
                 }
                 this.updateTotaalTijd(); // Update total time
                 await this.laadTellingen();
+                console.log('📈 Tellingen updated');
                 
                 // Show success message with task name
                 const projectNaam = this.getProjectNaam(taak.projectId);
