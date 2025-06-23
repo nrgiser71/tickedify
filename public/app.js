@@ -4753,6 +4753,16 @@ class Taakbeheer {
         const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
         
         container.innerHTML = `
+            <!-- Mobile header met hamburger menu -->
+            <header class="main-header">
+                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h1>Dagelijkse Planning</h1>
+            </header>
+            
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
@@ -4940,6 +4950,9 @@ class Taakbeheer {
     }
 
     bindDagelijksePlanningEvents() {
+        // Initialize mobile sidebar if needed  
+        this.initializeMobileSidebar();
+        
         // Time range change handlers
         const startUurInput = document.getElementById('startUur');
         const eindUurInput = document.getElementById('eindUur');

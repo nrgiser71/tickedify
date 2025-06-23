@@ -1629,8 +1629,8 @@ button:focus {
 .dagelijkse-planning-layout {
     display: flex;
     gap: 20px;
-    height: calc(100vh - 60px); /* Full viewport height minus small offset */
-    margin: -24px -32px;
+    height: calc(100vh - 140px); /* Full viewport height minus header and offset */
+    margin: 0 -32px -24px -32px; /* No top margin to make space for header */
     padding: 16px 16px 0 16px; /* Remove bottom padding to eliminate gap */
 }
 
