@@ -4673,7 +4673,10 @@ class Taakbeheer {
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="mind-dump" class="optimalisatie-checkbox">
                             <label for="mind-dump">Doe een mind dump</label>
-                            <button class="actie-knop" onclick="app.startMindDump()">Start</button>
+                            <div class="mind-dump-buttons">
+                                <button class="actie-knop" onclick="app.startMindDump()">Start</button>
+                                <button class="actie-knop secondary" onclick="app.configureMindDump()">Config</button>
+                            </div>
                         </div>
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="bekijk-acties" class="optimalisatie-checkbox">
@@ -4772,8 +4775,148 @@ class Taakbeheer {
     }
 
     startMindDump() {
-        // Placeholder for mind dump functionality
-        toast.info('Mind dump functionaliteit komt binnenkort!');
+        // Create and show mind dump modal
+        this.showMindDumpModal();
+    }
+
+    showMindDumpModal() {
+        // Create modal overlay
+        const modal = document.createElement('div');
+        modal.className = 'mind-dump-modal';
+        modal.innerHTML = `
+            <div class="mind-dump-container">
+                <button class="mind-dump-close" onclick="app.closeMindDump()">×</button>
+                
+                <div class="mind-dump-content">
+                    <h1 id="mind-dump-word" class="mind-dump-word">Loading...</h1>
+                    
+                    <div class="mind-dump-input-section">
+                        <input type="text" 
+                               id="mind-dump-input" 
+                               class="mind-dump-input" 
+                               placeholder="Type hier je gedachte..."
+                               autocomplete="off">
+                        <button class="mind-dump-add-btn" onclick="app.addMindDumpItem()">
+                            Toevoegen (Enter)
+                        </button>
+                    </div>
+                    
+                    <button class="mind-dump-next-btn" onclick="app.nextMindDumpWord()">
+                        Volgende Woord →
+                    </button>
+                </div>
+                
+                <div class="mind-dump-progress">
+                    <div class="progress-info">
+                        <span id="current-word-index">1</span> / <span id="total-words">10</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="mind-dump-progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Initialize mind dump
+        this.initializeMindDump();
+    }
+
+    async initializeMindDump() {
+        // Load user's word preferences
+        await this.loadMindDumpWords();
+        
+        // Start with first word
+        this.currentWordIndex = 0;
+        this.showCurrentWord();
+        
+        // Focus on input
+        document.getElementById('mind-dump-input').focus();
+        
+        // Add enter key listener
+        document.getElementById('mind-dump-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.addMindDumpItem();
+            }
+        });
+    }
+
+    async loadMindDumpWords() {
+        // Default words - will be replaced with user preferences
+        this.mindDumpWords = [
+            'Familie', 'Werk', 'Gezondheid', 'Financiën', 'Huis',
+            'Auto', 'Hobby', 'Vrienden', 'Projecten', 'Toekomst'
+        ];
+        
+        // TODO: Load user preferences from database
+        
+        // Filter only enabled words
+        this.activeMindDumpWords = this.mindDumpWords; // TODO: filter based on user settings
+    }
+
+    showCurrentWord() {
+        if (this.currentWordIndex >= this.activeMindDumpWords.length) {
+            this.completeMindDump();
+            return;
+        }
+        
+        const word = this.activeMindDumpWords[this.currentWordIndex];
+        document.getElementById('mind-dump-word').textContent = word;
+        
+        // Update progress
+        document.getElementById('current-word-index').textContent = this.currentWordIndex + 1;
+        document.getElementById('total-words').textContent = this.activeMindDumpWords.length;
+        
+        const progressPercent = ((this.currentWordIndex + 1) / this.activeMindDumpWords.length) * 100;
+        document.getElementById('mind-dump-progress-fill').style.width = `${progressPercent}%`;
+        
+        // Clear and focus input
+        const input = document.getElementById('mind-dump-input');
+        input.value = '';
+        input.focus();
+    }
+
+    async addMindDumpItem() {
+        const input = document.getElementById('mind-dump-input');
+        const text = input.value.trim();
+        
+        if (text) {
+            // Add to inbox
+            const currentWord = this.activeMindDumpWords[this.currentWordIndex];
+            const taakText = `${text} (Mind dump: ${currentWord})`;
+            
+            // Create task in inbox
+            await this.voegTaakToe(taakText, 'inbox');
+            
+            // Clear input and refocus
+            input.value = '';
+            input.focus();
+            
+            toast.success('Toegevoegd aan inbox!');
+        }
+    }
+
+    nextMindDumpWord() {
+        this.currentWordIndex++;
+        this.showCurrentWord();
+    }
+
+    completeMindDump() {
+        toast.success('Mind dump voltooid!');
+        this.closeMindDump();
+    }
+
+    closeMindDump() {
+        const modal = document.querySelector('.mind-dump-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    configureMindDump() {
+        // TODO: Show configuration modal
+        toast.info('Configuratie komt zo!');
     }
 
     async voegContextToe() {
