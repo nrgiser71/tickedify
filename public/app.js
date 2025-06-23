@@ -3766,19 +3766,29 @@ class Taakbeheer {
         if (takenLijst) {
             container = takenLijst.parentNode;
         } else {
-            // If takenLijst doesn't exist, find the content area
-            const contentArea = document.querySelector('.content-area');
-            if (contentArea) {
-                container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
-                if (!container) {
-                    // Create a new container if none exists
-                    container = document.createElement('div');
-                    container.className = 'taken-container';
-                    contentArea.appendChild(container);
-                }
+            // If takenLijst doesn't exist, we might be in daily planning mode
+            // First try to restore normal container structure
+            this.restoreNormalContainer();
+            
+            // Try again to find takenLijst after restoration
+            const restoredTakenLijst = document.getElementById('takenLijst');
+            if (restoredTakenLijst) {
+                container = restoredTakenLijst.parentNode;
             } else {
-                console.error('Could not find content area for global search');
-                return;
+                // If still no luck, find the content area
+                const contentArea = document.querySelector('.content-area');
+                if (contentArea) {
+                    container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout, .global-search');
+                    if (!container) {
+                        // Create a new container if none exists
+                        container = document.createElement('div');
+                        container.className = 'taken-container';
+                        contentArea.appendChild(container);
+                    }
+                } else {
+                    console.error('Could not find content area for global search');
+                    return;
+                }
             }
         }
         
@@ -4262,10 +4272,16 @@ class Taakbeheer {
         }
 
         // Update page title
-        document.getElementById('page-title').textContent = 'Contexten Beheer';
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = 'Contexten Beheer';
+        }
 
         // Hide input container
-        document.getElementById('taak-input-container').style.display = 'none';
+        const inputContainer = document.getElementById('taak-input-container');
+        if (inputContainer) {
+            inputContainer.style.display = 'none';
+        }
 
         // Set current list and save it
         this.huidigeLijst = 'contextenbeheer';
@@ -4350,14 +4366,29 @@ class Taakbeheer {
         if (takenLijst) {
             container = takenLijst.parentNode;
         } else {
-            // If takenLijst doesn't exist, find the content area
-            const contentArea = document.querySelector('.content-area');
-            container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout');
-            if (!container) {
-                // Create a new container if none exists
-                container = document.createElement('div');
-                container.className = 'taken-container';
-                contentArea.appendChild(container);
+            // If takenLijst doesn't exist, we might be in daily planning mode
+            // First try to restore normal container structure
+            this.restoreNormalContainer();
+            
+            // Try again to find takenLijst after restoration
+            const restoredTakenLijst = document.getElementById('takenLijst');
+            if (restoredTakenLijst) {
+                container = restoredTakenLijst.parentNode;
+            } else {
+                // If still no luck, find the content area
+                const contentArea = document.querySelector('.content-area');
+                if (contentArea) {
+                    container = contentArea.querySelector('.taken-container, .contexten-beheer, .dagelijkse-planning-layout');
+                    if (!container) {
+                        // Create a new container if none exists
+                        container = document.createElement('div');
+                        container.className = 'taken-container';
+                        contentArea.appendChild(container);
+                    }
+                } else {
+                    console.error('Could not find content area for contexten beheer');
+                    return;
+                }
             }
         }
         
