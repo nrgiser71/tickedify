@@ -622,6 +622,7 @@ const db = {
         FROM dagelijkse_planning dp
         LEFT JOIN taken t ON dp.actie_id = t.id
         WHERE dp.datum = $1 AND dp.user_id = $2
+        AND (dp.actie_id IS NULL OR t.afgewerkt IS NULL)
         ORDER BY dp.uur ASC, dp.positie ASC, dp.aangemaakt ASC
       `, [datum, userId]);
       
