@@ -5184,13 +5184,15 @@ class Taakbeheer {
                 .then(response => response.ok ? response.json() : [])
                 .then(ingeplandeActies => {
                     actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
-                    this.scheduleEventRebind();
+                    // Bind events only for the new actions in the list
+                    this.bindActionsListEvents();
                 })
                 .catch(error => {
                     console.error('Error updating actions list:', error);
                     // Fallback: simple filter without ingeplande check
                     actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, []);
-                    this.scheduleEventRebind();
+                    // Bind events only for the new actions in the list
+                    this.bindActionsListEvents();
                 });
         }
     }
@@ -5241,6 +5243,49 @@ class Taakbeheer {
         });
         
         console.log('🧹 DEBUG: Event listeners removed via element cloning');
+    }
+    
+    bindActionsListEvents() {
+        console.log('🎯 DEBUG: Binding only actions list drag events');
+        
+        // Only bind drag events for action items in the planning actions list
+        document.querySelectorAll('#planningActiesLijst [data-actie-id]').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'actie',
+                    actieId: item.dataset.actieId,
+                    duurMinuten: parseInt(item.dataset.duur) || 30
+                }));
+                
+                // Make item transparent during drag
+                item.style.opacity = '0.02';
+                
+                // Create semi-transparent drag image
+                const dragImage = document.createElement('div');
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.width = '100px';
+                dragImage.style.height = '40px';
+                dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
+                dragImage.style.borderRadius = '6px';
+                dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;">📋</div>';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 50, 20);
+                
+                // Clean up after drag
+                setTimeout(() => {
+                    if (dragImage.parentNode) {
+                        document.body.removeChild(dragImage);
+                    }
+                }, 100);
+            });
+            
+            item.addEventListener('dragend', (e) => {
+                // Restore opacity
+                item.style.opacity = '1';
+            });
+        });
     }
 
     async handlePlanningReorder(data, targetUur, targetPosition) {
