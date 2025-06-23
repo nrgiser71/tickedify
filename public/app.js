@@ -2853,7 +2853,11 @@ class Taakbeheer {
 
     // Recurring task calculation logic
     calculateNextRecurringDate(baseDate, herhalingType) {
-        const date = new Date(baseDate);
+        let date = new Date(baseDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time for date comparison
+        
+        console.log('🔄 calculateNextRecurringDate:', { baseDate, herhalingType, today: today.toISOString().split('T')[0] });
         
         switch (herhalingType) {
             case 'dagelijks':
@@ -3141,7 +3145,33 @@ class Taakbeheer {
                 return null;
         }
         
-        return date.toISOString().split('T')[0];
+        // Ensure the calculated date is in the future
+        // If the calculated date is still in the past, keep calculating until we get a future date
+        let calculatedDate = date.toISOString().split('T')[0];
+        let iterations = 0;
+        const maxIterations = 100; // Prevent infinite loops
+        
+        while (new Date(calculatedDate) <= today && iterations < maxIterations) {
+            console.log(`🔄 Date ${calculatedDate} is in past, calculating next occurrence...`);
+            iterations++;
+            
+            // Recalculate from the current calculated date
+            const nextCalculation = this.calculateNextRecurringDate(calculatedDate, herhalingType);
+            if (!nextCalculation || nextCalculation === calculatedDate) {
+                // Prevent infinite recursion or no progress
+                console.log('⚠️ Could not calculate future date, breaking loop');
+                break;
+            }
+            calculatedDate = nextCalculation;
+        }
+        
+        if (iterations >= maxIterations) {
+            console.error('❌ Max iterations reached in recurring date calculation');
+            return null;
+        }
+        
+        console.log(`✅ Final calculated date: ${calculatedDate} (after ${iterations} iterations)`);
+        return calculatedDate;
     }
 
     getNextWeekday(date, targetDay) {
