@@ -4960,7 +4960,11 @@ class Taakbeheer {
         }
     }
 
-    configureMindDump() {
+    async configureMindDump() {
+        // Ensure words are loaded first
+        if (!this.mindDumpWords) {
+            await this.loadMindDumpWords();
+        }
         this.showMindDumpConfigModal();
     }
 
