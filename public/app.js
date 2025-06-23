@@ -5193,7 +5193,7 @@ class Taakbeheer {
                         console.log('🔍 Planning items for completed task:', updatedPlanning.filter(p => p.actieId === actieId));
                         
                         // Re-render calendar section with filtered data
-                        const kalenderContainer = document.querySelector('.kalender-container');
+                        const kalenderContainer = document.getElementById('kalenderGrid');
                         console.log('🎯 Kalender container found:', !!kalenderContainer);
                         
                         if (kalenderContainer) {
