@@ -172,7 +172,7 @@
                     <span class="change-icon">📋</span>
                     <div class="change-content">
                         <div class="change-title">Changelog systeem geïmplementeerd</div>
-                        <div class="change-description">Mooie changelog pagina met emoji's en versie notificaties bevatten nu link naar "Bekijk wat er nieuw is".</div>
+                        <div class="change-description">Nieuwe changelog pagina met macOS styling en emoji's. Versie notificaties bevatten nu "📋 Bekijk wat er nieuw is" link naar changelog.</div>
                     </div>
                 </li>
             </ul>
@@ -221,85 +221,135 @@
             </ul>
         </div>
 
-        <!-- Version 0.5.25 - 0.5.48 Summary -->
+        <!-- Email Import System (v0.5.23-0.5.48) -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-number">v0.5.25 - v0.5.48</span>
-                <span class="version-date">Juni 2025</span>
-                <span class="version-badge badge-feature">Grote Update</span>
+                <span class="version-number">v0.5.23 - v0.5.48</span>
+                <span class="version-date">22 juni 2025</span>
+                <span class="version-badge badge-feature">Email Import</span>
             </div>
             <ul class="change-list">
                 <li class="change-item feature">
                     <span class="change-icon">📧</span>
                     <div class="change-content">
                         <div class="change-title">Volledig Email Import Systeem</div>
-                        <div class="change-description">Multi-user email-to-task systeem met unieke import codes, plus-addressing, en automatische project/context parsing.</div>
+                        <div class="change-description">Multi-user email-to-task systeem met unieke import codes (import+[code]@tickedify.com), plus-addressing routing, en automatische project/context parsing uit email subject/body.</div>
                     </div>
                 </li>
                 <li class="change-item feature">
                     <span class="change-icon">📝</span>
                     <div class="change-content">
                         <div class="change-title">Opmerkingen veld toegevoegd</div>
-                        <div class="change-description">Alle taken kunnen nu aanvullende opmerkingen bevatten. Volledig geïntegreerd in email import workflow.</div>
+                        <div class="change-description">Alle taken kunnen nu aanvullende opmerkingen bevatten. Email body wordt automatisch geconverteerd naar opmerkingen na filtering van structured data.</div>
                     </div>
                 </li>
                 <li class="change-item improvement">
-                    <span class="change-icon">🎯</span>
+                    <span class="change-icon">🎨</span>
                     <div class="change-content">
-                        <div class="change-title">Performance optimalisaties</div>
-                        <div class="change-description">Snellere drag & drop in dagelijkse planning, betere loading indicators, en geoptimaliseerde database queries.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Herhalende taken verbeteringen</div>
-                        <div class="change-description">Complexe herhalingspatronen zoals "2de woensdag van de maand" en werkdag patronen volledig werkend.</div>
+                        <div class="change-title">UI integratie email import</div>
+                        <div class="change-description">Import email zichtbaar in header met mailto link, copy-to-clipboard functionaliteit, en responsive macOS styling.</div>
                     </div>
                 </li>
             </ul>
         </div>
 
-        <!-- Version 0.5.x Early Series -->
+        <!-- Perfect Layout Achievement (v0.4.38-0.4.55) -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-number">v0.5.1 - v0.5.24</span>
-                <span class="version-date">Juni 2025</span>
-                <span class="version-badge badge-feature">UI Overhaul</span>
+                <span class="version-number">v0.4.38 - v0.4.55</span>
+                <span class="version-date">21 juni 2025</span>
+                <span class="version-badge badge-feature">Layout Overhaul</span>
+            </div>
+            <ul class="change-list">
+                <li class="change-item feature">
+                    <span class="change-icon">🎯</span>
+                    <div class="change-content">
+                        <div class="change-title">CSS Debugger Tool geïmplementeerd</div>
+                        <div class="change-description">Interactieve CSS debugger met sliders voor real-time layout adjustments. Global function window.showCSSDebugger() voor development.</div>
+                    </div>
+                </li>
+                <li class="change-item improvement">
+                    <span class="change-icon">🎨</span>
+                    <div class="change-content">
+                        <div class="change-title">Complete planning sidebar rebuild</div>
+                        <div class="change-description">Pixel-perfect layout bereikt: 550px breedte, calc(100vh - 60px) hoogte, vaste secties voor tijd/templates, flexibele acties sectie.</div>
+                    </div>
+                </li>
+                <li class="change-item feature">
+                    <span class="change-icon">📊</span>
+                    <div class="change-content">
+                        <div class="change-title">Notion Import Tools</div>
+                        <div class="change-description">Smart CSV Mapper en handmatige import tool. Drag & drop interface, mapping save/load, auto-mapping van Notion kolommen naar Tickedify velden.</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Toast & Loading Systems (Juni 17-18, 2025) -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-number">v0.5.1 - v0.5.22</span>
+                <span class="version-date">17-18 juni 2025</span>
+                <span class="version-badge badge-feature">UX Overhaul</span>
             </div>
             <ul class="change-list">
                 <li class="change-item feature">
                     <span class="change-icon">🍞</span>
                     <div class="change-content">
                         <div class="change-title">Toast Notification Systeem</div>
-                        <div class="change-description">Professionele macOS-stijl notificaties vervangen alle browser alerts. 4 types: success, error, warning, info.</div>
+                        <div class="change-description">Professionele macOS-stijl notificaties vervangen alle browser alerts. 4 types: success, error, warning, info met auto-dismiss en click-to-dismiss.</div>
                     </div>
                 </li>
                 <li class="change-item feature">
                     <span class="change-icon">⏳</span>
                     <div class="change-content">
                         <div class="change-title">Modern Loading Indicators</div>
-                        <div class="change-description">Volledig loading management systeem met spinners, overlays, en progress feedback voor alle operaties.</div>
+                        <div class="change-description">LoadingManager class met global overlays, button states, skeleton loading, en progress bars. Volledig loading management voor alle async operaties.</div>
                     </div>
                 </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🖱️</span>
+                <li class="change-item fix">
+                    <span class="change-icon">🔄</span>
                     <div class="change-content">
-                        <div class="change-title">Verbeterde Drag & Drop Cursors</div>
-                        <div class="change-description">Transparante items tijdens slepen, zichtbare drag cursor met emoji, en hover state feedback.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🎨</span>
-                    <div class="change-content">
-                        <div class="change-title">Perfect Layout Achievement</div>
-                        <div class="change-description">Pixel-perfect sidebar layout (550px) met CSS debugger tool. Complete planning interface rebuild.</div>
+                        <div class="change-title">Herhalende taken critical fixes</div>
+                        <div class="change-description">Werkdag patronen gefixed, database constraints uitgebreid (VARCHAR(50)), 2de/3de/4de weekdag patronen werkend, transaction management verbeterd.</div>
                     </div>
                 </li>
             </ul>
         </div>
 
-        <!-- Legacy Features -->
+        <!-- Recurring Tasks Foundation (Juni 16-17, 2025) -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-number">Juni 16-17, 2025</span>
+                <span class="version-date">16-17 juni 2025</span>
+                <span class="version-badge badge-feature">Recurring Tasks</span>
+            </div>
+            <ul class="change-list">
+                <li class="change-item feature">
+                    <span class="change-icon">🔄</span>
+                    <div class="change-content">
+                        <div class="change-title">Complete herhalingspatronen geïmplementeerd</div>
+                        <div class="change-description">Alle herhalingstypes: daily-N, weekly-interval-day, monthly-day-daynum, monthly-weekday patterns, yearly patterns, en unieke event-based recurrence.</div>
+                    </div>
+                </li>
+                <li class="change-item fix">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Transaction management & error handling</div>
+                        <div class="change-description">Database transaction lifecycle gefixed, proper BEGIN/COMMIT/ROLLBACK, variable scoping bugs opgelost, en immediate verification binnen transactions.</div>
+                    </div>
+                </li>
+                <li class="change-item feature">
+                    <span class="change-icon">🧪</span>
+                    <div class="change-content">
+                        <div class="change-title">Debug endpoints geïmplementeerd</div>
+                        <div class="change-description">Uitgebreide test endpoints: /api/debug/test-recurring/, /api/debug/parse-pattern/, en /api/debug/quick-monthly-test voor pattern validatie.</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Foundation & Core Features -->
         <div class="version-block">
             <div class="version-header">
                 <span class="version-number">v0.1.x - v0.4.x</span>
@@ -308,35 +358,43 @@
             </div>
             <ul class="change-list">
                 <li class="change-item feature">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Uitgebreide Herhalende Taken</div>
-                        <div class="change-description">Alle herhalingspatronen: dagelijks, wekelijks, maandelijks, yearly, en unieke event-based recurrence functionaliteit.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
                     <span class="change-icon">👥</span>
                     <div class="change-content">
-                        <div class="change-title">Multi-User Ondersteuning</div>
-                        <div class="change-description">Volledige gebruikersregistratie, authentication, en geïsoleerde data per gebruiker.</div>
+                        <div class="change-title">Multi-user systeem architectuur</div>
+                        <div class="change-description">Complete gebruikersregistratie, authentication, en geïsoleerde data per gebruiker. Database schema voor meerdere gebruikers.</div>
                     </div>
                 </li>
                 <li class="change-item feature">
                     <span class="change-icon">📅</span>
                     <div class="change-content">
-                        <div class="change-title">Dagelijkse Planning Interface</div>
-                        <div class="change-description">Drag & drop kalender interface voor tijdgebaseerde taakplanning met uurblokken.</div>
+                        <div class="change-title">Dagelijkse planning interface</div>
+                        <div class="change-description">Drag & drop kalender interface voor tijdgebaseerde taakplanning met uurblokken en visual feedback.</div>
                     </div>
                 </li>
                 <li class="change-item feature">
                     <span class="change-icon">📁</span>
                     <div class="change-content">
-                        <div class="change-title">Projecten & Contexten</div>
-                        <div class="change-description">Volledige GTD-gebaseerde organisatie met projecten, contexten, en slimme taakfilterin.</div>
+                        <div class="change-title">Projecten & contexten systeem</div>
+                        <div class="change-description">"Baas Over Je Tijd" methodologie geïmplementeerd met projecten, contexten, inbox processing, en uitgestelde lijsten (wekelijks/maandelijks/etc).</div>
+                    </div>
+                </li>
+                <li class="change-item feature">
+                    <span class="change-icon">🎨</span>
+                    <div class="change-content">
+                        <div class="change-title">macOS design system</div>
+                        <div class="change-description">Complete macOS-geïnspireerde UI met CSS variabelen, consistent kleurgebruik, shadows, en typography. Professional look & feel.</div>
                     </div>
                 </li>
             </ul>
         </div>
     </div>
+
+    <script>
+        // Update changelog automatisch bij nieuwe features
+        window.addChangelogEntry = function(version, date, type, icon, title, description) {
+            console.log('📋 Changelog entry added:', { version, type, title });
+            // Deze functie wordt gebruikt door toekomstige implementaties
+        };
+    </script>
 </body>
 </html>
