@@ -4948,10 +4948,12 @@ class Taakbeheer {
                 
                 // Temporarily switch to inbox for saving
                 const originalList = this.huidigeLijst;
+                const originalTaken = [...this.taken]; // Backup current tasks
+                
                 this.huidigeLijst = 'inbox';
                 
                 // Load inbox tasks first
-                await this.laadLijst('inbox');
+                await this.laadHuidigeLijst();
                 
                 // Add to tasks array
                 this.taken.push(nieuweTaak);
@@ -4959,8 +4961,9 @@ class Taakbeheer {
                 // Save to inbox
                 await this.slaLijstOp();
                 
-                // Restore original list
+                // Restore original list and tasks
                 this.huidigeLijst = originalList;
+                this.taken = originalTaken;
                 
                 // Update counts
                 await this.laadTellingen();
