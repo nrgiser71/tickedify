@@ -2348,7 +2348,7 @@ button:focus {
         margin-bottom: 8px;
     }
     
-    /* Daily planning responsive for tablets */
+    /* Daily planning responsive - only for mobile portrait */
     .dagelijkse-planning-layout {
         flex-direction: column;
         height: auto;
@@ -2371,6 +2371,29 @@ button:focus {
     .planning-acties .acties-lijst {
         max-height: 300px;
         overflow-y: auto;
+    }
+}
+
+/* Tablet landscape - behoud 2-kolommen layout voor dagelijkse planning */
+@media (min-width: 769px) and (max-width: 1200px) and (orientation: landscape) {
+    .dagelijkse-planning-layout {
+        flex-direction: row !important;
+        height: calc(100vh - 140px) !important;
+        gap: 20px !important;
+    }
+    
+    .planning-sidebar {
+        width: 40% !important;
+        height: 100% !important;
+        max-height: none !important;
+        order: 1 !important;
+        flex: none !important;
+    }
+    
+    .dag-kalender {
+        flex: 1 !important;
+        order: 2 !important;
+        height: 100% !important;
     }
 }
 
