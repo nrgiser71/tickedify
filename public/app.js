@@ -4615,7 +4615,39 @@ class Taakbeheer {
     }
 
     async renderWekelijkseOptimalisatie() {
-        const container = document.getElementById('taken-container');
+        // Find the container - similar to renderContextenBeheer
+        let container;
+        const takenLijst = document.getElementById('takenLijst');
+        if (takenLijst) {
+            container = takenLijst.parentNode;
+        } else {
+            // If takenLijst doesn't exist, we might be in daily planning mode
+            // First try to restore normal container structure
+            this.restoreNormalContainer();
+            
+            // Try again to find takenLijst after restoration
+            const restoredTakenLijst = document.getElementById('takenLijst');
+            if (restoredTakenLijst) {
+                container = restoredTakenLijst.parentNode;
+            } else {
+                // If still no luck, find the content area
+                const contentArea = document.querySelector('.content-area');
+                if (contentArea) {
+                    container = contentArea.querySelector('.taken-container');
+                    if (!container) {
+                        // Create container if it doesn't exist
+                        container = document.createElement('div');
+                        container.className = 'taken-container';
+                        contentArea.appendChild(container);
+                    }
+                }
+            }
+        }
+
+        if (!container) {
+            console.error('Could not find container for wekelijkse optimalisatie');
+            return;
+        }
         
         container.innerHTML = `
             <div class="wekelijkse-optimalisatie-container">
