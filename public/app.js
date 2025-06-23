@@ -5146,7 +5146,16 @@ class Taakbeheer {
                 }
                 
                 // Refresh the daily planning view to update the actions list
-                await this.preservePlanningFilters(() => this.renderTaken());
+                if (this.huidigeLijst === 'dagelijkse-planning') {
+                    // For daily planning, re-render the daily planning view
+                    const mainContainer = document.querySelector('.main-content');
+                    if (mainContainer) {
+                        await this.renderDagelijksePlanning(mainContainer);
+                    }
+                } else {
+                    // For other views, use normal renderTaken
+                    await this.preservePlanningFilters(() => this.renderTaken());
+                }
                 this.updateTotaalTijd(); // Update total time
                 await this.laadTellingen();
                 
