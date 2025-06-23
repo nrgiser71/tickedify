@@ -4843,16 +4843,62 @@ class Taakbeheer {
     }
 
     async loadMindDumpWords() {
-        // Default words - will be replaced with user preferences
+        // Complete trigger list from PDF
         this.mindDumpWords = [
-            'Familie', 'Werk', 'Gezondheid', 'Financiën', 'Huis',
-            'Auto', 'Hobby', 'Vrienden', 'Projecten', 'Toekomst'
+            // Professioneel
+            'Projecten: gestart maar niet afgerond', 'Projecten: nog te starten', 'Projecten: nog te beoordelen',
+            'Baas', 'Partners', 'Adviseurs', 'Coaches', 'Collega\'s', 'Ondergeschikten', 'Klanten',
+            'Telefoontjes', 'E-mails', 'Voicemails', 'Brieven', 'Tekstberichten', 'Sociale media',
+            'Rapporten', 'Evaluaties', 'Voorstellen', 'Artikelen', 'Instructies', 'Notulen',
+            'Boeken', 'Tijdschriften', 'Websites', 'Blogs', 'Podcasts',
+            'Cash flow', 'Budgetten', 'Balansposten', 'Prognoses', 'Debiteuren', 'Crediteuren',
+            'Doelstellingen', 'Bedrijfsplannen', 'Marketingplannen', 'Presentaties', 'Vergaderingen', 'Reizen',
+            'Organisatieschema', 'Reorganisatie', 'Nieuwe systemen', 'Leiderschap', 'Cultuur',
+            'Campagnes', 'Materialen', 'Public relations',
+            'Juridische kwesties', 'Verzekeringen', 'Personeelszaken', 'Training',
+            'Werving', 'Ontslag', 'Functioneringsgesprekken', 'Feedback',
+            'Computers', 'Software', 'Databases', 'Kantooruitrusting', 'Archieven',
+            'Potentiële klanten', 'Klantenrelaties', 'Klantenservice',
+            'Komende vergaderingen', 'Te plannen vergaderingen',
+            'Wachten op informatie', 'Gedelegeerde taken', 'Antwoorden', 'Bestellingen',
+            'Workshops', 'Vaardigheden ontwikkelen', 'Carrièremogelijkheden', 'CV',
+            
+            // Persoonlijk  
+            'Persoonlijke projecten gestart', 'Persoonlijke projecten te starten',
+            'Dienstverlening', 'Gemeenschap', 'Vrijwilligerswerk', 'Spirituele organisaties',
+            'Levenspartner', 'Kinderen', 'Ouders', 'Familie', 'Vrienden',
+            'Persoonlijke communicatie', 'Kaarten', 'Bedankjes',
+            'Verjaardagen', 'Vieringen', 'Huwelijken', 'Feestdagen', 'Vakanties', 'Etentjes',
+            'Huishoudelijke apparatuur', 'Telefoons', 'Internet', 'Televisie', 'Archieven thuis',
+            'Ontspanning', 'Muziek', 'Video', 'Plekken bezoeken', 'Fotografie', 'Hobbies', 'Koken',
+            'Rekeningen', 'Banken', 'Investeringen', 'Belasting', 'Budget', 'Hypotheek',
+            'Huisdieren', 'Dierbenodigdheden',
+            'Testament', 'Onroerend goed', 'Juridische zaken persoonlijk',
+            'Reparaties', 'Uitgeleende items', 'Vergoedingen',
+            'Familie activiteiten', 'Kinderen projecten',
+            'Huis reparaties', 'Verbouwing', 'Renovatie', 'Tuin', 'Garage', 'Decoratie', 'Meubels', 'Schoonmaken',
+            'Artsen', 'Tandarts', 'Controles', 'Voeding', 'Beweging',
+            'Cursussen', 'Coaching', 'Creatieve expressie',
+            'Auto', 'Fietsen', 'Onderhoud voertuigen', 'Forens',
+            'Werkkleding', 'Vrijetijdskleding', 'Sportkleding', 'Accessoires',
+            'Winkelen', 'Huishoudelijke artikelen', 'Cadeautjes', 'Levensmiddelen',
+            'Buurt', 'Buren', 'Scholen', 'Maatschappelijke betrokkenheid'
         ];
         
-        // TODO: Load user preferences from database
+        // Load user preferences from localStorage (temporary solution)
+        const savedPreferences = localStorage.getItem('mindDumpPreferences');
+        if (savedPreferences) {
+            this.mindDumpPreferences = JSON.parse(savedPreferences);
+        } else {
+            // Default: all enabled
+            this.mindDumpPreferences = {};
+            this.mindDumpWords.forEach(word => {
+                this.mindDumpPreferences[word] = true;
+            });
+        }
         
         // Filter only enabled words
-        this.activeMindDumpWords = this.mindDumpWords; // TODO: filter based on user settings
+        this.activeMindDumpWords = this.mindDumpWords.filter(word => this.mindDumpPreferences[word]);
     }
 
     showCurrentWord() {
@@ -4915,8 +4961,117 @@ class Taakbeheer {
     }
 
     configureMindDump() {
-        // TODO: Show configuration modal
-        toast.info('Configuratie komt zo!');
+        this.showMindDumpConfigModal();
+    }
+
+    showMindDumpConfigModal() {
+        // Create config modal
+        const modal = document.createElement('div');
+        modal.className = 'mind-dump-config-modal';
+        modal.innerHTML = `
+            <div class="mind-dump-config-container">
+                <button class="mind-dump-close" onclick="app.closeMindDumpConfig()">×</button>
+                
+                <h2>Mind Dump Configuratie</h2>
+                <p>Selecteer welke woorden je wilt gebruiken in je mind dump sessies:</p>
+                
+                <div class="config-actions">
+                    <button class="config-btn" onclick="app.selectAllWords()">Alles selecteren</button>
+                    <button class="config-btn" onclick="app.deselectAllWords()">Alles deselecteren</button>
+                    <button class="config-btn primary" onclick="app.saveMindDumpConfig()">Opslaan</button>
+                </div>
+                
+                <div class="words-grid" id="words-config-grid">
+                    ${this.renderWordsConfig()}
+                </div>
+                
+                <div class="add-word-section">
+                    <h3>Eigen woord toevoegen</h3>
+                    <div class="add-word-form">
+                        <input type="text" id="new-word-input" placeholder="Nieuw trigger woord..." maxlength="50">
+                        <button class="config-btn" onclick="app.addCustomWord()">Toevoegen</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+
+    renderWordsConfig() {
+        return this.mindDumpWords.map(word => {
+            const isEnabled = this.mindDumpPreferences[word];
+            const wordId = word.replace(/[^a-zA-Z0-9]/g, '_');
+            return `
+                <label class="word-checkbox-item">
+                    <input type="checkbox" 
+                           id="word_${wordId}" 
+                           ${isEnabled ? 'checked' : ''} 
+                           onchange="app.toggleWord('${word.replace(/'/g, "\\'")}')">
+                    <span class="word-label">${word}</span>
+                </label>
+            `;
+        }).join('');
+    }
+
+    toggleWord(word) {
+        this.mindDumpPreferences[word] = !this.mindDumpPreferences[word];
+    }
+
+    selectAllWords() {
+        this.mindDumpWords.forEach(word => {
+            this.mindDumpPreferences[word] = true;
+        });
+        this.refreshWordsConfig();
+    }
+
+    deselectAllWords() {
+        this.mindDumpWords.forEach(word => {
+            this.mindDumpPreferences[word] = false;
+        });
+        this.refreshWordsConfig();
+    }
+
+    refreshWordsConfig() {
+        const grid = document.getElementById('words-config-grid');
+        if (grid) {
+            grid.innerHTML = this.renderWordsConfig();
+        }
+    }
+
+    addCustomWord() {
+        const input = document.getElementById('new-word-input');
+        const newWord = input.value.trim();
+        
+        if (newWord && !this.mindDumpWords.includes(newWord)) {
+            this.mindDumpWords.push(newWord);
+            this.mindDumpPreferences[newWord] = true;
+            input.value = '';
+            this.refreshWordsConfig();
+            toast.success(`"${newWord}" toegevoegd!`);
+        } else if (this.mindDumpWords.includes(newWord)) {
+            toast.warning('Dit woord bestaat al!');
+        }
+    }
+
+    saveMindDumpConfig() {
+        // Save preferences to localStorage
+        localStorage.setItem('mindDumpPreferences', JSON.stringify(this.mindDumpPreferences));
+        
+        // Update active words
+        this.activeMindDumpWords = this.mindDumpWords.filter(word => this.mindDumpPreferences[word]);
+        
+        const enabledCount = this.activeMindDumpWords.length;
+        toast.success(`Configuratie opgeslagen! ${enabledCount} woorden geselecteerd.`);
+        
+        this.closeMindDumpConfig();
+    }
+
+    closeMindDumpConfig() {
+        const modal = document.querySelector('.mind-dump-config-modal');
+        if (modal) {
+            modal.remove();
+        }
     }
 
     async voegContextToe() {
