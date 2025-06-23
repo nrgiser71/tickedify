@@ -5160,8 +5160,8 @@ class Taakbeheer {
             }
         }
         
-        // Re-bind drag and drop events for new elements
-        this.bindDragAndDropEvents();
+        // Re-bind drag and drop events for new elements (with throttling)
+        this.scheduleEventRebind();
     }
     
     removeActionFromList(actieId) {
@@ -5184,15 +5184,63 @@ class Taakbeheer {
                 .then(response => response.ok ? response.json() : [])
                 .then(ingeplandeActies => {
                     actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
-                    this.bindDragAndDropEvents();
+                    this.scheduleEventRebind();
                 })
                 .catch(error => {
                     console.error('Error updating actions list:', error);
                     // Fallback: simple filter without ingeplande check
                     actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, []);
-                    this.bindDragAndDropEvents();
+                    this.scheduleEventRebind();
                 });
         }
+    }
+    
+    scheduleEventRebind() {
+        // Throttle event rebinding to prevent duplicates
+        // Clear any existing timeout first
+        if (this.rebindTimeout) {
+            clearTimeout(this.rebindTimeout);
+        }
+        
+        // Schedule a single rebind after a short delay
+        this.rebindTimeout = setTimeout(() => {
+            console.log('🔗 DEBUG: Scheduled rebind executing');
+            this.rebindDragAndDropEventsClean();
+            this.rebindTimeout = null;
+        }, 50); // Small delay to batch multiple rapid calls
+    }
+    
+    rebindDragAndDropEventsClean() {
+        // Remove existing event listeners to prevent duplicates
+        this.removeDragAndDropEventListeners();
+        
+        // Then bind fresh events
+        this.bindDragAndDropEvents();
+    }
+    
+    removeDragAndDropEventListeners() {
+        console.log('🧹 DEBUG: Removing existing drag and drop event listeners');
+        
+        // Clone and replace elements to remove all event listeners
+        const templateItems = document.querySelectorAll('.template-item');
+        templateItems.forEach(item => {
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+        });
+        
+        const actieItems = document.querySelectorAll('[data-actie-id]');
+        actieItems.forEach(item => {
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+        });
+        
+        const dropZones = document.querySelectorAll('.uur-content, .drop-zone');
+        dropZones.forEach(zone => {
+            const newZone = zone.cloneNode(true);
+            zone.parentNode.replaceChild(newZone, zone);
+        });
+        
+        console.log('🧹 DEBUG: Event listeners removed via element cloning');
     }
 
     async handlePlanningReorder(data, targetUur, targetPosition) {
