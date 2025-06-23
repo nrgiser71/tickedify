@@ -326,6 +326,20 @@ body {
     flex-shrink: 0; /* Don't shrink filters */
 }
 
+/* Acties lijst container */
+#acties-lijst {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 320px); /* Account for header, filters, and padding */
+}
+
+.taak-lijst {
+    overflow-y: auto;
+    max-height: calc(100vh - 320px);
+}
+
 /* Compact filters for daily planning */
 .dagelijkse-planning-layout .acties-filters {
     padding: 12px;
