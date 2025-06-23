@@ -4928,12 +4928,40 @@ class Taakbeheer {
         const text = input.value.trim();
         
         if (text) {
+            // Check if user is logged in
+            if (!this.isLoggedIn()) {
+                toast.warning('Log in om taken toe te voegen.');
+                return;
+            }
+            
             // Add to inbox
             const currentWord = this.activeMindDumpWords[this.currentWordIndex];
             const taakText = `${text} (Mind dump: ${currentWord})`;
             
-            // Create task in inbox
-            await this.voegTaakToe(taakText, 'inbox');
+            await loading.withLoading(async () => {
+                // Create task directly
+                const nieuweTaak = {
+                    id: this.generateId(),
+                    tekst: taakText,
+                    aangemaakt: new Date().toISOString()
+                };
+                
+                // Add to tasks array
+                this.taken.push(nieuweTaak);
+                
+                // Save to database/storage
+                await this.slaLijstOp();
+                
+                // Update UI counts if we're on inbox screen
+                if (this.huidigeLijst === 'inbox') {
+                    this.renderTaken();
+                }
+                await this.laadTellingen();
+                
+            }, {
+                operationId: 'add-mind-dump-item',
+                message: 'Toevoegen aan inbox...'
+            });
             
             // Clear input and refocus
             input.value = '';
