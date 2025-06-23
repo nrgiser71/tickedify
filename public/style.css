@@ -332,12 +332,12 @@ body {
     margin: 0;
     padding: 0;
     overflow-y: auto;
-    max-height: calc(100vh - 320px); /* Account for header, filters, and padding */
+    max-height: calc(100vh - 220px); /* Account for header, filters, and padding */
 }
 
 .taak-lijst {
     overflow-y: auto;
-    max-height: calc(100vh - 320px);
+    max-height: calc(100vh - 220px);
 }
 
 /* Compact filters for daily planning */
