@@ -2318,17 +2318,17 @@ button:focus {
     
     .lijst-sectie {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-direction: column;
+        gap: 4px;
     }
     
     .lijst-item {
-        flex: 0 0 auto;
-        min-width: 120px;
-        padding: 8px 12px;
-        text-align: center;
-        border-radius: var(--macos-radius-small);
-        background: var(--macos-bg-primary);
+        flex: none;
+        width: 100%;
+        padding: 8px 20px;
+        text-align: left;
+        border-radius: var(--macos-radius-button);
+        background: transparent;
     }
     
     .lijst-item.actief {
