@@ -5027,6 +5027,12 @@ class Taakbeheer {
             if (response.ok) {
                 // Fast local update instead of full refresh
                 this.updatePlanningLocally(planningItem, await response.json());
+                
+                // Remove task from actions list if it was an action
+                if (data.type === 'actie') {
+                    this.removeActionFromList(data.actieId);
+                }
+                
                 this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item toegevoegd!');
             } else {
@@ -5034,8 +5040,8 @@ class Taakbeheer {
             }
         }, {
             operationId: position !== null ? 'add-planning-position' : 'add-planning',
-            showGlobal: false, // Make it less intrusive
-            message: 'Toevoegen...'
+            showGlobal: true, // Show loading indicator
+            message: 'Item toevoegen...'
         });
     }
 
@@ -5100,6 +5106,37 @@ class Taakbeheer {
         
         // Re-bind drag and drop events for new elements
         this.bindDragAndDropEvents();
+    }
+    
+    removeActionFromList(actieId) {
+        // Remove from local arrays
+        if (this.planningActies) {
+            this.planningActies = this.planningActies.filter(a => a.id !== actieId);
+        }
+        if (this.taken) {
+            this.taken = this.taken.filter(a => a.id !== actieId);
+        }
+        
+        // Update the actions list UI
+        const actiesContainer = document.getElementById('planningActiesLijst');
+        if (actiesContainer) {
+            // Get today's date for ingeplande acties
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Re-render actions list without the removed action
+            fetch(`/api/ingeplande-acties/${today}`)
+                .then(response => response.ok ? response.json() : [])
+                .then(ingeplandeActies => {
+                    actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
+                    this.bindDragAndDropEvents();
+                })
+                .catch(error => {
+                    console.error('Error updating actions list:', error);
+                    // Fallback: simple filter without ingeplande check
+                    actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, []);
+                    this.bindDragAndDropEvents();
+                });
+        }
     }
 
     async handlePlanningReorder(data, targetUur, targetPosition) {
