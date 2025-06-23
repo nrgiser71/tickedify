@@ -1715,10 +1715,15 @@ class Taakbeheer {
         if (this.huidigeLijst === 'acties') {
             this.renderActiesTable(container);
         } else if (this.huidigeLijst === 'dagelijkse-planning') {
-            // For daily planning, use the main content container instead of takenLijst
-            // because renderDagelijksePlanning replaces the entire structure
-            const mainContainer = document.querySelector('.main-content') || container;
-            await this.renderDagelijksePlanning(mainContainer);
+            // Don't call renderDagelijksePlanning if already in daily planning view
+            // This prevents UI flashing when deleting items
+            if (!document.querySelector('.dagelijkse-planning-layout')) {
+                // For daily planning, use the main content container instead of takenLijst
+                // because renderDagelijksePlanning replaces the entire structure
+                const mainContainer = document.querySelector('.main-content') || container;
+                await this.renderDagelijksePlanning(mainContainer);
+            }
+            // If we're already in daily planning, do nothing (items are updated locally)
         } else if (this.huidigeLijst === 'projecten') {
             await this.renderProjectenLijst(container);
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
@@ -4295,13 +4300,18 @@ class Taakbeheer {
                 const header = mainContent.querySelector('.main-header');
                 const headerHTML = header ? header.outerHTML : '<header class="main-header"><h1 id="page-title">Inbox</h1></header>';
                 
+                // Only show input container for inbox
+                const inputContainerHTML = this.huidigeLijst === 'inbox' ? `
+                    <div class="taak-input-container" id="taak-input-container">
+                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                        <button id="toevoegBtn">Toevoegen</button>
+                    </div>
+                ` : '';
+                
                 mainContent.innerHTML = `
                     ${headerHTML}
                     <div class="content-area">
-                        <div class="taak-input-container" id="taak-input-container">
-                            <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
-                            <button id="toevoegBtn">Toevoegen</button>
-                        </div>
+                        ${inputContainerHTML}
                         <div class="taken-container">
                             <ul id="takenLijst"></ul>
                         </div>
@@ -5307,7 +5317,8 @@ class Taakbeheer {
             });
             
             if (response.ok) {
-                await this.preservePlanningFilters(() => this.renderTaken()); // Refresh the view with preserved filters
+                // Remove from local data and update only the affected area
+                this.removePlanningItemLocally(planningId);
                 this.updateTotaalTijd(); // Update total time
                 toast.success('Planning item verwijderd!');
             } else {
@@ -5317,6 +5328,22 @@ class Taakbeheer {
             console.error('Error deleting planning item:', error);
             toast.error('Fout bij verwijderen planning item');
         }
+    }
+    
+    removePlanningItemLocally(planningId) {
+        if (!this.currentPlanningData) return;
+        
+        // Find the item to get its hour before removing
+        const item = this.currentPlanningData.find(p => p.id === planningId);
+        if (!item) return;
+        
+        const affectedHour = item.uur;
+        
+        // Remove from local data
+        this.currentPlanningData = this.currentPlanningData.filter(p => p.id !== planningId);
+        
+        // Update only the affected hour display
+        this.updateSingleHourDisplay(affectedHour);
     }
 
     async completePlanningTask(actieId, checkboxElement) {
