@@ -3470,12 +3470,12 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
 // Debug endpoint for mind dump table
 app.get('/api/debug/mind-dump-table', requireAuth, async (req, res) => {
     try {
-        if (!db) {
-            return res.status(500).json({ error: 'Database not available' });
+        if (!pool) {
+            return res.status(500).json({ error: 'Database pool not available' });
         }
 
         // Check if table exists
-        const tableCheck = await db.query(`
+        const tableCheck = await pool.query(`
             SELECT table_name FROM information_schema.tables 
             WHERE table_schema = 'public' AND table_name = 'mind_dump_preferences'
         `);
@@ -3484,7 +3484,7 @@ app.get('/api/debug/mind-dump-table', requireAuth, async (req, res) => {
         
         let tableData = [];
         if (tableExists) {
-            const dataResult = await db.query('SELECT * FROM mind_dump_preferences LIMIT 5');
+            const dataResult = await pool.query('SELECT * FROM mind_dump_preferences LIMIT 5');
             tableData = dataResult.rows;
         }
 
@@ -3502,15 +3502,26 @@ app.get('/api/debug/mind-dump-table', requireAuth, async (req, res) => {
 // Mind dump preferences endpoints (BEFORE 404 handler!)
 app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
     try {
-        if (!db) {
-            console.error('Mind dump GET: Database not available');
+        if (!pool) {
+            console.error('Mind dump GET: Database pool not available');
             return res.status(500).json({ error: 'Database not available' });
         }
 
         const userId = req.session.user.id;
         console.log('Mind dump GET: Loading preferences for user:', userId);
         
-        const result = await db.query(
+        // First ensure table exists
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS mind_dump_preferences (
+                user_id VARCHAR(50) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                preferences JSONB NOT NULL DEFAULT '{}',
+                custom_words JSONB NOT NULL DEFAULT '[]',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        const result = await pool.query(
             'SELECT preferences, custom_words FROM mind_dump_preferences WHERE user_id = $1',
             [userId]
         );
@@ -3540,15 +3551,26 @@ app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
 
 app.post('/api/mind-dump/preferences', requireAuth, async (req, res) => {
     try {
-        if (!db) {
-            return res.status(500).json({ error: 'Database not available' });
+        if (!pool) {
+            return res.status(500).json({ error: 'Database pool not available' });
         }
 
         const userId = req.session.user.id;
         const { preferences, customWords } = req.body;
 
+        // First ensure table exists
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS mind_dump_preferences (
+                user_id VARCHAR(50) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                preferences JSONB NOT NULL DEFAULT '{}',
+                custom_words JSONB NOT NULL DEFAULT '[]',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Upsert preferences
-        await db.query(`
+        await pool.query(`
             INSERT INTO mind_dump_preferences (user_id, preferences, custom_words, updated_at)
             VALUES ($1, $2, $3, NOW())
             ON CONFLICT (user_id)
