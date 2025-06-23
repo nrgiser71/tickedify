@@ -85,6 +85,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    flex-shrink: 0; /* Prevent sidebar from shrinking unexpectedly */
 }
 
 .sidebar-header {
@@ -2291,6 +2292,23 @@ button:focus {
     .planning-acties .acties-lijst {
         max-height: 300px;
         overflow-y: auto;
+    }
+}
+
+/* Desktop - ensure sidebar always visible */
+@media (min-width: 1025px) {
+    .sidebar {
+        display: flex !important;
+        width: 450px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .app-layout {
+        flex-direction: row !important;
+    }
+    
+    .main-content {
+        flex: 1 !important;
     }
 }
 

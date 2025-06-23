@@ -1623,7 +1623,34 @@ class Taakbeheer {
         }
     }
 
+    ensureSidebarVisible() {
+        const sidebar = document.querySelector('.sidebar');
+        const appLayout = document.querySelector('.app-layout');
+        
+        if (sidebar) {
+            // Reset any inline styles that might hide the sidebar
+            sidebar.style.display = '';
+            sidebar.style.width = '';
+            sidebar.style.visibility = '';
+            console.log('ensureSidebarVisible: sidebar styles reset');
+        }
+        
+        if (appLayout) {
+            // Reset app layout to normal flex direction
+            appLayout.style.flexDirection = '';
+            console.log('ensureSidebarVisible: app layout restored');
+        }
+        
+        // Force a quick reflow to ensure changes take effect
+        if (sidebar) {
+            sidebar.offsetHeight;
+        }
+    }
+
     async laadHuidigeLijst() {
+        // Ensure sidebar is always visible when loading any list
+        this.ensureSidebarVisible();
+        
         // Only load data if user is logged in
         if (!this.isLoggedIn()) {
             this.taken = [];
@@ -4301,6 +4328,20 @@ class Taakbeheer {
 
     restoreNormalContainer() {
         console.log('restoreNormalContainer: starting restoration...');
+        
+        // Ensure sidebar is visible
+        const sidebar = document.querySelector('.sidebar');
+        const appLayout = document.querySelector('.app-layout');
+        if (sidebar) {
+            sidebar.style.display = '';
+            sidebar.style.width = '';
+            console.log('restoreNormalContainer: sidebar visibility restored');
+        }
+        if (appLayout) {
+            appLayout.style.flexDirection = '';
+            console.log('restoreNormalContainer: app layout restored');
+        }
+        
         // Restore the normal taken container structure
         const takenLijst = document.getElementById('takenLijst');
         if (!takenLijst) {

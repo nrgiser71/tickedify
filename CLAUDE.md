@@ -50,8 +50,31 @@
 - `public/style.css` - Changelog styling
 
 **🚀 DEPLOYMENT:**
-- Versie 0.5.52 gedeployed met correcte changelog
+- Versie 0.5.55 gedeployed met correcte changelog en iPad fix
 - Ready voor demo vanavond met werkende changelog systeem
+
+## IPAD RESPONSIVE FIX VOLTOOID (Juni 23, 2025) ✅
+
+**📱 PROBLEEM OPGELOST:**
+- Sidebar niet zichtbaar op iPad bij acties lijst
+- Menu items verdwenen op tablets
+- Dagelijkse planning layout gebroken op tablets
+
+**🔧 RESPONSIVE CSS TOEGEVOEGD:**
+- **@media (max-width: 1024px)** - Tablet breakpoint voor iPad
+- **App layout**: flex-direction column voor tablets
+- **Sidebar**: 100% breedte, max 40vh hoogte met scroll
+- **Menu items**: Horizontale layout met flex-wrap
+- **Dagelijkse planning**: Verticale layout op tablets
+- **Planning sidebar**: 50vh max hoogte met overflow scroll
+
+**✅ RESULTAAT:**
+- iPad en andere tablets tonen nu volledig functionele interface
+- Sidebar en alle menu items zichtbaar en toegankelijk
+- Dagelijkse planning werkt correct op alle schermgroottes
+- Responsive design vanaf desktop (1024px+) tot mobile (768px-)
+
+**VERSIE**: v0.5.54 met iPad responsive fixes gedeployed
 
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
