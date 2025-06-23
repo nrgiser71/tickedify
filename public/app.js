@@ -3810,6 +3810,9 @@ class Taakbeheer {
             case 'notion-import':
                 window.open('/notion-import.html', '_blank');
                 break;
+            case 'wekelijkse-optimalisatie':
+                this.showWekelijkseOptimalisatie();
+                break;
             default:
                 console.log('Unknown tool:', tool);
         }
@@ -4564,6 +4567,67 @@ class Taakbeheer {
                         `).join('')
                     }
                 </div>
+            </div>
+        `;
+    }
+
+    showWekelijkseOptimalisatie() {
+        // Update active list in sidebar - remove all actief classes
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+
+        // Highlight the wekelijkse optimalisatie tool item
+        const wekelijkseItem = document.querySelector('[data-tool="wekelijkse-optimalisatie"]');
+        if (wekelijkseItem) {
+            wekelijkseItem.classList.add('actief');
+        }
+
+        // Ensure tools dropdown is open
+        const toolsContent = document.getElementById('tools-content');
+        const toolsDropdown = document.getElementById('tools-dropdown');
+        if (toolsContent && toolsDropdown) {
+            toolsContent.style.display = 'block';
+            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.textContent = '▼';
+            }
+        }
+
+        // Update page title
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = 'Wekelijkse Optimalisatie';
+        }
+
+        // Hide input container
+        const inputContainer = document.getElementById('taak-input-container');
+        if (inputContainer) {
+            inputContainer.style.display = 'none';
+        }
+
+        // Set current list and save it
+        this.huidigeLijst = 'wekelijkse-optimalisatie';
+        this.saveCurrentList();
+
+        // Show wekelijkse optimalisatie interface
+        this.renderWekelijkseOptimalisatie();
+    }
+
+    async renderWekelijkseOptimalisatie() {
+        const container = document.getElementById('taken-container');
+        
+        // For now, show a placeholder message
+        container.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #666;">
+                <h2>Wekelijkse Optimalisatie</h2>
+                <p>Deze functie wordt binnenkort geïmplementeerd.</p>
+                <p>Hier komt de complete workflow voor:</p>
+                <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
+                    <li>1. OPRUIMEN - Verzamelplaatsen legen</li>
+                    <li>2. ACTUALISEREN - Mind dump met trigger woorden</li>
+                    <li>3. VERBETEREN - Lijsten reviewen</li>
+                </ul>
             </div>
         `;
     }
