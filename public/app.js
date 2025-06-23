@@ -5164,14 +5164,26 @@ class Taakbeheer {
                 
                 // Refresh the daily planning view to update the actions list
                 if (this.huidigeLijst === 'dagelijkse-planning') {
-                    console.log('🔄 Re-rendering daily planning view...');
-                    // For daily planning, re-render the daily planning view
-                    const mainContainer = document.querySelector('.main-content');
-                    if (mainContainer) {
-                        await this.renderDagelijksePlanning(mainContainer);
-                        console.log('✅ Daily planning view re-rendered');
+                    console.log('🔄 Updating daily planning actions list...');
+                    // For daily planning, just refresh the actions list with updated local data
+                    // instead of re-rendering the entire view to avoid race conditions
+                    const actiesContainer = document.getElementById('planningActiesLijst');
+                    if (actiesContainer) {
+                        const today = new Date().toISOString().split('T')[0];
+                        const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
+                        const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
+                        
+                        // Use local planningActies array which has been updated
+                        actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
+                        this.bindPlanningEventListeners();
+                        console.log('✅ Daily planning actions list updated with local data');
                     } else {
-                        console.error('❌ Main container not found for daily planning');
+                        console.log('🔄 Actions container not found, falling back to full re-render...');
+                        // Fallback to full re-render if container not found
+                        const mainContainer = document.querySelector('.main-content');
+                        if (mainContainer) {
+                            await this.renderDagelijksePlanning(mainContainer);
+                        }
                     }
                 } else {
                     console.log('🔄 Re-rendering normal view...');
