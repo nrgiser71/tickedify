@@ -5295,6 +5295,7 @@ class Taakbeheer {
                 // Revert checkbox if completion failed
                 checkboxElement.checked = false;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+            }
             } catch (error) {
                 console.error('Error completing planning task:', error);
                 checkboxElement.checked = false;
