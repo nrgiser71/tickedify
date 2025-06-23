@@ -1647,6 +1647,70 @@ class Taakbeheer {
         }
     }
 
+    // Mobile sidebar toggle functionality
+    initializeMobileSidebar() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        if (!hamburgerMenu || !sidebar || !mainContent || !overlay) {
+            console.log('Mobile sidebar elements not found, skipping initialization');
+            return;
+        }
+
+        const toggleSidebar = () => {
+            const isOpen = sidebar.classList.contains('sidebar-open');
+            
+            if (isOpen) {
+                // Close sidebar
+                sidebar.classList.remove('sidebar-open');
+                mainContent.classList.remove('sidebar-open');
+                overlay.classList.remove('active');
+                hamburgerMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            } else {
+                // Open sidebar
+                sidebar.classList.add('sidebar-open');
+                mainContent.classList.add('sidebar-open');
+                overlay.classList.add('active');
+                hamburgerMenu.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent background scroll
+            }
+        };
+
+        // Hamburger menu click
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+
+        // Overlay click to close
+        overlay.addEventListener('click', () => {
+            if (sidebar.classList.contains('sidebar-open')) {
+                toggleSidebar();
+            }
+        });
+
+        // Close sidebar when clicking on sidebar items (for better UX)
+        sidebar.addEventListener('click', (e) => {
+            if (e.target.closest('.lijst-item') || e.target.closest('[data-tool]')) {
+                // Small delay to allow navigation to complete
+                setTimeout(() => {
+                    if (sidebar.classList.contains('sidebar-open')) {
+                        toggleSidebar();
+                    }
+                }, 100);
+            }
+        });
+
+        // ESC key to close sidebar
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar.classList.contains('sidebar-open')) {
+                toggleSidebar();
+            }
+        });
+
+        console.log('Mobile sidebar initialized');
+    }
+
     async laadHuidigeLijst() {
         // Ensure sidebar is always visible when loading any list
         this.ensureSidebarVisible();
@@ -6495,6 +6559,11 @@ async function loadVersionNumber() {
 const app = new Taakbeheer();
 const auth = new AuthManager();
 const updateManager = new UpdateManager();
+
+// Initialize mobile sidebar after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    app.initializeMobileSidebar();
+});
 
 // Global CSS debugger function
 window.showCSSDebugger = function() {

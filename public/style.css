@@ -267,6 +267,42 @@ body {
 }
 
 /* ===== MAIN CONTENT ===== */
+/* ===== HAMBURGER MENU ===== */
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+    margin-right: 15px;
+}
+
+.hamburger-menu span {
+    width: 100%;
+    height: 3px;
+    background: var(--macos-text-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
 .main-content {
     flex: 1;
     background: var(--macos-bg-primary);
@@ -279,6 +315,8 @@ body {
 .main-header {
     padding: 24px 32px 16px;
     border-bottom: 1px solid var(--macos-gray-5);
+    display: flex;
+    align-items: center;
 }
 
 .main-header h1 {
@@ -2214,18 +2252,59 @@ button:focus {
 
 /* Tablet and iPad responsive */
 @media (max-width: 1024px) {
+    .hamburger-menu {
+        display: flex;
+    }
+    
     .app-layout {
-        flex-direction: column;
+        flex-direction: row; /* Keep row for slide effect */
+        position: relative;
     }
     
     .sidebar {
-        width: 100%;
-        height: auto;
-        min-height: 200px;
-        max-height: 40vh;
-        border-right: none;
-        border-bottom: 1px solid var(--macos-gray-4);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 350px;
+        height: 100vh;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        border-right: 1px solid var(--macos-gray-4);
+        border-bottom: none;
         overflow-y: auto;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        width: 100%;
+        transition: transform 0.3s ease;
+    }
+    
+    .main-content.sidebar-open {
+        transform: translateX(350px);
+    }
+    
+    /* Overlay when sidebar is open */
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
     }
     
     .sidebar-content {

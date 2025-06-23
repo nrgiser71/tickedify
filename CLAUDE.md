@@ -76,6 +76,35 @@
 
 **VERSIE**: v0.5.54 met iPad responsive fixes gedeployed
 
+## SIDEBAR VISIBILITY FIX VOLTOOID (Juni 23, 2025) ✅
+
+**📱 PROBLEEM GERAPPORTEERD:**
+- Sidebar niet zichtbaar bij navigatie naar acties lijst (van andere schermen)
+- Sidebar slechts half breed na refresh op acties pagina
+- Probleem optreedt op zowel iPad als desktop
+
+**🔧 ROOT CAUSE ANALYSIS:**
+- `renderDagelijksePlanning` vervangt main content volledig 
+- `restoreNormalContainer` herstelde main content maar niet sidebar state
+- CSS responsive rules konden sidebar onbedoeld beïnvloeden
+- Inline styles van JavaScript navigatie bleven actief
+
+**✅ COMPLETE FIX GEÏMPLEMENTEERD:**
+- **ensureSidebarVisible()** functie - reset alle inline styles
+- **restoreNormalContainer()** roept sidebar visibility fix aan
+- **laadHuidigeLijst()** controleert altijd sidebar bij lijst laden
+- **CSS flex-shrink: 0** - voorkomt onverwachte sidebar verkleining  
+- **Desktop media query** - sidebar gegarandeerd 450px en zichtbaar
+- **Force reflow** - immediate visual update na style reset
+
+**🎯 OPGELOSTE SCENARIOS:**
+- ✅ Navigatie dagelijkse planning → acties lijst
+- ✅ Direct navigeren naar acties vanaf andere schermen  
+- ✅ Refresh op acties pagina (sidebar nu correct breed)
+- ✅ Alle andere lijst navigaties behouden sidebar
+
+**VERSIE**: v0.5.56 met definitieve sidebar fix gedeployed
+
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
