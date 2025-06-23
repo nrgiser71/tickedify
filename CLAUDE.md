@@ -105,6 +105,39 @@
 
 **VERSIE**: v0.5.56 met definitieve sidebar fix gedeployed
 
+## MOBILE HAMBURGER MENU SYSTEEM GEÏMPLEMENTEERD (Juni 23, 2025) ✅
+
+**📱 FEATURE REQUEST VOLTOOID:**
+User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable kunnen maken? Met een knopje laten weg glijden?"
+
+**✨ COMPLETE HAMBURGER MENU IMPLEMENTATIE:**
+- **Hamburger icon** - 3 lijntjes animeren naar X wanneer open
+- **Slide animatie** - Sidebar slides in/uit vanaf links (translateX)
+- **Overlay systeem** - Semi-transparante overlay over main content
+- **Auto-close logic** - Sluit bij menu item klik of ESC key
+- **Touch optimized** - Perfect voor mobile/tablet gebruik
+
+**🎯 RESPONSIVE BREAKPOINTS:**
+- **Desktop (1025px+)**: Normale sidebar altijd zichtbaar
+- **Tablet/Mobile (<1024px)**: Hamburger menu + slide sidebar
+- **Smooth transitions**: 0.3s ease voor alle animaties
+
+**💻 TECHNISCHE IMPLEMENTATIE:**
+- `initializeMobileSidebar()` functie in app.js
+- CSS transforms en transitions voor smooth beweging
+- Event listeners voor hamburger, overlay, en keyboard
+- Prevent background scroll wanneer sidebar open
+- Auto-cleanup na navigatie voor betere UX
+
+**🎨 UX FEATURES:**
+- ✅ Tap hamburger → sidebar slides in met overlay
+- ✅ Tap menu item → navigeer + auto-close sidebar  
+- ✅ Tap overlay of ESC → close sidebar
+- ✅ Smooth 3-streep → X animatie
+- ✅ Touch-friendly 350px sidebar breedte
+
+**VERSIE**: v0.5.58 met mobile hamburger menu gedeployed
+
 ## Productivity Method
 **Important:** Tickedify is NOT a GTD (Getting Things Done) app. It implements the **"Baas Over Je Tijd"** (Master of Your Time) productivity method - a unique system developed specifically for effective time and task management.
 
