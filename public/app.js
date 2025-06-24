@@ -339,6 +339,7 @@ class Taakbeheer {
         this.touchedFields = new Set(); // Bijhouden welke velden al geïnteracteerd zijn
         this.sortDirection = {}; // Bijhouden van sorteer richting per kolom
         this.toonToekomstigeTaken = this.restoreToekomstToggle(); // Toggle voor toekomstige taken
+        this.autoRefreshInterval = null; // Voor inbox auto-refresh
         this.init();
     }
 
@@ -1735,9 +1736,64 @@ class Taakbeheer {
         console.log('Mobile sidebar initialized');
     }
 
+    handleInboxAutoRefresh() {
+        // Clear existing interval
+        if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+            this.autoRefreshInterval = null;
+        }
+
+        // Only set up auto-refresh for inbox
+        if (this.huidigeLijst === 'inbox') {
+            // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
+            this.autoRefreshInterval = setInterval(() => {
+                console.log('🔄 Auto-refreshing inbox...');
+                this.refreshInbox();
+            }, 15000); // 15 seconds
+        }
+    }
+
+    async refreshInbox() {
+        // Only refresh if we're still on inbox and user is logged in
+        if (this.huidigeLijst !== 'inbox' || !this.isLoggedIn()) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/lijst/inbox');
+            if (response.ok) {
+                const newTaken = await response.json();
+                
+                // Check if data has changed to avoid unnecessary re-renders
+                const hasChanged = JSON.stringify(this.taken) !== JSON.stringify(newTaken);
+                
+                if (hasChanged) {
+                    this.taken = newTaken;
+                    
+                    // Preserve scroll position during refresh
+                    this.preserveScrollPosition(async () => {
+                        await this.renderTaken();
+                    });
+                    
+                    // Update tellingen
+                    await this.laadTellingen();
+                    
+                    console.log('✅ Inbox refreshed - new data detected');
+                } else {
+                    console.log('ℹ️ Inbox refresh - no changes');
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing inbox:', error);
+        }
+    }
+
     async laadHuidigeLijst() {
         // Ensure sidebar is always visible when loading any list
         this.ensureSidebarVisible();
+        
+        // Handle auto-refresh for inbox
+        this.handleInboxAutoRefresh();
         
         // Only load data if user is logged in
         if (!this.isLoggedIn()) {
@@ -7396,6 +7452,13 @@ const updateManager = new UpdateManager();
 // Initialize mobile sidebar after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     app.initializeMobileSidebar();
+});
+
+// Clean up intervals when page unloads
+window.addEventListener('beforeunload', () => {
+    if (app.autoRefreshInterval) {
+        clearInterval(app.autoRefreshInterval);
+    }
 });
 
 // Global CSS debugger function
