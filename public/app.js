@@ -2864,15 +2864,18 @@ class Taakbeheer {
     }
 
     async verplaatsNaarUitgesteld(taakId, lijstNaam) {
-        await loading.withLoading(async () => {
-            const taak = this.taken.find(t => t.id === taakId);
-            if (!taak) return;
+        const taak = this.taken.find(t => t.id === taakId);
+        if (!taak) return;
 
+        await loading.withLoading(async () => {
             await this.verplaatsTaakNaarLijst(taak, lijstNaam);
             
-            // Verwijder uit huidige lijst
-            this.taken = this.taken.filter(t => t.id !== taakId);
-            this.renderActiesLijst();
+            // Sluit menu
+            const menuOverlay = document.querySelector('.acties-menu-overlay');
+            if (menuOverlay) menuOverlay.remove();
+            
+            // Refresh huidige lijst
+            await this.laadHuidigeLijst();
             
             const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
                 .replace('wekelijks', 'Wekelijks')
@@ -2886,24 +2889,21 @@ class Taakbeheer {
             showGlobal: true,
             message: 'Taak wordt verplaatst...'
         });
-
-        // Update tellingen
-        this.laadTellingen();
-        
-        // Sluit menu
-        document.querySelector('.acties-menu-overlay').remove();
     }
 
     async verplaatsNaarOpvolgen(taakId) {
-        await loading.withLoading(async () => {
-            const taak = this.taken.find(t => t.id === taakId);
-            if (!taak) return;
+        const taak = this.taken.find(t => t.id === taakId);
+        if (!taak) return;
 
+        await loading.withLoading(async () => {
             await this.verplaatsTaakNaarLijst(taak, 'opvolgen');
             
-            // Verwijder uit huidige lijst
-            this.taken = this.taken.filter(t => t.id !== taakId);
-            this.renderActiesLijst();
+            // Sluit menu
+            const menuOverlay = document.querySelector('.acties-menu-overlay');
+            if (menuOverlay) menuOverlay.remove();
+            
+            // Refresh huidige lijst
+            await this.laadHuidigeLijst();
             
             toast.success('Taak verplaatst naar Opvolgen');
         }, {
@@ -2911,12 +2911,6 @@ class Taakbeheer {
             showGlobal: true,
             message: 'Taak wordt verplaatst naar Opvolgen...'
         });
-
-        // Update tellingen
-        this.laadTellingen();
-        
-        // Sluit menu
-        document.querySelector('.acties-menu-overlay').remove();
     }
 
     resetPopupForm() {
