@@ -2197,6 +2197,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
+                    <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties">⚡</button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
             `;
@@ -2645,6 +2646,196 @@ class Taakbeheer {
         document.getElementById('planningPopup').style.display = 'none';
         this.huidigeTaakId = null;
         this.resetPopupForm();
+    }
+
+    toonActiesMenu(taakId) {
+        const taak = this.taken.find(t => t.id === taakId);
+        if (!taak) return;
+
+        // Verwijder bestaande menu als die er is
+        const bestaandMenu = document.querySelector('.acties-menu-overlay');
+        if (bestaandMenu) {
+            bestaandMenu.remove();
+        }
+
+        // Bepaal welke weekdagen we moeten tonen
+        const vandaag = new Date();
+        const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
+        const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+        
+        // Genereer de rest van de week dagen
+        let weekdagenHTML = '';
+        // Begin bij overmorgen (i=2) en ga door tot en met zondag
+        // Als het zondag is (weekdag=0), dan is 7-weekdag=7, maar we willen geen dagen na zondag
+        const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
+        
+        for (let i = 2; i <= dagenTotZondag; i++) {
+            const datum = new Date(vandaag);
+            datum.setDate(datum.getDate() + i);
+            const dagNaam = dagenVanDeWeek[datum.getDay()];
+            weekdagenHTML += `<button onclick="app.stelDatumIn('${taakId}', ${i})" class="menu-item">${dagNaam}</button>`;
+        }
+
+        // Maak de menu overlay
+        const menuOverlay = document.createElement('div');
+        menuOverlay.className = 'acties-menu-overlay';
+        menuOverlay.onclick = (e) => {
+            if (e.target === menuOverlay) {
+                menuOverlay.remove();
+            }
+        };
+
+        const menuContent = document.createElement('div');
+        menuContent.className = 'acties-menu-content';
+        menuContent.innerHTML = `
+            <div class="acties-menu">
+                <h3>Plan op</h3>
+                <div class="menu-section">
+                    <button onclick="app.stelDatumIn('${taakId}', 0)" class="menu-item">Vandaag</button>
+                    <button onclick="app.stelDatumIn('${taakId}', 1)" class="menu-item">Morgen</button>
+                    ${weekdagenHTML}
+                </div>
+                
+                <h3>Uitgesteld</h3>
+                <div class="menu-section">
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-wekelijks')" class="menu-item">Wekelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-maandelijks')" class="menu-item">Maandelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-3maandelijks')" class="menu-item">3-maandelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-6maandelijks')" class="menu-item">6-maandelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
+                </div>
+                
+                <div class="menu-section">
+                    <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
+                </div>
+                
+                <button onclick="document.querySelector('.acties-menu-overlay').remove()" class="menu-close">Sluiten</button>
+            </div>
+        `;
+
+        menuOverlay.appendChild(menuContent);
+        document.body.appendChild(menuOverlay);
+    }
+
+    async stelDatumIn(taakId, dagenVoorruit) {
+        const taak = this.taken.find(t => t.id === taakId);
+        if (!taak) return;
+
+        const nieuweDatum = new Date();
+        nieuweDatum.setDate(nieuweDatum.getDate() + dagenVoorruit);
+        
+        // Format datum naar YYYY-MM-DD
+        const jaar = nieuweDatum.getFullYear();
+        const maand = String(nieuweDatum.getMonth() + 1).padStart(2, '0');
+        const dag = String(nieuweDatum.getDate()).padStart(2, '0');
+        const datumString = `${jaar}-${maand}-${dag}`;
+
+        await loading.withLoading(async () => {
+            // Update de taak met nieuwe datum
+            const updateData = {
+                lijst: this.huidigeLijst,
+                tekst: taak.tekst,
+                projectId: taak.projectId,
+                contextId: taak.contextId,
+                verschijndatum: datumString,
+                duur: taak.duur,
+                opmerkingen: taak.opmerkingen,
+                type: taak.type
+            };
+
+            // Voeg herhaling velden toe als ze bestaan
+            if (taak.herhalingType !== undefined) {
+                updateData.herhalingType = taak.herhalingType;
+            }
+            if (taak.herhalingActief !== undefined) {
+                updateData.herhalingActief = taak.herhalingActief;
+            }
+
+            const response = await fetch(`/api/taak/${taakId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (response.ok) {
+                // Update lokale taak
+                taak.verschijndatum = datumString;
+                
+                // Herlaad de lijst om de update te tonen
+                await this.laadHuidigeLijst();
+                
+                const dagNaam = dagenVoorruit === 0 ? 'vandaag' : 
+                               dagenVoorruit === 1 ? 'morgen' : 
+                               `${nieuweDatum.toLocaleDateString('nl-NL', { weekday: 'long' })} ${nieuweDatum.toLocaleDateString('nl-NL')}`;
+                
+                toast.success(`Taak gepland voor ${dagNaam}`);
+            } else {
+                toast.error('Fout bij updaten van datum');
+            }
+        }, {
+            operationId: 'update-datum',
+            showGlobal: true,
+            message: 'Datum wordt bijgewerkt...'
+        });
+
+        // Sluit menu
+        document.querySelector('.acties-menu-overlay').remove();
+    }
+
+    async verplaatsNaarUitgesteld(taakId, lijstNaam) {
+        await loading.withLoading(async () => {
+            const taak = this.taken.find(t => t.id === taakId);
+            if (!taak) return;
+
+            await this.verplaatsTaakNaarLijst(taak, lijstNaam);
+            
+            // Verwijder uit huidige lijst
+            this.taken = this.taken.filter(t => t.id !== taakId);
+            this.renderActiesLijst();
+            
+            const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
+                .replace('wekelijks', 'Wekelijks')
+                .replace('maandelijks', 'Maandelijks')
+                .replace('3maandelijks', '3-maandelijks')
+                .replace('6maandelijks', '6-maandelijks')
+                .replace('jaarlijks', 'Jaarlijks');
+            toast.success(`Taak verplaatst naar ${weergaveNaam}`);
+        }, {
+            operationId: 'verplaats-uitgesteld',
+            showGlobal: true,
+            message: 'Taak wordt verplaatst...'
+        });
+
+        // Update tellingen
+        this.laadTellingen();
+        
+        // Sluit menu
+        document.querySelector('.acties-menu-overlay').remove();
+    }
+
+    async verplaatsNaarOpvolgen(taakId) {
+        await loading.withLoading(async () => {
+            const taak = this.taken.find(t => t.id === taakId);
+            if (!taak) return;
+
+            await this.verplaatsTaakNaarLijst(taak, 'opvolgen');
+            
+            // Verwijder uit huidige lijst
+            this.taken = this.taken.filter(t => t.id !== taakId);
+            this.renderActiesLijst();
+            
+            toast.success('Taak verplaatst naar Opvolgen');
+        }, {
+            operationId: 'verplaats-opvolgen',
+            showGlobal: true,
+            message: 'Taak wordt verplaatst naar Opvolgen...'
+        });
+
+        // Update tellingen
+        this.laadTellingen();
+        
+        // Sluit menu
+        document.querySelector('.acties-menu-overlay').remove();
     }
 
     resetPopupForm() {
