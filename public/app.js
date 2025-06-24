@@ -3813,18 +3813,43 @@ class Taakbeheer {
     }
 
     bindActiesEvents() {
-        // Filter event listeners
+        // Filter event listeners - remove old ones first to prevent duplicates
         const taakFilter = document.getElementById('taakFilter');
         const projectFilter = document.getElementById('projectFilter');
         const contextFilter = document.getElementById('contextFilter');
         const datumFilter = document.getElementById('datumFilter');
         const toekomstToggle = document.getElementById('toonToekomstToggle');
 
-        if (taakFilter) taakFilter.addEventListener('input', () => this.filterActies());
-        if (projectFilter) projectFilter.addEventListener('change', () => this.filterActies());
-        if (contextFilter) contextFilter.addEventListener('change', () => this.filterActies());
-        if (datumFilter) datumFilter.addEventListener('change', () => this.filterActies());
-        if (toekomstToggle) toekomstToggle.addEventListener('change', () => this.toggleToekomstigeTaken());
+        // Remove existing listeners by cloning elements (clears all listeners)
+        if (taakFilter && taakFilter.parentNode) {
+            const newTaakFilter = taakFilter.cloneNode(true);
+            taakFilter.parentNode.replaceChild(newTaakFilter, taakFilter);
+            newTaakFilter.addEventListener('input', () => this.filterActies());
+        }
+        
+        if (projectFilter && projectFilter.parentNode) {
+            const newProjectFilter = projectFilter.cloneNode(true);
+            projectFilter.parentNode.replaceChild(newProjectFilter, projectFilter);
+            newProjectFilter.addEventListener('change', () => this.filterActies());
+        }
+        
+        if (contextFilter && contextFilter.parentNode) {
+            const newContextFilter = contextFilter.cloneNode(true);
+            contextFilter.parentNode.replaceChild(newContextFilter, contextFilter);
+            newContextFilter.addEventListener('change', () => this.filterActies());
+        }
+        
+        if (datumFilter && datumFilter.parentNode) {
+            const newDatumFilter = datumFilter.cloneNode(true);
+            datumFilter.parentNode.replaceChild(newDatumFilter, datumFilter);
+            newDatumFilter.addEventListener('change', () => this.filterActies());
+        }
+        
+        if (toekomstToggle && toekomstToggle.parentNode) {
+            const newToekomstToggle = toekomstToggle.cloneNode(true);
+            toekomstToggle.parentNode.replaceChild(newToekomstToggle, toekomstToggle);
+            newToekomstToggle.addEventListener('change', () => this.toggleToekomstigeTaken());
+        }
 
         // Sort event listeners
         document.querySelectorAll('.sortable').forEach(th => {
