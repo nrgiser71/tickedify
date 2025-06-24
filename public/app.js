@@ -5475,6 +5475,12 @@ class Taakbeheer {
         const checkbox = planningItem.type === 'taak' && planningItem.actieId ? 
             `<input type="checkbox" class="task-checkbox" data-actie-id="${planningItem.actieId}" onclick="app.completePlanningTask('${planningItem.actieId}', this)">` : '';
         
+        // Make template items (geblokkeerd, pauze) editable
+        const isTemplateItem = planningItem.type === 'geblokkeerd' || planningItem.type === 'pauze';
+        const naamElement = isTemplateItem ? 
+            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
+            `<span class="planning-naam">${naam}</span>`;
+        
         return `
             <div class="planning-item" 
                  data-planning-id="${planningItem.id}" 
@@ -5484,7 +5490,7 @@ class Taakbeheer {
                  draggable="true">
                 ${checkbox}
                 <span class="planning-icon">${typeIcon}</span>
-                <span class="planning-naam">${naam}</span>
+                ${naamElement}
                 <span class="planning-duur">${planningItem.duurMinuten}min</span>
                 <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
             </div>
@@ -6089,6 +6095,94 @@ class Taakbeheer {
         
         // Update only the affected hour display
         this.updateSingleHourDisplay(affectedHour);
+    }
+
+    editPlanningItemName(planningId, spanElement) {
+        // Prevent editing if already in edit mode
+        if (spanElement.querySelector('input')) {
+            return;
+        }
+
+        const currentName = spanElement.textContent;
+        
+        // Create input element
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentName;
+        input.className = 'planning-naam-edit';
+        input.style.cssText = `
+            background: var(--macos-bg-primary);
+            border: 1px solid var(--macos-blue);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+        `;
+
+        // Replace span content with input
+        spanElement.innerHTML = '';
+        spanElement.appendChild(input);
+        
+        // Focus and select text
+        input.focus();
+        input.select();
+
+        // Save function
+        const saveEdit = async () => {
+            const newName = input.value.trim();
+            
+            if (newName && newName !== currentName) {
+                // Update via API
+                await this.updatePlanningItemName(planningId, newName);
+                spanElement.textContent = newName;
+            } else {
+                // Restore original name
+                spanElement.textContent = currentName;
+            }
+        };
+
+        // Cancel function  
+        const cancelEdit = () => {
+            spanElement.textContent = currentName;
+        };
+
+        // Event listeners
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveEdit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelEdit();
+            }
+        });
+    }
+
+    async updatePlanningItemName(planningId, newName) {
+        try {
+            const response = await fetch(`/api/dagelijkse-planning/${planningId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ naam: newName })
+            });
+
+            if (response.ok) {
+                // Update local data
+                const item = this.currentPlanningData?.find(p => p.id === planningId);
+                if (item) {
+                    item.naam = newName;
+                }
+                toast.success('Naam bijgewerkt!');
+            } else {
+                toast.error('Fout bij bijwerken naam');
+            }
+        } catch (error) {
+            console.error('Error updating planning item name:', error);
+            toast.error('Fout bij bijwerken naam');
+        }
     }
 
     async completePlanningTask(actieId, checkboxElement) {

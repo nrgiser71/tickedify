@@ -1379,6 +1379,26 @@ mark {
     }
 }
 
+/* Editable planning item names */
+.planning-naam.editable-naam {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 1px 3px;
+}
+
+.planning-naam.editable-naam:hover {
+    background-color: var(--macos-blue-alpha);
+    border-color: var(--macos-blue);
+}
+
+.planning-naam-edit {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+}
+
 /* Popup styling */
 .popup-overlay {
     position: fixed;
