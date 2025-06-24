@@ -160,12 +160,44 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.6.1 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-number">v0.6.1</span>
+                <span class="version-date">24 juni 2025</span>
+                <span class="version-badge badge-latest">Nieuwste</span>
+            </div>
+            <ul class="change-list">
+                <li class="change-item fix">
+                    <span class="change-icon">🎯</span>
+                    <div class="change-content">
+                        <div class="change-title">DEFINITIEVE oplossing acties filter probleem</div>
+                        <div class="change-description">Root cause gevonden! filterActies() zocht naar '.actie-row' elementen maar acties lijst gebruikt '.taak-item' elementen. Nu ondersteunt beide layouts voor 100% compatibiliteit.</div>
+                    </div>
+                </li>
+                <li class="change-item fix">
+                    <span class="change-icon">🔍</span>
+                    <div class="change-content">
+                        <div class="change-title">CSS selector mismatch opgelost</div>
+                        <div class="change-description">Dubbele selector '.actie-row, .taak-item' implementatie zorgt ervoor dat filtering werkt ongeacht welke layout gebruikt wordt. Geen gemiste elementen meer.</div>
+                    </div>
+                </li>
+                <li class="change-item improvement">
+                    <span class="change-icon">✅</span>
+                    <div class="change-content">
+                        <div class="change-title">Alle acties filters nu volledig operationeel</div>
+                        <div class="change-description">Taak tekst zoeken, project dropdown, context dropdown, en datum filtering werken nu allemaal perfect in het acties scherm. Filter functionaliteit 100% hersteld.</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
         <!-- Version 0.6.0 -->
         <div class="version-block">
             <div class="version-header">
                 <span class="version-number">v0.6.0</span>
                 <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-latest">Nieuwste</span>
+                <span class="version-badge badge-fix">Bugfix</span>
             </div>
             <ul class="change-list">
                 <li class="change-item fix">

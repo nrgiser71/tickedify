@@ -3996,6 +3996,12 @@ class Taakbeheer {
             const actieId = row.dataset.id;
             const actie = this.taken.find(t => t.id === actieId);
             
+            // Skip if task not found in taken array
+            if (!actie) {
+                row.style.display = 'none';
+                return;
+            }
+            
             let tonen = true;
             
             // Taak tekst filter (contains search)
