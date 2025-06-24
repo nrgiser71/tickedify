@@ -3935,6 +3935,113 @@ app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
+// ===== V1 API - URL-based endpoints for external integrations =====
+// These endpoints use import codes for authentication instead of sessions
+
+// Quick Add Task via URL (for Siri Shortcuts, automations, etc.)
+app.get('/api/v1/quick-add', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Extract parameters from URL
+        const { code, text, project, context, date, duur } = req.query;
+
+        // Validate required fields
+        if (!code || !text) {
+            return res.status(400).json({
+                error: 'Missing required parameters',
+                required: ['code', 'text'],
+                optional: ['project', 'context', 'date', 'duur'],
+                example: '/api/v1/quick-add?code=abc123&text=Buy milk&project=Shopping'
+            });
+        }
+
+        // Find user by import code
+        const user = await db.getUserByImportCode(code);
+        if (!user) {
+            return res.status(401).json({
+                error: 'Invalid import code',
+                hint: 'Use your personal import code from Tickedify settings'
+            });
+        }
+
+        const userId = user.id;
+        console.log(`🔗 Quick-add task via URL for user ${user.email}`);
+
+        // Build task data
+        const taskData = {
+            text: text.trim(),
+            userId: userId,
+            lijst: 'inbox', // Always add to inbox
+            duur: duur ? parseInt(duur) : null
+        };
+
+        // Handle project
+        if (project) {
+            taskData.projectId = await findOrCreateProject(project, userId);
+        }
+
+        // Handle context
+        if (context) {
+            taskData.contextId = await findOrCreateContext(context, userId);
+        }
+
+        // Handle date
+        if (date) {
+            try {
+                // Support multiple date formats
+                const parsedDate = new Date(date);
+                if (!isNaN(parsedDate.getTime())) {
+                    taskData.verschijndatum = parsedDate.toISOString().split('T')[0];
+                }
+            } catch (e) {
+                console.log('Could not parse date:', date);
+            }
+        }
+
+        // Create the task
+        const taskId = await db.createTask(
+            taskData.text,
+            taskData.projectId || null,
+            taskData.contextId || null,
+            taskData.verschijndatum || null,
+            taskData.duur || null,
+            'inbox',
+            userId,
+            null, // herhalingType
+            null, // herhalingWaarde
+            false, // herhalingActief
+            null  // opmerkingen
+        );
+
+        console.log(`✅ Task created via quick-add: ${taskId}`);
+
+        // Return success with task details
+        res.json({
+            success: true,
+            message: 'Task added successfully',
+            task: {
+                id: taskId,
+                text: taskData.text,
+                project: project || null,
+                context: context || null,
+                date: taskData.verschijndatum || null,
+                duration: taskData.duur || null,
+                list: 'inbox'
+            }
+        });
+
+    } catch (error) {
+        console.error('Quick-add error:', error);
+        res.status(500).json({ 
+            error: 'Failed to add task',
+            details: error.message 
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
     
