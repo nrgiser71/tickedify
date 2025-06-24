@@ -2177,6 +2177,7 @@ class Taakbeheer {
         this.taken.forEach(taak => {
             const li = document.createElement('li');
             li.className = 'taak-item actie-item';
+            li.dataset.id = taak.id;
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
@@ -4031,9 +4032,9 @@ class Taakbeheer {
                 }
             }
             
-            // Bestaande filters
-            if (projectFilter && actie.projectId !== projectFilter) tonen = false;
-            if (contextFilter && actie.contextId !== contextFilter) tonen = false;
+            // Bestaande filters - convert to strings for comparison
+            if (projectFilter && String(actie.projectId) !== projectFilter) tonen = false;
+            if (contextFilter && String(actie.contextId) !== contextFilter) tonen = false;
             
             // Datum filter - vergelijk correct geformatteerde datums
             if (datumFilter && actie.verschijndatum) {
