@@ -3947,8 +3947,9 @@ class Taakbeheer {
             document.getElementById('herhalingDisplay').value = herhalingDisplay;
             console.log('bewerkActie - generated display text:', herhalingDisplay);
             
-            // Set button text for editing existing action
-            this.setActionButtonText(false);
+            // Set button text - if in inbox, this is making a new action, otherwise editing existing
+            const isInboxAction = this.huidigeLijst === 'inbox';
+            this.setActionButtonText(isInboxAction);
             
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
