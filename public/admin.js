@@ -2,7 +2,7 @@
 class AdminDashboard {
     constructor() {
         this.isAuthenticated = false;
-        this.adminPassword = 'TickedifyAdmin2025!'; // Hardcoded voor nu, later via environment
+        this.adminPassword = 'tefhi5-kudgIr-girjot'; // Admin wachtwoord
         this.data = {};
         this.refreshInterval = null;
         
