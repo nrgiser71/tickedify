@@ -1911,6 +1911,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
+                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld')" class="acties-btn" title="Acties">⚡</button>
                     <button onclick="app.planTaakWrapper('${taak.id}')" class="plan-btn">Plan</button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
@@ -2648,7 +2649,7 @@ class Taakbeheer {
         this.resetPopupForm();
     }
 
-    toonActiesMenu(taakId) {
+    toonActiesMenu(taakId, menuType = 'acties') {
         const taak = this.taken.find(t => t.id === taakId);
         if (!taak) return;
 
@@ -2658,37 +2659,27 @@ class Taakbeheer {
             bestaandMenu.remove();
         }
 
-        // Bepaal welke weekdagen we moeten tonen
-        const vandaag = new Date();
-        const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
-        const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+        // Genereer verschillende menu content op basis van type
+        let menuContentHTML = '';
         
-        // Genereer de rest van de week dagen
-        let weekdagenHTML = '';
-        // Begin bij overmorgen (i=2) en ga door tot en met zondag
-        // Als het zondag is (weekdag=0), dan is 7-weekdag=7, maar we willen geen dagen na zondag
-        const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
-        
-        for (let i = 2; i <= dagenTotZondag; i++) {
-            const datum = new Date(vandaag);
-            datum.setDate(datum.getDate() + i);
-            const dagNaam = dagenVanDeWeek[datum.getDay()];
-            weekdagenHTML += `<button onclick="app.stelDatumIn('${taakId}', ${i})" class="menu-item">${dagNaam}</button>`;
-        }
-
-        // Maak de menu overlay
-        const menuOverlay = document.createElement('div');
-        menuOverlay.className = 'acties-menu-overlay';
-        menuOverlay.onclick = (e) => {
-            if (e.target === menuOverlay) {
-                menuOverlay.remove();
+        if (menuType === 'acties') {
+            // Voor acties lijst: datum opties + uitgesteld + opvolgen
+            const vandaag = new Date();
+            const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
+            const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+            
+            // Genereer de rest van de week dagen
+            let weekdagenHTML = '';
+            const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
+            
+            for (let i = 2; i <= dagenTotZondag; i++) {
+                const datum = new Date(vandaag);
+                datum.setDate(datum.getDate() + i);
+                const dagNaam = dagenVanDeWeek[datum.getDay()];
+                weekdagenHTML += `<button onclick="app.stelDatumIn('${taakId}', ${i})" class="menu-item">${dagNaam}</button>`;
             }
-        };
-
-        const menuContent = document.createElement('div');
-        menuContent.className = 'acties-menu-content';
-        menuContent.innerHTML = `
-            <div class="acties-menu">
+            
+            menuContentHTML = `
                 <h3>Plan op</h3>
                 <div class="menu-section">
                     <button onclick="app.stelDatumIn('${taakId}', 0)" class="menu-item">Vandaag</button>
@@ -2708,6 +2699,44 @@ class Taakbeheer {
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
+            `;
+        } else if (menuType === 'uitgesteld') {
+            // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten + opvolgen
+            menuContentHTML = `
+                <h3>Verplaats naar</h3>
+                <div class="menu-section">
+                    <button onclick="app.verplaatsNaarInbox('${taakId}')" class="menu-item inbox-item">📥 Inbox</button>
+                </div>
+                
+                <h3>Andere uitgesteld lijsten</h3>
+                <div class="menu-section">
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-wekelijks')" class="menu-item">Wekelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-maandelijks')" class="menu-item">Maandelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-3maandelijks')" class="menu-item">3-maandelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-6maandelijks')" class="menu-item">6-maandelijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
+                </div>
+                
+                <div class="menu-section">
+                    <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
+                </div>
+            `;
+        }
+
+        // Maak de menu overlay
+        const menuOverlay = document.createElement('div');
+        menuOverlay.className = 'acties-menu-overlay';
+        menuOverlay.onclick = (e) => {
+            if (e.target === menuOverlay) {
+                menuOverlay.remove();
+            }
+        };
+
+        const menuContent = document.createElement('div');
+        menuContent.className = 'acties-menu-content';
+        menuContent.innerHTML = `
+            <div class="acties-menu">
+                ${menuContentHTML}
                 
                 <button onclick="document.querySelector('.acties-menu-overlay').remove()" class="menu-close">Sluiten</button>
             </div>
@@ -2715,6 +2744,47 @@ class Taakbeheer {
 
         menuOverlay.appendChild(menuContent);
         document.body.appendChild(menuOverlay);
+    }
+
+    async verplaatsNaarInbox(taakId) {
+        const taak = this.taken.find(t => t.id === taakId);
+        if (!taak) return;
+
+        await loading.withLoading(async () => {
+            // Verplaats naar inbox
+            const response = await fetch(`/api/taak/${taakId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lijst: 'inbox',
+                    tekst: taak.tekst,
+                    projectId: taak.projectId,
+                    contextId: taak.contextId,
+                    verschijndatum: taak.verschijndatum,
+                    duur: taak.duur,
+                    opmerkingen: taak.opmerkingen,
+                    type: taak.type,
+                    herhalingType: taak.herhalingType,
+                    herhalingActief: taak.herhalingActief
+                })
+            });
+
+            if (response.ok) {
+                // Sluit menu
+                const menuOverlay = document.querySelector('.acties-menu-overlay');
+                if (menuOverlay) menuOverlay.remove();
+                
+                // Refresh huidige lijst
+                await this.laadHuidigeLijst();
+                toast.success('Taak verplaatst naar Inbox');
+            } else {
+                toast.error('Fout bij verplaatsen naar Inbox');
+            }
+        }, {
+            operationId: 'move-to-inbox',
+            showGlobal: true,
+            message: 'Verplaatsen naar Inbox...'
+        });
     }
 
     async stelDatumIn(taakId, dagenVoorruit) {

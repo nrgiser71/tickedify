@@ -1118,6 +1118,18 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     border-color: var(--macos-purple-hover);
 }
 
+.menu-item.inbox-item {
+    background: var(--macos-green);
+    color: white;
+    border-color: var(--macos-green);
+    font-weight: 600;
+}
+
+.menu-item.inbox-item:hover {
+    background: var(--macos-green-hover);
+    border-color: var(--macos-green-hover);
+}
+
 .menu-close {
     width: 100%;
     padding: 10px;
