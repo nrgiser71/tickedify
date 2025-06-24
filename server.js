@@ -3507,9 +3507,10 @@ app.get('/api/admin/tasks', async (req, res) => {
         const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
         const total = parseInt(totalResult.rows[0].count);
 
-        // Completed tasks
+        // Completed tasks (check both possible names)
         const completedResult = await pool.query(`
-            SELECT COUNT(*) as count FROM taken WHERE lijst = 'afgewerkte-taken'
+            SELECT COUNT(*) as count FROM taken 
+            WHERE lijst IN ('afgewerkte-taken', 'afgewerkt', 'completed')
         `);
         const completed = parseInt(completedResult.rows[0].count);
 
@@ -3851,6 +3852,36 @@ app.get('/api/admin/export', async (req, res) => {
         res.send(csvContent);
     } catch (error) {
         console.error('Admin export error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint voor admin data onderzoek
+app.get('/api/admin/debug', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Alle unieke lijst waarden
+        const lijstResult = await pool.query('SELECT DISTINCT lijst, COUNT(*) as count FROM taken GROUP BY lijst ORDER BY count DESC');
+        
+        // Sample taken om te zien wat erin staat
+        const sampleResult = await pool.query('SELECT id, tekst, lijst, afgewerkt, status FROM taken LIMIT 10');
+        
+        // Check database schema voor taken tabel
+        const schemaResult = await pool.query(`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'taken' 
+            ORDER BY ordinal_position
+        `);
+
+        res.json({
+            lijstWaarden: lijstResult.rows,
+            sampleTaken: sampleResult.rows,
+            databaseSchema: schemaResult.rows
+        });
+    } catch (error) {
+        console.error('Admin debug error:', error);
         res.status(500).json({ error: error.message });
     }
 });
