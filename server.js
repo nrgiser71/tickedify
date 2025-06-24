@@ -3930,11 +3930,6 @@ app.post('/api/admin/maintenance', async (req, res) => {
     }
 });
 
-// 404 handler (AFTER all routes!)
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 
@@ -4040,6 +4035,11 @@ app.get('/api/v1/quick-add', async (req, res) => {
             details: error.message 
         });
     }
+});
+
+// 404 handler - MUST be after all routes!
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
 app.listen(PORT, () => {
