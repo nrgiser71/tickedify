@@ -1911,8 +1911,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld')" class="acties-btn" title="Acties">⚡</button>
-                    <button onclick="app.planTaakWrapper('${taak.id}')" class="plan-btn">Plan</button>
+                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties">⚡</button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
             `;
@@ -2649,7 +2648,7 @@ class Taakbeheer {
         this.resetPopupForm();
     }
 
-    toonActiesMenu(taakId, menuType = 'acties') {
+    toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null) {
         const taak = this.taken.find(t => t.id === taakId);
         if (!taak) return;
 
@@ -2701,7 +2700,23 @@ class Taakbeheer {
                 </div>
             `;
         } else if (menuType === 'uitgesteld') {
-            // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten + opvolgen
+            // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten (exclusief huidige) + opvolgen
+            const uitgesteldOpties = [
+                { id: 'uitgesteld-wekelijks', naam: 'Wekelijks' },
+                { id: 'uitgesteld-maandelijks', naam: 'Maandelijks' },
+                { id: 'uitgesteld-3maandelijks', naam: '3-maandelijks' },
+                { id: 'uitgesteld-6maandelijks', naam: '6-maandelijks' },
+                { id: 'uitgesteld-jaarlijks', naam: 'Jaarlijks' }
+            ];
+            
+            // Filter uit de huidige lijst
+            const beschikbareOpties = uitgesteldOpties.filter(optie => optie.id !== huidigeLijst);
+            
+            let uitgesteldButtonsHTML = '';
+            beschikbareOpties.forEach(optie => {
+                uitgesteldButtonsHTML += `<button onclick="app.verplaatsNaarUitgesteld('${taakId}', '${optie.id}')" class="menu-item">${optie.naam}</button>`;
+            });
+            
             menuContentHTML = `
                 <h3>Verplaats naar</h3>
                 <div class="menu-section">
@@ -2710,11 +2725,7 @@ class Taakbeheer {
                 
                 <h3>Andere uitgesteld lijsten</h3>
                 <div class="menu-section">
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-wekelijks')" class="menu-item">Wekelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-maandelijks')" class="menu-item">Maandelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-3maandelijks')" class="menu-item">3-maandelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-6maandelijks')" class="menu-item">6-maandelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
+                    ${uitgesteldButtonsHTML}
                 </div>
                 
                 <div class="menu-section">
