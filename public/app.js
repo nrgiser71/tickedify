@@ -2514,10 +2514,29 @@ class Taakbeheer {
         if (!bevestiging) return;
         
         await loading.withLoading(async () => {
-            this.taken = this.taken.filter(taak => taak.id !== id);
-            await this.slaLijstOp();
-            this.renderTaken();
-            await this.laadTellingen();
+            try {
+                // Use DELETE endpoint for single task deletion
+                const response = await fetch(`/api/taak/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // Remove from local array
+                    this.taken = this.taken.filter(taak => taak.id !== id);
+                    
+                    // Re-render and update counts
+                    this.renderTaken();
+                    await this.laadTellingen();
+                    
+                    console.log(`✅ Task ${id} deleted successfully`);
+                } else {
+                    const error = await response.json();
+                    toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                toast.error('Fout bij verwijderen van taak');
+            }
         }, {
             operationId: `delete-task-${id}`,
             showGlobal: true,

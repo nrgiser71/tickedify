@@ -1776,6 +1776,35 @@ app.put('/api/taak/:id', async (req, res) => {
     }
 });
 
+// Delete individual task
+app.delete('/api/taak/:id', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const userId = getCurrentUserId(req);
+        console.log(`🗑️ Deleting task ${id} for user ${userId}`);
+        
+        const result = await pool.query(
+            'DELETE FROM taken WHERE id = $1 AND user_id = $2 RETURNING id',
+            [id, userId]
+        );
+        
+        if (result.rows.length > 0) {
+            console.log(`✅ Task ${id} deleted successfully`);
+            res.json({ success: true, deleted: id });
+        } else {
+            console.log(`❌ Task ${id} not found or not owned by user`);
+            res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+    } catch (error) {
+        console.error(`Error deleting task ${id}:`, error);
+        res.status(500).json({ error: 'Fout bij verwijderen', details: error.message });
+    }
+});
+
 // Debug endpoint to search for any task by ID
 app.get('/api/debug/find-task/:id', async (req, res) => {
     try {
