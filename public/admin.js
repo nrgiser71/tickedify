@@ -144,10 +144,10 @@ class AdminDashboard {
         this.renderTable('usersTable', this.data.users.recent || [], [
             'Naam', 'Email', 'Registratie', 'Laatste Login', 'Taken'
         ], (user) => [
-            user.name,
+            user.name || user.naam,
             user.email,
-            this.formatDate(user.created_at),
-            user.last_login ? this.formatDate(user.last_login) : 'Nooit',
+            this.formatDate(user.created_at || user.aangemaakt),
+            user.last_login || user.laatste_login ? this.formatDate(user.last_login || user.laatste_login) : 'Nooit',
             user.task_count || 0
         ]);
 
@@ -192,12 +192,13 @@ class AdminDashboard {
 
         // API Usage
         this.renderTable('apiTable', this.data.apiUsage.endpoints || [], [
-            'Endpoint', 'Calls (24h)', 'Avg Response', 'Errors'
+            'Endpoint', 'Calls', 'Avg Response', 'Errors', 'Laatste'
         ], (api) => [
             api.endpoint,
             api.calls_24h,
             `${api.avg_response_time}ms`,
-            api.error_count
+            api.error_count,
+            api.last_called ? this.formatDateTime(api.last_called) : '-'
         ]);
     }
 

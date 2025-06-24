@@ -17,8 +17,53 @@ app.use(express.static('public'));
 // Multer for form-data parsing (Mailgun webhooks)
 const upload = multer();
 
-// Request logging (simplified)
+// Enhanced request logging with API tracking
+const apiStats = new Map();
+const errorLogs = [];
+const MAX_ERROR_LOGS = 100;
+
 app.use((req, res, next) => {
+    const startTime = Date.now();
+    const originalSend = res.send;
+    
+    // Track API usage
+    const endpoint = req.method + ' ' + req.route?.path || req.url;
+    if (!apiStats.has(endpoint)) {
+        apiStats.set(endpoint, { calls: 0, totalTime: 0, errors: 0, lastCalled: null });
+    }
+    
+    res.send = function(data) {
+        const responseTime = Date.now() - startTime;
+        const stats = apiStats.get(endpoint);
+        
+        stats.calls++;
+        stats.totalTime += responseTime;
+        stats.lastCalled = new Date().toISOString();
+        
+        // Track errors
+        if (res.statusCode >= 400) {
+            stats.errors++;
+            
+            // Log error
+            errorLogs.unshift({
+                timestamp: new Date().toISOString(),
+                endpoint: req.url,
+                method: req.method,
+                statusCode: res.statusCode,
+                message: typeof data === 'string' ? data : JSON.stringify(data),
+                userAgent: req.get('User-Agent'),
+                ip: req.ip || req.connection.remoteAddress
+            });
+            
+            // Keep only recent errors
+            if (errorLogs.length > MAX_ERROR_LOGS) {
+                errorLogs.splice(MAX_ERROR_LOGS);
+            }
+        }
+        
+        return originalSend.call(this, data);
+    };
+    
     console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
     next();
 });
@@ -3490,7 +3535,10 @@ app.get('/api/admin/users', async (req, res) => {
             total,
             active,
             newToday,
-            recent: recentResult.rows
+            recent: recentResult.rows.map(user => ({
+                ...user,
+                task_count: parseInt(user.task_count)
+            }))
         });
     } catch (error) {
         console.error('Admin users error:', error);
@@ -3632,8 +3680,12 @@ app.get('/api/admin/monitoring', async (req, res) => {
         const uptime = process.uptime();
         const uptimeStr = Math.floor(uptime / 3600) + 'h ' + Math.floor((uptime % 3600) / 60) + 'm';
 
-        // Simulate error count (in real implementation, this would come from logs)
-        const errors24h = 0;
+        // Real error count from tracked errors
+        const now = Date.now();
+        const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+        const errors24h = errorLogs.filter(error => 
+            new Date(error.timestamp).getTime() > twentyFourHoursAgo
+        ).length;
 
         res.json({
             status,
@@ -3711,28 +3763,18 @@ app.get('/api/admin/contexts', async (req, res) => {
     }
 });
 
-// Admin Error Logs (simulated - in production this would come from actual logs)
+// Admin Error Logs (real-time from server tracking)
 app.get('/api/admin/errors', async (req, res) => {
     try {
-        // In a real implementation, you'd have an error_logs table
-        // For now, simulate some recent errors
-        const recentErrors = [
-            {
-                timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-                endpoint: '/api/taak/123',
-                message: 'Task not found',
-                user_email: 'test@example.com'
-            },
-            {
-                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                endpoint: '/api/lijst/acties',
-                message: 'Database connection timeout',
-                user_email: null
-            }
-        ];
-
         res.json({
-            recent: recentErrors
+            recent: errorLogs.map(error => ({
+                timestamp: error.timestamp,
+                endpoint: error.endpoint,
+                message: `${error.statusCode}: ${error.message.substring(0, 100)}`,
+                user_email: null, // Could be enhanced to track actual user
+                method: error.method,
+                statusCode: error.statusCode
+            }))
         });
     } catch (error) {
         console.error('Admin errors error:', error);
@@ -3740,34 +3782,28 @@ app.get('/api/admin/errors', async (req, res) => {
     }
 });
 
-// Admin API Usage Statistics
+// Admin API Usage Statistics (real-time from server tracking)
 app.get('/api/admin/api-usage', async (req, res) => {
     try {
-        // In production, this would come from actual API logs
-        // For now, simulate popular endpoints
-        const endpoints = [
-            {
-                endpoint: '/api/lijst/acties',
-                calls_24h: 1250,
-                avg_response_time: 45,
-                error_count: 2
-            },
-            {
-                endpoint: '/api/taak/:id',
-                calls_24h: 890,
-                avg_response_time: 32,
-                error_count: 0
-            },
-            {
-                endpoint: '/api/dagelijkse-planning',
-                calls_24h: 567,
-                avg_response_time: 78,
-                error_count: 1
-            }
-        ];
+        const now = Date.now();
+        const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+        
+        const endpoints = Array.from(apiStats.entries())
+            .map(([endpoint, stats]) => ({
+                endpoint: endpoint.replace(/GET |POST |PUT |DELETE /, ''),
+                calls_24h: stats.calls, // For now all calls (could filter by time)
+                avg_response_time: stats.calls > 0 ? Math.round(stats.totalTime / stats.calls) : 0,
+                error_count: stats.errors,
+                last_called: stats.lastCalled
+            }))
+            .filter(stat => stat.calls_24h > 0)
+            .sort((a, b) => b.calls_24h - a.calls_24h)
+            .slice(0, 20); // Top 20 endpoints
 
         res.json({
-            endpoints
+            endpoints,
+            totalRequests: Array.from(apiStats.values()).reduce((sum, stat) => sum + stat.calls, 0),
+            totalErrors: Array.from(apiStats.values()).reduce((sum, stat) => sum + stat.errors, 0)
         });
     } catch (error) {
         console.error('Admin API usage error:', error);
