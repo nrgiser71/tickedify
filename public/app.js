@@ -2044,14 +2044,13 @@ class Taakbeheer {
             // Remove from local list (no need to save - already done by server)
             this.taken = this.taken.filter(t => t.id !== id);
             await this.renderTaken();
+            // Update counts 
+            await this.laadTellingen();
         }, {
             operationId: 'verplaats-uitgestelde-taak',
             showGlobal: true,
             message: `Taak wordt verplaatst naar ${naarLijst}...`
         });
-        
-        // Update counts in background (non-blocking)
-        this.laadTellingen();
         
         // Sluit dropdown
         this.sluitAlleDropdowns();
@@ -2785,8 +2784,9 @@ class Taakbeheer {
                 const menuOverlay = document.querySelector('.acties-menu-overlay');
                 if (menuOverlay) menuOverlay.remove();
                 
-                // Refresh huidige lijst
+                // Refresh huidige lijst en tellingen
                 await this.laadHuidigeLijst();
+                await this.laadTellingen();
                 toast.success('Taak verplaatst naar Inbox');
             } else {
                 toast.error('Fout bij verplaatsen naar Inbox');
@@ -2842,8 +2842,9 @@ class Taakbeheer {
                 // Update lokale taak
                 taak.verschijndatum = datumString;
                 
-                // Herlaad de lijst om de update te tonen
+                // Herlaad de lijst en tellingen om de update te tonen
                 await this.laadHuidigeLijst();
+                await this.laadTellingen();
                 
                 const dagNaam = dagenVoorruit === 0 ? 'vandaag' : 
                                dagenVoorruit === 1 ? 'morgen' : 
@@ -2874,8 +2875,9 @@ class Taakbeheer {
             const menuOverlay = document.querySelector('.acties-menu-overlay');
             if (menuOverlay) menuOverlay.remove();
             
-            // Refresh huidige lijst
+            // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
+            await this.laadTellingen();
             
             const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
                 .replace('wekelijks', 'Wekelijks')
@@ -2902,8 +2904,9 @@ class Taakbeheer {
             const menuOverlay = document.querySelector('.acties-menu-overlay');
             if (menuOverlay) menuOverlay.remove();
             
-            // Refresh huidige lijst
+            // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
+            await this.laadTellingen();
             
             toast.success('Taak verplaatst naar Opvolgen');
         }, {
