@@ -3792,6 +3792,12 @@ class Taakbeheer {
         // Project filter vullen
         const projectFilter = document.getElementById('projectFilter');
         if (projectFilter) {
+            // Clear existing options except first ("Alle projecten")
+            while (projectFilter.children.length > 1) {
+                projectFilter.removeChild(projectFilter.lastChild);
+            }
+            
+            // Add project options
             this.projecten.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project.id;
@@ -3803,6 +3809,12 @@ class Taakbeheer {
         // Context filter vullen
         const contextFilter = document.getElementById('contextFilter');
         if (contextFilter) {
+            // Clear existing options except first ("Alle contexten")
+            while (contextFilter.children.length > 1) {
+                contextFilter.removeChild(contextFilter.lastChild);
+            }
+            
+            // Add context options
             this.contexten.forEach(context => {
                 const option = document.createElement('option');
                 option.value = context.id;
@@ -4004,8 +4016,10 @@ class Taakbeheer {
             
             let tonen = true;
             
-            // Taak tekst filter (contains search)
-            if (taakFilter && !actie.tekst.toLowerCase().includes(taakFilter)) tonen = false;
+            // Taak tekst filter (contains search) - only filter if there's actual text
+            if (taakFilter && taakFilter.trim() !== '' && !actie.tekst.toLowerCase().includes(taakFilter)) {
+                tonen = false;
+            }
             
             // Bestaande filters
             if (projectFilter && actie.projectId !== projectFilter) tonen = false;
