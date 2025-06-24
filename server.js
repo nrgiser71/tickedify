@@ -1337,39 +1337,7 @@ app.get('/api/auth/me', (req, res) => {
     });
 });
 
-// Admin endpoints (for user management)
-app.get('/api/admin/users', async (req, res) => {
-    try {
-        if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-        
-        // Get all users with basic info (without password hashes)
-        const result = await pool.query(`
-            SELECT 
-                id, 
-                email, 
-                naam, 
-                rol, 
-                aangemaakt, 
-                laatste_login, 
-                actief,
-                (SELECT COUNT(*) FROM taken WHERE user_id = users.id AND afgewerkt IS NULL) as active_tasks,
-                (SELECT COUNT(*) FROM taken WHERE user_id = users.id AND afgewerkt IS NOT NULL) as completed_tasks
-            FROM users 
-            ORDER BY aangemaakt DESC
-        `);
-        
-        res.json({
-            users: result.rows,
-            total: result.rows.length
-        });
-        
-    } catch (error) {
-        console.error('Admin users error:', error);
-        res.status(500).json({ error: 'Fout bij ophalen gebruikers' });
-    }
-});
+// Old admin users endpoint removed - using consolidated version later in file
 
 app.get('/api/admin/stats', async (req, res) => {
     try {
@@ -3520,14 +3488,16 @@ app.get('/api/admin/users', async (req, res) => {
         `);
         const newToday = parseInt(newTodayResult.rows[0].count);
 
-        // Recent users with task counts
+        // Recent users with task counts (more detailed info for table)
         const recentResult = await pool.query(`
-            SELECT u.id, u.naam as name, u.email, u.aangemaakt as created_at, 
-                   u.laatste_login as last_login, COUNT(t.id) as task_count
+            SELECT u.id, u.naam, u.email, u.aangemaakt, u.laatste_login, 
+                   COUNT(t.id) as task_count,
+                   COUNT(CASE WHEN t.afgewerkt IS NULL THEN 1 END) as active_tasks,
+                   COUNT(CASE WHEN t.afgewerkt IS NOT NULL THEN 1 END) as completed_tasks
             FROM users u
             LEFT JOIN taken t ON u.id = t.user_id
             GROUP BY u.id, u.naam, u.email, u.aangemaakt, u.laatste_login
-            ORDER BY u.aangemaakt DESC
+            ORDER BY u.laatste_login DESC NULLS LAST, u.aangemaakt DESC
             LIMIT 20
         `);
 
@@ -3537,7 +3507,12 @@ app.get('/api/admin/users', async (req, res) => {
             newToday,
             recent: recentResult.rows.map(user => ({
                 ...user,
-                task_count: parseInt(user.task_count)
+                name: user.naam, // Add name field for consistency
+                created_at: user.aangemaakt, // Add created_at field for consistency
+                last_login: user.laatste_login, // Add last_login field for consistency
+                task_count: parseInt(user.task_count),
+                active_tasks: parseInt(user.active_tasks),
+                completed_tasks: parseInt(user.completed_tasks)
             }))
         });
     } catch (error) {
