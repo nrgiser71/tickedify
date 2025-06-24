@@ -3865,7 +3865,7 @@ app.get('/api/admin/debug', async (req, res) => {
         const lijstResult = await pool.query('SELECT DISTINCT lijst, COUNT(*) as count FROM taken GROUP BY lijst ORDER BY count DESC');
         
         // Sample taken om te zien wat erin staat
-        const sampleResult = await pool.query('SELECT id, tekst, lijst, afgewerkt, status FROM taken LIMIT 10');
+        const sampleResult = await pool.query('SELECT id, tekst, lijst, afgewerkt FROM taken LIMIT 10');
         
         // Check database schema voor taken tabel
         const schemaResult = await pool.query(`
