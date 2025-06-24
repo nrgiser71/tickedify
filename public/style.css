@@ -115,6 +115,9 @@ body {
 .version-info {
     margin-top: 8px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .version-number {
@@ -122,6 +125,20 @@ body {
     color: var(--macos-gray-1);
     font-weight: 500;
     letter-spacing: 0.3px;
+}
+
+.changelog-link {
+    font-size: 10px;
+    color: var(--macos-blue);
+    text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.changelog-link:hover {
+    background-color: var(--macos-blue);
+    color: white;
 }
 
 
