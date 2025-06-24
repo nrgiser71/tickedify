@@ -3933,12 +3933,28 @@ app.post('/api/admin/maintenance', async (req, res) => {
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 
+// Test endpoint to verify V1 API is accessible
+app.get('/api/v1/test', (req, res) => {
+    res.json({
+        message: 'V1 API is working',
+        version: '0.6.10',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Quick Add Task via URL (for Siri Shortcuts, automations, etc.)
 app.get('/api/v1/quick-add', async (req, res) => {
     try {
         if (!db) {
             return res.status(503).json({ error: 'Database not available' });
         }
+
+        // Log incoming request for debugging
+        console.log('🔗 Quick-add request received:', {
+            url: req.url,
+            query: req.query,
+            headers: req.headers
+        });
 
         // Extract parameters from URL
         const { code, text, project, context, date, duur } = req.query;
@@ -3947,6 +3963,7 @@ app.get('/api/v1/quick-add', async (req, res) => {
         if (!code || !text) {
             return res.status(400).json({
                 error: 'Missing required parameters',
+                received: req.query,
                 required: ['code', 'text'],
                 optional: ['project', 'context', 'date', 'duur'],
                 example: '/api/v1/quick-add?code=abc123&text=Buy milk&project=Shopping'
