@@ -3990,7 +3990,9 @@ class Taakbeheer {
         const contextFilter = document.getElementById('contextFilter')?.value || '';
         const datumFilter = document.getElementById('datumFilter')?.value || '';
 
-        document.querySelectorAll('.actie-row').forEach(row => {
+        // Support both .actie-row (table layout) and .taak-item (list layout)
+        const elementsToFilter = document.querySelectorAll('.actie-row, .taak-item');
+        elementsToFilter.forEach(row => {
             const actieId = row.dataset.id;
             const actie = this.taken.find(t => t.id === actieId);
             

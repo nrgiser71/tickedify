@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Filter Test Debug</title>
+</head>
+<body>
+<h1>Filter Debug Test</h1>
+<p>Open browser console en ga naar Acties scherm, voer dan deze commands uit:</p>
+
+<pre>
+// 1. Check if filter elements exist
+console.log('taakFilter:', document.getElementById('taakFilter'));
+console.log('projectFilter:', document.getElementById('projectFilter'));
+console.log('contextFilter:', document.getElementById('contextFilter'));
+console.log('datumFilter:', document.getElementById('datumFilter'));
+
+// 2. Check if event listeners are attached
+const taakFilter = document.getElementById('taakFilter');
+if (taakFilter) {
+    console.log('taakFilter listeners:', getEventListeners(taakFilter));
+}
+
+// 3. Test manual filter function call
+if (window.app && window.app.filterActies) {
+    console.log('Manual filterActies call result:');
+    window.app.filterActies();
+} else {
+    console.log('ERROR: app.filterActies not found');
+}
+
+// 4. Check if taken array has data
+if (window.app && window.app.taken) {
+    console.log('taken array length:', window.app.taken.length);
+    console.log('first task:', window.app.taken[0]);
+} else {
+    console.log('ERROR: app.taken not found');
+}
+
+// 5. Check for actie-row elements
+const actieRows = document.querySelectorAll('.actie-row');
+console.log('actie-row elements found:', actieRows.length);
+</pre>
+
+<p>Ga naar Tickedify, log in, ga naar Acties scherm, open console en plak bovenstaande code.</p>
+</body>
+</html>
