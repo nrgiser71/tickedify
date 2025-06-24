@@ -3448,6 +3448,440 @@ app.post('/api/mind-dump/preferences', requireAuth, async (req, res) => {
     }
 });
 
+// ========================================
+// ADMIN API ENDPOINTS
+// ========================================
+
+// Admin Users Statistics
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Total users
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM users');
+        const total = parseInt(totalResult.rows[0].count);
+
+        // Active users (logged in last 30 days)
+        const activeResult = await pool.query(`
+            SELECT COUNT(*) as count FROM users 
+            WHERE laatste_login > NOW() - INTERVAL '30 days'
+        `);
+        const active = parseInt(activeResult.rows[0].count);
+
+        // New users today
+        const newTodayResult = await pool.query(`
+            SELECT COUNT(*) as count FROM users 
+            WHERE DATE(aangemaakt) = CURRENT_DATE
+        `);
+        const newToday = parseInt(newTodayResult.rows[0].count);
+
+        // Recent users with task counts
+        const recentResult = await pool.query(`
+            SELECT u.id, u.naam as name, u.email, u.aangemaakt as created_at, 
+                   u.laatste_login as last_login, COUNT(t.id) as task_count
+            FROM users u
+            LEFT JOIN taken t ON u.id = t.user_id
+            GROUP BY u.id, u.naam, u.email, u.aangemaakt, u.laatste_login
+            ORDER BY u.aangemaakt DESC
+            LIMIT 20
+        `);
+
+        res.json({
+            total,
+            active,
+            newToday,
+            recent: recentResult.rows
+        });
+    } catch (error) {
+        console.error('Admin users error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Tasks Statistics
+app.get('/api/admin/tasks', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Total tasks
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
+        const total = parseInt(totalResult.rows[0].count);
+
+        // Completed tasks
+        const completedResult = await pool.query(`
+            SELECT COUNT(*) as count FROM taken WHERE lijst = 'afgewerkte-taken'
+        `);
+        const completed = parseInt(completedResult.rows[0].count);
+
+        // Recurring tasks
+        const recurringResult = await pool.query(`
+            SELECT COUNT(*) as count FROM taken WHERE herhaling_actief = true
+        `);
+        const recurring = parseInt(recurringResult.rows[0].count);
+
+        // Tasks by list
+        const byListResult = await pool.query(`
+            SELECT lijst as list_name, COUNT(*) as count
+            FROM taken
+            GROUP BY lijst
+            ORDER BY count DESC
+        `);
+
+        res.json({
+            total,
+            completed,
+            recurring,
+            byList: byListResult.rows
+        });
+    } catch (error) {
+        console.error('Admin tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin System Statistics
+app.get('/api/admin/system', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Database size estimation
+        const sizeResult = await pool.query(`
+            SELECT pg_size_pretty(pg_database_size(current_database())) as size,
+                   pg_database_size(current_database()) as size_bytes
+        `);
+
+        // Total records across all tables
+        const tablesResult = await pool.query(`
+            SELECT schemaname, tablename, n_tup_ins as inserts
+            FROM pg_stat_user_tables
+            WHERE schemaname = 'public'
+        `);
+
+        let totalRecords = 0;
+        for (const table of tablesResult.rows) {
+            const countResult = await pool.query(`SELECT COUNT(*) as count FROM ${table.tablename}`);
+            totalRecords += parseInt(countResult.rows[0].count);
+        }
+
+        // Daily growth (tasks created today)
+        const dailyGrowthResult = await pool.query(`
+            SELECT COUNT(*) as count FROM taken WHERE DATE(aangemaakt) = CURRENT_DATE
+        `);
+        const dailyGrowth = parseInt(dailyGrowthResult.rows[0].count);
+
+        res.json({
+            dbSize: sizeResult.rows[0].size_bytes,
+            totalRecords,
+            dailyGrowth,
+            tables: tablesResult.rows
+        });
+    } catch (error) {
+        console.error('Admin system error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Insights
+app.get('/api/admin/insights', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Average tasks per day (last 30 days)
+        const tasksPerDayResult = await pool.query(`
+            SELECT AVG(daily_count) as avg_tasks
+            FROM (
+                SELECT DATE(aangemaakt) as date, COUNT(*) as daily_count
+                FROM taken
+                WHERE aangemaakt > NOW() - INTERVAL '30 days'
+                GROUP BY DATE(aangemaakt)
+            ) daily_stats
+        `);
+        const tasksPerDay = Math.round(tasksPerDayResult.rows[0].avg_tasks || 0);
+
+        // Completion rate
+        const completionResult = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkte-taken') * 100.0 / 
+                NULLIF((SELECT COUNT(*) FROM taken), 0) as completion_rate
+        `);
+        const completionRate = Math.round(completionResult.rows[0].completion_rate || 0);
+
+        // Productivity score (tasks completed per active user)
+        const productivityResult = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkte-taken') * 1.0 /
+                NULLIF((SELECT COUNT(*) FROM users WHERE laatste_login > NOW() - INTERVAL '30 days'), 0) as productivity
+        `);
+        const productivityScore = Math.round(productivityResult.rows[0].productivity || 0);
+
+        res.json({
+            tasksPerDay,
+            completionRate,
+            productivityScore
+        });
+    } catch (error) {
+        console.error('Admin insights error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Monitoring
+app.get('/api/admin/monitoring', async (req, res) => {
+    try {
+        const status = pool ? 'Healthy' : 'Database Error';
+        const uptime = process.uptime();
+        const uptimeStr = Math.floor(uptime / 3600) + 'h ' + Math.floor((uptime % 3600) / 60) + 'm';
+
+        // Simulate error count (in real implementation, this would come from logs)
+        const errors24h = 0;
+
+        res.json({
+            status,
+            uptime: uptimeStr,
+            errors24h,
+            memoryUsage: process.memoryUsage(),
+            nodeVersion: process.version
+        });
+    } catch (error) {
+        console.error('Admin monitoring error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Popular Projects
+app.get('/api/admin/projects', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        const result = await pool.query(`
+            SELECT p.naam as name, 
+                   COUNT(t.id) as task_count,
+                   COUNT(DISTINCT t.user_id) as user_count,
+                   COALESCE(
+                       (COUNT(CASE WHEN t.lijst = 'afgewerkte-taken' THEN 1 END) * 100.0 / 
+                        NULLIF(COUNT(t.id), 0)), 0
+                   ) as completion_rate
+            FROM projecten p
+            LEFT JOIN taken t ON p.naam = t.project
+            GROUP BY p.naam
+            HAVING COUNT(t.id) > 0
+            ORDER BY task_count DESC
+            LIMIT 20
+        `);
+
+        res.json({
+            popular: result.rows.map(row => ({
+                ...row,
+                completion_rate: Math.round(row.completion_rate)
+            }))
+        });
+    } catch (error) {
+        console.error('Admin projects error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Popular Contexts
+app.get('/api/admin/contexts', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        const result = await pool.query(`
+            SELECT c.naam as name,
+                   COUNT(t.id) as task_count,
+                   COUNT(DISTINCT t.user_id) as user_count,
+                   COALESCE(AVG(t.duur), 0) as avg_duration
+            FROM contexten c
+            LEFT JOIN taken t ON c.naam = t.context
+            GROUP BY c.naam
+            HAVING COUNT(t.id) > 0
+            ORDER BY task_count DESC
+            LIMIT 20
+        `);
+
+        res.json({
+            popular: result.rows.map(row => ({
+                ...row,
+                avg_duration: Math.round(row.avg_duration)
+            }))
+        });
+    } catch (error) {
+        console.error('Admin contexts error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Error Logs (simulated - in production this would come from actual logs)
+app.get('/api/admin/errors', async (req, res) => {
+    try {
+        // In a real implementation, you'd have an error_logs table
+        // For now, simulate some recent errors
+        const recentErrors = [
+            {
+                timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+                endpoint: '/api/taak/123',
+                message: 'Task not found',
+                user_email: 'test@example.com'
+            },
+            {
+                timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+                endpoint: '/api/lijst/acties',
+                message: 'Database connection timeout',
+                user_email: null
+            }
+        ];
+
+        res.json({
+            recent: recentErrors
+        });
+    } catch (error) {
+        console.error('Admin errors error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin API Usage Statistics
+app.get('/api/admin/api-usage', async (req, res) => {
+    try {
+        // In production, this would come from actual API logs
+        // For now, simulate popular endpoints
+        const endpoints = [
+            {
+                endpoint: '/api/lijst/acties',
+                calls_24h: 1250,
+                avg_response_time: 45,
+                error_count: 2
+            },
+            {
+                endpoint: '/api/taak/:id',
+                calls_24h: 890,
+                avg_response_time: 32,
+                error_count: 0
+            },
+            {
+                endpoint: '/api/dagelijkse-planning',
+                calls_24h: 567,
+                avg_response_time: 78,
+                error_count: 1
+            }
+        ];
+
+        res.json({
+            endpoints
+        });
+    } catch (error) {
+        console.error('Admin API usage error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Email Statistics
+app.get('/api/admin/email-stats', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Total email imports (tasks with opmerkingen suggesting email origin)
+        const totalResult = await pool.query(`
+            SELECT COUNT(*) as count FROM taken 
+            WHERE opmerkingen LIKE '%Email import%' 
+               OR opmerkingen LIKE '%Datum:%' 
+               OR opmerkingen LIKE '%Duur:%'
+        `);
+        const total = parseInt(totalResult.rows[0].count);
+
+        // This week
+        const thisWeekResult = await pool.query(`
+            SELECT COUNT(*) as count FROM taken 
+            WHERE (opmerkingen LIKE '%Email import%' 
+                   OR opmerkingen LIKE '%Datum:%' 
+                   OR opmerkingen LIKE '%Duur:%')
+              AND aangemaakt > NOW() - INTERVAL '7 days'
+        `);
+        const thisWeek = parseInt(thisWeekResult.rows[0].count);
+
+        // Success rate (assuming 98% for now, in production track actual failures)
+        const successRate = 98;
+
+        res.json({
+            total,
+            thisWeek,
+            successRate
+        });
+    } catch (error) {
+        console.error('Admin email stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Export Data
+app.get('/api/admin/export', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Get comprehensive data for CSV export
+        const users = await pool.query(`
+            SELECT u.id, u.naam, u.email, u.aangemaakt, u.laatste_login,
+                   COUNT(t.id) as total_tasks,
+                   COUNT(CASE WHEN t.lijst = 'afgewerkte-taken' THEN 1 END) as completed_tasks
+            FROM users u
+            LEFT JOIN taken t ON u.id = t.user_id
+            GROUP BY u.id, u.naam, u.email, u.aangemaakt, u.laatste_login
+            ORDER BY u.aangemaakt DESC
+        `);
+
+        // Convert to CSV
+        const csvHeaders = ['User ID', 'Name', 'Email', 'Registered', 'Last Login', 'Total Tasks', 'Completed Tasks'];
+        let csvContent = csvHeaders.join(',') + '\n';
+
+        users.rows.forEach(user => {
+            const row = [
+                user.id,
+                `"${user.naam}"`,
+                user.email,
+                user.aangemaakt,
+                user.laatste_login || '',
+                user.total_tasks,
+                user.completed_tasks
+            ];
+            csvContent += row.join(',') + '\n';
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=tickedify-export.csv');
+        res.send(csvContent);
+    } catch (error) {
+        console.error('Admin export error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Admin Maintenance
+app.post('/api/admin/maintenance', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Perform maintenance tasks
+        let cleanedCount = 0;
+
+        // Clean up orphaned records (example: tasks without users)
+        const cleanupResult = await pool.query(`
+            DELETE FROM taken WHERE user_id NOT IN (SELECT id FROM users)
+        `);
+        cleanedCount += cleanupResult.rowCount || 0;
+
+        // Update database statistics
+        await pool.query('ANALYZE');
+
+        res.json({
+            success: true,
+            message: `Onderhoud voltooid. ${cleanedCount} onnodige records verwijderd.`
+        });
+    } catch (error) {
+        console.error('Admin maintenance error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 404 handler (AFTER all routes!)
 app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
