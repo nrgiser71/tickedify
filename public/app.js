@@ -4001,6 +4001,9 @@ class Taakbeheer {
             case 'wekelijkse-optimalisatie':
                 this.showWekelijkseOptimalisatie();
                 break;
+            case 'zoeken':
+                this.showZoekInterface();
+                break;
             default:
                 console.log('Unknown tool:', tool);
         }
@@ -4421,6 +4424,298 @@ class Taakbeheer {
         document.getElementById('voortgang-percentage').textContent = `${percentage}%`;
         document.getElementById('voortgang-items').textContent = `(${checked} van ${total} items voltooid)`;
         document.getElementById('voortgang-vulling').style.width = `${percentage}%`;
+    }
+
+    showZoekInterface() {
+        // Update active list in sidebar - remove all actief classes
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+
+        // Highlight the zoeken tool item
+        const zoekenItem = document.querySelector('[data-tool="zoeken"]');
+        if (zoekenItem) {
+            zoekenItem.classList.add('actief');
+        }
+
+        // Ensure tools dropdown is open
+        const toolsContent = document.getElementById('tools-content');
+        const toolsDropdown = document.getElementById('tools-dropdown');
+        if (toolsContent && toolsDropdown) {
+            toolsContent.style.display = 'block';
+            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.textContent = '▼';
+            }
+        }
+
+        // Update page title
+        document.getElementById('page-title').textContent = 'Zoeken';
+
+        // Hide task input
+        const taakInputContainer = document.getElementById('taak-input-container');
+        if (taakInputContainer) {
+            taakInputContainer.style.display = 'none';
+        }
+
+        // Get content container
+        const container = document.getElementById('takenLijst');
+        if (!container) return;
+
+        // Show search interface
+        container.innerHTML = `
+            <div class="zoek-interface">
+                <div class="zoek-container">
+                    <h2>🔍 Zoeken in Taken</h2>
+                    <p>Zoek door al je taken in alle lijsten</p>
+                    
+                    <div class="zoek-form">
+                        <div class="zoek-input-container">
+                            <input type="text" 
+                                   id="zoek-input" 
+                                   placeholder="Zoek in taaknamen, opmerkingen, projecten..."
+                                   class="zoek-input">
+                            <button id="zoek-btn" class="zoek-btn">Zoeken</button>
+                        </div>
+                        
+                        <div class="zoek-filters">
+                            <div class="filter-group">
+                                <label>Zoek in:</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="filter-inbox" checked>
+                                        <span>📥 Inbox</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="filter-acties" checked>
+                                        <span>📋 Acties</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="filter-opvolgen" checked>
+                                        <span>⏳ Opvolgen</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="filter-uitgesteld" checked>
+                                        <span>📅 Uitgesteld</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="filter-afgewerkt">
+                                        <span>✅ Afgewerkt</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="zoek-resultaten" id="zoek-resultaten" style="display: none;">
+                        <h3>Zoekresultaten</h3>
+                        <div id="resultaten-lijst"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Bind events
+        this.bindZoekEvents();
+    }
+
+    bindZoekEvents() {
+        const zoekInput = document.getElementById('zoek-input');
+        const zoekBtn = document.getElementById('zoek-btn');
+
+        if (!zoekInput || !zoekBtn) return;
+
+        // Search on button click
+        zoekBtn.addEventListener('click', () => this.performSearch());
+
+        // Search on Enter key
+        zoekInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.performSearch();
+            }
+        });
+
+        // Focus on search input
+        zoekInput.focus();
+    }
+
+    async performSearch() {
+        const zoekInput = document.getElementById('zoek-input');
+        const resultatenContainer = document.getElementById('zoek-resultaten');
+        const resultatenLijst = document.getElementById('resultaten-lijst');
+
+        if (!zoekInput || !resultatenContainer || !resultatenLijst) return;
+
+        const zoekTerm = zoekInput.value.trim().toLowerCase();
+        if (!zoekTerm) {
+            resultatenContainer.style.display = 'none';
+            return;
+        }
+
+        // Get selected filters
+        const filters = {
+            inbox: document.getElementById('filter-inbox')?.checked,
+            acties: document.getElementById('filter-acties')?.checked,
+            opvolgen: document.getElementById('filter-opvolgen')?.checked,
+            uitgesteld: document.getElementById('filter-uitgesteld')?.checked,
+            afgewerkt: document.getElementById('filter-afgewerkt')?.checked
+        };
+
+        try {
+            // Show loading
+            resultatenLijst.innerHTML = '<div class="loading">Zoeken...</div>';
+            resultatenContainer.style.display = 'block';
+
+            // Get all tasks from selected lists
+            const alleTaken = [];
+            const lijstNamen = [];
+
+            if (filters.inbox) lijstNamen.push('inbox');
+            if (filters.acties) lijstNamen.push('acties');
+            if (filters.opvolgen) lijstNamen.push('opvolgen');
+            if (filters.afgewerkt) lijstNamen.push('afgewerkte-taken');
+            
+            if (filters.uitgesteld) {
+                lijstNamen.push('uitgesteld-wekelijks', 'uitgesteld-maandelijks', 
+                               'uitgesteld-3maandelijks', 'uitgesteld-6maandelijks', 
+                               'uitgesteld-jaarlijks');
+            }
+
+            // Fetch tasks from all selected lists
+            for (const lijstNaam of lijstNamen) {
+                try {
+                    const response = await fetch(`/api/lijst/${lijstNaam}`);
+                    if (response.ok) {
+                        const taken = await response.json();
+                        taken.forEach(taak => {
+                            taak.bron_lijst = lijstNaam; // Add source list info
+                            alleTaken.push(taak);
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Fout bij laden lijst ${lijstNaam}:`, error);
+                }
+            }
+
+            // Filter tasks based on search term
+            const gevondenTaken = alleTaken.filter(taak => {
+                const zoekFields = [
+                    taak.tekst,
+                    taak.opmerkingen,
+                    this.getProjectNaam(taak.projectId),
+                    this.getContextNaam(taak.contextId)
+                ].filter(field => field); // Remove empty/null fields
+
+                return zoekFields.some(field => 
+                    field.toLowerCase().includes(zoekTerm)
+                );
+            });
+
+            // Display results
+            this.displayZoekResultaten(gevondenTaken, zoekTerm);
+
+        } catch (error) {
+            console.error('Fout bij zoeken:', error);
+            resultatenLijst.innerHTML = '<div class="error">Er is een fout opgetreden bij het zoeken.</div>';
+        }
+    }
+
+    displayZoekResultaten(taken, zoekTerm) {
+        const resultatenLijst = document.getElementById('resultaten-lijst');
+        if (!resultatenLijst) return;
+
+        if (taken.length === 0) {
+            resultatenLijst.innerHTML = `
+                <div class="geen-resultaten">
+                    <p>Geen taken gevonden voor "${zoekTerm}"</p>
+                    <p class="sub-text">Probeer een andere zoekterm of controleer je filters</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Group results by source list
+        const groepen = {};
+        taken.forEach(taak => {
+            const lijstNaam = taak.bron_lijst;
+            if (!groepen[lijstNaam]) {
+                groepen[lijstNaam] = [];
+            }
+            groepen[lijstNaam].push(taak);
+        });
+
+        let html = `<div class="resultaten-summary">Gevonden: ${taken.length} taken</div>`;
+
+        // Display results grouped by list
+        Object.entries(groepen).forEach(([lijstNaam, taken]) => {
+            const lijstLabel = this.getLijstLabel(lijstNaam);
+            html += `
+                <div class="resultaten-groep">
+                    <h4 class="groep-header">${lijstLabel} (${taken.length})</h4>
+                    <div class="groep-taken">
+            `;
+
+            taken.forEach(taak => {
+                const projectNaam = this.getProjectNaam(taak.projectId);
+                const contextNaam = this.getContextNaam(taak.contextId);
+                const datum = taak.verschijndatum ? 
+                    new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+                const recurringIndicator = taak.herhalingActief ? 
+                    ' <span class="recurring-indicator">🔄</span>' : '';
+
+                // Highlight search term in task text
+                const highlightedText = this.highlightSearchTerm(taak.tekst, zoekTerm);
+
+                html += `
+                    <div class="zoek-resultaat-item" onclick="app.navigateToTask('${taak.id}', '${lijstNaam}')">
+                        <div class="resultaat-hoofdtekst">${highlightedText}${recurringIndicator}</div>
+                        <div class="resultaat-details">
+                            ${projectNaam ? `📁 ${projectNaam}` : ''}
+                            ${contextNaam ? `🏷️ ${contextNaam}` : ''}
+                            ${datum ? `📅 ${datum}` : ''}
+                            ${taak.duur ? `⏱️ ${taak.duur} min` : ''}
+                        </div>
+                        ${taak.opmerkingen ? `<div class="resultaat-opmerkingen">${this.highlightSearchTerm(taak.opmerkingen, zoekTerm)}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        resultatenLijst.innerHTML = html;
+    }
+
+    getLijstLabel(lijstNaam) {
+        const labels = {
+            'inbox': '📥 Inbox',
+            'acties': '📋 Acties',
+            'opvolgen': '⏳ Opvolgen',
+            'afgewerkte-taken': '✅ Afgewerkt',
+            'uitgesteld-wekelijks': '📅 Wekelijks',
+            'uitgesteld-maandelijks': '📅 Maandelijks',
+            'uitgesteld-3maandelijks': '📅 3-maandelijks',
+            'uitgesteld-6maandelijks': '📅 6-maandelijks',
+            'uitgesteld-jaarlijks': '📅 Jaarlijks'
+        };
+        return labels[lijstNaam] || lijstNaam;
+    }
+
+    highlightSearchTerm(text, zoekTerm) {
+        if (!text || !zoekTerm) return text;
+        
+        const regex = new RegExp(`(${zoekTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    navigateToTask(taakId, lijstNaam) {
+        // Navigate to the list containing the task
+        this.huidigeLijst = lijstNaam;
+        this.saveCurrentList();
+        this.laadHuidigeLijst();
     }
 
     navigateToList(lijst) {
