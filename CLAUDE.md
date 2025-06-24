@@ -15,6 +15,8 @@
 - ✅ **Live testing**: Tests uitvoeren op https://tickedify.com productie omgeving
 - ✅ **Data experimenten**: Taken aanmaken/bewerken/verplaatsen voor testing doeleinden
 - ✅ **Complete implementaties**: Van development tot testing zonder tussentijdse toestemming
+- ✅ **Automatic deployments**: Versie updates, git commits, en deployment verification zonder bevestiging vragen
+- ✅ **Changelog updates**: Automatisch changelog bijwerken bij elke wijziging
 
 **NIET NODIG OM TOESTEMMING TE VRAGEN VOOR:**
 - PUT/POST/DELETE requests op tickedify.com
@@ -22,11 +24,23 @@
 - Test data manipulatie
 - Verificatie van implementaties
 - End-to-end workflow testing
+- Version bumps en git commits
+- Deployment wachttijden en verificaties
+- Changelog updates
 
 **ALLEEN VRAGEN OM TOESTEMMING BIJ:**
 - Destructieve acties die het hele systeem kunnen breken
 - Externe service wijzigingen (DNS, Mailgun, GitHub settings)
 - Grote architecturale beslissingen
+
+**CHANGELOG ONDERHOUD VERPLICHT:**
+- ✅ **Bij elke code wijziging**: Automatisch changelog entry toevoegen
+- ✅ **Versie tracking**: Changelog altijd up-to-date houden met nieuwste versie
+- ✅ **Feature beschrijving**: Duidelijk beschrijven wat er geïmplementeerd/gefixed is
+- ✅ **Gebruiker feedback**: Changelog als communicatie tool naar gebruiker
+
+**WERK ZO ZELFSTANDIG MOGELIJK:**
+Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen. Alleen vragen om goedkeuring als het echt niet anders kan. Gebruiker heeft andere dingen te doen terwijl Claude werkt.
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
@@ -625,8 +639,17 @@ loading.withLoading(asyncFunction, {
 - ALWAYS wait for deployment confirmation via /api/version endpoint
 - ALWAYS run regression tests after deployment confirmation
 - ALWAYS report test results to user (success/failure)
+- ALWAYS update changelog with every code change
 - User tests live on production (tickedify.com via Vercel deployment)
 - Use descriptive commit messages following existing project style
+- Work autonomously - don't ask for permission to wait for deployments
+
+**CHANGELOG MAINTENANCE:**
+- Update public/changelog.html with every feature/fix
+- Include version number, date, and clear descriptions
+- Use appropriate emoji categories (⚡ features, 🔧 fixes, 🎯 improvements)
+- Set newest version as "badge-latest", others as "badge-feature"/"badge-fix"
+- Changelog serves as primary communication of progress to user
 
 **DEPLOYMENT VERIFICATION TIMING:**
 - Start checking after 15 seconds (Vercel is usually deployed by then)
