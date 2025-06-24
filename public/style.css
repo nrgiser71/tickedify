@@ -2254,27 +2254,7 @@ button:focus {
     pointer-events: none;
 }
 
-.planning-actie-item:hover {
-    background: var(--macos-green);
-    border-color: var(--macos-green-hover);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(48, 209, 88, 0.3);
-}
-
-.planning-actie-item:hover::before {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.planning-actie-item:hover::after {
-    opacity: 1;
-    color: var(--macos-text-tertiary);
-}
-
-.planning-actie-item:hover .actie-tekst,
-.planning-actie-item:hover .actie-meta {
-    color: white;
-}
+/* Removed hover effects for planning-actie-item - no color change on hover */
 
 .planning-actie-item:active {
     cursor: grabbing;
