@@ -2124,7 +2124,7 @@ class Taakbeheer {
         }
     }
 
-    renderActiesTable(container) {
+    async renderActiesTable(container) {
         if (!container) {
             console.error('renderActiesTable: container is null');
             return;
@@ -2163,7 +2163,7 @@ class Taakbeheer {
             <ul id="acties-lijst" class="taak-lijst"></ul>
         `;
 
-        this.vulFilterDropdowns();
+        await this.vulFilterDropdowns();
         this.renderActiesLijst();
         this.bindActiesEvents();
     }
@@ -3788,7 +3788,15 @@ class Taakbeheer {
         return context ? context.naam : 'Onbekende context';
     }
 
-    vulFilterDropdowns() {
+    async vulFilterDropdowns() {
+        // Ensure projects and contexts are loaded first
+        if (!this.projecten || this.projecten.length === 0) {
+            await this.laadProjecten();
+        }
+        if (!this.contexten || this.contexten.length === 0) {
+            await this.laadContexten();
+        }
+        
         // Project filter vullen
         const projectFilter = document.getElementById('projectFilter');
         if (projectFilter) {
@@ -4017,8 +4025,10 @@ class Taakbeheer {
             let tonen = true;
             
             // Taak tekst filter (contains search) - only filter if there's actual text
-            if (taakFilter && taakFilter.trim() !== '' && !actie.tekst.toLowerCase().includes(taakFilter)) {
-                tonen = false;
+            if (taakFilter && taakFilter.trim() !== '') {
+                if (!actie.tekst.toLowerCase().includes(taakFilter.trim())) {
+                    tonen = false;
+                }
             }
             
             // Bestaande filters
