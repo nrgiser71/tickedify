@@ -3507,10 +3507,9 @@ app.get('/api/admin/tasks', async (req, res) => {
         const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
         const total = parseInt(totalResult.rows[0].count);
 
-        // Completed tasks (check both possible names)
+        // Completed tasks (tasks with afgewerkt timestamp)
         const completedResult = await pool.query(`
-            SELECT COUNT(*) as count FROM taken 
-            WHERE lijst IN ('afgewerkte-taken', 'afgewerkt', 'completed')
+            SELECT COUNT(*) as count FROM taken WHERE afgewerkt IS NOT NULL
         `);
         const completed = parseInt(completedResult.rows[0].count);
 
@@ -3602,7 +3601,7 @@ app.get('/api/admin/insights', async (req, res) => {
         // Completion rate
         const completionResult = await pool.query(`
             SELECT 
-                (SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkte-taken') * 100.0 / 
+                (SELECT COUNT(*) FROM taken WHERE afgewerkt IS NOT NULL) * 100.0 / 
                 NULLIF((SELECT COUNT(*) FROM taken), 0) as completion_rate
         `);
         const completionRate = Math.round(completionResult.rows[0].completion_rate || 0);
@@ -3610,7 +3609,7 @@ app.get('/api/admin/insights', async (req, res) => {
         // Productivity score (tasks completed per active user)
         const productivityResult = await pool.query(`
             SELECT 
-                (SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkte-taken') * 1.0 /
+                (SELECT COUNT(*) FROM taken WHERE afgewerkt IS NOT NULL) * 1.0 /
                 NULLIF((SELECT COUNT(*) FROM users WHERE laatste_login > NOW() - INTERVAL '30 days'), 0) as productivity
         `);
         const productivityScore = Math.round(productivityResult.rows[0].productivity || 0);
@@ -3659,7 +3658,7 @@ app.get('/api/admin/projects', async (req, res) => {
                    COUNT(t.id) as task_count,
                    COUNT(DISTINCT t.user_id) as user_count,
                    COALESCE(
-                       (COUNT(CASE WHEN t.lijst = 'afgewerkte-taken' THEN 1 END) * 100.0 / 
+                       (COUNT(CASE WHEN t.afgewerkt IS NOT NULL THEN 1 END) * 100.0 / 
                         NULLIF(COUNT(t.id), 0)), 0
                    ) as completion_rate
             FROM projecten p
@@ -3823,7 +3822,7 @@ app.get('/api/admin/export', async (req, res) => {
         const users = await pool.query(`
             SELECT u.id, u.naam, u.email, u.aangemaakt, u.laatste_login,
                    COUNT(t.id) as total_tasks,
-                   COUNT(CASE WHEN t.lijst = 'afgewerkte-taken' THEN 1 END) as completed_tasks
+                   COUNT(CASE WHEN t.afgewerkt IS NOT NULL THEN 1 END) as completed_tasks
             FROM users u
             LEFT JOIN taken t ON u.id = t.user_id
             GROUP BY u.id, u.naam, u.email, u.aangemaakt, u.laatste_login
