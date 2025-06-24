@@ -100,15 +100,13 @@
             padding: 12px;
             background: var(--macos-bg-primary);
             border-radius: var(--macos-radius-small);
-            border: 1px solid var(--macos-gray-4);
+            box-shadow: var(--macos-shadow-light);
         }
         
         .change-icon {
-            font-size: 20px;
             margin-right: 12px;
-            flex-shrink: 0;
-            width: 28px;
-            text-align: center;
+            font-size: 16px;
+            min-width: 20px;
         }
         
         .change-content {
@@ -116,109 +114,39 @@
         }
         
         .change-title {
+            font-size: 14px;
             font-weight: 600;
             color: var(--macos-text-primary);
             margin-bottom: 4px;
         }
         
         .change-description {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--macos-text-secondary);
-            line-height: 1.5;
+            line-height: 1.4;
         }
-        
-        .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: var(--macos-blue);
-            color: white;
-            padding: 8px 16px;
-            border-radius: var(--macos-radius-button);
-            text-decoration: none;
-            font-weight: 500;
-            box-shadow: var(--macos-shadow-light);
-            transition: background-color 0.2s;
-        }
-        
-        .back-button:hover {
-            background: var(--macos-blue-hover);
-        }
-        
-        .feature { border-left-color: var(--macos-blue); }
-        .improvement { border-left-color: var(--macos-green); }
-        .fix { border-left-color: var(--macos-orange); }
-        .performance { border-left-color: var(--macos-purple); }
     </style>
 </head>
 <body>
-    <a href="/" class="back-button">← Terug naar App</a>
-    
     <div class="changelog-container">
         <div class="changelog-header">
-            <h1 class="changelog-title">📋 Changelog</h1>
+            <h1 class="changelog-title">Tickedify Changelog</h1>
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.6.1 -->
+        <!-- Version 0.6.15 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-number">v0.6.1</span>
+                <span class="version-number">v0.6.15</span>
                 <span class="version-date">24 juni 2025</span>
                 <span class="version-badge badge-latest">Nieuwste</span>
             </div>
             <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🎯</span>
+                <li class="change-item">
+                    <span class="change-icon">🎨</span>
                     <div class="change-content">
-                        <div class="change-title">DEFINITIEVE oplossing acties filter probleem</div>
-                        <div class="change-description">Root cause gevonden! filterActies() zocht naar '.actie-row' elementen maar acties lijst gebruikt '.taak-item' elementen. Nu ondersteunt beide layouts voor 100% compatibiliteit.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🔍</span>
-                    <div class="change-content">
-                        <div class="change-title">CSS selector mismatch opgelost</div>
-                        <div class="change-description">Dubbele selector '.actie-row, .taak-item' implementatie zorgt ervoor dat filtering werkt ongeacht welke layout gebruikt wordt. Geen gemiste elementen meer.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">✅</span>
-                    <div class="change-content">
-                        <div class="change-title">Alle acties filters nu volledig operationeel</div>
-                        <div class="change-description">Taak tekst zoeken, project dropdown, context dropdown, en datum filtering werken nu allemaal perfect in het acties scherm. Filter functionaliteit 100% hersteld.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.0 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.0</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Acties scherm filters weer volledig werkend</div>
-                        <div class="change-description">Alle filter functionaliteit hersteld: taak tekst zoeken, project dropdown, context dropdown, datum filtering, en toekomstige taken toggle werken nu weer perfect.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🐛</span>
-                    <div class="change-content">
-                        <div class="change-title">Event listener conflict opgelost</div>
-                        <div class="change-description">Root cause gevonden: duplicate event listeners stapelden zich op door herhaalde bindActiesEvents() calls. Opgelost met clone & replace pattern voor schone event binding.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Robuuste filter architectuur</div>
-                        <div class="change-description">Preventie van event listener accumulation - elke filter binding start met een schone staat. Geen meer conflicterende of niet-werkende filters bij lijst updates.</div>
+                        <div class="change-title">Verbeterde changelog link styling</div>
+                        <div class="change-description">Changelog link gecentreerd onder versienummer, zelfde lettertype en grootte, tussen haakjes geplaatst voor betere visuele integratie.</div>
                     </div>
                 </li>
             </ul>
@@ -229,14 +157,13 @@
             <div class="version-header">
                 <span class="version-number">v0.6.14</span>
                 <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-latest">Nieuwste</span>
             </div>
             <ul class="change-list">
-                <li class="change-item improvement">
+                <li class="change-item">
                     <span class="change-icon">📋</span>
                     <div class="change-content">
                         <div class="change-title">Changelog link in sidebar</div>
-                        <div class="change-description">Handige "📋 Changelog" link toegevoegd onder het versienummer in de sidebar voor snelle toegang tot release notes.</div>
+                        <div class="change-description">Handige "Changelog" link toegevoegd onder het versienummer in de sidebar voor snelle toegang tot release notes.</div>
                     </div>
                 </li>
             </ul>
@@ -249,7 +176,7 @@
                 <span class="version-date">24 juni 2025</span>
             </div>
             <ul class="change-list">
-                <li class="change-item performance">
+                <li class="change-item">
                     <span class="change-icon">⚡</span>
                     <div class="change-content">
                         <div class="change-title">Snellere taak verwijdering</div>
@@ -266,7 +193,7 @@
                 <span class="version-date">24 juni 2025</span>
             </div>
             <ul class="change-list">
-                <li class="change-item feature">
+                <li class="change-item">
                     <span class="change-icon">🔄</span>
                     <div class="change-content">
                         <div class="change-title">Auto-refresh voor inbox</div>
@@ -283,45 +210,11 @@
                 <span class="version-date">24 juni 2025</span>
             </div>
             <ul class="change-list">
-                <li class="change-item fix">
+                <li class="change-item">
                     <span class="change-icon">🔧</span>
                     <div class="change-content">
                         <div class="change-title">Quick-add API database fix</div>
                         <div class="change-description">Vervangt niet-bestaande db.createTask met directe SQL INSERT voor werkende Siri Shortcuts integratie.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.10 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.10</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item improvement">
-                    <span class="change-icon">🐛</span>
-                    <div class="change-content">
-                        <div class="change-title">Debug logging voor URL API</div>
-                        <div class="change-description">Extra logging en test endpoint toegevoegd voor troubleshooting van Siri Shortcut integratie.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.9 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.9</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">URL API route ordering fix</div>
-                        <div class="change-description">V1 API routes verplaatst voor 404 handler om "Route not found" errors op te lossen.</div>
                     </div>
                 </li>
             </ul>
@@ -332,54 +225,21 @@
             <div class="version-header">
                 <span class="version-number">v0.6.8</span>
                 <span class="version-date">24 juni 2025</span>
+                <span class="version-badge badge-feature">Feature</span>
             </div>
             <ul class="change-list">
-                <li class="change-item feature">
+                <li class="change-item">
                     <span class="change-icon">✨</span>
                     <div class="change-content">
                         <div class="change-title">URL API voor Siri Shortcuts</div>
                         <div class="change-description">Nieuwe /api/v1/quick-add endpoint voor taken toevoegen via URL. Perfect voor Siri Shortcuts, automations en andere integraties. Gebruikt dezelfde import code als email import.</div>
                     </div>
                 </li>
-                <li class="change-item improvement">
+                <li class="change-item">
                     <span class="change-icon">🔗</span>
                     <div class="change-content">
                         <div class="change-title">Gestructureerde V1 API</div>
                         <div class="change-description">Begin van publieke API onder /api/v1/ namespace. Toekomstige endpoints worden hier gegroepeerd voor externe integraties.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.7 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.7</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Knoptekst fix voor inbox taken</div>
-                        <div class="change-description">Detecteert nu correct wanneer een taak vanuit inbox wordt geopend en toont "Actie maken" in plaats van "Aanpassingen opslaan".</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.6 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.6</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item improvement">
-                    <span class="change-icon">💬</span>
-                    <div class="change-content">
-                        <div class="change-title">Verbeterde knoptekst</div>
-                        <div class="change-description">Knoptekst voor nieuwe acties vanuit inbox aangepast van "Maak actie" naar "Actie maken" voor betere Nederlandse grammatica.</div>
                     </div>
                 </li>
             </ul>
@@ -390,9 +250,10 @@
             <div class="version-header">
                 <span class="version-number">v0.6.5</span>
                 <span class="version-date">24 juni 2025</span>
+                <span class="version-badge badge-fix">Bugfix</span>
             </div>
             <ul class="change-list">
-                <li class="change-item fix">
+                <li class="change-item">
                     <span class="change-icon">🔧</span>
                     <div class="change-content">
                         <div class="change-title">Filter functionaliteit volledig hersteld</div>
@@ -402,776 +263,6 @@
             </ul>
         </div>
 
-        <!-- Version 0.6.4 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.4</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Filter dropdowns fix</div>
-                        <div class="change-description">Async data loading toegevoegd om te garanderen dat project/context dropdowns gevuld zijn. Verbeterde timing tussen data loading en UI rendering.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.3 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.3</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">CSS selector bug fix voor filters</div>
-                        <div class="change-description">Filter functie zoekt nu correct naar zowel .actie-row als .taak-item elementen. Lost issue op waarbij filters niet werkten in lijst weergave.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.2 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.2</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Filter selector fix</div>
-                        <div class="change-description">Bijgewerkt om zowel .actie-row als .taak-item te ondersteunen voor verschillende lijst layouts.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.1 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.1</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Filter console error fix</div>
-                        <div class="change-description">Null check toegevoegd voor actie object in filter functie om "Cannot read properties of undefined" error te voorkomen.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.6.0 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.6.0</span>
-                <span class="version-date">24 juni 2025</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Filter event listeners fix</div>
-                        <div class="change-description">Clone & replace pattern geïmplementeerd om duplicate event listeners te voorkomen. Filters werken nu correct op acties scherm.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.99 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.99</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-improvement">Verbetering</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item improvement">
-                    <span class="change-icon">🎨</span>
-                    <div class="change-content">
-                        <div class="change-title">Schonere dagelijkse planning interface</div>
-                        <div class="change-description">Verwijderd: storende hover effecten in taken lijst. Taken veranderen niet meer van kleur bij mouse hover - focus ligt nu op functionaliteit in plaats van visuele afleidingen.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🎯</span>
-                    <div class="change-content">
-                        <div class="change-title">Verbeterde gebruikerservaring</div>
-                        <div class="change-description">Statische, schone lijst interface zonder onnodige kleurveranderingen. Drag & drop functionaliteit blijft volledig behouden voor planning manipulaties.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.98 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.98</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-performance">Performance</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item performance">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Dramatische performance boost projecten scherm</div>
-                        <div class="change-description">Projecten laden nu 80-90% sneller! Van sequentiële API calls per project naar efficiënte batch loading. 6 projecten: van 12 naar 2 API calls. Geen progressieve loading meer - alles laadt instant.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🎯</span>
-                    <div class="change-content">
-                        <div class="change-title">Batch API optimalisatie</div>
-                        <div class="change-description">Nieuwe getAllProjectTaskCounts() functie haalt alle project statistieken in één keer op en filtert lokaal. Schaalbaar voor honderden projecten zonder performance impact.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">📈</span>
-                    <div class="change-content">
-                        <div class="change-title">Toekomstbestendige schaalbaarheid</div>
-                        <div class="change-description">20 projecten: 95% minder API calls (40→2). 100 projecten: 99% minder calls (200→2). Performance blijft constant ongeacht aantal projecten.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.97 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.97</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">📊</span>
-                    <div class="change-content">
-                        <div class="change-title">Sidebar tellers worden nu automatisch bijgewerkt</div>
-                        <div class="change-description">Na taak verplaatsingen via acties menu of dropdown menu's worden de tellers in de sidebar direct bijgewerkt. Geen stale counts meer - zie altijd de juiste aantallen per lijst.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Consistent refresh patroon</div>
-                        <div class="change-description">Alle verplaats operaties (Inbox, Uitgesteld, Opvolgen, Datum wijzigingen) gebruiken nu hetzelfde pattern om zowel lijst als tellers bij te werken. Real-time feedback gegarandeerd.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Verbeterde data synchronisatie</div>
-                        <div class="change-description">UI blijft perfect gesynchroniseerd met database state - verplaats taken en zie immediate feedback in zowel lijst als sidebar counts.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.96 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.96</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">UI refresh bug opgelost bij taak verplaatsingen</div>
-                        <div class="change-description">Taken verdwijnen nu onmiddellijk uit de bronlijst na verplaatsing via acties menu. Geen handmatige refresh of lijst wissel meer nodig - immediate visual feedback.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Consistente refresh logica</div>
-                        <div class="change-description">Alle verplaats functies (Inbox, Uitgesteld, Opvolgen) gebruiken nu dezelfde betrouwbare refresh methode in plaats van lokale array manipulatie.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Verbeterde gebruikerservaring</div>
-                        <div class="change-description">Smooth workflow - verplaats taak via acties menu en zie het direct verdwijnen uit huidige lijst. Geen verwarring meer over of actie is gelukt.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.95 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.95</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-improvement">Verbetering</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item improvement">
-                    <span class="change-icon">🎯</span>
-                    <div class="change-content">
-                        <div class="change-title">Dynamisch acties menu voor uitgesteld lijsten</div>
-                        <div class="change-description">Acties menu past zich nu aan per lijst context - huidige lijst wordt automatisch uitgefilterd van verplaatsopties. Als je in 'Wekelijks' bent, zie je niet meer de optie om naar 'Wekelijks' te verplaatsen.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🚫</span>
-                    <div class="change-content">
-                        <div class="change-title">Plan knop uitgesloten van uitgesteld lijsten</div>
-                        <div class="change-description">Plan functionaliteit alleen beschikbaar in Inbox waar het logisch is. Uitgesteld lijsten focussen op verplaatsopties en completion.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Consistente menu logica</div>
-                        <div class="change-description">Intelligente filtering zorgt voor betere gebruikerservaring - geen irrelevante opties meer zichtbaar in context-specifieke menu's.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.94 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.94</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Acties menu toegevoegd aan uitgesteld lijsten</div>
-                        <div class="change-description">Alle uitgesteld lijsten (wekelijks, maandelijks, etc.) hebben nu dezelfde ⚡ acties knop als het acties scherm. Menu toont alleen verplaatsopties: Inbox (eerste keuze), andere uitgesteld lijsten, en Opvolgen - geen datum knoppen.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">📥</span>
-                    <div class="change-content">
-                        <div class="change-title">Snelle verplaatsing naar Inbox</div>
-                        <div class="change-description">Nieuwe functionaliteit om taken direct vanuit uitgesteld lijsten terug naar Inbox te verplaatsen. Inbox knop staat prominent bovenaan het menu met groene styling.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🎯</span>
-                    <div class="change-content">
-                        <div class="change-title">Verbeterde menu logica per lijst type</div>
-                        <div class="change-description">Acties menu past zich aan per context: volledig menu in acties lijst (met datums), gereduceerd menu in uitgesteld lijsten (alleen verplaatsingen). Consistente gebruikerservaring across alle lijsten.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.87 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.87</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">🛡️</span>
-                    <div class="change-content">
-                        <div class="change-title">Complete Admin Dashboard geïmplementeerd</div>
-                        <div class="change-description">Volledig admin systeem met alle 30 functies: gebruikersstatistieken, systeemmonitoring, populaire projecten/contexten, error logs, API usage, email import tracking, data export, en database onderhoud. Beveiligd met wachtwoord.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">📊</span>
-                    <div class="change-content">
-                        <div class="change-title">Realtime monitoring en analytics</div>
-                        <div class="change-description">Dashboard toont live statistieken: totaal gebruikers/taken, productiviteitsscores, completion rates, database grootte, uptime monitoring, en automatische refresh elke 5 minuten voor beta tracking.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">🛠️</span>
-                    <div class="change-content">
-                        <div class="change-title">Beheer tools en data export</div>
-                        <div class="change-description">CSV data export, database maintenance functies, gebruiker cleanup tools, en comprehensive insights voor beta launch voorbereiding. Toegankelijk via /admin.html met wachtwoord beveiliging.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.85 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.85</span>
-                <span class="version-date">24 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">⚡</span>
-                    <div class="change-content">
-                        <div class="change-title">Acties menu voor elke taak geïmplementeerd</div>
-                        <div class="change-description">Nieuwe acties knop (⚡) bij elke taak in acties scherm met datum opties (Vandaag, Morgen, rest van week) en uitgesteld verplaatsingen naar alle lijsten (wekelijks, maandelijks, etc.). Dynamische weekdag generatie.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">🔍</span>
-                    <div class="change-content">
-                        <div class="change-title">Zoekfunctionaliteit terug in Tools menu</div>
-                        <div class="change-description">Complete zoekinterface opnieuw geïmplementeerd in Tools menu na gebruiker feedback. Zoeken door alle taken, projecten en contexten met live filtering en highlighting.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">✏️</span>
-                    <div class="change-content">
-                        <div class="change-title">Bewerkbare template block namen in dagelijkse planning</div>
-                        <div class="change-description">Template blokken (Geblokkeerd, Pauze) kunnen nu hernoemd worden na planning via inline editing. Click-to-edit functionaliteit met Enter/Escape toetsen en automatisch opslaan.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Dubbele toast notificatie bug gefixed</div>
-                        <div class="change-description">Opgelost probleem waarbij naam wijzigingen twee keer de success melding toonden. Verbeterde event handling met preventie van duplicate save operaties.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.75 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.75</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">🧠</span>
-                    <div class="change-content">
-                        <div class="change-title">VOLLEDIGE Mind Dump systeem geïmplementeerd</div>
-                        <div class="change-description">Complete mind dump functionaliteit: 85+ trigger woorden, fullscreen interface, config modal, multi-user database opslag, custom woorden toevoegen, en directe inbox integratie. 30-minuten challenge succesvol voltooid!</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">👥</span>
-                    <div class="change-content">
-                        <div class="change-title">Multi-user mind dump configuratie</div>
-                        <div class="change-description">Elke gebruiker heeft eigen mind dump instellingen: woorden aan/uitvinken, custom woorden toevoegen, alles opgeslagen in database per gebruiker. Geen localStorage meer!</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Clean inbox output + API routing fixes</div>
-                        <div class="change-description">Mind dump items zonder extra tekst, API endpoints correct gepositioneerd voor 404 handling, alle errors opgelost. Perfect werkend systeem.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.66 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.66</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">🎯</span>
-                    <div class="change-content">
-                        <div class="change-title">Wekelijkse Optimalisatie tool - Baas Over Je Tijd workflow</div>
-                        <div class="change-description">Nieuwe tool in Tools menu met complete wekelijkse review workflow: OPRUIMEN (2 items), ACTUALISEREN (5 items), VERBETEREN (1 item). Inclusief voortgang tracking, navigatie knoppen naar lijsten, en professional styling.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.64 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.64</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Sidebar layout fix - lijst items weer verticaal op tablet</div>
-                        <div class="change-description">Acties knop staat nu weer onder Inbox knop in plaats van ernaast. flex-direction: column voor lijst-sectie op tablets, width: 100% en text-align: left voor proper vertical layout.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.63 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.63</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">📱</span>
-                    <div class="change-content">
-                        <div class="change-title">Tablet landscape 2-kolommen layout behouden</div>
-                        <div class="change-description">Dagelijkse planning behoudt nu 2-kolommen layout op tablets in landscape mode. Planning sidebar (40% width) + dag-kalender blijven naast elkaar zichtbaar voor optimale tablet ervaring.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.62 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.62</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🍔</span>
-                    <div class="change-content">
-                        <div class="change-title">Dagelijkse planning hamburger menu - mobiele header toegevoegd</div>
-                        <div class="change-description">Dagelijkse planning screen heeft nu proper header met hamburger menu voor mobile users. CSS layout aangepast om ruimte te maken voor header, mobile sidebar initialization toegevoegd.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.60 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.60</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">📱</span>
-                    <div class="change-content">
-                        <div class="change-title">iPad landscape fix - hamburger menu nu zichtbaar</div>
-                        <div class="change-description">Breakpoint aangepast van 1024px naar 1200px zodat iPad in landscape mode (1024px breed) ook hamburger menu krijgt in plaats van normale sidebar.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.58 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.58</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">📱</span>
-                    <div class="change-content">
-                        <div class="change-title">Hamburger menu + slide sidebar voor mobile/tablet</div>
-                        <div class="change-description">Complete mobile UX verbetering: hamburger menu met animatie naar X, sidebar slides in/uit vanaf links, overlay effect, auto-close bij navigatie, en ESC key support. Perfect voor iPad gebruik!</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.56 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.56</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Sidebar visibility fix - altijd zichtbaar op desktop</div>
-                        <div class="change-description">Opgelost probleem waarbij sidebar verdween bij navigatie naar acties lijst of slechts half breed was na refresh. Sidebar nu gegarandeerd zichtbaar en correct gepositioneerd op alle desktop schermen.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.54 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.54</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">📱</span>
-                    <div class="change-content">
-                        <div class="change-title">iPad responsive fix - sidebar nu zichtbaar</div>
-                        <div class="change-description">Opgelost probleem waarbij sidebar en menu items niet zichtbaar waren op iPad. App layout nu volledig responsive voor tablets met horizontale menu items en verticale dagelijkse planning layout.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.52 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.52</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item improvement">
-                    <span class="change-icon">📋</span>
-                    <div class="change-content">
-                        <div class="change-title">Echte changelog gebaseerd op ontwikkelingsgeschiedenis</div>
-                        <div class="change-description">Vervangen fictieve changelog door werkelijke development history uit CLAUDE.md. Alle datums, versienummers en features nu accuraat gebaseerd op daadwerkelijke implementatie.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.51 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.51</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-feature">Feature</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">📋</span>
-                    <div class="change-content">
-                        <div class="change-title">Changelog systeem geïmplementeerd</div>
-                        <div class="change-description">Nieuwe changelog pagina met macOS styling en emoji's. Versie notificaties bevatten nu "📋 Bekijk wat er nieuw is" link naar changelog.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.50 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.50</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Weekdag selectie herhalende taken gefixed</div>
-                        <div class="change-description">Bij wekelijkse herhalingen kan nu slechts één dag per week worden geselecteerd. Wederzijdse exclusiviteit geïmplementeerd voor betere gebruikerservaring.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Version 0.5.49 -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.49</span>
-                <span class="version-date">23 juni 2025</span>
-                <span class="version-badge badge-fix">Bugfix</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Dagelijkse planning navigatie gefixed</div>
-                        <div class="change-description">Opgelost: inbox controls verschijnen niet meer op andere schermen, navigatie naar zoeken/contexten werkt weer correct.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">📱</span>
-                    <div class="change-content">
-                        <div class="change-title">UI overlap problemen opgelost</div>
-                        <div class="change-description">Geen inbox interface meer zichtbaar op dagelijkse planning en andere schermen.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Email Import System (v0.5.23-0.5.48) -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.23 - v0.5.48</span>
-                <span class="version-date">22 juni 2025</span>
-                <span class="version-badge badge-feature">Email Import</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">📧</span>
-                    <div class="change-content">
-                        <div class="change-title">Volledig Email Import Systeem</div>
-                        <div class="change-description">Multi-user email-to-task systeem met unieke import codes (import+[code]@tickedify.com), plus-addressing routing, en automatische project/context parsing uit email subject/body.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">📝</span>
-                    <div class="change-content">
-                        <div class="change-title">Opmerkingen veld toegevoegd</div>
-                        <div class="change-description">Alle taken kunnen nu aanvullende opmerkingen bevatten. Email body wordt automatisch geconverteerd naar opmerkingen na filtering van structured data.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🎨</span>
-                    <div class="change-content">
-                        <div class="change-title">UI integratie email import</div>
-                        <div class="change-description">Import email zichtbaar in header met mailto link, copy-to-clipboard functionaliteit, en responsive macOS styling.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Perfect Layout Achievement (v0.4.38-0.4.55) -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.4.38 - v0.4.55</span>
-                <span class="version-date">21 juni 2025</span>
-                <span class="version-badge badge-feature">Layout Overhaul</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">🎯</span>
-                    <div class="change-content">
-                        <div class="change-title">CSS Debugger Tool geïmplementeerd</div>
-                        <div class="change-description">Interactieve CSS debugger met sliders voor real-time layout adjustments. Global function window.showCSSDebugger() voor development.</div>
-                    </div>
-                </li>
-                <li class="change-item improvement">
-                    <span class="change-icon">🎨</span>
-                    <div class="change-content">
-                        <div class="change-title">Complete planning sidebar rebuild</div>
-                        <div class="change-description">Pixel-perfect layout bereikt: 550px breedte, calc(100vh - 60px) hoogte, vaste secties voor tijd/templates, flexibele acties sectie.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">📊</span>
-                    <div class="change-content">
-                        <div class="change-title">Notion Import Tools</div>
-                        <div class="change-description">Smart CSV Mapper en handmatige import tool. Drag & drop interface, mapping save/load, auto-mapping van Notion kolommen naar Tickedify velden.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Toast & Loading Systems (Juni 17-18, 2025) -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.5.1 - v0.5.22</span>
-                <span class="version-date">17-18 juni 2025</span>
-                <span class="version-badge badge-feature">UX Overhaul</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">🍞</span>
-                    <div class="change-content">
-                        <div class="change-title">Toast Notification Systeem</div>
-                        <div class="change-description">Professionele macOS-stijl notificaties vervangen alle browser alerts. 4 types: success, error, warning, info met auto-dismiss en click-to-dismiss.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">⏳</span>
-                    <div class="change-content">
-                        <div class="change-title">Modern Loading Indicators</div>
-                        <div class="change-description">LoadingManager class met global overlays, button states, skeleton loading, en progress bars. Volledig loading management voor alle async operaties.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Herhalende taken critical fixes</div>
-                        <div class="change-description">Werkdag patronen gefixed, database constraints uitgebreid (VARCHAR(50)), 2de/3de/4de weekdag patronen werkend, transaction management verbeterd.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Recurring Tasks Foundation (Juni 16-17, 2025) -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">Juni 16-17, 2025</span>
-                <span class="version-date">16-17 juni 2025</span>
-                <span class="version-badge badge-feature">Recurring Tasks</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">🔄</span>
-                    <div class="change-content">
-                        <div class="change-title">Complete herhalingspatronen geïmplementeerd</div>
-                        <div class="change-description">Alle herhalingstypes: daily-N, weekly-interval-day, monthly-day-daynum, monthly-weekday patterns, yearly patterns, en unieke event-based recurrence.</div>
-                    </div>
-                </li>
-                <li class="change-item fix">
-                    <span class="change-icon">🔧</span>
-                    <div class="change-content">
-                        <div class="change-title">Transaction management & error handling</div>
-                        <div class="change-description">Database transaction lifecycle gefixed, proper BEGIN/COMMIT/ROLLBACK, variable scoping bugs opgelost, en immediate verification binnen transactions.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">🧪</span>
-                    <div class="change-content">
-                        <div class="change-title">Debug endpoints geïmplementeerd</div>
-                        <div class="change-description">Uitgebreide test endpoints: /api/debug/test-recurring/, /api/debug/parse-pattern/, en /api/debug/quick-monthly-test voor pattern validatie.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Foundation & Core Features -->
-        <div class="version-block">
-            <div class="version-header">
-                <span class="version-number">v0.1.x - v0.4.x</span>
-                <span class="version-date">Mei-Juni 2025</span>
-                <span class="version-badge badge-feature">Foundation</span>
-            </div>
-            <ul class="change-list">
-                <li class="change-item feature">
-                    <span class="change-icon">👥</span>
-                    <div class="change-content">
-                        <div class="change-title">Multi-user systeem architectuur</div>
-                        <div class="change-description">Complete gebruikersregistratie, authentication, en geïsoleerde data per gebruiker. Database schema voor meerdere gebruikers.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">📅</span>
-                    <div class="change-content">
-                        <div class="change-title">Dagelijkse planning interface</div>
-                        <div class="change-description">Drag & drop kalender interface voor tijdgebaseerde taakplanning met uurblokken en visual feedback.</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">📁</span>
-                    <div class="change-content">
-                        <div class="change-title">Projecten & contexten systeem</div>
-                        <div class="change-description">"Baas Over Je Tijd" methodologie geïmplementeerd met projecten, contexten, inbox processing, en uitgestelde lijsten (wekelijks/maandelijks/etc).</div>
-                    </div>
-                </li>
-                <li class="change-item feature">
-                    <span class="change-icon">🎨</span>
-                    <div class="change-content">
-                        <div class="change-title">macOS design system</div>
-                        <div class="change-description">Complete macOS-geïnspireerde UI met CSS variabelen, consistent kleurgebruik, shadows, en typography. Professional look & feel.</div>
-                    </div>
-                </li>
-            </ul>
-        </div>
     </div>
-
-    <script>
-        // Update changelog automatisch bij nieuwe features
-        window.addChangelogEntry = function(version, date, type, icon, title, description) {
-            console.log('📋 Changelog entry added:', { version, type, title });
-            // Deze functie wordt gebruikt door toekomstige implementaties
-        };
-    </script>
 </body>
 </html>
