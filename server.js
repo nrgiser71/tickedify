@@ -3600,15 +3600,22 @@ app.get('/api/admin/system', async (req, res) => {
 
         // Total records across all tables
         const tablesResult = await pool.query(`
-            SELECT schemaname, tablename, n_tup_ins as inserts
-            FROM pg_stat_user_tables
-            WHERE schemaname = 'public'
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
         `);
 
         let totalRecords = 0;
+        const tableDetails = [];
         for (const table of tablesResult.rows) {
-            const countResult = await pool.query(`SELECT COUNT(*) as count FROM ${table.tablename}`);
-            totalRecords += parseInt(countResult.rows[0].count);
+            try {
+                const countResult = await pool.query(`SELECT COUNT(*) as count FROM "${table.table_name}"`);
+                const count = parseInt(countResult.rows[0].count);
+                totalRecords += count;
+                tableDetails.push({ table_name: table.table_name, count });
+            } catch (error) {
+                console.log(`Skipping table ${table.table_name}: ${error.message}`);
+            }
         }
 
         // Daily growth (tasks created today)
@@ -3621,7 +3628,7 @@ app.get('/api/admin/system', async (req, res) => {
             dbSize: sizeResult.rows[0].size_bytes,
             totalRecords,
             dailyGrowth,
-            tables: tablesResult.rows
+            tables: tableDetails
         });
     } catch (error) {
         console.error('Admin system error:', error);
