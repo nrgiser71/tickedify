@@ -6129,8 +6129,14 @@ class Taakbeheer {
         input.focus();
         input.select();
 
+        // Prevent double execution
+        let isSaving = false;
+        
         // Save function
         const saveEdit = async () => {
+            if (isSaving) return;
+            isSaving = true;
+            
             const newName = input.value.trim();
             
             if (newName && newName !== currentName) {
@@ -6145,6 +6151,7 @@ class Taakbeheer {
 
         // Cancel function  
         const cancelEdit = () => {
+            if (isSaving) return;
             spanElement.textContent = currentName;
         };
 
@@ -6153,7 +6160,7 @@ class Taakbeheer {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                saveEdit();
+                input.blur(); // This will trigger saveEdit via blur event
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 cancelEdit();
