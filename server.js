@@ -4014,20 +4014,27 @@ app.get('/api/v1/quick-add', async (req, res) => {
         }
 
         // Create the task
-        const taskId = await db.createTask(
+        const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        const result = await pool.query(`
+            INSERT INTO taken (
+                id, tekst, lijst, aangemaakt, project_id, context_id, 
+                verschijndatum, duur, type, user_id
+            ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5, $6, $7, $8, $9)
+            RETURNING *
+        `, [
+            taskId,
             taskData.text,
+            'inbox',
             taskData.projectId || null,
             taskData.contextId || null,
             taskData.verschijndatum || null,
             taskData.duur || null,
-            'inbox',
-            userId,
-            null, // herhalingType
-            null, // herhalingWaarde
-            false, // herhalingActief
-            null  // opmerkingen
-        );
+            'taak',
+            userId
+        ]);
 
+        const createdTask = result.rows[0];
         console.log(`✅ Task created via quick-add: ${taskId}`);
 
         // Return success with task details
@@ -4035,13 +4042,13 @@ app.get('/api/v1/quick-add', async (req, res) => {
             success: true,
             message: 'Task added successfully',
             task: {
-                id: taskId,
-                text: taskData.text,
+                id: createdTask.id,
+                text: createdTask.tekst,
                 project: project || null,
                 context: context || null,
-                date: taskData.verschijndatum || null,
-                duration: taskData.duur || null,
-                list: 'inbox'
+                date: createdTask.verschijndatum || null,
+                duration: createdTask.duur || null,
+                list: createdTask.lijst
             }
         });
 
