@@ -1147,12 +1147,16 @@ class Taakbeheer {
 
         container.innerHTML = '';
 
+        // Batch load all task data in parallel - much faster than per-project calls
+        const taskCounts = await this.getAllProjectTaskCounts();
+
+        // Render all projects synchronously for instant UI
         for (const project of this.projecten) {
             const div = document.createElement('div');
             div.className = 'project-wrapper';
             div.dataset.id = project.id;
             
-            const actiesInfo = await this.telActiesPerProject(project.id);
+            const actiesInfo = taskCounts[project.id] || { open: 0, afgewerkt: 0 };
             
             div.innerHTML = `
                 <div class="project-item" onclick="app.toggleProject('${project.id}')">
@@ -1176,32 +1180,52 @@ class Taakbeheer {
         }
     }
 
-    async telActiesPerProject(projectId) {
+    async getAllProjectTaskCounts() {
         try {
-            // Haal alle acties en afgewerkte taken op
+            // Single batch call - much faster than individual calls per project
             const [actiesResponse, afgewerkteResponse] = await Promise.all([
                 fetch('/api/lijst/acties'),
                 fetch('/api/lijst/afgewerkte-taken')
             ]);
             
-            let openActies = 0;
-            let afgewerkteActies = 0;
+            const taskCounts = {};
             
+            // Initialize counts for all projects
+            this.projecten.forEach(project => {
+                taskCounts[project.id] = { open: 0, afgewerkt: 0 };
+            });
+            
+            // Count open tasks
             if (actiesResponse.ok) {
                 const acties = await actiesResponse.json();
-                openActies = acties.filter(actie => actie.projectId === projectId).length;
+                acties.forEach(actie => {
+                    if (actie.projectId && taskCounts[actie.projectId]) {
+                        taskCounts[actie.projectId].open++;
+                    }
+                });
             }
             
+            // Count completed tasks
             if (afgewerkteResponse.ok) {
                 const afgewerkteTaken = await afgewerkteResponse.json();
-                afgewerkteActies = afgewerkteTaken.filter(taak => taak.projectId === projectId && taak.type === 'actie').length;
+                afgewerkteTaken.forEach(taak => {
+                    if (taak.projectId && taak.type === 'actie' && taskCounts[taak.projectId]) {
+                        taskCounts[taak.projectId].afgewerkt++;
+                    }
+                });
             }
             
-            return { open: openActies, afgewerkt: afgewerkteActies };
+            return taskCounts;
         } catch (error) {
-            console.error('Fout bij tellen acties per project:', error);
-            return { open: 0, afgewerkt: 0 };
+            console.error('Fout bij batch laden project task counts:', error);
+            return {};
         }
+    }
+
+    async telActiesPerProject(projectId) {
+        // Legacy function for compatibility - use getAllProjectTaskCounts for batch operations
+        const allCounts = await this.getAllProjectTaskCounts();
+        return allCounts[projectId] || { open: 0, afgewerkt: 0 };
     }
 
     bindProjectenEvents() {
