@@ -2464,13 +2464,30 @@ class Taakbeheer {
                     const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
                     toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
-                    // For recurring tasks, refresh lists but preserve scroll position
-                    setTimeout(() => {
-                        this.laadTellingen();
-                        if (this.huidigeLijst === 'acties') {
+                    // For recurring tasks, add new task to local arrays immediately
+                    this.laadTellingen();
+                    if (nextRecurringTaskId && this.huidigeLijst === 'acties') {
+                        // Add the new recurring task to local arrays immediately for drag & drop
+                        try {
+                            const newTaskResponse = await fetch(`/api/taak/${nextRecurringTaskId}`);
+                            if (newTaskResponse.ok) {
+                                const newTask = await newTaskResponse.json();
+                                console.log('🔄 Adding new recurring task to local arrays:', newTask);
+                                
+                                // Add to both arrays used for drag & drop
+                                this.taken.push(newTask);
+                                if (this.planningActies) {
+                                    this.planningActies.push(newTask);
+                                }
+                                
+                                // Then refresh UI
+                                this.preserveScrollPosition(() => this.laadHuidigeLijst());
+                            }
+                        } catch (error) {
+                            console.error('Error fetching new recurring task:', error);
                             this.preserveScrollPosition(() => this.laadHuidigeLijst());
                         }
-                    }, 500);
+                    }
                 } else {
                     toast.success('Taak afgewerkt!');
                 }
@@ -6033,6 +6050,15 @@ class Taakbeheer {
     async handleDropInternal(data, uur, position) {
         const today = new Date().toISOString().split('T')[0];
         
+        // Debug: Log the drop operation
+        console.log('🎯 DROP OPERATION:', {
+            type: data.type,
+            actieId: data.actieId,
+            uur,
+            position,
+            timestamp: new Date().toISOString()
+        });
+        
         // Prevent duplicate drops by checking if this operation is already in progress
         const operationKey = `drop-${data.type}-${data.actieId || data.planningType}-${uur}-${position}`;
         if (this.activeDropOperations && this.activeDropOperations.has(operationKey)) {
@@ -6583,6 +6609,25 @@ class Taakbeheer {
                 // Refresh the daily planning view to update both actions list and calendar
                 if (this.huidigeLijst === 'dagelijkse-planning') {
                     console.log('🔄 Updating daily planning - both calendar and actions list...');
+                    
+                    // Add new recurring task to local arrays BEFORE updating UI
+                    if (nextRecurringTaskId) {
+                        try {
+                            const newTaskResponse = await fetch(`/api/taak/${nextRecurringTaskId}`);
+                            if (newTaskResponse.ok) {
+                                const newTask = await newTaskResponse.json();
+                                console.log('🔄 Adding new recurring task to local arrays for daily planning:', newTask);
+                                
+                                // Add to both arrays used for drag & drop
+                                this.taken.push(newTask);
+                                if (this.planningActies) {
+                                    this.planningActies.push(newTask);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error fetching new recurring task for daily planning:', error);
+                        }
+                    }
                     
                     // Update actions list with local data (for immediate feedback)
                     const actiesContainer = document.getElementById('planningActiesLijst');
