@@ -4090,6 +4090,163 @@ app.get('/api/v1/quick-add', async (req, res) => {
     }
 });
 
+// Debug endpoint for recurring tasks issue
+app.get('/api/debug/recurring-tasks-analysis', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        // Get recently completed tasks with recurring settings
+        const recentlyCompletedQuery = `
+            SELECT 
+                id, tekst, lijst, project_id, context_id, 
+                verschijndatum, afgewerkt, 
+                herhaling_type, herhaling_actief,
+                opmerkingen
+            FROM taken 
+            WHERE afgewerkt >= NOW() - INTERVAL '3 days'
+            AND herhaling_actief = true
+            AND herhaling_type IS NOT NULL
+            ORDER BY afgewerkt DESC
+        `;
+        
+        const completedResult = await pool.query(recentlyCompletedQuery);
+        
+        // For each completed recurring task, check if a new one was created
+        const analysis = [];
+        
+        for (const task of completedResult.rows) {
+            // Look for potential new tasks created around the same time
+            const searchQuery = `
+                SELECT id, tekst, verschijndatum, aangemaakt
+                FROM taken
+                WHERE tekst = $1
+                AND lijst = $2
+                AND aangemaakt >= $3
+                AND afgewerkt IS NULL
+                ORDER BY aangemaakt DESC
+                LIMIT 1
+            `;
+            
+            const newTaskResult = await pool.query(searchQuery, [
+                task.tekst,
+                task.lijst,
+                task.afgewerkt
+            ]);
+            
+            analysis.push({
+                completedTask: {
+                    id: task.id,
+                    tekst: task.tekst,
+                    lijst: task.lijst,
+                    afgewerkt: task.afgewerkt,
+                    herhaling_type: task.herhaling_type,
+                    verschijndatum: task.verschijndatum
+                },
+                newTaskCreated: newTaskResult.rows.length > 0,
+                newTask: newTaskResult.rows[0] || null
+            });
+        }
+        
+        // Also check for orphaned recurring tasks (active but not completed)
+        const orphanedQuery = `
+            SELECT id, tekst, lijst, verschijndatum, herhaling_type, aangemaakt
+            FROM taken
+            WHERE herhaling_actief = true
+            AND afgewerkt IS NULL
+            AND verschijndatum < CURRENT_DATE
+            ORDER BY verschijndatum DESC
+            LIMIT 20
+        `;
+        
+        const orphanedResult = await pool.query(orphanedQuery);
+        
+        res.json({
+            summary: {
+                recentlyCompletedRecurring: completedResult.rows.length,
+                successfullyRecreated: analysis.filter(a => a.newTaskCreated).length,
+                failed: analysis.filter(a => !a.newTaskCreated).length,
+                orphanedRecurringTasks: orphanedResult.rows.length
+            },
+            failedRecreations: analysis.filter(a => !a.newTaskCreated),
+            orphanedTasks: orphanedResult.rows,
+            allAnalysis: analysis
+        });
+        
+    } catch (error) {
+        console.error('Debug recurring tasks analysis error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Recovery endpoint for missing recurring tasks
+app.post('/api/debug/recover-recurring-tasks', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const { taskIds } = req.body;
+        if (!taskIds || !Array.isArray(taskIds)) {
+            return res.status(400).json({ error: 'taskIds array required' });
+        }
+        
+        const recovered = [];
+        const failed = [];
+        
+        for (const taskId of taskIds) {
+            try {
+                // Get the completed task
+                const taskResult = await pool.query(
+                    'SELECT * FROM taken WHERE id = $1',
+                    [taskId]
+                );
+                
+                if (taskResult.rows.length === 0) {
+                    failed.push({ taskId, error: 'Task not found' });
+                    continue;
+                }
+                
+                const task = taskResult.rows[0];
+                
+                // Calculate next date based on pattern
+                // For now, set to tomorrow as a simple recovery
+                const nextDate = new Date();
+                nextDate.setDate(nextDate.getDate() + 1);
+                const nextDateString = nextDate.toISOString().split('T')[0];
+                
+                // Create new task
+                const newTaskResult = await db.createRecurringTask(
+                    task,
+                    nextDateString,
+                    task.user_id
+                );
+                
+                if (newTaskResult.id) {
+                    recovered.push({
+                        originalTaskId: taskId,
+                        newTaskId: newTaskResult.id,
+                        newDate: nextDateString
+                    });
+                } else {
+                    failed.push({ taskId, error: 'Failed to create new task' });
+                }
+                
+            } catch (error) {
+                failed.push({ taskId, error: error.message });
+            }
+        }
+        
+        res.json({
+            success: true,
+            recovered: recovered.length,
+            failed: failed.length,
+            details: { recovered, failed }
+        });
+        
+    } catch (error) {
+        console.error('Recover recurring tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 404 handler - MUST be after all routes!
 app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
