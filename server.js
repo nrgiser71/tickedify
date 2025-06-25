@@ -4178,6 +4178,33 @@ app.get('/api/debug/recurring-tasks-analysis', async (req, res) => {
     }
 });
 
+// Debug endpoint to find task by ID across all tables
+app.get('/api/debug/find-task/:taskId', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const { taskId } = req.params;
+        
+        // Search in taken table
+        const taskResult = await pool.query('SELECT * FROM taken WHERE id = $1', [taskId]);
+        
+        // Also check if this task ID appears in any planning
+        const planningResult = await pool.query('SELECT * FROM dagelijkse_planning WHERE actie_id = $1', [taskId]);
+        
+        res.json({
+            task_id: taskId,
+            found_in_taken: taskResult.rows,
+            referenced_in_planning: planningResult.rows
+        });
+        
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 // Debug endpoint to cleanup orphaned planning items
 app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
     try {
