@@ -4531,12 +4531,19 @@ app.post('/api/debug/recover-recurring-tasks', async (req, res) => {
                 nextDate.setDate(nextDate.getDate() + 1);
                 const nextDateString = nextDate.toISOString().split('T')[0];
                 
-                // Create new task
-                const newTaskResult = await db.createRecurringTask(
-                    task,
-                    nextDateString,
-                    task.user_id
-                );
+                // Create new task WITH recurring properties preserved
+                const newId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                const insertResult = await pool.query(`
+                    INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    RETURNING id
+                `, [
+                    newId, task.tekst, new Date().toISOString(), task.lijst,
+                    task.project_id, nextDateString + 'T00:00:00.000Z', task.context_id, task.duur, task.type,
+                    task.herhaling_type, task.herhaling_waarde, task.herhaling_actief, task.opmerkingen, null, task.user_id
+                ]);
+                
+                const newTaskResult = { id: insertResult.rows[0]?.id };
                 
                 if (newTaskResult.id) {
                     recovered.push({
@@ -4562,6 +4569,76 @@ app.post('/api/debug/recover-recurring-tasks', async (req, res) => {
         
     } catch (error) {
         console.error('Recover recurring tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Fix recovered tasks that lost their recurring properties  
+app.post('/api/debug/fix-missing-recurring-properties', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const userId = getCurrentUserId(req);
+        
+        // Find all completed recurring tasks from today
+        const completedRecurringTasks = await pool.query(`
+            SELECT * FROM taken 
+            WHERE user_id = $1 
+            AND herhaling_type IS NOT NULL 
+            AND herhaling_actief = true 
+            AND afgewerkt >= CURRENT_DATE
+            ORDER BY afgewerkt DESC
+        `, [userId]);
+        
+        // Find all active tasks created today that might be missing recurring properties
+        const todaysTasks = await pool.query(`
+            SELECT * FROM taken 
+            WHERE user_id = $1 
+            AND afgewerkt IS NULL 
+            AND aangemaakt >= CURRENT_DATE
+            AND (herhaling_type IS NULL OR herhaling_actief = false)
+        `, [userId]);
+        
+        const fixed = [];
+        
+        // Try to match tasks by name and restore recurring properties
+        for (const completedTask of completedRecurringTasks.rows) {
+            const matchingTask = todaysTasks.rows.find(task => 
+                task.tekst === completedTask.tekst && 
+                (!task.herhaling_type || !task.herhaling_actief)
+            );
+            
+            if (matchingTask) {
+                await pool.query(`
+                    UPDATE taken 
+                    SET herhaling_type = $1, herhaling_waarde = $2, herhaling_actief = $3
+                    WHERE id = $4 AND user_id = $5
+                `, [
+                    completedTask.herhaling_type,
+                    completedTask.herhaling_waarde, 
+                    completedTask.herhaling_actief,
+                    matchingTask.id,
+                    userId
+                ]);
+                
+                fixed.push({
+                    taskId: matchingTask.id,
+                    taskName: matchingTask.tekst,
+                    restoredRecurring: completedTask.herhaling_type
+                });
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Fixed ${fixed.length} tasks with missing recurring properties`,
+            completedRecurringFound: completedRecurringTasks.rows.length,
+            todaysTasksFound: todaysTasks.rows.length,
+            fixed: fixed
+        });
+        
+    } catch (error) {
+        console.error('Fix recurring properties error:', error);
         res.status(500).json({ error: error.message });
     }
 });
