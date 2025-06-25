@@ -4643,11 +4643,6 @@ app.post('/api/debug/fix-missing-recurring-properties', async (req, res) => {
     }
 });
 
-// 404 handler - MUST be after all routes!
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
 // Debug endpoint to list all users
 app.get('/api/debug/users-info', async (req, res) => {
     try {
@@ -4677,6 +4672,11 @@ app.get('/api/debug/users-info', async (req, res) => {
             stack: error.stack
         });
     }
+});
+
+// 404 handler - MUST be after all routes!
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
 app.listen(PORT, () => {
