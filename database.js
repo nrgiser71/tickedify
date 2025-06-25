@@ -391,7 +391,9 @@ const db = {
         const result = await pool.query(query, values);
         console.log(`✅ DB: Query successful, rowCount: ${result.rowCount}`);
         
-        // If this update marks a task as completed (afgewerkt), cleanup planning items
+        // DISABLED: Automatic planning cleanup temporarily disabled due to bug
+        // TODO: Re-implement after investigating task disappearance issue
+        /*
         if (result.rowCount > 0 && updates.afgewerkt) {
           console.log(`🧹 Task ${taskId} marked as completed, cleaning up planning items...`);
           try {
@@ -402,9 +404,9 @@ const db = {
             console.log(`✅ Cleaned up ${cleanupResult.rowCount} planning items for completed task ${taskId}`);
           } catch (cleanupError) {
             console.error(`⚠️ Failed to cleanup planning items for task ${taskId}:`, cleanupError.message);
-            // Don't fail the main update because of cleanup error
           }
         }
+        */
         
         return result.rowCount > 0;
       } catch (dbError) {
@@ -446,7 +448,9 @@ const db = {
           const basicResult = await pool.query(basicQuery, basicValues);
           console.log(`✅ DB: Fallback successful, rowCount: ${basicResult.rowCount}`);
           
-          // If this update marks a task as completed (afgewerkt), cleanup planning items
+          // DISABLED: Automatic planning cleanup temporarily disabled due to bug
+          // TODO: Re-implement after investigating task disappearance issue
+          /*
           if (basicResult.rowCount > 0 && updates.afgewerkt) {
             console.log(`🧹 Task ${taskId} marked as completed (fallback), cleaning up planning items...`);
             try {
@@ -457,9 +461,9 @@ const db = {
               console.log(`✅ Cleaned up ${cleanupResult.rowCount} planning items for completed task ${taskId}`);
             } catch (cleanupError) {
               console.error(`⚠️ Failed to cleanup planning items for task ${taskId}:`, cleanupError.message);
-              // Don't fail the main update because of cleanup error
             }
           }
+          */
           
           return basicResult.rowCount > 0;
         }
