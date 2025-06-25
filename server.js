@@ -29,6 +29,14 @@ const forensicLogger = require('./forensic-logger');
 console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
 console.log('🔍 DEBUG: Forensic logger enabled status:', forensicLogger.enabled);
 
+// Force test log on startup
+if (forensicLogger.enabled) {
+    setTimeout(() => {
+        forensicLogger.log('SYSTEM', 'STARTUP_TEST', { message: 'Forensic logging system initialized' });
+        console.log('🧪 Startup test log written');
+    }, 2000);
+}
+
 // Add forensic logging middleware
 app.use(forensicLogger.middleware());
 
@@ -4938,6 +4946,50 @@ app.post('/api/debug/switch-test-user', async (req, res) => {
         res.status(500).json({ 
             error: error.message,
             stack: error.stack
+        });
+    }
+});
+
+// Direct database query for forensic logs (bypass logger)
+app.get('/api/debug/forensic/raw-database', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        // Check if forensic_logs table exists
+        const tableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_name = 'forensic_logs'
+            ) as exists
+        `);
+        
+        if (!tableExists.rows[0].exists) {
+            return res.json({
+                status: 'forensic_logs table does not exist',
+                forensic_debug: process.env.FORENSIC_DEBUG,
+                logger_enabled: forensicLogger.enabled
+            });
+        }
+        
+        // Get recent logs directly from database
+        const logs = await pool.query(`
+            SELECT * FROM forensic_logs 
+            ORDER BY timestamp DESC 
+            LIMIT 20
+        `);
+        
+        res.json({
+            status: 'forensic_logs table exists',
+            forensic_debug: process.env.FORENSIC_DEBUG,
+            logger_enabled: forensicLogger.enabled,
+            total_logs: logs.rows.length,
+            recent_logs: logs.rows
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            forensic_debug: process.env.FORENSIC_DEBUG,
+            logger_enabled: forensicLogger.enabled
         });
     }
 });
