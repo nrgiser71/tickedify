@@ -3841,6 +3841,19 @@ class Taakbeheer {
                 targetList: originalTask.lijst
             });
             
+            // Debug: Log what we're sending to the server
+            console.log('📤 Sending to recurring API:', {
+                originalTask,
+                nextDate,
+                taskProperties: Object.keys(originalTask),
+                herhalingInfo: {
+                    herhalingType: originalTask.herhalingType,
+                    herhaling_type: originalTask.herhaling_type,
+                    herhalingActief: originalTask.herhalingActief,
+                    herhaling_actief: originalTask.herhaling_actief
+                }
+            });
+            
             const response = await fetch('/api/taak/recurring', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
