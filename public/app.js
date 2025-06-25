@@ -1464,9 +1464,9 @@ class Taakbeheer {
                 console.log('🔄 Refreshing lists after recurring task creation...');
                 await this.laadTellingen();
                 
-                // Refresh the current view if needed
+                // Refresh the current view if needed with preserved filters
                 if (this.huidigeLijst === 'acties') {
-                    await this.laadHuidigeLijst();
+                    await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                 }
                 
                 setTimeout(() => {
@@ -1597,6 +1597,51 @@ class Taakbeheer {
                     scrollContainer.scrollTop = scrollPosition;
                 }, 50);
             }
+            return result;
+        }
+    }
+
+    // Helper function to preserve actions filter state during re-renders
+    preserveActionsFilters(callback) {
+        // Save current filter values for actions list
+        const savedFilters = {
+            taakFilter: document.getElementById('taakFilter')?.value || '',
+            projectFilter: document.getElementById('projectFilter')?.value || '',
+            contextFilter: document.getElementById('contextFilter')?.value || '',
+            datumFilter: document.getElementById('datumFilter')?.value || '',
+            toekomstToggle: document.getElementById('toonToekomstToggle')?.checked || false
+        };
+        
+        const result = callback();
+        
+        const restoreFilters = () => {
+            // Restore filter values after re-render
+            const taakFilter = document.getElementById('taakFilter');
+            const projectFilter = document.getElementById('projectFilter');
+            const contextFilter = document.getElementById('contextFilter');
+            const datumFilter = document.getElementById('datumFilter');
+            const toekomstToggle = document.getElementById('toonToekomstToggle');
+            
+            if (taakFilter) taakFilter.value = savedFilters.taakFilter;
+            if (projectFilter) projectFilter.value = savedFilters.projectFilter;
+            if (contextFilter) contextFilter.value = savedFilters.contextFilter;
+            if (datumFilter) datumFilter.value = savedFilters.datumFilter;
+            if (toekomstToggle) toekomstToggle.checked = savedFilters.toekomstToggle;
+            
+            // Re-apply filters after restoration
+            if (this.huidigeLijst === 'acties') {
+                this.renderActiesLijst();
+            }
+        };
+        
+        // Restore filters after DOM updates
+        if (result && typeof result.then === 'function') {
+            return result.then(() => {
+                setTimeout(restoreFilters, 10);
+                return result;
+            });
+        } else {
+            setTimeout(restoreFilters, 10);
             return result;
         }
     }
@@ -3153,7 +3198,9 @@ class Taakbeheer {
                     actie.herhalingActief = !!herhalingType;
                     
                     await this.slaLijstOp();
-                    this.renderTaken();
+                    
+                    // Preserve filters when updating actions list
+                    await this.preserveActionsFilters(() => this.renderTaken());
                     await this.laadTellingen();
                 }
             } else {
@@ -3188,9 +3235,9 @@ class Taakbeheer {
                     this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
                     await this.laadTellingen();
                     
-                    // If we're currently viewing acties, refresh the list
+                    // If we're currently viewing acties, refresh the list with preserved filters
                     if (this.huidigeLijst === 'acties') {
-                        await this.laadHuidigeLijst();
+                        await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                     }
                 } else {
                     console.error('Fout bij opslaan actie:', response.status);
