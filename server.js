@@ -4210,6 +4210,16 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
     try {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
         
+        // Find planning items that reference completed tasks
+        const completedTasksPlanning = await pool.query(`
+            SELECT dp.id, dp.datum, dp.uur, dp.naam, dp.actie_id, t.afgewerkt
+            FROM dagelijkse_planning dp
+            JOIN taken t ON dp.actie_id = t.id
+            WHERE dp.actie_id IS NOT NULL 
+            AND t.afgewerkt IS NOT NULL
+            ORDER BY dp.datum DESC, dp.uur
+        `);
+        
         // Find planning items that reference non-existent tasks
         const orphanedPlanning = await pool.query(`
             SELECT dp.id, dp.datum, dp.uur, dp.naam, dp.actie_id
@@ -4220,15 +4230,31 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
             ORDER BY dp.datum DESC, dp.uur
         `);
         
-        if (orphanedPlanning.rows.length === 0) {
+        const totalToClean = orphanedPlanning.rows.length + completedTasksPlanning.rows.length;
+        
+        if (totalToClean === 0) {
             return res.json({
-                message: 'No orphaned planning items found',
-                cleaned: 0
+                message: 'No planning items to clean',
+                cleaned: 0,
+                completed_tasks_planning: [],
+                orphaned_items: []
             });
         }
         
+        // Delete planning items for completed tasks
+        const deleteCompletedResult = await pool.query(`
+            DELETE FROM dagelijkse_planning
+            WHERE id IN (
+                SELECT dp.id
+                FROM dagelijkse_planning dp
+                JOIN taken t ON dp.actie_id = t.id
+                WHERE dp.actie_id IS NOT NULL 
+                AND t.afgewerkt IS NOT NULL
+            )
+        `);
+        
         // Delete orphaned planning items
-        const deleteResult = await pool.query(`
+        const deleteOrphanedResult = await pool.query(`
             DELETE FROM dagelijkse_planning
             WHERE id IN (
                 SELECT dp.id
@@ -4240,9 +4266,12 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
         `);
         
         res.json({
-            message: 'Cleaned up orphaned planning items',
+            message: 'Cleaned up planning items',
+            completed_tasks_planning: completedTasksPlanning.rows,
             orphaned_items: orphanedPlanning.rows,
-            cleaned: deleteResult.rowCount
+            cleaned_completed: deleteCompletedResult.rowCount,
+            cleaned_orphaned: deleteOrphanedResult.rowCount,
+            total_cleaned: deleteCompletedResult.rowCount + deleteOrphanedResult.rowCount
         });
         
     } catch (error) {
