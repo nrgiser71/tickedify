@@ -2333,8 +2333,8 @@ class Taakbeheer {
                 <div class="taak-checkbox">
                     <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
                 </div>
-                <div class="taak-content">
-                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
+                <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
+                    <div class="taak-titel">${taak.tekst}${recurringIndicator}</div>
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
