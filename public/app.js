@@ -6225,12 +6225,22 @@ class Taakbeheer {
     }
     
     removeActionFromList(actieId) {
+        console.log('🗑️ removeActionFromList called for actieId:', actieId);
+        
         // Remove from local arrays
         if (this.planningActies) {
             this.planningActies = this.planningActies.filter(a => a.id !== actieId);
         }
         if (this.taken) {
             this.taken = this.taken.filter(a => a.id !== actieId);
+        }
+        
+        // CRITICAL FIX: Also remove from planning data to prevent duplicates
+        if (this.currentPlanningData) {
+            const beforeLength = this.currentPlanningData.length;
+            this.currentPlanningData = this.currentPlanningData.filter(p => p.actieId !== actieId);
+            const afterLength = this.currentPlanningData.length;
+            console.log(`🧹 Cleaned planning data: ${beforeLength} → ${afterLength} items`);
         }
         
         // Update the actions list UI
