@@ -4178,6 +4178,59 @@ app.get('/api/debug/recurring-tasks-analysis', async (req, res) => {
     }
 });
 
+// Single task recovery endpoint
+app.post('/api/taak/recover-recurring', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const { taskId } = req.body;
+        if (!taskId) {
+            return res.status(400).json({ error: 'taskId required' });
+        }
+        
+        // Get the completed task
+        const taskResult = await pool.query(
+            'SELECT * FROM taken WHERE id = $1',
+            [taskId]
+        );
+        
+        if (taskResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        
+        const task = taskResult.rows[0];
+        
+        // Create new task with proper date calculation
+        const newTask = {
+            tekst: task.tekst,
+            lijst: task.lijst,
+            projectId: task.project_id,
+            contextId: task.context_id,
+            duur: task.duur,
+            herhalingActief: true,
+            herhalingType: task.herhaling_type,
+            opmerkingen: task.opmerkingen
+        };
+        
+        // Calculate next date - for now use tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        newTask.verschijndatum = tomorrow.toISOString().split('T')[0];
+        
+        const result = await db.voegTaakToe(newTask, task.user_id);
+        
+        res.json({
+            success: true,
+            newTaskId: result.id,
+            nextDate: newTask.verschijndatum
+        });
+        
+    } catch (error) {
+        console.error('Recover recurring task error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Recovery endpoint for missing recurring tasks
 app.post('/api/debug/recover-recurring-tasks', async (req, res) => {
     try {
