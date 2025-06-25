@@ -390,6 +390,22 @@ const db = {
       try {
         const result = await pool.query(query, values);
         console.log(`✅ DB: Query successful, rowCount: ${result.rowCount}`);
+        
+        // If this update marks a task as completed (afgewerkt), cleanup planning items
+        if (result.rowCount > 0 && updates.afgewerkt) {
+          console.log(`🧹 Task ${taskId} marked as completed, cleaning up planning items...`);
+          try {
+            const cleanupResult = await pool.query(
+              'DELETE FROM dagelijkse_planning WHERE actie_id = $1 AND user_id = $2',
+              [taskId, userId]
+            );
+            console.log(`✅ Cleaned up ${cleanupResult.rowCount} planning items for completed task ${taskId}`);
+          } catch (cleanupError) {
+            console.error(`⚠️ Failed to cleanup planning items for task ${taskId}:`, cleanupError.message);
+            // Don't fail the main update because of cleanup error
+          }
+        }
+        
         return result.rowCount > 0;
       } catch (dbError) {
         console.log(`⚠️ DB: Query failed:`, dbError.message);
@@ -429,6 +445,22 @@ const db = {
           
           const basicResult = await pool.query(basicQuery, basicValues);
           console.log(`✅ DB: Fallback successful, rowCount: ${basicResult.rowCount}`);
+          
+          // If this update marks a task as completed (afgewerkt), cleanup planning items
+          if (basicResult.rowCount > 0 && updates.afgewerkt) {
+            console.log(`🧹 Task ${taskId} marked as completed (fallback), cleaning up planning items...`);
+            try {
+              const cleanupResult = await pool.query(
+                'DELETE FROM dagelijkse_planning WHERE actie_id = $1 AND user_id = $2',
+                [taskId, userId]
+              );
+              console.log(`✅ Cleaned up ${cleanupResult.rowCount} planning items for completed task ${taskId}`);
+            } catch (cleanupError) {
+              console.error(`⚠️ Failed to cleanup planning items for task ${taskId}:`, cleanupError.message);
+              // Don't fail the main update because of cleanup error
+            }
+          }
+          
           return basicResult.rowCount > 0;
         }
         throw dbError;
