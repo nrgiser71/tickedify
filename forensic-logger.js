@@ -4,87 +4,84 @@
  * 
  * Environment variable: FORENSIC_DEBUG=true/false
  * When false: Zero performance impact, no logging
- * When true: Complete transaction logging with full content
+ * When true: Complete transaction logging to database
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const { Pool } = require('pg');
 
 class ForensicLogger {
     constructor() {
         this.enabled = process.env.FORENSIC_DEBUG === 'true';
-        this.logDir = path.join(__dirname, 'forensic-logs');
-        this.maxLogFiles = 50; // Keep last 50 log files
+        this.pool = null;
         
         if (this.enabled) {
-            this.initializeLogDirectory();
-            console.log('🔍 Forensic logging ENABLED - All operations will be logged');
+            this.initializeDatabase();
+            console.log('🔍 Forensic logging ENABLED - All operations will be logged to database');
         } else {
             console.log('🔍 Forensic logging DISABLED - Zero performance impact');
         }
     }
 
-    async initializeLogDirectory() {
+    async initializeDatabase() {
         try {
-            await fs.mkdir(this.logDir, { recursive: true });
+            // Use same database connection as main app
+            this.pool = new Pool({
+                connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING,
+                ssl: { rejectUnauthorized: false }
+            });
+
+            // Create forensic_logs table if it doesn't exist
+            await this.pool.query(`
+                CREATE TABLE IF NOT EXISTS forensic_logs (
+                    id SERIAL PRIMARY KEY,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    category VARCHAR(50) NOT NULL,
+                    action VARCHAR(100) NOT NULL,
+                    data JSONB NOT NULL,
+                    user_id VARCHAR(50),
+                    endpoint VARCHAR(200),
+                    ip_address INET,
+                    user_agent TEXT
+                )
+            `);
+
+            // Create index for faster queries
+            await this.pool.query(`
+                CREATE INDEX IF NOT EXISTS idx_forensic_timestamp ON forensic_logs(timestamp);
+                CREATE INDEX IF NOT EXISTS idx_forensic_category ON forensic_logs(category);
+                CREATE INDEX IF NOT EXISTS idx_forensic_user ON forensic_logs(user_id);
+            `);
+
+            console.log('✅ Forensic logging database initialized');
         } catch (error) {
-            console.error('Failed to create forensic log directory:', error);
+            console.error('Failed to initialize forensic logging database:', error);
+            this.enabled = false; // Disable if database fails
         }
     }
 
     // Main logging function - returns immediately if disabled
-    async log(category, action, data) {
-        if (!this.enabled) return; // Zero performance impact when disabled
-
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            category, // 'RECURRING_TASKS', 'PLANNING', 'USER_ACTION', 'SYSTEM'
-            action,   // 'CREATE', 'DELETE', 'UPDATE', 'CLEANUP', etc.
-            data: {
-                ...data,
-                environment: process.env.NODE_ENV || 'unknown',
-                userAgent: data.userAgent || 'server-side'
-            }
-        };
+    async log(category, action, data, context = {}) {
+        if (!this.enabled || !this.pool) return; // Zero performance impact when disabled
 
         try {
-            await this.writeLogEntry(logEntry);
+            await this.pool.query(`
+                INSERT INTO forensic_logs (category, action, data, user_id, endpoint, ip_address, user_agent)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `, [
+                category,
+                action,
+                JSON.stringify({
+                    ...data,
+                    environment: process.env.NODE_ENV || 'unknown',
+                    ...context
+                }),
+                data.userId || context.userId || null,
+                context.endpoint || null,
+                context.ip || null,
+                context.userAgent || null
+            ]);
         } catch (error) {
             console.error('Forensic logging failed (non-blocking):', error.message);
-        }
-    }
-
-    async writeLogEntry(entry) {
-        const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        const logFile = path.join(this.logDir, `forensic-${date}.jsonl`);
-        
-        // Write as JSON Lines format for easy parsing
-        const logLine = JSON.stringify(entry) + '\n';
-        
-        try {
-            await fs.appendFile(logFile, logLine);
-            await this.rotateLogsIfNeeded();
-        } catch (error) {
-            console.error('Failed to write forensic log:', error);
-        }
-    }
-
-    async rotateLogsIfNeeded() {
-        try {
-            const files = await fs.readdir(this.logDir);
-            const logFiles = files
-                .filter(f => f.startsWith('forensic-') && f.endsWith('.jsonl'))
-                .sort()
-                .reverse();
-
-            if (logFiles.length > this.maxLogFiles) {
-                const filesToDelete = logFiles.slice(this.maxLogFiles);
-                for (const file of filesToDelete) {
-                    await fs.unlink(path.join(this.logDir, file));
-                }
-            }
-        } catch (error) {
-            console.error('Log rotation failed:', error);
         }
     }
 
@@ -152,36 +149,38 @@ class ForensicLogger {
     // Analysis and recovery helper methods
 
     async getLogsForTimeRange(startTime, endTime, category = null) {
-        if (!this.enabled) return [];
+        if (!this.enabled || !this.pool) return [];
 
         try {
-            const files = await fs.readdir(this.logDir);
-            const logFiles = files.filter(f => f.startsWith('forensic-') && f.endsWith('.jsonl'));
-            
-            const logs = [];
-            for (const file of logFiles) {
-                const content = await fs.readFile(path.join(this.logDir, file), 'utf8');
-                const lines = content.trim().split('\n').filter(line => line);
-                
-                for (const line of lines) {
-                    try {
-                        const entry = JSON.parse(line);
-                        const entryTime = new Date(entry.timestamp);
-                        
-                        if (entryTime >= startTime && entryTime <= endTime) {
-                            if (!category || entry.category === category) {
-                                logs.push(entry);
-                            }
-                        }
-                    } catch (parseError) {
-                        console.error('Failed to parse log line:', parseError);
-                    }
-                }
+            let query = `
+                SELECT id, timestamp, category, action, data, user_id, endpoint, ip_address, user_agent
+                FROM forensic_logs 
+                WHERE timestamp >= $1 AND timestamp <= $2
+            `;
+            const params = [startTime.toISOString(), endTime.toISOString()];
+
+            if (category) {
+                query += ` AND category = $3`;
+                params.push(category);
             }
+
+            query += ` ORDER BY timestamp ASC`;
+
+            const result = await this.pool.query(query, params);
             
-            return logs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            return result.rows.map(row => ({
+                id: row.id,
+                timestamp: row.timestamp.toISOString(),
+                category: row.category,
+                action: row.action,
+                data: row.data, // Already parsed JSON
+                userId: row.user_id,
+                endpoint: row.endpoint,
+                ipAddress: row.ip_address,
+                userAgent: row.user_agent
+            }));
         } catch (error) {
-            console.error('Failed to read forensic logs:', error);
+            console.error('Failed to read forensic logs from database:', error);
             return [];
         }
     }
