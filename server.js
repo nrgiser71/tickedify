@@ -4178,6 +4178,54 @@ app.get('/api/debug/recurring-tasks-analysis', async (req, res) => {
     }
 });
 
+// Debug endpoint to cleanup orphaned planning items
+app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        // Find planning items that reference non-existent tasks
+        const orphanedPlanning = await pool.query(`
+            SELECT dp.id, dp.datum, dp.uur, dp.naam, dp.actie_id
+            FROM dagelijkse_planning dp
+            LEFT JOIN taken t ON dp.actie_id = t.id
+            WHERE dp.actie_id IS NOT NULL 
+            AND t.id IS NULL
+            ORDER BY dp.datum DESC, dp.uur
+        `);
+        
+        if (orphanedPlanning.rows.length === 0) {
+            return res.json({
+                message: 'No orphaned planning items found',
+                cleaned: 0
+            });
+        }
+        
+        // Delete orphaned planning items
+        const deleteResult = await pool.query(`
+            DELETE FROM dagelijkse_planning
+            WHERE id IN (
+                SELECT dp.id
+                FROM dagelijkse_planning dp
+                LEFT JOIN taken t ON dp.actie_id = t.id
+                WHERE dp.actie_id IS NOT NULL 
+                AND t.id IS NULL
+            )
+        `);
+        
+        res.json({
+            message: 'Cleaned up orphaned planning items',
+            orphaned_items: orphanedPlanning.rows,
+            cleaned: deleteResult.rowCount
+        });
+        
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 // Debug endpoint to check recent planning data
 app.get('/api/debug/recent-planning', async (req, res) => {
     try {
