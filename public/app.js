@@ -1601,7 +1601,7 @@ class Taakbeheer {
         }
     }
 
-    // Helper function to preserve actions filter state during re-renders
+    // Helper function to preserve actions filter state and scroll position during re-renders
     preserveActionsFilters(callback) {
         // Save current filter values for actions list
         const savedFilters = {
@@ -1611,6 +1611,11 @@ class Taakbeheer {
             datumFilter: document.getElementById('datumFilter')?.value || '',
             toekomstToggle: document.getElementById('toonToekomstToggle')?.checked || false
         };
+        
+        // Save scroll position - check different possible scroll containers
+        const savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        const mainContent = document.querySelector('.main-content');
+        const savedMainContentScroll = mainContent ? mainContent.scrollTop : 0;
         
         const result = callback();
         
@@ -1633,6 +1638,16 @@ class Taakbeheer {
                 this.renderActiesLijst();
                 this.filterActies(); // Apply the restored filter values
             }
+            
+            // Restore scroll position
+            setTimeout(() => {
+                if (savedScrollPosition > 0) {
+                    window.scrollTo(0, savedScrollPosition);
+                }
+                if (savedMainContentScroll > 0 && mainContent) {
+                    mainContent.scrollTop = savedMainContentScroll;
+                }
+            }, 50); // Slightly longer delay for scroll restoration
         };
         
         // Restore filters after DOM updates
@@ -2603,8 +2618,12 @@ class Taakbeheer {
                     // Remove from local array
                     this.taken = this.taken.filter(taak => taak.id !== id);
                     
-                    // Re-render and update counts
-                    this.renderTaken();
+                    // Re-render with preserved filters and scroll position for actions list
+                    if (this.huidigeLijst === 'acties') {
+                        await this.preserveActionsFilters(() => this.renderTaken());
+                    } else {
+                        this.renderTaken();
+                    }
                     await this.laadTellingen();
                     
                     console.log(`✅ Task ${id} deleted successfully`);
