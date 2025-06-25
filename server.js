@@ -4178,6 +4178,49 @@ app.get('/api/debug/recurring-tasks-analysis', async (req, res) => {
     }
 });
 
+// Debug endpoint to check recent planning data
+app.get('/api/debug/recent-planning', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        // Get all planning data from the last 7 days
+        const recentPlanning = await pool.query(`
+            SELECT datum, COUNT(*) as item_count, 
+                   array_agg(DISTINCT type) as types,
+                   MIN(aangemaakt) as earliest_created,
+                   MAX(aangemaakt) as latest_created
+            FROM dagelijkse_planning 
+            WHERE datum >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY datum
+            ORDER BY datum DESC
+        `);
+        
+        // Get all planning items for today specifically
+        const todayPlanning = await pool.query(`
+            SELECT id, datum, uur, type, naam, actie_id, aangemaakt
+            FROM dagelijkse_planning 
+            WHERE datum = CURRENT_DATE
+            ORDER BY uur, positie
+        `);
+        
+        // Check if any planning was deleted recently (if we had audit logs)
+        const allPlanningCount = await pool.query('SELECT COUNT(*) as total FROM dagelijkse_planning');
+        
+        res.json({
+            recent_planning_by_date: recentPlanning.rows,
+            today_planning_items: todayPlanning.rows,
+            total_planning_items_in_db: parseInt(allPlanningCount.rows[0].total),
+            today_date: new Date().toISOString().split('T')[0]
+        });
+        
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 // Debug endpoint to test recovery
 app.get('/api/debug/test-recovery/:taskId', async (req, res) => {
     try {
