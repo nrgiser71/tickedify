@@ -4178,6 +4178,46 @@ app.get('/api/debug/recurring-tasks-analysis', async (req, res) => {
     }
 });
 
+// Debug endpoint to test recovery
+app.get('/api/debug/test-recovery/:taskId', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const { taskId } = req.params;
+        
+        // Test 1: Check database connection
+        const dbTest = await pool.query('SELECT NOW()');
+        
+        // Test 2: Find the task
+        const taskResult = await pool.query(
+            'SELECT id, tekst, herhaling_type, lijst FROM taken WHERE id = $1',
+            [taskId]
+        );
+        
+        // Test 3: Check table columns
+        const columnCheck = await pool.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'taken'
+            ORDER BY ordinal_position
+        `);
+        
+        res.json({
+            database_connected: true,
+            database_time: dbTest.rows[0].now,
+            task_found: taskResult.rows.length > 0,
+            task_data: taskResult.rows[0] || null,
+            table_columns: columnCheck.rows.map(r => r.column_name)
+        });
+        
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 // Single task recovery endpoint
 app.post('/api/taak/recover-recurring', async (req, res) => {
     try {
