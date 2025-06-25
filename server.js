@@ -4184,6 +4184,8 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
         
         const { taskId } = req.body;
+        console.log('🔧 Recovery request for taskId:', taskId);
+        
         if (!taskId) {
             return res.status(400).json({ error: 'taskId required' });
         }
@@ -4194,11 +4196,14 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
             [taskId]
         );
         
+        console.log('📋 Found task rows:', taskResult.rows.length);
+        
         if (taskResult.rows.length === 0) {
             return res.status(404).json({ error: 'Task not found' });
         }
         
         const task = taskResult.rows[0];
+        console.log('✅ Task data:', { id: task.id, tekst: task.tekst, herhaling_type: task.herhaling_type });
         
         // Create new task with proper date calculation
         const newTask = {
@@ -4243,24 +4248,50 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
         const newTaskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         try {
-            await pool.query(
-                `INSERT INTO taken (id, tekst, lijst, project_id, context_id, verschijndatum, 
-                 duur, herhaling_type, herhaling_actief, opmerkingen, user_id, aangemaakt, bijgewerkt)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-                [
-                    newTaskId,
-                    task.tekst,
-                    'acties', // New tasks always go to actions list
-                    task.project_id,
-                    task.context_id,
-                    newTask.verschijndatum,
-                    task.duur,
-                    task.herhaling_type,
-                    true,
-                    task.opmerkingen,
-                    task.user_id
-                ]
-            );
+            // First check if herhaling columns exist
+            const columnCheck = await pool.query(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'taken' 
+                AND column_name IN ('herhaling_type', 'herhaling_actief', 'opmerkingen')
+            `);
+            
+            const existingColumns = columnCheck.rows.map(r => r.column_name);
+            console.log('🔍 Available columns:', existingColumns);
+            
+            // Build dynamic insert query based on available columns
+            const columns = ['id', 'tekst', 'lijst', 'project_id', 'context_id', 'verschijndatum', 'duur', 'user_id', 'aangemaakt', 'bijgewerkt'];
+            const values = [newTaskId, task.tekst, 'acties', task.project_id, task.context_id, newTask.verschijndatum, task.duur, task.user_id, 'NOW()', 'NOW()'];
+            const placeholders = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
+            
+            // Add optional columns if they exist
+            if (existingColumns.includes('herhaling_type')) {
+                columns.push('herhaling_type');
+                values.push(task.herhaling_type);
+                placeholders.push(`$${values.length}`);
+            }
+            
+            if (existingColumns.includes('herhaling_actief')) {
+                columns.push('herhaling_actief');
+                values.push(true);
+                placeholders.push(`$${values.length}`);
+            }
+            
+            if (existingColumns.includes('opmerkingen')) {
+                columns.push('opmerkingen');
+                values.push(task.opmerkingen || '');
+                placeholders.push(`$${values.length}`);
+            }
+            
+            const insertQuery = `
+                INSERT INTO taken (${columns.join(', ')})
+                VALUES (${placeholders.join(', ')})
+            `;
+            
+            console.log('📝 Insert query:', insertQuery);
+            console.log('📊 Values:', values.slice(0, 8)); // Don't log all values for security
+            
+            await pool.query(insertQuery, values.slice(0, placeholders.filter(p => p.startsWith('$')).length));
             
             res.json({
                 success: true,
@@ -4269,6 +4300,7 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
             });
         } catch (insertError) {
             console.error('Failed to insert recovered task:', insertError);
+            console.error('Error details:', insertError.message);
             throw insertError;
         }
         
