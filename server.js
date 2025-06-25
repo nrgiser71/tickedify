@@ -22,6 +22,12 @@ const apiStats = new Map();
 const errorLogs = [];
 const MAX_ERROR_LOGS = 100;
 
+// Import forensic logger
+const forensicLogger = require('./forensic-logger');
+
+// Add forensic logging middleware
+app.use(forensicLogger.middleware());
+
 app.use((req, res, next) => {
     const startTime = Date.now();
     const originalSend = res.send;
@@ -1960,10 +1966,47 @@ app.get('/api/dagelijkse-planning/:datum', async (req, res) => {
         
         const { datum } = req.params;
         const userId = getCurrentUserId(req);
+        
+        // Log API request
+        await forensicLogger.log('PLANNING', 'API_GET_PLANNING_REQUEST', {
+            datum: datum,
+            userId: userId,
+            endpoint: '/api/dagelijkse-planning/:datum',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            requestTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_call'
+        });
+        
         const planning = await db.getDagelijksePlanning(datum, userId);
+        
+        // Log successful response
+        await forensicLogger.log('PLANNING', 'API_GET_PLANNING_SUCCESS', {
+            datum: datum,
+            userId: userId,
+            planningItemsReturned: planning.length,
+            endpoint: '/api/dagelijkse-planning/:datum',
+            responseTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_call'
+        });
+        
         res.json(planning);
     } catch (error) {
         console.error('Error getting dagelijkse planning:', error);
+        
+        // Log API error
+        await forensicLogger.log('PLANNING', 'API_GET_PLANNING_ERROR', {
+            datum: req.params.datum,
+            userId: getCurrentUserId(req),
+            error: error.message,
+            stack: error.stack,
+            endpoint: '/api/dagelijkse-planning/:datum',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            errorTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_error'
+        });
+        
         res.status(500).json({ error: 'Fout bij ophalen dagelijkse planning' });
     }
 });
@@ -1975,10 +2018,47 @@ app.post('/api/dagelijkse-planning', async (req, res) => {
         }
         
         const userId = getCurrentUserId(req);
+        
+        // Log API request
+        await forensicLogger.log('PLANNING', 'API_ADD_PLANNING_REQUEST', {
+            planningData: req.body,
+            userId: userId,
+            endpoint: '/api/dagelijkse-planning',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            requestTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_call'
+        });
+        
         const planningId = await db.addToDagelijksePlanning(req.body, userId);
+        
+        // Log successful response
+        await forensicLogger.log('PLANNING', 'API_ADD_PLANNING_SUCCESS', {
+            planningId: planningId,
+            planningData: req.body,
+            userId: userId,
+            endpoint: '/api/dagelijkse-planning',
+            responseTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_call'
+        });
+        
         res.json({ success: true, id: planningId });
     } catch (error) {
         console.error('Error adding to dagelijkse planning:', error);
+        
+        // Log API error
+        await forensicLogger.log('PLANNING', 'API_ADD_PLANNING_ERROR', {
+            planningData: req.body,
+            userId: getCurrentUserId(req),
+            error: error.message,
+            stack: error.stack,
+            endpoint: '/api/dagelijkse-planning',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            errorTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_error'
+        });
+        
         res.status(500).json({ error: 'Fout bij toevoegen aan dagelijkse planning' });
     }
 });
@@ -2033,15 +2113,64 @@ app.delete('/api/dagelijkse-planning/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        const success = await db.deleteDagelijksePlanning(id);
+        const userId = getCurrentUserId(req);
+        
+        // Log API request - CRITICAL for debugging planning disappearance
+        await forensicLogger.log('PLANNING', 'API_DELETE_PLANNING_REQUEST', {
+            planningId: id,
+            userId: userId,
+            endpoint: '/api/dagelijkse-planning/:id',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            requestTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_call',
+            severity: 'CRITICAL' // Mark as critical for forensic analysis
+        });
+        
+        const success = await db.deleteDagelijksePlanning(id, userId);
         
         if (success) {
+            // Log successful deletion
+            await forensicLogger.log('PLANNING', 'API_DELETE_PLANNING_SUCCESS', {
+                planningId: id,
+                userId: userId,
+                endpoint: '/api/dagelijkse-planning/:id',
+                responseTimestamp: new Date().toISOString(),
+                triggeredBy: 'api_call',
+                severity: 'CRITICAL'
+            });
+            
             res.json({ success: true });
         } else {
+            // Log planning item not found
+            await forensicLogger.log('PLANNING', 'API_DELETE_PLANNING_NOT_FOUND', {
+                planningId: id,
+                userId: userId,
+                endpoint: '/api/dagelijkse-planning/:id',
+                responseTimestamp: new Date().toISOString(),
+                triggeredBy: 'api_call',
+                severity: 'WARNING'
+            });
+            
             res.status(404).json({ error: 'Planning item niet gevonden' });
         }
     } catch (error) {
         console.error('Error deleting dagelijkse planning:', error);
+        
+        // Log API error - CRITICAL for debugging
+        await forensicLogger.log('PLANNING', 'API_DELETE_PLANNING_ERROR', {
+            planningId: req.params.id,
+            userId: getCurrentUserId(req),
+            error: error.message,
+            stack: error.stack,
+            endpoint: '/api/dagelijkse-planning/:id',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            errorTimestamp: new Date().toISOString(),
+            triggeredBy: 'api_error',
+            severity: 'CRITICAL'
+        });
+        
         res.status(500).json({ error: 'Fout bij verwijderen dagelijkse planning' });
     }
 });
@@ -4210,6 +4339,19 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
     try {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
         
+        const userId = getCurrentUserId(req);
+        
+        // Log cleanup operation start - CRITICAL for debugging mass deletions
+        await forensicLogger.log('PLANNING', 'BULK_CLEANUP_START', {
+            userId: userId,
+            endpoint: '/api/debug/cleanup-orphaned-planning',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            requestTimestamp: new Date().toISOString(),
+            triggeredBy: 'debug_cleanup',
+            severity: 'CRITICAL'
+        });
+        
         // Find planning items that reference completed tasks
         const completedTasksPlanning = await pool.query(`
             SELECT dp.id, dp.datum, dp.uur, dp.naam, dp.actie_id, t.afgewerkt
@@ -4232,7 +4374,27 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
         
         const totalToClean = orphanedPlanning.rows.length + completedTasksPlanning.rows.length;
         
+        // Log cleanup analysis
+        await forensicLogger.log('PLANNING', 'BULK_CLEANUP_ANALYSIS', {
+            userId: userId,
+            completedTasksPlanningCount: completedTasksPlanning.rows.length,
+            orphanedPlanningCount: orphanedPlanning.rows.length,
+            totalToClean: totalToClean,
+            completedTasksPlanningIds: completedTasksPlanning.rows.map(row => row.id),
+            orphanedPlanningIds: orphanedPlanning.rows.map(row => row.id),
+            endpoint: '/api/debug/cleanup-orphaned-planning',
+            triggeredBy: 'debug_cleanup',
+            severity: 'CRITICAL'
+        });
+        
         if (totalToClean === 0) {
+            await forensicLogger.log('PLANNING', 'BULK_CLEANUP_NO_ITEMS', {
+                userId: userId,
+                endpoint: '/api/debug/cleanup-orphaned-planning',
+                responseTimestamp: new Date().toISOString(),
+                triggeredBy: 'debug_cleanup'
+            });
+            
             return res.json({
                 message: 'No planning items to clean',
                 cleaned: 0,
@@ -4253,6 +4415,16 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
             )
         `);
         
+        // Log completed tasks cleanup
+        await forensicLogger.log('PLANNING', 'BULK_CLEANUP_COMPLETED_TASKS', {
+            userId: userId,
+            deletedCount: deleteCompletedResult.rowCount,
+            deletedItems: completedTasksPlanning.rows,
+            endpoint: '/api/debug/cleanup-orphaned-planning',
+            triggeredBy: 'debug_cleanup',
+            severity: 'CRITICAL'
+        });
+        
         // Delete orphaned planning items
         const deleteOrphanedResult = await pool.query(`
             DELETE FROM dagelijkse_planning
@@ -4265,16 +4437,53 @@ app.post('/api/debug/cleanup-orphaned-planning', async (req, res) => {
             )
         `);
         
+        // Log orphaned items cleanup
+        await forensicLogger.log('PLANNING', 'BULK_CLEANUP_ORPHANED_ITEMS', {
+            userId: userId,
+            deletedCount: deleteOrphanedResult.rowCount,
+            deletedItems: orphanedPlanning.rows,
+            endpoint: '/api/debug/cleanup-orphaned-planning',
+            triggeredBy: 'debug_cleanup',
+            severity: 'CRITICAL'
+        });
+        
+        const totalCleaned = deleteCompletedResult.rowCount + deleteOrphanedResult.rowCount;
+        
+        // Log cleanup completion
+        await forensicLogger.log('PLANNING', 'BULK_CLEANUP_COMPLETE', {
+            userId: userId,
+            cleanedCompleted: deleteCompletedResult.rowCount,
+            cleanedOrphaned: deleteOrphanedResult.rowCount,
+            totalCleaned: totalCleaned,
+            endpoint: '/api/debug/cleanup-orphaned-planning',
+            responseTimestamp: new Date().toISOString(),
+            triggeredBy: 'debug_cleanup',
+            severity: 'CRITICAL'
+        });
+        
         res.json({
             message: 'Cleaned up planning items',
             completed_tasks_planning: completedTasksPlanning.rows,
             orphaned_items: orphanedPlanning.rows,
             cleaned_completed: deleteCompletedResult.rowCount,
             cleaned_orphaned: deleteOrphanedResult.rowCount,
-            total_cleaned: deleteCompletedResult.rowCount + deleteOrphanedResult.rowCount
+            total_cleaned: totalCleaned
         });
         
     } catch (error) {
+        // Log cleanup error
+        await forensicLogger.log('PLANNING', 'BULK_CLEANUP_ERROR', {
+            userId: getCurrentUserId(req),
+            error: error.message,
+            stack: error.stack,
+            endpoint: '/api/debug/cleanup-orphaned-planning',
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            errorTimestamp: new Date().toISOString(),
+            triggeredBy: 'debug_cleanup',
+            severity: 'CRITICAL'
+        });
+        
         res.status(500).json({ 
             error: error.message,
             stack: error.stack
@@ -4671,6 +4880,95 @@ app.get('/api/debug/users-info', async (req, res) => {
             error: error.message,
             stack: error.stack
         });
+    }
+});
+
+// Test user switch endpoint for Claude testing
+app.post('/api/debug/switch-test-user', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const testUserEmail = 'test@example.com';
+        
+        // Get test user info
+        const testUser = await pool.query(`
+            SELECT id, email, naam, rol 
+            FROM users 
+            WHERE email = $1 AND actief = true
+        `, [testUserEmail]);
+        
+        if (testUser.rows.length === 0) {
+            return res.status(404).json({ 
+                error: 'Test user not found',
+                hint: 'test@example.com user must exist and be active' 
+            });
+        }
+        
+        const user = testUser.rows[0];
+        
+        // Log the switch for forensic tracking
+        await forensicLogger.logUserAction('TEST_USER_SWITCH', {
+            userId: user.id,
+            userEmail: user.email
+        }, {
+            endpoint: req.url,
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            switchedFrom: 'Claude automated testing'
+        });
+        
+        // Return test user session info
+        res.json({
+            success: true,
+            testUser: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                rol: user.rol
+            },
+            message: 'Claude can now test with this user account',
+            note: 'All subsequent API calls should use this user_id for testing'
+        });
+        
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
+// Forensic logging analysis endpoints
+app.get('/api/debug/forensic/recurring-events', async (req, res) => {
+    try {
+        const timeRange = parseInt(req.query.hours) || 24;
+        const taskId = req.query.taskId;
+        
+        const events = await forensicLogger.getRecurringTaskEvents(taskId, timeRange);
+        
+        res.json({
+            timeRange: `${timeRange} hours`,
+            totalEvents: events.length,
+            events: events
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/debug/forensic/planning-events', async (req, res) => {
+    try {
+        const timeRange = parseInt(req.query.hours) || 24;
+        
+        const events = await forensicLogger.getPlanningEvents(timeRange);
+        
+        res.json({
+            timeRange: `${timeRange} hours`,
+            totalEvents: events.length,
+            events: events
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const forensicLogger = require('./forensic-logger');
 
 // Database connection
 const pool = new Pool({
@@ -349,6 +350,16 @@ const db = {
     console.log(`🔍 DB: updateTask called for taskId: ${taskId}, userId: ${userId}`);
     console.log(`📝 DB: Updates:`, JSON.stringify(updates, null, 2));
     
+    // Log task update for forensic analysis
+    await forensicLogger.logRecurringTaskOperation('UPDATE_ATTEMPT', {
+      id: taskId,
+      userId: userId,
+      updates: updates
+    }, {
+      triggeredBy: 'user_action',
+      endpoint: 'database.updateTask'
+    });
+    
     if (!userId) {
       console.warn('⚠️ updateTask called without userId - operation cancelled');
       return false;
@@ -479,8 +490,31 @@ const db = {
   async createRecurringTask(originalTask, newDate, userId) {
     const client = await pool.connect();
     
+    // Log initial forensic information
+    await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ATTEMPT', {
+      originalTaskId: originalTask.id,
+      originalTaskText: originalTask.tekst,
+      newDate: newDate,
+      userId: userId,
+      herhalingType: originalTask.herhalingType,
+      herhalingActief: originalTask.herhalingActief,
+      inputParameters: {
+        originalTask_keys: Object.keys(originalTask),
+        originalTask_values: JSON.stringify(originalTask),
+        newDate_type: typeof newDate,
+        userId_type: typeof userId
+      }
+    }, {
+      triggeredBy: 'task_completion',
+      endpoint: 'database.createRecurringTask'
+    });
+    
     if (!userId) {
       console.warn('⚠️ createRecurringTask called without userId - operation cancelled');
+      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_FAILED', {
+        error: 'Missing userId',
+        originalTaskId: originalTask.id
+      }, { endpoint: 'database.createRecurringTask' });
       return null;
     }
     
@@ -489,7 +523,20 @@ const db = {
       await client.query('BEGIN');
       console.log('🔄 DEBUG: Started transaction');
       
+      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_TRANSACTION_START', {
+        originalTaskId: originalTask.id,
+        userId: userId,
+        transactionState: 'BEGUN'
+      }, { endpoint: 'database.createRecurringTask' });
+      
       const newId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      
+      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ID_GENERATED', {
+        originalTaskId: originalTask.id,
+        newTaskId: newId,
+        userId: userId,
+        generationTimestamp: new Date().toISOString()
+      }, { endpoint: 'database.createRecurringTask' });
       
       // Debug log the original task properties
       console.log('🐛 DEBUG: originalTask properties:', Object.keys(originalTask));
@@ -504,8 +551,22 @@ const db = {
       const verschijndatumISO = newDate + 'T00:00:00.000Z';
       console.log('🐛 DEBUG: converted to ISO:', verschijndatumISO);
       
+      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_DATE_CONVERTED', {
+        originalTaskId: originalTask.id,
+        newTaskId: newId,
+        inputDate: newDate,
+        convertedDate: verschijndatumISO,
+        userId: userId
+      }, { endpoint: 'database.createRecurringTask' });
+      
       // Try with herhaling fields first
       try {
+        const insertValues = [
+          newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
+          originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type,
+          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, originalTask.opmerkingen, null, userId
+        ];
+        
         console.log('🐛 DEBUG: About to insert with values:', [
           newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
           originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
@@ -513,54 +574,125 @@ const db = {
         ]);
         console.log('🐛 DEBUG: newDate parameter received:', newDate, typeof newDate);
         
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_INSERT_ATTEMPT', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          insertValues: insertValues,
+          sqlQuery: 'INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id) VALUES (...)',
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
+        
         const insertResult = await client.query(`
           INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           RETURNING id
-        `, [
-          newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-          originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type,
-          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, originalTask.opmerkingen, null, userId
-        ]);
+        `, insertValues);
         
         console.log('✅ DEBUG: Insert successful, returned ID:', insertResult.rows[0]?.id);
+        
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_INSERT_SUCCESS', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          returnedId: insertResult.rows[0]?.id,
+          rowsAffected: insertResult.rowCount,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
         
         // Verify the insert worked by immediately querying it back within transaction
         const verifyResult = await client.query('SELECT * FROM taken WHERE id = $1', [newId]);
         console.log('🔍 DEBUG: Verification query returned rows:', verifyResult.rows.length);
         
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_VERIFY_ATTEMPT', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          verificationRowsFound: verifyResult.rows.length,
+          verificationData: verifyResult.rows.length > 0 ? verifyResult.rows[0] : null,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
+        
         if (verifyResult.rows.length === 0) {
           console.error('❌ DEBUG: Task was not found immediately after insert within transaction!');
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_VERIFY_FAILED', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            error: 'Task not found after insert within transaction',
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
           await client.query('ROLLBACK');
           console.log('🔄 DEBUG: Transaction rolled back');
           return null;
         }
         
-        console.log('🔍 DEBUG: Saved task details within transaction:', {
+        const savedTaskDetails = {
           id: verifyResult.rows[0].id,
           tekst: verifyResult.rows[0].tekst,
           lijst: verifyResult.rows[0].lijst,
           verschijndatum: verifyResult.rows[0].verschijndatum,
           herhaling_type: verifyResult.rows[0].herhaling_type,
           herhaling_actief: verifyResult.rows[0].herhaling_actief
-        });
+        };
+        
+        console.log('🔍 DEBUG: Saved task details within transaction:', savedTaskDetails);
+        
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_VERIFY_SUCCESS', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          savedTaskDetails: savedTaskDetails,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
         
         // Commit the transaction
         await client.query('COMMIT');
         console.log('✅ DEBUG: Transaction committed successfully');
         
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_COMMIT_SUCCESS', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          transactionState: 'COMMITTED',
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
+        
         // EXTRA DEBUG: Query the task again AFTER commit to verify persistence
         const postCommitVerify = await pool.query('SELECT * FROM taken WHERE id = $1', [newId]);
         console.log('🔍 DEBUG: Post-commit verification rows:', postCommitVerify.rows.length);
+        
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_POST_COMMIT_VERIFY', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          postCommitRowsFound: postCommitVerify.rows.length,
+          postCommitData: postCommitVerify.rows.length > 0 ? postCommitVerify.rows[0] : null,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
+        
         if (postCommitVerify.rows.length === 0) {
           console.error('❌ DEBUG: CRITICAL - Task disappeared after commit!');
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_POST_COMMIT_FAILED', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            error: 'CRITICAL - Task disappeared after commit',
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
         } else {
           console.log('✅ DEBUG: Task confirmed persistent after commit');
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_SUCCESS', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            finalTaskData: postCommitVerify.rows[0],
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
         }
         
         return newId;
       } catch (dbError) {
         console.error('❌ DEBUG: Insert failed with error:', dbError.message);
+        
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_INSERT_FAILED', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          error: dbError.message,
+          stack: dbError.stack,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
         
         // If herhaling columns don't exist, fall back to basic insert
         if (dbError.message.includes('herhaling_type') || 
@@ -569,51 +701,124 @@ const db = {
           
           console.log('🔄 DEBUG: Herhaling columns not found, trying basic insert');
           
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_FALLBACK_ATTEMPT', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            reason: 'Herhaling columns not found',
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
+          
           // Rollback the failed transaction and start new one
           await client.query('ROLLBACK');
           await client.query('BEGIN');
+          
+          const basicInsertValues = [
+            newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
+            originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, originalTask.opmerkingen, null, userId
+          ];
+          
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_INSERT_ATTEMPT', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            basicInsertValues: basicInsertValues,
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
           
           const basicInsertResult = await client.query(`
             INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING id
-          `, [
-            newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-            originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, originalTask.opmerkingen, null, userId
-          ]);
+          `, basicInsertValues);
           
           console.log('✅ DEBUG: Basic insert successful, returned ID:', basicInsertResult.rows[0]?.id);
+          
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_INSERT_SUCCESS', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            returnedId: basicInsertResult.rows[0]?.id,
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
           
           // Verify basic insert
           const basicVerifyResult = await client.query('SELECT * FROM taken WHERE id = $1', [newId]);
           
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_VERIFY', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            verificationRowsFound: basicVerifyResult.rows.length,
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
+          
           if (basicVerifyResult.rows.length === 0) {
             console.error('❌ DEBUG: Basic task was not found after insert!');
+            await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_VERIFY_FAILED', {
+              originalTaskId: originalTask.id,
+              newTaskId: newId,
+              error: 'Basic task not found after insert',
+              userId: userId
+            }, { endpoint: 'database.createRecurringTask' });
             await client.query('ROLLBACK');
             return null;
           }
           
           await client.query('COMMIT');
           console.log('✅ DEBUG: Basic transaction committed successfully');
+          
+          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_SUCCESS', {
+            originalTaskId: originalTask.id,
+            newTaskId: newId,
+            finalTaskData: basicVerifyResult.rows[0],
+            userId: userId
+          }, { endpoint: 'database.createRecurringTask' });
+          
           return newId;
         }
         
         await client.query('ROLLBACK');
         console.log('🔄 DEBUG: Transaction rolled back due to error');
+        
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ROLLBACK', {
+          originalTaskId: originalTask.id,
+          newTaskId: newId,
+          error: dbError.message,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
+        
         throw dbError;
       }
     } catch (error) {
       console.error('❌ DEBUG: Fatal error in createRecurringTask:', error);
+      
+      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_FATAL_ERROR', {
+        originalTaskId: originalTask?.id,
+        newTaskId: newId || 'unknown',
+        error: error.message,
+        stack: error.stack,
+        userId: userId
+      }, { endpoint: 'database.createRecurringTask' });
+      
       try {
         await client.query('ROLLBACK');
         console.log('🔄 DEBUG: Transaction rolled back due to fatal error');
       } catch (rollbackError) {
         console.error('❌ DEBUG: Error during rollback:', rollbackError);
+        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ROLLBACK_ERROR', {
+          originalTaskId: originalTask?.id,
+          rollbackError: rollbackError.message,
+          userId: userId
+        }, { endpoint: 'database.createRecurringTask' });
       }
       return null;
     } finally {
       client.release();
       console.log('🔌 DEBUG: Database client released');
+      
+      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_CLEANUP', {
+        originalTaskId: originalTask?.id,
+        newTaskId: newId || 'unknown',
+        clientReleased: true,
+        userId: userId
+      }, { endpoint: 'database.createRecurringTask' });
     }
   },
 
@@ -661,8 +866,27 @@ const db = {
     try {
       if (!userId) {
         console.warn('⚠️ getDagelijksePlanning called without userId - returning empty results');
+        
+        // Log missing userId issue
+        await forensicLogger.log('PLANNING', 'GET_PLANNING_NO_USERID', {
+          datum: datum,
+          userId: userId || 'missing',
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.getDagelijksePlanning',
+          triggeredBy: 'system_error'
+        });
+        
         return [];
       }
+
+      // Log planning retrieval attempt
+      await forensicLogger.log('PLANNING', 'GET_PLANNING_ATTEMPT', {
+        datum: datum,
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.getDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
 
       const result = await pool.query(`
         SELECT dp.*, t.tekst as actie_tekst, t.project_id, t.context_id, t.duur as actie_duur
@@ -673,7 +897,7 @@ const db = {
         ORDER BY dp.uur ASC, dp.positie ASC, dp.aangemaakt ASC
       `, [datum, userId]);
       
-      return result.rows.map(row => ({
+      const planningItems = result.rows.map(row => ({
         id: row.id,
         actieId: row.actie_id,
         datum: row.datum,
@@ -689,8 +913,40 @@ const db = {
         contextId: row.context_id,
         actieDuur: row.actie_duur
       }));
+      
+      // Log successful planning retrieval with summary
+      await forensicLogger.log('PLANNING', 'GET_PLANNING_SUCCESS', {
+        datum: datum,
+        userId: userId,
+        itemCount: planningItems.length,
+        itemSummary: planningItems.map(item => ({
+          id: item.id,
+          type: item.type,
+          uur: item.uur,
+          naam: item.naam,
+          actieId: item.actieId,
+          actieTekst: item.actieTekst
+        })),
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.getDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
+      return planningItems;
     } catch (error) {
       console.error('Error getting dagelijkse planning:', error);
+      
+      // Log planning retrieval failure
+      await forensicLogger.log('PLANNING', 'GET_PLANNING_FAILED', {
+        datum: datum,
+        userId: userId,
+        error: error.message,
+        stack: error.stack,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.getDagelijksePlanning',
+        triggeredBy: 'system_error'
+      });
+      
       return [];
     }
   },
@@ -699,10 +955,29 @@ const db = {
     try {
       if (!userId) {
         console.warn('⚠️ addToDagelijksePlanning called without userId - operation cancelled');
+        
+        await forensicLogger.log('PLANNING', 'ADD_PLANNING_NO_USERID', {
+          planningItem: planningItem,
+          userId: userId || 'missing',
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.addToDagelijksePlanning',
+          triggeredBy: 'system_error'
+        });
+        
         return null;
       }
 
       const id = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      
+      // Log planning addition attempt
+      await forensicLogger.log('PLANNING', 'ADD_PLANNING_ATTEMPT', {
+        planningItem: planningItem,
+        generatedId: id,
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.addToDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
       
       // Calculate next position for this hour for this user
       let positie = planningItem.positie;
@@ -717,11 +992,22 @@ const db = {
 
       // If inserting at specific position, shift other items for this user
       if (planningItem.positie !== undefined && planningItem.positie !== null) {
-        await pool.query(`
+        const shiftResult = await pool.query(`
           UPDATE dagelijkse_planning 
           SET positie = positie + 1 
           WHERE datum = $1 AND uur = $2 AND positie >= $3 AND user_id = $4
         `, [planningItem.datum, planningItem.uur, planningItem.positie, userId]);
+        
+        await forensicLogger.log('PLANNING', 'ADD_PLANNING_POSITION_SHIFT', {
+          planningId: id,
+          shiftedRows: shiftResult.rowCount,
+          datum: planningItem.datum,
+          uur: planningItem.uur,
+          insertPosition: planningItem.positie,
+          userId: userId,
+          endpoint: 'database.addToDagelijksePlanning',
+          triggeredBy: 'user_action'
+        });
       }
       
       await pool.query(`
@@ -739,9 +1025,40 @@ const db = {
         userId
       ]);
       
+      // Log successful planning addition
+      await forensicLogger.log('PLANNING', 'ADD_PLANNING_SUCCESS', {
+        planningId: id,
+        addedItem: {
+          id: id,
+          actieId: planningItem.actieId,
+          datum: planningItem.datum,
+          uur: planningItem.uur,
+          positie: positie,
+          type: planningItem.type,
+          naam: planningItem.naam,
+          duurMinuten: planningItem.duurMinuten
+        },
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.addToDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
       return id;
     } catch (error) {
       console.error('Error adding to dagelijkse planning:', error);
+      
+      // Log planning addition failure
+      await forensicLogger.log('PLANNING', 'ADD_PLANNING_FAILED', {
+        planningItem: planningItem,
+        userId: userId,
+        error: error.message,
+        stack: error.stack,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.addToDagelijksePlanning',
+        triggeredBy: 'system_error'
+      });
+      
       throw error;
     }
   },
@@ -750,8 +1067,39 @@ const db = {
     try {
       if (!userId) {
         console.warn('⚠️ updateDagelijksePlanning called without userId - operation cancelled');
+        
+        await forensicLogger.log('PLANNING', 'UPDATE_PLANNING_NO_USERID', {
+          planningId: id,
+          updates: updates,
+          userId: userId || 'missing',
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.updateDagelijksePlanning',
+          triggeredBy: 'system_error'
+        });
+        
         return false;
       }
+
+      // Get current planning item for logging
+      const beforeResult = await pool.query(`
+        SELECT dp.*, t.tekst as actie_tekst
+        FROM dagelijkse_planning dp
+        LEFT JOIN taken t ON dp.actie_id = t.id
+        WHERE dp.id = $1 AND dp.user_id = $2
+      `, [id, userId]);
+      
+      const beforeItem = beforeResult.rows[0];
+      
+      // Log planning update attempt
+      await forensicLogger.log('PLANNING', 'UPDATE_PLANNING_ATTEMPT', {
+        planningId: id,
+        updates: updates,
+        beforeItem: beforeItem,
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.updateDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
 
       const fields = [];
       const values = [];
@@ -774,9 +1122,46 @@ const db = {
       const query = `UPDATE dagelijkse_planning SET ${fields.join(', ')} WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}`;
       
       const result = await pool.query(query, values);
+      
+      // Get updated item for logging
+      const afterResult = await pool.query(`
+        SELECT dp.*, t.tekst as actie_tekst
+        FROM dagelijkse_planning dp
+        LEFT JOIN taken t ON dp.actie_id = t.id
+        WHERE dp.id = $1 AND dp.user_id = $2
+      `, [id, userId]);
+      
+      const afterItem = afterResult.rows[0];
+      
+      // Log update result
+      await forensicLogger.log('PLANNING', 'UPDATE_PLANNING_SUCCESS', {
+        planningId: id,
+        rowsUpdated: result.rowCount,
+        beforeItem: beforeItem,
+        afterItem: afterItem,
+        updates: updates,
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.updateDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error updating dagelijkse planning:', error);
+      
+      // Log planning update failure
+      await forensicLogger.log('PLANNING', 'UPDATE_PLANNING_FAILED', {
+        planningId: id,
+        updates: updates,
+        userId: userId,
+        error: error.message,
+        stack: error.stack,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.updateDagelijksePlanning',
+        triggeredBy: 'system_error'
+      });
+      
       return false;
     }
   },
@@ -785,15 +1170,39 @@ const db = {
     try {
       if (!userId) {
         console.warn('⚠️ reorderDagelijksePlanning called without userId - operation cancelled');
+        
+        await forensicLogger.log('PLANNING', 'REORDER_PLANNING_NO_USERID', {
+          planningId: id,
+          targetUur: targetUur,
+          targetPosition: targetPosition,
+          userId: userId || 'missing',
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.reorderDagelijksePlanning',
+          triggeredBy: 'system_error'
+        });
+        
         return false;
       }
 
       // Get current item info with user verification
       const currentResult = await pool.query(`
-        SELECT datum, uur, positie FROM dagelijkse_planning WHERE id = $1 AND user_id = $2
+        SELECT dp.*, t.tekst as actie_tekst
+        FROM dagelijkse_planning dp
+        LEFT JOIN taken t ON dp.actie_id = t.id
+        WHERE dp.id = $1 AND dp.user_id = $2
       `, [id, userId]);
       
       if (currentResult.rows.length === 0) {
+        await forensicLogger.log('PLANNING', 'REORDER_PLANNING_NOT_FOUND', {
+          planningId: id,
+          targetUur: targetUur,  
+          targetPosition: targetPosition,
+          userId: userId,
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.reorderDagelijksePlanning',
+          triggeredBy: 'system_error'
+        });
+        
         return false;
       }
       
@@ -802,10 +1211,29 @@ const db = {
       const currentUur = current.uur;
       const currentPositie = current.positie;
       
+      // Log reorder attempt
+      await forensicLogger.log('PLANNING', 'REORDER_PLANNING_ATTEMPT', {
+        planningId: id,
+        currentItem: current,
+        currentPosition: {
+          datum: datum,
+          uur: currentUur,
+          positie: currentPositie
+        },
+        targetPosition: {
+          uur: targetUur,
+          positie: targetPosition
+        },
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.reorderDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
       // If moving to different hour or specific position
       if (currentUur !== targetUur || targetPosition !== null) {
         // Remove from current position (shift items down) - only for this user
-        await pool.query(`
+        const shiftDownResult = await pool.query(`
           UPDATE dagelijkse_planning 
           SET positie = positie - 1 
           WHERE datum = $1 AND uur = $2 AND positie > $3 AND user_id = $4
@@ -823,51 +1251,204 @@ const db = {
           finalPosition = maxPosResult.rows[0].next_position;
         } else {
           // Insert at specific position, shift others up - only for this user
-          await pool.query(`
+          const shiftUpResult = await pool.query(`
             UPDATE dagelijkse_planning 
             SET positie = positie + 1 
             WHERE datum = $1 AND uur = $2 AND positie >= $3 AND user_id = $4
           `, [datum, targetUur, finalPosition, userId]);
+          
+          await forensicLogger.log('PLANNING', 'REORDER_PLANNING_SHIFT_UP', {
+            planningId: id,
+            shiftedRows: shiftUpResult.rowCount,
+            datum: datum,
+            targetUur: targetUur,
+            insertPosition: finalPosition,
+            userId: userId,
+            endpoint: 'database.reorderDagelijksePlanning',
+            triggeredBy: 'user_action'
+          });
         }
         
         // Update item with new hour and position
-        await pool.query(`
+        const updateResult = await pool.query(`
           UPDATE dagelijkse_planning 
           SET uur = $1, positie = $2 
           WHERE id = $3 AND user_id = $4
         `, [targetUur, finalPosition, id, userId]);
         
+        // Log successful reorder
+        await forensicLogger.log('PLANNING', 'REORDER_PLANNING_SUCCESS', {
+          planningId: id,
+          reorderResult: {
+            rowsUpdated: updateResult.rowCount,
+            shiftedDown: shiftDownResult.rowCount,
+            finalPosition: finalPosition,
+            finalUur: targetUur
+          },
+          beforeState: {
+            uur: currentUur,
+            positie: currentPositie
+          },
+          afterState: {
+            uur: targetUur,
+            positie: finalPosition
+          },
+          userId: userId,
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.reorderDagelijksePlanning',
+          triggeredBy: 'user_action'
+        });
+        
         return true;
       }
+      
+      // Log no change needed
+      await forensicLogger.log('PLANNING', 'REORDER_PLANNING_NO_CHANGE', {
+        planningId: id,
+        reason: 'Same hour and no specific position requested',
+        currentPosition: {
+          uur: currentUur,
+          positie: currentPositie
+        },
+        userId: userId,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.reorderDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
       
       return true; // No change needed
     } catch (error) {
       console.error('Error reordering dagelijkse planning:', error);
+      
+      // Log reorder failure
+      await forensicLogger.log('PLANNING', 'REORDER_PLANNING_FAILED', {
+        planningId: id,
+        targetUur: targetUur,
+        targetPosition: targetPosition,
+        userId: userId,
+        error: error.message,
+        stack: error.stack,
+        requestTimestamp: new Date().toISOString(),
+        endpoint: 'database.reorderDagelijksePlanning',
+        triggeredBy: 'system_error'
+      });
+      
       return false;
     }
   },
 
-  async deleteDagelijksePlanning(id) {
+  async deleteDagelijksePlanning(id, userId = null) {
     try {
+      // Get planning item details before deletion for forensic logging
+      const beforeResult = await pool.query(`
+        SELECT dp.*, t.tekst as actie_tekst, t.lijst as actie_lijst
+        FROM dagelijkse_planning dp
+        LEFT JOIN taken t ON dp.actie_id = t.id
+        WHERE dp.id = $1
+      `, [id]);
+      
+      const planningItem = beforeResult.rows[0];
+      
+      // Log deletion attempt with full context
+      await forensicLogger.log('PLANNING', 'DELETE_PLANNING_ATTEMPT', {
+        planningId: id,
+        planningItem: planningItem,
+        userId: userId || planningItem?.user_id || 'unknown',
+        deletionDetails: {
+          itemExists: !!planningItem,
+          datum: planningItem?.datum,
+          uur: planningItem?.uur,
+          type: planningItem?.type,
+          naam: planningItem?.naam,
+          actieId: planningItem?.actie_id,
+          actieTekst: planningItem?.actie_tekst,
+          actieLijst: planningItem?.actie_lijst
+        },
+        endpoint: 'database.deleteDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
       const result = await pool.query('DELETE FROM dagelijkse_planning WHERE id = $1', [id]);
+      
+      // Log successful deletion
+      await forensicLogger.log('PLANNING', 'DELETE_PLANNING_SUCCESS', {
+        planningId: id,
+        rowsDeleted: result.rowCount,
+        deletedItem: planningItem,
+        userId: userId || planningItem?.user_id || 'unknown',
+        endpoint: 'database.deleteDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
       return result.rowCount > 0;
     } catch (error) {
       console.error('Error deleting dagelijkse planning:', error);
+      
+      // Log deletion failure
+      await forensicLogger.log('PLANNING', 'DELETE_PLANNING_FAILED', {
+        planningId: id,
+        error: error.message,
+        stack: error.stack,
+        userId: userId || 'unknown',
+        endpoint: 'database.deleteDagelijksePlanning',
+        triggeredBy: 'user_action'
+      });
+      
       return false;
     }
   },
 
-  async getIngeplandeActies(datum) {
+  async getIngeplandeActies(datum, userId = null) {
     try {
+      // Log retrieval attempt
+      if (userId) {
+        await forensicLogger.log('PLANNING', 'GET_INGEPLANDE_ACTIES_ATTEMPT', {
+          datum: datum,
+          userId: userId,
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.getIngeplandeActies',
+          triggeredBy: 'user_action'
+        });
+      }
+
       const result = await pool.query(`
         SELECT DISTINCT actie_id
         FROM dagelijkse_planning
         WHERE datum = $1 AND actie_id IS NOT NULL
       `, [datum]);
       
-      return result.rows.map(row => row.actie_id);
+      const actieIds = result.rows.map(row => row.actie_id);
+      
+      // Log successful retrieval
+      if (userId) {
+        await forensicLogger.log('PLANNING', 'GET_INGEPLANDE_ACTIES_SUCCESS', {
+          datum: datum,
+          actieCount: actieIds.length,
+          actieIds: actieIds,
+          userId: userId,
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.getIngeplandeActies',
+          triggeredBy: 'user_action'
+        });
+      }
+      
+      return actieIds;
     } catch (error) {
       console.error('Error getting ingeplande acties:', error);
+      
+      // Log retrieval failure
+      if (userId) {
+        await forensicLogger.log('PLANNING', 'GET_INGEPLANDE_ACTIES_FAILED', {
+          datum: datum,
+          userId: userId,
+          error: error.message,
+          stack: error.stack,
+          requestTimestamp: new Date().toISOString(),
+          endpoint: 'database.getIngeplandeActies',
+          triggeredBy: 'system_error'
+        });
+      }
+      
       return [];
     }
   },
