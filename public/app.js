@@ -6116,6 +6116,7 @@ class Taakbeheer {
                 }
             }
             
+            console.log('📤 Sending to server:', planningItem);
             const response = await fetch('/api/dagelijkse-planning', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -6123,8 +6124,10 @@ class Taakbeheer {
             });
             
             if (response.ok) {
+                const serverResponse = await response.json();
+                console.log('📥 Server response:', serverResponse);
                 // Fast local update instead of full refresh
-                this.updatePlanningLocally(planningItem, await response.json());
+                this.updatePlanningLocally(planningItem, serverResponse);
                 
                 // Remove task from actions list if it was an action
                 if (data.type === 'actie') {
@@ -6158,6 +6161,8 @@ class Taakbeheer {
     }
     
     updatePlanningLocally(planningItem, serverResponse) {
+        console.log('🔄 updatePlanningLocally called with:', { planningItem, serverResponse });
+        
         // Update local planning data immediately for fast visual feedback
         if (!this.currentPlanningData) {
             this.currentPlanningData = [];
@@ -6170,7 +6175,10 @@ class Taakbeheer {
             ...serverResponse // Merge any additional server data
         };
         
+        console.log('➕ Adding to currentPlanningData:', newItem);
+        console.log('📊 Array length before:', this.currentPlanningData.length);
         this.currentPlanningData.push(newItem);
+        console.log('📊 Array length after:', this.currentPlanningData.length);
         
         // Update only the affected hour in the calendar
         this.updateSingleHourDisplay(planningItem.uur);
