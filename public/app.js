@@ -3492,9 +3492,11 @@ class Taakbeheer {
                         
                         console.log('🐛 DEBUG: Parsing weekly pattern:', {interval, targetDay});
                         
-                        if (!isNaN(interval) && !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7) {
-                            // Convert our day numbering (1-7) to JavaScript day numbering (0-6, Sunday=0)
-                            const jsTargetDay = targetDay === 7 ? 0 : targetDay; // 7=Sunday becomes 0, others stay same
+                        if (!isNaN(interval) && !isNaN(targetDay) && targetDay >= 0 && targetDay <= 7) {
+                            // Convert our day numbering (0-7) to JavaScript day numbering (0-6, Sunday=0)
+                            // 0=Sunday, 1=Monday, ..., 6=Saturday, 7=Sunday (legacy)
+                            const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+                            console.log('🐛 DEBUG: Day conversion:', {targetDay, jsTargetDay});
                             return this.getNextWeekdayWithInterval(date, jsTargetDay, interval);
                         }
                     }
