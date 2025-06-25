@@ -2415,9 +2415,21 @@ class Taakbeheer {
                         }
                     }
                 } else {
+                    console.log('🔄 Calculating next recurring date for task:', {
+                        verschijndatum: taak.verschijndatum,
+                        herhalingType: taak.herhalingType,
+                        taskObject: taak
+                    });
+                    
                     const nextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
+                    console.log('📅 Calculated next date:', nextDate);
+                    
                     if (nextDate) {
+                        console.log('✅ Next date exists, calling createNextRecurringTask...');
                         nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
+                        console.log('🎯 createNextRecurringTask result:', nextRecurringTaskId);
+                    } else {
+                        console.error('❌ nextDate is null/undefined - recurring task will not be created');
                     }
                 }
             }
