@@ -25,6 +25,10 @@ const MAX_ERROR_LOGS = 100;
 // Import forensic logger
 const forensicLogger = require('./forensic-logger');
 
+// Debug: Check forensic logger status at startup
+console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
+console.log('🔍 DEBUG: Forensic logger enabled status:', forensicLogger.enabled);
+
 // Add forensic logging middleware
 app.use(forensicLogger.middleware());
 
