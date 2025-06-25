@@ -5818,6 +5818,9 @@ class Taakbeheer {
         
         this.bindingInProgress = true;
         
+        // Remove existing drag/drop event listeners to prevent duplicates
+        this.removeDragAndDropEvents();
+        
         // Template drag start
         document.querySelectorAll('.template-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
@@ -5994,6 +5997,35 @@ class Taakbeheer {
         this.bindingInProgress = false;
     }
 
+    removeDragAndDropEvents() {
+        // Remove existing event listeners by cloning and replacing elements
+        // This is more reliable than trying to track individual listeners
+        
+        // Clone template items to remove event listeners
+        document.querySelectorAll('.template-item').forEach(item => {
+            const newItem = item.cloneNode(true);
+            if (item.parentNode) {
+                item.parentNode.replaceChild(newItem, item);
+            }
+        });
+        
+        // Clone planning action items to remove event listeners
+        document.querySelectorAll('.planning-actie-item').forEach(item => {
+            const newItem = item.cloneNode(true);
+            if (item.parentNode) {
+                item.parentNode.replaceChild(newItem, item);
+            }
+        });
+        
+        // Clone drop zones to remove event listeners
+        document.querySelectorAll('.uur-content, .drop-zone').forEach(zone => {
+            const newZone = zone.cloneNode(true);
+            if (zone.parentNode) {
+                zone.parentNode.replaceChild(newZone, zone);
+            }
+        });
+    }
+
     async handleDrop(data, uur) {
         return this.handleDropInternal(data, uur, null);
     }
@@ -6001,7 +6033,18 @@ class Taakbeheer {
     async handleDropInternal(data, uur, position) {
         const today = new Date().toISOString().split('T')[0];
         
-        // Debug logging removed for production
+        // Prevent duplicate drops by checking if this operation is already in progress
+        const operationKey = `drop-${data.type}-${data.actieId || data.planningType}-${uur}-${position}`;
+        if (this.activeDropOperations && this.activeDropOperations.has(operationKey)) {
+            console.log('🚫 Duplicate drop operation prevented:', operationKey);
+            return;
+        }
+        
+        // Track active operations
+        if (!this.activeDropOperations) {
+            this.activeDropOperations = new Set();
+        }
+        this.activeDropOperations.add(operationKey);
         
         return await loading.withLoading(async () => {
             const planningItem = {
@@ -6067,10 +6110,20 @@ class Taakbeheer {
             } else {
                 toast.error('Fout bij toevoegen planning item');
             }
+            
+            // Always clean up the operation key
+            if (this.activeDropOperations) {
+                this.activeDropOperations.delete(operationKey);
+            }
         }, {
             operationId: position !== null ? 'add-planning-position' : 'add-planning',
             showGlobal: true, // Show loading indicator
             message: 'Item toevoegen...'
+        }).finally(() => {
+            // Ensure cleanup even if withLoading fails
+            if (this.activeDropOperations) {
+                this.activeDropOperations.delete(operationKey);
+            }
         });
     }
 
