@@ -4212,18 +4212,65 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
             opmerkingen: task.opmerkingen
         };
         
-        // Calculate next date - for now use tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        newTask.verschijndatum = tomorrow.toISOString().split('T')[0];
+        // Calculate next date based on recurrence type
+        let nextDate;
+        if (task.herhaling_type === 'werkdagen') {
+            // Find next weekday
+            nextDate = new Date();
+            do {
+                nextDate.setDate(nextDate.getDate() + 1);
+            } while (nextDate.getDay() === 0 || nextDate.getDay() === 6);
+        } else if (task.herhaling_type === 'dagelijks') {
+            nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + 1);
+        } else if (task.herhaling_type && task.herhaling_type.startsWith('weekly-')) {
+            // Calculate proper weekly recurrence
+            const parts = task.herhaling_type.split('-');
+            const interval = parseInt(parts[1]) || 1;
+            const targetDays = parts[2]?.split(',').map(Number) || [];
+            
+            nextDate = new Date(task.verschijndatum);
+            nextDate.setDate(nextDate.getDate() + (interval * 7));
+        } else {
+            // Default to tomorrow
+            nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + 1);
+        }
         
-        const result = await db.voegTaakToe(newTask, task.user_id);
+        newTask.verschijndatum = nextDate.toISOString().split('T')[0];
         
-        res.json({
-            success: true,
-            newTaskId: result.id,
-            nextDate: newTask.verschijndatum
-        });
+        // Insert directly using SQL
+        const newTaskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        try {
+            await pool.query(
+                `INSERT INTO taken (id, tekst, lijst, project_id, context_id, verschijndatum, 
+                 duur, herhaling_type, herhaling_actief, opmerkingen, user_id, aangemaakt, bijgewerkt)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+                [
+                    newTaskId,
+                    task.tekst,
+                    'acties', // New tasks always go to actions list
+                    task.project_id,
+                    task.context_id,
+                    newTask.verschijndatum,
+                    task.duur,
+                    task.herhaling_type,
+                    true,
+                    task.opmerkingen,
+                    task.user_id
+                ]
+            );
+            
+            res.json({
+                success: true,
+                newTaskId: newTaskId,
+                nextDate: newTask.verschijndatum
+            });
+        } catch (insertError) {
+            console.error('Failed to insert recovered task:', insertError);
+            throw insertError;
+        }
         
     } catch (error) {
         console.error('Recover recurring task error:', error);
