@@ -4648,6 +4648,37 @@ app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
 });
 
+// Debug endpoint to list all users
+app.get('/api/debug/users-info', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+        
+        const users = await pool.query(`
+            SELECT id, email, naam, rol, aangemaakt, actief, email_import_code
+            FROM users 
+            ORDER BY aangemaakt ASC
+        `);
+        
+        res.json({
+            total_users: users.rows.length,
+            users: users.rows.map(user => ({
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                rol: user.rol,
+                aangemaakt: user.aangemaakt,
+                actief: user.actief,
+                has_import_code: !!user.email_import_code
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
     
