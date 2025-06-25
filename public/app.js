@@ -1631,6 +1631,7 @@ class Taakbeheer {
             // Re-apply filters after restoration
             if (this.huidigeLijst === 'acties') {
                 this.renderActiesLijst();
+                this.filterActies(); // Apply the restored filter values
             }
         };
         
