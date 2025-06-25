@@ -2450,8 +2450,12 @@ class Taakbeheer {
                 }
                 
                 // Background updates (don't await these for faster response)
-                if (!nextRecurringTaskId) {
+                // Only save list if this wasn't a recurring task, or if recurring task creation failed
+                if (!isRecurring) {
                     this.slaLijstOp().catch(console.error);
+                } else if (isRecurring && !nextRecurringTaskId) {
+                    console.error('⚠️ Recurring task creation failed - NOT saving list to prevent data loss');
+                    toast.warning('Herhalende taak kon niet worden aangemaakt. Controleer de Acties lijst later.');
                 }
                 this.laadTellingen().catch(console.error);
                 
@@ -3337,6 +3341,13 @@ class Taakbeheer {
                 date.setDate(date.getDate() + 1);
                 break;
                 
+            case 'werkdagen':
+                // Find next weekday (Monday to Friday)
+                do {
+                    date.setDate(date.getDate() + 1);
+                } while (date.getDay() === 0 || date.getDay() === 6); // Skip weekends
+                break;
+                
             case 'wekelijks':
                 date.setDate(date.getDate() + 7);
                 break;
@@ -3826,24 +3837,24 @@ class Taakbeheer {
                 const result = await response.json();
                 console.log('✅ New recurring task created with ID:', result.taskId);
                 
-                // Debug: Check what was actually created
-                setTimeout(async () => {
-                    try {
-                        const checkResponse = await fetch(`/api/taak/${result.taskId}`);
-                        if (checkResponse.ok) {
-                            const newTask = await checkResponse.json();
-                            console.log('🔍 DEBUG: New recurring task in database:', newTask);
-                        } else {
-                            console.log('🔍 DEBUG: Failed to fetch task, status:', checkResponse.status);
-                        }
-                    } catch (error) {
-                        console.log('Debug check of new task failed:', error);
+                // Verify the task was actually created
+                try {
+                    const checkResponse = await fetch(`/api/taak/${result.taskId}`);
+                    if (checkResponse.ok) {
+                        const newTask = await checkResponse.json();
+                        console.log('🔍 VERIFIED: New recurring task in database:', newTask);
+                        return result.taskId;
+                    } else {
+                        console.error('❌ Task creation verification failed, status:', checkResponse.status);
+                        return null;
                     }
-                }, 2000);
-                
-                return result.taskId;
+                } catch (verifyError) {
+                    console.error('❌ Task verification failed:', verifyError);
+                    return null;
+                }
             } else {
-                console.error('Failed to create recurring task:', response.status);
+                const errorText = await response.text();
+                console.error('❌ Failed to create recurring task:', response.status, errorText);
                 return null;
             }
         } catch (error) {
