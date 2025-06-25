@@ -547,6 +547,32 @@
         </div>
     </div>
 
+    <!-- Clear Planning Confirmation Modal -->
+    <div class="popup-overlay" id="clearPlanningModal" style="display: none;">
+        <div class="popup-content clear-planning-popup">
+            <h2>Planning leegmaken</h2>
+            <p>Weet je zeker dat je de planning wilt leegmaken?</p>
+            <div class="clear-options">
+                <label class="checkbox-option">
+                    <input type="checkbox" id="clearTaken" checked>
+                    <span>Taken verwijderen</span>
+                </label>
+                <label class="checkbox-option">
+                    <input type="checkbox" id="clearPauzes" checked>
+                    <span>Pauzes verwijderen</span>
+                </label>
+                <label class="checkbox-option">
+                    <input type="checkbox" id="clearGeblokkeerd" checked>
+                    <span>Geblokkeerde tijd verwijderen</span>
+                </label>
+            </div>
+            <div class="popup-acties clear-planning-actions">
+                <button type="button" id="clearPlanningCancel" class="btn-cancel">Annuleren</button>
+                <button type="button" id="clearPlanningConfirm" class="btn-danger">Leegmaken</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

@@ -5614,8 +5614,11 @@ class Taakbeheer {
                 <div class="dag-kalender">
                     <div class="kalender-header">
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
-                        <div class="totaal-tijd">
-                            <span id="totaalGeplandeTijd">Totaal: 0 min</span>
+                        <div class="header-actions">
+                            <span id="totaalGeplandeTijd" class="totaal-tijd">Totaal: 0 min</span>
+                            <button class="btn-clear-planning" id="btnClearPlanning" title="Planning leegmaken">
+                                🗑️ Leegmaken
+                            </button>
                         </div>
                     </div>
                     <div class="kalender-grid" id="kalenderGrid">
@@ -5788,6 +5791,12 @@ class Taakbeheer {
         
         // Populate filter dropdowns
         this.populatePlanningFilters();
+        
+        // Clear planning button
+        const btnClearPlanning = document.getElementById('btnClearPlanning');
+        if (btnClearPlanning) {
+            btnClearPlanning.addEventListener('click', () => this.showClearPlanningModal());
+        }
     }
 
     bindDragAndDropEvents() {
@@ -6729,6 +6738,102 @@ class Taakbeheer {
                 totaalElement.textContent = `Totaal: ${minuten}min`;
             }
         }
+    }
+
+    showClearPlanningModal() {
+        const modal = document.getElementById('clearPlanningModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            
+            // Reset checkboxes to checked
+            document.getElementById('clearTaken').checked = true;
+            document.getElementById('clearPauzes').checked = true;
+            document.getElementById('clearGeblokkeerd').checked = true;
+            
+            // Bind events
+            const cancelBtn = document.getElementById('clearPlanningCancel');
+            const confirmBtn = document.getElementById('clearPlanningConfirm');
+            
+            const closeModal = () => {
+                modal.style.display = 'none';
+            };
+            
+            cancelBtn.onclick = closeModal;
+            confirmBtn.onclick = () => {
+                this.clearPlanning();
+                closeModal();
+            };
+            
+            // Close on overlay click
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            };
+        }
+    }
+
+    async clearPlanning() {
+        const clearTaken = document.getElementById('clearTaken').checked;
+        const clearPauzes = document.getElementById('clearPauzes').checked;
+        const clearGeblokkeerd = document.getElementById('clearGeblokkeerd').checked;
+        
+        if (!clearTaken && !clearPauzes && !clearGeblokkeerd) {
+            toast.warning('Selecteer minstens één optie om te verwijderen');
+            return;
+        }
+        
+        // Show loading
+        loading.withLoading(async () => {
+            const today = new Date().toISOString().split('T')[0];
+            const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+            const planning = planningResponse.ok ? await planningResponse.json() : [];
+            
+            // Filter items to delete based on user selection
+            const itemsToDelete = planning.filter(item => {
+                // Note: database uses 'taak' but we call them 'actie' in the UI
+                if ((item.type === 'actie' || item.type === 'taak') && clearTaken) return true;
+                if (item.type === 'pauze' && clearPauzes) return true;
+                if (item.type === 'geblokkeerd' && clearGeblokkeerd) return true;
+                return false;
+            });
+            
+            // Delete each item with fade animation
+            for (const item of itemsToDelete) {
+                try {
+                    const response = await fetch(`/api/dagelijkse-planning/${item.id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        // Animate item removal
+                        const element = document.querySelector(`[data-planning-id="${item.id}"]`);
+                        if (element) {
+                            element.style.transition = 'opacity 0.3s ease';
+                            element.style.opacity = '0';
+                            setTimeout(() => element.remove(), 300);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error deleting planning item:', error);
+                }
+            }
+            
+            // Refresh the planning view
+            await this.renderTaken();
+            
+            // Show success message
+            const deletedCount = itemsToDelete.length;
+            if (deletedCount > 0) {
+                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} verwijderd uit de planning`);
+            } else {
+                toast.info('Geen items gevonden om te verwijderen');
+            }
+        }, {
+            operationId: 'clear-planning',
+            showGlobal: true,
+            message: 'Planning leegmaken...'
+        });
     }
 
     addCSSDebugger() {
