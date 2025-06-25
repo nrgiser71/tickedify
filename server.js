@@ -4300,9 +4300,9 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
             console.log('🔍 Available columns:', existingColumns);
             
             // Build dynamic insert query based on available columns
-            const columns = ['id', 'tekst', 'lijst', 'project_id', 'context_id', 'verschijndatum', 'duur', 'user_id', 'aangemaakt', 'bijgewerkt'];
-            const values = [newTaskId, task.tekst, 'acties', task.project_id, task.context_id, newTask.verschijndatum, task.duur, task.user_id, 'NOW()', 'NOW()'];
-            const placeholders = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
+            const columns = ['id', 'tekst', 'lijst', 'project_id', 'context_id', 'verschijndatum', 'duur', 'user_id', 'aangemaakt'];
+            const values = [newTaskId, task.tekst, 'acties', task.project_id, task.context_id, newTask.verschijndatum, task.duur, task.user_id];
+            const placeholders = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()'];
             
             // Add optional columns if they exist
             if (existingColumns.includes('herhaling_type')) {
