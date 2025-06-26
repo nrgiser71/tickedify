@@ -3127,6 +3127,8 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 const interval = parseInt(parts[1]);
                 const targetDay = parseInt(parts[2]); // 1=Monday, 2=Tuesday, ..., 7=Sunday
                 
+                console.log('🐛 WEEKLY DEBUG:', { pattern, interval, targetDay, baseDate, dayOfWeek: date.getDay() });
+                
                 if (!isNaN(interval) && !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7) {
                     // Convert our day numbering (1-7) to JavaScript day numbering (0-6, Sunday=0)
                     const jsTargetDay = targetDay === 7 ? 0 : targetDay;
@@ -3135,19 +3137,26 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     const currentDay = date.getDay();
                     let daysToAdd = jsTargetDay - currentDay;
                     
+                    console.log('🐛 CALC:', { jsTargetDay, currentDay, daysToAdd });
+                    
                     if (daysToAdd <= 0) {
                         daysToAdd += 7;
+                        console.log('🐛 ADJUSTED daysToAdd:', daysToAdd);
                     }
                     
                     const nextOccurrence = new Date(date);
                     nextOccurrence.setDate(date.getDate() + daysToAdd);
                     
+                    console.log('🐛 BEFORE INTERVAL:', nextOccurrence.toISOString().split('T')[0]);
+                    
                     // Add additional weeks based on interval (only if interval > 1)
                     if (interval > 1) {
                         nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
+                        console.log('🐛 AFTER INTERVAL:', nextOccurrence.toISOString().split('T')[0]);
                     }
                     
                     nextDate = nextOccurrence.toISOString().split('T')[0];
+                    console.log('🐛 FINAL RESULT:', nextDate);
                 }
             }
         } else if (pattern.startsWith('monthly-day-')) {
