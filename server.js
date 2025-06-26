@@ -3182,30 +3182,24 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 const targetDay = parseInt(parts[2]);
                 console.log('🐛 PARSED:', { interval, targetDay });
                 
-                // MANUAL calculation for weekly-1-4 + 2025-06-17
-                if (pattern === 'weekly-1-4' && baseDate === '2025-06-17') {
-                    console.log('🐛 HARDCODED FIX FOR TEST CASE');
-                    nextDate = '2025-06-19';  // Force correct result
-                } else {
-                    // Normal logic
-                    const jsTargetDay = targetDay === 7 ? 0 : targetDay;
-                    const currentDay = date.getDay();
-                    let daysToAdd = jsTargetDay - currentDay;
-                    
-                    if (daysToAdd <= 0) {
-                        daysToAdd += 7;
-                    }
-                    
-                    const nextOccurrence = new Date(date);
-                    nextOccurrence.setDate(date.getDate() + daysToAdd);
-                    
-                    // Add interval weeks
-                    if (interval > 1) {
-                        nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
-                    }
-                    
-                    nextDate = nextOccurrence.toISOString().split('T')[0];
+                // Normal logic
+                const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+                const currentDay = date.getDay();
+                let daysToAdd = jsTargetDay - currentDay;
+                
+                if (daysToAdd <= 0) {
+                    daysToAdd += 7;
                 }
+                
+                const nextOccurrence = new Date(date);
+                nextOccurrence.setDate(date.getDate() + daysToAdd);
+                
+                // Add interval weeks
+                if (interval > 1) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
+                }
+                
+                nextDate = nextOccurrence.toISOString().split('T')[0];
                 console.log('🐛 WEEKLY RESULT:', nextDate);
             }
         } else if (pattern.startsWith('monthly-day-')) {
