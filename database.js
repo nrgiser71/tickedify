@@ -438,16 +438,20 @@ const db = {
           Object.keys(updates).forEach(key => {
             if (key === 'projectId') {
               basicFields.push(`project_id = $${basicParamIndex}`);
+              basicValues.push(updates[key]);
+              basicParamIndex++;
             } else if (key === 'contextId') {
               basicFields.push(`context_id = $${basicParamIndex}`);
+              basicValues.push(updates[key]);
+              basicParamIndex++;
             } else if (!key.startsWith('herhaling')) {
               basicFields.push(`${key} = $${basicParamIndex}`);
+              basicValues.push(updates[key]);
+              basicParamIndex++;
             } else {
               console.log(`⏭️ DB: Skipping herhaling field: ${key}`);
-              return; // Skip herhaling fields
+              // Skip herhaling fields completely - do not add to basicFields or basicValues
             }
-            basicValues.push(updates[key]);
-            basicParamIndex++;
           });
 
           basicValues.push(taskId);
