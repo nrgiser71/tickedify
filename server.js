@@ -3307,7 +3307,9 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                                 if (nextDateObj.getDay() === jsTargetDay) {
                                     occurrenceCount++;
                                     if (occurrenceCount === occurrenceNumber) {
-                                        break; // Found the nth occurrence
+                                        // Found the nth occurrence, set nextDate
+                                        nextDate = nextDateObj.toISOString().split('T')[0];
+                                        break;
                                     }
                                 }
                                 nextDateObj.setDate(nextDateObj.getDate() + 1);
@@ -3318,10 +3320,6 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                                     break;
                                 }
                             }
-                        }
-                        
-                        if (nextDate !== null) {
-                            nextDate = nextDateObj.toISOString().split('T')[0];
                         }
                     }
                 }
