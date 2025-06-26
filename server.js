@@ -1016,6 +1016,29 @@ app.get('/api/user/info', async (req, res) => {
     }
 });
 
+// API endpoint voor alle gebruikers (voor test dashboard)
+app.get('/api/users', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        // Get all active users
+        const result = await pool.query(`
+            SELECT id, email, naam, rol
+            FROM users 
+            WHERE actief = TRUE
+            ORDER BY naam
+        `);
+        
+        res.json(result.rows);
+        
+    } catch (error) {
+        console.error('Get users error:', error);
+        res.status(500).json({ error: 'Fout bij ophalen gebruikers' });
+    }
+});
+
 // Debug endpoint om huidige gebruiker te checken
 app.get('/api/debug/current-user', (req, res) => {
     const userId = getCurrentUserId(req);

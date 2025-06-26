@@ -4362,6 +4362,9 @@ class Taakbeheer {
             case 'zoeken':
                 this.showZoekInterface();
                 break;
+            case 'test-herhalingen':
+                window.open('/test-herhalingen.html', '_blank');
+                break;
             default:
                 console.log('Unknown tool:', tool);
         }
