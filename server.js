@@ -3206,12 +3206,23 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 const interval = parseInt(parts[3]);
                 if (!isNaN(dayNum) && !isNaN(interval) && dayNum >= 1 && dayNum <= 31) {
                     const nextDateObj = new Date(date);
-                    nextDateObj.setMonth(date.getMonth() + interval);
-                    nextDateObj.setDate(dayNum);
                     
-                    // Handle months with fewer days
-                    if (nextDateObj.getDate() !== dayNum) {
-                        nextDateObj.setDate(0); // Last day of month
+                    // Check if the target day exists in the current month and hasn't passed yet
+                    const currentDay = date.getDate();
+                    const testCurrentMonth = new Date(date.getFullYear(), date.getMonth(), dayNum);
+                    
+                    if (dayNum > currentDay && testCurrentMonth.getDate() === dayNum) {
+                        // Target day exists in current month and hasn't passed yet
+                        nextDateObj.setDate(dayNum);
+                    } else {
+                        // Move to next interval month
+                        nextDateObj.setMonth(date.getMonth() + interval);
+                        nextDateObj.setDate(dayNum);
+                        
+                        // Handle months with fewer days
+                        if (nextDateObj.getDate() !== dayNum) {
+                            nextDateObj.setDate(0); // Last day of month
+                        }
                     }
                     
                     nextDate = nextDateObj.toISOString().split('T')[0];
