@@ -2886,11 +2886,28 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'maandelijks') {
             const nextDateObj = new Date(date);
+            const originalDay = date.getDate();
             nextDateObj.setMonth(date.getMonth() + 1);
+            
+            // Handle months with fewer days (e.g., day 31 in February)
+            if (nextDateObj.getDate() !== originalDay) {
+                // Set to last day of target month if original day doesn't exist
+                nextDateObj.setDate(0);
+            }
+            
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'jaarlijks') {
             const nextDateObj = new Date(date);
+            const originalDay = date.getDate();
+            const originalMonth = date.getMonth();
             nextDateObj.setFullYear(date.getFullYear() + 1);
+            
+            // Handle leap year issues (e.g., Feb 29 in non-leap year)
+            if (nextDateObj.getDate() !== originalDay && originalMonth === 1 && originalDay === 29) {
+                // Feb 29 in non-leap year becomes Feb 28
+                nextDateObj.setDate(28);
+            }
+            
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'om-de-dag') {
             const nextDateObj = new Date(date);
@@ -2906,15 +2923,36 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === '2-maanden') {
             const nextDateObj = new Date(date);
+            const originalDay = date.getDate();
             nextDateObj.setMonth(date.getMonth() + 2);
+            
+            // Handle months with fewer days
+            if (nextDateObj.getDate() !== originalDay) {
+                nextDateObj.setDate(0);
+            }
+            
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === '3-maanden') {
             const nextDateObj = new Date(date);
+            const originalDay = date.getDate();
             nextDateObj.setMonth(date.getMonth() + 3);
+            
+            // Handle months with fewer days
+            if (nextDateObj.getDate() !== originalDay) {
+                nextDateObj.setDate(0);
+            }
+            
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === '6-maanden') {
             const nextDateObj = new Date(date);
+            const originalDay = date.getDate();
             nextDateObj.setMonth(date.getMonth() + 6);
+            
+            // Handle months with fewer days
+            if (nextDateObj.getDate() !== originalDay) {
+                nextDateObj.setDate(0);
+            }
+            
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'].includes(pattern)) {
             // Specific weekdays
