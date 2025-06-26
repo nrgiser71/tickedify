@@ -2868,7 +2868,161 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
         let nextDate = null;
         const date = new Date(baseDate);
         
-        if (pattern.startsWith('daily-')) {
+        // Handle simple Dutch patterns first
+        if (pattern === 'dagelijks') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setDate(date.getDate() + 1);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'werkdagen') {
+            // Find next weekday (Monday to Friday)
+            const nextDateObj = new Date(date);
+            do {
+                nextDateObj.setDate(nextDateObj.getDate() + 1);
+            } while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6); // Skip weekends
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'wekelijks') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setDate(date.getDate() + 7);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'maandelijks') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 1);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'jaarlijks') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'om-de-dag') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setDate(date.getDate() + 2);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === '2-weken') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setDate(date.getDate() + 14);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === '3-weken') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setDate(date.getDate() + 21);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === '2-maanden') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 2);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === '3-maanden') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 3);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === '6-maanden') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 6);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'].includes(pattern)) {
+            // Specific weekdays
+            const weekdays = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+            const targetDay = weekdays.indexOf(pattern);
+            const currentDay = date.getDay();
+            let daysToAdd = targetDay - currentDay;
+            
+            if (daysToAdd <= 0) {
+                daysToAdd += 7;
+            }
+            
+            const nextDateObj = new Date(date);
+            nextDateObj.setDate(date.getDate() + daysToAdd);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'eerste-dag-maand') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 1);
+            nextDateObj.setDate(1);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'laatste-dag-maand') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 2);
+            nextDateObj.setDate(0); // Last day of previous month
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'eerste-werkdag-maand') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 1);
+            nextDateObj.setDate(1);
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() + 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'laatste-werkdag-maand') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setMonth(date.getMonth() + 2);
+            nextDateObj.setDate(0); // Last day of next month
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() - 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'eerste-dag-jaar') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDateObj.setMonth(0); // January
+            nextDateObj.setDate(1);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'laatste-dag-jaar') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDateObj.setMonth(11); // December
+            nextDateObj.setDate(31);
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'eerste-werkdag-jaar') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDateObj.setMonth(0); // January
+            nextDateObj.setDate(1);
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() + 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern === 'laatste-werkdag-jaar') {
+            const nextDateObj = new Date(date);
+            nextDateObj.setFullYear(date.getFullYear() + 1);
+            nextDateObj.setMonth(11); // December
+            nextDateObj.setDate(31);
+            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                nextDateObj.setDate(nextDateObj.getDate() - 1);
+            }
+            nextDate = nextDateObj.toISOString().split('T')[0];
+        } else if (pattern.startsWith('eerste-') && pattern.endsWith('-maand')) {
+            // Handle eerste-weekdag-maand patterns
+            const weekdayName = pattern.replace('eerste-', '').replace('-maand', '');
+            const weekdays = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+            const targetWeekday = weekdays.indexOf(weekdayName);
+            
+            if (targetWeekday !== -1) {
+                const nextDateObj = new Date(date);
+                nextDateObj.setMonth(date.getMonth() + 1);
+                nextDateObj.setDate(1);
+                
+                // Find the first occurrence of the target weekday in the month
+                while (nextDateObj.getDay() !== targetWeekday) {
+                    nextDateObj.setDate(nextDateObj.getDate() + 1);
+                }
+                
+                nextDate = nextDateObj.toISOString().split('T')[0];
+            }
+        } else if (pattern.startsWith('laatste-') && pattern.endsWith('-maand')) {
+            // Handle laatste-weekdag-maand patterns
+            const weekdayName = pattern.replace('laatste-', '').replace('-maand', '');
+            const weekdays = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+            const targetWeekday = weekdays.indexOf(weekdayName);
+            
+            if (targetWeekday !== -1) {
+                const nextDateObj = new Date(date);
+                nextDateObj.setMonth(date.getMonth() + 2);
+                nextDateObj.setDate(0); // Last day of the next month
+                
+                // Go backwards to find the last occurrence of the target weekday
+                while (nextDateObj.getDay() !== targetWeekday) {
+                    nextDateObj.setDate(nextDateObj.getDate() - 1);
+                }
+                
+                nextDate = nextDateObj.toISOString().split('T')[0];
+            }
+        } else if (pattern.startsWith('daily-')) {
             // Pattern: daily-interval (e.g., daily-3 = every 3 days)
             const parts = pattern.split('-');
             if (parts.length === 2) {
