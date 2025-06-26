@@ -5442,4 +5442,4 @@ app.listen(PORT, () => {
             console.error('⚠️ Database initialization failed:', error.message);
         }
     }, 1000);
-});
+});// Force deploy Thu Jun 26 11:21:42 CEST 2025
