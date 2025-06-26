@@ -134,6 +134,31 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.8.5 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-number">v0.8.5</span>
+                <span class="version-date">26 juni 2025</span>
+                <span class="version-badge badge-latest">Nieuwste</span>
+            </div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-icon">🔍</span>
+                    <div class="change-content">
+                        <div class="change-title">ROOT CAUSE GEVONDEN: Herhalende taken verdwijnen bij updates</div>
+                        <div class="change-description">Probleem geïdentificeerd: updateTask() functie heeft bug in fallback herhaling handling. ForEach return statement breekt loop, veroorzaakt parameter mismatch. Herhalinggegevens verdwijnen alleen bij PUT /api/taak/:id, niet bij POST /api/lijst/. Forensic logging toont alle update attempts falen stilletjes.</div>
+                    </div>
+                </li>
+                <li class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">PARTIAL FIX: Database updateTask fallback logic</div>
+                        <div class="change-description">Fixed forEach return bug in fallback query. Herhalingvelden worden nu correct geskipt zonder parameter mismatch. Echter, root cause blijft: waarom valt updateTask terug naar fallback als database wel herhalingkolommen heeft?</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
         <!-- Version 0.8.4 -->
         <div class="version-block">
             <div class="version-header">

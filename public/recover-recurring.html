@@ -84,6 +84,20 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .task-item.selected {
+            border-color: var(--macos-blue);
+            background: rgba(0, 122, 255, 0.05);
+        }
+        
+        .task-checkbox {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
         
         .task-info h3 {
@@ -139,6 +153,36 @@
             margin-bottom: 20px;
             padding: 15px 30px;
             font-size: 15px;
+        }
+        
+        .btn-recover-selected {
+            background: var(--macos-blue);
+            margin-bottom: 20px;
+            margin-right: 15px;
+            padding: 15px 30px;
+            font-size: 15px;
+        }
+        
+        .btn-recover-selected:hover {
+            background: var(--macos-blue-hover);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+        
+        .btn-recover-selected:disabled {
+            background: var(--macos-gray-3);
+            cursor: not-allowed;
+        }
+        
+        .selection-controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .selection-info {
+            color: var(--macos-text-secondary);
+            font-size: 14px;
         }
         
         .btn-recover-all:hover {
@@ -226,9 +270,19 @@
             
             <div id="messageArea"></div>
             
-            <button class="btn-recover btn-recover-all" onclick="recoverAllTasks()">
-                🚀 Herstel Alle Verdwenen Taken
-            </button>
+            <div class="selection-controls">
+                <button class="btn-recover btn-recover-selected" onclick="recoverSelectedTasks()" id="recoverSelectedBtn" disabled>
+                    ✅ Herstel Geselecteerde (<span id="selectedCount">0</span>)
+                </button>
+                <button class="btn-recover btn-recover-all" onclick="recoverAllTasks()">
+                    🚀 Herstel Alle Verdwenen Taken
+                </button>
+                <span class="selection-info">
+                    <a href="#" onclick="selectAllTasks()">Alles selecteren</a> | 
+                    <a href="#" onclick="selectNoneTasks()">Niets selecteren</a> | 
+                    <a href="#" onclick="selectNonTestTasks()">Geen test-taken</a>
+                </span>
+            </div>
             
             <div class="task-list">
                 <h3>Verdwenen Herhalende Taken</h3>
@@ -273,6 +327,7 @@
                 const taskElement = document.createElement('div');
                 taskElement.className = 'task-item';
                 taskElement.innerHTML = `
+                    <input type="checkbox" class="task-checkbox" id="check-${task.id}" onchange="updateSelectionCount()">
                     <div class="task-info">
                         <h3>${escapeHtml(task.tekst)}</h3>
                         <div class="task-meta">
@@ -287,6 +342,16 @@
                         </button>
                     </div>
                 `;
+                
+                // Add click handler to toggle selection
+                taskElement.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox' && e.target.tagName !== 'BUTTON') {
+                        const checkbox = taskElement.querySelector('.task-checkbox');
+                        checkbox.checked = !checkbox.checked;
+                        updateSelectionCount();
+                        updateTaskItemStyle(taskElement, checkbox.checked);
+                    }
+                });
                 failedTasksList.appendChild(taskElement);
             });
         }
@@ -317,6 +382,42 @@
             }
         }
         
+        async function recoverSelectedTasks() {
+            const selectedTaskIds = getSelectedTaskIds();
+            
+            if (selectedTaskIds.length === 0) {
+                showMessage('Selecteer eerst taken om te herstellen', 'error');
+                return;
+            }
+            
+            if (!confirm(`Weet je zeker dat je ${selectedTaskIds.length} geselecteerde taken wilt herstellen?`)) {
+                return;
+            }
+            
+            showMessage('Bezig met herstellen van geselecteerde taken...', 'info');
+            
+            try {
+                const response = await fetch('/api/debug/recover-recurring-tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskIds: selectedTaskIds })
+                });
+                
+                if (!response.ok) throw new Error('Recovery failed');
+                
+                const result = await response.json();
+                showMessage(
+                    `✅ ${result.recovered} taken hersteld, ${result.failed} mislukt`, 
+                    result.failed > 0 ? 'warning' : 'success'
+                );
+                
+                // Reload analysis
+                setTimeout(() => loadAnalysis(), 2000);
+            } catch (error) {
+                showMessage('❌ Herstel mislukt', 'error');
+            }
+        }
+
         async function recoverAllTasks() {
             const taskIds = analysisData.failedRecreations.map(item => item.completedTask.id);
             
@@ -351,6 +452,57 @@
             } catch (error) {
                 showMessage('❌ Herstel mislukt', 'error');
             }
+        }
+        
+        function getSelectedTaskIds() {
+            const checkboxes = document.querySelectorAll('.task-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.id.replace('check-', ''));
+        }
+        
+        function updateSelectionCount() {
+            const selectedCount = getSelectedTaskIds().length;
+            document.getElementById('selectedCount').textContent = selectedCount;
+            document.getElementById('recoverSelectedBtn').disabled = selectedCount === 0;
+            
+            // Update visual styling for selected items
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                const taskItem = checkbox.closest('.task-item');
+                updateTaskItemStyle(taskItem, checkbox.checked);
+            });
+        }
+        
+        function updateTaskItemStyle(taskItem, selected) {
+            if (selected) {
+                taskItem.classList.add('selected');
+            } else {
+                taskItem.classList.remove('selected');
+            }
+        }
+        
+        function selectAllTasks() {
+            document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = true);
+            updateSelectionCount();
+        }
+        
+        function selectNoneTasks() {
+            document.querySelectorAll('.task-checkbox').forEach(cb => cb.checked = false);
+            updateSelectionCount();
+        }
+        
+        function selectNonTestTasks() {
+            document.querySelectorAll('.task-checkbox').forEach(cb => {
+                const taskItem = cb.closest('.task-item');
+                const taskText = taskItem.querySelector('h3').textContent.toLowerCase();
+                
+                // Don't select tasks with test-related keywords
+                const isTestTask = taskText.includes('test') || 
+                                  taskText.includes('debug') || 
+                                  taskText.includes('temp') ||
+                                  taskText.includes('example');
+                
+                cb.checked = !isTestTask;
+            });
+            updateSelectionCount();
         }
         
         function showMessage(message, type) {
