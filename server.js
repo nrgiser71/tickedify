@@ -3142,13 +3142,30 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'laatste-werkdag-jaar') {
             const nextDateObj = new Date(date);
-            nextDateObj.setFullYear(date.getFullYear() + 1);
-            nextDateObj.setMonth(11); // December
-            nextDateObj.setDate(31);
-            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
-                nextDateObj.setDate(nextDateObj.getDate() - 1);
+            const currentMonth = date.getMonth() + 1; // Convert to 1-based
+            const currentDay = date.getDate();
+            
+            // Find last workday of this year first
+            const thisYearLastWorkday = new Date(date.getFullYear(), 11, 31); // Dec 31 this year
+            while (thisYearLastWorkday.getDay() === 0 || thisYearLastWorkday.getDay() === 6) {
+                thisYearLastWorkday.setDate(thisYearLastWorkday.getDate() - 1);
             }
-            nextDate = nextDateObj.toISOString().split('T')[0];
+            
+            // Check if this year's last workday hasn't passed yet
+            const lastWorkdayThisYear = thisYearLastWorkday.getDate();
+            if (currentMonth < 12 || (currentMonth === 12 && currentDay < lastWorkdayThisYear)) {
+                // Use this year's last workday
+                nextDate = thisYearLastWorkday.toISOString().split('T')[0];
+            } else {
+                // Use next year's last workday
+                nextDateObj.setFullYear(date.getFullYear() + 1);
+                nextDateObj.setMonth(11); // December
+                nextDateObj.setDate(31);
+                while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                    nextDateObj.setDate(nextDateObj.getDate() - 1);
+                }
+                nextDate = nextDateObj.toISOString().split('T')[0];
+            }
         } else if (pattern.startsWith('eerste-') && pattern.endsWith('-maand')) {
             // Handle eerste-weekdag-maand patterns
             const weekdayName = pattern.replace('eerste-', '').replace('-maand', '');
@@ -3261,25 +3278,58 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 
                 if (!isNaN(interval) && interval > 0) {
                     const nextDateObj = new Date(date);
-                    nextDateObj.setFullYear(date.getFullYear() + interval);
                     
                     if (specialType === 'first-workday') {
-                        // First workday of the year
+                        // First workday of the year - always next year for interval 1
+                        nextDateObj.setFullYear(date.getFullYear() + interval);
                         nextDateObj.setMonth(0); // January
                         nextDateObj.setDate(1);
                         while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                             nextDateObj.setDate(nextDateObj.getDate() + 1);
                         }
                     } else if (specialType === 'last-workday') {
-                        // Last workday of the year
-                        nextDateObj.setMonth(11); // December
-                        nextDateObj.setDate(31);
-                        while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
-                            nextDateObj.setDate(nextDateObj.getDate() - 1);
+                        // Last workday of the year - check current year first for interval 1
+                        const currentMonth = date.getMonth() + 1; // Convert to 1-based
+                        const currentDay = date.getDate();
+                        
+                        if (interval === 1) {
+                            // Find last workday of this year first
+                            const thisYearLastWorkday = new Date(date.getFullYear(), 11, 31); // Dec 31 this year
+                            while (thisYearLastWorkday.getDay() === 0 || thisYearLastWorkday.getDay() === 6) {
+                                thisYearLastWorkday.setDate(thisYearLastWorkday.getDate() - 1);
+                            }
+                            
+                            // Check if this year's last workday hasn't passed yet
+                            const lastWorkdayThisYear = thisYearLastWorkday.getDate();
+                            if (currentMonth < 12 || (currentMonth === 12 && currentDay < lastWorkdayThisYear)) {
+                                // Use this year's last workday
+                                nextDate = thisYearLastWorkday.toISOString().split('T')[0];
+                            } else {
+                                // Use next year's last workday
+                                nextDateObj.setFullYear(date.getFullYear() + interval);
+                                nextDateObj.setMonth(11); // December
+                                nextDateObj.setDate(31);
+                                while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                                    nextDateObj.setDate(nextDateObj.getDate() - 1);
+                                }
+                                nextDate = nextDateObj.toISOString().split('T')[0];
+                            }
+                        } else {
+                            // For intervals > 1, always use future years
+                            nextDateObj.setFullYear(date.getFullYear() + interval);
+                            nextDateObj.setMonth(11); // December
+                            nextDateObj.setDate(31);
+                            while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
+                                nextDateObj.setDate(nextDateObj.getDate() - 1);
+                            }
+                            nextDate = nextDateObj.toISOString().split('T')[0];
                         }
                     }
                     
-                    nextDate = nextDateObj.toISOString().split('T')[0];
+                    // Set nextDate if not already set (for first-workday case)
+                    if (!nextDate) {
+                        nextDate = nextDateObj.toISOString().split('T')[0];
+                    }
                 }
             }
         } else if (pattern.startsWith('yearly-')) {
