@@ -2853,6 +2853,55 @@ app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
     });
 });
 
+// Debug endpoint for detailed weekly calculation
+app.get('/api/debug/weekly-calc/:pattern/:baseDate', (req, res) => {
+    const { pattern, baseDate } = req.params;
+    const date = new Date(baseDate);
+    
+    if (pattern.startsWith('weekly-')) {
+        const parts = pattern.split('-');
+        const interval = parseInt(parts[1]);
+        const targetDay = parseInt(parts[2]);
+        const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+        const currentDay = date.getDay();
+        let daysToAdd = jsTargetDay - currentDay;
+        
+        const originalDaysToAdd = daysToAdd;
+        if (daysToAdd <= 0) {
+            daysToAdd += 7;
+        }
+        
+        const nextOccurrence = new Date(date);
+        nextOccurrence.setDate(date.getDate() + daysToAdd);
+        
+        const beforeInterval = nextOccurrence.toISOString().split('T')[0];
+        
+        // Add interval weeks
+        if (interval > 1) {
+            nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
+        }
+        
+        const result = nextOccurrence.toISOString().split('T')[0];
+        
+        res.json({
+            pattern,
+            baseDate,
+            baseDateObj: date.toDateString(),
+            baseDayOfWeek: currentDay,
+            targetDay,
+            jsTargetDay,
+            originalDaysToAdd,
+            adjustedDaysToAdd: daysToAdd,
+            beforeInterval,
+            interval,
+            extraWeeks: interval > 1 ? (interval - 1) : 0,
+            finalResult: result
+        });
+    } else {
+        res.json({ error: 'Not a weekly pattern' });
+    }
+});
+
 // GET version of test-recurring for easier testing (date calculation only)
 app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
     try {
@@ -3093,7 +3142,7 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     const nextOccurrence = new Date(date);
                     nextOccurrence.setDate(date.getDate() + daysToAdd);
                     
-                    // Add additional weeks based on interval
+                    // Add additional weeks based on interval (only if interval > 1)
                     if (interval > 1) {
                         nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
                     }
