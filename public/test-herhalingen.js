@@ -101,7 +101,7 @@ class HerhalingenTestRunner {
                 { description: 'Elke 3 maanden', pattern: '3-maanden', baseDate: '2025-03-31', expected: '2025-06-30', edgeCase: 'Kwartaal einde' },
                 { description: 'Elke 6 maanden', pattern: '6-maanden', baseDate: '2025-06-30', expected: '2025-12-30' },
                 { description: 'Dag 1 van elke maand', pattern: 'monthly-day-1-1', baseDate: '2025-06-15', expected: '2025-07-01' },
-                { description: 'Dag 15 van elke 2 maanden', pattern: 'monthly-day-15-2', baseDate: '2025-06-01', expected: '2025-08-15' },
+                { description: 'Dag 15 van elke 2 maanden', pattern: 'monthly-day-15-2', baseDate: '2025-06-01', expected: '2025-06-15' },
                 { description: 'Dag 29 van elke maand', pattern: 'monthly-day-29-1', baseDate: '2025-01-15', expected: '2025-01-29', edgeCase: 'Februari 29' },
                 { description: 'Dag 31 van elke maand', pattern: 'monthly-day-31-1', baseDate: '2025-01-15', expected: '2025-01-31' },
                 { description: 'Dag 31 van elke maand (vanaf feb)', pattern: 'monthly-day-31-1', baseDate: '2025-02-15', expected: '2025-03-31', edgeCase: 'Februari skip' },

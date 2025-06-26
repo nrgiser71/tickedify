@@ -3352,10 +3352,18 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                     const targetHasPassed = (month < currentMonth) || 
                                            (month === currentMonth && day <= currentDay);
                     
-                    if (!targetHasPassed && testCurrentYear.getDate() === day) {
-                        // Target date exists in current year and hasn't passed yet
+                    // Special handling for Feb 29 in non-leap years
+                    const isFeb29 = (month === 2 && day === 29);
+                    const isCurrentYearLeap = (currentYear % 4 === 0 && currentYear % 100 !== 0) || (currentYear % 400 === 0);
+                    
+                    if (!targetHasPassed && (testCurrentYear.getDate() === day || (isFeb29 && !isCurrentYearLeap))) {
+                        // Target date exists in current year (or Feb 29 becomes Feb 28 in non-leap year)
                         nextDateObj.setMonth(month - 1); // JavaScript months are 0-based
-                        nextDateObj.setDate(day);
+                        if (isFeb29 && !isCurrentYearLeap) {
+                            nextDateObj.setDate(28); // Feb 29 becomes Feb 28 in non-leap year
+                        } else {
+                            nextDateObj.setDate(day);
+                        }
                     } else {
                         // Move to next interval year
                         nextDateObj.setFullYear(date.getFullYear() + interval);
