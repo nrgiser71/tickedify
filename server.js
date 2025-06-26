@@ -5394,6 +5394,31 @@ app.get('/api/debug/forensic/planning-events', async (req, res) => {
     }
 });
 
+app.get('/api/debug/database-columns', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const result = await pool.query(`
+            SELECT column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns 
+            WHERE table_name = 'taken' 
+            ORDER BY ordinal_position
+        `);
+        
+        res.json({
+            success: true,
+            table: 'taken',
+            columns: result.rows,
+            herhalingColumns: result.rows.filter(col => col.column_name.startsWith('herhaling'))
+        });
+    } catch (error) {
+        console.error('Failed to get database columns:', error);
+        res.status(500).json({ error: 'Failed to retrieve database columns' });
+    }
+});
+
 // 404 handler - MUST be after all routes!
 app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });
