@@ -3001,12 +3001,25 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             const nextDateObj = new Date(date);
             const originalDay = date.getDate();
             const originalMonth = date.getMonth();
-            nextDateObj.setFullYear(date.getFullYear() + 1);
             
-            // Handle leap year issues (e.g., Feb 29 in non-leap year)
-            if (nextDateObj.getDate() !== originalDay && originalMonth === 1 && originalDay === 29) {
-                // Feb 29 in non-leap year becomes Feb 28
-                nextDateObj.setDate(28);
+            // Handle leap year issues BEFORE setting the year
+            if (originalMonth === 1 && originalDay === 29) {
+                // Feb 29 case - check if next year is leap year
+                const nextYear = date.getFullYear() + 1;
+                const isNextYearLeap = (nextYear % 4 === 0 && nextYear % 100 !== 0) || (nextYear % 400 === 0);
+                
+                if (!isNextYearLeap) {
+                    // Next year is not leap year, use Feb 28
+                    nextDateObj.setFullYear(nextYear);
+                    nextDateObj.setMonth(1); // February
+                    nextDateObj.setDate(28);
+                } else {
+                    // Next year is leap year, use Feb 29
+                    nextDateObj.setFullYear(nextYear);
+                }
+            } else {
+                // Normal case - just add one year
+                nextDateObj.setFullYear(date.getFullYear() + 1);
             }
             
             nextDate = nextDateObj.toISOString().split('T')[0];
@@ -3103,9 +3116,20 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'laatste-dag-jaar') {
             const nextDateObj = new Date(date);
-            nextDateObj.setFullYear(date.getFullYear() + 1);
-            nextDateObj.setMonth(11); // December
-            nextDateObj.setDate(31);
+            const currentMonth = date.getMonth() + 1; // Convert to 1-based
+            const currentDay = date.getDate();
+            
+            // Check if December 31 hasn't passed yet this year
+            if (currentMonth < 12 || (currentMonth === 12 && currentDay < 31)) {
+                // Use current year
+                nextDateObj.setMonth(11); // December
+                nextDateObj.setDate(31);
+            } else {
+                // Use next year
+                nextDateObj.setFullYear(date.getFullYear() + 1);
+                nextDateObj.setMonth(11); // December
+                nextDateObj.setDate(31);
+            }
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'eerste-werkdag-jaar') {
             const nextDateObj = new Date(date);
@@ -3268,13 +3292,30 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 if (!isNaN(day) && !isNaN(month) && !isNaN(interval) && 
                     day >= 1 && day <= 31 && month >= 1 && month <= 12) {
                     const nextDateObj = new Date(date);
-                    nextDateObj.setFullYear(date.getFullYear() + interval);
-                    nextDateObj.setMonth(month - 1); // JavaScript months are 0-based
-                    nextDateObj.setDate(day);
                     
-                    // Handle leap year issues
-                    if (nextDateObj.getDate() !== day) {
-                        nextDateObj.setDate(0); // Last day of previous month
+                    // Check if the target date exists in the current year and hasn't passed yet
+                    const currentYear = date.getFullYear();
+                    const currentMonth = date.getMonth() + 1; // Convert to 1-based
+                    const currentDay = date.getDate();
+                    
+                    const testCurrentYear = new Date(currentYear, month - 1, day);
+                    const targetHasPassed = (month < currentMonth) || 
+                                           (month === currentMonth && day <= currentDay);
+                    
+                    if (!targetHasPassed && testCurrentYear.getDate() === day) {
+                        // Target date exists in current year and hasn't passed yet
+                        nextDateObj.setMonth(month - 1); // JavaScript months are 0-based
+                        nextDateObj.setDate(day);
+                    } else {
+                        // Move to next interval year
+                        nextDateObj.setFullYear(date.getFullYear() + interval);
+                        nextDateObj.setMonth(month - 1); // JavaScript months are 0-based
+                        nextDateObj.setDate(day);
+                        
+                        // Handle leap year issues
+                        if (nextDateObj.getDate() !== day) {
+                            nextDateObj.setDate(0); // Last day of previous month
+                        }
                     }
                     
                     nextDate = nextDateObj.toISOString().split('T')[0];
