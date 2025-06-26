@@ -3173,14 +3173,11 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 }
             }
         } else if (pattern.startsWith('weekly-')) {
-            console.log('🐛 ENTERING WEEKLY SECTION');
             // Pattern: weekly-interval-day (e.g., weekly-1-4 = every week on Thursday)
             const parts = pattern.split('-');
-            console.log('🐛 PARTS:', parts);
             if (parts.length === 3) {
                 const interval = parseInt(parts[1]);
                 const targetDay = parseInt(parts[2]);
-                console.log('🐛 PARSED:', { interval, targetDay });
                 
                 // Normal logic
                 const jsTargetDay = targetDay === 7 ? 0 : targetDay;
@@ -3200,7 +3197,6 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                 }
                 
                 nextDate = nextOccurrence.toISOString().split('T')[0];
-                console.log('🐛 WEEKLY RESULT:', nextDate);
             }
         } else if (pattern.startsWith('monthly-day-')) {
             // Pattern: monthly-day-daynum-interval (e.g., monthly-day-15-2 = day 15 every 2 months)
@@ -3224,38 +3220,31 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
         } else if (pattern.startsWith('yearly-special-')) {
             // Pattern: yearly-special-type-interval (e.g., yearly-special-first-workday-1)
             const parts = pattern.split('-');
-            console.log('🐛 Yearly special parts:', parts);
             if (parts.length >= 4) {
                 const specialType = parts.slice(2, -1).join('-'); // Everything except 'yearly', 'special' and interval
                 const interval = parseInt(parts[parts.length - 1]);
-                console.log('🐛 Special type:', specialType, 'interval:', interval);
                 
                 if (!isNaN(interval) && interval > 0) {
                     const nextDateObj = new Date(date);
                     nextDateObj.setFullYear(date.getFullYear() + interval);
                     
                     if (specialType === 'first-workday') {
-                        console.log('🐛 Processing first-workday');
                         // First workday of the year
                         nextDateObj.setMonth(0); // January
                         nextDateObj.setDate(1);
                         while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                             nextDateObj.setDate(nextDateObj.getDate() + 1);
                         }
-                        console.log('🐛 First workday result:', nextDateObj.toISOString().split('T')[0]);
                     } else if (specialType === 'last-workday') {
-                        console.log('🐛 Processing last-workday');
                         // Last workday of the year
                         nextDateObj.setMonth(11); // December
                         nextDateObj.setDate(31);
                         while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                             nextDateObj.setDate(nextDateObj.getDate() - 1);
                         }
-                        console.log('🐛 Last workday result:', nextDateObj.toISOString().split('T')[0]);
                     }
                     
                     nextDate = nextDateObj.toISOString().split('T')[0];
-                    console.log('🐛 Final nextDate:', nextDate);
                 }
             }
         } else if (pattern.startsWith('yearly-')) {
