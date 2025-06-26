@@ -3122,42 +3122,28 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             }
         } else if (pattern.startsWith('weekly-')) {
             // Pattern: weekly-interval-day (e.g., weekly-1-4 = every week on Thursday)
+            // Use the EXACT same logic as the working debug endpoint
             const parts = pattern.split('-');
             if (parts.length === 3) {
                 const interval = parseInt(parts[1]);
-                const targetDay = parseInt(parts[2]); // 1=Monday, 2=Tuesday, ..., 7=Sunday
+                const targetDay = parseInt(parts[2]);
+                const jsTargetDay = targetDay === 7 ? 0 : targetDay;
+                const currentDay = date.getDay();
+                let daysToAdd = jsTargetDay - currentDay;
                 
-                console.log('🐛 WEEKLY DEBUG:', { pattern, interval, targetDay, baseDate, dayOfWeek: date.getDay() });
-                
-                if (!isNaN(interval) && !isNaN(targetDay) && targetDay >= 1 && targetDay <= 7) {
-                    // Convert our day numbering (1-7) to JavaScript day numbering (0-6, Sunday=0)
-                    const jsTargetDay = targetDay === 7 ? 0 : targetDay;
-                    
-                    // Find next occurrence of target day
-                    const currentDay = date.getDay();
-                    let daysToAdd = jsTargetDay - currentDay;
-                    
-                    console.log('🐛 CALC:', { jsTargetDay, currentDay, daysToAdd });
-                    
-                    if (daysToAdd <= 0) {
-                        daysToAdd += 7;
-                        console.log('🐛 ADJUSTED daysToAdd:', daysToAdd);
-                    }
-                    
-                    const nextOccurrence = new Date(date);
-                    nextOccurrence.setDate(date.getDate() + daysToAdd);
-                    
-                    console.log('🐛 BEFORE INTERVAL:', nextOccurrence.toISOString().split('T')[0]);
-                    
-                    // Add additional weeks based on interval (only if interval > 1)
-                    if (interval > 1) {
-                        nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
-                        console.log('🐛 AFTER INTERVAL:', nextOccurrence.toISOString().split('T')[0]);
-                    }
-                    
-                    nextDate = nextOccurrence.toISOString().split('T')[0];
-                    console.log('🐛 FINAL RESULT:', nextDate);
+                if (daysToAdd <= 0) {
+                    daysToAdd += 7;
                 }
+                
+                const nextOccurrence = new Date(date);
+                nextOccurrence.setDate(date.getDate() + daysToAdd);
+                
+                // Add interval weeks
+                if (interval > 1) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + (interval - 1) * 7);
+                }
+                
+                nextDate = nextOccurrence.toISOString().split('T')[0];
             }
         } else if (pattern.startsWith('monthly-day-')) {
             // Pattern: monthly-day-daynum-interval (e.g., monthly-day-15-2 = day 15 every 2 months)
