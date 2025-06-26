@@ -2853,6 +2853,58 @@ app.get('/api/debug/parse-pattern/:pattern', (req, res) => {
     });
 });
 
+// Test if weekly-1-4 works correctly
+app.get('/api/debug/test-weekly-simple', (req, res) => {
+    const pattern = 'weekly-1-4';
+    const baseDate = '2025-06-17';
+    const date = new Date(baseDate);
+    
+    // Manual calculation step by step
+    const steps = [];
+    steps.push(`Input: ${pattern} + ${baseDate}`);
+    steps.push(`Base date object: ${date.toDateString()}`);
+    steps.push(`Base day of week: ${date.getDay()} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()]})`);
+    
+    const parts = pattern.split('-');
+    const interval = parseInt(parts[1]); // 1
+    const targetDay = parseInt(parts[2]); // 4 (Thursday)
+    steps.push(`Parsed: interval=${interval}, targetDay=${targetDay}`);
+    
+    const jsTargetDay = targetDay === 7 ? 0 : targetDay; // 4
+    steps.push(`JS target day: ${jsTargetDay} (${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][jsTargetDay]})`);
+    
+    const currentDay = date.getDay(); // 2 (Tuesday)
+    let daysToAdd = jsTargetDay - currentDay; // 4-2 = 2
+    steps.push(`Days to add initially: ${daysToAdd}`);
+    
+    if (daysToAdd <= 0) {
+        daysToAdd += 7;
+        steps.push(`Adjusted days to add: ${daysToAdd}`);
+    }
+    
+    const nextOccurrence = new Date(date);
+    nextOccurrence.setDate(date.getDate() + daysToAdd);
+    steps.push(`After adding days: ${nextOccurrence.toDateString()}`);
+    
+    if (interval > 1) {
+        const extraWeeks = (interval - 1) * 7;
+        nextOccurrence.setDate(nextOccurrence.getDate() + extraWeeks);
+        steps.push(`After adding ${extraWeeks} extra days: ${nextOccurrence.toDateString()}`);
+    }
+    
+    const result = nextOccurrence.toISOString().split('T')[0];
+    steps.push(`Final result: ${result}`);
+    
+    res.json({
+        pattern,
+        baseDate,
+        expected: '2025-06-19',
+        result,
+        correct: result === '2025-06-19',
+        steps
+    });
+});
+
 // Debug endpoint for detailed weekly calculation
 app.get('/api/debug/weekly-calc/:pattern/:baseDate', (req, res) => {
     const { pattern, baseDate } = req.params;
