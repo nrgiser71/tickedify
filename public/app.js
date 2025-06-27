@@ -3291,8 +3291,10 @@ class Taakbeheer {
                     toast.error('Fout bij plannen van taak. Probeer opnieuw.');
                     return;
                 }
-            } else {
-                // Voor niet-inbox taken (zoals acties bewerken), gewoon popup sluiten
+            }
+            
+            // Voor acties lijst editing: sluit popup
+            if (this.huidigeLijst === 'acties') {
                 this.sluitPopup();
             }
         }, {
