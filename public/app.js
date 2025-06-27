@@ -7904,7 +7904,12 @@ class QuickAddModal {
     show() {
         this.modal.style.display = 'flex';
         this.input.value = '';
-        this.input.focus();
+        
+        // Use setTimeout to ensure modal is fully rendered before focusing
+        setTimeout(() => {
+            this.input.focus();
+            this.input.select(); // Also select any existing text
+        }, 10);
         
         // Add to body to handle keyboard events
         document.body.appendChild(this.modal);
