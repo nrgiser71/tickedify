@@ -932,18 +932,18 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     transition: all 0.2s ease;
 }
 
-/* General button styling - exclude table buttons */
-button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn) {
-    background: var(--macos-blue);
+/* General button styling - exclude table buttons and specific buttons */
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.btn-logout):not(.btn-copy) {
+    background: var(--soft-blue);
     color: white;
     border: none;
     font-weight: 500;
     box-shadow: var(--macos-shadow-light);
 }
 
-/* General button hover - exclude table buttons */
-button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):hover {
-    background: var(--macos-blue-hover);
+/* General button hover - exclude table buttons and specific buttons */
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.btn-logout):not(.btn-copy):hover {
+    background: var(--soft-blue-hover);
     transform: translateY(-1px);
     box-shadow: var(--macos-shadow-medium);
 }
