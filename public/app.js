@@ -7938,40 +7938,32 @@ class QuickAddModal {
             
             console.log('Adding task via SAFE method:', taakNaam);
             
-            // SAFE APPROACH: Only use when already in inbox mode
-            if (app && app.huidigeLijst === 'inbox') {
-                // Get current inbox first to make sure we don't overwrite
-                const currentInbox = [...app.taken]; // Copy current tasks
-                
-                // Create new task
-                const nieuweTaak = {
-                    id: app.generateId(),
-                    tekst: taakNaam,
-                    aangemaakt: new Date().toISOString()
-                };
-                
-                // Add to current list (no loading/switching)
-                app.taken.push(nieuweTaak);
-                
-                // Save and update UI
-                await app.slaLijstOp();
-                app.renderTaken();
-                await app.laadTellingen();
-                
+            // UNIVERSAL SAFE APPROACH: Direct API call to inbox
+            const response = await fetch('/api/lijst/inbox', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tekst: taakNaam
+                })
+            });
+            
+            if (response.ok) {
                 toast.success('Taak toegevoegd aan inbox');
                 this.hide();
-            } else {
-                // Fallback: Use normal input method
-                const normalInput = document.getElementById('taakInput');
-                if (normalInput) {
-                    normalInput.value = taakNaam;
-                    normalInput.focus();
-                    toast.info('Ga naar Inbox en druk Enter om taak toe te voegen');
-                    this.hide();
-                } else {
-                    toast.warning('Ga eerst naar Inbox om taken toe te voegen');
-                    this.hide();
+                
+                // Update counts and refresh if in inbox
+                if (app) {
+                    await app.laadTellingen();
+                    if (app.huidigeLijst === 'inbox') {
+                        await app.laadHuidigeLijst();
+                    }
                 }
+            } else {
+                const errorText = await response.text();
+                console.error('API Error:', errorText);
+                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout'));
             }
         } catch (error) {
             console.error('Error adding task:', error);
