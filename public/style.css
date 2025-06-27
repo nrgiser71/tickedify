@@ -1042,7 +1042,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 
 /* Acties knop styling */
 .acties-btn {
-    background: var(--macos-blue) !important;
+    background: var(--soft-blue) !important;
     color: white !important;
     font-size: 12px;
     padding: 4px 8px;
@@ -1053,7 +1053,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 }
 
 .acties-btn:hover {
-    background: var(--macos-blue-hover) !important;
+    background: var(--soft-blue-hover) !important;
     transform: translateY(-1px);
 }
 
@@ -4349,7 +4349,7 @@ button:focus {
 
 .optimalisatie-item .actie-knop {
     padding: 6px 12px;
-    background: var(--macos-blue);
+    background: var(--soft-blue);
     color: white;
     border: none;
     border-radius: var(--macos-radius-button);
@@ -4360,7 +4360,7 @@ button:focus {
 }
 
 .optimalisatie-item .actie-knop:hover {
-    background: var(--macos-blue-hover);
+    background: var(--soft-blue-hover);
 }
 
 .voortgang-sectie {
