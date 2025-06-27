@@ -8039,12 +8039,14 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Check for F9 key first - works everywhere including input fields!
+            // F9 DISABLED FOR DATA SAFETY
             if (e.key === 'F9') {
-                // F9 works the same on all platforms
                 e.preventDefault();
-                console.log('F9 detected - triggering quick add modal');
-                this.quickAddModal.show();
+                if (window.toast) {
+                    toast.error('Quick Add permanent uitgeschakeld vanwege data safety');
+                } else {
+                    alert('Quick Add permanent uitgeschakeld vanwege data safety');
+                }
                 return;
             }
             
