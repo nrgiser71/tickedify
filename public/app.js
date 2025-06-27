@@ -7866,5 +7866,214 @@ window.showCSSDebugger = function() {
     }
 };
 
+// Quick Add Modal System
+class QuickAddModal {
+    constructor() {
+        this.modal = document.getElementById('quickAddModal');
+        this.input = document.getElementById('quickAddInput');
+        this.cancelBtn = document.getElementById('quickAddCancel');
+        this.okBtn = document.getElementById('quickAddOk');
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        // Button events
+        this.cancelBtn.addEventListener('click', () => this.hide());
+        this.okBtn.addEventListener('click', () => this.handleSubmit());
+        
+        // Keyboard events
+        this.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.handleSubmit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                this.hide();
+            }
+        });
+        
+        // Click outside to close
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.hide();
+            }
+        });
+    }
+    
+    show() {
+        this.modal.style.display = 'flex';
+        this.input.value = '';
+        this.input.focus();
+        
+        // Add to body to handle keyboard events
+        document.body.appendChild(this.modal);
+    }
+    
+    hide() {
+        this.modal.style.display = 'none';
+        this.input.value = '';
+    }
+    
+    async handleSubmit() {
+        const taakNaam = this.input.value.trim();
+        
+        if (!taakNaam) {
+            toast.warning('Voer een taaknaam in');
+            this.input.focus();
+            return;
+        }
+        
+        try {
+            // Add task to inbox using existing method
+            if (app && app.voegTaakToe) {
+                await app.voegTaakToe(taakNaam, 'inbox');
+                toast.success('Taak toegevoegd aan inbox');
+                this.hide();
+            } else {
+                // Fallback: direct API call
+                const response = await fetch('/api/lijst/inbox', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        naam: taakNaam,
+                        project: null,
+                        context: null,
+                        verschijndatum: null,
+                        duur: null,
+                        opmerkingen: null
+                    })
+                });
+                
+                if (response.ok) {
+                    toast.success('Taak toegevoegd aan inbox');
+                    this.hide();
+                    
+                    // Refresh inbox if currently viewing
+                    if (app && app.huidigeLijst === 'inbox') {
+                        app.laadHuidigeLijst();
+                    }
+                } else {
+                    toast.error('Fout bij toevoegen van taak');
+                }
+            }
+        } catch (error) {
+            console.error('Error adding task:', error);
+            toast.error('Fout bij toevoegen van taak');
+        }
+    }
+}
+
+// Keyboard Help Modal System
+class KeyboardHelpModal {
+    constructor() {
+        this.modal = document.getElementById('keyboardHelpModal');
+        this.closeBtn = document.getElementById('keyboardHelpClose');
+        
+        this.setupEventListeners();
+        this.updateShortcutsForOS();
+    }
+    
+    setupEventListeners() {
+        this.closeBtn.addEventListener('click', () => this.hide());
+        
+        // Click outside to close
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.hide();
+            }
+        });
+        
+        // Escape to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.style.display === 'flex') {
+                this.hide();
+            }
+        });
+    }
+    
+    show() {
+        this.modal.style.display = 'flex';
+    }
+    
+    hide() {
+        this.modal.style.display = 'none';
+    }
+    
+    updateShortcutsForOS() {
+        // Detect macOS
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifierKey = isMac ? 'Cmd' : 'Ctrl';
+        
+        // Update all Ctrl shortcuts to show correct modifier
+        const shortcuts = this.modal.querySelectorAll('kbd');
+        shortcuts.forEach(kbd => {
+            if (kbd.textContent.includes('Ctrl')) {
+                kbd.textContent = kbd.textContent.replace('Ctrl', modifierKey);
+            }
+        });
+        
+        // Update footer shortcuts as well
+        const footerShortcuts = document.querySelectorAll('.shortcuts-footer kbd');
+        footerShortcuts.forEach(kbd => {
+            if (kbd.textContent.includes('Ctrl')) {
+                kbd.textContent = kbd.textContent.replace('Ctrl', modifierKey);
+            }
+        });
+    }
+}
+
+// Global Keyboard Shortcuts System
+class KeyboardShortcutManager {
+    constructor() {
+        this.quickAddModal = new QuickAddModal();
+        this.keyboardHelpModal = new KeyboardHelpModal();
+        
+        this.setupGlobalShortcuts();
+    }
+    
+    setupGlobalShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ignore shortcuts when typing in input fields
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                // Only allow Escape to close modals
+                if (e.key === 'Escape') {
+                    this.quickAddModal.hide();
+                    this.keyboardHelpModal.hide();
+                }
+                return;
+            }
+            
+            // Check for Ctrl+Shift+N (or Cmd+Shift+N on Mac)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+                e.preventDefault();
+                this.quickAddModal.show();
+                return;
+            }
+            
+            // Check for '?' key to show help
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                this.keyboardHelpModal.show();
+                return;
+            }
+            
+            // Escape key to close any open modals
+            if (e.key === 'Escape') {
+                this.quickAddModal.hide();
+                this.keyboardHelpModal.hide();
+            }
+        });
+    }
+}
+
+// Initialize keyboard shortcuts system
+let keyboardManager;
+document.addEventListener('DOMContentLoaded', () => {
+    keyboardManager = new KeyboardShortcutManager();
+});
+
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);

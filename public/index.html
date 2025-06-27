@@ -206,6 +206,84 @@
                 </div>
             </main>
         </div>
+        
+        <!-- Keyboard Shortcuts Footer -->
+        <footer class="shortcuts-footer" id="shortcuts-footer">
+            <div class="shortcuts-content">
+                <span class="shortcut-item"><kbd>Ctrl+Shift+N</kbd> Nieuwe taak</span>
+                <span class="shortcut-item"><kbd>?</kbd> Help</span>
+                <span class="shortcut-item"><kbd>ESC</kbd> Sluiten</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Quick Add Modal -->
+    <div id="quickAddModal" class="popup-overlay quick-add-overlay" style="display: none;">
+        <div class="popup-content quick-add-content">
+            <h3>Nieuwe taak toevoegen</h3>
+            <div class="form-groep">
+                <input type="text" id="quickAddInput" placeholder="Taaknaam..." autofocus>
+            </div>
+            <div class="quick-add-actions">
+                <button id="quickAddCancel" class="btn-cancel">Annuleren</button>
+                <button id="quickAddOk" class="btn-primary">Toevoegen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Help Modal -->
+    <div id="keyboardHelpModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content keyboard-help-content">
+            <h3>⌨️ Sneltoetsen</h3>
+            <div class="shortcuts-grid">
+                <div class="shortcuts-category">
+                    <h4>Algemeen</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>Ctrl+Shift+N</kbd></span>
+                            <span class="shortcut-desc">Nieuwe taak toevoegen</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>?</kbd></span>
+                            <span class="shortcut-desc">Deze help tonen</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>ESC</kbd></span>
+                            <span class="shortcut-desc">Modal sluiten</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-category">
+                    <h4>Inbox</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>Enter</kbd></span>
+                            <span class="shortcut-desc">Taak toevoegen</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-category">
+                    <h4>Planning</h4>
+                    <div class="shortcut-list">
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>Tab</kbd></span>
+                            <span class="shortcut-desc">Tussen velden navigeren</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>+</kbd></span>
+                            <span class="shortcut-desc">Nieuw project/context</span>
+                        </div>
+                        <div class="shortcut-row">
+                            <span class="shortcut-keys"><kbd>Enter</kbd></span>
+                            <span class="shortcut-desc">Opslaan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="popup-acties">
+                <button id="keyboardHelpClose" class="btn-primary">Sluiten</button>
+            </div>
+        </div>
     </div>
 
     <!-- Planning Popup -->
