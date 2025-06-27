@@ -4020,8 +4020,8 @@ button:focus {
 }
 
 .btn-login {
-    background: var(--macos-blue);
-    border-color: var(--macos-blue);
+    background: var(--soft-blue);
+    border-color: var(--soft-blue);
     color: white;
 }
 
