@@ -8005,21 +8005,21 @@ class KeyboardHelpModal {
     updateShortcutsForOS() {
         // Detect macOS
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const modifierKey = isMac ? 'Cmd' : 'Ctrl';
+        const shortcutCombo = isMac ? 'Ctrl+Opt+Cmd+N' : 'Ctrl+Win+Alt+N';
         
-        // Update all Ctrl shortcuts to show correct modifier
+        // Update all triple modifier shortcuts in help modal
         const shortcuts = this.modal.querySelectorAll('kbd');
         shortcuts.forEach(kbd => {
-            if (kbd.textContent.includes('Ctrl')) {
-                kbd.textContent = kbd.textContent.replace('Ctrl', modifierKey);
+            if (kbd.textContent.includes('Ctrl+Shift+N')) {
+                kbd.textContent = shortcutCombo;
             }
         });
         
         // Update footer shortcuts as well
         const footerShortcuts = document.querySelectorAll('.shortcuts-footer kbd');
         footerShortcuts.forEach(kbd => {
-            if (kbd.textContent.includes('Ctrl')) {
-                kbd.textContent = kbd.textContent.replace('Ctrl', modifierKey);
+            if (kbd.textContent.includes('Ctrl+Shift+N')) {
+                kbd.textContent = shortcutCombo;
             }
         });
     }
@@ -8046,8 +8046,8 @@ class KeyboardShortcutManager {
                 return;
             }
             
-            // Check for Ctrl+Shift+N (or Cmd+Shift+N on Mac)
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+            // Check for triple modifier + N (Ctrl+Option+Cmd+N on Mac, Ctrl+Windows+Alt+N on Windows)
+            if (e.ctrlKey && e.altKey && e.metaKey && e.key === 'N') {
                 e.preventDefault();
                 this.quickAddModal.show();
                 return;
