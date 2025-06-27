@@ -3463,14 +3463,14 @@ button:focus {
 }
 
 .btn-login {
-    background: var(--macos-blue);
+    background: var(--soft-blue);
     color: white;
-    border-color: var(--macos-blue);
+    border-color: var(--soft-blue);
 }
 
 .btn-login:hover {
-    background: var(--macos-blue-hover);
-    border-color: var(--macos-blue-hover);
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
 }
 
 .user-info {
@@ -3593,14 +3593,14 @@ button:focus {
 }
 
 .auth-modal .popup-acties .actie-btn {
-    background: var(--macos-blue);
-    border: 1px solid var(--macos-blue);
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
     color: white;
 }
 
 .auth-modal .popup-acties .actie-btn:hover {
-    background: var(--macos-blue-hover);
-    border-color: var(--macos-blue-hover);
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
 }
 
 /* ===== WELCOME MESSAGE ===== */
@@ -3988,7 +3988,7 @@ button:focus {
 }
 
 .login-prompt strong {
-    color: var(--macos-blue);
+    color: var(--soft-blue);
 }
 
 /* User section styling */
@@ -4026,8 +4026,8 @@ button:focus {
 }
 
 .btn-login:hover {
-    background: var(--macos-blue-hover);
-    border-color: var(--macos-blue-hover);
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
 }
 
 .user-info {
