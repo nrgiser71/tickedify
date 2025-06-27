@@ -7921,6 +7921,11 @@ class QuickAddModal {
     }
     
     async handleSubmit() {
+        // TEMPORARILY DISABLED - was causing data loss
+        toast.error('Quick Add tijdelijk uitgeschakeld vanwege data safety');
+        this.hide();
+        return;
+        
         const taakNaam = this.input.value.trim();
         
         if (!taakNaam) {
@@ -7938,8 +7943,8 @@ class QuickAddModal {
             
             console.log('Adding task via app method:', taakNaam);
             
-            // Use the same method as the normal task input - manipulate app state directly
-            if (app) {
+            // SAFER APPROACH: Only add if already in inbox, don't switch lists
+            if (app && app.huidigeLijst === 'inbox') {
                 // Create new task object like the normal method does
                 const nieuweTaak = {
                     id: app.generateId(),
@@ -7947,28 +7952,16 @@ class QuickAddModal {
                     aangemaakt: new Date().toISOString()
                 };
                 
-                // Add to taken array (only if we're in inbox mode, otherwise get inbox first)
-                if (app.huidigeLijst === 'inbox') {
-                    app.taken.push(nieuweTaak);
-                } else {
-                    // Load inbox first, add task, then save
-                    await app.laadLijst('inbox');
-                    app.taken.push(nieuweTaak);
-                }
-                
-                // Save using the app's method
+                app.taken.push(nieuweTaak);
                 await app.slaLijstOp();
-                
-                // Update UI
-                if (app.huidigeLijst === 'inbox') {
-                    app.renderTaken();
-                }
+                app.renderTaken();
                 await app.laadTellingen();
                 
                 toast.success('Taak toegevoegd aan inbox');
                 this.hide();
             } else {
-                toast.error('App niet beschikbaar');
+                toast.warning('Ga eerst naar Inbox om taken toe te voegen via Quick Add');
+                this.hide();
             }
         } catch (error) {
             console.error('Error adding task:', error);
