@@ -8041,11 +8041,14 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // F9 - Safe Quick Add (only when in inbox)
+            // F9 EMERGENCY DISABLED - CAUSES DATA LOSS
             if (e.key === 'F9') {
                 e.preventDefault();
-                console.log('F9 detected - safe quick add modal');
-                this.quickAddModal.show();
+                if (window.toast) {
+                    toast.error('🚨 F9 NOODSTOP: Veroorzaakt data verlies! Gebruik normale input.');
+                } else {
+                    alert('🚨 F9 NOODSTOP: Veroorzaakt data verlies!');
+                }
                 return;
             }
             
