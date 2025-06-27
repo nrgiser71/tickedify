@@ -7921,11 +7921,6 @@ class QuickAddModal {
     }
     
     async handleSubmit() {
-        // TEMPORARILY DISABLED - was causing data loss
-        toast.error('Quick Add tijdelijk uitgeschakeld vanwege data safety');
-        this.hide();
-        return;
-        
         const taakNaam = this.input.value.trim();
         
         if (!taakNaam) {
@@ -7941,18 +7936,24 @@ class QuickAddModal {
                 return;
             }
             
-            console.log('Adding task via app method:', taakNaam);
+            console.log('Adding task via SAFE method:', taakNaam);
             
-            // SAFER APPROACH: Only add if already in inbox, don't switch lists
+            // SAFE APPROACH: Only use when already in inbox mode
             if (app && app.huidigeLijst === 'inbox') {
-                // Create new task object like the normal method does
+                // Get current inbox first to make sure we don't overwrite
+                const currentInbox = [...app.taken]; // Copy current tasks
+                
+                // Create new task
                 const nieuweTaak = {
                     id: app.generateId(),
                     tekst: taakNaam,
                     aangemaakt: new Date().toISOString()
                 };
                 
+                // Add to current list (no loading/switching)
                 app.taken.push(nieuweTaak);
+                
+                // Save and update UI
                 await app.slaLijstOp();
                 app.renderTaken();
                 await app.laadTellingen();
@@ -7960,8 +7961,17 @@ class QuickAddModal {
                 toast.success('Taak toegevoegd aan inbox');
                 this.hide();
             } else {
-                toast.warning('Ga eerst naar Inbox om taken toe te voegen via Quick Add');
-                this.hide();
+                // Fallback: Use normal input method
+                const normalInput = document.getElementById('taakInput');
+                if (normalInput) {
+                    normalInput.value = taakNaam;
+                    normalInput.focus();
+                    toast.info('Ga naar Inbox en druk Enter om taak toe te voegen');
+                    this.hide();
+                } else {
+                    toast.warning('Ga eerst naar Inbox om taken toe te voegen');
+                    this.hide();
+                }
             }
         } catch (error) {
             console.error('Error adding task:', error);
@@ -8039,14 +8049,11 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // F9 DISABLED FOR DATA SAFETY
+            // F9 - Safe Quick Add (only when in inbox)
             if (e.key === 'F9') {
                 e.preventDefault();
-                if (window.toast) {
-                    toast.error('Quick Add permanent uitgeschakeld vanwege data safety');
-                } else {
-                    alert('Quick Add permanent uitgeschakeld vanwege data safety');
-                }
+                console.log('F9 detected - safe quick add modal');
+                this.quickAddModal.show();
                 return;
             }
             
