@@ -4283,6 +4283,27 @@ class Taakbeheer {
                 if (taakDatum !== datumFilter) tonen = false;
             }
             
+            // Toekomstige taken filter - check of taak in de toekomst is
+            if (!this.toonToekomstigeTaken && actie.verschijndatum) {
+                const vandaag = new Date().toISOString().split('T')[0];
+                let taakDatum = actie.verschijndatum;
+                
+                // Normaliseer datum voor vergelijking
+                if (actie.verschijndatum instanceof Date) {
+                    taakDatum = actie.verschijndatum.toISOString().split('T')[0];
+                } else if (typeof actie.verschijndatum === 'string') {
+                    const parsed = new Date(actie.verschijndatum);
+                    if (!isNaN(parsed.getTime())) {
+                        taakDatum = parsed.toISOString().split('T')[0];
+                    }
+                }
+                
+                // Verberg toekomstige taken als toggle uit staat
+                if (taakDatum > vandaag) {
+                    tonen = false;
+                }
+            }
+            
             row.style.display = tonen ? '' : 'none';
         });
     }
