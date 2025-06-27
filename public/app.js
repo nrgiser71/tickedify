@@ -7936,20 +7936,42 @@ class QuickAddModal {
                 return;
             }
             
-            console.log('Adding task via SAFE method:', taakNaam);
+            console.log('🔍 DEBUG: Adding task via API:', taakNaam);
+            
+            // Check current user first
+            const userResponse = await fetch('/api/debug/current-user');
+            const userData = await userResponse.json();
+            console.log('🔍 DEBUG: Current user:', userData);
+            
+            // Check inbox before adding
+            const beforeResponse = await fetch('/api/lijst/inbox');
+            const beforeTasks = await beforeResponse.json();
+            console.log('🔍 DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
             
             // UNIVERSAL SAFE APPROACH: Direct API call to inbox
+            const requestBody = { tekst: taakNaam };
+            console.log('🔍 DEBUG: Request body:', requestBody);
+            
             const response = await fetch('/api/lijst/inbox', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    tekst: taakNaam
-                })
+                body: JSON.stringify(requestBody)
             });
             
+            console.log('🔍 DEBUG: Response status:', response.status);
+            console.log('🔍 DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
+            
             if (response.ok) {
+                const responseData = await response.json();
+                console.log('🔍 DEBUG: Response data:', responseData);
+                
+                // Check inbox after adding
+                const afterResponse = await fetch('/api/lijst/inbox');
+                const afterTasks = await afterResponse.json();
+                console.log('🔍 DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
+                
                 toast.success('Taak toegevoegd aan inbox');
                 this.hide();
                 
@@ -7962,7 +7984,12 @@ class QuickAddModal {
                 }
             } else {
                 const errorText = await response.text();
-                console.error('API Error:', errorText);
+                console.error('🚨 DEBUG: API Error details:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorText: errorText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
                 toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout'));
             }
         } catch (error) {
@@ -8041,14 +8068,11 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // F9 EMERGENCY DISABLED - CAUSES DATA LOSS
+            // F9 - Debug mode for test user
             if (e.key === 'F9') {
                 e.preventDefault();
-                if (window.toast) {
-                    toast.error('🚨 F9 NOODSTOP: Veroorzaakt data verlies! Gebruik normale input.');
-                } else {
-                    alert('🚨 F9 NOODSTOP: Veroorzaakt data verlies!');
-                }
+                console.log('F9 detected - debug quick add modal');
+                this.quickAddModal.show();
                 return;
             }
             
