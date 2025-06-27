@@ -8005,7 +8005,7 @@ class KeyboardHelpModal {
     updateShortcutsForOS() {
         // Detect macOS
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const shortcutCombo = isMac ? 'Ctrl+Opt+Cmd+N' : 'Ctrl+Win+Alt+N';
+        const shortcutCombo = isMac ? 'Ctrl+Opt+Cmd+N' : 'Ctrl+Alt+N';
         
         // Update all triple modifier shortcuts in help modal
         const shortcuts = this.modal.querySelectorAll('kbd');
@@ -8036,6 +8036,18 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
+            // Debug logging
+            if (e.key === 'N' && (e.ctrlKey || e.altKey || e.metaKey)) {
+                console.log('Keyboard event:', {
+                    key: e.key,
+                    ctrlKey: e.ctrlKey,
+                    altKey: e.altKey,
+                    metaKey: e.metaKey,
+                    shiftKey: e.shiftKey,
+                    platform: navigator.platform
+                });
+            }
+            
             // Ignore shortcuts when typing in input fields
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 // Only allow Escape to close modals
@@ -8046,9 +8058,24 @@ class KeyboardShortcutManager {
                 return;
             }
             
-            // Check for triple modifier + N (Ctrl+Option+Cmd+N on Mac, Ctrl+Windows+Alt+N on Windows)
-            if (e.ctrlKey && e.altKey && e.metaKey && e.key === 'N') {
+            // Check for different combinations based on OS
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            let shouldTrigger = false;
+            
+            if (e.key === 'N') {
+                if (isMac) {
+                    // Mac: Ctrl+Option+Cmd+N
+                    shouldTrigger = e.ctrlKey && e.altKey && e.metaKey;
+                } else {
+                    // Windows/Linux: Try different combinations since Windows key is tricky
+                    // Option 1: Ctrl+Alt+N (simpler, less chance of conflicts)
+                    shouldTrigger = e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey;
+                }
+            }
+            
+            if (shouldTrigger) {
                 e.preventDefault();
+                console.log('Triggering quick add modal');
                 this.quickAddModal.show();
                 return;
             }
