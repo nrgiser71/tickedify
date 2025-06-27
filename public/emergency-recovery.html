@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Data Recovery - Tickedify</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #ff3b30;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background: #f0f0f0;
+        }
+        .error {
+            background: #fee;
+            color: #c00;
+        }
+        .success {
+            background: #efe;
+            color: #060;
+        }
+        .task-list {
+            margin-top: 20px;
+        }
+        .task-item {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .task-meta {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056cc;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚨 Emergency Data Recovery</h1>
+        
+        <div class="warning">
+            <strong>WAARSCHUWING:</strong> Dit is een noodprocedure om verloren inbox taken te herstellen.
+            Gebruik alleen als geïnstrueerd door support.
+        </div>
+        
+        <div id="status" class="status">
+            Ready to start recovery scan...
+        </div>
+        
+        <div>
+            <button onclick="startRecovery()">Start Recovery Scan</button>
+            <button onclick="checkAllLists()">Check All Lists</button>
+            <button onclick="restoreToInbox()" id="restoreBtn" style="display:none; background: #30d158;">Restore Found Tasks to Inbox</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script>
+        let foundTasks = [];
+        const userId = 'user_1750506689312_16hqhim0k'; // Your specific user ID
+        
+        function updateStatus(message, type = '') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+        }
+        
+        async function startRecovery() {
+            updateStatus('Starting recovery scan...', '');
+            foundTasks = [];
+            
+            try {
+                // First, check current user
+                const userResponse = await fetch('/api/debug/current-user');
+                const userData = await userResponse.json();
+                console.log('Current user:', userData);
+                
+                // Check all possible lists
+                const lists = ['inbox', 'acties', 'projecten', 'opvolgen', 'afgewerkte-taken',
+                              'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 
+                              'uitgesteld-3maandelijks', 'uitgesteld-6maandelijks', 
+                              'uitgesteld-jaarlijks'];
+                
+                let totalFound = 0;
+                const resultsEl = document.getElementById('results');
+                resultsEl.innerHTML = '<h2>Scanning all lists...</h2>';
+                
+                for (const list of lists) {
+                    const response = await fetch(`/api/lijst/${list}`);
+                    if (response.ok) {
+                        const tasks = await response.json();
+                        
+                        if (tasks.length > 0) {
+                            resultsEl.innerHTML += `<h3>${list}: ${tasks.length} tasks found</h3>`;
+                            
+                            tasks.forEach(task => {
+                                // Check if task belongs to our user
+                                if (!task.user_id || task.user_id === userId) {
+                                    foundTasks.push({...task, originalList: list});
+                                    totalFound++;
+                                    
+                                    resultsEl.innerHTML += `
+                                        <div class="task-item">
+                                            <strong>${task.tekst || 'Unnamed task'}</strong>
+                                            <div class="task-meta">
+                                                ID: ${task.id} | 
+                                                List: ${list} | 
+                                                Created: ${task.aangemaakt || 'Unknown'} |
+                                                User: ${task.user_id || 'No user ID'}
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                            });
+                        }
+                    }
+                }
+                
+                if (totalFound > 0) {
+                    updateStatus(`Found ${totalFound} tasks total. Review and restore if needed.`, 'success');
+                    document.getElementById('restoreBtn').style.display = 'inline-block';
+                } else {
+                    updateStatus('No tasks found in any list.', 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Error during recovery: ' + error.message, 'error');
+                console.error('Recovery error:', error);
+            }
+        }
+        
+        async function checkAllLists() {
+            updateStatus('Checking all lists...', '');
+            
+            try {
+                // Direct check for all lists
+                const response = await fetch('/api/debug/users-import-codes');
+                const data = await response.json();
+                
+                const resultsEl = document.getElementById('results');
+                resultsEl.innerHTML = '<h2>User Data Check</h2>';
+                resultsEl.innerHTML += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                // Find tasks that might be orphaned
+                updateStatus('Check complete. Review the data above.', 'success');
+                
+            } catch (error) {
+                updateStatus('Error checking lists: ' + error.message, 'error');
+            }
+        }
+        
+        async function restoreToInbox() {
+            if (foundTasks.length === 0) {
+                updateStatus('No tasks to restore.', 'error');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to restore ${foundTasks.length} tasks to inbox?`)) {
+                return;
+            }
+            
+            updateStatus('Restoring tasks to inbox...', '');
+            let restored = 0;
+            
+            for (const task of foundTasks) {
+                try {
+                    // Only restore if not already in inbox
+                    if (task.originalList !== 'inbox') {
+                        // Move task to inbox
+                        const response = await fetch(`/api/lijst/inbox`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                tekst: task.tekst,
+                                id: task.id + '_restored',
+                                aangemaakt: task.aangemaakt || new Date().toISOString()
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            restored++;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error restoring task:', error);
+                }
+            }
+            
+            updateStatus(`Restored ${restored} tasks to inbox. Please refresh the main app.`, 'success');
+        }
+        
+        // Auto-start recovery on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateStatus('Emergency Recovery Tool Ready. Click "Start Recovery Scan" to begin.', '');
+        });
+    </script>
+</body>
+</html>
