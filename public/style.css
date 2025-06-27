@@ -232,7 +232,7 @@ body {
 }
 
 .lijst-item.actief .lijst-telling {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--soft-blue);
     color: white;
 }
 
