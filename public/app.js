@@ -8005,7 +8005,7 @@ class KeyboardHelpModal {
     updateShortcutsForOS() {
         // Detect macOS
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const shortcutCombo = isMac ? 'Ctrl+Opt+Cmd+N' : 'Ctrl+Alt+N';
+        const shortcutCombo = isMac ? 'Cmd+Opt+N' : 'Ctrl+Alt+N';
         
         // Update all triple modifier shortcuts in help modal
         const shortcuts = this.modal.querySelectorAll('kbd');
@@ -8064,11 +8064,10 @@ class KeyboardShortcutManager {
             
             if (e.key === 'N') {
                 if (isMac) {
-                    // Mac: Ctrl+Option+Cmd+N
-                    shouldTrigger = e.ctrlKey && e.altKey && e.metaKey;
+                    // Mac: Let's try Cmd+Alt+N first (simpler)
+                    shouldTrigger = e.metaKey && e.altKey && !e.ctrlKey && !e.shiftKey;
                 } else {
-                    // Windows/Linux: Try different combinations since Windows key is tricky
-                    // Option 1: Ctrl+Alt+N (simpler, less chance of conflicts)
+                    // Windows/Linux: Ctrl+Alt+N
                     shouldTrigger = e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey;
                 }
             }
