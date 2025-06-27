@@ -7936,41 +7936,43 @@ class QuickAddModal {
                 return;
             }
             
-            // Direct API call - more reliable than trying to use voegTaakToe
-            const response = await fetch('/api/lijst/inbox', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    tekst: taakNaam,  // Use 'tekst' instead of 'naam' to match existing API
-                    project: null,
-                    context: null,
-                    verschijndatum: null,
-                    duur: null,
-                    opmerkingen: null
-                })
-            });
+            console.log('Adding task via app method:', taakNaam);
             
-            if (response.ok) {
+            // Use the same method as the normal task input - manipulate app state directly
+            if (app) {
+                // Create new task object like the normal method does
+                const nieuweTaak = {
+                    id: app.generateId(),
+                    tekst: taakNaam,
+                    aangemaakt: new Date().toISOString()
+                };
+                
+                // Add to taken array (only if we're in inbox mode, otherwise get inbox first)
+                if (app.huidigeLijst === 'inbox') {
+                    app.taken.push(nieuweTaak);
+                } else {
+                    // Load inbox first, add task, then save
+                    await app.laadLijst('inbox');
+                    app.taken.push(nieuweTaak);
+                }
+                
+                // Save using the app's method
+                await app.slaLijstOp();
+                
+                // Update UI
+                if (app.huidigeLijst === 'inbox') {
+                    app.renderTaken();
+                }
+                await app.laadTellingen();
+                
                 toast.success('Taak toegevoegd aan inbox');
                 this.hide();
-                
-                // Refresh inbox if currently viewing + update counts
-                if (app) {
-                    if (app.huidigeLijst === 'inbox') {
-                        await app.laadHuidigeLijst();
-                    }
-                    await app.laadTellingen(); // Update sidebar counts
-                }
             } else {
-                const errorData = await response.text();
-                console.error('Server error:', errorData);
-                toast.error('Fout bij toevoegen van taak');
+                toast.error('App niet beschikbaar');
             }
         } catch (error) {
             console.error('Error adding task:', error);
-            toast.error('Fout bij toevoegen van taak');
+            toast.error('Fout bij toevoegen van taak: ' + error.message);
         }
     }
 }
