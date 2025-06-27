@@ -565,10 +565,23 @@ const db = {
       
       // Try with herhaling fields first
       try {
+        // Ensure all required fields have default values to prevent undefined errors
         const insertValues = [
-          newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-          originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type,
-          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief, originalTask.opmerkingen, null, userId
+          newId, 
+          originalTask.tekst || 'Herhalende taak', 
+          new Date().toISOString(), 
+          originalTask.lijst || 'acties',
+          originalTask.projectId || null, 
+          verschijndatumISO, 
+          originalTask.contextId || null, 
+          originalTask.duur || 0, 
+          originalTask.type || 'actie',
+          originalTask.herhalingType || null, 
+          originalTask.herhalingWaarde || null, 
+          originalTask.herhalingActief || false, 
+          originalTask.opmerkingen || null, 
+          null, 
+          userId
         ];
         
         console.log('🐛 DEBUG: About to insert with values:', [
@@ -717,8 +730,18 @@ const db = {
           await client.query('BEGIN');
           
           const basicInsertValues = [
-            newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-            originalTask.projectId, verschijndatumISO, originalTask.contextId, originalTask.duur, originalTask.type, originalTask.opmerkingen, null, userId
+            newId, 
+            originalTask.tekst || 'Herhalende taak', 
+            new Date().toISOString(), 
+            originalTask.lijst || 'acties',
+            originalTask.projectId || null, 
+            verschijndatumISO, 
+            originalTask.contextId || null, 
+            originalTask.duur || 0, 
+            originalTask.type || 'actie', 
+            originalTask.opmerkingen || null, 
+            null, 
+            userId
           ];
           
           await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_INSERT_ATTEMPT', {
