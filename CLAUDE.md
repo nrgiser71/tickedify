@@ -44,6 +44,27 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## HERHALENDE TAKEN 500 ERROR DEFINITIEF OPGELOST (Juni 27, 2025) ✅
+
+**🔧 KRITIEKE FIX VOLTOOID: Versie 0.9.4**
+- **Probleem**: 500 Internal Server Error bij afvinken herhalende taken in acties scherm
+- **Symptoom**: Nieuwe taak werd wel aangemaakt, maar gebruiker kreeg error melding
+- **Console error**: `POST https://www.tickedify.com/api/taak/recurring 500 (Internal Server Error)`
+- **Root Cause**: Intensieve forensic logging in createRecurringTask functie (20+ async database calls)
+- **Oplossing**: Vervangen door eenvoudige versie zonder intensive logging
+- **Resultaat**: Herhalende taken werken nu volledig zonder errors
+- **Performance**: Snellere recurring task creation door minder database operaties
+- **Testing**: End-to-end getest - aanmaken en afvinken werkt perfect
+
+**📊 TECHNISCHE DETAILS:**
+- **Voor fix**: 20+ `await forensicLogger.logRecurringTaskOperation()` calls per recurring task
+- **Na fix**: Eenvoudige transactional approach met alleen essentiële logging
+- **Database operaties**: Gereduceerd van 20+ naar 3-4 essentiële calls
+- **Error handling**: Behouden van fallback logic voor databases zonder herhaling kolommen
+- **Backwards compatibility**: Volledige ondersteuning voor bestaande recurring patterns
+
+**STATUS**: Alle herhalende taken functionaliteit volledig operationeel zonder server errors.
+
 ## HERHALENDE TAKEN BUG DEFINITIEF OPGELOST (Juni 26, 2025) ✅
 
 **🔍 ROOT CAUSE ANALYSE VOLTOOID:**
