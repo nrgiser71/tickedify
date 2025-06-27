@@ -7930,39 +7930,43 @@ class QuickAddModal {
         }
         
         try {
-            // Add task to inbox using existing method
-            if (app && app.voegTaakToe) {
-                await app.voegTaakToe(taakNaam, 'inbox');
+            // Check if user is logged in first
+            if (app && !app.isLoggedIn()) {
+                toast.warning('Log in om taken toe te voegen.');
+                return;
+            }
+            
+            // Direct API call - more reliable than trying to use voegTaakToe
+            const response = await fetch('/api/lijst/inbox', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tekst: taakNaam,  // Use 'tekst' instead of 'naam' to match existing API
+                    project: null,
+                    context: null,
+                    verschijndatum: null,
+                    duur: null,
+                    opmerkingen: null
+                })
+            });
+            
+            if (response.ok) {
                 toast.success('Taak toegevoegd aan inbox');
                 this.hide();
-            } else {
-                // Fallback: direct API call
-                const response = await fetch('/api/lijst/inbox', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        naam: taakNaam,
-                        project: null,
-                        context: null,
-                        verschijndatum: null,
-                        duur: null,
-                        opmerkingen: null
-                    })
-                });
                 
-                if (response.ok) {
-                    toast.success('Taak toegevoegd aan inbox');
-                    this.hide();
-                    
-                    // Refresh inbox if currently viewing
-                    if (app && app.huidigeLijst === 'inbox') {
-                        app.laadHuidigeLijst();
+                // Refresh inbox if currently viewing + update counts
+                if (app) {
+                    if (app.huidigeLijst === 'inbox') {
+                        await app.laadHuidigeLijst();
                     }
-                } else {
-                    toast.error('Fout bij toevoegen van taak');
+                    await app.laadTellingen(); // Update sidebar counts
                 }
+            } else {
+                const errorData = await response.text();
+                console.error('Server error:', errorData);
+                toast.error('Fout bij toevoegen van taak');
             }
         } catch (error) {
             console.error('Error adding task:', error);
@@ -8040,34 +8044,22 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Debug logging
-            if (e.key === 'N' && (e.ctrlKey || e.altKey || e.metaKey)) {
-                console.log('Keyboard event:', {
-                    key: e.key,
-                    ctrlKey: e.ctrlKey,
-                    altKey: e.altKey,
-                    metaKey: e.metaKey,
-                    shiftKey: e.shiftKey,
-                    platform: navigator.platform
-                });
-            }
-            
-            // Ignore shortcuts when typing in input fields
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                // Only allow Escape to close modals
-                if (e.key === 'Escape') {
-                    this.quickAddModal.hide();
-                    this.keyboardHelpModal.hide();
-                }
-                return;
-            }
-            
-            // Check for F9 key - much more reliable!
+            // Check for F9 key first - works everywhere including input fields!
             if (e.key === 'F9') {
                 // F9 works the same on all platforms
                 e.preventDefault();
                 console.log('F9 detected - triggering quick add modal');
                 this.quickAddModal.show();
+                return;
+            }
+            
+            // For other shortcuts, ignore when typing in input fields (except our quick add modal)
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                // Allow Escape to close modals and Enter in quick add modal
+                if (e.key === 'Escape') {
+                    this.quickAddModal.hide();
+                    this.keyboardHelpModal.hide();
+                }
                 return;
             }
             
