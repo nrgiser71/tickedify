@@ -490,82 +490,24 @@ const db = {
     }
   },
 
-  // Create a new recurring task instance
+  // Create a new recurring task instance (simplified version without intensive logging)
   async createRecurringTask(originalTask, newDate, userId) {
-    const client = await pool.connect();
-    
-    // Log initial forensic information
-    await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ATTEMPT', {
-      originalTaskId: originalTask.id,
-      originalTaskText: originalTask.tekst,
-      newDate: newDate,
-      userId: userId,
-      herhalingType: originalTask.herhalingType,
-      herhalingActief: originalTask.herhalingActief,
-      inputParameters: {
-        originalTask_keys: Object.keys(originalTask),
-        originalTask_values: JSON.stringify(originalTask),
-        newDate_type: typeof newDate,
-        userId_type: typeof userId
-      }
-    }, {
-      triggeredBy: 'task_completion',
-      endpoint: 'database.createRecurringTask'
-    });
-    
     if (!userId) {
       console.warn('⚠️ createRecurringTask called without userId - operation cancelled');
-      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_FAILED', {
-        error: 'Missing userId',
-        originalTaskId: originalTask.id
-      }, { endpoint: 'database.createRecurringTask' });
       return null;
     }
     
+    const client = await pool.connect();
+    
     try {
-      // Start explicit transaction
       await client.query('BEGIN');
-      console.log('🔄 DEBUG: Started transaction');
-      
-      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_TRANSACTION_START', {
-        originalTaskId: originalTask.id,
-        userId: userId,
-        transactionState: 'BEGUN'
-      }, { endpoint: 'database.createRecurringTask' });
+      console.log('✅ Started transaction for recurring task creation');
       
       const newId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-      
-      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ID_GENERATED', {
-        originalTaskId: originalTask.id,
-        newTaskId: newId,
-        userId: userId,
-        generationTimestamp: new Date().toISOString()
-      }, { endpoint: 'database.createRecurringTask' });
-      
-      // Debug log the original task properties
-      console.log('🐛 DEBUG: originalTask properties:', Object.keys(originalTask));
-      console.log('🐛 DEBUG: originalTask full object:', originalTask);
-      console.log('🐛 DEBUG: recurring properties:', {
-        herhalingType: originalTask.herhalingType,
-        herhalingWaarde: originalTask.herhalingWaarde,
-        herhalingActief: originalTask.herhalingActief
-      });
-      
-      // Convert newDate string to proper ISO timestamp to avoid timezone issues (move outside try block)
       const verschijndatumISO = newDate + 'T00:00:00.000Z';
-      console.log('🐛 DEBUG: converted to ISO:', verschijndatumISO);
-      
-      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_DATE_CONVERTED', {
-        originalTaskId: originalTask.id,
-        newTaskId: newId,
-        inputDate: newDate,
-        convertedDate: verschijndatumISO,
-        userId: userId
-      }, { endpoint: 'database.createRecurringTask' });
       
       // Try with herhaling fields first
       try {
-        // Ensure all required fields have default values to prevent undefined errors
         const insertValues = [
           newId, 
           originalTask.tekst || 'Herhalende taak', 
@@ -584,268 +526,66 @@ const db = {
           userId
         ];
         
-        console.log('🐛 DEBUG: About to insert with values:', [
-          newId, originalTask.tekst, new Date().toISOString(), originalTask.lijst,
-          originalTask.projectId, newDate, originalTask.contextId, originalTask.duur, originalTask.type,
-          originalTask.herhalingType, originalTask.herhalingWaarde, originalTask.herhalingActief
-        ]);
-        console.log('🐛 DEBUG: newDate parameter received:', newDate, typeof newDate);
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_INSERT_ATTEMPT', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          insertValues: insertValues,
-          sqlQuery: 'INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id) VALUES (...)',
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
         const insertResult = await client.query(`
           INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           RETURNING id
         `, insertValues);
         
-        console.log('✅ DEBUG: Insert successful, returned ID:', insertResult.rows[0]?.id);
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_INSERT_SUCCESS', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          returnedId: insertResult.rows[0]?.id,
-          rowsAffected: insertResult.rowCount,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
-        // Verify the insert worked by immediately querying it back within transaction
-        const verifyResult = await client.query('SELECT * FROM taken WHERE id = $1', [newId]);
-        console.log('🔍 DEBUG: Verification query returned rows:', verifyResult.rows.length);
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_VERIFY_ATTEMPT', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          verificationRowsFound: verifyResult.rows.length,
-          verificationData: verifyResult.rows.length > 0 ? verifyResult.rows[0] : null,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
-        if (verifyResult.rows.length === 0) {
-          console.error('❌ DEBUG: Task was not found immediately after insert within transaction!');
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_VERIFY_FAILED', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            error: 'Task not found after insert within transaction',
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-          await client.query('ROLLBACK');
-          console.log('🔄 DEBUG: Transaction rolled back');
-          return null;
+        if (insertResult.rows.length === 0) {
+          throw new Error('Insert returned no rows');
         }
         
-        const savedTaskDetails = {
-          id: verifyResult.rows[0].id,
-          tekst: verifyResult.rows[0].tekst,
-          lijst: verifyResult.rows[0].lijst,
-          verschijndatum: verifyResult.rows[0].verschijndatum,
-          herhaling_type: verifyResult.rows[0].herhaling_type,
-          herhaling_actief: verifyResult.rows[0].herhaling_actief
-        };
-        
-        console.log('🔍 DEBUG: Saved task details within transaction:', savedTaskDetails);
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_VERIFY_SUCCESS', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          savedTaskDetails: savedTaskDetails,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
-        // Commit the transaction
         await client.query('COMMIT');
-        console.log('✅ DEBUG: Transaction committed successfully');
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_COMMIT_SUCCESS', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          transactionState: 'COMMITTED',
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
-        // EXTRA DEBUG: Query the task again AFTER commit to verify persistence
-        const postCommitVerify = await pool.query('SELECT * FROM taken WHERE id = $1', [newId]);
-        console.log('🔍 DEBUG: Post-commit verification rows:', postCommitVerify.rows.length);
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_POST_COMMIT_VERIFY', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          postCommitRowsFound: postCommitVerify.rows.length,
-          postCommitData: postCommitVerify.rows.length > 0 ? postCommitVerify.rows[0] : null,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
-        if (postCommitVerify.rows.length === 0) {
-          console.error('❌ DEBUG: CRITICAL - Task disappeared after commit!');
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_POST_COMMIT_FAILED', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            error: 'CRITICAL - Task disappeared after commit',
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-        } else {
-          console.log('✅ DEBUG: Task confirmed persistent after commit');
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_SUCCESS', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            finalTaskData: postCommitVerify.rows[0],
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-        }
-        
+        console.log('✅ Recurring task created successfully:', newId);
         return newId;
+        
       } catch (dbError) {
-        console.error('❌ DEBUG: Insert failed with error:', dbError.message);
+        console.log('⚠️ Herhaling columns error, falling back to basic insert:', dbError.message);
         
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_INSERT_FAILED', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          error: dbError.message,
-          stack: dbError.stack,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
+        // Fallback to basic insert without herhaling fields
+        await client.query('ROLLBACK');
+        await client.query('BEGIN');
         
-        // If herhaling columns don't exist, fall back to basic insert
-        if (dbError.message.includes('herhaling_type') || 
-            dbError.message.includes('herhaling_waarde') || 
-            dbError.message.includes('herhaling_actief')) {
-          
-          console.log('🔄 DEBUG: Herhaling columns not found, trying basic insert');
-          
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_FALLBACK_ATTEMPT', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            reason: 'Herhaling columns not found',
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-          
-          // Rollback the failed transaction and start new one
-          await client.query('ROLLBACK');
-          await client.query('BEGIN');
-          
-          const basicInsertValues = [
-            newId, 
-            originalTask.tekst || 'Herhalende taak', 
-            new Date().toISOString(), 
-            originalTask.lijst || 'acties',
-            originalTask.projectId || null, 
-            verschijndatumISO, 
-            originalTask.contextId || null, 
-            originalTask.duur || 0, 
-            originalTask.type || 'actie', 
-            originalTask.opmerkingen || null, 
-            null, 
-            userId
-          ];
-          
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_INSERT_ATTEMPT', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            basicInsertValues: basicInsertValues,
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-          
-          const basicInsertResult = await client.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING id
-          `, basicInsertValues);
-          
-          console.log('✅ DEBUG: Basic insert successful, returned ID:', basicInsertResult.rows[0]?.id);
-          
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_INSERT_SUCCESS', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            returnedId: basicInsertResult.rows[0]?.id,
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-          
-          // Verify basic insert
-          const basicVerifyResult = await client.query('SELECT * FROM taken WHERE id = $1', [newId]);
-          
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_VERIFY', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            verificationRowsFound: basicVerifyResult.rows.length,
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-          
-          if (basicVerifyResult.rows.length === 0) {
-            console.error('❌ DEBUG: Basic task was not found after insert!');
-            await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_VERIFY_FAILED', {
-              originalTaskId: originalTask.id,
-              newTaskId: newId,
-              error: 'Basic task not found after insert',
-              userId: userId
-            }, { endpoint: 'database.createRecurringTask' });
-            await client.query('ROLLBACK');
-            return null;
-          }
-          
-          await client.query('COMMIT');
-          console.log('✅ DEBUG: Basic transaction committed successfully');
-          
-          await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_BASIC_SUCCESS', {
-            originalTaskId: originalTask.id,
-            newTaskId: newId,
-            finalTaskData: basicVerifyResult.rows[0],
-            userId: userId
-          }, { endpoint: 'database.createRecurringTask' });
-          
-          return newId;
+        const basicInsertValues = [
+          newId, 
+          originalTask.tekst || 'Herhalende taak', 
+          new Date().toISOString(), 
+          originalTask.lijst || 'acties',
+          originalTask.projectId || null, 
+          verschijndatumISO, 
+          originalTask.contextId || null, 
+          originalTask.duur || 0, 
+          originalTask.type || 'actie', 
+          originalTask.opmerkingen || null, 
+          null, 
+          userId
+        ];
+        
+        const basicInsertResult = await client.query(`
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          RETURNING id
+        `, basicInsertValues);
+        
+        if (basicInsertResult.rows.length === 0) {
+          throw new Error('Basic insert returned no rows');
         }
         
-        await client.query('ROLLBACK');
-        console.log('🔄 DEBUG: Transaction rolled back due to error');
-        
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ROLLBACK', {
-          originalTaskId: originalTask.id,
-          newTaskId: newId,
-          error: dbError.message,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
-        
-        throw dbError;
+        await client.query('COMMIT');
+        console.log('✅ Recurring task created with basic insert:', newId);
+        return newId;
       }
     } catch (error) {
-      console.error('❌ DEBUG: Fatal error in createRecurringTask:', error);
-      
-      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_FATAL_ERROR', {
-        originalTaskId: originalTask?.id,
-        newTaskId: newId || 'unknown',
-        error: error.message,
-        stack: error.stack,
-        userId: userId
-      }, { endpoint: 'database.createRecurringTask' });
-      
+      console.error('❌ Error in createRecurringTask:', error.message);
       try {
         await client.query('ROLLBACK');
-        console.log('🔄 DEBUG: Transaction rolled back due to fatal error');
       } catch (rollbackError) {
-        console.error('❌ DEBUG: Error during rollback:', rollbackError);
-        await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_ROLLBACK_ERROR', {
-          originalTaskId: originalTask?.id,
-          rollbackError: rollbackError.message,
-          userId: userId
-        }, { endpoint: 'database.createRecurringTask' });
+        console.error('❌ Error during rollback:', rollbackError.message);
       }
       return null;
     } finally {
       client.release();
-      console.log('🔌 DEBUG: Database client released');
-      
-      await forensicLogger.logRecurringTaskOperation('CREATE_RECURRING_CLEANUP', {
-        originalTaskId: originalTask?.id,
-        newTaskId: newId || 'unknown',
-        clientReleased: true,
-        userId: userId
-      }, { endpoint: 'database.createRecurringTask' });
     }
   },
 

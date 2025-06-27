@@ -2383,7 +2383,8 @@ app.post('/api/taak/recurring', async (req, res) => {
             
             res.json({ success: true, taskId });
         } else {
-            res.status(500).json({ error: 'Fout bij aanmaken herhalende taak' });
+            console.error('❌ createRecurringTask returned null or false');
+            res.status(500).json({ error: 'Fout bij aanmaken herhalende taak - createRecurringTask failed' });
         }
     } catch (error) {
         console.error('Error creating recurring task:', error);
