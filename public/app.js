@@ -2845,6 +2845,27 @@ class Taakbeheer {
         this.resetPopupForm();
     }
 
+    async openVolgendeInboxTaak() {
+        // Alleen in inbox lijst automatisch volgende taak openen
+        if (this.huidigeLijst !== 'inbox') return false;
+        
+        // Zoek de eerste taak in de huidige inbox lijst
+        const volgendeTaak = this.taken.find(taak => taak.id !== this.huidigeTaakId);
+        
+        if (volgendeTaak) {
+            // Korte delay zodat UI updates kunnen verwerken
+            setTimeout(async () => {
+                await this.planTaak(volgendeTaak.id);
+                toast.info(`Volgende taak: ${volgendeTaak.tekst.substring(0, 30)}...`);
+            }, 150);
+            return true;
+        }
+        
+        // Geen taken meer in inbox
+        toast.success('🎉 Inbox is leeg! Alle taken zijn verwerkt.');
+        return false;
+    }
+
     toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null) {
         const taak = this.taken.find(t => t.id === taakId);
         if (!taak) return;
@@ -3259,14 +3280,21 @@ class Taakbeheer {
                     if (this.huidigeLijst === 'acties') {
                         await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                     }
+                    
+                    // Probeer automatisch volgende inbox taak te openen
+                    const volgendeGeopend = await this.openVolgendeInboxTaak();
+                    if (!volgendeGeopend) {
+                        this.sluitPopup();
+                    }
                 } else {
                     console.error('Fout bij opslaan actie:', response.status);
                     toast.error('Fout bij plannen van taak. Probeer opnieuw.');
                     return;
                 }
+            } else {
+                // Voor niet-inbox taken (zoals acties bewerken), gewoon popup sluiten
+                this.sluitPopup();
             }
-            
-            this.sluitPopup();
         }, {
             operationId: 'save-action',
             button: maakActieBtn,

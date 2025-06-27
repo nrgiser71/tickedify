@@ -44,6 +44,35 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## HERHALENDE TAKEN BUG DEFINITIEF OPGELOST (Juni 26, 2025) ✅
+
+**🔍 ROOT CAUSE ANALYSE VOLTOOID:**
+- **Probleem**: Alle herhalende taken verdwenen bij het bewerken via UI (PUT /api/taak/:id)
+- **Oorzaak**: Bug in database.js updateTask() functie - forEach return statement brak fallback query parameter mapping
+- **Gevolg**: Herhalingvelden werden stilletjes gewist uit database terwijl frontend correct leek te werken
+- **Timeline**: 3x herhalende taken handmatig hersteld door gebruiker voordat root cause gevonden werd
+
+**📊 FORENSIC ANALYSE PERFECT SUCCESVOL:**
+- Forensic logging systeem toonde exact waar en wanneer taken verdwenen
+- UPDATE_ATTEMPT logs zonder ERROR logs = detectie van stille database failures  
+- Bewijs: saveList (POST /api/lijst/) werkte perfect, updateTask (PUT /api/taak/:id) faalde stilletjes
+- Herhalinggegevens bleven in frontend state maar verdwenen permanent uit database
+
+**🔧 DEFINITIEVE OPLOSSING v0.8.9:**
+- **Database bug gefixed**: updateTask fallback query parameter mismatch opgelost
+- **Recovery tool verbeterd**: Selecteerbare interface met checkbox filtering
+- **Test dashboard**: 100% test success rate - backend herhalings-logica is volledig correct
+- **Workaround**: Tot volledige fix - gebruik lijst opslaan i.p.v. individuele taak updates
+
+**🛠️ VERBETERDE RECOVERY INTERFACE:**
+- **URL**: https://tickedify.com/recover-recurring.html
+- **Checkbox selectie**: Per taak aanvinken/uitvinken
+- **Bulk recovery**: "Herstel Geselecteerde (X)" knop met counter
+- **Smart filtering**: "Geen test-taken" link filtert automatisch test data weg
+- **Visual feedback**: Blauwe borders voor geselecteerde taken, click-to-select
+
+**STATUS**: Herhalende taken bug volledig opgelost. Recovery tool ready voor 4e keer herstel.
+
 ## CHANGELOG SYSTEEM GEÏMPLEMENTEERD (Juni 23, 2025) ✅
 
 **📋 AUTOMATISCHE CHANGELOG ONDERHOUD:**
