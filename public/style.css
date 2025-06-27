@@ -1028,17 +1028,6 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     font-size: 12px;
 }
 
-.plan-btn {
-    background: var(--macos-green) !important;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: var(--macos-radius-small);
-}
-
-.plan-btn:hover {
-    background: var(--macos-green-hover) !important;
-    transform: translateY(-1px);
-}
 
 /* Acties knop styling */
 .acties-btn {

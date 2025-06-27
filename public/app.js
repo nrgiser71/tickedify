@@ -2425,7 +2425,6 @@ class Taakbeheer {
             if (this.huidigeLijst === 'inbox') {
                 acties = `
                     <div class="taak-acties">
-                        <button onclick="app.planTaakWrapper('${taak.id}')" class="plan-btn">Plan</button>
                         <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                     </div>
                 `;
