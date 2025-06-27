@@ -1097,6 +1097,45 @@ app.get('/api/debug/inbox-tasks/:userId?', async (req, res) => {
     }
 });
 
+// EMERGENCY: Debug endpoint to get ALL tasks for a user (for data recovery)
+app.get('/api/emergency/all-user-tasks/:userId?', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = req.params.userId || 'default-user-001';
+        
+        const query = `
+            SELECT t.*, u.email as user_email, u.naam as user_naam
+            FROM taken t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.user_id = $1
+            ORDER BY t.aangemaakt DESC
+        `;
+        
+        const result = await pool.query(query, [userId]);
+        
+        res.json({
+            success: true,
+            count: result.rows.length,
+            userId: userId,
+            tasks: result.rows,
+            message: `ALL tasks for user ${userId} - EMERGENCY RECOVERY`,
+            lists: {
+                inbox: result.rows.filter(t => t.lijst === 'inbox').length,
+                acties: result.rows.filter(t => t.lijst === 'acties').length,
+                afgewerkt: result.rows.filter(t => t.afgewerkt).length,
+                other: result.rows.filter(t => t.lijst && t.lijst !== 'inbox' && t.lijst !== 'acties').length
+            }
+        });
+        
+    } catch (error) {
+        console.error('Emergency user tasks error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test endpoint for email parsing (development only)
 app.post('/api/email/test', async (req, res) => {
     try {
