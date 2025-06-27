@@ -43,6 +43,18 @@
     --macos-radius-large: 12px;
     --macos-radius-button: 6px;
     
+    /* Softer Color Palette for UI Elements */
+    --soft-blue: #8B9BF0;
+    --soft-blue-hover: #7A8AE8;
+    --soft-blue-bg: #E8EBF8;
+    --soft-green: #85C39A;
+    --soft-green-hover: #75B38A;
+    --soft-green-bg: #EDF5F0;
+    --soft-neutral: #E8E9F3;
+    --soft-neutral-hover: #D8DAE8;
+    --soft-beige: #F5F3F0;
+    --soft-beige-hover: #EBE8E3;
+    
     /* Toast Notification Colors */
     --toast-success: #30D158;
     --toast-success-bg: #30D15820;
@@ -2149,11 +2161,11 @@ button:focus {
 }
 
 .template-item:hover {
-    background: var(--macos-blue);
-    border-color: var(--macos-blue-hover);
-    color: white;
+    background: var(--soft-neutral-hover);
+    border-color: var(--soft-blue);
+    color: var(--macos-text-primary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(139, 155, 240, 0.2);
 }
 
 .template-item:hover::before {
@@ -2548,13 +2560,13 @@ button:focus {
 }
 
 .planning-item[data-type="geblokkeerd"] {
-    background: rgba(255, 149, 0, 0.1);
-    border-color: var(--macos-orange);
+    background: var(--soft-blue-bg);
+    border-color: var(--soft-blue);
 }
 
 .planning-item[data-type="pauze"] {
-    background: rgba(48, 209, 88, 0.1);
-    border-color: var(--macos-green);
+    background: var(--soft-green-bg);
+    border-color: var(--soft-green);
 }
 
 .planning-item[data-type="taak"] {
@@ -2920,25 +2932,33 @@ button:focus {
 }
 
 .template-item {
-    background: #007AFF;
-    color: white;
+    background: var(--soft-neutral);
+    color: var(--macos-text-primary);
+    border: 1px solid var(--macos-gray-4);
     padding: 6px 10px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 11px;
+    font-weight: 500;
     cursor: grab;
     white-space: nowrap;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .template-item:hover {
-    background: #0056CC;
+    background: var(--soft-neutral-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .template-item[data-type="pauze"] {
-    background: #30D158;
+    background: var(--soft-beige);
+    border-color: var(--soft-green);
 }
 
 .template-item[data-type="pauze"]:hover {
-    background: #28CD41;
+    background: var(--soft-beige-hover);
+    border-color: var(--soft-green-hover);
 }
 
 /* Actions section - takes remaining space */
