@@ -8003,11 +8003,10 @@ class KeyboardHelpModal {
     }
     
     updateShortcutsForOS() {
-        // Detect macOS
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const shortcutCombo = isMac ? 'Cmd+Opt+N' : 'Ctrl+Alt+N';
+        // F9 is the same on all platforms - much simpler!
+        const shortcutCombo = 'F9';
         
-        // Update all triple modifier shortcuts in help modal
+        // Update all shortcuts in help modal
         const shortcuts = this.modal.querySelectorAll('kbd');
         shortcuts.forEach(kbd => {
             if (kbd.textContent.includes('Ctrl+Shift+N')) {
@@ -8058,23 +8057,11 @@ class KeyboardShortcutManager {
                 return;
             }
             
-            // Check for different combinations based on OS
-            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-            let shouldTrigger = false;
-            
-            if (e.key === 'N') {
-                if (isMac) {
-                    // Mac: Let's try Cmd+Alt+N first (simpler)
-                    shouldTrigger = e.metaKey && e.altKey && !e.ctrlKey && !e.shiftKey;
-                } else {
-                    // Windows/Linux: Ctrl+Alt+N
-                    shouldTrigger = e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey;
-                }
-            }
-            
-            if (shouldTrigger) {
+            // Check for F9 key - much more reliable!
+            if (e.key === 'F9') {
+                // F9 works the same on all platforms
                 e.preventDefault();
-                console.log('Triggering quick add modal');
+                console.log('F9 detected - triggering quick add modal');
                 this.quickAddModal.show();
                 return;
             }
