@@ -7983,14 +7983,26 @@ class QuickAddModal {
                     }
                 }
             } else {
-                const errorText = await response.text();
+                let errorText;
+                try {
+                    errorText = await response.text();
+                } catch (e) {
+                    errorText = 'Could not read error response';
+                }
+                
                 console.error('🚨 DEBUG: API Error details:', {
                     status: response.status,
                     statusText: response.statusText,
                     errorText: errorText,
-                    headers: Object.fromEntries(response.headers.entries())
+                    url: response.url
                 });
-                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout'));
+                
+                // Check inbox after failed request
+                const afterFailResponse = await fetch('/api/lijst/inbox');
+                const afterFailTasks = await afterFailResponse.json();
+                console.log('🔍 DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
+                
+                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout (500)'));
             }
         } catch (error) {
             console.error('Error adding task:', error);
