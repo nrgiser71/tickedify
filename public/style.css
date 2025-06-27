@@ -226,8 +226,9 @@ body {
 }
 
 .lijst-item.actief {
-    background: var(--macos-blue);
-    color: white;
+    background: var(--soft-blue-bg);
+    color: var(--macos-text-primary);
+    border: 1px solid var(--soft-blue);
 }
 
 .lijst-item.actief .lijst-telling {
@@ -1133,9 +1134,9 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 }
 
 .menu-item:hover {
-    background: var(--macos-blue);
-    color: white;
-    border-color: var(--macos-blue);
+    background: var(--soft-blue-bg);
+    color: var(--macos-text-primary);
+    border-color: var(--soft-blue);
     transform: translateX(2px);
 }
 
@@ -2746,8 +2747,9 @@ button:focus {
     }
     
     .lijst-item.actief {
-        background: var(--macos-blue);
-        color: white;
+        background: var(--soft-blue-bg);
+        color: var(--macos-text-primary);
+        border: 1px solid var(--soft-blue);
     }
     
     .dropdown-content {
@@ -4192,7 +4194,7 @@ button:focus {
 }
 
 .primary-btn {
-    background: var(--macos-blue);
+    background: var(--soft-blue);
     color: white;
     border: none;
     padding: 10px 16px;
@@ -4204,7 +4206,7 @@ button:focus {
 }
 
 .primary-btn:hover {
-    background: var(--macos-blue-hover);
+    background: var(--soft-blue-hover);
     transform: translateY(-1px);
 }
 
