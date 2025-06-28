@@ -44,6 +44,26 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## FILTER ALIGNMENT PROBLEEM DEFINITIEF OPGELOST (December 28, 2025) ✅
+
+**🎯 UI/UX VERBETERING VOLTOOID: Versie 0.9.72-0.9.73**
+- **Probleem**: Filter elementen in dagelijkse planning niet uitgelijnd - verschillende hoogtes en posities
+- **Symptoom**: Taak input, dropdowns, datum veld en checkbox stonden niet op één lijn
+- **Root Cause**: Inconsistente padding, min-width constraints en ontbrekende baseline alignment
+- **Oplossing Fase 1 (v0.9.72)**: Min-width: 120px weggehaald van .filter-select elementen
+- **Oplossing Fase 2 (v0.9.73)**: Uniforme heights (32px) en align-items: end toegevoegd
+- **Resultaat**: Alle filter elementen perfect uitgelijnd voor professionele uitstraling
+- **Performance**: Betere visuele consistentie en gebruikerservaring
+
+**📊 TECHNISCHE DETAILS:**
+- **Checkbox HTML refactor**: Semantisch correcte input+label structuur (v0.9.71)
+- **Min-width removal**: Flexibele layout zonder geforceerde breedtes (v0.9.72)
+- **Uniform heights**: 32px height + 6px padding voor alle filter elementen (v0.9.73)
+- **Baseline alignment**: align-items: end in .acties-filters container (v0.9.73)
+- **Box-sizing**: border-box voor exacte height berekening
+
+**STATUS**: Filter alignment volledig opgelost, professionele UI consistency bereikt.
+
 ## FOOTER OVERLAP PROBLEEM DEFINITIEF OPGELOST (Juni 28, 2025) ✅
 
 **🔧 KRITIEKE FIX VOLTOOID: Versie 0.9.59-0.9.61**
