@@ -1575,7 +1575,7 @@ class Taakbeheer {
 
     // Helper function to preserve scroll position during re-renders
     preserveScrollPosition(callback) {
-        const scrollContainer = document.querySelector('.acties-lijst, .taak-lijst, .main-content');
+        const scrollContainer = document.querySelector('#acties-lijst, .acties-lijst, .taak-lijst, .main-content');
         const scrollPosition = scrollContainer?.scrollTop || 0;
         
         const result = callback();
@@ -2503,20 +2503,11 @@ class Taakbeheer {
                 const checkbox = document.querySelector(`input[onchange*="${id}"]`);
                 const rowElement = checkbox?.closest('tr, li, .project-actie-item');
                 if (rowElement) {
-                    // Save scroll position before animation
-                    const scrollContainer = document.querySelector('.acties-lijst, .taak-lijst, .main-content');
-                    const scrollPosition = scrollContainer?.scrollTop || 0;
-                    
                     rowElement.style.opacity = '0.5';
                     rowElement.style.transition = 'opacity 0.3s';
                     setTimeout(() => {
                         if (rowElement.parentNode) {
                             rowElement.parentNode.removeChild(rowElement);
-                            
-                            // Restore scroll position after element removal
-                            if (scrollContainer) {
-                                scrollContainer.scrollTop = scrollPosition;
-                            }
                         }
                     }, 300);
                 }
@@ -2562,6 +2553,11 @@ class Taakbeheer {
                     }
                 } else {
                     toast.success('Taak afgewerkt!');
+                    // For non-recurring tasks, also refresh the list to ensure UI consistency
+                    // Use a small delay to allow DOM animations to complete
+                    setTimeout(() => {
+                        this.preserveScrollPosition(() => this.laadHuidigeLijst());
+                    }, 350);
                 }
             } else {
                 // Rollback the afgewerkt timestamp
