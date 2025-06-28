@@ -2052,7 +2052,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties"><i class="ti ti-dots-vertical"></i></button>
+                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties">⋮</button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
             `;
@@ -2338,7 +2338,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties"><i class="ti ti-dots-vertical"></i></button>
+                    <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties">⋮</button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
             `;
@@ -5876,10 +5876,10 @@ class Taakbeheer {
 
     renderPlanningItem(planningItem) {
         const typeIcon = {
-            'taak': '<i class="ti ti-dots-vertical"></i>',
+            'taak': '⋮',
             'geblokkeerd': '🔒',
             'pauze': '☕'
-        }[planningItem.type] || '<i class="ti ti-dots-vertical"></i>';
+        }[planningItem.type] || '⋮';
         
         const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
         

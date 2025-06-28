@@ -6,7 +6,7 @@
     <title>Tickedify - Smart Task Management</title>
     <meta name="description" content="Tickedify your tasks with smart task management. Get things done efficiently with projects, contexts, and smart scheduling.">
     <meta name="keywords" content="task management, productivity, todo, gtd, project management">
-    <link rel="stylesheet" href="https://unpkg.com/@tabler/icons@latest/icons.css">
+    <!-- Temporary fallback: using emojis until Tabler Icons loads correctly -->
     <link rel="stylesheet" href="style.css?v=0.4.99">
 </head>
 <body>
@@ -87,27 +87,27 @@
                     <!-- Standaard lijsten -->
                     <div class="lijst-sectie">
                         <div class="lijst-item actief" data-lijst="inbox">
-                            <div class="lijst-icon"><i class="ti ti-inbox"></i></div>
+                            <div class="lijst-icon">📥</div>
                             <span class="lijst-naam">Inbox</span>
                             <span class="lijst-telling" id="telling-inbox">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="acties">
-                            <div class="lijst-icon"><i class="ti ti-list-check"></i></div>
+                            <div class="lijst-icon">📋</div>
                             <span class="lijst-naam">Acties</span>
                             <span class="lijst-telling" id="telling-acties">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="projecten">
-                            <div class="lijst-icon"><i class="ti ti-folder"></i></div>
+                            <div class="lijst-icon">📁</div>
                             <span class="lijst-naam">Projecten</span>
                             <span class="lijst-telling" id="telling-projecten">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="opvolgen">
-                            <div class="lijst-icon"><i class="ti ti-clock"></i></div>
+                            <div class="lijst-icon">⏳</div>
                             <span class="lijst-naam">Opvolgen</span>
                             <span class="lijst-telling" id="telling-opvolgen">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="afgewerkte-taken">
-                            <div class="lijst-icon"><i class="ti ti-check"></i></div>
+                            <div class="lijst-icon">✅</div>
                             <span class="lijst-naam">Afgewerkt</span>
                             <span class="lijst-telling" id="telling-afgewerkte-taken">0</span>
                         </div>
