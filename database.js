@@ -746,19 +746,24 @@ const db = {
         triggeredBy: 'user_action'
       });
       
-      // Calculate next position for this hour for this user
+      // Get current maximum position for this hour
+      const maxPosResult = await pool.query(`
+        SELECT COALESCE(MAX(positie), -1) + 1 as next_position
+        FROM dagelijkse_planning 
+        WHERE datum = $1 AND uur = $2 AND user_id = $3
+      `, [planningItem.datum, planningItem.uur, userId]);
+      const maxPosition = maxPosResult.rows[0].next_position;
+
+      // Calculate actual position
       let positie = planningItem.positie;
       if (positie === undefined || positie === null) {
-        const maxPosResult = await pool.query(`
-          SELECT COALESCE(MAX(positie), -1) + 1 as next_position
-          FROM dagelijkse_planning 
-          WHERE datum = $1 AND uur = $2 AND user_id = $3
-        `, [planningItem.datum, planningItem.uur, userId]);
-        positie = maxPosResult.rows[0].next_position;
-      }
-
-      // If inserting at specific position, shift other items for this user
-      if (planningItem.positie !== undefined && planningItem.positie !== null) {
+        // No position specified, add at end
+        positie = maxPosition;
+      } else if (positie >= maxPosition) {
+        // Position is at or beyond the end, add at end without shifting
+        positie = maxPosition;
+      } else {
+        // Position is in the middle, shift other items
         const shiftResult = await pool.query(`
           UPDATE dagelijkse_planning 
           SET positie = positie + 1 
