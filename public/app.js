@@ -362,7 +362,7 @@ class Taakbeheer {
                                   'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen',
                                   'contextenbeheer'];
                 if (validLists.includes(saved)) {
-                    console.log(`<i class="ti ti-repeat"></i> Restored last selected list: ${saved}`);
+                    console.log(`<i class="fas fa-redo"></i> Restored last selected list: ${saved}`);
                     return saved;
                 }
             }
@@ -1349,7 +1349,7 @@ class Taakbeheer {
                 const contextNaam = this.getContextNaam(actie.contextId);
                 const datum = new Date(actie.verschijndatum).toLocaleDateString('nl-NL');
                 
-                const recurringIndicator = actie.herhalingActief ? '<span class="recurring-indicator" title="Herhalende taak"><i class="ti ti-repeat"></i></span>' : '';
+                const recurringIndicator = actie.herhalingActief ? '<span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
                 html += `
                     <div class="project-actie-item open">
                         <div class="actie-status">
@@ -1461,7 +1461,7 @@ class Taakbeheer {
                 const nextDateFormatted = new Date(this.calculateNextRecurringDate(actie.verschijndatum, actie.herhalingType)).toLocaleDateString('nl-NL');
                 
                 // Refresh all lists to show the new recurring task
-                console.log('<i class="ti ti-repeat"></i> Refreshing lists after recurring task creation...');
+                console.log('<i class="fas fa-redo"></i> Refreshing lists after recurring task creation...');
                 await this.laadTellingen();
                 
                 // Refresh the current view if needed with preserved filters
@@ -1808,7 +1808,7 @@ class Taakbeheer {
         if (this.huidigeLijst === 'inbox') {
             // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
             this.autoRefreshInterval = setInterval(() => {
-                console.log('<i class="ti ti-repeat"></i> Auto-refreshing inbox...');
+                console.log('<i class="fas fa-redo"></i> Auto-refreshing inbox...');
                 this.refreshInbox();
             }, 15000); // 15 seconds
         }
@@ -1839,7 +1839,7 @@ class Taakbeheer {
                     // Update tellingen
                     await this.laadTellingen();
                     
-                    console.log('<i class="ti ti-check"></i> Inbox refreshed - new data detected');
+                    console.log('<i class="fas fa-check"></i> Inbox refreshed - new data detected');
                 } else {
                     console.log('ℹ️ Inbox refresh - no changes');
                 }
@@ -2027,7 +2027,7 @@ class Taakbeheer {
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
             const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="ti ti-repeat"></i></span>' : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Build extra info line
             let extraInfo = [];
@@ -2052,7 +2052,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties">⋮</button>
+                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
             `;
@@ -2075,7 +2075,7 @@ class Taakbeheer {
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
             const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="ti ti-repeat"></i></span>' : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             const duurText = taak.duur ? `${taak.duur} min` : '';
             const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
             
@@ -2299,7 +2299,7 @@ class Taakbeheer {
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
             const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="ti ti-repeat"></i></span>' : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
@@ -2338,7 +2338,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties">⋮</button>
+                    <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
                     <button onclick="app.verwijderTaak('${taak.id}')">×</button>
                 </div>
             `;
@@ -2361,7 +2361,7 @@ class Taakbeheer {
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
             const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="ti ti-repeat"></i></span>' : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
@@ -2419,7 +2419,7 @@ class Taakbeheer {
             const li = document.createElement('li');
             li.className = 'taak-item';
             
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="ti ti-repeat"></i></span>' : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             let acties = '';
             if (this.huidigeLijst === 'inbox') {
@@ -2475,7 +2475,7 @@ class Taakbeheer {
                         }
                     }
                 } else {
-                    console.log('<i class="ti ti-repeat"></i> Calculating next recurring date for task:', {
+                    console.log('<i class="fas fa-redo"></i> Calculating next recurring date for task:', {
                         verschijndatum: taak.verschijndatum,
                         herhalingType: taak.herhalingType,
                         taskObject: taak
@@ -2485,7 +2485,7 @@ class Taakbeheer {
                     console.log('<i class="ti ti-calendar"></i> Calculated next date:', nextDate);
                     
                     if (nextDate) {
-                        console.log('<i class="ti ti-check"></i> Next date exists, calling createNextRecurringTask...');
+                        console.log('<i class="fas fa-check"></i> Next date exists, calling createNextRecurringTask...');
                         nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
                         console.log('🎯 createNextRecurringTask result:', nextRecurringTaskId);
                     } else {
@@ -2544,7 +2544,7 @@ class Taakbeheer {
                             const newTaskResponse = await fetch(`/api/taak/${nextRecurringTaskId}`);
                             if (newTaskResponse.ok) {
                                 const newTask = await newTaskResponse.json();
-                                console.log('<i class="ti ti-repeat"></i> Adding new recurring task to local arrays:', newTask);
+                                console.log('<i class="fas fa-redo"></i> Adding new recurring task to local arrays:', newTask);
                                 
                                 // Add to both arrays used for drag & drop
                                 this.taken.push(newTask);
@@ -2625,7 +2625,7 @@ class Taakbeheer {
                     }
                     await this.laadTellingen();
                     
-                    console.log(`<i class="ti ti-check"></i> Task ${id} deleted successfully`);
+                    console.log(`<i class="fas fa-check"></i> Task ${id} deleted successfully`);
                 } else {
                     const error = await response.json();
                     toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
@@ -2859,7 +2859,7 @@ class Taakbeheer {
         }
         
         // Geen taken meer in inbox
-        toast.success('<i class="ti ti-confetti"></i> Inbox is leeg! Alle taken zijn verwerkt.');
+        toast.success('<i class="fas fa-party-horn"></i> Inbox is leeg! Alle taken zijn verwerkt.');
         return false;
     }
 
@@ -3272,7 +3272,7 @@ class Taakbeheer {
                 });
                 
                 if (response.ok) {
-                    console.log('<i class="ti ti-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
+                    console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
                     // Only remove from inbox AFTER successful save
                     this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
                     await this.laadTellingen();
@@ -3457,7 +3457,7 @@ class Taakbeheer {
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time for date comparison
         
-        console.log('<i class="ti ti-repeat"></i> calculateNextRecurringDate:', { baseDate, herhalingType, today: today.toISOString().split('T')[0] });
+        console.log('<i class="fas fa-redo"></i> calculateNextRecurringDate:', { baseDate, herhalingType, today: today.toISOString().split('T')[0] });
         
         switch (herhalingType) {
             case 'dagelijks':
@@ -3761,7 +3761,7 @@ class Taakbeheer {
         const maxIterations = 100; // Prevent infinite loops
         
         while (new Date(calculatedDate) <= today && iterations < maxIterations) {
-            console.log(`<i class="ti ti-repeat"></i> Date ${calculatedDate} is in past, calculating next occurrence...`);
+            console.log(`<i class="fas fa-redo"></i> Date ${calculatedDate} is in past, calculating next occurrence...`);
             iterations++;
             
             // Recalculate from the current calculated date
@@ -3779,7 +3779,7 @@ class Taakbeheer {
             return null;
         }
         
-        console.log(`<i class="ti ti-check"></i> Final calculated date: ${calculatedDate} (after ${iterations} iterations)`);
+        console.log(`<i class="fas fa-check"></i> Final calculated date: ${calculatedDate} (after ${iterations} iterations)`);
         return calculatedDate;
     }
 
@@ -3943,7 +3943,7 @@ class Taakbeheer {
 
     async createNextRecurringTask(originalTask, nextDate) {
         try {
-            console.log('<i class="ti ti-repeat"></i> Creating next recurring task:', {
+            console.log('<i class="fas fa-redo"></i> Creating next recurring task:', {
                 originalTask: originalTask,
                 nextDate: nextDate,
                 targetList: originalTask.lijst
@@ -3973,7 +3973,7 @@ class Taakbeheer {
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('<i class="ti ti-check"></i> New recurring task created with ID:', result.taskId);
+                console.log('<i class="fas fa-check"></i> New recurring task created with ID:', result.taskId);
                 
                 // Verify the task was actually created
                 try {
@@ -4897,7 +4897,7 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-acties" checked>
-                                        <span><i class="ti ti-clipboard"></i> Acties</span>
+                                        <span><i class="fas fa-clipboard"></i> Acties</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-opvolgen" checked>
@@ -4909,7 +4909,7 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-afgewerkt">
-                                        <span><i class="ti ti-check"></i> Afgewerkt</span>
+                                        <span><i class="fas fa-check"></i> Afgewerkt</span>
                                     </label>
                                 </div>
                             </div>
@@ -5070,7 +5070,7 @@ class Taakbeheer {
                 const datum = taak.verschijndatum ? 
                     new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
                 const recurringIndicator = taak.herhalingActief ? 
-                    ' <span class="recurring-indicator"><i class="ti ti-repeat"></i></span>' : '';
+                    ' <span class="recurring-indicator"><i class="fas fa-redo"></i></span>' : '';
 
                 // Highlight search term in task text
                 const highlightedText = this.highlightSearchTerm(taak.tekst, zoekTerm);
@@ -5101,9 +5101,9 @@ class Taakbeheer {
     getLijstLabel(lijstNaam) {
         const labels = {
             'inbox': '<i class="ti ti-inbox"></i> Inbox',
-            'acties': '<i class="ti ti-clipboard"></i> Acties',
+            'acties': '<i class="fas fa-clipboard"></i> Acties',
             'opvolgen': '⏳ Opvolgen',
-            'afgewerkte-taken': '<i class="ti ti-check"></i> Afgewerkt',
+            'afgewerkte-taken': '<i class="fas fa-check"></i> Afgewerkt',
             'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Wekelijks',
             'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Maandelijks',
             'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> 3-maandelijks',
@@ -5762,7 +5762,7 @@ class Taakbeheer {
                     
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
-                        <h3><i class="ti ti-clipboard"></i> Acties</h3>
+                        <h3><i class="fas fa-clipboard"></i> Acties</h3>
                         <div class="planning-acties-filters">
                             <input type="text" id="planningTaakFilter" placeholder="Zoek taak..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
@@ -5876,10 +5876,10 @@ class Taakbeheer {
 
     renderPlanningItem(planningItem) {
         const typeIcon = {
-            'taak': '⋮',
+            'taak': '<i class="fas fa-ellipsis-v"></i>',
             'geblokkeerd': '🔒',
             'pauze': '☕'
-        }[planningItem.type] || '⋮';
+        }[planningItem.type] || '<i class="fas fa-ellipsis-v"></i>';
         
         const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
         
@@ -6001,7 +6001,7 @@ class Taakbeheer {
                 dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
                 dragImage.style.borderRadius = '6px';
                 dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
-                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="ti ti-clipboard"></i></div>';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="fas fa-clipboard"></i></div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
@@ -6039,7 +6039,7 @@ class Taakbeheer {
                 dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
                 dragImage.style.borderRadius = '6px';
                 dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
-                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="ti ti-clipboard"></i></div>';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="fas fa-clipboard"></i></div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
@@ -6079,7 +6079,7 @@ class Taakbeheer {
                 dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
                 dragImage.style.borderRadius = '6px';
                 dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
-                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="ti ti-clipboard"></i></div>';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="fas fa-clipboard"></i></div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
@@ -6306,7 +6306,7 @@ class Taakbeheer {
     }
     
     updatePlanningLocally(planningItem, serverResponse) {
-        console.log('<i class="ti ti-repeat"></i> updatePlanningLocally called with:', { planningItem, serverResponse });
+        console.log('<i class="fas fa-redo"></i> updatePlanningLocally called with:', { planningItem, serverResponse });
         
         // Update local planning data immediately for fast visual feedback
         if (!this.currentPlanningData) {
@@ -6477,7 +6477,7 @@ class Taakbeheer {
                 dragImage.style.background = 'rgba(0, 123, 255, 0.5)';
                 dragImage.style.borderRadius = '6px';
                 dragImage.style.border = '2px solid rgba(0, 123, 255, 0.8)';
-                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="ti ti-clipboard"></i></div>';
+                dragImage.innerHTML = '<div style="color: white; font-size: 12px; text-align: center; line-height: 36px; font-weight: 500;"><i class="fas fa-clipboard"></i></div>';
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
@@ -6697,7 +6697,7 @@ class Taakbeheer {
             try {
                 // Find the task in planning actions array first, then fall back to main tasks
                 let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
-                console.log('<i class="ti ti-clipboard"></i> Local task found:', taak ? 'Yes' : 'No');
+                console.log('<i class="fas fa-clipboard"></i> Local task found:', taak ? 'Yes' : 'No');
             
             if (!taak) {
                 console.log('<i class="ti ti-search"></i> Task not found locally, fetching from API...');
@@ -6725,7 +6725,7 @@ class Taakbeheer {
             
             // Check if this is a recurring task
             const isRecurring = taak.herhalingActief && taak.herhalingType;
-            console.log('<i class="ti ti-repeat"></i> Is recurring task:', isRecurring);
+            console.log('<i class="fas fa-redo"></i> Is recurring task:', isRecurring);
             
             // Mark task as completed with current timestamp
             taak.afgewerkt = new Date().toISOString();
@@ -6757,9 +6757,9 @@ class Taakbeheer {
             // Mark task as completed using existing completion workflow
             console.log('🚀 Calling verplaatsTaakNaarAfgewerkt...');
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
-            console.log('<i class="ti ti-check"></i> verplaatsTaakNaarAfgewerkt result:', success);
+            console.log('<i class="fas fa-check"></i> verplaatsTaakNaarAfgewerkt result:', success);
             if (success) {
-                console.log('<i class="ti ti-confetti"></i> Task successfully marked as completed in database');
+                console.log('<i class="fas fa-party-horn"></i> Task successfully marked as completed in database');
                 
                 // Remove task from both arrays if present
                 console.log('🗑️ Removing task from local arrays...');
@@ -6771,7 +6771,7 @@ class Taakbeheer {
                 
                 // Refresh the daily planning view to update both actions list and calendar
                 if (this.huidigeLijst === 'dagelijkse-planning') {
-                    console.log('<i class="ti ti-repeat"></i> Updating daily planning - both calendar and actions list...');
+                    console.log('<i class="fas fa-redo"></i> Updating daily planning - both calendar and actions list...');
                     
                     // Add new recurring task to local arrays BEFORE updating UI
                     if (nextRecurringTaskId) {
@@ -6779,7 +6779,7 @@ class Taakbeheer {
                             const newTaskResponse = await fetch(`/api/taak/${nextRecurringTaskId}`);
                             if (newTaskResponse.ok) {
                                 const newTask = await newTaskResponse.json();
-                                console.log('<i class="ti ti-repeat"></i> Adding new recurring task to local arrays for daily planning:', newTask);
+                                console.log('<i class="fas fa-redo"></i> Adding new recurring task to local arrays for daily planning:', newTask);
                                 
                                 // Add to both arrays used for drag & drop
                                 this.taken.push(newTask);
@@ -6802,7 +6802,7 @@ class Taakbeheer {
                         // Use local planningActies array which has been updated
                         actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
                         this.bindDragAndDropEvents();
-                        console.log('<i class="ti ti-check"></i> Actions list updated with local data');
+                        console.log('<i class="fas fa-check"></i> Actions list updated with local data');
                     }
                     
                     // Also refresh the calendar to remove completed tasks from planning items
@@ -6815,7 +6815,7 @@ class Taakbeheer {
                     
                     if (planningResponse.ok) {
                         const updatedPlanning = await planningResponse.json();
-                        console.log('<i class="ti ti-clipboard"></i> Updated planning data received:', updatedPlanning.length, 'items');
+                        console.log('<i class="fas fa-clipboard"></i> Updated planning data received:', updatedPlanning.length, 'items');
                         console.log('<i class="ti ti-search"></i> Planning items for completed task:', updatedPlanning.filter(p => p.actieId === actieId));
                         
                         // Re-render calendar section with filtered data
@@ -6833,7 +6833,7 @@ class Taakbeheer {
                             
                             kalenderContainer.innerHTML = newHTML;
                             this.bindDragAndDropEvents(); // Re-bind events for calendar too
-                            console.log('<i class="ti ti-check"></i> Calendar updated with filtered planning data');
+                            console.log('<i class="fas fa-check"></i> Calendar updated with filtered planning data');
                         } else {
                             console.error('<i class="ti ti-x"></i> Kalender container not found in DOM');
                         }
@@ -6841,7 +6841,7 @@ class Taakbeheer {
                         console.error('<i class="ti ti-x"></i> Failed to fetch updated planning data:', planningResponse.status);
                     }
                 } else {
-                    console.log('<i class="ti ti-repeat"></i> Re-rendering normal view...');
+                    console.log('<i class="fas fa-redo"></i> Re-rendering normal view...');
                     // For other views, use normal renderTaken
                     await this.preservePlanningFilters(() => this.renderTaken());
                 }
@@ -6859,18 +6859,18 @@ class Taakbeheer {
                     toast.success(`${taskDisplay} afgerond! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // Refresh all data to show the new recurring task
-                    console.log('<i class="ti ti-repeat"></i> Refreshing all data after recurring task creation...');
+                    console.log('<i class="fas fa-redo"></i> Refreshing all data after recurring task creation...');
                     await this.laadTellingen();
                     
                     // For daily planning, refresh the actions list to show the new task
                     if (this.huidigeLijst === 'dagelijkse-planning') {
-                        console.log('<i class="ti ti-clipboard"></i> Refreshing actions list to show new recurring task...');
+                        console.log('<i class="fas fa-clipboard"></i> Refreshing actions list to show new recurring task...');
                         // Re-fetch actions from API to get the new recurring task
                         const actiesResponse = await fetch('/api/lijst/acties');
                         if (actiesResponse.ok) {
                             const refreshedActies = await actiesResponse.json();
                             this.planningActies = this.filterTakenOpDatum(refreshedActies, true);
-                            console.log('<i class="ti ti-check"></i> Planning actions refreshed with new recurring task');
+                            console.log('<i class="fas fa-check"></i> Planning actions refreshed with new recurring task');
                             
                             // Update the actions list display
                             const actiesContainer = document.getElementById('planningActiesLijst');
@@ -7223,7 +7223,7 @@ class Taakbeheer {
         
         // Copy to clipboard
         navigator.clipboard.writeText(values).then(() => {
-            output.textContent += '\n<i class="ti ti-check"></i> Copied to clipboard!';
+            output.textContent += '\n<i class="fas fa-check"></i> Copied to clipboard!';
         });
     }
 }
@@ -7761,7 +7761,7 @@ class UpdateManager {
                     <div class="update-toast-title">Nieuwe versie beschikbaar</div>
                     <div class="update-toast-subtitle">v${this.newVersion} is klaar om te laden</div>
                     <div class="update-toast-changelog">
-                        <a href="/changelog.html" target="_blank" class="changelog-link"><i class="ti ti-clipboard"></i> Bekijk wat er nieuw is</a>
+                        <a href="/changelog.html" target="_blank" class="changelog-link"><i class="fas fa-clipboard"></i> Bekijk wat er nieuw is</a>
                     </div>
                 </div>
                 <div class="update-toast-actions">

@@ -5003,10 +5003,10 @@ button:focus {
     }
 }
 
-/* ===== TABLER ICONS STYLING ===== */
+/* ===== FONT AWESOME ICONS STYLING ===== */
 
 /* General icon styling */
-.ti {
+.fas, .far, .fab {
     font-size: 16px;
     line-height: 1;
     display: inline-block;
@@ -5014,73 +5014,73 @@ button:focus {
 }
 
 /* Sidebar navigation icons */
-.lijst-icon .ti {
+.lijst-icon .fas {
     font-size: 18px;
     color: var(--macos-text-secondary);
 }
 
-.lijst-item.actief .lijst-icon .ti {
+.lijst-item.actief .lijst-icon .fas {
     color: var(--macos-blue);
 }
 
 /* Feature icons */
-.feature-icon .ti {
+.feature-icon .fas {
     font-size: 20px;
     color: var(--macos-blue);
 }
 
 /* Menu button icons */
-.acties-btn .ti {
+.acties-btn .fas {
     font-size: 14px;
     color: inherit;
 }
 
 /* User interface icons */
-.user-avatar .ti {
+.user-avatar .fas {
     font-size: 20px;
     color: var(--macos-text-secondary);
 }
 
-.btn-copy .ti {
+.btn-copy .fas {
     font-size: 14px;
     color: inherit;
 }
 
 /* Dropdown arrow icons */
-.dropdown-arrow .ti {
+.dropdown-arrow .fas {
     font-size: 12px;
     color: var(--macos-text-secondary);
     transition: transform 0.2s ease;
 }
 
-.dropdown-header.expanded .dropdown-arrow .ti {
+.dropdown-header.expanded .dropdown-arrow .fas {
     transform: rotate(90deg);
 }
 
 /* Toast notification icons */
-.toast .ti {
+.toast .fas {
     font-size: 16px;
     margin-right: 8px;
 }
 
 /* Keyboard help icons */
-.keyboard-help .ti {
+.keyboard-help .fas {
     color: var(--macos-blue);
     margin-right: 4px;
 }
 
 /* Calendar and planning icons */
-.kalender-content .ti {
+.kalender-content .fas {
     font-size: 14px;
 }
 
 /* Responsive icon sizes */
 @media (max-width: 768px) {
-    .lijst-icon .ti {
+    .lijst-icon .fas {
         font-size: 16px;
     }
     
-    .feature-icon .ti {
+    .feature-icon .fas {
         font-size: 18px;
     }
 }
