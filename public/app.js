@@ -4143,8 +4143,20 @@ class Taakbeheer {
                 
                 if (isPriority) {
                     item.classList.add('priority-task');
+                    // Add priority star if not already present
+                    if (!item.querySelector('.priority-indicator')) {
+                        const titleElement = item.querySelector('.planning-item-title');
+                        if (titleElement) {
+                            titleElement.insertAdjacentHTML('beforebegin', '<span class="priority-indicator">⭐</span>');
+                        }
+                    }
                 } else {
                     item.classList.remove('priority-task');
+                    // Remove priority star if present
+                    const priorityIndicator = item.querySelector('.priority-indicator');
+                    if (priorityIndicator) {
+                        priorityIndicator.remove();
+                    }
                 }
             }
         });
