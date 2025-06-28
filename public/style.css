@@ -937,7 +937,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 }
 
 /* General button styling - exclude table buttons and specific buttons */
-button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.btn-logout):not(.btn-copy) {
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.btn-logout):not(.btn-copy):not(.verwijder-btn):not(.delete-btn):not(.delete-planning):not(.acties-btn) {
     background: var(--soft-blue);
     color: white;
     border: none;
@@ -946,14 +946,14 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 }
 
 /* General button hover - exclude table buttons and specific buttons */
-button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.btn-logout):not(.btn-copy):hover {
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.btn-logout):not(.btn-copy):not(.verwijder-btn):not(.delete-btn):not(.delete-planning):not(.acties-btn):hover {
     background: var(--soft-blue-hover);
     transform: translateY(-1px);
     box-shadow: var(--macos-shadow-medium);
 }
 
 /* General button active - exclude table buttons */
-button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):active {
+button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not(.verplaats-btn-small):not(.plan-btn):not(.verwijder-btn):not(.delete-btn):not(.delete-planning):not(.acties-btn):active {
     transform: translateY(0);
     box-shadow: var(--macos-shadow-light);
 }
