@@ -354,6 +354,7 @@ body {
 /* ===== ACTIES TABLE STYLING ===== */
 .acties-filters {
     display: flex;
+    align-items: end;
     gap: 16px;
     margin-bottom: 20px;
     padding: 16px;
@@ -400,11 +401,13 @@ body {
 
 .filter-groep select,
 .filter-groep input {
-    padding: 4px 8px;
+    padding: 6px 8px;
     border: 1px solid var(--macos-gray-4);
     border-radius: var(--macos-radius-small);
     background: var(--macos-bg-primary);
     font-size: 12px;
+    height: 32px;
+    box-sizing: border-box;
 }
 
 .acties-table-container {
@@ -656,6 +659,7 @@ body {
     gap: 8px;
     font-size: 12px;
     white-space: nowrap;
+    height: 32px;
 }
 
 .checkbox-wrapper input[type="checkbox"] {
