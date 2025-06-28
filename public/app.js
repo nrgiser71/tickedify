@@ -4146,9 +4146,24 @@ class Taakbeheer {
                 e.preventDefault();
                 slot.classList.remove('drag-over', 'drag-rejected');
                 
-                const taakId = e.dataTransfer.getData('text/plain');
                 const position = parseInt(slot.dataset.position);
                 
+                // Parse drag data - could be JSON or plain text
+                let taakId;
+                try {
+                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (dragData.type === 'actie') {
+                        taakId = dragData.actieId;
+                    } else {
+                        console.log('🔍 Unknown drag type:', dragData.type);
+                        return;
+                    }
+                } catch (error) {
+                    // Fallback to plain text (for priority tasks)
+                    taakId = e.dataTransfer.getData('text/plain');
+                }
+                
+                console.log('🔍 Extracted task ID:', taakId);
                 this.handlePriorityDrop(taakId, position);
             });
         });
@@ -4176,11 +4191,20 @@ class Taakbeheer {
                 return;
             }
             
+            // Debug logging
+            console.log('🔍 Looking for task with ID:', taakId);
+            console.log('🔍 planningActies array:', this.planningActies?.length || 0, 'items');
+            console.log('🔍 taken array:', this.taken?.length || 0, 'items');
+            
             // Find task in actions list
             const taak = this.planningActies?.find(t => t.id === taakId) || 
                         this.taken?.find(t => t.id === taakId);
             
+            console.log('🔍 Found task:', taak);
+            
             if (!taak) {
+                console.error('❌ Task not found! Available IDs in planningActies:', this.planningActies?.map(t => t.id));
+                console.error('❌ Available IDs in taken:', this.taken?.map(t => t.id));
                 toast.error('Taak niet gevonden');
                 return;
             }
@@ -6062,8 +6086,12 @@ class Taakbeheer {
             const taak = this.topPrioriteiten[index];
             
             if (taak) {
-                const projectNaam = this.getProjectNaam(taak.project_id);
-                const contextNaam = this.getContextNaam(taak.context_id);
+                // Handle both database format (project_id) and frontend format (projectId)
+                const projectId = taak.project_id || taak.projectId;
+                const contextId = taak.context_id || taak.contextId;
+                
+                const projectNaam = this.getProjectNaam(projectId);
+                const contextNaam = this.getContextNaam(contextId);
                 const duurText = taak.duur ? `${taak.duur}min` : '';
                 
                 return `
