@@ -2512,12 +2512,18 @@ class Taakbeheer {
                 // Remove from local array immediately after successful server update
                 this.taken = this.taken.filter(t => t.id !== id);
                 
-                // Visual feedback: fade out the completed task
+                // Remove DOM element immediately without full re-render
                 const checkbox = document.querySelector(`input[onchange*="${id}"]`);
                 const rowElement = checkbox?.closest('tr, li, .project-actie-item');
                 if (rowElement) {
-                    rowElement.style.opacity = '0.3';
-                    rowElement.style.transition = 'opacity 0.2s';
+                    // Fade out and remove - NO SCROLL POSITION CHANGE
+                    rowElement.style.transition = 'opacity 0.3s';
+                    rowElement.style.opacity = '0';
+                    setTimeout(() => {
+                        if (rowElement.parentNode) {
+                            rowElement.parentNode.removeChild(rowElement);
+                        }
+                    }, 300);
                 }
                 
                 // Background updates (don't await these for faster response)
@@ -2562,11 +2568,8 @@ class Taakbeheer {
                     toast.success('Taak afgewerkt!');
                 }
                 
-                // Don't refresh from server - just update the DOM to remove the completed task
-                // The local array is already correct, and server background updates handle persistence
-                setTimeout(() => {
-                    this.preserveScrollPosition(() => this.renderTaken());
-                }, 100);
+                // No need to re-render - DOM element already removed above
+                // Local array is correct, server background sync handles persistence
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
