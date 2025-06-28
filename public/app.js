@@ -7948,11 +7948,11 @@ class QuickAddModal {
             const beforeTasks = await beforeResponse.json();
             console.log('🔍 DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
             
-            // UNIVERSAL SAFE APPROACH: Direct API call to inbox
+            // SAFE APPROACH: Use dedicated single task endpoint
             const requestBody = { tekst: taakNaam };
             console.log('🔍 DEBUG: Request body:', requestBody);
             
-            const response = await fetch('/api/lijst/inbox', {
+            const response = await fetch('/api/taak/add-to-inbox', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

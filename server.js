@@ -1831,6 +1831,53 @@ app.post('/api/lijst/:naam', async (req, res) => {
     }
 });
 
+// SAFE: Add single task to inbox (for Quick Add)
+app.post('/api/taak/add-to-inbox', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = getCurrentUserId(req);
+        const { tekst } = req.body;
+        
+        console.log('🔍 SERVER: Adding single task to inbox:', { tekst, userId });
+        
+        if (!tekst) {
+            return res.status(400).json({ error: 'Tekst is required' });
+        }
+        
+        // Get current inbox first
+        const currentInbox = await db.getList('inbox', userId);
+        console.log('🔍 SERVER: Current inbox has', currentInbox.length, 'tasks');
+        
+        // Create new task
+        const newTask = {
+            id: generateId(),
+            tekst: tekst,
+            aangemaakt: new Date().toISOString()
+        };
+        
+        // Add to current inbox
+        const updatedInbox = [...currentInbox, newTask];
+        console.log('🔍 SERVER: Updated inbox will have', updatedInbox.length, 'tasks');
+        
+        // Save updated inbox
+        const success = await db.saveList('inbox', updatedInbox, userId);
+        
+        if (success) {
+            console.log('✅ SERVER: Successfully added task to inbox');
+            res.json({ success: true, taskId: newTask.id });
+        } else {
+            console.error('❌ SERVER: Failed to save updated inbox');
+            res.status(500).json({ error: 'Fout bij opslaan' });
+        }
+    } catch (error) {
+        console.error('Error adding task to inbox:', error);
+        res.status(500).json({ error: 'Fout bij opslaan', details: error.message });
+    }
+});
+
 app.put('/api/taak/:id', async (req, res) => {
     try {
         if (!db) {
