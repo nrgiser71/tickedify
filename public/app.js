@@ -2289,9 +2289,6 @@ class Taakbeheer {
                         Toon toekomstige taken
                     </label>
                 </div>
-                <div class="filter-groep">
-                    <button id="addTestTasksBtn" style="background: orange; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add 20 Test Tasks</button>
-                </div>
             </div>
             <ul id="acties-lijst" class="taak-lijst"></ul>
         `;
@@ -8194,51 +8191,4 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);
 
-// Add test tasks functionality (temporary for testing)
-// Use event delegation since the button is dynamically created
-document.addEventListener('click', async (e) => {
-    if (e.target && e.target.id === 'addTestTasksBtn') {
-        if (!app.isLoggedIn()) {
-            toast.warning('Log in om test taken toe te voegen.');
-            return;
-        }
-        
-        const addTestTasksBtn = e.target;
-        addTestTasksBtn.disabled = true;
-        addTestTasksBtn.textContent = 'Adding...';
-        
-        try {
-            const tasks = [];
-            for (let i = 1; i <= 20; i++) {
-                tasks.push({
-                    id: `test-scroll-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    tekst: `Test scroll taak #${i} voor scroll position testing`,
-                    verschijndatum: new Date().toISOString().split('T')[0],
-                    duur: 5,
-                    contextId: 'JB thuis',
-                    lijst: 'acties'
-                });
-            }
-            
-            // Add all tasks to the local array
-            app.taken = app.taken.concat(tasks);
-            
-            // Save to server
-            await app.slaLijstOp();
-            
-            // Re-render to show new tasks
-            app.renderTaken();
-            
-            toast.success('20 test taken toegevoegd aan acties lijst!');
-            addTestTasksBtn.style.display = 'none'; // Hide after use
-            
-        } catch (error) {
-            console.error('Error adding test tasks:', error);
-            toast.error('Fout bij toevoegen test taken.');
-        }
-        
-        addTestTasksBtn.disabled = false;
-        addTestTasksBtn.textContent = 'Add 20 Test Tasks';
-    }
-});
 
