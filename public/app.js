@@ -452,7 +452,7 @@ class Taakbeheer {
 
     async loadUserData() {
         // Called by AuthManager after successful login
-        await this.laadTellingen();
+        // await this.laadTellingen(); // Disabled - tellers removed from sidebar
         
         // Navigate to the restored current list (includes sidebar update)
         await this.navigeerNaarLijst(this.huidigeLijst);
@@ -1251,7 +1251,7 @@ class Taakbeheer {
             this.projecten.push(nieuwProject);
             await this.slaProjectenOp();
             await this.renderProjectenItems();
-            await this.laadTellingen();
+            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
         }
     }
 
@@ -1285,7 +1285,7 @@ class Taakbeheer {
         this.projecten = this.projecten.filter(p => p.id !== id);
         await this.slaProjectenOp();
         await this.renderProjectenItems();
-        await this.laadTellingen();
+        // await this.laadTellingen(); // Disabled - tellers removed from sidebar
     }
 
     async toggleProject(projectId) {
@@ -1450,7 +1450,7 @@ class Taakbeheer {
             }
             
             // Update tellingen in sidebar
-            await this.laadTellingen();
+            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
             
             // Herlaad het project om de nieuwe status te tonen, maar behoud de open staat
             const projectId = containerId.replace('taken-', '');
@@ -1465,7 +1465,7 @@ class Taakbeheer {
                 
                 // Refresh all lists to show the new recurring task
                 console.log('<i class="fas fa-redo"></i> Refreshing lists after recurring task creation...');
-                await this.laadTellingen();
+                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 
                 // Refresh the current view if needed with preserved filters
                 if (this.huidigeLijst === 'acties') {
@@ -1518,7 +1518,7 @@ class Taakbeheer {
             });
             
             // Update tellingen in sidebar
-            await this.laadTellingen();
+            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
             
             // Herlaad het project om de nieuwe status te tonen, maar behoud de open staat
             const projectId = containerId.replace('taken-', '');
@@ -1850,7 +1850,7 @@ class Taakbeheer {
                     });
                     
                     // Update tellingen
-                    await this.laadTellingen();
+                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                     
                     console.log('<i class="fas fa-check"></i> Inbox refreshed - new data detected');
                 } else {
@@ -1930,7 +1930,7 @@ class Taakbeheer {
                 this.taken.push(nieuweTaak);
                 await this.slaLijstOp();
                 this.renderTaken();
-                await this.laadTellingen();
+                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 
                 input.value = '';
                 input.focus();
@@ -2199,7 +2199,7 @@ class Taakbeheer {
             this.taken = this.taken.filter(t => t.id !== id);
             await this.renderTaken();
             // Update counts 
-            await this.laadTellingen();
+            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
         }, {
             operationId: 'verplaats-uitgestelde-taak',
             showGlobal: true,
@@ -2549,7 +2549,7 @@ class Taakbeheer {
                     console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed - NOT saving list to prevent data loss');
                     toast.warning('Herhalende taak kon niet worden aangemaakt. Controleer de Acties lijst later.');
                 }
-                this.laadTellingen().catch(console.error);
+                // this.laadTellingen().catch(console.error); // Disabled - tellers removed from sidebar
                 
                 // Show success message and refresh UI with scroll preservation
                 if (isRecurring && nextRecurringTaskId) {
@@ -2557,7 +2557,7 @@ class Taakbeheer {
                     toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // For recurring tasks, add new task to local arrays immediately
-                    this.laadTellingen();
+                    // this.laadTellingen(); // Disabled - tellers removed from sidebar
                     if (nextRecurringTaskId && this.huidigeLijst === 'acties') {
                         // Add the new recurring task to local arrays immediately for drag & drop
                         try {
@@ -2658,7 +2658,7 @@ class Taakbeheer {
                     } else {
                         this.renderTaken();
                     }
-                    await this.laadTellingen();
+                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                     
                     console.log(`<i class="fas fa-check"></i> Task ${id} deleted successfully`);
                 } else {
@@ -3075,7 +3075,7 @@ class Taakbeheer {
                 
                 // Refresh huidige lijst en tellingen
                 await this.laadHuidigeLijst();
-                await this.laadTellingen();
+                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 toast.success('Taak verplaatst naar Inbox');
             } else {
                 toast.error('Fout bij verplaatsen naar Inbox');
@@ -3133,7 +3133,7 @@ class Taakbeheer {
                 
                 // Herlaad de lijst en tellingen om de update te tonen
                 await this.laadHuidigeLijst();
-                await this.laadTellingen();
+                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 
                 const dagNaam = dagenVoorruit === 0 ? 'vandaag' : 
                                dagenVoorruit === 1 ? 'morgen' : 
@@ -3166,7 +3166,7 @@ class Taakbeheer {
             
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
-            await this.laadTellingen();
+            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
             
             const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
                 .replace('wekelijks', 'Wekelijks')
@@ -3195,7 +3195,7 @@ class Taakbeheer {
             
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
-            await this.laadTellingen();
+            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
             
             toast.success('Taak verplaatst naar Opvolgen');
         }, {
@@ -3315,7 +3315,7 @@ class Taakbeheer {
                     
                     // Preserve filters when updating actions list
                     await this.preserveActionsFilters(() => this.renderTaken());
-                    await this.laadTellingen();
+                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                     this.sluitPopup();
                 }
             } else {
@@ -3348,7 +3348,7 @@ class Taakbeheer {
                     console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
                     // Only remove from inbox AFTER successful save
                     this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-                    await this.laadTellingen();
+                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                     
                     // If we're currently viewing acties, refresh the list with preserved filters
                     if (this.huidigeLijst === 'acties') {
@@ -5440,7 +5440,7 @@ class Taakbeheer {
                 this.taken = originalTaken;
                 
                 // Update counts
-                await this.laadTellingen();
+                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 
             }, {
                 operationId: 'add-mind-dump-item',
@@ -6919,7 +6919,7 @@ class Taakbeheer {
                     await this.preservePlanningFilters(() => this.renderTaken());
                 }
                 this.updateTotaalTijd(); // Update total time
-                await this.laadTellingen();
+                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 console.log('📈 Tellingen updated');
                 
                 // Show success message with task name
@@ -6933,7 +6933,7 @@ class Taakbeheer {
                     
                     // Refresh all data to show the new recurring task
                     console.log('<i class="fas fa-redo"></i> Refreshing all data after recurring task creation...');
-                    await this.laadTellingen();
+                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                     
                     // For daily planning, refresh the actions list to show the new task
                     if (this.huidigeLijst === 'dagelijkse-planning') {
