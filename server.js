@@ -2478,6 +2478,105 @@ app.post('/api/taak/recurring', async (req, res) => {
     }
 });
 
+// Priority management endpoints
+app.put('/api/taak/:id/prioriteit', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const { prioriteit, datum } = req.body; // prioriteit: 1-3 of null, datum: YYYY-MM-DD
+        const userId = getCurrentUserId(req);
+        
+        console.log('Setting task priority:', { id, prioriteit, datum, userId });
+        
+        const { pool } = require('./database');
+        
+        if (prioriteit === null || prioriteit === undefined) {
+            // Remove priority
+            await pool.query(`
+                UPDATE taken 
+                SET top_prioriteit = NULL, prioriteit_datum = NULL 
+                WHERE id = $1 AND user_id = $2
+            `, [id, userId]);
+        } else {
+            // Set priority
+            await pool.query(`
+                UPDATE taken 
+                SET top_prioriteit = $1, prioriteit_datum = $2 
+                WHERE id = $3 AND user_id = $4
+            `, [prioriteit, datum, id, userId]);
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error setting task priority:', error);
+        res.status(500).json({ error: 'Fout bij instellen prioriteit' });
+    }
+});
+
+app.get('/api/prioriteiten/:datum', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { datum } = req.params; // YYYY-MM-DD
+        const userId = getCurrentUserId(req);
+        
+        const { pool } = require('./database');
+        const result = await pool.query(`
+            SELECT * FROM taken 
+            WHERE prioriteit_datum = $1 AND user_id = $2 AND top_prioriteit IS NOT NULL
+            ORDER BY top_prioriteit
+        `, [datum, userId]);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error getting priorities:', error);
+        res.status(500).json({ error: 'Fout bij ophalen prioriteiten' });
+    }
+});
+
+app.post('/api/prioriteiten/reorder', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { prioriteiten } = req.body; // Array of {id, prioriteit}
+        const userId = getCurrentUserId(req);
+        
+        const { pool } = require('./database');
+        
+        // Update priorities in transaction
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            for (const item of prioriteiten) {
+                await client.query(`
+                    UPDATE taken 
+                    SET top_prioriteit = $1 
+                    WHERE id = $2 AND user_id = $3
+                `, [item.prioriteit, item.id, userId]);
+            }
+            
+            await client.query('COMMIT');
+            res.json({ success: true });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error('Error reordering priorities:', error);
+        res.status(500).json({ error: 'Fout bij herordenen prioriteiten' });
+    }
+});
+
 // Debug endpoint to check all tasks for 16/06
 app.get('/api/debug/june16', async (req, res) => {
     try {

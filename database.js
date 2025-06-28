@@ -57,7 +57,9 @@ const initDatabase = async () => {
         ADD COLUMN IF NOT EXISTS herhaling_waarde INTEGER,
         ADD COLUMN IF NOT EXISTS herhaling_actief BOOLEAN DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS opmerkingen TEXT,
-        ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id)
+        ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id),
+        ADD COLUMN IF NOT EXISTS top_prioriteit INTEGER CHECK (top_prioriteit IN (1, 2, 3)),
+        ADD COLUMN IF NOT EXISTS prioriteit_datum DATE
       `);
       console.log('✅ Recurring task columns and opmerkingen added/verified');
     } catch (alterError) {
@@ -68,7 +70,9 @@ const initDatabase = async () => {
         { name: 'herhaling_waarde', type: 'INTEGER' },
         { name: 'herhaling_actief', type: 'BOOLEAN DEFAULT FALSE' },
         { name: 'opmerkingen', type: 'TEXT' },
-        { name: 'user_id', type: 'VARCHAR(50) REFERENCES users(id)' }
+        { name: 'user_id', type: 'VARCHAR(50) REFERENCES users(id)' },
+        { name: 'top_prioriteit', type: 'INTEGER CHECK (top_prioriteit IN (1, 2, 3))' },
+        { name: 'prioriteit_datum', type: 'DATE' }
       ];
       
       for (const col of recurringColumns) {

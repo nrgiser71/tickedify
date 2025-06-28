@@ -4089,6 +4089,159 @@ class Taakbeheer {
         return context ? context.naam : 'Onbekende context';
     }
 
+    async removePrioriteit(position) {
+        const index = position - 1;
+        const taak = this.topPrioriteiten[index];
+        
+        if (taak) {
+            try {
+                // Remove priority from server
+                await fetch(`/api/taak/${taak.id}/prioriteit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prioriteit: null })
+                });
+                
+                // Update local state
+                this.topPrioriteiten[index] = null;
+                
+                // Re-render slots
+                const prioriteitSlots = document.getElementById('prioriteitSlots');
+                if (prioriteitSlots) {
+                    prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
+                    this.bindPrioriteitEvents();
+                }
+                
+                toast.success(`Taak verwijderd uit prioriteit ${position}`);
+            } catch (error) {
+                console.error('Error removing priority:', error);
+                toast.error('Fout bij verwijderen prioriteit');
+            }
+        }
+    }
+
+    bindPrioriteitEvents() {
+        // Enable drag and drop for priority slots
+        const prioriteitSlots = document.querySelectorAll('.prioriteit-slot');
+        prioriteitSlots.forEach(slot => {
+            // Enable drop events
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const position = parseInt(slot.dataset.position);
+                const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
+                
+                // Check if slot is empty or if we're at max capacity
+                if (slot.classList.contains('empty') || currentTaskCount < 3) {
+                    slot.classList.add('drag-over');
+                } else {
+                    slot.classList.add('drag-rejected');
+                }
+            });
+            
+            slot.addEventListener('dragleave', (e) => {
+                slot.classList.remove('drag-over', 'drag-rejected');
+            });
+            
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                slot.classList.remove('drag-over', 'drag-rejected');
+                
+                const taakId = e.dataTransfer.getData('text/plain');
+                const position = parseInt(slot.dataset.position);
+                
+                this.handlePriorityDrop(taakId, position);
+            });
+        });
+        
+        // Enable drag for existing priority tasks
+        const prioriteitTaken = document.querySelectorAll('.prioriteit-taak');
+        prioriteitTaken.forEach(taak => {
+            taak.addEventListener('dragstart', (e) => {
+                const slot = taak.closest('.prioriteit-slot');
+                const taakId = slot.dataset.taakId;
+                e.dataTransfer.setData('text/plain', taakId);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+        });
+    }
+
+    async handlePriorityDrop(taakId, position) {
+        try {
+            // Check if max capacity reached
+            const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
+            const targetSlot = this.topPrioriteiten[position - 1];
+            
+            if (!targetSlot && currentTaskCount >= 3) {
+                toast.warning('Maximum 3 prioriteiten bereikt! Verwijder eerst een andere prioriteit.');
+                return;
+            }
+            
+            // Find task in actions list
+            const taak = this.planningActies?.find(t => t.id === taakId) || 
+                        this.taken?.find(t => t.id === taakId);
+            
+            if (!taak) {
+                toast.error('Taak niet gevonden');
+                return;
+            }
+            
+            // Set priority on server
+            const today = new Date().toISOString().split('T')[0];
+            await fetch(`/api/taak/${taakId}/prioriteit`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    prioriteit: position, 
+                    datum: today 
+                })
+            });
+            
+            // Update local state
+            this.topPrioriteiten[position - 1] = taak;
+            
+            // Re-render slots
+            const prioriteitSlots = document.getElementById('prioriteitSlots');
+            if (prioriteitSlots) {
+                prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
+                this.bindPrioriteitEvents();
+            }
+            
+            toast.success(`"${taak.tekst}" toegevoegd als prioriteit ${position}`);
+        } catch (error) {
+            console.error('Error setting priority:', error);
+            toast.error('Fout bij instellen prioriteit');
+        }
+    }
+
+    async loadTopPrioriteiten() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const response = await fetch(`/api/prioriteiten/${today}`);
+            
+            if (response.ok) {
+                const prioriteiten = await response.json();
+                
+                // Initialize empty array
+                this.topPrioriteiten = [null, null, null];
+                
+                // Fill in priorities based on their position
+                prioriteiten.forEach(taak => {
+                    if (taak.top_prioriteit >= 1 && taak.top_prioriteit <= 3) {
+                        this.topPrioriteiten[taak.top_prioriteit - 1] = taak;
+                    }
+                });
+                
+                console.log('Loaded top priorities:', this.topPrioriteiten);
+            } else {
+                console.log('No priorities found for today');
+                this.topPrioriteiten = [null, null, null];
+            }
+        } catch (error) {
+            console.error('Error loading priorities:', error);
+            this.topPrioriteiten = [null, null, null];
+        }
+    }
+
     async vulFilterDropdowns() {
         // Ensure projects and contexts are loaded first
         if (!this.projecten || this.projecten.length === 0) {
@@ -5780,6 +5933,9 @@ class Taakbeheer {
         // Store actions for filtering (make available to filter functions)
         this.planningActies = acties;
         
+        // Load top priorities for today
+        await this.loadTopPrioriteiten();
+        
         // Laad dagelijkse planning voor vandaag
         const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
         const planning = planningResponse.ok ? await planningResponse.json() : [];
@@ -5836,6 +5992,14 @@ class Taakbeheer {
                         </div>
                     </div>
                     
+                    <!-- Top 3 Priorities - fixed medium section -->
+                    <div class="top-prioriteiten-sectie">
+                        <h3>⭐ Top 3 Prioriteiten</h3>
+                        <div class="prioriteit-slots" id="prioriteitSlots">
+                            ${this.renderPrioriteitSlots()}
+                        </div>
+                    </div>
+                    
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
                         <h3><i class="fas fa-clipboard"></i> Acties</h3>
@@ -5880,10 +6044,51 @@ class Taakbeheer {
         // Bind events for dagelijkse planning
         this.bindDagelijksePlanningEvents();
         this.bindDragAndDropEvents();
+        this.bindPrioriteitEvents();
         this.updateTotaalTijd();
         
         // Populate filter dropdowns
         this.populatePlanningFilters();
+    }
+
+    renderPrioriteitSlots() {
+        // Initialize priorities array if not exists
+        if (!this.topPrioriteiten) {
+            this.topPrioriteiten = [null, null, null]; // 3 slots: positions 0, 1, 2
+        }
+        
+        return [1, 2, 3].map(position => {
+            const index = position - 1;
+            const taak = this.topPrioriteiten[index];
+            
+            if (taak) {
+                const projectNaam = this.getProjectNaam(taak.project_id);
+                const contextNaam = this.getContextNaam(taak.context_id);
+                const duurText = taak.duur ? `${taak.duur}min` : '';
+                
+                return `
+                    <div class="prioriteit-slot filled" data-position="${position}" data-taak-id="${taak.id}">
+                        <div class="slot-nummer">${position}</div>
+                        <div class="slot-content">
+                            <div class="prioriteit-taak" draggable="true">
+                                <div class="prioriteit-titel">${taak.tekst}</div>
+                                <div class="prioriteit-details">${projectNaam} • ${contextNaam} • ${duurText}</div>
+                            </div>
+                        </div>
+                        <button class="remove-prioriteit" onclick="app.removePrioriteit(${position})" title="Verwijder uit prioriteiten">×</button>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="prioriteit-slot empty" data-position="${position}">
+                        <div class="slot-nummer">${position}</div>
+                        <div class="slot-content">
+                            <div class="slot-placeholder">Sleep hier je belangrijkste taak</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
     }
 
     renderActiesVoorPlanning(acties, ingeplandeActies) {

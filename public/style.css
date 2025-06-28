@@ -2970,6 +2970,167 @@ button:focus {
     border-color: var(--soft-green-hover);
 }
 
+/* Top 3 Priorities section */
+.top-prioriteiten-sectie {
+    background: linear-gradient(135deg, #FFF8DC, #FFFACD);
+    padding: 12px;
+    border-radius: 6px;
+    border: 2px solid #FFD700;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+}
+
+.top-prioriteiten-sectie h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #B8860B;
+    font-weight: 600;
+    text-align: center;
+}
+
+.prioriteit-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prioriteit-slot {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+    min-height: 50px;
+}
+
+.prioriteit-slot.empty {
+    border-style: dashed;
+    border-color: #FFD700;
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.prioriteit-slot.empty:hover {
+    border-color: #FFA500;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.prioriteit-slot.filled {
+    border-color: #FFD700;
+    background: linear-gradient(135deg, #FFF, #FFFEF7);
+    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.1);
+}
+
+.prioriteit-slot.filled:hover {
+    border-color: #FFA500;
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+.prioriteit-slot.drag-over {
+    border-color: #FF6347;
+    background: rgba(255, 99, 71, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 99, 71, 0.3);
+}
+
+.prioriteit-slot.drag-rejected {
+    border-color: #DC143C;
+    background: rgba(220, 20, 60, 0.1);
+    animation: shake 0.5s ease-in-out;
+}
+
+.slot-nummer {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.slot-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.slot-placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+}
+
+.prioriteit-taak {
+    cursor: grab;
+}
+
+.prioriteit-taak:active {
+    cursor: grabbing;
+}
+
+.prioriteit-titel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prioriteit-details {
+    font-size: 11px;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.remove-prioriteit {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background: #FF6347;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.prioriteit-slot.filled:hover .remove-prioriteit {
+    opacity: 1;
+}
+
+.remove-prioriteit:hover {
+    background: #DC143C;
+    transform: scale(1.1);
+}
+
+/* Shake animation for rejected drops */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
 /* Actions section - takes remaining space */
 .acties-sectie {
     background: white;
