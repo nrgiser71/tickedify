@@ -4148,19 +4148,20 @@ class Taakbeheer {
                 
                 const position = parseInt(slot.dataset.position);
                 
-                // Parse drag data - could be JSON or plain text
+                // Parse drag data - should be JSON now
                 let taakId;
                 try {
                     const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    if (dragData.type === 'actie') {
+                    if (dragData.type === 'actie' || dragData.type === 'prioriteit') {
                         taakId = dragData.actieId;
                     } else {
                         console.log('🔍 Unknown drag type:', dragData.type);
                         return;
                     }
                 } catch (error) {
-                    // Fallback to plain text (for priority tasks)
-                    taakId = e.dataTransfer.getData('text/plain');
+                    console.error('🔍 Failed to parse drag data:', error);
+                    toast.error('Fout bij verwerken drag data');
+                    return;
                 }
                 
                 console.log('🔍 Extracted task ID:', taakId);
@@ -4174,7 +4175,17 @@ class Taakbeheer {
             taak.addEventListener('dragstart', (e) => {
                 const slot = taak.closest('.prioriteit-slot');
                 const taakId = slot.dataset.taakId;
-                e.dataTransfer.setData('text/plain', taakId);
+                
+                // Find the task to get duration
+                const taskData = this.topPrioriteiten.find(t => t && t.id === taakId);
+                const duurMinuten = taskData?.duur || 60;
+                
+                // Send JSON data like other draggable items
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'prioriteit',
+                    actieId: taakId,
+                    duurMinuten: duurMinuten
+                }));
                 e.dataTransfer.effectAllowed = 'move';
             });
         });
@@ -4223,11 +4234,26 @@ class Taakbeheer {
             // Update local state
             this.topPrioriteiten[position - 1] = taak;
             
+            // Remove from planning actions list (so it doesn't show in sidebar anymore)
+            if (this.planningActies) {
+                this.planningActies = this.planningActies.filter(t => t.id !== taakId);
+            }
+            
             // Re-render slots
             const prioriteitSlots = document.getElementById('prioriteitSlots');
             if (prioriteitSlots) {
                 prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
                 this.bindPrioriteitEvents();
+            }
+            
+            // Re-render actions list to remove the task
+            const actiesContainer = document.getElementById('planningActiesLijst');
+            if (actiesContainer) {
+                const today = new Date().toISOString().split('T')[0];
+                const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
+                const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
+                actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies, ingeplandeActies);
+                this.bindDragAndDropEvents();
             }
             
             toast.success(`"${taak.tekst}" toegevoegd als prioriteit ${position}`);
@@ -6541,15 +6567,18 @@ class Taakbeheer {
             
             if (data.type === 'template') {
                 planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
-            } else if (data.type === 'actie') {
+            } else if (data.type === 'actie' || data.type === 'prioriteit') {
                 planningItem.actieId = data.actieId;
                 
                 // Use cached data first for speed (avoid API call)
                 let actie = this.planningActies?.find(t => t.id === data.actieId) || 
-                           this.taken.find(t => t.id === data.actieId);
+                           this.taken?.find(t => t.id === data.actieId) ||
+                           this.topPrioriteiten?.find(t => t && t.id === data.actieId);
                 
                 if (actie) {
-                    const projectNaam = this.getProjectNaam(actie.projectId);
+                    // Handle both database format (project_id) and frontend format (projectId)
+                    const projectId = actie.project_id || actie.projectId;
+                    const projectNaam = this.getProjectNaam(projectId);
                     planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
                 } else {
                     // Only fetch from API if not found in cache
@@ -6559,7 +6588,9 @@ class Taakbeheer {
                         const acties = await actiesResponse.json();
                         actie = acties.find(t => t.id === data.actieId);
                         if (actie) {
-                            const projectNaam = this.getProjectNaam(actie.projectId);
+                            // Handle both database format (project_id) and frontend format (projectId)
+                            const projectId = actie.project_id || actie.projectId;
+                            const projectNaam = this.getProjectNaam(projectId);
                             planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
                         } else {
                             planningItem.naam = 'Onbekende actie';
