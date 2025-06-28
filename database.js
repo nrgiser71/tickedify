@@ -760,8 +760,9 @@ const db = {
         // No position specified, add at end
         positie = currentItemCount;
       } else if (positie >= currentItemCount) {
-        // Position is at or beyond the current count, add at end
-        positie = currentItemCount;
+        // Position is at or beyond the current count, add at end without shifting
+        // Don't change the position - keep it as is
+        // This allows proper ordering when multiple items are added at the end
       } else {
         // Position is within the existing items, shift others
         const shiftResult = await pool.query(`
