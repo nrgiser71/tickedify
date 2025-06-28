@@ -64,6 +64,16 @@
     --toast-info-bg: #007AFF20;
     --toast-warning: #FF9500;
     --toast-warning-bg: #FF950020;
+    
+    /* Priority Colors - Subtle macOS Blue Theme */
+    --priority-primary: #007AFF;
+    --priority-primary-hover: #0056CC;
+    --priority-bg: #E3F2FD;
+    --priority-bg-hover: #BBDEFB;
+    --priority-border: #90CAF9;
+    --priority-border-hover: #64B5F6;
+    --priority-text: #1565C0;
+    --priority-shadow: rgba(0, 122, 255, 0.2);
 }
 
 body {
@@ -2581,38 +2591,28 @@ button:focus {
     border-color: var(--macos-blue);
 }
 
-/* Priority task styling - golden theme */
+/* Priority task styling - subtle macOS blue theme */
 .planning-item.priority-task {
-    background: linear-gradient(135deg, #FFF8DC, #FFFACD) !important;
-    border: 2px solid #FFD700 !important;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    background: linear-gradient(135deg, var(--priority-bg), var(--macos-bg-primary)) !important;
+    border: 2px solid var(--priority-border) !important;
+    box-shadow: 0 2px 8px var(--priority-shadow);
     position: relative;
 }
 
 .planning-item.priority-task:hover {
-    border-color: #FFA500 !important;
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    border-color: var(--priority-border-hover) !important;
+    box-shadow: 0 4px 12px var(--priority-shadow);
     transform: translateY(-1px);
 }
 
 .priority-indicator {
-    color: #FFD700;
+    color: var(--priority-primary);
     font-size: 14px;
-    text-shadow: 0 1px 2px rgba(255, 215, 0, 0.3);
-    animation: gentle-glow 2s ease-in-out infinite alternate;
+    text-shadow: 0 1px 2px var(--priority-shadow);
+    filter: drop-shadow(0 0 2px var(--priority-primary));
 }
 
-/* Gentle glow animation for priority star */
-@keyframes gentle-glow {
-    from { 
-        text-shadow: 0 1px 2px rgba(255, 215, 0, 0.3);
-        transform: scale(1);
-    }
-    to { 
-        text-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
-        transform: scale(1.05);
-    }
-}
+/* Removed gentle-glow animation for subtler design */
 
 .task-checkbox {
     margin-right: 8px;
@@ -3005,18 +3005,18 @@ button:focus {
 
 /* Top 3 Priorities section */
 .top-prioriteiten-sectie {
-    background: linear-gradient(135deg, #FFF8DC, #FFFACD);
+    background: linear-gradient(135deg, var(--priority-bg), var(--macos-bg-primary));
     padding: 12px;
-    border-radius: 6px;
-    border: 2px solid #FFD700;
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--priority-border);
     margin-bottom: 10px;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+    box-shadow: 0 2px 8px var(--priority-shadow);
 }
 
 .top-prioriteiten-sectie h3 {
     margin: 0 0 10px 0;
     font-size: 14px;
-    color: #B8860B;
+    color: var(--priority-text);
     font-weight: 600;
     text-align: center;
 }
@@ -3041,24 +3041,24 @@ button:focus {
 
 .prioriteit-slot.empty {
     border-style: dashed;
-    border-color: #FFD700;
-    background: rgba(255, 215, 0, 0.05);
+    border-color: var(--priority-border);
+    background: var(--priority-bg);
 }
 
 .prioriteit-slot.empty:hover {
-    border-color: #FFA500;
-    background: rgba(255, 215, 0, 0.1);
+    border-color: var(--priority-border-hover);
+    background: var(--priority-bg-hover);
 }
 
 .prioriteit-slot.filled {
-    border-color: #FFD700;
-    background: linear-gradient(135deg, #FFF, #FFFEF7);
-    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.1);
+    border-color: var(--priority-border);
+    background: linear-gradient(135deg, var(--macos-bg-primary), var(--priority-bg));
+    box-shadow: 0 2px 4px var(--priority-shadow);
 }
 
 .prioriteit-slot.filled:hover {
-    border-color: #FFA500;
-    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.2);
+    border-color: var(--priority-border-hover);
+    box-shadow: 0 4px 8px var(--priority-shadow);
     transform: translateY(-1px);
 }
 
