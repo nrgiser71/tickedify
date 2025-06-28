@@ -6615,7 +6615,7 @@ class Taakbeheer {
             
             if (response.ok) {
                 // Fast local update instead of full refresh
-                this.updateReorderLocally(data, targetUur, targetPosition);
+                await this.updateReorderLocally(data, targetUur, targetPosition);
                 this.updateTotaalTijd(); // Update total time
                 
                 if (data.currentUur !== targetUur) {
@@ -6633,25 +6633,24 @@ class Taakbeheer {
         });
     }
     
-    updateReorderLocally(data, targetUur, targetPosition) {
-        if (!this.currentPlanningData) return;
+    async updateReorderLocally(data, targetUur, targetPosition) {
+        // Fetch fresh data from server to get correct ordering
+        const today = new Date().toISOString().split('T')[0];
+        try {
+            const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+            if (planningResponse.ok) {
+                this.currentPlanningData = await planningResponse.json();
+                console.log('📊 Fetched reordered planning data:', this.currentPlanningData.length, 'items');
+            }
+        } catch (error) {
+            console.error('Error fetching reordered planning data:', error);
+        }
         
-        // Find and update the planning item
-        const item = this.currentPlanningData.find(p => p.id === data.planningId);
-        if (item) {
-            const oldUur = item.uur;
-            
-            // Update the item properties
-            item.uur = targetUur;
-            if (targetPosition !== null) {
-                item.positie = targetPosition;
-            }
-            
-            // Update both affected hours
-            this.updateSingleHourDisplay(oldUur);
-            if (oldUur !== targetUur) {
-                this.updateSingleHourDisplay(targetUur);
-            }
+        // Update the affected hour displays
+        const oldUur = data.currentUur;
+        this.updateSingleHourDisplay(oldUur);
+        if (oldUur !== targetUur) {
+            this.updateSingleHourDisplay(targetUur);
         }
     }
 
