@@ -1577,6 +1577,7 @@ class Taakbeheer {
     preserveScrollPosition(callback) {
         const scrollContainer = document.querySelector('#acties-lijst, .acties-lijst, .taak-lijst, .main-content');
         const scrollPosition = scrollContainer?.scrollTop || 0;
+        console.log(`💾 Saving scroll position: ${scrollPosition}px for container:`, scrollContainer?.className || scrollContainer?.id);
         
         const result = callback();
         
@@ -1586,7 +1587,8 @@ class Taakbeheer {
                 if (scrollContainer) {
                     setTimeout(() => {
                         scrollContainer.scrollTop = scrollPosition;
-                    }, 50);
+                        console.log(`📍 Restored scroll position: ${scrollPosition}px for container:`, scrollContainer?.className || scrollContainer?.id);
+                    }, 100);
                 }
                 return value;
             });
@@ -1595,7 +1597,8 @@ class Taakbeheer {
             if (scrollContainer) {
                 setTimeout(() => {
                     scrollContainer.scrollTop = scrollPosition;
-                }, 50);
+                    console.log(`📍 Restored scroll position: ${scrollPosition}px for container:`, scrollContainer?.className || scrollContainer?.id);
+                }, 100);
             }
             return result;
         }
@@ -2499,19 +2502,6 @@ class Taakbeheer {
                 // Remove from local array immediately for instant UI feedback
                 this.taken = this.taken.filter(t => t.id !== id);
                 
-                // Fast UI update - just remove the element without full re-render
-                const checkbox = document.querySelector(`input[onchange*="${id}"]`);
-                const rowElement = checkbox?.closest('tr, li, .project-actie-item');
-                if (rowElement) {
-                    rowElement.style.opacity = '0.5';
-                    rowElement.style.transition = 'opacity 0.3s';
-                    setTimeout(() => {
-                        if (rowElement.parentNode) {
-                            rowElement.parentNode.removeChild(rowElement);
-                        }
-                    }, 300);
-                }
-                
                 // Background updates (don't await these for faster response)
                 // Only save list if this wasn't a recurring task, or if recurring task creation failed
                 if (!isRecurring) {
@@ -2522,7 +2512,7 @@ class Taakbeheer {
                 }
                 this.laadTellingen().catch(console.error);
                 
-                // Show success message
+                // Show success message and refresh UI with scroll preservation
                 if (isRecurring && nextRecurringTaskId) {
                     const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
                     toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
@@ -2542,23 +2532,19 @@ class Taakbeheer {
                                 if (this.planningActies) {
                                     this.planningActies.push(newTask);
                                 }
-                                
-                                // Then refresh UI
-                                this.preserveScrollPosition(() => this.laadHuidigeLijst());
                             }
                         } catch (error) {
                             console.error('Error fetching new recurring task:', error);
-                            this.preserveScrollPosition(() => this.laadHuidigeLijst());
                         }
                     }
                 } else {
                     toast.success('Taak afgewerkt!');
-                    // For non-recurring tasks, also refresh the list to ensure UI consistency
-                    // Use a small delay to allow DOM animations to complete
-                    setTimeout(() => {
-                        this.preserveScrollPosition(() => this.laadHuidigeLijst());
-                    }, 350);
                 }
+                
+                // Always refresh UI with scroll preservation for consistency
+                setTimeout(() => {
+                    this.preserveScrollPosition(() => this.laadHuidigeLijst());
+                }, 100);
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
