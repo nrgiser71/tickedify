@@ -341,6 +341,7 @@ class Taakbeheer {
         this.toonToekomstigeTaken = this.restoreToekomstToggle(); // Toggle voor toekomstige taken
         this.autoRefreshInterval = null; // Voor inbox auto-refresh
         this.activeCompletions = new Set(); // Track active task completions to prevent race conditions
+        this.saveTimeout = null; // Debounce lijst opslaan
         this.init();
     }
 
@@ -2542,7 +2543,7 @@ class Taakbeheer {
                 // Background updates (don't await these for faster response)
                 // Only save list if this wasn't a recurring task, or if recurring task creation failed
                 if (!isRecurring) {
-                    this.slaLijstOp().catch(console.error);
+                    this.debouncedSave();
                 } else if (isRecurring && !nextRecurringTaskId) {
                     console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed - NOT saving list to prevent data loss');
                     toast.warning('Herhalende taak kon niet worden aangemaakt. Controleer de Acties lijst later.');
@@ -2692,6 +2693,22 @@ class Taakbeheer {
             toast.error(`Fout bij opslaan: ${error.message}`);
             return false;
         }
+    }
+
+    // Debounced save to prevent race conditions from rapid task completions
+    debouncedSave() {
+        // Clear any existing timeout
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+        }
+        
+        // Set new timeout to save after 500ms of inactivity
+        this.saveTimeout = setTimeout(() => {
+            this.slaLijstOp().catch(console.error);
+            this.saveTimeout = null;
+        }, 500);
+        
+        console.log('Debounced save scheduled...');
     }
 
     // Planning popup methods (aangepast van originele code)
