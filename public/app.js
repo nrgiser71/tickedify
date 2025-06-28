@@ -7008,23 +7008,29 @@ class Taakbeheer {
     }
 
     async deletePlanningItem(planningId) {
-        try {
-            const response = await fetch(`/api/dagelijkse-planning/${planningId}`, {
-                method: 'DELETE'
-            });
-            
-            if (response.ok) {
-                // Remove from local data and update only the affected area
-                this.removePlanningItemLocally(planningId);
-                this.updateTotaalTijd(); // Update total time
-                toast.success('Planning item verwijderd!');
-            } else {
+        await loading.withLoading(async () => {
+            try {
+                const response = await fetch(`/api/dagelijkse-planning/${planningId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // Remove from local data and update only the affected area
+                    this.removePlanningItemLocally(planningId);
+                    this.updateTotaalTijd(); // Update total time
+                    toast.success('Planning item verwijderd!');
+                } else {
+                    toast.error('Fout bij verwijderen planning item');
+                }
+            } catch (error) {
+                console.error('Error deleting planning item:', error);
                 toast.error('Fout bij verwijderen planning item');
             }
-        } catch (error) {
-            console.error('Error deleting planning item:', error);
-            toast.error('Fout bij verwijderen planning item');
-        }
+        }, {
+            operationId: 'delete-planning-item',
+            showGlobal: true,
+            message: 'Planning item verwijderen...'
+        });
     }
     
     removePlanningItemLocally(planningId) {
