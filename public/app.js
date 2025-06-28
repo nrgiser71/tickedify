@@ -6385,30 +6385,41 @@ class Taakbeheer {
             if (planningResponse.ok) {
                 this.currentPlanningData = await planningResponse.json();
                 console.log('📊 Fetched current planning data:', this.currentPlanningData.length, 'items');
+                
+                // The server response already includes the new item, so we don't need to add it again
+                // Just update the display with the current data from server
             } else {
-                // Fallback to empty array if fetch fails
+                // Fallback: if fetch fails, manually add the item
                 if (!this.currentPlanningData) {
                     this.currentPlanningData = [];
                 }
+                
+                // Only add if server fetch failed
+                const newItem = {
+                    ...planningItem,
+                    id: serverResponse.id || Math.random().toString(36),
+                    ...serverResponse
+                };
+                
+                console.log('➕ Adding to currentPlanningData (fallback):', newItem);
+                this.currentPlanningData.push(newItem);
             }
         } catch (error) {
             console.error('Error fetching planning data:', error);
+            // Fallback: if fetch fails, manually add the item
             if (!this.currentPlanningData) {
                 this.currentPlanningData = [];
             }
+            
+            const newItem = {
+                ...planningItem,
+                id: serverResponse.id || Math.random().toString(36),
+                ...serverResponse
+            };
+            
+            console.log('➕ Adding to currentPlanningData (error fallback):', newItem);
+            this.currentPlanningData.push(newItem);
         }
-        
-        // Add the new planning item to local data
-        const newItem = {
-            ...planningItem,
-            id: serverResponse.id || Math.random().toString(36), // Use server ID if available
-            ...serverResponse // Merge any additional server data
-        };
-        
-        console.log('➕ Adding to currentPlanningData:', newItem);
-        console.log('📊 Array length before:', this.currentPlanningData.length);
-        this.currentPlanningData.push(newItem);
-        console.log('📊 Array length after:', this.currentPlanningData.length);
         
         // Update only the affected hour in the calendar
         this.updateSingleHourDisplay(planningItem.uur);
