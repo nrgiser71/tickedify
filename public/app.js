@@ -6628,7 +6628,7 @@ class Taakbeheer {
             }
         }, {
             operationId: 'reorder-planning',
-            showGlobal: false, // Make less intrusive
+            showGlobal: true, // Show loading indicator
             message: 'Verplaatsen...'
         });
     }
