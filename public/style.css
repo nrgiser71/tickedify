@@ -405,7 +405,6 @@ body {
     border-radius: var(--macos-radius-small);
     background: var(--macos-bg-primary);
     font-size: 12px;
-    min-width: 120px;
 }
 
 .acties-table-container {
@@ -3019,7 +3018,6 @@ button:focus {
     border-radius: 4px;
     font-size: 12px;
     background: white;
-    min-width: 120px;
 }
 
 .planning-acties-filters .filter-input-number {
