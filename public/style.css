@@ -566,17 +566,6 @@ body {
     transform: scale(1.1);
 }
 
-.verwijder-btn {
-    color: var(--macos-text-secondary);
-    font-weight: bold;
-    background: transparent;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-}
 
 .verwijder-btn:hover {
     background: var(--macos-red);
@@ -2637,14 +2626,14 @@ button:focus {
 }
 
 .delete-planning {
-    background: var(--macos-red);
-    color: white;
+    background: transparent;
+    color: var(--macos-text-secondary);
     border: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--macos-radius-small);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -2654,7 +2643,8 @@ button:focus {
 }
 
 .delete-planning:hover {
-    background: #d70015;
+    background: var(--macos-red);
+    color: white;
     transform: scale(1.1);
 }
 
@@ -4268,22 +4258,30 @@ button:focus {
 }
 
 .edit-btn, .delete-btn {
-    background: none;
+    background: transparent;
     border: none;
     padding: 6px;
     border-radius: var(--macos-radius-small);
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--macos-text-secondary);
 }
 
 .edit-btn:hover {
-    background: var(--macos-blue);
+    background: var(--macos-gray-5);
+    color: var(--macos-blue);
     transform: scale(1.1);
 }
 
 .delete-btn:hover {
     background: var(--macos-red);
+    color: white;
     transform: scale(1.1);
 }
 
