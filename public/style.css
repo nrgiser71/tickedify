@@ -568,8 +568,8 @@ body {
 
 
 .verwijder-btn:hover {
-    background: var(--macos-red);
-    color: white;
+    background: var(--macos-gray-5);
+    color: var(--macos-red);
     transform: scale(1.1);
 }
 
@@ -2643,8 +2643,8 @@ button:focus {
 }
 
 .delete-planning:hover {
-    background: var(--macos-red);
-    color: white;
+    background: var(--macos-gray-5);
+    color: var(--macos-red);
     transform: scale(1.1);
 }
 
@@ -4280,8 +4280,8 @@ button:focus {
 }
 
 .delete-btn:hover {
-    background: var(--macos-red);
-    color: white;
+    background: var(--macos-gray-5);
+    color: var(--macos-red);
     transform: scale(1.1);
 }
 
