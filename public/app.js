@@ -2506,20 +2506,15 @@ class Taakbeheer {
             
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
             if (success) {
-                // Remove from local array immediately for instant UI feedback
-                this.taken = this.taken.filter(t => t.id !== id);
+                // Keep task in local array until server refresh
+                // Don't remove from this.taken here to avoid race conditions
                 
-                // Remove DOM element to keep UI consistent
+                // Show visual feedback that task is being processed
                 const checkbox = document.querySelector(`input[onchange*="${id}"]`);
                 const rowElement = checkbox?.closest('tr, li, .project-actie-item');
                 if (rowElement) {
                     rowElement.style.opacity = '0.5';
-                    rowElement.style.transition = 'opacity 0.3s';
-                    setTimeout(() => {
-                        if (rowElement.parentNode) {
-                            rowElement.parentNode.removeChild(rowElement);
-                        }
-                    }, 300);
+                    rowElement.style.pointerEvents = 'none';
                 }
                 
                 // Background updates (don't await these for faster response)
@@ -2564,11 +2559,11 @@ class Taakbeheer {
                     toast.success('Taak afgewerkt!');
                 }
                 
-                // Don't refresh list after completion to prevent data loss
-                // The local array update is sufficient for UI consistency
-                // setTimeout(() => {
-                //     this.preserveScrollPosition(() => this.laadHuidigeLijst());
-                // }, 500);
+                // Always refresh UI with scroll preservation for consistency
+                // Wait longer to ensure server update is processed
+                setTimeout(() => {
+                    this.preserveScrollPosition(() => this.laadHuidigeLijst());
+                }, 1000);
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
