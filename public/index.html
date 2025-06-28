@@ -6,6 +6,7 @@
     <title>Tickedify - Smart Task Management</title>
     <meta name="description" content="Tickedify your tasks with smart task management. Get things done efficiently with projects, contexts, and smart scheduling.">
     <meta name="keywords" content="task management, productivity, todo, gtd, project management">
+    <link rel="stylesheet" href="https://unpkg.com/@tabler/icons@latest/iconfont/tabler-icons.min.css">
     <link rel="stylesheet" href="style.css?v=0.4.99">
 </head>
 <body>
@@ -28,7 +29,7 @@
                         </div>
                         <div class="user-info" id="user-info" style="display: none;">
                             <div class="user-info-top">
-                                <div class="user-avatar">👤</div>
+                                <div class="user-avatar"><i class="ti ti-user"></i></div>
                                 <div class="user-details">
                                     <span class="user-name" id="user-name"></span>
                                     <span class="user-email" id="user-email"></span>
@@ -39,7 +40,7 @@
                                 <div class="import-email-container">
                                     <span class="import-label">Email import:</span>
                                     <a href="#" class="import-email-link" id="import-email-link"></a>
-                                    <button class="btn-copy" id="btn-copy-import" title="Kopieer naar clipboard">📄</button>
+                                    <button class="btn-copy" id="btn-copy-import" title="Kopieer naar clipboard"><i class="ti ti-copy"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -59,19 +60,19 @@
                         
                         <div class="features-list">
                             <div class="feature">
-                                <span class="feature-icon">📋</span>
+                                <span class="feature-icon"><i class="ti ti-list-check"></i></span>
                                 <span>Gestructureerd takenbeheer</span>
                             </div>
                             <div class="feature">
-                                <span class="feature-icon">🔄</span>
+                                <span class="feature-icon"><i class="ti ti-repeat"></i></span>
                                 <span>Herhalende taken</span>
                             </div>
                             <div class="feature">
-                                <span class="feature-icon">📅</span>
+                                <span class="feature-icon"><i class="ti ti-calendar"></i></span>
                                 <span>Dagelijkse planning</span>
                             </div>
                             <div class="feature">
-                                <span class="feature-icon">📁</span>
+                                <span class="feature-icon"><i class="ti ti-folder"></i></span>
                                 <span>Projecten & contexten</span>
                             </div>
                         </div>
@@ -86,27 +87,27 @@
                     <!-- Standaard lijsten -->
                     <div class="lijst-sectie">
                         <div class="lijst-item actief" data-lijst="inbox">
-                            <div class="lijst-icon">📥</div>
+                            <div class="lijst-icon"><i class="ti ti-inbox"></i></div>
                             <span class="lijst-naam">Inbox</span>
                             <span class="lijst-telling" id="telling-inbox">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="acties">
-                            <div class="lijst-icon">📋</div>
+                            <div class="lijst-icon"><i class="ti ti-list-check"></i></div>
                             <span class="lijst-naam">Acties</span>
                             <span class="lijst-telling" id="telling-acties">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="projecten">
-                            <div class="lijst-icon">📁</div>
+                            <div class="lijst-icon"><i class="ti ti-folder"></i></div>
                             <span class="lijst-naam">Projecten</span>
                             <span class="lijst-telling" id="telling-projecten">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="opvolgen">
-                            <div class="lijst-icon">⏳</div>
+                            <div class="lijst-icon"><i class="ti ti-clock"></i></div>
                             <span class="lijst-naam">Opvolgen</span>
                             <span class="lijst-telling" id="telling-opvolgen">0</span>
                         </div>
                         <div class="lijst-item" data-lijst="afgewerkte-taken">
-                            <div class="lijst-icon">✅</div>
+                            <div class="lijst-icon"><i class="ti ti-check"></i></div>
                             <span class="lijst-naam">Afgewerkt</span>
                             <span class="lijst-telling" id="telling-afgewerkte-taken">0</span>
                         </div>
@@ -115,32 +116,32 @@
                     <!-- Uitgesteld lijsten dropdown -->
                     <div class="lijst-sectie">
                         <div class="sectie-header dropdown-header" id="uitgesteld-dropdown">
-                            <span class="dropdown-arrow">▶</span>
+                            <span class="dropdown-arrow"><i class="ti ti-chevron-right"></i></span>
                             <span>Uitgesteld</span>
                         </div>
                         <div class="dropdown-content" id="uitgesteld-content" style="display: none;">
                             <div class="lijst-item" data-lijst="uitgesteld-wekelijks">
-                                <div class="lijst-icon">📅</div>
+                                <div class="lijst-icon"><i class="ti ti-calendar"></i></div>
                                 <span class="lijst-naam">Wekelijks</span>
                                 <span class="lijst-telling" id="telling-uitgesteld-wekelijks">0</span>
                             </div>
                             <div class="lijst-item" data-lijst="uitgesteld-maandelijks">
-                                <div class="lijst-icon">📅</div>
+                                <div class="lijst-icon"><i class="ti ti-calendar"></i></div>
                                 <span class="lijst-naam">Maandelijks</span>
                                 <span class="lijst-telling" id="telling-uitgesteld-maandelijks">0</span>
                             </div>
                             <div class="lijst-item" data-lijst="uitgesteld-3maandelijks">
-                                <div class="lijst-icon">📅</div>
+                                <div class="lijst-icon"><i class="ti ti-calendar"></i></div>
                                 <span class="lijst-naam">3-maandelijks</span>
                                 <span class="lijst-telling" id="telling-uitgesteld-3maandelijks">0</span>
                             </div>
                             <div class="lijst-item" data-lijst="uitgesteld-6maandelijks">
-                                <div class="lijst-icon">📅</div>
+                                <div class="lijst-icon"><i class="ti ti-calendar"></i></div>
                                 <span class="lijst-naam">6-maandelijks</span>
                                 <span class="lijst-telling" id="telling-uitgesteld-6maandelijks">0</span>
                             </div>
                             <div class="lijst-item" data-lijst="uitgesteld-jaarlijks">
-                                <div class="lijst-icon">📅</div>
+                                <div class="lijst-icon"><i class="ti ti-calendar"></i></div>
                                 <span class="lijst-naam">Jaarlijks</span>
                                 <span class="lijst-telling" id="telling-uitgesteld-jaarlijks">0</span>
                             </div>
@@ -150,32 +151,32 @@
                     <!-- Tools dropdown -->
                     <div class="lijst-sectie">
                         <div class="sectie-header dropdown-header" id="tools-dropdown">
-                            <span class="dropdown-arrow">▶</span>
-                            <span>🛠️ Tools</span>
+                            <span class="dropdown-arrow"><i class="ti ti-chevron-right"></i></span>
+                            <span><i class="ti ti-tools"></i> Tools</span>
                         </div>
                         <div class="dropdown-content" id="tools-content" style="display: none;">
                             <div class="lijst-item" data-lijst="dagelijkse-planning">
-                                <div class="lijst-icon">📅</div>
+                                <div class="lijst-icon"><i class="ti ti-calendar"></i></div>
                                 <span class="lijst-naam">Dagelijkse Planning</span>
                             </div>
                             <div class="lijst-item" data-tool="contextenbeheer">
-                                <div class="lijst-icon">🏷️</div>
+                                <div class="lijst-icon"><i class="ti ti-tag"></i></div>
                                 <span class="lijst-naam">Contexten Beheer</span>
                             </div>
                             <div class="lijst-item" data-tool="csv-import">
-                                <div class="lijst-icon">📊</div>
+                                <div class="lijst-icon"><i class="ti ti-file-spreadsheet"></i></div>
                                 <span class="lijst-naam">CSV Import</span>
                             </div>
                             <div class="lijst-item" data-tool="wekelijkse-optimalisatie">
-                                <div class="lijst-icon">🎯</div>
+                                <div class="lijst-icon"><i class="ti ti-target"></i></div>
                                 <span class="lijst-naam">Wekelijkse Optimalisatie</span>
                             </div>
                             <div class="lijst-item" data-tool="zoeken">
-                                <div class="lijst-icon">🔍</div>
+                                <div class="lijst-icon"><i class="ti ti-search"></i></div>
                                 <span class="lijst-naam">Zoeken</span>
                             </div>
                             <div class="lijst-item" data-tool="test-herhalingen">
-                                <div class="lijst-icon">🧪</div>
+                                <div class="lijst-icon"><i class="ti ti-flask"></i></div>
                                 <span class="lijst-naam">Test Herhalingen</span>
                             </div>
                         </div>
@@ -234,7 +235,7 @@
     <!-- Keyboard Help Modal -->
     <div id="keyboardHelpModal" class="popup-overlay" style="display: none;">
         <div class="popup-content keyboard-help-content">
-            <h3>⌨️ Sneltoetsen</h3>
+            <h3><i class="ti ti-keyboard"></i> Sneltoetsen</h3>
             <div class="shortcuts-grid">
                 <div class="shortcuts-category">
                     <h4>Algemeen</h4>
@@ -290,7 +291,7 @@
     <div id="planningPopup" class="popup-overlay" style="display: none;">
         <div class="popup-content">
             <h3>Taak plannen</h3>
-            <p class="keyboard-help">💡 Toetsenbord: Tab = navigeren, + = nieuw item, Esc = annuleren, Enter = opslaan</p>
+            <p class="keyboard-help"><i class="ti ti-bulb"></i> Toetsenbord: Tab = navigeren, + = nieuw item, Esc = annuleren, Enter = opslaan</p>
             
             <div class="form-groep">
                 <label>Taaknaam:</label>

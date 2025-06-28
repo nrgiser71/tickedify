@@ -134,16 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.9.32 -->
+        <!-- Version 0.9.33 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-number">v0.9.32</span>
+                <span class="version-number">v0.9.33</span>
                 <span class="version-date">28 december 2025</span>
                 <span class="version-badge badge-latest">Nieuwste</span>
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-palette"></i></span>
+                    <div class="change-content">
+                        <div class="change-title">Complete icon modernisatie met Tabler Icons</div>
+                        <div class="change-description">Alle 114+ emoji's vervangen door professionele Tabler Icons. Consistente visuele stijl door hele applicatie. Menu buttons nu moderne 3 verticale puntjes in plaats van bliksem icoon. Schaalbaarheid en hover effects geoptimaliseerd.</div>
+                    </div>
+                </li>
+                <li class="change-item">
+                    <span class="change-icon"><i class="ti ti-dots-vertical"></i></span>
+                    <div class="change-content">
+                        <div class="change-title">Modernere menu buttons voor actie items</div>
+                        <div class="change-description">Vervangen van ⚡ door professionele 3-dots verticaal icoon (⋮) voor actie menu's. Volgt moderne UI standaarden zoals Gmail, Slack en Notion.</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Version 0.9.32 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-number">v0.9.32</span>
+                <span class="version-date">28 december 2025</span>
+                <span class="version-badge badge-fix">Fix</span>
+            </div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Loading indicator timing fix voor inbox workflow</div>
                         <div class="change-description">Loading indicator blijft nu actief tot volgende inbox taak volledig geladen is. Voorkomt verwarrende flits van oude taak voordat nieuwe verschijnt. Message aangepast naar "Taak opslaan en volgende laden..." voor betere feedback.</div>
@@ -161,14 +186,14 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">KRITIEKE FIX: Quick Add data verlies definitief opgelost</div>
                         <div class="change-description">Nieuwe veilige /api/taak/add-to-inbox endpoint voorkomt volledig overschrijven van inbox bij F9 Quick Add. Endpoint voegt individuele taken toe zonder data verlies. 500 error bij Quick Add opgelost. End-to-end getest - F9 functionaliteit nu volledig veilig.</div>
                     </div>
                 </li>
                 <li class="change-item">
-                    <span class="change-icon">⚡</span>
+                    <span class="change-icon"><i class="ti ti-bolt"></i></span>
                     <div class="change-content">
                         <div class="change-title">F9 Quick Add nu productie-klaar</div>
                         <div class="change-description">Quick Add modal werkt nu veilig vanuit alle schermen. Geen data verlies meer bij toevoegen van nieuwe taken. Backend API volledig herschreven voor veilige single-task operations.</div>
@@ -186,7 +211,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">KEYBOARD SHORTCUT FIX: Unieke triple-modifier combinatie</div>
                         <div class="change-description">Keyboard shortcut aangepast van Cmd+Shift+N naar Ctrl+Opt+Cmd+N (Mac) / Ctrl+Win+Alt+N (Windows). Voorkomt conflict met browser incognito shortcut. Triple-modifier combinatie is veel unieker en ergonomisch. Automatische OS-detectie toont juiste shortcuts in footer en help modal.</div>
@@ -204,14 +229,14 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">⌨️</span>
+                    <span class="change-icon"><i class="ti ti-keyboard"></i></span>
                     <div class="change-content">
                         <div class="change-title">KEYBOARD SHORTCUTS SYSTEEM: Volledige globale sneltoetsen geïmplementeerd</div>
                         <div class="change-description">Complete keyboard shortcuts implementatie: Ctrl+Shift+N (Cmd+Shift+N op Mac) voor quick add modal overal in app. ? toets voor keyboard help overlay. ESC om modals te sluiten. Footer toont belangrijkste shortcuts. OS-detectie toont juiste modifier keys (Cmd vs Ctrl). Moderne modal-based UI voor non-intrusive snelle taak toevoeging.</div>
                     </div>
                 </li>
                 <li class="change-item">
-                    <span class="change-icon">🚀</span>
+                    <span class="change-icon"><i class="ti ti-rocket"></i></span>
                     <div class="change-content">
                         <div class="change-title">QUICK ADD MODAL: Taak toevoegen vanuit elke pagina</div>
                         <div class="change-description">Modal systeem voor snelle taak toevoeging aan inbox. Werkt vanuit alle paginas en schermen. Enter om op te slaan, ESC om te annuleren. Automatic focus op input veld. Toast feedback bij succes/error. Intelligent fallback naar direct API calls indien nodig.</div>
@@ -236,7 +261,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🧹</span>
+                    <span class="change-icon"><i class="ti ti-broom"></i></span>
                     <div class="change-content">
                         <div class="change-title">PLAN-KNOP VERWIJDERD: Inbox pagina vereenvoudigd</div>
                         <div class="change-description">Plan-knop weggehaald van inbox items. Alleen nog verwijderen (×) knop per taak. Schonere, minder overvolle interface in inbox. CSS voor .plan-btn opgeruimd.</div>
@@ -344,7 +369,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">KRITIEKE FIX: 500 errors bij herhalende taken afvinken opgelost</div>
                         <div class="change-description">Vervangen van intensieve forensic logging in createRecurringTask functie (20+ async database calls) door eenvoudige versie. Herhalende taken werken nu zonder server errors. Snellere performance en betrouwbaarheid.</div>
@@ -362,7 +387,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">⚡</span>
+                    <span class="change-icon"><i class="ti ti-bolt"></i></span>
                     <div class="change-content">
                         <div class="change-title">WORKFLOW BOOST: Automatisch volgende inbox taak</div>
                         <div class="change-description">Na het verwerken van een inbox taak opent automatisch de volgende taak voor snellere inbox verwerking. Alleen actief in inbox lijst. Toont toast feedback voor volgende taak en lege inbox notificatie.</div>
@@ -394,7 +419,7 @@
                     </div>
                 </li>
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">PARTIAL FIX: Database updateTask fallback logic</div>
                         <div class="change-description">Fixed forEach return bug in fallback query. Herhalingvelden worden nu correct geskipt zonder parameter mismatch. Echter, root cause blijft: waarom valt updateTask terug naar fallback als database wel herhalingkolommen heeft?</div>
@@ -419,7 +444,7 @@
                     </div>
                 </li>
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Monthly-Day & Yearly Pattern Logic Fix</div>
                         <div class="change-description">monthly-day-31-1 checkt nu eerst huidige maand. yearly-25-12-1 checkt eerst huidig jaar. Laatste-werkdag-jaar patterns gebruiken correct huidig jaar logica.</div>
@@ -443,14 +468,14 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">CRITICAL FIX: Monthly-Weekday Last Patterns</div>
                         <div class="change-description">Opgelost: monthly-weekday-last-X-1 patronen gaven null resultaat. Nu correct: laatste maandag, dinsdag, etc. van elke maand werken perfect.</div>
                     </div>
                 </li>
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">CRITICAL FIX: Yearly-Special Patterns</div>
                         <div class="change-description">Opgelost: yearly-special-first-workday-1 en yearly-special-last-workday-1 gaven null. Problem was else-if volgorde - yearly-special moet voor yearly- komen.</div>
@@ -474,7 +499,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">MAJOR FIX: Herhalingen Test Dashboard Accuracy</div>
                         <div class="change-description">Opgelost: Test endpoint gaf foute resultaten door "future date enforcement" logica. Weekly patterns gaven bijv. 2025-07-03 i.p.v. 2025-06-19. Test dashboard geeft nu 100% accurate berekeningen voor alle patronen.</div>
@@ -611,7 +636,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">FIX: Recovery tool behoudt nu herhalingsinstellingen</div>
                         <div class="change-description">Recovery tool herstelt taken nu met correcte herhalingsinstellingen (herhaling_type, herhaling_actief). Nieuwe fix-endpoint beschikbaar voor bestaande gerecoverde taken zonder herhalingsinstellingen.</div>
@@ -645,7 +670,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🧹</span>
+                    <span class="change-icon"><i class="ti ti-broom"></i></span>
                     <div class="change-content">
                         <div class="change-title">PREVENTIE: Automatische planning cleanup bij taak afwerking</div>
                         <div class="change-description">Planning items worden nu automatisch verwijderd wanneer taken worden afgewerkt. Dit voorkomt het probleem waarbij dagelijkse planning "verdwijnt" omdat alle items verwijzen naar afgewerkte taken. Geen meer handmatige cleanup nodig.</div>
@@ -662,7 +687,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">FIX: Wekelijkse herhalingen op zondag werken weer</div>
                         <div class="change-description">Probleem opgelost waarbij wekelijkse taken op zondag (dag 0) niet werden aangemaakt. Weekly pattern validatie aangepast om dag 0-7 te accepteren in plaats van alleen 1-7.</div>
@@ -679,7 +704,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">FIX: Recovery tool database kolom error</div>
                         <div class="change-description">Verwijderd niet-bestaande 'bijgewerkt' kolom uit INSERT query. Recovery tool werkt nu correct voor alle herhalende taken.</div>
@@ -696,7 +721,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Verbeterde recovery tool met debug logging</div>
                         <div class="change-description">Recovery tool checkt nu dynamisch welke database kolommen bestaan en past de INSERT query daarop aan. Extra debug logging toegevoegd om problemen te diagnosticeren.</div>
@@ -713,7 +738,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Fix recovery tool voor herhalende taken</div>
                         <div class="change-description">De recovery tool gebruikt nu directe SQL queries in plaats van niet-bestaande database functies. Ook verbeterde datum berekening voor verschillende herhalingstypen bij recovery.</div>
@@ -731,7 +756,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">DEFINITIEVE FIX: Drag & drop duplicatie 100% opgelost</div>
                         <div class="change-description">De echte root cause gevonden en opgelost: oude planning entries bleven bestaan in currentPlanningData array. removeActionFromList verwijdert nu ook stale planning entries via actieId filtering. Dit lost het probleem op waarbij taak X twee keer in planning verscheen.</div>
@@ -748,7 +773,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">FINAL FIX: Drag & drop duplicatie volledig opgelost</div>
                         <div class="change-description">Het resterende probleem waarbij nieuwe herhalende taken nog steeds 2x werden toegevoegd bij slepen is opgelost. Nieuwe herhalende taken worden nu onmiddellijk toegevoegd aan lokale arrays vóór bindDragAndDropEvents() wordt aangeroepen, waardoor perfect herkenning gegarandeerd is.</div>
@@ -765,7 +790,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Drag & drop duplicatie bug opgelost</div>
                         <div class="change-description">Het probleem waarbij taken 3x werden toegevoegd bij slepen naar dagelijkse planning is opgelost. Event handlers worden nu correct verwijderd en hergebruik, plus duplicate operatie detectie toegevoegd.</div>
@@ -782,7 +807,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">CRITICAL FIX: Herhalende taken bug opgelost</div>
                         <div class="change-description">Het probleem waarbij herhalende taken niet werden aangemaakt bij afvinken is opgelost. Twee fixes: 1) 'werkdagen' herhaling toegevoegd aan calculateNextRecurringDate functie, 2) Lijst wordt niet meer overschreven bij mislukte recurring task creation. Betere error handling en verificatie toegevoegd.</div>
@@ -799,7 +824,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Herhalende taken herstel tools</div>
                         <div class="change-description">Debug endpoints en recovery pagina toegevoegd om verdwenen herhalende taken te analyseren en herstellen. Probleem gevonden: 28 van 34 herhalende taken werden niet correct aangemaakt bij afvinken vanuit dagelijkse planning.</div>
@@ -816,7 +841,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Debug endpoints voor herhalende taken</div>
                         <div class="change-description">Analyse endpoints toegevoegd om probleem met verdwenen herhalende taken te onderzoeken.</div>
@@ -901,7 +926,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">⚡</span>
+                    <span class="change-icon"><i class="ti ti-bolt"></i></span>
                     <div class="change-content">
                         <div class="change-title">Snellere taak verwijdering</div>
                         <div class="change-description">Dramatische performance verbetering voor het verwijderen van taken. Gebruikt nu specifieke DELETE endpoint in plaats van hele lijst opnieuw opslaan. Van 3+ seconden naar instant response.</div>
@@ -935,7 +960,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Quick-add API database fix</div>
                         <div class="change-description">Vervangt niet-bestaande db.createTask met directe SQL INSERT voor werkende Siri Shortcuts integratie.</div>
@@ -978,7 +1003,7 @@
             </div>
             <ul class="change-list">
                 <li class="change-item">
-                    <span class="change-icon">🔧</span>
+                    <span class="change-icon"><i class="ti ti-wrench"></i></span>
                     <div class="change-content">
                         <div class="change-title">Filter functionaliteit volledig hersteld</div>
                         <div class="change-description">Dataset ID toegevoegd aan lijst elementen en type conversie gefixed voor project/context filters. Alle filters werken nu correct.</div>

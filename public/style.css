@@ -5002,3 +5002,85 @@ button:focus {
         justify-content: center;
     }
 }
+
+/* ===== TABLER ICONS STYLING ===== */
+
+/* General icon styling */
+.ti {
+    font-size: 16px;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Sidebar navigation icons */
+.lijst-icon .ti {
+    font-size: 18px;
+    color: var(--macos-text-secondary);
+}
+
+.lijst-item.actief .lijst-icon .ti {
+    color: var(--macos-blue);
+}
+
+/* Feature icons */
+.feature-icon .ti {
+    font-size: 20px;
+    color: var(--macos-blue);
+}
+
+/* Menu button icons */
+.acties-btn .ti {
+    font-size: 14px;
+    color: inherit;
+}
+
+/* User interface icons */
+.user-avatar .ti {
+    font-size: 20px;
+    color: var(--macos-text-secondary);
+}
+
+.btn-copy .ti {
+    font-size: 14px;
+    color: inherit;
+}
+
+/* Dropdown arrow icons */
+.dropdown-arrow .ti {
+    font-size: 12px;
+    color: var(--macos-text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.dropdown-header.expanded .dropdown-arrow .ti {
+    transform: rotate(90deg);
+}
+
+/* Toast notification icons */
+.toast .ti {
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+/* Keyboard help icons */
+.keyboard-help .ti {
+    color: var(--macos-blue);
+    margin-right: 4px;
+}
+
+/* Calendar and planning icons */
+.kalender-content .ti {
+    font-size: 14px;
+}
+
+/* Responsive icon sizes */
+@media (max-width: 768px) {
+    .lijst-icon .ti {
+        font-size: 16px;
+    }
+    
+    .feature-icon .ti {
+        font-size: 18px;
+    }
+}
