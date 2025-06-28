@@ -3063,15 +3063,41 @@ button:focus {
 }
 
 .prioriteit-slot.drag-over {
-    border-color: #FF6347;
-    background: rgba(255, 99, 71, 0.1);
-    box-shadow: 0 4px 12px rgba(255, 99, 71, 0.3);
+    border-color: #32CD32;
+    background: rgba(50, 205, 50, 0.1);
+    box-shadow: 0 4px 12px rgba(50, 205, 50, 0.3);
+    cursor: pointer;
+    position: relative;
+}
+
+.prioriteit-slot.drag-over::after {
+    content: "✅";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 10;
 }
 
 .prioriteit-slot.drag-rejected {
     border-color: #DC143C;
     background: rgba(220, 20, 60, 0.1);
     animation: shake 0.5s ease-in-out;
+    cursor: not-allowed !important;
+    position: relative;
+}
+
+.prioriteit-slot.drag-rejected::after {
+    content: "🚫";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 10;
 }
 
 .slot-nummer {
