@@ -4131,30 +4131,23 @@ class Taakbeheer {
             return; // Not in daily planning view
         }
         
-        // Reload current planning data to get fresh priority info
-        const today = new Date().toISOString().split('T')[0];
-        const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
-        const planning = planningResponse.ok ? await planningResponse.json() : [];
-        this.currentPlanningData = planning;
+        // Simply update CSS classes on existing planning items
+        // This is much safer than reloading the entire grid
+        const planningItems = document.querySelectorAll('.planning-item');
         
-        // Update all hour elements with fresh planning data
-        for (let uur = 0; uur < 24; uur++) {
-            const uurElement = document.querySelector(`[data-uur="${uur}"]`);
-            if (uurElement) {
-                const uurContent = uurElement.querySelector('.uur-content');
-                if (uurContent) {
-                    const uurPlanning = planning.filter(p => {
-                        const startTijd = new Date(`1970-01-01T${p.starttijd}`);
-                        return startTijd.getHours() === uur;
-                    });
-                    
-                    uurContent.innerHTML = this.renderPlanningItemsWithDropZones(uurPlanning, uur);
+        planningItems.forEach(item => {
+            const actieId = item.dataset.actieId;
+            if (actieId) {
+                // Check if this task is now a priority
+                const isPriority = this.topPrioriteiten?.some(p => p && p.id === actieId);
+                
+                if (isPriority) {
+                    item.classList.add('priority-task');
+                } else {
+                    item.classList.remove('priority-task');
                 }
             }
-        }
-        
-        // Rebind drag & drop events for the updated elements
-        this.bindDragAndDropEvents();
+        });
     }
 
     bindPrioriteitEvents() {
