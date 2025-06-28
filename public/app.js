@@ -340,6 +340,7 @@ class Taakbeheer {
         this.sortDirection = {}; // Bijhouden van sorteer richting per kolom
         this.toonToekomstigeTaken = this.restoreToekomstToggle(); // Toggle voor toekomstige taken
         this.autoRefreshInterval = null; // Voor inbox auto-refresh
+        this.activeCompletions = new Set(); // Track active task completions to prevent race conditions
         this.init();
     }
 
@@ -2467,12 +2468,24 @@ class Taakbeheer {
     }
 
     async taakAfwerken(id) {
+        // Prevent race conditions from rapid clicking
+        if (this.activeCompletions.has(id)) {
+            console.log('Task completion already in progress:', id);
+            return;
+        }
+        
+        this.activeCompletions.add(id);
+        
         const taak = this.taken.find(t => t.id === id);
-        if (!taak) return;
+        if (!taak) {
+            this.activeCompletions.delete(id);
+            return;
+        }
         
         const isRecurring = taak.herhalingActief && taak.herhalingType;
         
-        return await loading.withLoading(async () => {
+        try {
+            return await loading.withLoading(async () => {
             taak.afgewerkt = new Date().toISOString();
             
             // Handle recurring tasks
@@ -2575,11 +2588,19 @@ class Taakbeheer {
                 delete taak.afgewerkt;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
+            
+            // Always cleanup the completion tracking
+            this.activeCompletions.delete(id);
         }, {
             operationId: `complete-task-${id}`,
             showGlobal: true,
             message: 'Taak afwerken...'
         });
+        } catch (error) {
+            console.error('Error in taakAfwerken:', error);
+            this.activeCompletions.delete(id);
+            throw error;
+        }
     }
 
     async verplaatsTaakNaarAfgewerkt(taak) {
