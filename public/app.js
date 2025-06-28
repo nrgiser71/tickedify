@@ -2245,13 +2245,19 @@ class Taakbeheer {
 
     // Toggle future tasks display for planning
     async togglePlanningToekomstigeTaken() {
-        this.toonToekomstigeTaken = !this.toonToekomstigeTaken;
-        this.saveToekomstToggle();
-        // Re-render daily planning to apply the filter
-        const container = document.querySelector('.main-content');
-        if (container) {
-            await this.renderDagelijksePlanning(container);
-        }
+        await loading.withLoading(async () => {
+            this.toonToekomstigeTaken = !this.toonToekomstigeTaken;
+            this.saveToekomstToggle();
+            // Re-render daily planning to apply the filter
+            const container = document.querySelector('.main-content');
+            if (container) {
+                await this.renderDagelijksePlanning(container);
+            }
+        }, {
+            operationId: 'toggle-toekomstige-taken',
+            showGlobal: true,
+            message: this.toonToekomstigeTaken ? 'Toekomstige taken verbergen...' : 'Toekomstige taken tonen...'
+        });
     }
 
     async renderActiesTable(container) {
