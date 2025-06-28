@@ -2506,8 +2506,8 @@ class Taakbeheer {
             
             const success = await this.verplaatsTaakNaarAfgewerkt(taak);
             if (success) {
-                // Keep task in local array until server refresh
-                // Don't remove from this.taken here to avoid race conditions
+                // Remove from local array immediately after successful server update
+                this.taken = this.taken.filter(t => t.id !== id);
                 
                 // Show visual feedback that task is being processed
                 const checkbox = document.querySelector(`input[onchange*="${id}"]`);
@@ -2559,11 +2559,10 @@ class Taakbeheer {
                     toast.success('Taak afgewerkt!');
                 }
                 
-                // Always refresh UI with scroll preservation for consistency
-                // Wait longer to ensure server update is processed
+                // Refresh UI with scroll preservation after background operations complete
                 setTimeout(() => {
                     this.preserveScrollPosition(() => this.laadHuidigeLijst());
-                }, 1000);
+                }, 300);
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
