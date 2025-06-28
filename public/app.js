@@ -2509,6 +2509,19 @@ class Taakbeheer {
                 // Remove from local array immediately for instant UI feedback
                 this.taken = this.taken.filter(t => t.id !== id);
                 
+                // Remove DOM element to keep UI consistent
+                const checkbox = document.querySelector(`input[onchange*="${id}"]`);
+                const rowElement = checkbox?.closest('tr, li, .project-actie-item');
+                if (rowElement) {
+                    rowElement.style.opacity = '0.5';
+                    rowElement.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        if (rowElement.parentNode) {
+                            rowElement.parentNode.removeChild(rowElement);
+                        }
+                    }, 300);
+                }
+                
                 // Background updates (don't await these for faster response)
                 // Only save list if this wasn't a recurring task, or if recurring task creation failed
                 if (!isRecurring) {
@@ -2539,6 +2552,9 @@ class Taakbeheer {
                                 if (this.planningActies) {
                                     this.planningActies.push(newTask);
                                 }
+                                
+                                // Re-render taken to show the new recurring task
+                                this.renderTaken();
                             }
                         } catch (error) {
                             console.error('Error fetching new recurring task:', error);
@@ -2548,11 +2564,11 @@ class Taakbeheer {
                     toast.success('Taak afgewerkt!');
                 }
                 
-                // Always refresh UI with scroll preservation for consistency
-                // Wait longer to ensure server update is processed
-                setTimeout(() => {
-                    this.preserveScrollPosition(() => this.laadHuidigeLijst());
-                }, 500);
+                // Don't refresh list after completion to prevent data loss
+                // The local array update is sufficient for UI consistency
+                // setTimeout(() => {
+                //     this.preserveScrollPosition(() => this.laadHuidigeLijst());
+                // }, 500);
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
