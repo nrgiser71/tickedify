@@ -759,8 +759,8 @@ const db = {
       if (positie === undefined || positie === null) {
         // No position specified, add at end
         positie = currentItemCount;
-      } else if (positie > currentItemCount) {
-        // Position is beyond the current count, add at end
+      } else if (positie >= currentItemCount) {
+        // Position is at or beyond the current count, add at end
         positie = currentItemCount;
       } else {
         // Position is within the existing items, shift others
