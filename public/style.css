@@ -650,18 +650,23 @@ body {
     margin: 0;
 }
 
-/* Planning toekomst toggle styling */
-.planning-toekomst-toggle {
+/* Checkbox wrapper styling */
+.checkbox-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    cursor: pointer;
     white-space: nowrap;
 }
 
-.planning-toekomst-toggle input[type="checkbox"] {
+.checkbox-wrapper input[type="checkbox"] {
     margin: 0;
+    cursor: pointer;
+}
+
+.checkbox-wrapper label {
+    cursor: pointer;
+    user-select: none;
 }
 
 /* ===== PROJECTEN LIJST STYLING ===== */

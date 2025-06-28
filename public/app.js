@@ -5842,10 +5842,10 @@ class Taakbeheer {
                                 <option value="">Alle contexten</option>
                             </select>
                             <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
-                            <label class="planning-toekomst-toggle">
+                            <div class="checkbox-wrapper">
                                 <input type="checkbox" id="planningToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                                Toon toekomstige taken
-                            </label>
+                                <label for="planningToekomstToggle">Toon toekomstige taken</label>
+                            </div>
                         </div>
                         <div class="acties-container" id="planningActiesLijst">
                             ${this.renderActiesVoorPlanning(acties, ingeplandeActies)}
