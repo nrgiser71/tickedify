@@ -2053,7 +2053,7 @@ class Taakbeheer {
                 </div>
                 <div class="taak-acties">
                     <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
-                    <button onclick="app.verwijderTaak('${taak.id}')">×</button>
+                    <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                 </div>
             `;
             
@@ -2339,7 +2339,7 @@ class Taakbeheer {
                 </div>
                 <div class="taak-acties">
                     <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
-                    <button onclick="app.verwijderTaak('${taak.id}')">×</button>
+                    <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                 </div>
             `;
             
@@ -2425,13 +2425,13 @@ class Taakbeheer {
             if (this.huidigeLijst === 'inbox') {
                 acties = `
                     <div class="taak-acties">
-                        <button onclick="app.verwijderTaak('${taak.id}')">×</button>
+                        <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                     </div>
                 `;
             } else if (this.huidigeLijst !== 'afgewerkte-taken') {
                 acties = `
                     <div class="taak-acties">
-                        <button onclick="app.verwijderTaak('${taak.id}')">×</button>
+                        <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                     </div>
                 `;
             }
@@ -4643,8 +4643,8 @@ class Taakbeheer {
                                     <small class="context-info">Aangemaakt: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
                                 </div>
                                 <div class="context-acties">
-                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Bewerken">✏️</button>
-                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Verwijderen">🗑️</button>
+                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Bewerken"><i class="fas fa-edit"></i></button>
+                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Verwijderen">×</button>
                                 </div>
                             </div>
                         `).join('')
