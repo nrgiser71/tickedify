@@ -1575,9 +1575,14 @@ class Taakbeheer {
 
     // Helper function to preserve scroll position during re-renders
     preserveScrollPosition(callback) {
-        const scrollContainer = document.querySelector('#acties-lijst, .acties-lijst, .taak-lijst, .main-content');
+        // Try multiple selectors to find the correct scroll container
+        const scrollContainer = document.querySelector('#acties-lijst') || 
+                               document.querySelector('.acties-lijst') || 
+                               document.querySelector('.taak-lijst') ||
+                               document.querySelector('.main-content');
         const scrollPosition = scrollContainer?.scrollTop || 0;
-        console.log(`💾 Saving scroll position: ${scrollPosition}px for container:`, scrollContainer?.className || scrollContainer?.id);
+        const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
+        console.log(`💾 Saving scroll position: ${scrollPosition}px for container:`, containerInfo);
         
         const result = callback();
         
@@ -1587,8 +1592,9 @@ class Taakbeheer {
                 if (scrollContainer) {
                     setTimeout(() => {
                         scrollContainer.scrollTop = scrollPosition;
-                        console.log(`📍 Restored scroll position: ${scrollPosition}px for container:`, scrollContainer?.className || scrollContainer?.id);
-                    }, 100);
+                        const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
+                        console.log(`📍 Restored scroll position: ${scrollPosition}px for container:`, containerInfo);
+                    }, 200);
                 }
                 return value;
             });
@@ -1597,8 +1603,9 @@ class Taakbeheer {
             if (scrollContainer) {
                 setTimeout(() => {
                     scrollContainer.scrollTop = scrollPosition;
-                    console.log(`📍 Restored scroll position: ${scrollPosition}px for container:`, scrollContainer?.className || scrollContainer?.id);
-                }, 100);
+                    const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
+                    console.log(`📍 Restored scroll position: ${scrollPosition}px for container:`, containerInfo);
+                }, 200);
             }
             return result;
         }
@@ -2542,9 +2549,10 @@ class Taakbeheer {
                 }
                 
                 // Always refresh UI with scroll preservation for consistency
+                // Wait longer to ensure server update is processed
                 setTimeout(() => {
                     this.preserveScrollPosition(() => this.laadHuidigeLijst());
-                }, 100);
+                }, 500);
             } else {
                 // Rollback the afgewerkt timestamp
                 delete taak.afgewerkt;
