@@ -6332,6 +6332,12 @@ class Taakbeheer {
             }
             
             console.log('📤 Sending to server:', planningItem);
+            console.log('🎯 Position details:', {
+                requestedPosition: position,
+                planningItemPosition: planningItem.positie,
+                hour: uur,
+                existingItemsInHour: this.currentPlanningData?.filter(p => p.uur === uur).length || 0
+            });
             const response = await fetch('/api/dagelijkse-planning', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
