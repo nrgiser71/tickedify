@@ -8120,3 +8120,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);
+
+// Add test tasks functionality (temporary for testing)
+document.addEventListener('DOMContentLoaded', () => {
+    const addTestTasksBtn = document.getElementById('addTestTasksBtn');
+    if (addTestTasksBtn) {
+        addTestTasksBtn.addEventListener('click', async () => {
+            if (!app.isLoggedIn()) {
+                toast.warning('Log in om test taken toe te voegen.');
+                return;
+            }
+            
+            addTestTasksBtn.disabled = true;
+            addTestTasksBtn.textContent = 'Adding...';
+            
+            try {
+                const tasks = [];
+                for (let i = 1; i <= 20; i++) {
+                    tasks.push({
+                        id: `test-scroll-${i}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        tekst: `Test scroll taak #${i} voor scroll position testing`,
+                        verschijndatum: new Date().toISOString().split('T')[0],
+                        duur: 5,
+                        contextId: 'JB thuis',
+                        lijst: 'acties'
+                    });
+                }
+                
+                // Add all tasks to the local array
+                app.taken = app.taken.concat(tasks);
+                
+                // Save to server
+                await app.slaLijstOp();
+                
+                // Re-render to show new tasks
+                app.renderTaken();
+                
+                toast.success('20 test taken toegevoegd aan acties lijst!');
+                addTestTasksBtn.style.display = 'none'; // Hide after use
+                
+            } catch (error) {
+                console.error('Error adding test tasks:', error);
+                toast.error('Fout bij toevoegen test taken.');
+            }
+            
+            addTestTasksBtn.disabled = false;
+            addTestTasksBtn.textContent = 'Add 20 Test Tasks';
+        });
+    }
+});
+
+// Show test button only on acties page
+if (typeof app !== 'undefined') {
+    const originalLaadHuidigeLijst = app.laadHuidigeLijst;
+    app.laadHuidigeLijst = function() {
+        const result = originalLaadHuidigeLijst.call(this);
+        
+        // Show test button only on acties page
+        const addTestTasksBtn = document.getElementById('addTestTasksBtn');
+        if (addTestTasksBtn) {
+            addTestTasksBtn.style.display = this.huidigeLijst === 'acties' ? 'inline-block' : 'none';
+        }
+        
+        return result;
+    };
+}
