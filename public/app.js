@@ -4130,9 +4130,23 @@ class Taakbeheer {
                 e.preventDefault();
                 const position = parseInt(slot.dataset.position);
                 const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
+                const targetSlot = this.topPrioriteiten[position - 1];
                 
-                // Check if slot is empty or if we're at max capacity
-                if (slot.classList.contains('empty') || currentTaskCount < 3) {
+                // Parse drag data to check if it's from our own priorities (reordering)
+                let isReordering = false;
+                try {
+                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    isReordering = dragData.type === 'prioriteit';
+                } catch (error) {
+                    // Not JSON or error parsing, assume external drag
+                    isReordering = false;
+                }
+                
+                // Allow drop if:
+                // 1. Slot is empty and we have space (< 3 total)
+                // 2. Slot is filled (replacing existing)
+                // 3. It's internal reordering
+                if (targetSlot || currentTaskCount < 3 || isReordering) {
                     slot.classList.add('drag-over');
                 } else {
                     slot.classList.add('drag-rejected');
@@ -4198,9 +4212,29 @@ class Taakbeheer {
             const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
             const targetSlot = this.topPrioriteiten[position - 1];
             
+            // Check if this task is already in priorities (prevent duplicates)
+            const isAlreadyInPriorities = this.topPrioriteiten.some(p => p && p.id === taakId);
+            if (isAlreadyInPriorities) {
+                toast.warning('Deze taak staat al in je Top 3 prioriteiten!');
+                return;
+            }
+            
+            // Strict validation: only allow if:
+            // 1. Target slot is empty AND we have capacity (< 3 total)
+            // 2. Target slot is filled (replacing existing task)
             if (!targetSlot && currentTaskCount >= 3) {
                 toast.warning('Maximum 3 prioriteiten bereikt! Verwijder eerst een andere prioriteit.');
                 return;
+            }
+            
+            // If replacing an existing priority, first remove it from the database
+            if (targetSlot) {
+                console.log('🔄 Replacing existing priority:', targetSlot.tekst);
+                await fetch(`/api/taak/${targetSlot.id}/prioriteit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prioriteit: null })
+                });
             }
             
             // Debug logging
@@ -4223,7 +4257,7 @@ class Taakbeheer {
             
             // Set priority on server
             const today = new Date().toISOString().split('T')[0];
-            await fetch(`/api/taak/${taakId}/prioriteit`, {
+            const response = await fetch(`/api/taak/${taakId}/prioriteit`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -4231,6 +4265,13 @@ class Taakbeheer {
                     datum: today 
                 })
             });
+            
+            // Check for server-side validation errors
+            if (!response.ok) {
+                const errorData = await response.json();
+                toast.error(errorData.error || 'Fout bij instellen prioriteit');
+                return;
+            }
             
             // Update local state
             this.topPrioriteiten[position - 1] = taak;

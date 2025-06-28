@@ -2501,6 +2501,25 @@ app.put('/api/taak/:id/prioriteit', async (req, res) => {
                 WHERE id = $1 AND user_id = $2
             `, [id, userId]);
         } else {
+            // Validate: max 3 priorities per date
+            const existingCount = await pool.query(`
+                SELECT COUNT(*) as count 
+                FROM taken 
+                WHERE top_prioriteit IS NOT NULL 
+                AND prioriteit_datum = $1 
+                AND user_id = $2
+                AND id != $3
+            `, [datum, userId, id]);
+            
+            const currentCount = parseInt(existingCount.rows[0].count);
+            
+            if (currentCount >= 3) {
+                return res.status(400).json({ 
+                    error: 'Maximum 3 prioriteiten per dag bereikt',
+                    currentCount: currentCount 
+                });
+            }
+            
             // Set priority
             await pool.query(`
                 UPDATE taken 
