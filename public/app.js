@@ -342,6 +342,7 @@ class Taakbeheer {
         this.autoRefreshInterval = null; // Voor inbox auto-refresh
         this.activeCompletions = new Set(); // Track active task completions to prevent race conditions
         this.saveTimeout = null; // Debounce lijst opslaan
+        this.isSaving = false; // Prevent parallel saves
         this.init();
     }
 
@@ -2707,12 +2708,32 @@ class Taakbeheer {
         // Clear any existing timeout
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        
+        // Don't schedule another save if one is already in progress
+        if (this.isSaving) {
+            console.log('Save already in progress, skipping...');
+            return;
         }
         
         // Set new timeout to save after 500ms of inactivity
-        this.saveTimeout = setTimeout(() => {
-            this.slaLijstOp().catch(console.error);
+        this.saveTimeout = setTimeout(async () => {
             this.saveTimeout = null;
+            
+            if (this.isSaving) {
+                console.log('Save started by another call, skipping...');
+                return;
+            }
+            
+            this.isSaving = true;
+            try {
+                await this.slaLijstOp();
+            } catch (error) {
+                console.error('Error in debounced save:', error);
+            } finally {
+                this.isSaving = false;
+            }
         }, 500);
         
         console.log('Debounced save scheduled...');
