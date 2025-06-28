@@ -532,35 +532,50 @@ body {
 .actie-buttons {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     position: relative;
 }
 
 .bewerk-btn,
 .verplaats-btn-small,
 .verwijder-btn {
-    background: none;
+    background: transparent;
     border: none;
-    padding: 4px;
+    padding: 6px;
     cursor: pointer;
     border-radius: var(--macos-radius-small);
     font-size: 14px;
     transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--macos-text-secondary);
 }
 
 .bewerk-btn:hover {
-    background: var(--macos-blue);
+    background: var(--macos-gray-5);
+    color: var(--macos-blue);
     transform: scale(1.1);
 }
 
 .verplaats-btn-small:hover {
-    background: var(--macos-green);
+    background: var(--macos-gray-5);
+    color: var(--macos-green);
     transform: scale(1.1);
 }
 
 .verwijder-btn {
-    color: var(--macos-red);
+    color: var(--macos-text-secondary);
     font-weight: bold;
+    background: transparent;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
 }
 
 .verwijder-btn:hover {
@@ -1031,19 +1046,25 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 
 /* Acties knop styling */
 .acties-btn {
-    background: var(--soft-blue) !important;
-    color: white !important;
-    font-size: 12px;
-    padding: 4px 8px;
+    background: transparent !important;
+    color: var(--macos-text-secondary) !important;
+    font-size: 14px;
+    padding: 6px;
     border-radius: var(--macos-radius-small);
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .acties-btn:hover {
-    background: var(--soft-blue-hover) !important;
-    transform: translateY(-1px);
+    background: var(--macos-gray-5) !important;
+    color: var(--macos-text-primary) !important;
+    transform: scale(1.1);
 }
 
 /* Acties menu overlay */
