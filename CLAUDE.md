@@ -44,6 +44,27 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## QUICK ADD DATA VERLIES PROBLEEM DEFINITIEF OPGELOST (Juni 28, 2025) ✅
+
+**🔧 KRITIEKE FIX VOLTOOID: Versie 0.9.30-0.9.31**
+- **Probleem**: F9 Quick Add functionaliteit veroorzaakte data verlies door inbox overschrijving
+- **Symptoom**: 500 Internal Server Error bij Quick Add + volledige inbox wissing
+- **Console error**: `POST https://www.tickedify.com/api/lijst/inbox 500 (Internal Server Error)`
+- **Root Cause**: Frontend stuurde single task object naar array-verwachtende endpoint
+- **Oplossing**: Nieuwe veilige `/api/taak/add-to-inbox` endpoint voor single-task toevoeging
+- **Resultaat**: F9 Quick Add werkt nu volledig zonder data verlies
+- **Performance**: Veiligere task creation door dedicated single-task endpoint
+- **Testing**: End-to-end getest - Quick Add functioneert perfect zonder overschrijving
+
+**📊 TECHNISCHE DETAILS:**
+- **Voor fix**: `POST /api/lijst/inbox` verwachtte volledige array → overschreef bestaande taken
+- **Na fix**: `POST /api/taak/add-to-inbox` voegt veilig individuele taken toe
+- **API operaties**: Dedicated endpoint haalt eerst bestaande inbox op, voegt taak toe
+- **Error handling**: Volledige error propagation naar frontend met duidelijke foutmeldingen
+- **Data safety**: Inbox groeit incrementeel zonder verlies van bestaande taken
+
+**STATUS**: F9 Quick Add functionaliteit volledig operationeel zonder data verlies risico.
+
 ## HERHALENDE TAKEN 500 ERROR DEFINITIEF OPGELOST (Juni 27, 2025) ✅
 
 **🔧 KRITIEKE FIX VOLTOOID: Versie 0.9.4**

@@ -2852,11 +2852,9 @@ class Taakbeheer {
         const volgendeTaak = this.taken.find(taak => taak.id !== this.huidigeTaakId);
         
         if (volgendeTaak) {
-            // Korte delay zodat UI updates kunnen verwerken
-            setTimeout(async () => {
-                await this.planTaak(volgendeTaak.id);
-                toast.info(`Volgende taak: ${volgendeTaak.tekst.substring(0, 30)}...`);
-            }, 150);
+            // Direct planTaak aanroepen (loading is al actief)
+            await this.planTaak(volgendeTaak.id);
+            toast.info(`Volgende taak: ${volgendeTaak.tekst.substring(0, 30)}...`);
             return true;
         }
         
@@ -3223,6 +3221,9 @@ class Taakbeheer {
 
         const maakActieBtn = document.getElementById('maakActieBtn');
         
+        // Voor inbox taken: hou loading actief tot volgende taak geladen is
+        const isInboxTaak = this.huidigeLijst !== 'acties';
+        
         return await loading.withLoading(async () => {
             if (this.huidigeLijst === 'acties') {
                 // Bewerk bestaande actie
@@ -3242,6 +3243,7 @@ class Taakbeheer {
                     // Preserve filters when updating actions list
                     await this.preserveActionsFilters(() => this.renderTaken());
                     await this.laadTellingen();
+                    this.sluitPopup();
                 }
             } else {
                 // Maak nieuwe actie van inbox taak
@@ -3281,6 +3283,7 @@ class Taakbeheer {
                     }
                     
                     // Probeer automatisch volgende inbox taak te openen
+                    // Loading blijft actief totdat volgende taak geladen is
                     const volgendeGeopend = await this.openVolgendeInboxTaak();
                     if (!volgendeGeopend) {
                         this.sluitPopup();
@@ -3291,15 +3294,10 @@ class Taakbeheer {
                     return;
                 }
             }
-            
-            // Voor acties lijst editing: sluit popup
-            if (this.huidigeLijst === 'acties') {
-                this.sluitPopup();
-            }
         }, {
             operationId: 'save-action',
             button: maakActieBtn,
-            message: 'Actie opslaan...'
+            message: isInboxTaak ? 'Taak opslaan en volgende laden...' : 'Actie opslaan...'
         });
     }
 
