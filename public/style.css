@@ -327,7 +327,7 @@ body {
 
 .content-area {
     flex: 1;
-    padding: 24px 32px;
+    padding: 24px 32px 60px 32px; /* Extra bottom padding for shortcuts footer */
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
