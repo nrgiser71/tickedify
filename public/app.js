@@ -2552,7 +2552,7 @@ class Taakbeheer {
                                 }
                                 
                                 // Re-render taken to show the new recurring task
-                                this.renderTaken();
+                                this.preserveScrollPosition(() => this.renderTaken());
                             }
                         } catch (error) {
                             console.error('Error fetching new recurring task:', error);
@@ -2565,7 +2565,7 @@ class Taakbeheer {
                 // Don't refresh from server - just update the DOM to remove the completed task
                 // The local array is already correct, and server background updates handle persistence
                 setTimeout(() => {
-                    this.renderTaken();
+                    this.preserveScrollPosition(() => this.renderTaken());
                 }, 100);
             } else {
                 // Rollback the afgewerkt timestamp
