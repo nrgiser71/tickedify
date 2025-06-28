@@ -2581,6 +2581,39 @@ button:focus {
     border-color: var(--macos-blue);
 }
 
+/* Priority task styling - golden theme */
+.planning-item.priority-task {
+    background: linear-gradient(135deg, #FFF8DC, #FFFACD) !important;
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    position: relative;
+}
+
+.planning-item.priority-task:hover {
+    border-color: #FFA500 !important;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    transform: translateY(-1px);
+}
+
+.priority-indicator {
+    color: #FFD700;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(255, 215, 0, 0.3);
+    animation: gentle-glow 2s ease-in-out infinite alternate;
+}
+
+/* Gentle glow animation for priority star */
+@keyframes gentle-glow {
+    from { 
+        text-shadow: 0 1px 2px rgba(255, 215, 0, 0.3);
+        transform: scale(1);
+    }
+    to { 
+        text-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
+        transform: scale(1.05);
+    }
+}
+
 .task-checkbox {
     margin-right: 8px;
     transform: scale(1.1);

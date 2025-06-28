@@ -4094,7 +4094,7 @@ class Taakbeheer {
         const taak = this.topPrioriteiten[index];
         
         if (taak) {
-            try {
+            await loading.withLoading(async () => {
                 // Remove priority from server
                 await fetch(`/api/taak/${taak.id}/prioriteit`, {
                     method: 'PUT',
@@ -4113,10 +4113,11 @@ class Taakbeheer {
                 }
                 
                 toast.success(`Taak verwijderd uit prioriteit ${position}`);
-            } catch (error) {
-                console.error('Error removing priority:', error);
-                toast.error('Fout bij verwijderen prioriteit');
-            }
+            }, {
+                operationId: 'remove-priority',
+                showGlobal: true,
+                message: 'Prioriteit verwijderen...'
+            });
         }
     }
 
@@ -4192,7 +4193,7 @@ class Taakbeheer {
     }
 
     async handlePriorityDrop(taakId, position) {
-        try {
+        await loading.withLoading(async () => {
             // Check if max capacity reached
             const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
             const targetSlot = this.topPrioriteiten[position - 1];
@@ -4257,10 +4258,11 @@ class Taakbeheer {
             }
             
             toast.success(`"${taak.tekst}" toegevoegd als prioriteit ${position}`);
-        } catch (error) {
-            console.error('Error setting priority:', error);
-            toast.error('Fout bij instellen prioriteit');
-        }
+        }, {
+            operationId: 'add-priority',
+            showGlobal: true,
+            message: 'Prioriteit instellen...'
+        });
     }
 
     async loadTopPrioriteiten() {
@@ -6218,6 +6220,14 @@ class Taakbeheer {
         
         const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
         
+        // Check if this task is in top priorities
+        const isPriority = planningItem.type === 'taak' && planningItem.actieId && 
+                          this.topPrioriteiten?.some(p => p && p.id === planningItem.actieId);
+        
+        // Add priority styling and icon if it's a priority task
+        const priorityClass = isPriority ? ' priority-task' : '';
+        const priorityIcon = isPriority ? '<span class="priority-indicator">⭐</span>' : '';
+        
         // Add checkbox for tasks (but not for blocked time or breaks)
         const checkbox = planningItem.type === 'taak' && planningItem.actieId ? 
             `<input type="checkbox" class="task-checkbox" data-actie-id="${planningItem.actieId}" onclick="app.completePlanningTask('${planningItem.actieId}', this)">` : '';
@@ -6229,7 +6239,7 @@ class Taakbeheer {
             `<span class="planning-naam">${naam}</span>`;
         
         return `
-            <div class="planning-item" 
+            <div class="planning-item${priorityClass}" 
                  data-planning-id="${planningItem.id}" 
                  data-type="${planningItem.type}"
                  data-uur="${planningItem.uur}"
@@ -6237,6 +6247,7 @@ class Taakbeheer {
                  draggable="true">
                 ${checkbox}
                 <span class="planning-icon">${typeIcon}</span>
+                ${priorityIcon}
                 ${naamElement}
                 <span class="planning-duur">${planningItem.duurMinuten}min</span>
                 <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
