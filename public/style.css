@@ -327,7 +327,7 @@ body {
 
 .content-area {
     flex: 1;
-    padding: 24px 32px 60px 32px; /* Extra bottom padding for shortcuts footer */
+    padding: 24px 32px 40px 32px; /* Bottom padding matches shortcuts footer height */
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
@@ -4718,6 +4718,7 @@ button:focus {
     padding: 8px 16px;
     z-index: 1000;
     transition: opacity 0.3s ease, transform 0.3s ease;
+    height: 40px; /* Exact height for padding calculations */
 }
 
 .shortcuts-content {
