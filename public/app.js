@@ -2616,6 +2616,11 @@ class Taakbeheer {
             });
             
             if (!response.ok) {
+                // 404 means task already completed/deleted - that's actually success
+                if (response.status === 404) {
+                    console.log(`Task ${taak.id} already completed/deleted on server - treating as success`);
+                    return true;
+                }
                 throw new Error(`HTTP error ${response.status}`);
             }
             
@@ -2682,7 +2687,8 @@ class Taakbeheer {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Server error saving list:', errorData);
-                toast.error(`Fout bij opslaan: ${errorData.error || 'Onbekende fout'}`);
+                // Don't show toast error for background save operations
+                // toast.error(`Fout bij opslaan: ${errorData.error || 'Onbekende fout'}`);
                 return false;
             }
             
@@ -2690,7 +2696,8 @@ class Taakbeheer {
             return true;
         } catch (error) {
             console.error('Fout bij opslaan lijst:', error);
-            toast.error(`Fout bij opslaan: ${error.message}`);
+            // Don't show toast error for background save operations
+            // toast.error(`Fout bij opslaan: ${error.message}`);
             return false;
         }
     }
