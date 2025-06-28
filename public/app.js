@@ -4112,6 +4112,9 @@ class Taakbeheer {
                     this.bindPrioriteitEvents();
                 }
                 
+                // Update planning grid to remove golden styling
+                await this.updatePlanningGridAfterPriorityChange();
+                
                 toast.success(`Taak verwijderd uit prioriteit ${position}`);
             }, {
                 operationId: 'remove-priority',
@@ -4119,6 +4122,39 @@ class Taakbeheer {
                 message: 'Prioriteit verwijderen...'
             });
         }
+    }
+
+    async updatePlanningGridAfterPriorityChange() {
+        // Only update if we're in the daily planning view
+        const planningGrid = document.querySelector('.dagelijkse-planning-layout');
+        if (!planningGrid) {
+            return; // Not in daily planning view
+        }
+        
+        // Reload current planning data to get fresh priority info
+        const today = new Date().toISOString().split('T')[0];
+        const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+        const planning = planningResponse.ok ? await planningResponse.json() : [];
+        this.currentPlanningData = planning;
+        
+        // Update all hour elements with fresh planning data
+        for (let uur = 0; uur < 24; uur++) {
+            const uurElement = document.querySelector(`[data-uur="${uur}"]`);
+            if (uurElement) {
+                const uurContent = uurElement.querySelector('.uur-content');
+                if (uurContent) {
+                    const uurPlanning = planning.filter(p => {
+                        const startTijd = new Date(`1970-01-01T${p.starttijd}`);
+                        return startTijd.getHours() === uur;
+                    });
+                    
+                    uurContent.innerHTML = this.renderPlanningItemsWithDropZones(uurPlanning, uur);
+                }
+            }
+        }
+        
+        // Rebind drag & drop events for the updated elements
+        this.bindDragAndDropEvents();
     }
 
     bindPrioriteitEvents() {
@@ -4274,6 +4310,9 @@ class Taakbeheer {
                 actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies, ingeplandeActies);
                 this.bindDragAndDropEvents();
             }
+            
+            // Update planning grid to show golden styling for new priority
+            await this.updatePlanningGridAfterPriorityChange();
             
             toast.success(`"${taak.tekst}" toegevoegd als prioriteit ${position}`);
         }, {
