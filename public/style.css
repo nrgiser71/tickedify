@@ -654,11 +654,10 @@ body {
 .planning-toekomst-toggle {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 8px;
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
-    margin-left: auto; /* Push to the right */
 }
 
 .planning-toekomst-toggle input[type="checkbox"] {
