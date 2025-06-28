@@ -4131,31 +4131,35 @@ class Taakbeheer {
             return; // Not in daily planning view
         }
         
-        // Simply update CSS classes on existing planning items
-        // This is much safer than reloading the entire grid
-        const planningItems = document.querySelectorAll('.planning-item');
+        // Update CSS classes on existing planning items in the day planner
+        const planningItems = document.querySelectorAll('.planning-item[data-type="taak"]');
         
         planningItems.forEach(item => {
-            const actieId = item.dataset.actieId;
-            if (actieId) {
-                // Check if this task is now a priority
-                const isPriority = this.topPrioriteiten?.some(p => p && p.id === actieId);
+            // Find actie ID from the checkbox data attribute
+            const checkbox = item.querySelector('.task-checkbox');
+            if (checkbox) {
+                const actieId = checkbox.dataset.actieId;
                 
-                if (isPriority) {
-                    item.classList.add('priority-task');
-                    // Add priority star if not already present
-                    if (!item.querySelector('.priority-indicator')) {
-                        const titleElement = item.querySelector('.planning-item-title');
-                        if (titleElement) {
-                            titleElement.insertAdjacentHTML('beforebegin', '<span class="priority-indicator">⭐</span>');
+                if (actieId) {
+                    // Check if this task is now a priority
+                    const isPriority = this.topPrioriteiten?.some(p => p && p.id === actieId);
+                    
+                    if (isPriority) {
+                        item.classList.add('priority-task');
+                        // Add priority star if not already present
+                        if (!item.querySelector('.priority-indicator')) {
+                            const iconElement = item.querySelector('.planning-icon');
+                            if (iconElement) {
+                                iconElement.insertAdjacentHTML('afterend', '<span class="priority-indicator">⭐</span>');
+                            }
                         }
-                    }
-                } else {
-                    item.classList.remove('priority-task');
-                    // Remove priority star if present
-                    const priorityIndicator = item.querySelector('.priority-indicator');
-                    if (priorityIndicator) {
-                        priorityIndicator.remove();
+                    } else {
+                        item.classList.remove('priority-task');
+                        // Remove priority star if present
+                        const priorityIndicator = item.querySelector('.priority-indicator');
+                        if (priorityIndicator) {
+                            priorityIndicator.remove();
+                        }
                     }
                 }
             }
