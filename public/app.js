@@ -6342,7 +6342,7 @@ class Taakbeheer {
                 const serverResponse = await response.json();
                 console.log('<i class="ti ti-inbox"></i> Server response:', serverResponse);
                 // Fast local update instead of full refresh
-                this.updatePlanningLocally(planningItem, serverResponse);
+                await this.updatePlanningLocally(planningItem, serverResponse);
                 
                 // Remove task from actions list if it was an action
                 if (data.type === 'actie') {
@@ -6375,12 +6375,27 @@ class Taakbeheer {
         return this.handleDropInternal(data, uur, position);
     }
     
-    updatePlanningLocally(planningItem, serverResponse) {
+    async updatePlanningLocally(planningItem, serverResponse) {
         console.log('<i class="fas fa-redo"></i> updatePlanningLocally called with:', { planningItem, serverResponse });
         
-        // Update local planning data immediately for fast visual feedback
-        if (!this.currentPlanningData) {
-            this.currentPlanningData = [];
+        // First, fetch the current planning data from server to ensure we have all items
+        const today = new Date().toISOString().split('T')[0];
+        try {
+            const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+            if (planningResponse.ok) {
+                this.currentPlanningData = await planningResponse.json();
+                console.log('📊 Fetched current planning data:', this.currentPlanningData.length, 'items');
+            } else {
+                // Fallback to empty array if fetch fails
+                if (!this.currentPlanningData) {
+                    this.currentPlanningData = [];
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching planning data:', error);
+            if (!this.currentPlanningData) {
+                this.currentPlanningData = [];
+            }
         }
         
         // Add the new planning item to local data

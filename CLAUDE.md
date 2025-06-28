@@ -44,6 +44,26 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## FOOTER OVERLAP PROBLEEM DEFINITIEF OPGELOST (Juni 28, 2025) ✅
+
+**🔧 KRITIEKE FIX VOLTOOID: Versie 0.9.59-0.9.61**
+- **Probleem**: Keyboard shortcuts footer overlapte laatste taken in lijsten
+- **Symptoom**: Laatste taken in acties/inbox niet volledig zichtbaar door footer overlap
+- **Console error**: Geen errors, maar visueel probleem met content zichtbaarheid
+- **Root Cause**: taken-container had max-height: 100vh zonder rekening te houden met footer
+- **Oplossing**: taken-container max-height aangepast naar calc(100vh - 40px)
+- **Resultaat**: Alle taken nu volledig zichtbaar zonder footer overlap
+- **Performance**: Betere UX door volledige content zichtbaarheid
+
+**📊 TECHNISCHE DETAILS:**
+- **Voor fix**: max-height: 100vh → footer overlapte laatste content
+- **Na fix**: max-height: calc(100vh - 40px) → footer height aftrekken van viewport
+- **CSS operaties**: Exacte 40px footer height gemeten en toegepast in calc()
+- **Responsive design**: Footer blijft correct werken op alle schermgroottes
+- **Content safety**: Alle lijst items nu volledig toegankelijk zonder scroll problemen
+
+**STATUS**: Footer overlap volledig opgelost, alle taken zichtbaar.
+
 ## QUICK ADD DATA VERLIES PROBLEEM DEFINITIEF OPGELOST (Juni 28, 2025) ✅
 
 **🔧 KRITIEKE FIX VOLTOOID: Versie 0.9.30-0.9.31**
