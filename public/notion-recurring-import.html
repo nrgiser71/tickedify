@@ -232,7 +232,8 @@
             <textarea id="csvInput" class="csv-input" placeholder="Taaknaam,Project,Context,Herhaling,Datum,Duur
 Weekrapport schrijven,Werk,Computer,Elke vrijdag,2025-01-03,60
 Backup maken,IT,Computer,Elke eerste zondag van de maand,2025-01-05,30
-Team meeting,Werk,Kantoor,Elke dinsdag,2025-01-07,90"></textarea>
+Belastingaangifte,Financiën,,Elk jaar op 1 maart,2025-03-01,180
+Maand afsluiten,Financiën,,Elke laatste dag van de maand,2025-01-31,60"></textarea>
             
             <div class="format-hint">
                 <strong>CSV Format:</strong> Taaknaam, Project (optioneel), Context (optioneel), Herhaling, Datum (optioneel), Duur in minuten (optioneel)
@@ -247,6 +248,8 @@ Team meeting,Werk,Kantoor,Elke dinsdag,2025-01-07,90"></textarea>
                 <div class="pattern-example"><strong>Elke X weken op [dag]</strong> → Om de X weken</div>
                 <div class="pattern-example"><strong>Elke [eerste/laatste] [dag] van de maand</strong> → Maandelijks op specifieke dag</div>
                 <div class="pattern-example"><strong>Elke maand op de [X]e</strong> → Maandelijks op datum</div>
+                <div class="pattern-example"><strong>Elke laatste dag van de maand</strong> → Laatste dag van de maand</div>
+                <div class="pattern-example"><strong>Elk jaar op [dag] [maand]</strong> → Jaarlijks op specifieke datum</div>
             </div>
         </div>
         
@@ -299,6 +302,24 @@ Team meeting,Werk,Kantoor,Elke dinsdag,2025-01-07,90"></textarea>
             'vierde': 'fourth',
             'laatste': 'last'
         };
+        
+        function convertMonthNameToNumber(monthName) {
+            const months = {
+                'januari': '1',
+                'februari': '2', 
+                'maart': '3',
+                'april': '4',
+                'mei': '5',
+                'juni': '6',
+                'juli': '7',
+                'augustus': '8',
+                'september': '9',
+                'oktober': '10',
+                'november': '11',
+                'december': '12'
+            };
+            return months[monthName.toLowerCase()];
+        }
         
         function convertNotionPattern(notionText) {
             if (!notionText) return null;
@@ -370,12 +391,33 @@ Team meeting,Werk,Kantoor,Elke dinsdag,2025-01-07,90"></textarea>
                 return `monthly-day-${day}-1`;
             }
             
+            // Elke laatste dag van de maand
+            if (text === 'elke laatste dag van de maand' || text === 'laatste dag van de maand') {
+                return 'laatste-dag-maand';
+            }
+            
+            // Elke eerste dag van de maand
+            if (text === 'elke eerste dag van de maand' || text === 'eerste dag van de maand') {
+                return 'eerste-dag-maand';
+            }
+            
             // Elke eerste/laatste werkdag van de maand
             if (text === 'elke eerste werkdag van de maand') {
                 return 'eerste-werkdag-maand';
             }
             if (text === 'elke laatste werkdag van de maand') {
                 return 'laatste-werkdag-maand';
+            }
+            
+            // Elk jaar op [dag] [maand] - Nederlandse maanden
+            const yearlyMatch = text.match(/elk jaar op (\d+) (\w+)/);
+            if (yearlyMatch) {
+                const day = yearlyMatch[1];
+                const monthName = yearlyMatch[2];
+                const monthNum = convertMonthNameToNumber(monthName);
+                if (monthNum) {
+                    return `yearly-${day}-${monthNum}-1`;
+                }
             }
             
             // Als geen patroon herkend
