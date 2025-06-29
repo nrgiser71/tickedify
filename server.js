@@ -1314,6 +1314,49 @@ function generateId() {
     return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+// Debug endpoint to test pattern conversion
+app.post('/api/debug/test-pattern', (req, res) => {
+    const { pattern } = req.body;
+    
+    // Simple conversion test (using same logic as frontend)
+    const convertedPattern = convertNotionPatternServer(pattern);
+    
+    res.json({
+        input: pattern,
+        output: convertedPattern,
+        isRecognized: !!convertedPattern
+    });
+});
+
+function convertNotionPatternServer(notionText) {
+    if (!notionText) return null;
+    
+    const text = notionText.toLowerCase().trim();
+    
+    // Elke dag
+    if (text === 'elke dag' || text === 'dagelijks' || text === 'iedere dag') {
+        return 'dagelijks';
+    }
+    
+    // Elke vrijdag  
+    if (text === 'elke vrijdag') {
+        return 'weekly-1-5';
+    }
+    
+    // Elke week op [dag]
+    const weeklyMatch = text.match(/elke week op (\w+)/);
+    if (weeklyMatch) {
+        const dayMappings = {
+            'maandag': '1', 'dinsdag': '2', 'woensdag': '3', 'donderdag': '4', 
+            'vrijdag': '5', 'zaterdag': '6', 'zondag': '7'
+        };
+        const dayNum = dayMappings[weeklyMatch[1]];
+        if (dayNum) return `weekly-1-${dayNum}`;
+    }
+    
+    return null;
+}
+
 // Authentication middleware
 function requireAuth(req, res, next) {
     if (!req.session.userId) {
