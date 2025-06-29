@@ -2426,8 +2426,32 @@ app.get('/api/taak/:id', async (req, res) => {
         console.log('🐛 DEBUG: Query result rows count:', result.rows.length);
         
         if (result.rows.length > 0) {
-            console.log('🐛 DEBUG: Found task:', result.rows[0]);
-            res.json(result.rows[0]);
+            const task = result.rows[0];
+            console.log('🐛 DEBUG: Found task:', task);
+            
+            // Convert database column names to frontend property names
+            if (task.project_id !== undefined) {
+                task.projectId = task.project_id;
+                delete task.project_id;
+            }
+            if (task.context_id !== undefined) {
+                task.contextId = task.context_id;
+                delete task.context_id;
+            }
+            if (task.herhaling_type !== undefined) {
+                task.herhalingType = task.herhaling_type;
+                delete task.herhaling_type;
+            }
+            if (task.herhaling_waarde !== undefined) {
+                task.herhalingWaarde = task.herhaling_waarde;
+                delete task.herhaling_waarde;
+            }
+            if (task.herhaling_actief !== undefined) {
+                task.herhalingActief = task.herhaling_actief;
+                delete task.herhaling_actief;
+            }
+            
+            res.json(task);
         } else {
             console.log('🐛 DEBUG: Task not found in database');
             res.status(404).json({ error: 'Task not found' });
