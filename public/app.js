@@ -8619,7 +8619,10 @@ async function deleteAllTasks() {
     if (!secondConfirmation) return;
     
     try {
-        loading.showGlobal('Alle taken verwijderen...');
+        // Check if loading manager exists
+        if (window.loading && loading.showGlobal) {
+            loading.showGlobal('Alle taken verwijderen...');
+        }
         
         // Delete alle taken via API - werkt alleen voor aangelogde gebruiker
         const response = await fetch('/api/lijst/acties/delete-all', {
@@ -8630,7 +8633,12 @@ async function deleteAllTasks() {
         if (response.ok) {
             toast.success('Alle taken succesvol verwijderd');
             // Refresh de lijst
-            await app.laadHuidigeLijst();
+            if (app && app.laadHuidigeLijst) {
+                await app.laadHuidigeLijst();
+            } else {
+                // Fallback: reload page
+                window.location.reload();
+            }
         } else {
             const error = await response.text();
             toast.error('Fout bij verwijderen: ' + error);
@@ -8638,7 +8646,10 @@ async function deleteAllTasks() {
     } catch (error) {
         toast.error('Fout bij verwijderen: ' + error.message);
     } finally {
-        loading.hideGlobal();
+        // Hide loading if it exists
+        if (window.loading && loading.hideGlobal) {
+            loading.hideGlobal();
+        }
     }
 }
 
