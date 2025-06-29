@@ -44,6 +44,40 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## CSV IMPORT BESTEMMINGSLIJST FEATURE VOLTOOID (Juni 29, 2025) 📊✅
+
+**🎯 FEATURE REQUEST VOLTOOID: Versie 0.9.106-0.9.107**
+- **User request**: "Nu mag je de gewone csv import nog aanpassen. Hij is nu zo gemaakt dat je naar de inbox importeert. Geef de gebruiker de mogelijkheid om te kiezen om naar de inbox of één van de uitgesteld lijsten te importeren."
+- **Probleem**: CSV import was hardcoded naar inbox alleen
+- **Oplossing**: Dropdown interface voor bestemmingslijst selectie
+
+**📊 TECHNISCHE IMPLEMENTATIE:**
+- **Backend API wijziging**: `/api/email/import-real` endpoint uitgebreid met `targetList` parameter
+- **Validatie toegevoegd**: Alleen toegestane lijsten (inbox, uitgesteld-wekelijks, uitgesteld-maandelijks, uitgesteld-3maandelijks, uitgesteld-6maandelijks, uitgesteld-jaarlijks)
+- **Automatische fallback**: Bij ongeldige lijst namen wordt automatisch inbox gebruikt
+- **Frontend dropdown**: Zichtbare selectie interface in csv-mapper.html
+- **Progress feedback**: Import berichten tonen naar welke lijst wordt geïmporteerd
+
+**🎨 UX/UI VERBETERINGEN:**
+- **Duidelijke dropdown** met emoji iconen en lijst namen
+- **Eigen sectie** buiten mapping container voor betere zichtbaarheid (v0.9.107 fix)
+- **Progress tekst** toont bestemmingslijst: "Importeren van X taken naar Uitgesteld - Wekelijks..."
+- **Succes melding** vermeldt bestemmingslijst: "Import voltooid naar Uitgesteld - Maandelijks!"
+- **Professional styling** consistent met rest van CSV mapper interface
+
+**🧪 TESTING VOLTOOID:**
+- ✅ **Import naar uitgesteld-wekelijks**: Succesvol getest via API
+- ✅ **Import naar uitgesteld-maandelijks**: Succesvol getest via API  
+- ✅ **Fallback naar inbox**: Werkt correct bij ongeldige lijst namen
+- ✅ **Dropdown zichtbaarheid**: Fix v0.9.107 - verplaatst buiten mapping container
+- ✅ **End-to-end workflow**: Van CSV upload tot taak in juiste lijst
+
+**🔧 OPGELOSTE PROBLEMEN:**
+- **v0.9.106**: Backend + frontend implementatie
+- **v0.9.107**: Dropdown zichtbaarheid fix - verplaatst naar eigen sectie
+
+**STATUS**: CSV import gebruikers kunnen nu kiezen naar welke lijst ze importeren in plaats van alleen inbox. Volledig functioneel en getest.
+
 ## TOP 3 PRIORITEITEN FEATURE VOLLEDIG GEÏMPLEMENTEERD (December 28, 2025) 🎯✅
 
 **🚀 MAJOR FEATURE VOLTOOID: Versie 0.9.76-0.9.88**
