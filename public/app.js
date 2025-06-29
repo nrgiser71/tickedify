@@ -8594,8 +8594,19 @@ document.addEventListener('DOMContentLoaded', loadVersionNumber);
 
 // Tijdelijke functie om alle taken te wissen - ALLEEN VOOR AANGELOGDE GEBRUIKER
 async function deleteAllTasks() {
-    // Extra veiligheidscontroles
-    if (window.huidigeLijst !== 'acties') {
+    // Extra veiligheidscontroles - check multiple ways to ensure we're on acties
+    const isActiesLijst = window.huidigeLijst === 'acties' || 
+                         app.huidigeLijst === 'acties' || 
+                         document.getElementById('acties-lijst') !== null;
+    
+    console.log('Debug deleteAllTasks:', {
+        windowHuidigeLijst: window.huidigeLijst,
+        appHuidigeLijst: app?.huidigeLijst,
+        hasActiesLijst: !!document.getElementById('acties-lijst'),
+        isActiesLijst
+    });
+    
+    if (!isActiesLijst) {
         toast.error('Deze functie werkt alleen op de acties lijst');
         return;
     }
