@@ -1906,8 +1906,7 @@ class Taakbeheer {
             message: 'Lijst laden...'
         });
         
-        // Update delete all button visibility
-        updateDeleteAllButtonVisibility();
+        // No need for button visibility updates - button is hardcoded in acties lijst
     }
 
     async voegTaakToe() {
@@ -2297,6 +2296,12 @@ class Taakbeheer {
                         <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
                         Toon toekomstige taken
                     </label>
+                </div>
+                <div class="filter-groep">
+                    <button onclick="deleteAllTasks()" 
+                            style="background: #ff3b30; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">
+                        🗑️ Alles Wissen (Tijdelijk)
+                    </button>
                 </div>
             </div>
             <ul id="acties-lijst" class="taak-lijst"></ul>
@@ -8626,32 +8631,6 @@ async function deleteAllTasks() {
     }
 }
 
-// Show delete all button alleen op acties lijst
-function updateDeleteAllButtonVisibility() {
-    const container = document.getElementById('taak-input-container');
-    let deleteBtn = document.getElementById('deleteAllBtn');
-    
-    console.log('Debug: Current list:', window.huidigeLijst);
-    
-    if (window.huidigeLijst === 'acties') {
-        // Create button if it doesn't exist
-        if (!deleteBtn) {
-            deleteBtn = document.createElement('button');
-            deleteBtn.id = 'deleteAllBtn';
-            deleteBtn.innerHTML = '🗑️ Alles Wissen (Tijdelijk)';
-            deleteBtn.style.cssText = 'background: #ff3b30; color: white; margin-left: 10px; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;';
-            deleteBtn.onclick = deleteAllTasks;
-            container.appendChild(deleteBtn);
-            console.log('Debug: Delete button created and added');
-        }
-        deleteBtn.style.display = 'inline-block';
-    } else {
-        // Remove button if it exists and we're not on acties
-        if (deleteBtn) {
-            deleteBtn.remove();
-            console.log('Debug: Delete button removed');
-        }
-    }
-}
+// Delete all button is now hardcoded in renderActiesTable - no need for complex visibility management
 
 
