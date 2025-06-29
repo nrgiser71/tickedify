@@ -1178,12 +1178,16 @@ app.post('/api/email/test', async (req, res) => {
 // Real import endpoint that actually saves tasks
 app.post('/api/email/import-real', async (req, res) => {
     try {
-        const { subject, body, sender } = req.body;
+        const { subject, body, sender, targetList } = req.body;
         const userId = getCurrentUserId(req);
         
         if (!subject) {
             return res.status(400).json({ error: 'Subject is required' });
         }
+        
+        // Validate targetList - default to inbox
+        const validLists = ['inbox', 'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks'];
+        const targetListName = validLists.includes(targetList) ? targetList : 'inbox';
         
         // Parse email to task data
         const taskData = parseEmailToTask({
@@ -1205,7 +1209,7 @@ app.post('/api/email/import-real', async (req, res) => {
         const task = {
             id: generateId(),
             tekst: taskData.tekst,
-            lijst: 'inbox',
+            lijst: targetListName,
             aangemaakt: new Date().toISOString(),
             projectId: taskData.projectId || null,
             contextId: taskData.contextId || null,
@@ -1215,11 +1219,11 @@ app.post('/api/email/import-real', async (req, res) => {
             user_id: userId
         };
         
-        // Save to database - get current inbox and add task
-        const currentInbox = await db.getList('inbox', userId) || [];
-        currentInbox.push(task);
+        // Save to database - get current list and add task
+        const currentList = await db.getList(targetListName, userId) || [];
+        currentList.push(task);
         
-        const success = await db.saveList('inbox', currentInbox, userId);
+        const success = await db.saveList(targetListName, currentList, userId);
         
         if (success) {
             res.json({

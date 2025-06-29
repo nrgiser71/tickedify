@@ -351,6 +351,18 @@
                         <span>Sleep hier een kolom naartoe</span>
                         <button class="field-clear-btn" onclick="clearMapping('opmerkingen')" title="Mapping verwijderen">×</button>
                     </div>
+                    
+                    <div class="field-label">Bestemmingslijst</div>
+                    <div style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa;">
+                        <select id="targetListSelect" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            <option value="inbox">📥 Inbox</option>
+                            <option value="uitgesteld-wekelijks">📅 Uitgesteld - Wekelijks</option>
+                            <option value="uitgesteld-maandelijks">📅 Uitgesteld - Maandelijks</option>
+                            <option value="uitgesteld-3maandelijks">📅 Uitgesteld - 3-maandelijks</option>
+                            <option value="uitgesteld-6maandelijks">📅 Uitgesteld - 6-maandelijks</option>
+                            <option value="uitgesteld-jaarlijks">📅 Uitgesteld - Jaarlijks</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             
@@ -623,7 +635,9 @@
             let failed = 0;
             const total = allData.length;
             
-            document.getElementById('progressText').textContent = `Importeren van ${total} taken...`;
+            const targetList = document.getElementById('targetListSelect');
+            const listName = targetList.options[targetList.selectedIndex].text;
+            document.getElementById('progressText').textContent = `Importeren van ${total} taken naar ${listName}...`;
             
             for (let i = 0; i < allData.length; i++) {
                 const row = allData[i];
@@ -660,7 +674,7 @@
                 }
             }
             
-            const message = `📊 Import voltooid!<br>✅ ${imported} taken geïmporteerd<br>❌ ${failed} taken gefaald<br><br>Ga naar <a href="/" target="_blank">Tickedify</a> om je geïmporteerde taken te bekijken.`;
+            const message = `📊 Import voltooid naar ${listName}!<br>✅ ${imported} taken geïmporteerd<br>❌ ${failed} taken gefaald<br><br>Ga naar <a href="/" target="_blank">Tickedify</a> om je geïmporteerde taken te bekijken.`;
             showResult(message, failed === 0 ? 'success' : 'error');
         }
         
@@ -704,10 +718,14 @@
                 }
             }
             
+            // Get selected target list
+            const targetList = document.getElementById('targetListSelect').value;
+            
             return {
                 subject: subject,
                 body: body.trim(),
-                sender: 'csv-import@tickedify.com'
+                sender: 'csv-import@tickedify.com',
+                targetList: targetList
             };
         }
         
