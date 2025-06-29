@@ -1905,6 +1905,9 @@ class Taakbeheer {
             operationId: 'load-list',
             message: 'Lijst laden...'
         });
+        
+        // Update delete all button visibility
+        updateDeleteAllButtonVisibility();
     }
 
     async voegTaakToe() {
@@ -8583,5 +8586,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);
+
+// Tijdelijke functie om alle taken te wissen - ALLEEN VOOR AANGELOGDE GEBRUIKER
+async function deleteAllTasks() {
+    // Extra veiligheidscontroles
+    if (window.huidigeLijst !== 'acties') {
+        toast.error('Deze functie werkt alleen op de acties lijst');
+        return;
+    }
+    
+    // Vraag dubbele bevestiging
+    const confirmation = confirm('⚠️ WAARSCHUWING: Dit zal ALLE taken in je acties lijst permanent verwijderen!\n\nWeet je dit 100% zeker?');
+    if (!confirmation) return;
+    
+    const secondConfirmation = confirm('🚨 LAATSTE WAARSCHUWING: Deze actie kan NIET ongedaan gemaakt worden!\n\nTyp mentaal "IK BEGRIJP HET RISICO" en klik OK om door te gaan.');
+    if (!secondConfirmation) return;
+    
+    try {
+        loading.showGlobal('Alle taken verwijderen...');
+        
+        // Delete alle taken via API - werkt alleen voor aangelogde gebruiker
+        const response = await fetch('/api/lijst/acties/delete-all', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            toast.success('Alle taken succesvol verwijderd');
+            // Refresh de lijst
+            await app.laadHuidigeLijst();
+        } else {
+            const error = await response.text();
+            toast.error('Fout bij verwijderen: ' + error);
+        }
+    } catch (error) {
+        toast.error('Fout bij verwijderen: ' + error.message);
+    } finally {
+        loading.hideGlobal();
+    }
+}
+
+// Show delete all button alleen op acties lijst
+function updateDeleteAllButtonVisibility() {
+    const deleteBtn = document.getElementById('deleteAllBtn');
+    if (deleteBtn) {
+        deleteBtn.style.display = (window.huidigeLijst === 'acties') ? 'inline-block' : 'none';
+    }
+}
 
 

@@ -1344,6 +1344,42 @@ function generateId() {
     return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+// TIJDELIJKE ENDPOINT: Delete all tasks for logged in user - SUPER SECURE
+app.delete('/api/lijst/acties/delete-all', async (req, res) => {
+    try {
+        // CRITICAL: Must be authenticated - NO fallback to default user
+        if (!req.session.userId) {
+            return res.status(401).json({ error: 'Authentication required - niet ingelogd' });
+        }
+        
+        const userId = req.session.userId;
+        
+        // EXTRA SAFETY: Only for specific user (jan@buskens.be)
+        const userCheck = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0 || userCheck.rows[0].email !== 'jan@buskens.be') {
+            return res.status(403).json({ error: 'Not authorized - alleen voor Jan toegestaan' });
+        }
+        
+        // Delete only acties for this specific user
+        const result = await pool.query(
+            'DELETE FROM taken WHERE user_id = $1 AND lijst = $2 AND afgewerkt IS NULL',
+            [userId, 'acties']
+        );
+        
+        console.log(`🗑️ TEMP DELETE ALL: Deleted ${result.rowCount} acties for user ${userId} (${userCheck.rows[0].email})`);
+        
+        res.json({
+            success: true,
+            deletedCount: result.rowCount,
+            message: `${result.rowCount} taken verwijderd uit acties lijst`
+        });
+        
+    } catch (error) {
+        console.error('Error in delete all:', error);
+        res.status(500).json({ error: 'Server error tijdens verwijderen' });
+    }
+});
+
 // Debug endpoint to test pattern conversion
 app.post('/api/debug/test-pattern', (req, res) => {
     const { pattern } = req.body;
