@@ -351,18 +351,22 @@
                         <span>Sleep hier een kolom naartoe</span>
                         <button class="field-clear-btn" onclick="clearMapping('opmerkingen')" title="Mapping verwijderen">×</button>
                     </div>
-                    
-                    <div class="field-label">Bestemmingslijst</div>
-                    <div style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa;">
-                        <select id="targetListSelect" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-                            <option value="inbox">📥 Inbox</option>
-                            <option value="uitgesteld-wekelijks">📅 Uitgesteld - Wekelijks</option>
-                            <option value="uitgesteld-maandelijks">📅 Uitgesteld - Maandelijks</option>
-                            <option value="uitgesteld-3maandelijks">📅 Uitgesteld - 3-maandelijks</option>
-                            <option value="uitgesteld-6maandelijks">📅 Uitgesteld - 6-maandelijks</option>
-                            <option value="uitgesteld-jaarlijks">📅 Uitgesteld - Jaarlijks</option>
-                        </select>
-                    </div>
+                </div>
+            </div>
+            
+            <!-- Bestemmingslijst dropdown buiten mapping container voor betere zichtbaarheid -->
+            <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+                <h4>🎯 Bestemmingslijst</h4>
+                <div style="margin: 10px 0;">
+                    <label for="targetListSelect" style="display: block; margin-bottom: 5px; font-weight: 600;">Importeren naar:</label>
+                    <select id="targetListSelect" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: white;">
+                        <option value="inbox">📥 Inbox</option>
+                        <option value="uitgesteld-wekelijks">📅 Uitgesteld - Wekelijks</option>
+                        <option value="uitgesteld-maandelijks">📅 Uitgesteld - Maandelijks</option>
+                        <option value="uitgesteld-3maandelijks">📅 Uitgesteld - 3-maandelijks</option>
+                        <option value="uitgesteld-6maandelijks">📅 Uitgesteld - 6-maandelijks</option>
+                        <option value="uitgesteld-jaarlijks">📅 Uitgesteld - Jaarlijks</option>
+                    </select>
                 </div>
             </div>
             
