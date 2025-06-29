@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Notion Herhalende Taken - Tickedify</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .import-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 30px;
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            box-shadow: var(--macos-shadow-medium);
+        }
+        
+        .import-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--macos-gray-4);
+        }
+        
+        .import-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--macos-text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .import-subtitle {
+            font-size: 16px;
+            color: var(--macos-text-secondary);
+        }
+        
+        .import-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--macos-text-primary);
+            margin-bottom: 15px;
+        }
+        
+        .csv-input {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 1px solid var(--macos-gray-4);
+            border-radius: var(--macos-radius-medium);
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+        
+        .format-hint {
+            margin-top: 10px;
+            padding: 15px;
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-small);
+            font-size: 14px;
+            color: var(--macos-text-secondary);
+        }
+        
+        .preview-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-medium);
+            border: 1px solid var(--macos-gray-4);
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .preview-table th,
+        .preview-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--macos-gray-4);
+        }
+        
+        .preview-table th {
+            font-weight: 600;
+            background: var(--macos-bg-primary);
+        }
+        
+        .pattern-recognized {
+            color: var(--macos-green);
+            font-weight: 500;
+        }
+        
+        .pattern-unrecognized {
+            color: var(--macos-red);
+            font-weight: 500;
+        }
+        
+        .pattern-converted {
+            font-size: 12px;
+            color: var(--macos-text-secondary);
+            font-family: 'Monaco', monospace;
+        }
+        
+        .import-button {
+            display: block;
+            margin: 30px auto;
+            padding: 12px 40px;
+            background: var(--macos-blue);
+            color: white;
+            border: none;
+            border-radius: var(--macos-radius-medium);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .import-button:hover {
+            background: var(--macos-blue-dark);
+            transform: translateY(-1px);
+        }
+        
+        .import-button:disabled {
+            background: var(--macos-gray-4);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .progress-section {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--macos-gray-4);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--macos-blue);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--macos-text-secondary);
+        }
+        
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: var(--macos-radius-medium);
+        }
+        
+        .result-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result-details {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--macos-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .example-patterns {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-small);
+            font-size: 13px;
+        }
+        
+        .example-patterns h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: var(--macos-text-primary);
+        }
+        
+        .pattern-example {
+            margin: 5px 0;
+            color: var(--macos-text-secondary);
+        }
+        
+        .pattern-example strong {
+            color: var(--macos-text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="import-container">
+        <div class="import-header">
+            <h1 class="import-title">🔄 Import Notion Herhalende Taken</h1>
+            <p class="import-subtitle">Converteer je Notion herhalingspatronen automatisch naar Tickedify formaat</p>
+        </div>
+        
+        <div class="import-section">
+            <h3 class="section-title">📋 Plak je CSV data</h3>
+            <textarea id="csvInput" class="csv-input" placeholder="Taaknaam,Project,Context,Herhaling,Datum,Duur
+Weekrapport schrijven,Werk,Computer,Elke vrijdag,2025-01-03,60
+Backup maken,IT,Computer,Elke eerste zondag van de maand,2025-01-05,30
+Team meeting,Werk,Kantoor,Elke dinsdag,2025-01-07,90"></textarea>
+            
+            <div class="format-hint">
+                <strong>CSV Format:</strong> Taaknaam, Project (optioneel), Context (optioneel), Herhaling, Datum (optioneel), Duur in minuten (optioneel)
+            </div>
+            
+            <div class="example-patterns">
+                <h4>Ondersteunde herhalingspatronen:</h4>
+                <div class="pattern-example"><strong>Elke dag</strong> → Dagelijks</div>
+                <div class="pattern-example"><strong>Elke X dagen</strong> → Om de X dagen</div>
+                <div class="pattern-example"><strong>Elke werkdag</strong> → Maandag t/m vrijdag</div>
+                <div class="pattern-example"><strong>Elke week op [dag]</strong> → Wekelijks op specifieke dag</div>
+                <div class="pattern-example"><strong>Elke X weken op [dag]</strong> → Om de X weken</div>
+                <div class="pattern-example"><strong>Elke [eerste/laatste] [dag] van de maand</strong> → Maandelijks op specifieke dag</div>
+                <div class="pattern-example"><strong>Elke maand op de [X]e</strong> → Maandelijks op datum</div>
+            </div>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <h3 class="section-title">👁️ Preview van herkenning</h3>
+            <div id="previewContent"></div>
+        </div>
+        
+        <button class="import-button" id="importButton" onclick="startImport()">
+            🚀 Start Import
+        </button>
+        
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Voorbereiden...</div>
+        </div>
+        
+        <div class="result-section" id="resultSection"></div>
+        
+        <a href="/" class="back-link">← Terug naar Tickedify</a>
+    </div>
+    
+    <script>
+        let parsedTasks = [];
+        
+        // Pattern conversie mapping
+        const patternMappings = {
+            // Dagelijkse patronen
+            'elke dag': 'dagelijks',
+            'dagelijks': 'dagelijks',
+            'iedere dag': 'dagelijks',
+            'elke werkdag': 'werkdagen',
+            'werkdagen': 'werkdagen',
+            
+            // Wekelijkse patronen - dagen
+            'zondag': '7',
+            'maandag': '1', 
+            'dinsdag': '2',
+            'woensdag': '3',
+            'donderdag': '4',
+            'vrijdag': '5',
+            'zaterdag': '6',
+            
+            // Posities
+            'eerste': 'first',
+            'tweede': 'second',
+            'derde': 'third',
+            'vierde': 'fourth',
+            'laatste': 'last'
+        };
+        
+        function convertNotionPattern(notionText) {
+            if (!notionText) return null;
+            
+            const text = notionText.toLowerCase().trim();
+            
+            // Elke dag
+            if (text === 'elke dag' || text === 'dagelijks' || text === 'iedere dag') {
+                return 'dagelijks';
+            }
+            
+            // Elke X dagen
+            const everyXDaysMatch = text.match(/elke (\d+) dagen?/);
+            if (everyXDaysMatch) {
+                return `daily-${everyXDaysMatch[1]}`;
+            }
+            
+            // Elke werkdag
+            if (text === 'elke werkdag' || text === 'werkdagen') {
+                return 'werkdagen';
+            }
+            
+            // Elke week op [dag]
+            const weeklyMatch = text.match(/elke week op (\w+)/);
+            if (weeklyMatch) {
+                const dayName = weeklyMatch[1];
+                const dayNum = patternMappings[dayName];
+                if (dayNum) {
+                    return `weekly-1-${dayNum}`;
+                }
+            }
+            
+            // Elke X weken op [dag]
+            const everyXWeeksMatch = text.match(/elke (\d+) weken? op (\w+)/);
+            if (everyXWeeksMatch) {
+                const weeks = everyXWeeksMatch[1];
+                const dayName = everyXWeeksMatch[2];
+                const dayNum = patternMappings[dayName];
+                if (dayNum) {
+                    return `weekly-${weeks}-${dayNum}`;
+                }
+            }
+            
+            // Elke [dag] (impliceert wekelijks)
+            const implicitWeeklyMatch = text.match(/^elke (\w+)$/);
+            if (implicitWeeklyMatch) {
+                const dayName = implicitWeeklyMatch[1];
+                const dayNum = patternMappings[dayName];
+                if (dayNum) {
+                    return `weekly-1-${dayNum}`;
+                }
+            }
+            
+            // Elke [eerste/laatste] [dag] van de maand
+            const monthlyWeekdayMatch = text.match(/elke (eerste|tweede|derde|vierde|laatste) (\w+) van de maand/);
+            if (monthlyWeekdayMatch) {
+                const position = patternMappings[monthlyWeekdayMatch[1]];
+                const dayName = monthlyWeekdayMatch[2];
+                const dayNum = patternMappings[dayName];
+                if (position && dayNum) {
+                    return `monthly-weekday-${position}-${dayNum}-1`;
+                }
+            }
+            
+            // Elke maand op de Xe / elke Xe van de maand
+            const monthlyDayMatch = text.match(/elke (?:maand op de )?(\d+)e?(?: van de maand)?/);
+            if (monthlyDayMatch) {
+                const day = monthlyDayMatch[1];
+                return `monthly-day-${day}-1`;
+            }
+            
+            // Elke eerste/laatste werkdag van de maand
+            if (text === 'elke eerste werkdag van de maand') {
+                return 'eerste-werkdag-maand';
+            }
+            if (text === 'elke laatste werkdag van de maand') {
+                return 'laatste-werkdag-maand';
+            }
+            
+            // Als geen patroon herkend
+            return null;
+        }
+        
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const tasks = [];
+            
+            // Skip header if it looks like a header
+            const firstLine = lines[0].toLowerCase();
+            const startIndex = firstLine.includes('taaknaam') || firstLine.includes('taak') ? 1 : 0;
+            
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const parts = line.split(',').map(p => p.trim());
+                
+                if (parts[0]) { // Must have task name
+                    const herhalingPattern = parts[3] || '';
+                    const convertedPattern = convertNotionPattern(herhalingPattern);
+                    
+                    tasks.push({
+                        taaknaam: parts[0],
+                        project: parts[1] || '',
+                        context: parts[2] || '',
+                        herhalingNotion: herhalingPattern,
+                        herhalingTickedify: convertedPattern,
+                        datum: parts[4] || '',
+                        duur: parts[5] || ''
+                    });
+                }
+            }
+            
+            return tasks;
+        }
+        
+        function showPreview() {
+            const csvText = document.getElementById('csvInput').value;
+            if (!csvText.trim()) {
+                document.getElementById('previewSection').style.display = 'none';
+                return;
+            }
+            
+            parsedTasks = parseCSV(csvText);
+            
+            if (parsedTasks.length === 0) {
+                document.getElementById('previewSection').style.display = 'none';
+                return;
+            }
+            
+            let html = `<p>Gevonden: <strong>${parsedTasks.length}</strong> taken</p>`;
+            html += '<table class="preview-table">';
+            html += '<tr><th>Taak</th><th>Notion Herhaling</th><th>Tickedify Patroon</th><th>Status</th></tr>';
+            
+            let recognizedCount = 0;
+            parsedTasks.forEach(task => {
+                const isRecognized = !!task.herhalingTickedify;
+                if (isRecognized) recognizedCount++;
+                
+                html += '<tr>';
+                html += `<td>${task.taaknaam}</td>`;
+                html += `<td>${task.herhalingNotion || '-'}</td>`;
+                html += `<td class="${isRecognized ? 'pattern-recognized' : 'pattern-unrecognized'}">`;
+                if (isRecognized) {
+                    html += `✓ <span class="pattern-converted">${task.herhalingTickedify}</span>`;
+                } else if (task.herhalingNotion) {
+                    html += '✗ Niet herkend';
+                } else {
+                    html += '-';
+                }
+                html += '</td>';
+                html += `<td>${isRecognized ? '✅' : (task.herhalingNotion ? '❌' : '➖')}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            html += `<p style="margin-top: 15px;">Herhalingspatronen herkend: <strong>${recognizedCount}</strong> van <strong>${parsedTasks.filter(t => t.herhalingNotion).length}</strong></p>`;
+            
+            document.getElementById('previewContent').innerHTML = html;
+            document.getElementById('previewSection').style.display = 'block';
+        }
+        
+        // Auto preview on input
+        document.getElementById('csvInput').addEventListener('input', showPreview);
+        
+        async function startImport() {
+            if (parsedTasks.length === 0) {
+                alert('Voer eerst CSV data in');
+                return;
+            }
+            
+            // Disable button
+            document.getElementById('importButton').disabled = true;
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            let imported = 0;
+            let failed = 0;
+            const total = parsedTasks.length;
+            
+            for (let i = 0; i < parsedTasks.length; i++) {
+                const task = parsedTasks[i];
+                
+                updateProgress((i / total) * 100, `Importeren taak ${i + 1} van ${total}...`);
+                
+                try {
+                    const response = await fetch('/api/import/notion-recurring', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            taaknaam: task.taaknaam,
+                            project: task.project,
+                            context: task.context,
+                            herhalingType: task.herhalingTickedify,
+                            herhalingActief: !!task.herhalingTickedify,
+                            datum: task.datum,
+                            duur: task.duur
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        imported++;
+                    } else {
+                        failed++;
+                        console.error('Import failed for:', task.taaknaam, await response.text());
+                    }
+                } catch (error) {
+                    failed++;
+                    console.error('Import error:', error);
+                }
+                
+                // Small delay to not overwhelm server
+                if (i % 5 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            
+            updateProgress(100, 'Import voltooid!');
+            showResult(imported, failed, total);
+            
+            // Re-enable button
+            document.getElementById('importButton').disabled = false;
+        }
+        
+        function updateProgress(percentage, text) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+        
+        function showResult(imported, failed, total) {
+            const resultSection = document.getElementById('resultSection');
+            const isSuccess = failed === 0;
+            
+            resultSection.className = `result-section ${isSuccess ? 'result-success' : 'result-error'}`;
+            
+            let html = `<h3>${isSuccess ? '✅ Import Succesvol!' : '⚠️ Import Voltooid met Waarschuwingen'}</h3>`;
+            html += '<div class="result-details">';
+            html += `<p>Totaal verwerkt: <strong>${total}</strong> taken</p>`;
+            html += `<p>Succesvol geïmporteerd: <strong>${imported}</strong> taken</p>`;
+            if (failed > 0) {
+                html += `<p>Mislukt: <strong>${failed}</strong> taken</p>`;
+            }
+            
+            const recurringCount = parsedTasks.filter(t => t.herhalingTickedify).length;
+            html += `<p>Met herhalingspatroon: <strong>${recurringCount}</strong> taken</p>`;
+            
+            html += '</div>';
+            
+            resultSection.innerHTML = html;
+            resultSection.style.display = 'block';
+        }
+        
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (!response.ok) {
+                    alert('Je moet ingelogd zijn om taken te importeren');
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+        }
+        
+        // Check auth on load
+        checkAuth();
+    </script>
+</body>
+</html>

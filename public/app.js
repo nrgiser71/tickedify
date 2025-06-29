@@ -4749,6 +4749,9 @@ class Taakbeheer {
                 window.open('/csv-mapper.html', '_blank');
                 break;
             case 'notion-import':
+                window.open('/notion-recurring-import.html', '_blank');
+                break;
+            case 'notion-import-old':
                 window.open('/notion-import.html', '_blank');
                 break;
             case 'wekelijkse-optimalisatie':

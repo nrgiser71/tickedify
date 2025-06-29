@@ -1240,6 +1240,67 @@ app.post('/api/email/import-real', async (req, res) => {
     }
 });
 
+// Notion recurring tasks import endpoint (temporary for Jan)
+app.post('/api/import/notion-recurring', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+        const { taaknaam, project, context, herhalingType, herhalingActief, datum, duur } = req.body;
+        
+        if (!taaknaam) {
+            return res.status(400).json({ error: 'Taaknaam is verplicht' });
+        }
+        
+        // Create task object
+        const task = {
+            id: generateId(),
+            tekst: taaknaam,
+            lijst: 'acties', // Direct to acties list
+            aangemaakt: new Date().toISOString(),
+            projectId: null,
+            contextId: null,
+            verschijndatum: datum ? new Date(datum).toISOString() : new Date().toISOString(),
+            duur: duur ? parseInt(duur) : null,
+            opmerkingen: null,
+            herhalingType: herhalingType || null,
+            herhalingActief: herhalingActief || false,
+            user_id: userId
+        };
+        
+        // Find or create project if provided
+        if (project && project.trim()) {
+            task.projectId = await findOrCreateProject(project.trim(), userId);
+        }
+        
+        // Find or create context if provided
+        if (context && context.trim()) {
+            task.contextId = await findOrCreateContext(context.trim(), userId);
+        }
+        
+        // Get current acties list and add task
+        const currentActies = await db.getList('acties', userId) || [];
+        currentActies.push(task);
+        
+        const success = await db.saveList('acties', currentActies, userId);
+        
+        if (success) {
+            res.json({
+                success: true,
+                task: task,
+                message: 'Task successfully imported to acties'
+            });
+        } else {
+            res.status(500).json({ error: 'Failed to save task to database' });
+        }
+        
+    } catch (error) {
+        console.error('Notion recurring import error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 function generateId() {
     return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
