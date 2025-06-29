@@ -8630,7 +8630,17 @@ async function deleteAllTasks() {
 function updateDeleteAllButtonVisibility() {
     const deleteBtn = document.getElementById('deleteAllBtn');
     if (deleteBtn) {
+        // Debug: altijd tonen voor nu
+        console.log('Debug: Current list:', window.huidigeLijst, 'Button element:', deleteBtn);
         deleteBtn.style.display = (window.huidigeLijst === 'acties') ? 'inline-block' : 'none';
+        
+        // Force show for debugging
+        if (window.huidigeLijst === 'acties') {
+            deleteBtn.style.display = 'inline-block';
+            console.log('Debug: Button should be visible now');
+        }
+    } else {
+        console.log('Debug: Delete button element not found');
     }
 }
 
