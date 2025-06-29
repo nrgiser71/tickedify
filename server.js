@@ -1246,6 +1246,15 @@ app.post('/api/import/notion-recurring', async (req, res) => {
         const userId = getCurrentUserId(req);
         const { taaknaam, project, context, herhalingType, herhalingActief, datum, duur } = req.body;
         
+        // Debug logging
+        console.log('🔍 Notion import debug:', {
+            userId,
+            taaknaam,
+            herhalingType,
+            herhalingActief,
+            requestBody: req.body
+        });
+        
         if (!taaknaam) {
             return res.status(400).json({ error: 'Taaknaam is verplicht' });
         }

@@ -290,6 +290,17 @@ const db = {
         await pool.query('DELETE FROM taken WHERE user_id = $1 AND lijst = $2 AND afgewerkt IS NULL', [userId, listName]);
         
         for (const item of items) {
+          // Debug logging for recurring tasks
+          if (item.herhalingType) {
+            console.log('💾 DB: Saving recurring task:', {
+              id: item.id,
+              tekst: item.tekst,
+              herhalingType: item.herhalingType,
+              herhalingActief: item.herhalingActief,
+              userId
+            });
+          }
+          
           // Check if herhaling columns exist and fall back gracefully
           try {
             await pool.query(`
