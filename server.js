@@ -1259,11 +1259,28 @@ app.post('/api/import/notion-recurring', async (req, res) => {
             return res.status(400).json({ error: 'Taaknaam is verplicht' });
         }
         
-        // Parse date safely
+        // Parse date safely - handle European DD/MM/YYYY format
         let verschijndatumISO;
         try {
             if (datum && datum.trim() && datum !== '') {
-                verschijndatumISO = new Date(datum).toISOString();
+                // Check if it's DD/MM/YYYY format (contains slashes)
+                if (datum.includes('/')) {
+                    const parts = datum.split('/');
+                    if (parts.length === 3) {
+                        // Convert DD/MM/YYYY to YYYY-MM-DD
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2];
+                        const isoDate = `${year}-${month}-${day}`;
+                        verschijndatumISO = new Date(isoDate).toISOString();
+                        console.log('📅 Converted European date:', datum, '→', isoDate);
+                    } else {
+                        verschijndatumISO = new Date(datum).toISOString();
+                    }
+                } else {
+                    // Assume it's already in ISO format or other standard format
+                    verschijndatumISO = new Date(datum).toISOString();
+                }
             } else {
                 verschijndatumISO = new Date().toISOString();
             }
