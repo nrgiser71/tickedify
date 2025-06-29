@@ -8628,19 +8628,29 @@ async function deleteAllTasks() {
 
 // Show delete all button alleen op acties lijst
 function updateDeleteAllButtonVisibility() {
-    const deleteBtn = document.getElementById('deleteAllBtn');
-    if (deleteBtn) {
-        // Debug: altijd tonen voor nu
-        console.log('Debug: Current list:', window.huidigeLijst, 'Button element:', deleteBtn);
-        deleteBtn.style.display = (window.huidigeLijst === 'acties') ? 'inline-block' : 'none';
-        
-        // Force show for debugging
-        if (window.huidigeLijst === 'acties') {
-            deleteBtn.style.display = 'inline-block';
-            console.log('Debug: Button should be visible now');
+    const container = document.getElementById('taak-input-container');
+    let deleteBtn = document.getElementById('deleteAllBtn');
+    
+    console.log('Debug: Current list:', window.huidigeLijst);
+    
+    if (window.huidigeLijst === 'acties') {
+        // Create button if it doesn't exist
+        if (!deleteBtn) {
+            deleteBtn = document.createElement('button');
+            deleteBtn.id = 'deleteAllBtn';
+            deleteBtn.innerHTML = '🗑️ Alles Wissen (Tijdelijk)';
+            deleteBtn.style.cssText = 'background: #ff3b30; color: white; margin-left: 10px; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;';
+            deleteBtn.onclick = deleteAllTasks;
+            container.appendChild(deleteBtn);
+            console.log('Debug: Delete button created and added');
         }
+        deleteBtn.style.display = 'inline-block';
     } else {
-        console.log('Debug: Delete button element not found');
+        // Remove button if it exists and we're not on acties
+        if (deleteBtn) {
+            deleteBtn.remove();
+            console.log('Debug: Delete button removed');
+        }
     }
 }
 
