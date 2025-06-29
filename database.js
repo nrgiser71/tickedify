@@ -501,6 +501,14 @@ const db = {
       return null;
     }
     
+    // Log what we're receiving
+    console.log('🔄 Creating recurring task with:', {
+      herhalingType: originalTask.herhalingType,
+      herhalingActief: originalTask.herhalingActief,
+      herhalingWaarde: originalTask.herhalingWaarde,
+      newDate: newDate
+    });
+    
     const client = await pool.connect();
     
     try {
@@ -524,7 +532,7 @@ const db = {
           originalTask.type || 'actie',
           originalTask.herhalingType || null, 
           originalTask.herhalingWaarde || null, 
-          originalTask.herhalingActief || false, 
+          originalTask.herhalingType ? true : false, // herhalingActief = true als er een herhalingType is 
           originalTask.opmerkingen || null, 
           null, 
           userId
