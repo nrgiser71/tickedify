@@ -2297,7 +2297,7 @@ class Taakbeheer {
                         Toon toekomstige taken
                     </label>
                 </div>
-                <div class="filter-groep">
+                <div class="filter-groep" style="display: none;">
                     <button onclick="deleteAllTasks()" 
                             style="background: #ff3b30; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">
                         🗑️ Alles Wissen (Tijdelijk)
