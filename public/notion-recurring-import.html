@@ -328,7 +328,7 @@ Maand afsluiten,Financiën,,Elke laatste dag van de maand,2025-01-31,60"></texta
             
             // Elke dag
             if (text === 'elke dag' || text === 'dagelijks' || text === 'iedere dag') {
-                return 'dagelijks';
+                return 'daily-1';
             }
             
             // Elke X dagen
@@ -339,7 +339,7 @@ Maand afsluiten,Financiën,,Elke laatste dag van de maand,2025-01-31,60"></texta
             
             // Elke werkdag
             if (text === 'elke werkdag' || text === 'werkdagen') {
-                return 'werkdagen';
+                return 'weekly-1-1,2,3,4,5';
             }
             
             // Elke week op [dag]

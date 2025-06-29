@@ -1259,6 +1259,19 @@ app.post('/api/import/notion-recurring', async (req, res) => {
             return res.status(400).json({ error: 'Taaknaam is verplicht' });
         }
         
+        // Parse date safely
+        let verschijndatumISO;
+        try {
+            if (datum && datum.trim() && datum !== '') {
+                verschijndatumISO = new Date(datum).toISOString();
+            } else {
+                verschijndatumISO = new Date().toISOString();
+            }
+        } catch (dateError) {
+            console.warn('⚠️ Invalid date, using current date:', datum);
+            verschijndatumISO = new Date().toISOString();
+        }
+        
         // Create task object
         const task = {
             id: generateId(),
@@ -1267,7 +1280,7 @@ app.post('/api/import/notion-recurring', async (req, res) => {
             aangemaakt: new Date().toISOString(),
             projectId: null,
             contextId: null,
-            verschijndatum: datum ? new Date(datum).toISOString() : new Date().toISOString(),
+            verschijndatum: verschijndatumISO,
             duur: duur ? parseInt(duur) : null,
             opmerkingen: null,
             herhalingType: herhalingType || null,
