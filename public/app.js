@@ -1972,6 +1972,16 @@ class Taakbeheer {
                         this.openHerhalingPopup();
                         this.showQuickTip("Herhaling popup geopend");
                         break;
+                        
+                    case 'F10':
+                        e.preventDefault();
+                        const dateField = document.getElementById('verschijndatum');
+                        dateField.focus();
+                        if (dateField.showPicker) {
+                            dateField.showPicker();
+                        }
+                        this.showQuickTip("Datum picker geopend");
+                        break;
                 }
             }
             
@@ -9257,6 +9267,26 @@ class KeyboardShortcutManager {
                 e.preventDefault();
                 console.log('F12 detected - quick add modal');
                 this.quickAddModal.show();
+                return;
+            }
+            
+            // F9 - Open herhaling popup (works globally)
+            if (e.key === 'F9') {
+                e.preventDefault();
+                // First check if planning popup is open, if not open it first
+                const planningPopup = document.getElementById('planningPopup');
+                if (!planningPopup || planningPopup.style.display === 'none') {
+                    // Open planning popup first with empty task
+                    this.openPlanningPopup('', 'new');
+                    // Small delay to ensure popup is ready
+                    setTimeout(() => {
+                        this.openHerhalingPopup();
+                    }, 100);
+                } else {
+                    // Planning popup already open, directly open recurring popup
+                    this.openHerhalingPopup();
+                }
+                this.showQuickTip("Herhaling popup geopend");
                 return;
             }
             
