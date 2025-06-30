@@ -2326,7 +2326,15 @@ class Taakbeheer {
 
         lijst.innerHTML = '';
 
-        this.taken.forEach(taak => {
+        // Sort actions by date (ascending) - tasks without date go to bottom
+        const sortedTaken = [...this.taken].sort((a, b) => {
+            if (!a.verschijndatum && !b.verschijndatum) return 0;
+            if (!a.verschijndatum) return 1; // Tasks without date go to bottom
+            if (!b.verschijndatum) return -1;
+            return new Date(a.verschijndatum) - new Date(b.verschijndatum);
+        });
+
+        sortedTaken.forEach(taak => {
             const li = document.createElement('li');
             li.className = 'taak-item actie-item';
             li.dataset.id = taak.id;
