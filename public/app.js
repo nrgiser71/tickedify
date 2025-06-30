@@ -1923,6 +1923,11 @@ class Taakbeheer {
         const popup = document.getElementById('planningPopup');
         
         popup.addEventListener('keydown', (e) => {
+            // DEBUG: Log planning popup F-key events
+            if (e.key.match(/^F\d+$/)) {
+                console.log(`📋 Planning popup F-key: ${e.key}, popup visible: ${popup.style.display !== 'none'}, target: ${e.target.tagName}`);
+            }
+            
             // Only handle F-keys when popup is visible
             if (!popup.style.display || popup.style.display === 'none') return;
             
@@ -9266,6 +9271,11 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
+            // DEBUG: Log alle F-key presses
+            if (e.key.match(/^F\d+$/)) {
+                console.log(`🔑 F-key detected: ${e.key}, target: ${e.target.tagName}, planning popup open: ${document.getElementById('planningPopup')?.style.display !== 'none'}`);
+            }
+            
             // F11 - Quick Add nieuwe taak (F12 opent browser console)
             if (e.key === 'F11') {
                 e.preventDefault();
