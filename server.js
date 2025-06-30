@@ -5854,4 +5854,34 @@ app.listen(PORT, () => {
             console.error('⚠️ Database initialization failed:', error.message);
         }
     }, 1000);
-});// Force deploy Thu Jun 26 11:21:42 CEST 2025
+});
+
+// Debug endpoint to find specific task by ID without user filtering
+app.get('/api/debug/find-task/:id', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        
+        if (result.rows.length > 0) {
+            res.json({
+                found: true,
+                task: result.rows[0],
+                message: `Task ${id} found`
+            });
+        } else {
+            res.json({
+                found: false,
+                message: `Task ${id} not found in database`
+            });
+        }
+    } catch (error) {
+        console.error('Error finding task:', error);
+        res.status(500).json({ error: 'Database error', details: error.message });
+    }
+});
+
+// Force deploy Thu Jun 26 11:21:42 CEST 2025
