@@ -5884,4 +5884,32 @@ app.get('/api/debug/find-task/:id', async (req, res) => {
     }
 });
 
+// Fix user_id for specific task
+app.put('/api/debug/fix-user/:id', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const result = await pool.query(
+            'UPDATE taken SET user_id = $1 WHERE id = $2 RETURNING *',
+            ['default-user-001', id]
+        );
+        
+        if (result.rows.length > 0) {
+            res.json({
+                success: true,
+                message: `Task ${id} user_id updated to default-user-001`,
+                task: result.rows[0]
+            });
+        } else {
+            res.status(404).json({ error: 'Task not found' });
+        }
+    } catch (error) {
+        console.error('Error fixing user_id:', error);
+        res.status(500).json({ error: 'Database error', details: error.message });
+    }
+});
+
 // Force deploy Thu Jun 26 11:21:42 CEST 2025
