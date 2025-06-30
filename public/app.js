@@ -1950,16 +1950,6 @@ class Taakbeheer {
                         this.showQuickTip("Datum ingesteld op morgen");
                         break;
                         
-                    case 'F5':
-                        e.preventDefault();
-                        const dateField = document.getElementById('verschijndatum');
-                        dateField.focus();
-                        if (dateField.showPicker) {
-                            dateField.showPicker();
-                        }
-                        this.showQuickTip("Datum picker geopend");
-                        break;
-                        
                     case 'F6':
                         e.preventDefault();
                         this.focusAndOpenDropdown('contextSelect');
@@ -1985,19 +1975,26 @@ class Taakbeheer {
                 }
             }
             
-            // SHIFT + F1-F6 for quick moves
-            if (e.shiftKey && e.key.match(/^F([1-6])$/)) {
+            // SHIFT + F1-F4, F6 for quick moves (F5 is reserved for browser refresh)
+            if (e.shiftKey && e.key.match(/^F([1-4]|6)$/)) {
                 e.preventDefault();
+                const keyNum = parseInt(e.key.substring(1));
                 const lists = [
-                    'opvolgen',
-                    'uitgesteld-wekelijks', 
-                    'uitgesteld-maandelijks',
-                    'uitgesteld-3maandelijks',
-                    'uitgesteld-6maandelijks',
-                    'uitgesteld-jaarlijks'
+                    'opvolgen',              // SHIFT+F1
+                    'uitgesteld-wekelijks',  // SHIFT+F2
+                    'uitgesteld-maandelijks', // SHIFT+F3
+                    'uitgesteld-3maandelijks', // SHIFT+F4
+                    'uitgesteld-6maandelijks'  // SHIFT+F6 (skip F5)
                 ];
-                const index = parseInt(e.key.substring(1)) - 1;
-                if (lists[index]) {
+                
+                let index;
+                if (keyNum <= 4) {
+                    index = keyNum - 1;  // F1-F4 map to indices 0-3
+                } else if (keyNum === 6) {
+                    index = 4;  // F6 maps to index 4 (6-maandelijks)
+                }
+                
+                if (index !== undefined && lists[index]) {
                     this.quickMove(lists[index]);
                 }
             }
