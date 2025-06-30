@@ -2068,14 +2068,15 @@ button:focus {
 /* ===== SIMPLE DAILY PLANNING ===== */
 .dagelijkse-planning-layout {
     display: flex;
-    gap: 20px;
+    gap: 0; /* Remove gap - splitter will handle spacing */
     height: calc(100vh - 140px); /* Full viewport height minus header and offset */
     margin: 0 -32px -24px -32px; /* No top margin to make space for header */
     padding: 16px 16px 0 16px; /* Remove bottom padding to eliminate gap */
+    position: relative; /* For absolute positioned splitter */
 }
 
 .planning-sidebar {
-    width: calc(50% - 10px); /* Exactly 50% minus half the gap */
+    width: 50%; /* Default 50% - can be adjusted by splitter */
     flex-shrink: 0; /* Don't shrink */
     background: #f0f0f0; /* Simple gray background */
     border-radius: 8px;
@@ -2085,6 +2086,45 @@ button:focus {
     gap: 15px;
     height: 100%; /* Full height */
     box-sizing: border-box; /* Include padding in height calculation */
+}
+
+/* Resizable splitter between planning columns */
+.planning-splitter {
+    width: 8px;
+    background: transparent;
+    cursor: ew-resize;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.planning-splitter:hover {
+    background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.1);
+}
+
+.planning-splitter.resizing {
+    background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.2);
+}
+
+.splitter-handle {
+    width: 2px;
+    height: 40px;
+    background: var(--macos-gray-3);
+    border-radius: 1px;
+    transition: all 0.2s ease;
+}
+
+.planning-splitter:hover .splitter-handle {
+    background: var(--macos-blue);
+    height: 60px;
+}
+
+.planning-splitter.resizing .splitter-handle {
+    background: var(--macos-blue);
+    height: 80px;
+    width: 3px;
 }
 
 /* Time section - bit higher */
@@ -2445,7 +2485,7 @@ button:focus {
 }
 
 .dag-kalender {
-    width: calc(50% - 10px); /* Exactly 50% minus half the gap */
+    width: 50%; /* Default 50% - can be adjusted by splitter */
     flex-shrink: 0; /* Don't shrink */
     background: var(--macos-bg-primary);
     border-radius: var(--macos-radius-large);
@@ -2910,24 +2950,28 @@ button:focus {
         flex-direction: column;
     }
     
-    /* Force 50/50 split in daily planning for laptop */
+    /* Force splitter layout in daily planning for laptop */
     .dagelijkse-planning-layout {
         flex-direction: row !important;
         height: calc(100vh - 140px) !important;
-        gap: 20px !important;
+        gap: 0 !important;
     }
     
     .planning-sidebar {
-        width: calc(50% - 10px) !important;
+        width: 50% !important;
         flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
     }
     
-    .dag-kalender {
-        width: calc(50% - 10px) !important;
-        flex-shrink: 0 !important;
+    .planning-splitter {
         order: 2 !important;
+    }
+    
+    .dag-kalender {
+        width: 50% !important;
+        flex-shrink: 0 !important;
+        order: 3 !important;
         height: 100% !important;
     }
     
@@ -3003,24 +3047,28 @@ button:focus {
         flex-direction: column;
     }
     
-    /* Force 50/50 split in daily planning for large desktop */
+    /* Force splitter layout in daily planning for large desktop */
     .dagelijkse-planning-layout {
         flex-direction: row !important;
         height: calc(100vh - 140px) !important;
-        gap: 20px !important;
+        gap: 0 !important;
     }
     
     .planning-sidebar {
-        width: calc(50% - 10px) !important;
+        width: 50% !important;
         flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
     }
     
-    .dag-kalender {
-        width: calc(50% - 10px) !important;
-        flex-shrink: 0 !important;
+    .planning-splitter {
         order: 2 !important;
+    }
+    
+    .dag-kalender {
+        width: 50% !important;
+        flex-shrink: 0 !important;
+        order: 3 !important;
         height: 100% !important;
     }
     

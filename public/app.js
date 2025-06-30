@@ -4421,6 +4421,86 @@ class Taakbeheer {
         }
     }
 
+    initPlanningResizer() {
+        const splitter = document.getElementById('planningSplitter');
+        if (!splitter) return;
+
+        const sidebar = document.querySelector('.planning-sidebar');
+        const calendar = document.querySelector('.dag-kalender');
+        const container = document.querySelector('.dagelijkse-planning-layout');
+        
+        if (!sidebar || !calendar || !container) return;
+
+        let isResizing = false;
+        let startX = 0;
+        let startSidebarWidth = 0;
+
+        // Load saved width from localStorage
+        const savedWidth = localStorage.getItem('planning-sidebar-width');
+        if (savedWidth) {
+            const width = parseFloat(savedWidth);
+            if (width >= 20 && width <= 80) { // Validate range (20% to 80%)
+                sidebar.style.width = width + '%';
+                calendar.style.width = (100 - width) + '%';
+            }
+        }
+
+        const startResize = (e) => {
+            isResizing = true;
+            startX = e.clientX || e.touches[0].clientX;
+            startSidebarWidth = (sidebar.offsetWidth / container.offsetWidth) * 100;
+            
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+            
+            // Add visual feedback
+            splitter.classList.add('resizing');
+        };
+
+        const doResize = (e) => {
+            if (!isResizing) return;
+            
+            e.preventDefault();
+            const currentX = e.clientX || e.touches[0].clientX;
+            const deltaX = currentX - startX;
+            const containerWidth = container.offsetWidth;
+            const deltaPercent = (deltaX / containerWidth) * 100;
+            
+            let newSidebarWidth = startSidebarWidth + deltaPercent;
+            
+            // Constrain width between 20% and 80%
+            newSidebarWidth = Math.max(20, Math.min(80, newSidebarWidth));
+            
+            const newCalendarWidth = 100 - newSidebarWidth;
+            
+            sidebar.style.width = newSidebarWidth + '%';
+            calendar.style.width = newCalendarWidth + '%';
+        };
+
+        const stopResize = () => {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            splitter.classList.remove('resizing');
+            
+            // Save width to localStorage
+            const sidebarWidth = (sidebar.offsetWidth / container.offsetWidth) * 100;
+            localStorage.setItem('planning-sidebar-width', sidebarWidth.toString());
+        };
+
+        // Mouse events
+        splitter.addEventListener('mousedown', startResize);
+        document.addEventListener('mousemove', doResize);
+        document.addEventListener('mouseup', stopResize);
+
+        // Touch events for mobile
+        splitter.addEventListener('touchstart', startResize);
+        document.addEventListener('touchmove', doResize);
+        document.addEventListener('touchend', stopResize);
+    }
+
     async vulFilterDropdowns() {
         // Ensure projects and contexts are loaded first
         if (!this.projecten || this.projecten.length === 0) {
@@ -6198,6 +6278,11 @@ class Taakbeheer {
                     </div>
                 </div>
                 
+                <!-- Resizable splitter -->
+                <div class="planning-splitter" id="planningSplitter">
+                    <div class="splitter-handle"></div>
+                </div>
+                
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
                     <div class="kalender-header">
@@ -6220,6 +6305,7 @@ class Taakbeheer {
         this.bindDagelijksePlanningEvents();
         this.bindDragAndDropEvents();
         this.bindPrioriteitEvents();
+        this.initPlanningResizer();
         this.updateTotaalTijd();
         
         // Populate filter dropdowns
