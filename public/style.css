@@ -2530,6 +2530,34 @@ button:focus {
     background: rgba(255, 149, 0, 0.08);
 }
 
+/* Current hour indicator styling */
+.kalender-uur.current-hour {
+    border-left: 4px solid var(--macos-blue);
+    box-shadow: 0 0 12px rgba(0, 122, 255, 0.15);
+    background: rgba(0, 122, 255, 0.03);
+}
+
+.kalender-uur.current-hour .uur-tijd {
+    background: var(--macos-blue);
+    color: white;
+    padding: 3px 8px;
+    border-radius: var(--macos-radius-small);
+    font-weight: 700;
+}
+
+.current-hour-indicator {
+    font-size: 10px;
+    color: var(--macos-blue);
+    font-weight: 600;
+    margin-top: 2px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 .uur-label {
     width: 160px;
     min-width: 160px;

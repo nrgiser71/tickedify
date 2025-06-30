@@ -1863,6 +1863,11 @@ class Taakbeheer {
     }
 
     async laadHuidigeLijst() {
+        // Stop current hour tracking when leaving daily planning
+        if (this.huidigeLijst !== 'dagelijkse-planning') {
+            this.stopCurrentHourTracking();
+        }
+        
         // Ensure sidebar is always visible when loading any list
         this.ensureSidebarVisible();
         
@@ -6217,6 +6222,9 @@ class Taakbeheer {
         
         // Populate filter dropdowns
         this.populatePlanningFilters();
+        
+        // Start current hour tracking for this daily planning view
+        this.startCurrentHourTracking();
     }
 
     renderPrioriteitSlots() {
@@ -6619,6 +6627,83 @@ class Taakbeheer {
         
         // Reset binding flag
         this.bindingInProgress = false;
+    }
+
+    // Current hour indicator functions
+    getCurrentHour() {
+        return new Date().getHours();
+    }
+
+    markCurrentHour() {
+        // Only mark current hour if we're in daily planning view
+        if (this.huidigeLijst !== 'dagelijkse-planning') {
+            return;
+        }
+
+        // Remove existing current-hour classes
+        document.querySelectorAll('.kalender-uur.current-hour').forEach(el => {
+            el.classList.remove('current-hour');
+            // Remove live indicator if it exists
+            const indicator = el.querySelector('.current-hour-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        });
+
+        // Get current hour
+        const currentHour = this.getCurrentHour();
+        
+        // Find and mark the current hour block
+        const currentHourBlock = document.querySelector(`[data-uur="${currentHour}"]`);
+        if (currentHourBlock && currentHourBlock.classList.contains('kalender-uur')) {
+            currentHourBlock.classList.add('current-hour');
+            
+            // Add live indicator to the time label
+            const uurTijd = currentHourBlock.querySelector('.uur-tijd');
+            if (uurTijd && !uurTijd.querySelector('.current-hour-indicator')) {
+                const indicator = document.createElement('div');
+                indicator.className = 'current-hour-indicator';
+                indicator.textContent = '🔴 LIVE';
+                uurTijd.appendChild(indicator);
+            }
+        }
+    }
+
+    startCurrentHourTracking() {
+        // Clear any existing timer
+        if (this.currentHourTimer) {
+            clearInterval(this.currentHourTimer);
+        }
+
+        // Mark current hour immediately
+        this.markCurrentHour();
+
+        // Set up timer to check every minute (60000ms)
+        let lastHour = this.getCurrentHour();
+        this.currentHourTimer = setInterval(() => {
+            const currentHour = this.getCurrentHour();
+            // Only update when hour actually changes
+            if (currentHour !== lastHour) {
+                this.markCurrentHour();
+                lastHour = currentHour;
+            }
+        }, 60000);
+    }
+
+    stopCurrentHourTracking() {
+        if (this.currentHourTimer) {
+            clearInterval(this.currentHourTimer);
+            this.currentHourTimer = null;
+        }
+        
+        // Remove all current-hour indicators
+        document.querySelectorAll('.kalender-uur.current-hour').forEach(el => {
+            el.classList.remove('current-hour');
+            const indicator = el.querySelector('.current-hour-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        });
     }
 
     removeDragAndDropEvents() {
