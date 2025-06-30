@@ -1952,35 +1952,36 @@ class Taakbeheer {
                         
                     case 'F6':
                         e.preventDefault();
-                        this.focusAndOpenDropdown('contextSelect');
-                        this.showQuickTip("Context dropdown geopend");
-                        break;
-                        
-                    case 'F7':
-                        e.preventDefault();
-                        this.cycleDuration();
-                        break;
-                        
-                    case 'F8':
-                        e.preventDefault();
-                        document.getElementById('opmerkingen').focus();
-                        this.showQuickTip("Focus op opmerkingen");
-                        break;
-                        
-                    case 'F9':
-                        e.preventDefault();
-                        this.openHerhalingPopup();
-                        this.showQuickTip("Herhaling popup geopend");
-                        break;
-                        
-                    case 'F10':
-                        e.preventDefault();
                         const dateField = document.getElementById('verschijndatum');
                         dateField.focus();
                         if (dateField.showPicker) {
                             dateField.showPicker();
                         }
                         this.showQuickTip("Datum picker geopend");
+                        break;
+                        
+                    case 'F7':
+                        e.preventDefault();
+                        this.focusAndOpenDropdown('contextSelect');
+                        this.showQuickTip("Context dropdown geopend");
+                        break;
+                        
+                    case 'F8':
+                        e.preventDefault();
+                        this.cycleDuration();
+                        this.showQuickTip("Duur cyclisch bijgewerkt");
+                        break;
+                        
+                    case 'F9':
+                        e.preventDefault();
+                        document.getElementById('opmerkingen').focus();
+                        this.showQuickTip("Focus op opmerkingen");
+                        break;
+                        
+                    case 'F10':
+                        e.preventDefault();
+                        this.openHerhalingPopup();
+                        this.showQuickTip("Herhaling popup geopend");
                         break;
                 }
             }
@@ -9270,8 +9271,8 @@ class KeyboardShortcutManager {
                 return;
             }
             
-            // F9 - Open herhaling popup (works globally)
-            if (e.key === 'F9') {
+            // F10 - Open herhaling popup (works globally)
+            if (e.key === 'F10') {
                 e.preventDefault();
                 // First check if planning popup is open, if not open it first
                 const planningPopup = document.getElementById('planningPopup');
