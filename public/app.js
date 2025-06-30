@@ -1960,18 +1960,12 @@ class Taakbeheer {
                         this.showQuickTip("Datum picker geopend");
                         break;
                         
-                    case 'F5':
-                        e.preventDefault();
-                        this.focusAndOpenDropdown('contextSelect');
-                        this.showQuickTip("Context dropdown geopend");
-                        break;
+                    // F5 overgeslagen - browser refresh functionaliteit behouden
                         
                     case 'F6':
                         e.preventDefault();
-                        const duurField = document.getElementById('duur');
-                        duurField.focus();
-                        duurField.select();
-                        this.showQuickTip("Duur veld geselecteerd");
+                        this.focusAndOpenDropdown('contextSelect');
+                        this.showQuickTip("Context dropdown geopend");
                         break;
                         
                     case 'F7':
@@ -2135,7 +2129,7 @@ class Taakbeheer {
             setTimeout(() => {
                 tipToast.show(
                     "⚡ Master tip: Combineer F-toetsen voor super snelle verwerking. " +
-                    "F1→Type→F3→F5→Type→F7→Enter. Geen muis nodig!",
+                    "F1→Type→F3→F6→Type→F7→Enter. Geen muis nodig!",
                     20000
                 );
             }, 2000);

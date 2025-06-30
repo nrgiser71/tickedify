@@ -1518,6 +1518,11 @@ mark {
     animation: fadeIn 0.2s ease;
 }
 
+/* Keyboard help modal should be above planning popup */
+#keyboardHelpModal {
+    z-index: 1500;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
