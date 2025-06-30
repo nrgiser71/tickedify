@@ -585,6 +585,28 @@ body {
     transform: scale(1.1);
 }
 
+.terugzet-btn {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: var(--macos-radius-small);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--macos-text-secondary);
+}
+
+.terugzet-btn:hover {
+    background: var(--macos-gray-5);
+    color: var(--macos-green);
+    transform: scale(1.1);
+}
+
 .verplaats-dropdown {
     position: relative;
     display: inline-block;

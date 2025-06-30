@@ -1926,16 +1926,26 @@ class Taakbeheer {
                 const nieuweTaak = {
                     id: this.generateId(),
                     tekst: tekst,
-                    aangemaakt: new Date().toISOString()
+                    aangemaakt: new Date().toISOString(),
+                    lijst: 'inbox'
                 };
                 
-                this.taken.push(nieuweTaak);
-                await this.slaLijstOp();
-                this.renderTaken();
-                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                // Create task on server
+                const response = await fetch('/api/taak', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nieuweTaak)
+                });
                 
-                input.value = '';
-                input.focus();
+                if (response.ok) {
+                    // Refresh list from server to ensure consistency
+                    await this.laadHuidigeLijst();
+                    
+                    input.value = '';
+                    input.focus();
+                } else {
+                    toast.error('Fout bij toevoegen van taak');
+                }
             }, {
                 operationId: 'add-task',
                 showGlobal: true,
@@ -2121,8 +2131,6 @@ class Taakbeheer {
 
             tbody.appendChild(tr);
         });
-
-        this.slaLijstOp();
     }
 
     getVerplaatsOpties(taakId) {
@@ -2455,7 +2463,14 @@ class Taakbeheer {
                         <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                     </div>
                 `;
-            } else if (this.huidigeLijst !== 'afgewerkte-taken') {
+            } else if (this.huidigeLijst === 'afgewerkte-taken') {
+                acties = `
+                    <div class="taak-acties">
+                        <button onclick="app.terugzettenNaarInbox('${taak.id}')" class="terugzet-btn" title="Terug naar inbox">↩️</button>
+                        <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
+                    </div>
+                `;
+            } else {
                 acties = `
                     <div class="taak-acties">
                         <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
@@ -2553,12 +2568,11 @@ class Taakbeheer {
                 }
                 
                 // Background updates (don't await these for faster response)
-                // Only save list if this wasn't a recurring task, or if recurring task creation failed
-                if (!isRecurring) {
-                    this.debouncedSave();
-                } else if (isRecurring && !nextRecurringTaskId) {
-                    console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed - NOT saving list to prevent data loss');
-                    toast.warning('Herhalende taak kon niet worden aangemaakt. Controleer de Acties lijst later.');
+                // Note: We no longer use debouncedSave() to prevent data loss
+                // Individual task updates are handled directly via API
+                if (isRecurring && !nextRecurringTaskId) {
+                    console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed');
+                    toast.error('Let op: De herhalende taak kon niet worden aangemaakt. Controleer de herhaling-instellingen.');
                 }
                 // this.laadTellingen().catch(console.error); // Disabled - tellers removed from sidebar
                 
@@ -2645,6 +2659,38 @@ class Taakbeheer {
         });
     }
 
+    async terugzettenNaarInbox(taakId) {
+        return await loading.withLoading(async () => {
+            // Update task to move it back to inbox and clear completed status
+            const response = await fetch(`/api/taak/${taakId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lijst: 'inbox',
+                    afgewerkt: null  // Clear the completed timestamp
+                })
+            });
+            
+            if (response.ok) {
+                // Remove from local array if we're on afgewerkte-taken page
+                if (this.huidigeLijst === 'afgewerkte-taken') {
+                    this.taken = this.taken.filter(t => t.id !== taakId);
+                    this.renderTaken();
+                }
+                
+                toast.success('Taak teruggezet naar inbox');
+                return true;
+            } else {
+                toast.error('Fout bij terugzetten van taak');
+                return false;
+            }
+        }, {
+            operationId: 'restore-task',
+            showGlobal: true,
+            message: 'Taak terugzetten naar inbox...'
+        });
+    }
+
     async verwijderTaak(id) {
         const taak = this.taken.find(t => t.id === id);
         if (!taak) return;
@@ -2688,66 +2734,19 @@ class Taakbeheer {
     }
 
     async slaLijstOp() {
-        try {
-            console.log('Saving list:', this.huidigeLijst, 'with tasks:', this.taken);
-            const response = await fetch(`/api/lijst/${this.huidigeLijst}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.taken)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Server error saving list:', errorData);
-                // Don't show toast error for background save operations
-                // toast.error(`Fout bij opslaan: ${errorData.error || 'Onbekende fout'}`);
-                return false;
-            }
-            
-            console.log('List saved successfully');
-            return true;
-        } catch (error) {
-            console.error('Fout bij opslaan lijst:', error);
-            // Don't show toast error for background save operations
-            // toast.error(`Fout bij opslaan: ${error.message}`);
-            return false;
-        }
+        // DISABLED: This function was causing data loss by overwriting the entire list on the server
+        // Individual task updates should be used instead (PUT /api/taak/:id)
+        // After updates, use laadHuidigeLijst() to refresh data from server
+        console.warn('slaLijstOp() is disabled to prevent data loss. Use individual task updates instead.');
+        return true;
     }
 
     // Debounced save to prevent race conditions from rapid task completions
     debouncedSave() {
-        // Clear any existing timeout
-        if (this.saveTimeout) {
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = null;
-        }
-        
-        // Don't schedule another save if one is already in progress
-        if (this.isSaving) {
-            console.log('Save already in progress, skipping...');
-            return;
-        }
-        
-        // Set new timeout to save after 500ms of inactivity
-        this.saveTimeout = setTimeout(async () => {
-            this.saveTimeout = null;
-            
-            if (this.isSaving) {
-                console.log('Save started by another call, skipping...');
-                return;
-            }
-            
-            this.isSaving = true;
-            try {
-                await this.slaLijstOp();
-            } catch (error) {
-                console.error('Error in debounced save:', error);
-            } finally {
-                this.isSaving = false;
-            }
-        }, 500);
-        
-        console.log('Debounced save scheduled...');
+        // DISABLED: This function called slaLijstOp() which was causing data loss
+        // Individual task updates are now handled directly without bulk saves
+        console.warn('debouncedSave() is disabled. Individual task updates are used instead.');
+        return;
     }
 
     // Planning popup methods (aangepast van originele code)
@@ -3313,21 +3312,31 @@ class Taakbeheer {
                 // Bewerk bestaande actie
                 const actie = this.taken.find(t => t.id === this.huidigeTaakId);
                 if (actie) {
-                    actie.tekst = taakNaam;
-                    actie.projectId = projectId;
-                    actie.verschijndatum = verschijndatum;
-                    actie.contextId = contextId;
-                    actie.duur = duur;
-                    actie.opmerkingen = opmerkingen;
-                    actie.herhalingType = herhalingType;
-                    actie.herhalingActief = !!herhalingType;
+                    // Update task on server
+                    const updateData = {
+                        tekst: taakNaam,
+                        projectId: projectId,
+                        verschijndatum: verschijndatum,
+                        contextId: contextId,
+                        duur: duur,
+                        opmerkingen: opmerkingen,
+                        herhalingType: herhalingType,
+                        herhalingActief: !!herhalingType
+                    };
                     
-                    await this.slaLijstOp();
+                    const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updateData)
+                    });
                     
-                    // Preserve filters when updating actions list
-                    await this.preserveActionsFilters(() => this.renderTaken());
-                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-                    this.sluitPopup();
+                    if (response.ok) {
+                        // Refresh list from server to ensure consistency
+                        await this.preserveActionsFilters(() => this.laadHuidigeLijst());
+                        this.sluitPopup();
+                    } else {
+                        toast.error('Fout bij bewerken van actie');
+                    }
                 }
             } else {
                 // Maak nieuwe actie van inbox taak
@@ -3453,10 +3462,12 @@ class Taakbeheer {
     }
 
     verwijderTaakUitHuidigeLijst(id) {
+        // Remove from local array
         this.taken = this.taken.filter(t => t.id !== id);
-        this.slaLijstOp();
+        // Just re-render UI, don't save entire list to server
         this.renderTaken();
-        this.laadTellingen();
+        // Background update tellingen if needed
+        this.laadTellingen().catch(console.error);
     }
 
     async slaProjectenOp() {
@@ -4033,6 +4044,20 @@ class Taakbeheer {
                 targetList: originalTask.lijst
             });
             
+            // Validate input parameters
+            if (!originalTask || !nextDate) {
+                console.error('❌ Invalid parameters for createNextRecurringTask:', { originalTask, nextDate });
+                toast.error('Fout: Ongeldige parameters voor herhalende taak');
+                return null;
+            }
+            
+            // Validate date format
+            if (!nextDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                console.error('❌ Invalid date format:', nextDate);
+                toast.error('Fout: Ongeldige datum voor herhalende taak');
+                return null;
+            }
+            
             // Debug: Log what we're sending to the server
             console.log('📤 Sending to recurring API:', {
                 originalTask,
@@ -4068,19 +4093,31 @@ class Taakbeheer {
                         return result.taskId;
                     } else {
                         console.error('<i class="ti ti-x"></i> Task creation verification failed, status:', checkResponse.status);
+                        toast.error('Waarschuwing: Herhalende taak aangemaakt maar verificatie mislukt');
                         return null;
                     }
                 } catch (verifyError) {
                     console.error('<i class="ti ti-x"></i> Task verification failed:', verifyError);
-                    return null;
+                    // Don't show error toast here - task might still be created successfully
+                    return result.taskId; // Return the ID anyway
                 }
             } else {
                 const errorText = await response.text();
                 console.error('<i class="ti ti-x"></i> Failed to create recurring task:', response.status, errorText);
+                
+                // Parse specific error messages
+                if (response.status === 400) {
+                    toast.error('Fout: Ongeldige gegevens voor herhalende taak');
+                } else if (response.status === 500) {
+                    toast.error('Server fout bij aanmaken herhalende taak. Probeer later opnieuw.');
+                } else {
+                    toast.error(`Fout bij aanmaken herhalende taak (${response.status})`);
+                }
                 return null;
             }
         } catch (error) {
             console.error('Error creating recurring task:', error);
+            toast.error('Netwerk fout bij aanmaken herhalende taak');
             return null;
         }
     }
@@ -5705,24 +5742,17 @@ class Taakbeheer {
                     aangemaakt: new Date().toISOString()
                 };
                 
-                // Temporarily switch to inbox for saving
-                const originalList = this.huidigeLijst;
-                const originalTaken = [...this.taken]; // Backup current tasks
+                // Save task directly to server
+                nieuweTaak.lijst = 'inbox';
+                const response = await fetch('/api/taak', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nieuweTaak)
+                });
                 
-                this.huidigeLijst = 'inbox';
-                
-                // Load inbox tasks first
-                await this.laadHuidigeLijst();
-                
-                // Add to tasks array
-                this.taken.push(nieuweTaak);
-                
-                // Save to inbox
-                await this.slaLijstOp();
-                
-                // Restore original list and tasks
-                this.huidigeLijst = originalList;
-                this.taken = originalTaken;
+                if (!response.ok) {
+                    throw new Error('Failed to save task to inbox');
+                }
                 
                 // Update counts
                 // await this.laadTellingen(); // Disabled - tellers removed from sidebar

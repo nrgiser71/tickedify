@@ -134,12 +134,44 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.9.109 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-number">v0.9.109</span>
+                <span class="version-date">30 juni 2025</span>
+                <span class="version-badge badge-latest">Nieuwste</span>
+            </div>
+            <ul class="change-list">
+                <li class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">KRITIEKE FIX: Data verlies herhalende taken opgelost</div>
+                        <div class="change-description">Verwijderd automatisch bulk save systeem (slaLijstOp) dat race conditions veroorzaakte. Herhalende taken verdwijnen niet meer door conflicten tussen lokale state en server updates. Alle task updates nu via individuele API calls voor betere data integrity.</div>
+                    </div>
+                </li>
+                <li class="change-item">
+                    <span class="change-icon">↩️</span>
+                    <div class="change-content">
+                        <div class="change-title">NIEUWE FEATURE: Terugzetten afgewerkte taken</div>
+                        <div class="change-description">Toegevoegd knop om afgewerkte taken gemakkelijk terug naar inbox te verplaatsen. Handig voor taken die per ongeluk zijn afgevinkt of om verloren herhalende taken te herstellen. Directe feedback via toast notifications.</div>
+                    </div>
+                </li>
+                <li class="change-item">
+                    <span class="change-icon">⚡</span>
+                    <div class="change-content">
+                        <div class="change-title">VERBETERING: Betere error handling herhalende taken</div>
+                        <div class="change-description">Verbeterde foutafhandeling bij het aanmaken van herhalende taken. Gebruiker krijgt duidelijke feedback bij problemen en taken blijven behouden ook als de herhaling niet kan worden ingesteld.</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
         <!-- Version 0.9.107 -->
         <div class="version-block">
             <div class="version-header">
                 <span class="version-number">v0.9.107</span>
                 <span class="version-date">29 juni 2025</span>
-                <span class="version-badge badge-latest">Nieuwste</span>
+                <span class="version-badge badge-fix">Fix</span>
             </div>
             <ul class="change-list">
                 <li class="change-item">
