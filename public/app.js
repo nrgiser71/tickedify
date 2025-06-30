@@ -9296,6 +9296,13 @@ class KeyboardShortcutManager {
             
             // For other shortcuts, ignore when typing in input fields (except our quick add modal)
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                // Allow F2-F9 when planning popup is open (they're handled by the planning popup handler)
+                const planningPopup = document.getElementById('planningPopup');
+                if (planningPopup && planningPopup.style.display !== 'none' && e.key.match(/^F[2-9]$/)) {
+                    // Let F2-F9 pass through to planning popup handler
+                    return;
+                }
+                
                 // Allow Escape to close modals, F1 for help, and Enter in quick add modal
                 if (e.key === 'Escape') {
                     this.quickAddModal.hide();
