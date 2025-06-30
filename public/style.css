@@ -2207,7 +2207,37 @@ button:focus {
 .collapsible.collapsed .section-header h3 {
     font-size: 12px !important; /* Smaller text when collapsed */
 }
-    overflow: hidden !important;
+
+/* Make the section containers themselves compact when collapsed */
+.templates-sectie.collapsed,
+.tijd-sectie.collapsed,
+.top-prioriteiten-sectie.collapsed {
+    margin-bottom: 2px !important;
+    padding: 0 !important;
+    min-height: auto !important;
+}
+
+.templates-sectie.collapsed .section-header,
+.tijd-sectie.collapsed .section-header,
+.top-prioriteiten-sectie.collapsed .section-header {
+    margin: 0 !important;
+    padding: 4px 8px !important;
+}
+
+/* Remove all padding/margins from collapsed templates */
+.templates-sectie.collapsed {
+    border: 1px solid var(--macos-gray-4) !important;
+    background: rgba(0, 0, 0, 0.02) !important;
+}
+
+.tijd-sectie.collapsed {
+    border: 1px solid var(--macos-gray-4) !important;
+    background: rgba(0, 0, 0, 0.02) !important;
+}
+
+.top-prioriteiten-sectie.collapsed {
+    margin-bottom: 2px !important;
+    padding: 0 !important;
 }
 
 /* Time section - bit higher */
@@ -3082,6 +3112,21 @@ button:focus {
     
     .filter-groep {
         max-width: 110px !important;
+    }
+    
+    /* Ultra compact collapsed sections on laptop */
+    .templates-sectie.collapsed,
+    .tijd-sectie.collapsed,
+    .top-prioriteiten-sectie.collapsed {
+        margin-bottom: 1px !important;
+        padding: 0 !important;
+    }
+    
+    .templates-sectie.collapsed .section-header,
+    .tijd-sectie.collapsed .section-header,
+    .top-prioriteiten-sectie.collapsed .section-header {
+        padding: 2px 6px !important;
+        margin: 0 !important;
     }
     
     .tijd-sectie .section-content,
