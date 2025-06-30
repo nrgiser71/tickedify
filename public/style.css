@@ -2224,20 +2224,34 @@ button:focus {
     padding: 4px 8px !important;
 }
 
-/* Remove all padding/margins from collapsed templates */
-.templates-sectie.collapsed {
-    border: 1px solid var(--macos-gray-4) !important;
-    background: rgba(0, 0, 0, 0.02) !important;
-}
-
+/* Ultra minimal styling for collapsed containers */
+.templates-sectie.collapsed,
 .tijd-sectie.collapsed {
-    border: 1px solid var(--macos-gray-4) !important;
-    background: rgba(0, 0, 0, 0.02) !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    margin-bottom: 1px !important;
+    padding: 0 !important;
+    min-height: auto !important;
 }
 
 .top-prioriteiten-sectie.collapsed {
-    margin-bottom: 2px !important;
+    margin-bottom: 1px !important;
     padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Make collapsed headers look like thin lines */
+.templates-sectie.collapsed .section-header,
+.tijd-sectie.collapsed .section-header,
+.top-prioriteiten-sectie.collapsed .section-header {
+    margin: 0 !important;
+    padding: 2px 8px !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--macos-gray-4) !important;
+    border-radius: 3px !important;
+    font-size: 11px !important;
 }
 
 /* Time section - bit higher */
@@ -3114,19 +3128,25 @@ button:focus {
         max-width: 110px !important;
     }
     
-    /* Ultra compact collapsed sections on laptop */
+    /* Ultra minimal collapsed sections on laptop */
     .templates-sectie.collapsed,
     .tijd-sectie.collapsed,
     .top-prioriteiten-sectie.collapsed {
-        margin-bottom: 1px !important;
+        margin-bottom: 0px !important;
         padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
     }
     
     .templates-sectie.collapsed .section-header,
     .tijd-sectie.collapsed .section-header,
     .top-prioriteiten-sectie.collapsed .section-header {
-        padding: 2px 6px !important;
+        padding: 1px 6px !important;
         margin: 0 !important;
+        background: rgba(0, 0, 0, 0.03) !important;
+        border: 1px solid var(--macos-gray-5) !important;
+        border-radius: 2px !important;
+        font-size: 10px !important;
     }
     
     .tijd-sectie .section-content,
