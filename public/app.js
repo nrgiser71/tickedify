@@ -1986,16 +1986,17 @@ class Taakbeheer {
                 }
             }
             
-            // SHIFT + F1-F4, F6 for quick moves (F5 is reserved for browser refresh)
-            if (e.shiftKey && e.key.match(/^F([1-4]|6)$/)) {
+            // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
+            if (e.shiftKey && e.key.match(/^F([1-4]|6|7)$/)) {
                 e.preventDefault();
                 const keyNum = parseInt(e.key.substring(1));
                 const lists = [
-                    'opvolgen',              // SHIFT+F1
-                    'uitgesteld-wekelijks',  // SHIFT+F2
-                    'uitgesteld-maandelijks', // SHIFT+F3
+                    'opvolgen',                // SHIFT+F1
+                    'uitgesteld-wekelijks',    // SHIFT+F2
+                    'uitgesteld-maandelijks',  // SHIFT+F3
                     'uitgesteld-3maandelijks', // SHIFT+F4
-                    'uitgesteld-6maandelijks'  // SHIFT+F6 (skip F5)
+                    'uitgesteld-6maandelijks', // SHIFT+F6 (skip F5)
+                    'uitgesteld-jaarlijks'     // SHIFT+F7
                 ];
                 
                 let index;
@@ -2003,6 +2004,8 @@ class Taakbeheer {
                     index = keyNum - 1;  // F1-F4 map to indices 0-3
                 } else if (keyNum === 6) {
                     index = 4;  // F6 maps to index 4 (6-maandelijks)
+                } else if (keyNum === 7) {
+                    index = 5;  // F7 maps to index 5 (jaarlijks)
                 }
                 
                 if (index !== undefined && lists[index]) {
@@ -9278,16 +9281,16 @@ class KeyboardShortcutManager {
                 const planningPopup = document.getElementById('planningPopup');
                 if (!planningPopup || planningPopup.style.display === 'none') {
                     // Open planning popup first with empty task
-                    this.openPlanningPopup('', 'new');
+                    app.openPlanningPopup('', 'new');
                     // Small delay to ensure popup is ready
                     setTimeout(() => {
-                        this.openHerhalingPopup();
+                        app.openHerhalingPopup();
                     }, 100);
                 } else {
                     // Planning popup already open, directly open recurring popup
-                    this.openHerhalingPopup();
+                    app.openHerhalingPopup();
                 }
-                this.showQuickTip("Herhaling popup geopend");
+                app.showQuickTip("Herhaling popup geopend");
                 return;
             }
             
