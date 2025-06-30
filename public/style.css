@@ -352,7 +352,7 @@ body {
 .taken-container {
     min-height: 200px;
     overflow-y: auto;
-    max-height: calc(100vh - 40px); /* Viewport height minus footer height */
+    max-height: calc(100vh - 120px); /* Viewport height minus footer, header and padding */
 }
 
 #takenLijst {
@@ -1010,7 +1010,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 .taken-container {
     min-height: 200px;
     overflow-y: auto;
-    max-height: calc(100vh - 40px); /* Viewport height minus footer height */
+    max-height: calc(100vh - 120px); /* Viewport height minus footer, header and padding */
 }
 
 #takenLijst {

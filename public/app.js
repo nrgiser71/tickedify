@@ -1889,13 +1889,8 @@ class Taakbeheer {
                     const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
                     if (response.ok) {
                         let taken = await response.json();
-                        console.log(`📊 Loaded ${taken.length} taken for lijst: ${this.huidigeLijst}`);
-                        if (this.huidigeLijst === 'inbox') {
-                            console.log('📋 Inbox taken:', taken.map(t => `${t.tekst} (${t.id})`));
-                        }
                         // Apply date filter only for actions list
                         this.taken = this.filterTakenOpDatum(taken);
-                        console.log(`✅ After filtering: ${this.taken.length} taken`);
                     } else {
                         this.taken = [];
                     }
@@ -2455,15 +2450,6 @@ class Taakbeheer {
         }
         container.innerHTML = '';
 
-        console.log(`🎨 renderStandaardLijst: Rendering ${this.taken.length} taken for ${this.huidigeLijst}`);
-        if (this.huidigeLijst === 'inbox') {
-            const taakEen = this.taken.find(t => t.tekst === '1');
-            if (taakEen) {
-                console.log('✅ Found task "1" in this.taken:', taakEen);
-            } else {
-                console.log('❌ Task "1" NOT found in this.taken');
-            }
-        }
 
         this.taken.forEach(taak => {
             const li = document.createElement('li');
