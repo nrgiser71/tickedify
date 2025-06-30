@@ -351,6 +351,8 @@ class Taakbeheer {
         this.zetVandaagDatum();
         // Add document click listener to close dropdowns
         document.addEventListener('click', (event) => this.handleDocumentClick(event));
+        // Initialize laptop sidebar if applicable
+        this.initializeLaptopSidebar();
         // Data loading happens after authentication check in AuthManager
     }
 
@@ -6643,11 +6645,6 @@ class Taakbeheer {
         // Remove existing current-hour classes
         document.querySelectorAll('.kalender-uur.current-hour').forEach(el => {
             el.classList.remove('current-hour');
-            // Remove live indicator if it exists
-            const indicator = el.querySelector('.current-hour-indicator');
-            if (indicator) {
-                indicator.remove();
-            }
         });
 
         // Get current hour
@@ -6657,15 +6654,6 @@ class Taakbeheer {
         const currentHourBlock = document.querySelector(`[data-uur="${currentHour}"]`);
         if (currentHourBlock && currentHourBlock.classList.contains('kalender-uur')) {
             currentHourBlock.classList.add('current-hour');
-            
-            // Add live indicator to the time label
-            const uurTijd = currentHourBlock.querySelector('.uur-tijd');
-            if (uurTijd && !uurTijd.querySelector('.current-hour-indicator')) {
-                const indicator = document.createElement('div');
-                indicator.className = 'current-hour-indicator';
-                indicator.textContent = '🔴 LIVE';
-                uurTijd.appendChild(indicator);
-            }
         }
     }
 
@@ -6699,11 +6687,78 @@ class Taakbeheer {
         // Remove all current-hour indicators
         document.querySelectorAll('.kalender-uur.current-hour').forEach(el => {
             el.classList.remove('current-hour');
-            const indicator = el.querySelector('.current-hour-indicator');
-            if (indicator) {
-                indicator.remove();
-            }
         });
+    }
+
+    // Laptop sidebar toggle functionality (separate from mobile)
+    initializeLaptopSidebar() {
+        const toggleButton = document.getElementById('sidebar-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (!toggleButton || !sidebar) {
+            return;
+        }
+        
+        // Only initialize on laptop screens (1201-1599px)
+        if (window.innerWidth < 1201 || window.innerWidth >= 1600) {
+            return;
+        }
+        
+        // Restore saved state from localStorage
+        const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+            this.updateToggleIcon(true);
+        }
+        
+        // Bind toggle event
+        toggleButton.addEventListener('click', () => this.toggleLaptopSidebar());
+        
+        // Update toggle visibility based on screen size
+        window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+    }
+    
+    toggleLaptopSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand
+            sidebar.classList.remove('collapsed');
+            localStorage.setItem('sidebar-collapsed', 'false');
+            this.updateToggleIcon(false);
+        } else {
+            // Collapse
+            sidebar.classList.add('collapsed');
+            localStorage.setItem('sidebar-collapsed', 'true');
+            this.updateToggleIcon(true);
+        }
+    }
+    
+    updateToggleIcon(isCollapsed) {
+        const toggleButton = document.getElementById('sidebar-toggle');
+        const icon = toggleButton?.querySelector('i');
+        
+        if (icon) {
+            if (isCollapsed) {
+                icon.className = 'fas fa-chevron-right';
+            } else {
+                icon.className = 'fas fa-chevron-left';
+            }
+        }
+    }
+    
+    handleLaptopSidebarResize() {
+        const sidebar = document.querySelector('.sidebar');
+        const isLaptop = window.innerWidth >= 1201 && window.innerWidth < 1600;
+        
+        if (!isLaptop) {
+            // Remove collapsed state when not on laptop
+            sidebar?.classList.remove('collapsed');
+        } else {
+            // Reinitialize if entering laptop range
+            this.initializeLaptopSidebar();
+        }
     }
 
     removeDragAndDropEvents() {

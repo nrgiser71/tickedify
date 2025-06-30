@@ -2545,18 +2545,6 @@ button:focus {
     font-weight: 700;
 }
 
-.current-hour-indicator {
-    font-size: 10px;
-    color: var(--macos-blue);
-    font-weight: 600;
-    margin-top: 2px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
 
 .uur-label {
     width: 160px;
@@ -2903,8 +2891,69 @@ button:focus {
     }
 }
 
-/* Desktop - ensure sidebar always visible */
-@media (min-width: 1201px) {
+/* Laptop - collapsible sidebar */
+@media (min-width: 1201px) and (max-width: 1599px) {
+    .sidebar {
+        display: flex !important;
+        width: 300px !important;
+        flex-shrink: 0 !important;
+        position: relative;
+        transition: width 0.3s ease;
+    }
+    
+    .sidebar.collapsed {
+        width: 60px !important;
+        overflow: hidden;
+    }
+    
+    .sidebar.collapsed .sidebar-content {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .sidebar.collapsed .sidebar-header h1 {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .sidebar.collapsed .lijst-item span {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .app-layout {
+        flex-direction: row !important;
+    }
+    
+    .main-content {
+        flex: 1 !important;
+    }
+    
+    /* Toggle button for laptop */
+    .sidebar-toggle {
+        display: block;
+        position: absolute;
+        top: 20px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 16px;
+        color: var(--macos-text-secondary);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: var(--macos-radius-small);
+        transition: all 0.2s ease;
+        z-index: 10;
+    }
+    
+    .sidebar-toggle:hover {
+        background: var(--macos-gray-5);
+        color: var(--macos-blue);
+    }
+}
+
+/* Large Desktop - sidebar always visible */
+@media (min-width: 1600px) {
     .sidebar {
         display: flex !important;
         width: 450px !important;
@@ -2917,6 +2966,11 @@ button:focus {
     
     .main-content {
         flex: 1 !important;
+    }
+    
+    /* Hide toggle button on large desktop */
+    .sidebar-toggle {
+        display: none;
     }
 }
 
