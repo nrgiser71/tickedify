@@ -1443,8 +1443,8 @@ function optionalAuth(req, res, next) {
 
 // Get current user ID from session or fallback to default
 function getCurrentUserId(req) {
-    // Return user from session if authenticated, otherwise default user
-    return req.session.userId || 'default-user-001';
+    // Return user from session if authenticated, otherwise Jan's actual user ID
+    return req.session.userId || 'user_1750513625687_5458i79dj';
 }
 
 // Authentication API endpoints
