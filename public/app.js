@@ -4449,8 +4449,8 @@ class Taakbeheer {
             const width = parseFloat(savedWidth);
             if (width >= 20 && width <= 80) { // Validate range (20% to 80%)
                 console.log('🔍 Loading saved width:', width + '%');
-                sidebar.style.width = width + '%';
-                calendar.style.width = (100 - width) + '%';
+                sidebar.style.setProperty('width', width + '%', 'important');
+                calendar.style.setProperty('width', (100 - width) + '%', 'important');
             }
         }
 
@@ -4494,8 +4494,8 @@ class Taakbeheer {
             
             console.log('🔍 Resizing:', { currentX, deltaX, newSidebarWidth });
             
-            sidebar.style.width = newSidebarWidth + '%';
-            calendar.style.width = newCalendarWidth + '%';
+            sidebar.style.setProperty('width', newSidebarWidth + '%', 'important');
+            calendar.style.setProperty('width', newCalendarWidth + '%', 'important');
         };
 
         const stopResize = (e) => {
