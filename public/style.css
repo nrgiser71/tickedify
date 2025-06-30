@@ -2075,7 +2075,8 @@ button:focus {
 }
 
 .planning-sidebar {
-    flex: 1; /* Take 50% of available space */
+    flex: 1 1 50%; /* Exactly 50% of available space */
+    max-width: 50%; /* Enforce 50% maximum */
     background: #f0f0f0; /* Simple gray background */
     border-radius: 8px;
     padding: 15px 15px 40px 25px; /* Larger bottom padding for visual balance */
@@ -2444,7 +2445,8 @@ button:focus {
 }
 
 .dag-kalender {
-    flex: 1;
+    flex: 1 1 50%; /* Exactly 50% of available space */
+    max-width: 50%; /* Enforce 50% maximum */
     background: var(--macos-bg-primary);
     border-radius: var(--macos-radius-large);
     padding: 20px;
@@ -2901,41 +2903,55 @@ button:focus {
         transition: width 0.3s ease;
     }
     
+    /* Ensure main content uses remaining space correctly */
+    .main-content {
+        flex: 1 !important;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Force 50/50 split in daily planning for laptop */
+    .dagelijkse-planning-layout {
+        flex-direction: row !important;
+        height: calc(100vh - 140px) !important;
+        gap: 20px !important;
+    }
+    
+    .planning-sidebar {
+        flex: 1 1 50% !important;
+        max-width: 50% !important;
+        height: 100% !important;
+        order: 1 !important;
+    }
+    
+    .dag-kalender {
+        flex: 1 1 50% !important;
+        max-width: 50% !important;
+        order: 2 !important;
+        height: 100% !important;
+    }
+    
     .sidebar.collapsed {
-        width: 60px !important;
+        width: 40px !important;
         overflow: hidden;
     }
     
-    /* Hide text content in collapsed state */
-    .sidebar.collapsed .app-logo img {
-        display: none;
-    }
-    
-    .sidebar.collapsed .app-logo::after {
-        content: "T";
-        display: block;
-        font-size: 24px;
-        font-weight: bold;
-        color: var(--macos-blue);
-        text-align: center;
-        line-height: 1;
-    }
-    
-    .sidebar.collapsed .lijst-item span,
+    /* Hide ALL content in collapsed state - completely empty sidebar */
+    .sidebar.collapsed .sidebar-content,
+    .sidebar.collapsed .app-logo,
     .sidebar.collapsed .user-section,
     .sidebar.collapsed .version-info {
-        display: none;
+        display: none !important;
     }
     
-    .sidebar.collapsed .lijst-item {
-        justify-content: center;
-        padding: 8px;
-        text-align: center;
-    }
-    
-    .sidebar.collapsed .lijst-item:before {
-        margin-right: 0;
-        font-size: 16px;
+    /* Only toggle button remains visible */
+    .sidebar.collapsed .sidebar-toggle {
+        display: block !important;
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
     }
     
     .app-layout {
@@ -2983,6 +2999,29 @@ button:focus {
     
     .main-content {
         flex: 1 !important;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Force 50/50 split in daily planning for large desktop */
+    .dagelijkse-planning-layout {
+        flex-direction: row !important;
+        height: calc(100vh - 140px) !important;
+        gap: 20px !important;
+    }
+    
+    .planning-sidebar {
+        flex: 1 1 50% !important;
+        max-width: 50% !important;
+        height: 100% !important;
+        order: 1 !important;
+    }
+    
+    .dag-kalender {
+        flex: 1 1 50% !important;
+        max-width: 50% !important;
+        order: 2 !important;
+        height: 100% !important;
     }
     
     /* Hide toggle button on large desktop */
