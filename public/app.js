@@ -1929,28 +1929,28 @@ class Taakbeheer {
             // Skip if in textarea (except F8 which should focus textarea)
             if (e.target.tagName === 'TEXTAREA' && e.key !== 'F8') return;
             
-            // F1-F9 shortcuts (no modifiers)
+            // F2-F9 shortcuts (F1 is reserved for global help)
             if (!e.ctrlKey && !e.altKey && !e.metaKey) {
                 switch(e.key) {
-                    case 'F1':
+                    case 'F2':
                         e.preventDefault();
                         this.focusAndOpenDropdown('projectSelect');
                         this.showQuickTip("Project dropdown geopend");
                         break;
                         
-                    case 'F2':
+                    case 'F3':
                         e.preventDefault();
                         this.setDateToday();
                         this.showQuickTip("Datum ingesteld op vandaag");
                         break;
                         
-                    case 'F3':
+                    case 'F4':
                         e.preventDefault();
                         this.setDateTomorrow();
                         this.showQuickTip("Datum ingesteld op morgen");
                         break;
                         
-                    case 'F4':
+                    case 'F5':
                         e.preventDefault();
                         const dateField = document.getElementById('verschijndatum');
                         dateField.focus();
@@ -1959,8 +1959,6 @@ class Taakbeheer {
                         }
                         this.showQuickTip("Datum picker geopend");
                         break;
-                        
-                    // F5 overgeslagen - browser refresh functionaliteit behouden
                         
                     case 'F6':
                         e.preventDefault();
@@ -2113,7 +2111,7 @@ class Taakbeheer {
             setTimeout(() => {
                 tipToast.show(
                     "💡 Wist je dat? F-toetsen maken inbox verwerking 3x sneller. " +
-                    "F2=vandaag, F3=morgen, F7=cyclische duur. Druk ? voor volledig overzicht.",
+                    "F3=vandaag, F4=morgen, F7=cyclische duur. Druk F1 voor volledig overzicht.",
                     20000
                 );
             }, 2000);
@@ -2129,7 +2127,7 @@ class Taakbeheer {
             setTimeout(() => {
                 tipToast.show(
                     "⚡ Master tip: Combineer F-toetsen voor super snelle verwerking. " +
-                    "F1→Type→F3→F6→Type→F7→Enter. Geen muis nodig!",
+                    "F2→Type→F4→F6→Type→F7→Enter. Geen muis nodig!",
                     20000
                 );
             }, 2000);
@@ -9276,7 +9274,16 @@ class KeyboardShortcutManager {
             }
             
             // Check for '?' key to show help
-            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            // F1 for help (universal help key)
+            if (e.key === 'F1' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                this.keyboardHelpModal.show();
+                return;
+            }
+            
+            // Keep ? for backward compatibility (when not in text field)
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey && 
+                e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 e.preventDefault();
                 this.keyboardHelpModal.show();
                 return;
