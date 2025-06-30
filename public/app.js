@@ -9223,8 +9223,8 @@ class KeyboardHelpModal {
     }
     
     updateShortcutsForOS() {
-        // F9 is the same on all platforms - much simpler!
-        const shortcutCombo = 'F9';
+        // F12 is the same on all platforms - much simpler!
+        const shortcutCombo = 'F12';
         
         // Update all shortcuts in help modal
         const shortcuts = this.modal.querySelectorAll('kbd');
@@ -9255,20 +9255,26 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // F9 - Debug mode for test user
-            if (e.key === 'F9') {
+            // F12 - Quick Add nieuwe taak (verplaatst van F9)
+            if (e.key === 'F12') {
                 e.preventDefault();
-                console.log('F9 detected - debug quick add modal');
+                console.log('F12 detected - quick add modal');
                 this.quickAddModal.show();
                 return;
             }
             
             // For other shortcuts, ignore when typing in input fields (except our quick add modal)
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                // Allow Escape to close modals and Enter in quick add modal
+                // Allow Escape to close modals, F1 for help, and Enter in quick add modal
                 if (e.key === 'Escape') {
                     this.quickAddModal.hide();
                     this.keyboardHelpModal.hide();
+                }
+                // F1 should always work for help, even in text fields
+                if (e.key === 'F1' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    this.keyboardHelpModal.show();
+                    return;
                 }
                 return;
             }
