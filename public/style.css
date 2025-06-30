@@ -2127,13 +2127,63 @@ button:focus {
     width: 3px;
 }
 
+/* Collapsible sections styling */
+.collapsible {
+    transition: all 0.3s ease;
+}
+
+.collapsible .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: var(--macos-radius-small);
+    transition: all 0.2s ease;
+}
+
+.collapsible .section-header:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.collapsible .section-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.collapsible .chevron {
+    color: var(--macos-gray-2);
+    transition: transform 0.3s ease;
+}
+
+.collapsible .section-content {
+    overflow: hidden;
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+.collapsible.collapsed .section-content {
+    max-height: 0 !important;
+    opacity: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+
 /* Time section - bit higher */
 .tijd-sectie {
     background: white;
-    padding: 10px;
     border-radius: 6px;
     border: 1px solid #ddd;
-    height: 80px; /* Higher as requested */
+    margin-bottom: 10px;
+}
+
+.tijd-sectie .section-content {
+    padding: 10px;
 }
 
 /* Compact sections for daily planning */
@@ -2175,14 +2225,27 @@ button:focus {
 
 .templates-sectie {
     background: var(--macos-bg-primary);
-    padding: 15px;
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--macos-gray-5);
     flex-shrink: 0; /* Don't shrink templates */
-    /* Fixed height based on debugger optimal value */
-    height: 200px;
-    min-height: 200px;
+    margin-bottom: 10px;
+}
+
+.templates-sectie .section-content {
+    padding: 15px;
+    max-height: 200px;
     overflow-y: auto; /* Allow scrolling if too many templates */
+}
+
+.templates-sectie h4 {
+    margin: 10px 0 8px 0;
+    font-size: 13px;
+    color: var(--macos-text-secondary);
+    font-weight: 600;
+}
+
+.templates-sectie h4:first-child {
+    margin-top: 0;
 }
 
 .templates-sectie h3 {
@@ -2288,10 +2351,8 @@ button:focus {
     border: 1px solid var(--macos-gray-5);
     display: flex;
     flex-direction: column;
-    min-height: 0; /* Allow flex shrinking */
+    min-height: 200px; /* Minimum height for usability */
     overflow: hidden; /* Prevent this container from scrolling */
-    /* Dynamic height calculation based on viewport and other components */
-    max-height: calc(100vh - 360px); /* Subtract header(120px), time-settings(80px), templates(160px) */
 }
 
 .acties-sectie h3 {
@@ -2312,8 +2373,6 @@ button:focus {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     min-height: 0; /* Allow flex shrinking */
-    /* Ensure list fits within calculated parent height minus header space */
-    max-height: calc(100vh - 430px); /* Parent max-height minus h3 header and padding */
 }
 
 /* Specific height constraints for daily planning */
@@ -2957,6 +3016,28 @@ button:focus {
         gap: 0 !important;
     }
     
+    /* Compacter collapsible sections on laptop */
+    .collapsible .section-header {
+        padding: 8px !important;
+    }
+    
+    .collapsible .section-header h3 {
+        font-size: 13px !important;
+    }
+    
+    .tijd-sectie .section-content,
+    .templates-sectie .section-content,
+    .top-prioriteiten-sectie .section-content {
+        padding: 10px !important;
+    }
+    
+    /* Smaller margins between sections */
+    .tijd-sectie,
+    .templates-sectie,
+    .top-prioriteiten-sectie {
+        margin-bottom: 8px !important;
+    }
+    
     .planning-sidebar {
         width: 50% !important;
         flex-shrink: 0 !important;
@@ -3214,11 +3295,14 @@ button:focus {
 /* Top 3 Priorities section */
 .top-prioriteiten-sectie {
     background: linear-gradient(135deg, var(--priority-bg), var(--macos-bg-primary));
-    padding: 12px;
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--priority-border);
     margin-bottom: 10px;
     box-shadow: 0 2px 8px var(--priority-shadow);
+}
+
+.top-prioriteiten-sectie .section-content {
+    padding: 12px;
 }
 
 .top-prioriteiten-sectie h3 {

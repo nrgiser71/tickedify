@@ -4535,6 +4535,68 @@ class Taakbeheer {
         console.log('🔍 Planning resizer initialized successfully');
     }
 
+    initCollapsibleSections() {
+        // Load saved collapse states from localStorage
+        const savedStates = JSON.parse(localStorage.getItem('planning-collapse-states') || '{}');
+        
+        // Determine default states based on screen size
+        const isLaptop = window.innerWidth <= 1599;
+        const defaults = {
+            'tijd': !isLaptop, // Open on desktop, closed on laptop
+            'templates': !isLaptop, // Open on desktop, closed on laptop
+            'prioriteiten': true // Always open by default
+        };
+        
+        // Apply saved states or defaults
+        ['tijd', 'templates', 'prioriteiten'].forEach(section => {
+            const shouldBeOpen = savedStates[section] !== undefined ? savedStates[section] : defaults[section];
+            const sectionEl = document.getElementById(`${section}-sectie`);
+            
+            if (sectionEl && !shouldBeOpen) {
+                sectionEl.classList.add('collapsed');
+                const chevron = sectionEl.querySelector('.chevron i');
+                if (chevron) {
+                    chevron.classList.remove('fa-chevron-down');
+                    chevron.classList.add('fa-chevron-right');
+                }
+            }
+        });
+        
+        console.log('🔍 Collapsible sections initialized');
+    }
+
+    toggleSection(sectionName) {
+        const section = document.getElementById(`${sectionName}-sectie`);
+        if (!section) return;
+        
+        const isCollapsed = section.classList.contains('collapsed');
+        const chevron = section.querySelector('.chevron i');
+        
+        if (isCollapsed) {
+            section.classList.remove('collapsed');
+            if (chevron) {
+                chevron.classList.remove('fa-chevron-right');
+                chevron.classList.add('fa-chevron-down');
+            }
+        } else {
+            section.classList.add('collapsed');
+            if (chevron) {
+                chevron.classList.remove('fa-chevron-down');
+                chevron.classList.add('fa-chevron-right');
+            }
+        }
+        
+        // Save state to localStorage
+        const savedStates = JSON.parse(localStorage.getItem('planning-collapse-states') || '{}');
+        savedStates[sectionName] = !section.classList.contains('collapsed');
+        localStorage.setItem('planning-collapse-states', JSON.stringify(savedStates));
+        
+        // Re-bind drag and drop events after DOM changes
+        setTimeout(() => {
+            this.bindDragAndDropEvents();
+        }, 350); // After animation completes
+    }
+
     async vulFilterDropdowns() {
         // Ensure projects and contexts are loaded first
         if (!this.projecten || this.projecten.length === 0) {
@@ -6254,38 +6316,54 @@ class Taakbeheer {
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
-                    <!-- Time settings - fixed small section -->
-                    <div class="tijd-sectie">
-                        <h3>⏰ Tijd</h3>
-                        <div class="tijd-inputs">
-                            <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
-                            <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
+                    <!-- Time settings - collapsible section -->
+                    <div class="tijd-sectie collapsible" id="tijd-sectie">
+                        <div class="section-header" onclick="app.toggleSection('tijd')">
+                            <h3>⏰ Tijd</h3>
+                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="section-content">
+                            <div class="tijd-inputs">
+                                <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
+                                <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Templates - fixed medium section -->
-                    <div class="templates-sectie">
-                        <h3>🔒 Geblokkeerd</h3>
-                        <div class="template-items">
+                    <!-- Templates - collapsible section -->
+                    <div class="templates-sectie collapsible" id="templates-sectie">
+                        <div class="section-header" onclick="app.toggleSection('templates')">
+                            <h3>🔒 Geblokkeerd & Pauzes</h3>
+                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="section-content">
+                            <h4>🔒 Geblokkeerd</h4>
+                            <div class="template-items">
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30min</div>
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60min</div>
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">🔒 90min</div>
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120min</div>
-                        </div>
-                        
-                        <h3>☕ Pauzes</h3>
-                        <div class="template-items">
-                            <div class="template-item" draggable="true" data-type="pauze" data-duur="5">☕ 5min</div>
-                            <div class="template-item" draggable="true" data-type="pauze" data-duur="10">☕ 10min</div>
-                            <div class="template-item" draggable="true" data-type="pauze" data-duur="15">☕ 15min</div>
+                            </div>
+                            
+                            <h4>☕ Pauzes</h4>
+                            <div class="template-items">
+                                <div class="template-item" draggable="true" data-type="pauze" data-duur="5">☕ 5min</div>
+                                <div class="template-item" draggable="true" data-type="pauze" data-duur="10">☕ 10min</div>
+                                <div class="template-item" draggable="true" data-type="pauze" data-duur="15">☕ 15min</div>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Top 3 Priorities - fixed medium section -->
-                    <div class="top-prioriteiten-sectie">
-                        <h3>⭐ Top 3 Prioriteiten</h3>
-                        <div class="prioriteit-slots" id="prioriteitSlots">
-                            ${this.renderPrioriteitSlots()}
+                    <!-- Top 3 Priorities - collapsible section -->
+                    <div class="top-prioriteiten-sectie collapsible" id="prioriteiten-sectie">
+                        <div class="section-header" onclick="app.toggleSection('prioriteiten')">
+                            <h3>⭐ Top 3 Prioriteiten</h3>
+                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="section-content">
+                            <div class="prioriteit-slots" id="prioriteitSlots">
+                                ${this.renderPrioriteitSlots()}
+                            </div>
                         </div>
                     </div>
                     
@@ -6340,6 +6418,7 @@ class Taakbeheer {
         this.bindDragAndDropEvents();
         this.bindPrioriteitEvents();
         this.initPlanningResizer();
+        this.initCollapsibleSections();
         this.updateTotaalTijd();
         
         // Populate filter dropdowns
