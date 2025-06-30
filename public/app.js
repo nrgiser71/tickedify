@@ -1889,8 +1889,13 @@ class Taakbeheer {
                     const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
                     if (response.ok) {
                         let taken = await response.json();
-                        // Apply date filter for actions list
+                        console.log(`📊 Loaded ${taken.length} taken for lijst: ${this.huidigeLijst}`);
+                        if (this.huidigeLijst === 'inbox') {
+                            console.log('📋 Inbox taken:', taken.map(t => `${t.tekst} (${t.id})`));
+                        }
+                        // Apply date filter only for actions list
                         this.taken = this.filterTakenOpDatum(taken);
+                        console.log(`✅ After filtering: ${this.taken.length} taken`);
                     } else {
                         this.taken = [];
                     }
