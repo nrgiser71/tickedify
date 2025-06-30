@@ -2084,6 +2084,113 @@ button:focus {
     }
 }
 
+/* Tip Toast System - Centered long-duration tips */
+.tip-toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001; /* Above normal toasts */
+    pointer-events: none;
+}
+
+.tip-toast {
+    position: relative;
+    min-width: 400px;
+    max-width: 600px;
+    padding: 16px 20px;
+    background: #E3F2FD; /* Light blue */
+    border: 1px solid #90CAF9;
+    border-radius: var(--macos-radius-large);
+    box-shadow: var(--macos-shadow-medium);
+    pointer-events: all;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.tip-toast-show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Progress bar that counts down */
+.tip-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: #1976D2;
+    border-radius: 0 0 var(--macos-radius-large) var(--macos-radius-large);
+    animation: shrinkWidth linear forwards;
+    animation-play-state: running;
+}
+
+@keyframes shrinkWidth {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+.tip-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tip-content i {
+    color: #1976D2;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.tip-message {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #0D47A1;
+    line-height: 1.4;
+}
+
+.tip-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #1976D2;
+    cursor: pointer;
+    padding: 0 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.tip-close:hover {
+    opacity: 1;
+}
+
+/* Duration cycle indicator */
+.duration-cycle-indicator {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--macos-radius-medium);
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10002;
+}
+
+.duration-cycle-indicator.show {
+    opacity: 1;
+}
+
+.duration-cycle-indicator .current {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
 /* ===== SIMPLE DAILY PLANNING ===== */
 .dagelijkse-planning-layout {
     display: flex;

@@ -70,6 +70,109 @@ class ToastManager {
 // Global toast instance
 const toast = new ToastManager();
 
+// Tip Toast System for centered, long-duration tips
+class TipToast {
+    constructor() {
+        this.container = null;
+        this.currentTip = null;
+        this.timeoutId = null;
+        this.pausedTime = null;
+        this.remainingTime = null;
+        this.createContainer();
+    }
+    
+    createContainer() {
+        this.container = document.createElement('div');
+        this.container.className = 'tip-toast-container';
+        document.body.appendChild(this.container);
+    }
+    
+    show(message, duration = 20000) {
+        // Remove any existing tip
+        if (this.currentTip) {
+            this.dismiss();
+        }
+        
+        const tip = document.createElement('div');
+        tip.className = 'tip-toast';
+        tip.innerHTML = `
+            <div class="tip-progress" style="animation-duration: ${duration}ms"></div>
+            <div class="tip-content">
+                <i class="fas fa-lightbulb"></i>
+                <span class="tip-message">${message}</span>
+                <button class="tip-close">×</button>
+            </div>
+        `;
+        
+        this.currentTip = tip;
+        this.container.appendChild(tip);
+        
+        // Animate in
+        setTimeout(() => tip.classList.add('tip-toast-show'), 10);
+        
+        // Auto dismiss after duration
+        this.remainingTime = duration;
+        this.timeoutId = setTimeout(() => this.dismiss(), duration);
+        
+        // Pause progress on hover
+        tip.addEventListener('mouseenter', () => this.pauseProgress());
+        tip.addEventListener('mouseleave', () => this.resumeProgress());
+        
+        // Close button
+        tip.querySelector('.tip-close').addEventListener('click', () => this.dismiss());
+    }
+    
+    pauseProgress() {
+        if (!this.currentTip || !this.timeoutId) return;
+        
+        clearTimeout(this.timeoutId);
+        this.pausedTime = Date.now();
+        
+        // Pause the CSS animation
+        const progressBar = this.currentTip.querySelector('.tip-progress');
+        if (progressBar) {
+            progressBar.style.animationPlayState = 'paused';
+        }
+    }
+    
+    resumeProgress() {
+        if (!this.currentTip || !this.pausedTime) return;
+        
+        // Calculate remaining time
+        const elapsed = Date.now() - this.pausedTime;
+        this.remainingTime = Math.max(0, this.remainingTime - elapsed);
+        
+        // Resume animation
+        const progressBar = this.currentTip.querySelector('.tip-progress');
+        if (progressBar) {
+            progressBar.style.animationPlayState = 'running';
+        }
+        
+        // Set new timeout for remaining time
+        this.timeoutId = setTimeout(() => this.dismiss(), this.remainingTime);
+        this.pausedTime = null;
+    }
+    
+    dismiss() {
+        if (!this.currentTip) return;
+        
+        this.currentTip.classList.remove('tip-toast-show');
+        
+        setTimeout(() => {
+            if (this.currentTip && this.currentTip.parentNode) {
+                this.currentTip.parentNode.removeChild(this.currentTip);
+            }
+            this.currentTip = null;
+            this.timeoutId = null;
+            this.pausedTime = null;
+            this.remainingTime = null;
+        }, 300);
+    }
+}
+
+// Global tip toast instance
+const tipToast = new TipToast();
+
 // Custom Modal System
 class InputModal {
     constructor() {
@@ -587,6 +690,9 @@ class Taakbeheer {
                 this.probeerOpslaan();
             }
         });
+        
+        // Initialize F-key shortcuts for planning popup
+        this.initPlanningKeyboardShortcuts();
 
         // Bind herhaling popup events
         document.addEventListener('DOMContentLoaded', () => {
@@ -1812,6 +1918,230 @@ class Taakbeheer {
         console.log('Mobile sidebar initialized');
     }
 
+    // F-key shortcuts for planning popup
+    initPlanningKeyboardShortcuts() {
+        const popup = document.getElementById('planningPopup');
+        
+        popup.addEventListener('keydown', (e) => {
+            // Only handle F-keys when popup is visible
+            if (!popup.style.display || popup.style.display === 'none') return;
+            
+            // Skip if in textarea (except F8 which should focus textarea)
+            if (e.target.tagName === 'TEXTAREA' && e.key !== 'F8') return;
+            
+            // F1-F9 shortcuts (no modifiers)
+            if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+                switch(e.key) {
+                    case 'F1':
+                        e.preventDefault();
+                        this.focusAndOpenDropdown('projectSelect');
+                        this.showQuickTip("Project dropdown geopend");
+                        break;
+                        
+                    case 'F2':
+                        e.preventDefault();
+                        this.setDateToday();
+                        this.showQuickTip("Datum ingesteld op vandaag");
+                        break;
+                        
+                    case 'F3':
+                        e.preventDefault();
+                        this.setDateTomorrow();
+                        this.showQuickTip("Datum ingesteld op morgen");
+                        break;
+                        
+                    case 'F4':
+                        e.preventDefault();
+                        const dateField = document.getElementById('verschijndatum');
+                        dateField.focus();
+                        if (dateField.showPicker) {
+                            dateField.showPicker();
+                        }
+                        this.showQuickTip("Datum picker geopend");
+                        break;
+                        
+                    case 'F5':
+                        e.preventDefault();
+                        this.focusAndOpenDropdown('contextSelect');
+                        this.showQuickTip("Context dropdown geopend");
+                        break;
+                        
+                    case 'F6':
+                        e.preventDefault();
+                        const duurField = document.getElementById('duur');
+                        duurField.focus();
+                        duurField.select();
+                        this.showQuickTip("Duur veld geselecteerd");
+                        break;
+                        
+                    case 'F7':
+                        e.preventDefault();
+                        this.cycleDuration();
+                        break;
+                        
+                    case 'F8':
+                        e.preventDefault();
+                        document.getElementById('opmerkingen').focus();
+                        this.showQuickTip("Focus op opmerkingen");
+                        break;
+                        
+                    case 'F9':
+                        e.preventDefault();
+                        this.openHerhalingPopup();
+                        this.showQuickTip("Herhaling popup geopend");
+                        break;
+                }
+            }
+            
+            // SHIFT + F1-F6 for quick moves
+            if (e.shiftKey && e.key.match(/^F([1-6])$/)) {
+                e.preventDefault();
+                const lists = [
+                    'opvolgen',
+                    'uitgesteld-wekelijks', 
+                    'uitgesteld-maandelijks',
+                    'uitgesteld-3maandelijks',
+                    'uitgesteld-6maandelijks',
+                    'uitgesteld-jaarlijks'
+                ];
+                const index = parseInt(e.key.substring(1)) - 1;
+                if (lists[index]) {
+                    this.quickMove(lists[index]);
+                }
+            }
+        });
+    }
+    
+    // Helper function to focus and open dropdown
+    focusAndOpenDropdown(selectId) {
+        const select = document.getElementById(selectId);
+        if (select) {
+            select.focus();
+            // Trigger mousedown to open dropdown
+            const event = new MouseEvent('mousedown', { bubbles: true });
+            select.dispatchEvent(event);
+        }
+    }
+    
+    // Set date to today
+    setDateToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('verschijndatum').value = today;
+    }
+    
+    // Set date to tomorrow
+    setDateTomorrow() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('verschijndatum').value = tomorrow.toISOString().split('T')[0];
+    }
+    
+    // Cycle through common durations
+    cycleDuration() {
+        const durations = [5, 10, 15, 20, 30, 45, 60, 90, 120];
+        const duurField = document.getElementById('duur');
+        const current = parseInt(duurField.value) || 0;
+        const currentIndex = durations.indexOf(current);
+        const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % durations.length;
+        const nextDuration = durations[nextIndex];
+        
+        duurField.value = nextDuration;
+        
+        // Show cycle indicator
+        this.showDurationCycle(durations, nextIndex);
+        this.showQuickTip(`Duur: ${nextDuration} minuten`);
+    }
+    
+    // Show duration cycle indicator
+    showDurationCycle(durations, currentIndex) {
+        const duurField = document.getElementById('duur');
+        const rect = duurField.getBoundingClientRect();
+        
+        // Create or reuse indicator
+        let indicator = document.getElementById('durationCycleIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'durationCycleIndicator';
+            indicator.className = 'duration-cycle-indicator';
+            document.body.appendChild(indicator);
+        }
+        
+        // Create cycle display
+        const cycleText = durations.map((d, i) => 
+            i === currentIndex ? `<span class="current">${d}</span>` : d
+        ).join(' → ');
+        
+        indicator.innerHTML = `F7: ${cycleText}`;
+        
+        // Position near duration field
+        indicator.style.left = `${rect.right + 10}px`;
+        indicator.style.top = `${rect.top + (rect.height / 2) - 15}px`;
+        
+        // Show and hide
+        indicator.classList.add('show');
+        setTimeout(() => {
+            indicator.classList.remove('show');
+        }, 2000);
+    }
+    
+    // Quick move to list
+    quickMove(lijst) {
+        this.verplaatsTaak(lijst);
+        const lijstNamen = {
+            'opvolgen': 'Opvolgen',
+            'uitgesteld-wekelijks': 'Wekelijks',
+            'uitgesteld-maandelijks': 'Maandelijks',
+            'uitgesteld-3maandelijks': '3-maandelijks',
+            'uitgesteld-6maandelijks': '6-maandelijks',
+            'uitgesteld-jaarlijks': 'Jaarlijks'
+        };
+        this.showQuickTip(`Verplaatst naar ${lijstNamen[lijst]}`);
+    }
+    
+    // Quick feedback toasts (short, 2 sec)
+    showQuickTip(message) {
+        toast.info(message, 2000);
+    }
+    
+    // Progressive learning tips (long, 20 sec)
+    showLearningTip(message) {
+        tipToast.show(message, 20000);
+    }
+    
+    // Track usage for progressive tips
+    trackPlanningUsage() {
+        const usage = parseInt(localStorage.getItem('planningPopupUsage') || '0');
+        const newUsage = usage + 1;
+        localStorage.setItem('planningPopupUsage', newUsage);
+        
+        // Progressive tips
+        if (newUsage === 4) {
+            setTimeout(() => {
+                tipToast.show(
+                    "💡 Wist je dat? F-toetsen maken inbox verwerking 3x sneller. " +
+                    "F2=vandaag, F3=morgen, F7=cyclische duur. Druk ? voor volledig overzicht.",
+                    20000
+                );
+            }, 2000);
+        } else if (newUsage === 10) {
+            setTimeout(() => {
+                tipToast.show(
+                    "🚀 Power tip: F7 cyclet door populaire duren (5→10→15→20→30→45→60→90→120). " +
+                    "SHIFT+F1 t/m F6 voor snel verplaatsen!",
+                    20000
+                );
+            }, 2000);
+        } else if (newUsage === 20) {
+            setTimeout(() => {
+                tipToast.show(
+                    "⚡ Master tip: Combineer F-toetsen voor super snelle verwerking. " +
+                    "F1→Type→F3→F5→Type→F7→Enter. Geen muis nodig!",
+                    20000
+                );
+            }, 2000);
+        }
+    }
+
     handleInboxAutoRefresh() {
         // Clear existing interval
         if (this.autoRefreshInterval) {
@@ -2934,6 +3264,9 @@ class Taakbeheer {
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
+            
+            // Track usage for progressive F-key tips
+            this.trackPlanningUsage();
         }
     }
 
@@ -4762,6 +5095,9 @@ class Taakbeheer {
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
+            
+            // Track usage for progressive F-key tips
+            this.trackPlanningUsage();
         }
     }
 
