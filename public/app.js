@@ -2455,6 +2455,16 @@ class Taakbeheer {
         }
         container.innerHTML = '';
 
+        console.log(`🎨 renderStandaardLijst: Rendering ${this.taken.length} taken for ${this.huidigeLijst}`);
+        if (this.huidigeLijst === 'inbox') {
+            const taakEen = this.taken.find(t => t.tekst === '1');
+            if (taakEen) {
+                console.log('✅ Found task "1" in this.taken:', taakEen);
+            } else {
+                console.log('❌ Task "1" NOT found in this.taken');
+            }
+        }
+
         this.taken.forEach(taak => {
             const li = document.createElement('li');
             li.className = 'taak-item';
