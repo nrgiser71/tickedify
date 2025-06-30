@@ -1934,20 +1934,20 @@ class Taakbeheer {
                 switch(e.key) {
                     case 'F2':
                         e.preventDefault();
-                        this.focusAndOpenDropdown('projectSelect');
-                        this.showQuickTip("Project dropdown geopend");
+                        app.focusAndOpenDropdown('projectSelect');
+                        app.showQuickTip("Project dropdown geopend");
                         break;
                         
                     case 'F3':
                         e.preventDefault();
-                        this.setDateToday();
-                        this.showQuickTip("Datum ingesteld op vandaag");
+                        app.setDateToday();
+                        app.showQuickTip("Datum ingesteld op vandaag");
                         break;
                         
                     case 'F4':
                         e.preventDefault();
-                        this.setDateTomorrow();
-                        this.showQuickTip("Datum ingesteld op morgen");
+                        app.setDateTomorrow();
+                        app.showQuickTip("Datum ingesteld op morgen");
                         break;
                         
                     case 'F6':
@@ -1957,31 +1957,31 @@ class Taakbeheer {
                         if (dateField.showPicker) {
                             dateField.showPicker();
                         }
-                        this.showQuickTip("Datum picker geopend");
+                        app.showQuickTip("Datum picker geopend");
                         break;
                         
                     case 'F7':
                         e.preventDefault();
-                        this.focusAndOpenDropdown('contextSelect');
-                        this.showQuickTip("Context dropdown geopend");
+                        app.focusAndOpenDropdown('contextSelect');
+                        app.showQuickTip("Context dropdown geopend");
                         break;
                         
                     case 'F8':
                         e.preventDefault();
-                        this.cycleDuration();
-                        this.showQuickTip("Duur cyclisch bijgewerkt");
+                        app.cycleDuration();
+                        app.showQuickTip("Duur cyclisch bijgewerkt");
                         break;
                         
                     case 'F9':
                         e.preventDefault();
                         document.getElementById('opmerkingen').focus();
-                        this.showQuickTip("Focus op opmerkingen");
+                        app.showQuickTip("Focus op opmerkingen");
                         break;
                         
                     case 'F10':
                         e.preventDefault();
-                        this.openHerhalingPopup();
-                        this.showQuickTip("Herhaling popup geopend");
+                        app.openHerhalingPopup();
+                        app.showQuickTip("Herhaling popup geopend");
                         break;
                 }
             }
@@ -2009,7 +2009,7 @@ class Taakbeheer {
                 }
                 
                 if (index !== undefined && lists[index]) {
-                    this.quickMove(lists[index]);
+                    app.quickMove(lists[index]);
                 }
             }
         });
@@ -9266,10 +9266,10 @@ class KeyboardShortcutManager {
     
     setupGlobalShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // F12 - Quick Add nieuwe taak (verplaatst van F9)
-            if (e.key === 'F12') {
+            // F11 - Quick Add nieuwe taak (F12 opent browser console)
+            if (e.key === 'F11') {
                 e.preventDefault();
-                console.log('F12 detected - quick add modal');
+                console.log('F11 detected - quick add modal');
                 this.quickAddModal.show();
                 return;
             }
