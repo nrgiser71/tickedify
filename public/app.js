@@ -4423,13 +4423,21 @@ class Taakbeheer {
 
     initPlanningResizer() {
         const splitter = document.getElementById('planningSplitter');
-        if (!splitter) return;
+        if (!splitter) {
+            console.log('🔍 Splitter element not found');
+            return;
+        }
 
         const sidebar = document.querySelector('.planning-sidebar');
         const calendar = document.querySelector('.dag-kalender');
         const container = document.querySelector('.dagelijkse-planning-layout');
         
-        if (!sidebar || !calendar || !container) return;
+        if (!sidebar || !calendar || !container) {
+            console.log('🔍 Required elements not found:', { sidebar: !!sidebar, calendar: !!calendar, container: !!container });
+            return;
+        }
+
+        console.log('🔍 Initializing planning resizer...');
 
         let isResizing = false;
         let startX = 0;
@@ -4440,18 +4448,27 @@ class Taakbeheer {
         if (savedWidth) {
             const width = parseFloat(savedWidth);
             if (width >= 20 && width <= 80) { // Validate range (20% to 80%)
+                console.log('🔍 Loading saved width:', width + '%');
                 sidebar.style.width = width + '%';
                 calendar.style.width = (100 - width) + '%';
             }
         }
 
         const startResize = (e) => {
+            console.log('🔍 Start resize triggered');
+            e.preventDefault();
+            e.stopPropagation();
+            
             isResizing = true;
-            startX = e.clientX || e.touches[0].clientX;
+            startX = e.clientX || (e.touches && e.touches[0].clientX);
             startSidebarWidth = (sidebar.offsetWidth / container.offsetWidth) * 100;
+            
+            console.log('🔍 Resize started:', { startX, startSidebarWidth });
             
             document.body.style.cursor = 'ew-resize';
             document.body.style.userSelect = 'none';
+            document.body.style.pointerEvents = 'none'; // Prevent interference
+            splitter.style.pointerEvents = 'auto'; // Keep splitter active
             
             // Add visual feedback
             splitter.classList.add('resizing');
@@ -4461,7 +4478,9 @@ class Taakbeheer {
             if (!isResizing) return;
             
             e.preventDefault();
-            const currentX = e.clientX || e.touches[0].clientX;
+            e.stopPropagation();
+            
+            const currentX = e.clientX || (e.touches && e.touches[0].clientX);
             const deltaX = currentX - startX;
             const containerWidth = container.offsetWidth;
             const deltaPercent = (deltaX / containerWidth) * 100;
@@ -4473,22 +4492,35 @@ class Taakbeheer {
             
             const newCalendarWidth = 100 - newSidebarWidth;
             
+            console.log('🔍 Resizing:', { currentX, deltaX, newSidebarWidth });
+            
             sidebar.style.width = newSidebarWidth + '%';
             calendar.style.width = newCalendarWidth + '%';
         };
 
-        const stopResize = () => {
+        const stopResize = (e) => {
             if (!isResizing) return;
+            
+            console.log('🔍 Stop resize triggered');
             
             isResizing = false;
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
+            document.body.style.pointerEvents = '';
+            splitter.style.pointerEvents = '';
             splitter.classList.remove('resizing');
             
             // Save width to localStorage
             const sidebarWidth = (sidebar.offsetWidth / container.offsetWidth) * 100;
             localStorage.setItem('planning-sidebar-width', sidebarWidth.toString());
+            
+            console.log('🔍 Resize stopped, saved width:', sidebarWidth);
         };
+
+        // Remove any existing event listeners to prevent duplicates
+        splitter.removeEventListener('mousedown', startResize);
+        document.removeEventListener('mousemove', doResize);
+        document.removeEventListener('mouseup', stopResize);
 
         // Mouse events
         splitter.addEventListener('mousedown', startResize);
@@ -4496,9 +4528,11 @@ class Taakbeheer {
         document.addEventListener('mouseup', stopResize);
 
         // Touch events for mobile
-        splitter.addEventListener('touchstart', startResize);
-        document.addEventListener('touchmove', doResize);
+        splitter.addEventListener('touchstart', startResize, { passive: false });
+        document.addEventListener('touchmove', doResize, { passive: false });
         document.addEventListener('touchend', stopResize);
+
+        console.log('🔍 Planning resizer initialized successfully');
     }
 
     async vulFilterDropdowns() {
