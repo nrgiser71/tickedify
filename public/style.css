@@ -2224,34 +2224,35 @@ button:focus {
     padding: 4px 8px !important;
 }
 
-/* Ultra minimal styling for collapsed containers */
+/* Completely minimize collapsed containers - only header visible */
 .templates-sectie.collapsed,
-.tijd-sectie.collapsed {
+.tijd-sectie.collapsed,
+.top-prioriteiten-sectie.collapsed {
+    /* Remove ALL spacing and sizing */
     border: none !important;
     background: transparent !important;
     border-radius: 0 !important;
-    margin-bottom: 1px !important;
+    margin: 0 !important;
+    margin-bottom: 2px !important; /* Only tiny gap between collapsed sections */
     padding: 0 !important;
-    min-height: auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    flex-shrink: 1 !important;
+    /* Container becomes just the header height */
 }
 
-.top-prioriteiten-sectie.collapsed {
-    margin-bottom: 1px !important;
-    padding: 0 !important;
-    border: none !important;
-    background: transparent !important;
-}
-
-/* Make collapsed headers look like thin lines */
+/* Header becomes the entire visible element */
 .templates-sectie.collapsed .section-header,
 .tijd-sectie.collapsed .section-header,
 .top-prioriteiten-sectie.collapsed .section-header {
     margin: 0 !important;
-    padding: 2px 8px !important;
+    padding: 3px 8px !important;
     background: rgba(0, 0, 0, 0.05) !important;
     border: 1px solid var(--macos-gray-4) !important;
-    border-radius: 3px !important;
+    border-radius: 4px !important;
     font-size: 11px !important;
+    /* Header is now the only visible part */
+    line-height: 1.2 !important;
 }
 
 /* Time section - bit higher */
@@ -3128,25 +3129,30 @@ button:focus {
         max-width: 110px !important;
     }
     
-    /* Ultra minimal collapsed sections on laptop */
+    /* Maximum space efficiency on laptop */
     .templates-sectie.collapsed,
     .tijd-sectie.collapsed,
     .top-prioriteiten-sectie.collapsed {
-        margin-bottom: 0px !important;
+        margin: 0 !important;
+        margin-bottom: 1px !important; /* Absolute minimum gap */
         padding: 0 !important;
         border: none !important;
         background: transparent !important;
+        min-height: 0 !important;
+        height: auto !important;
+        flex-shrink: 1 !important;
     }
     
     .templates-sectie.collapsed .section-header,
     .tijd-sectie.collapsed .section-header,
     .top-prioriteiten-sectie.collapsed .section-header {
-        padding: 1px 6px !important;
+        padding: 2px 6px !important;
         margin: 0 !important;
         background: rgba(0, 0, 0, 0.03) !important;
         border: 1px solid var(--macos-gray-5) !important;
-        border-radius: 2px !important;
+        border-radius: 3px !important;
         font-size: 10px !important;
+        line-height: 1.1 !important;
     }
     
     .tijd-sectie .section-content,
