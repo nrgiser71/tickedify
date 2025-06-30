@@ -2906,19 +2906,36 @@ button:focus {
         overflow: hidden;
     }
     
-    .sidebar.collapsed .sidebar-content {
-        opacity: 0;
-        transition: opacity 0.2s ease;
+    /* Hide text content in collapsed state */
+    .sidebar.collapsed .app-logo img {
+        display: none;
     }
     
-    .sidebar.collapsed .sidebar-header h1 {
-        opacity: 0;
-        transition: opacity 0.2s ease;
+    .sidebar.collapsed .app-logo::after {
+        content: "T";
+        display: block;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--macos-blue);
+        text-align: center;
+        line-height: 1;
     }
     
-    .sidebar.collapsed .lijst-item span {
-        opacity: 0;
-        transition: opacity 0.2s ease;
+    .sidebar.collapsed .lijst-item span,
+    .sidebar.collapsed .user-section,
+    .sidebar.collapsed .version-info {
+        display: none;
+    }
+    
+    .sidebar.collapsed .lijst-item {
+        justify-content: center;
+        padding: 8px;
+        text-align: center;
+    }
+    
+    .sidebar.collapsed .lijst-item:before {
+        margin-right: 0;
+        font-size: 16px;
     }
     
     .app-layout {

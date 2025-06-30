@@ -6692,25 +6692,17 @@ class Taakbeheer {
 
     // Laptop sidebar toggle functionality (separate from mobile)
     initializeLaptopSidebar() {
-        console.log('🖥️ initializeLaptopSidebar called, window width:', window.innerWidth);
-        
         const toggleButton = document.getElementById('sidebar-toggle');
         const sidebar = document.querySelector('.sidebar');
         
-        console.log('🔍 Elements found:', { toggleButton: !!toggleButton, sidebar: !!sidebar });
-        
         if (!toggleButton || !sidebar) {
-            console.log('❌ Missing elements, skipping laptop sidebar initialization');
             return;
         }
         
         // Only initialize on laptop screens (1201-1599px)
         if (window.innerWidth < 1201 || window.innerWidth >= 1600) {
-            console.log('❌ Not laptop screen size, skipping laptop sidebar initialization');
             return;
         }
-        
-        console.log('✅ Laptop sidebar initialization proceeding...');
         
         // Restore saved state from localStorage
         const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -6720,20 +6712,15 @@ class Taakbeheer {
         }
         
         // Bind toggle event
-        toggleButton.addEventListener('click', () => {
-            console.log('🔄 Toggle button clicked!');
-            this.toggleLaptopSidebar();
-        });
+        toggleButton.addEventListener('click', () => this.toggleLaptopSidebar());
         
         // Update toggle visibility based on screen size
         window.addEventListener('resize', () => this.handleLaptopSidebarResize());
     }
     
     toggleLaptopSidebar() {
-        console.log('🔀 toggleLaptopSidebar called');
         const sidebar = document.querySelector('.sidebar');
         const isCollapsed = sidebar.classList.contains('collapsed');
-        console.log('📊 Current state - isCollapsed:', isCollapsed);
         
         if (isCollapsed) {
             // Expand
