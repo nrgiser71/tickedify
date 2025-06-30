@@ -365,13 +365,14 @@ body {
 .acties-filters {
     display: flex;
     align-items: end;
-    gap: 16px;
+    gap: 12px;
     margin-bottom: 20px;
-    padding: 16px;
+    padding: 12px;
     background: var(--macos-gray-6);
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--macos-gray-5);
     flex-shrink: 0; /* Don't shrink filters */
+    flex-wrap: wrap; /* Allow wrapping on narrow screens */
 }
 
 /* Acties lijst container */
@@ -390,9 +391,25 @@ body {
 
 /* Compact filters for daily planning */
 .dagelijkse-planning-layout .acties-filters {
-    padding: 12px;
-    margin-bottom: 12px;
-    gap: 12px;
+    padding: 8px;
+    margin-bottom: 8px;
+    gap: 8px;
+    flex-wrap: wrap; /* Allow wrapping in planning layout */
+}
+
+/* Make filter groups more compact in planning */
+.dagelijkse-planning-layout .filter-groep {
+    min-width: 100px;
+    max-width: 120px;
+}
+
+.dagelijkse-planning-layout .filter-groep select,
+.dagelijkse-planning-layout .filter-groep input {
+    max-width: 100px;
+    min-width: 80px;
+    font-size: 11px;
+    padding: 4px 6px;
+    height: 28px;
 }
 
 .filter-groep {
@@ -418,6 +435,8 @@ body {
     font-size: 12px;
     height: 32px;
     box-sizing: border-box;
+    max-width: 140px; /* Limit width to prevent overflow */
+    min-width: 80px; /* Ensure minimum usability */
 }
 
 .acties-table-container {
@@ -2171,6 +2190,23 @@ button:focus {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin: 0 !important;
+}
+
+/* Extra compact styling for collapsed sections */
+.collapsible.collapsed {
+    margin-bottom: 4px !important; /* Minimal space between collapsed sections */
+}
+
+.collapsible.collapsed .section-header {
+    padding: 4px 8px !important; /* Much smaller padding when collapsed */
+    margin-bottom: 0 !important;
+    border-radius: var(--macos-radius-small);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.collapsible.collapsed .section-header h3 {
+    font-size: 12px !important; /* Smaller text when collapsed */
+}
     overflow: hidden !important;
 }
 
@@ -3023,6 +3059,29 @@ button:focus {
     
     .collapsible .section-header h3 {
         font-size: 13px !important;
+    }
+    
+    /* Extra compact collapsed sections on laptop */
+    .collapsible.collapsed {
+        margin-bottom: 2px !important;
+    }
+    
+    .collapsible.collapsed .section-header {
+        padding: 3px 6px !important;
+    }
+    
+    .collapsible.collapsed .section-header h3 {
+        font-size: 11px !important;
+    }
+    
+    /* Responsive filter layout for laptop */
+    .acties-filters {
+        gap: 8px !important;
+        padding: 8px !important;
+    }
+    
+    .filter-groep {
+        max-width: 110px !important;
     }
     
     .tijd-sectie .section-content,
