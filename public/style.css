@@ -2075,8 +2075,8 @@ button:focus {
 }
 
 .planning-sidebar {
-    flex: 1 1 50%; /* Exactly 50% of available space */
-    max-width: 50%; /* Enforce 50% maximum */
+    width: calc(50% - 10px); /* Exactly 50% minus half the gap */
+    flex-shrink: 0; /* Don't shrink */
     background: #f0f0f0; /* Simple gray background */
     border-radius: 8px;
     padding: 15px 15px 40px 25px; /* Larger bottom padding for visual balance */
@@ -2445,8 +2445,8 @@ button:focus {
 }
 
 .dag-kalender {
-    flex: 1 1 50%; /* Exactly 50% of available space */
-    max-width: 50%; /* Enforce 50% maximum */
+    width: calc(50% - 10px); /* Exactly 50% minus half the gap */
+    flex-shrink: 0; /* Don't shrink */
     background: var(--macos-bg-primary);
     border-radius: var(--macos-radius-large);
     padding: 20px;
@@ -2918,15 +2918,15 @@ button:focus {
     }
     
     .planning-sidebar {
-        flex: 1 1 50% !important;
-        max-width: 50% !important;
+        width: calc(50% - 10px) !important;
+        flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
     }
     
     .dag-kalender {
-        flex: 1 1 50% !important;
-        max-width: 50% !important;
+        width: calc(50% - 10px) !important;
+        flex-shrink: 0 !important;
         order: 2 !important;
         height: 100% !important;
     }
@@ -3011,15 +3011,15 @@ button:focus {
     }
     
     .planning-sidebar {
-        flex: 1 1 50% !important;
-        max-width: 50% !important;
+        width: calc(50% - 10px) !important;
+        flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
     }
     
     .dag-kalender {
-        flex: 1 1 50% !important;
-        max-width: 50% !important;
+        width: calc(50% - 10px) !important;
+        flex-shrink: 0 !important;
         order: 2 !important;
         height: 100% !important;
     }
