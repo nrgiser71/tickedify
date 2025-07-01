@@ -6941,18 +6941,17 @@ class Taakbeheer {
             }
         }
         
-        const naamElement = isTemplateItem ? 
-            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
-            `<span class="planning-naam planning-taak-titel">${naam}</span>`;
-        
         const expandChevron = isExpandable ? '<span class="expand-chevron">▶</span>' : '';
         
-        // Build details section - action list style
+        // Build details section - action list style with 3 lines
         let detailsHtml = '';
         if (isExpandable && taskDetails) {
             detailsHtml = '<div class="planning-item-details">';
             
-            // Build extra info line (like action list)
+            // Line 1: Task name (like taak-titel in action list)
+            detailsHtml += `<div class="planning-taak-titel">${naam}</div>`;
+            
+            // Line 2: Build extra info line (project/context/datum/duur)
             let extraInfo = [];
             if (taskDetails.project && taskDetails.project !== 'Geen project') {
                 extraInfo.push(`<i class="ti ti-folder"></i> ${taskDetails.project}`);
@@ -6982,13 +6981,19 @@ class Taakbeheer {
                 detailsHtml += `<div class="planning-extra-info">${extraInfo.join(' • ')}</div>`;
             }
             
-            // Add opmerkingen as separate line if present
+            // Line 3: Add opmerkingen as separate line if present
             if (taskDetails.opmerkingen) {
                 detailsHtml += `<div class="planning-opmerkingen">${this.linkifyUrls(taskDetails.opmerkingen)}</div>`;
             }
             
             detailsHtml += '</div>';
         }
+        
+        // For non-expandable items, use the name in the header
+        // For expandable items, the name will be shown in the details section
+        const naamElement = isTemplateItem ? 
+            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
+            (isExpandable ? '' : `<span class="planning-naam">${naam}</span>`);
         
         const clickHandler = isExpandable ? `onclick="app.togglePlanningItemExpand('${planningItem.id}', event)"` : '';
         
