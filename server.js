@@ -1739,6 +1739,118 @@ app.get('/api/waitlist/stats', async (req, res) => {
     }
 });
 
+// Test endpoint for GoHighLevel tag functionality
+app.post('/api/test/ghl-tag', async (req, res) => {
+    try {
+        const { email, name } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        if (!process.env.GHL_API_KEY) {
+            return res.status(500).json({ error: 'GoHighLevel API key not configured' });
+        }
+
+        const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
+        
+        console.log(`🧪 Testing GHL integration for: ${email}`);
+        
+        // First, search for existing contact by email
+        const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                'Content-Type': 'application/json',
+                'Version': '2021-07-28'
+            }
+        });
+
+        let contactId = null;
+        let isExisting = false;
+        let result = { steps: [] };
+
+        if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            if (searchData.contact && searchData.contact.id) {
+                contactId = searchData.contact.id;
+                isExisting = true;
+                result.steps.push(`✅ Found existing contact: ${contactId}`);
+            } else {
+                result.steps.push(`⚠️ No existing contact found for ${email}`);
+            }
+        } else {
+            const errorText = await searchResponse.text();
+            result.steps.push(`❌ Search failed: ${searchResponse.status} - ${errorText}`);
+        }
+
+        if (!contactId) {
+            // Create new contact
+            const createResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Version': '2021-07-28'
+                },
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    firstName: name ? name.split(' ')[0] : 'Test',
+                    lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
+                    name: name || 'Test User',
+                    locationId: locationId,
+                    tags: ['tickedify-waitlist-signup'],
+                    source: 'test-signup'
+                })
+            });
+
+            if (createResponse.ok) {
+                const createData = await createResponse.json();
+                contactId = createData.contact?.id;
+                result.steps.push(`✅ New contact created: ${contactId}`);
+                result.action = 'created';
+            } else {
+                const errorText = await createResponse.text();
+                result.steps.push(`❌ Create failed: ${createResponse.status} - ${errorText}`);
+            }
+        } else {
+            // Add tag to existing contact
+            const tagResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Version': '2021-07-28'
+                },
+                body: JSON.stringify({
+                    tags: ['tickedify-waitlist-signup']
+                })
+            });
+
+            if (tagResponse.ok) {
+                result.steps.push(`✅ Tag 'tickedify-waitlist-signup' added to contact: ${contactId}`);
+                result.action = 'tagged';
+            } else {
+                const errorText = await tagResponse.text();
+                result.steps.push(`❌ Tag failed: ${tagResponse.status} - ${errorText}`);
+            }
+        }
+
+        result.success = true;
+        result.contactId = contactId;
+        result.email = email;
+        
+        res.json(result);
+
+    } catch (error) {
+        console.error('🧪 GHL test error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            success: false 
+        });
+    }
+});
+
 app.get('/api/auth/me', (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
