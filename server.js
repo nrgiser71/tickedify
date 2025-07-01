@@ -1601,7 +1601,7 @@ app.post('/api/waitlist/signup', async (req, res) => {
         const referrer = req.headers.referer || req.headers.referrer;
         
         // Insert into waitlist
-        const result = await db.query(
+        const result = await pool.query(
             'INSERT INTO waitlist (email, ip_address, user_agent, referrer) VALUES ($1, $2, $3, $4) RETURNING id, aangemaakt',
             [email.toLowerCase().trim(), ipAddress, userAgent, referrer]
         );
@@ -1609,7 +1609,7 @@ app.post('/api/waitlist/signup', async (req, res) => {
         console.log(`✅ New waitlist signup: ${email}`);
         
         // Get total waitlist count
-        const countResult = await db.query('SELECT COUNT(*) as total FROM waitlist');
+        const countResult = await pool.query('SELECT COUNT(*) as total FROM waitlist');
         const totalCount = parseInt(countResult.rows[0].total);
         
         res.json({ 
@@ -1637,7 +1637,7 @@ app.post('/api/waitlist/signup', async (req, res) => {
 // Get waitlist stats (public endpoint)
 app.get('/api/waitlist/stats', async (req, res) => {
     try {
-        const result = await db.query('SELECT COUNT(*) as total FROM waitlist');
+        const result = await pool.query('SELECT COUNT(*) as total FROM waitlist');
         const totalCount = parseInt(result.rows[0].total);
         
         res.json({ 
