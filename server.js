@@ -1624,7 +1624,7 @@ app.post('/api/waitlist/signup', async (req, res) => {
                         lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
                         name: name || 'Waitlist User',
                         locationId: process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt',
-                        tags: ['waitlist', 'tickedify'],
+                        tags: ['tickedify-waitlist-signup'],
                         source: 'waitlist-signup',
                         customFields: [
                             {
