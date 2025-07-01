@@ -44,6 +44,44 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## UITKLAPBARE TAKEN IN DAGELIJKSE PLANNING VOLTOOID (Juli 1, 2025) ✨✅
+
+**🎯 FEATURE REQUEST VOLTOOID: Versie 0.9.144-0.9.149**
+- **User request**: "Kan je in de planner op het dagelijkse planning scherm, de taken de mogelijkheid geven om uit te klappen en de andere eigenschappen te tonen?"
+- **Secondary request**: "Kan je er ook voor zorgen dat indien er in het opmerkingen veld een URL staat, dat die clickable is?"
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **CSS uitklapbare animaties**: Smooth slideDown animaties met chevron rotatie
+- **URL detection**: Automatische linkify functie voor http://, https:// en www. URLs
+- **Expandable structure**: Header met naam/duur/controls, details sectie met extra info
+- **Layout fixes**: Multiple iterations voor correcte verticale layout
+- **Padding optimalisatie**: Compacte spacing tussen header en details
+
+**🎨 UX/UI VERBETERINGEN:**
+- **Intuïtieve chevron**: ▶ roteerd naar ▼ bij uitklappen  
+- **Clickable URLs**: Opmerkingen met URLs worden automatisch klikbaar (nieuwe tab)
+- **Action list styling**: Consistente layout met project • context • datum • duur
+- **Smooth animaties**: 0.3s ease transitions voor professionele uitstraling
+- **Drag & drop compatible**: Event.stopPropagation() voorkomt conflicten
+
+**🔧 OPGELOSTE PROBLEMEN:**
+- **v0.9.144**: Basis implementatie uitklapbare taken + URL detection
+- **v0.9.145**: Layout omgezet naar action list stijl met hiërarchische structuur  
+- **v0.9.146**: Layout fix - taaknaam verplaatst naar uitklapbare sectie (FOUT)
+- **v0.9.147**: Critical fix - taaknaam terug in header, details alleen extra info
+- **v0.9.148**: CSS flex-direction fix - verticale layout voor header/details
+- **v0.9.149**: Padding optimalisatie - compactere spacing tussen elementen
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkende** uitklapbare taken in dagelijkse planning
+- **Clickable URLs** in alle opmerkingen velden  
+- **Verticale layout** met header boven en details eronder
+- **Compacte spacing** zonder onnodige ruimte
+- **Drag & drop** functionaliteit volledig behouden
+- **macOS design** consistent met rest van applicatie
+
+**STATUS**: Uitklapbare taken feature 100% voltooid en gepolijst voor productie gebruik.
+
 ## CSV IMPORT BESTEMMINGSLIJST FEATURE VOLTOOID (Juni 29, 2025) 📊✅
 
 **🎯 FEATURE REQUEST VOLTOOID: Versie 0.9.106-0.9.107**
