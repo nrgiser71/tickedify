@@ -1608,6 +1608,43 @@ app.post('/api/waitlist/signup', async (req, res) => {
         
         console.log(`✅ New waitlist signup: ${email}`);
         
+        // Add to GoHighLevel if API key is configured
+        if (process.env.GHL_API_KEY) {
+            try {
+                const ghlResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Version': '2021-07-28'
+                    },
+                    body: JSON.stringify({
+                        email: email.toLowerCase().trim(),
+                        locationId: process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt',
+                        tags: ['waitlist', 'tickedify'],
+                        source: 'waitlist-signup',
+                        customFields: [
+                            {
+                                id: 'source',
+                                field_value: 'Tickedify Waitlist'
+                            }
+                        ]
+                    })
+                });
+
+                if (ghlResponse.ok) {
+                    const ghlData = await ghlResponse.json();
+                    console.log(`✅ Contact added to GoHighLevel: ${ghlData.contact?.id || 'success'}`);
+                } else {
+                    const errorText = await ghlResponse.text();
+                    console.error(`⚠️ GoHighLevel API error: ${ghlResponse.status} - ${errorText}`);
+                }
+            } catch (ghlError) {
+                console.error('⚠️ GoHighLevel integration error:', ghlError.message);
+                // Don't fail the whole signup if GHL fails
+            }
+        }
+        
         // Get total waitlist count
         const countResult = await pool.query('SELECT COUNT(*) as total FROM waitlist');
         const totalCount = parseInt(countResult.rows[0].total);
