@@ -6943,53 +6943,48 @@ class Taakbeheer {
         
         const naamElement = isTemplateItem ? 
             `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
-            `<span class="planning-naam">${naam}</span>`;
+            `<span class="planning-naam planning-taak-titel">${naam}</span>`;
         
         const expandChevron = isExpandable ? '<span class="expand-chevron">▶</span>' : '';
         
-        // Build details section
+        // Build details section - action list style
         let detailsHtml = '';
         if (isExpandable && taskDetails) {
             detailsHtml = '<div class="planning-item-details">';
             
+            // Build extra info line (like action list)
+            let extraInfo = [];
             if (taskDetails.project && taskDetails.project !== 'Geen project') {
-                detailsHtml += `
-                    <div class="detail-row">
-                        <span class="detail-label">Project</span>
-                        <span class="detail-value">${taskDetails.project}</span>
-                    </div>`;
+                extraInfo.push(`<i class="ti ti-folder"></i> ${taskDetails.project}`);
             }
-            
             if (taskDetails.context && taskDetails.context !== 'Geen context') {
-                detailsHtml += `
-                    <div class="detail-row">
-                        <span class="detail-label">Context</span>
-                        <span class="detail-value">${taskDetails.context}</span>
-                    </div>`;
+                extraInfo.push(`🏷️ ${taskDetails.context}`);
             }
-            
             if (taskDetails.deadline) {
-                detailsHtml += `
-                    <div class="detail-row">
-                        <span class="detail-label">Deadline</span>
-                        <span class="detail-value">${taskDetails.deadline}</span>
-                    </div>`;
+                // Add date status indicator like in action list
+                const datumStatus = this.getTaakDatumStatus(taskDetails.deadline);
+                let datumIndicator = '';
+                if (datumStatus === 'verleden') {
+                    datumIndicator = '<i class="ti ti-alert-triangle"></i>';
+                } else if (datumStatus === 'vandaag') {
+                    datumIndicator = '<i class="ti ti-calendar"></i>';
+                } else if (datumStatus === 'toekomst') {
+                    datumIndicator = '🔮';
+                }
+                extraInfo.push(`${datumIndicator} ${taskDetails.deadline}`);
             }
-            
             if (taskDetails.duur) {
-                detailsHtml += `
-                    <div class="detail-row">
-                        <span class="detail-label">Geschatte Duur</span>
-                        <span class="detail-value">${taskDetails.duur} minuten</span>
-                    </div>`;
+                extraInfo.push(`⏱️ ${taskDetails.duur} min`);
             }
             
+            // Add extra info line if there's any info
+            if (extraInfo.length > 0) {
+                detailsHtml += `<div class="planning-extra-info">${extraInfo.join(' • ')}</div>`;
+            }
+            
+            // Add opmerkingen as separate line if present
             if (taskDetails.opmerkingen) {
-                detailsHtml += `
-                    <div class="detail-row">
-                        <span class="detail-label">Opmerkingen</span>
-                        <span class="detail-value">${this.linkifyUrls(taskDetails.opmerkingen)}</span>
-                    </div>`;
+                detailsHtml += `<div class="planning-opmerkingen">${this.linkifyUrls(taskDetails.opmerkingen)}</div>`;
             }
             
             detailsHtml += '</div>';
