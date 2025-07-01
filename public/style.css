@@ -2952,6 +2952,95 @@ button:focus {
     cursor: pointer;
 }
 
+/* Expandable planning items */
+.planning-item.expandable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.planning-item.expandable:hover {
+    background-color: rgba(0, 122, 255, 0.15);
+}
+
+.planning-item-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.expand-chevron {
+    font-size: 10px;
+    color: var(--macos-text-tertiary);
+    transition: transform 0.3s ease;
+    margin-right: 4px;
+}
+
+.planning-item.expanded .expand-chevron {
+    transform: rotate(90deg);
+}
+
+.planning-item-details {
+    display: none;
+    padding: 12px 8px 8px 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--macos-gray-5);
+    font-size: 11px;
+    color: var(--macos-text-secondary);
+    animation: slideDown 0.3s ease-out;
+}
+
+.planning-item.expanded .planning-item-details {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.detail-row {
+    display: flex;
+    padding: 4px 0;
+    align-items: flex-start;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--macos-text-tertiary);
+    min-width: 80px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    flex: 1;
+    color: var(--macos-text-primary);
+}
+
+/* Clickable links in opmerkingen */
+.detail-value a {
+    color: var(--macos-blue);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.detail-value a:hover {
+    border-bottom-color: var(--macos-blue);
+}
+
+.detail-value a:active {
+    opacity: 0.8;
+}
+
 /* Drop zone styling */
 .drop-zone {
     height: 8px;

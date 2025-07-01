@@ -3899,6 +3899,26 @@ class Taakbeheer {
         return div.innerHTML;
     }
 
+    // Convert URLs in text to clickable links
+    linkifyUrls(text) {
+        if (!text) return '';
+        
+        // First escape HTML to prevent XSS
+        const escaped = this.escapeHtml(text);
+        
+        // Regex to match URLs (http://, https://, www.)
+        const urlRegex = /(\b(https?:\/\/|www\.)[^\s<]+)/gi;
+        
+        return escaped.replace(urlRegex, (match) => {
+            let href = match;
+            // Add http:// if URL starts with www.
+            if (match.startsWith('www.')) {
+                href = 'http://' + match;
+            }
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${match}</a>`;
+        });
+    }
+
     // Recurring task calculation logic
     calculateNextRecurringDate(baseDate, herhalingType) {
         let date = new Date(baseDate);
@@ -6899,23 +6919,101 @@ class Taakbeheer {
         
         // Make template items (geblokkeerd, pauze) editable
         const isTemplateItem = planningItem.type === 'geblokkeerd' || planningItem.type === 'pauze';
+        
+        // Only tasks are expandable
+        const isExpandable = planningItem.type === 'taak' && planningItem.actieId;
+        const expandableClass = isExpandable ? ' expandable' : '';
+        
+        // Get task details if it's a task
+        let taskDetails = null;
+        if (isExpandable) {
+            const actie = this.planningActies?.find(t => t.id === planningItem.actieId) || 
+                         this.taken?.find(t => t.id === planningItem.actieId) ||
+                         this.topPrioriteiten?.find(t => t && t.id === planningItem.actieId);
+            if (actie) {
+                taskDetails = {
+                    project: this.getProjectNaam(actie.project_id || actie.projectId),
+                    context: this.getContextNaam(actie.context_id || actie.contextId),
+                    deadline: actie.verschijndatum ? new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : null,
+                    duur: actie.duur,
+                    opmerkingen: actie.opmerkingen
+                };
+            }
+        }
+        
         const naamElement = isTemplateItem ? 
             `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
             `<span class="planning-naam">${naam}</span>`;
         
+        const expandChevron = isExpandable ? '<span class="expand-chevron">▶</span>' : '';
+        
+        // Build details section
+        let detailsHtml = '';
+        if (isExpandable && taskDetails) {
+            detailsHtml = '<div class="planning-item-details">';
+            
+            if (taskDetails.project && taskDetails.project !== 'Geen project') {
+                detailsHtml += `
+                    <div class="detail-row">
+                        <span class="detail-label">Project</span>
+                        <span class="detail-value">${taskDetails.project}</span>
+                    </div>`;
+            }
+            
+            if (taskDetails.context && taskDetails.context !== 'Geen context') {
+                detailsHtml += `
+                    <div class="detail-row">
+                        <span class="detail-label">Context</span>
+                        <span class="detail-value">${taskDetails.context}</span>
+                    </div>`;
+            }
+            
+            if (taskDetails.deadline) {
+                detailsHtml += `
+                    <div class="detail-row">
+                        <span class="detail-label">Deadline</span>
+                        <span class="detail-value">${taskDetails.deadline}</span>
+                    </div>`;
+            }
+            
+            if (taskDetails.duur) {
+                detailsHtml += `
+                    <div class="detail-row">
+                        <span class="detail-label">Geschatte Duur</span>
+                        <span class="detail-value">${taskDetails.duur} minuten</span>
+                    </div>`;
+            }
+            
+            if (taskDetails.opmerkingen) {
+                detailsHtml += `
+                    <div class="detail-row">
+                        <span class="detail-label">Opmerkingen</span>
+                        <span class="detail-value">${this.linkifyUrls(taskDetails.opmerkingen)}</span>
+                    </div>`;
+            }
+            
+            detailsHtml += '</div>';
+        }
+        
+        const clickHandler = isExpandable ? `onclick="app.togglePlanningItemExpand('${planningItem.id}', event)"` : '';
+        
         return `
-            <div class="planning-item${priorityClass}" 
+            <div class="planning-item${priorityClass}${expandableClass}" 
                  data-planning-id="${planningItem.id}" 
                  data-type="${planningItem.type}"
                  data-uur="${planningItem.uur}"
                  data-duur="${planningItem.duurMinuten}"
                  draggable="true">
-                ${checkbox}
-                <span class="planning-icon">${typeIcon}</span>
-                ${priorityIcon}
-                ${naamElement}
-                <span class="planning-duur">${planningItem.duurMinuten}min</span>
-                <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
+                <div class="planning-item-header" ${clickHandler}>
+                    ${expandChevron}
+                    ${checkbox}
+                    <span class="planning-icon">${typeIcon}</span>
+                    ${priorityIcon}
+                    ${naamElement}
+                    <span class="planning-duur">${planningItem.duurMinuten}min</span>
+                    <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
+                </div>
+                ${detailsHtml}
             </div>
         `;
     }
@@ -7760,6 +7858,33 @@ class Taakbeheer {
             showGlobal: true,
             message: 'Planning item verwijderen...'
         });
+    }
+    
+    togglePlanningItemExpand(planningId, event) {
+        // Prevent drag from starting when clicking expand/collapse
+        if (event) {
+            event.stopPropagation();
+        }
+        
+        const planningItem = document.querySelector(`[data-planning-id="${planningId}"]`);
+        if (!planningItem) return;
+        
+        const detailsDiv = planningItem.querySelector('.planning-item-details');
+        const chevronIcon = planningItem.querySelector('.expand-chevron');
+        
+        if (!detailsDiv || !chevronIcon) return;
+        
+        const isExpanded = planningItem.classList.contains('expanded');
+        
+        if (isExpanded) {
+            // Collapse
+            planningItem.classList.remove('expanded');
+            chevronIcon.textContent = '▶';
+        } else {
+            // Expand
+            planningItem.classList.add('expanded');
+            chevronIcon.textContent = '▼';
+        }
     }
     
     removePlanningItemLocally(planningId) {
