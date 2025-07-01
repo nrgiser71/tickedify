@@ -43,7 +43,7 @@ Voeg toe aan `server.js` (na bestaande waitlist endpoints):
 // MindDump Waitlist API endpoints
 app.post('/api/minddump-waitlist/signup', async (req, res) => {
     try {
-        const { email, name } = req.body;
+        const { email, firstname, lastname, name } = req.body;
         
         // Basic email validation
         if (!email || !email.includes('@')) {
@@ -99,9 +99,9 @@ app.post('/api/minddump-waitlist/signup', async (req, res) => {
                         },
                         body: JSON.stringify({
                             email: email.toLowerCase().trim(),
-                            firstName: name ? name.split(' ')[0] : 'MindDump',
-                            lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
-                            name: name || 'MindDump User',
+                            firstName: firstname || (name ? name.split(' ')[0] : 'MindDump'),
+                            lastName: lastname || (name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User'), 
+                            name: (firstname && lastname) ? `${firstname} ${lastname}` : (name || 'MindDump User'),
                             locationId: locationId,
                             tags: ['minddump-waitlist-signup'],
                             source: 'minddump-waitlist',
@@ -264,13 +264,23 @@ Maak `public/minddump-waitlist.html`:
             </div>
 
             <form class="signup-form" id="signup-form">
-                <input 
-                    type="text" 
-                    class="email-input" 
-                    id="name-input"
-                    placeholder="Je naam (optioneel)" 
-                    style="margin-bottom: 12px;"
-                >
+                <div class="name-fields" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <input 
+                        type="text" 
+                        class="email-input" 
+                        id="firstname-input"
+                        placeholder="Voornaam" 
+                        required
+                        style="flex: 1; margin-bottom: 0;"
+                    >
+                    <input 
+                        type="text" 
+                        class="email-input" 
+                        id="lastname-input"
+                        placeholder="Achternaam (optioneel)" 
+                        style="flex: 1; margin-bottom: 0;"
+                    >
+                </div>
                 <input 
                     type="email" 
                     class="email-input" 
@@ -384,13 +394,20 @@ Maak `public/minddump-waitlist.html`:
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const nameInput = document.getElementById('name-input');
+            const firstnameInput = document.getElementById('firstname-input');
+            const lastnameInput = document.getElementById('lastname-input');
             const emailInput = document.getElementById('email-input');
             const submitButton = document.getElementById('signup-button');
-            const name = nameInput.value.trim();
+            const firstname = firstnameInput.value.trim();
+            const lastname = lastnameInput.value.trim();
             const email = emailInput.value.trim();
 
             // Basic validation
+            if (!firstname) {
+                toast.error('Voornaam is verplicht');
+                return;
+            }
+            
             if (!email || !email.includes('@')) {
                 toast.error('Voer een geldig email adres in');
                 return;
@@ -406,14 +423,15 @@ Maak `public/minddump-waitlist.html`:
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email, name })
+                    body: JSON.stringify({ email, firstname, lastname })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
                     toast.success(`Gelukt! Je bent nummer ${data.position} op de MindDump wachtlijst 🎉`, 6000);
-                    nameInput.value = '';
+                    firstnameInput.value = '';
+                    lastnameInput.value = '';
                     emailInput.value = '';
                     loadWaitlistStats(); // Refresh stats
                 } else {
