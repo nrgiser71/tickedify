@@ -301,6 +301,11 @@
                 flex-direction: column;
             }
 
+            .name-fields {
+                flex-direction: column !important;
+                gap: 12px !important;
+            }
+
             .features-grid {
                 grid-template-columns: 1fr;
                 gap: 24px;
@@ -338,13 +343,23 @@
             </div>
 
             <form class="signup-form" id="signup-form">
-                <input 
-                    type="text" 
-                    class="email-input" 
-                    id="name-input"
-                    placeholder="Je naam (optioneel)" 
-                    style="margin-bottom: 12px;"
-                >
+                <div class="name-fields" style="display: flex; gap: 12px; margin-bottom: 12px;">
+                    <input 
+                        type="text" 
+                        class="email-input" 
+                        id="firstname-input"
+                        placeholder="Voornaam" 
+                        required
+                        style="flex: 1; margin-bottom: 0;"
+                    >
+                    <input 
+                        type="text" 
+                        class="email-input" 
+                        id="lastname-input"
+                        placeholder="Achternaam (optioneel)" 
+                        style="flex: 1; margin-bottom: 0;"
+                    >
+                </div>
                 <input 
                     type="email" 
                     class="email-input" 
@@ -494,13 +509,20 @@
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const nameInput = document.getElementById('name-input');
+            const firstnameInput = document.getElementById('firstname-input');
+            const lastnameInput = document.getElementById('lastname-input');
             const emailInput = document.getElementById('email-input');
             const submitButton = document.getElementById('signup-button');
-            const name = nameInput.value.trim();
+            const firstname = firstnameInput.value.trim();
+            const lastname = lastnameInput.value.trim();
             const email = emailInput.value.trim();
 
             // Basic validation
+            if (!firstname) {
+                toast.error('Voornaam is verplicht');
+                return;
+            }
+            
             if (!email || !email.includes('@')) {
                 toast.error('Voer een geldig email adres in');
                 return;
@@ -516,14 +538,15 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email, name })
+                    body: JSON.stringify({ email, firstname, lastname })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
                     toast.success(`Gelukt! Je bent nummer ${data.position} op de wachtlijst 🎉`, 6000);
-                    nameInput.value = '';
+                    firstnameInput.value = '';
+                    lastnameInput.value = '';
                     emailInput.value = '';
                     loadWaitlistStats(); // Refresh stats
                 } else {
