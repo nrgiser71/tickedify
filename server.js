@@ -1588,7 +1588,7 @@ app.post('/api/auth/logout', (req, res) => {
 // Waitlist API endpoint
 app.post('/api/waitlist/signup', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, name } = req.body;
         
         // Basic email validation
         if (!email || !email.includes('@')) {
@@ -1620,6 +1620,9 @@ app.post('/api/waitlist/signup', async (req, res) => {
                     },
                     body: JSON.stringify({
                         email: email.toLowerCase().trim(),
+                        firstName: name ? name.split(' ')[0] : 'Waitlist',
+                        lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
+                        name: name || 'Waitlist User',
                         locationId: process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt',
                         tags: ['waitlist', 'tickedify'],
                         source: 'waitlist-signup',
