@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickedify - Binnenkort Beschikbaar</title>
+    <link rel="icon" type="image/png" href="Tickedify logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* macOS System Colors - consistent met bestaande app */
+            --macos-blue: #007AFF;
+            --macos-blue-hover: #0056CC;  
+            --macos-green: #30D158;
+            --macos-red: #FF3B30;
+            --macos-gray-1: #8E8E93;
+            --macos-gray-2: #AEAEB2;
+            --macos-gray-3: #C7C7CC;
+            --macos-gray-4: #D1D1D6;
+            --macos-gray-5: #E5E5EA;
+            --macos-gray-6: #F2F2F7;
+            --macos-bg-primary: #FFFFFF;
+            --macos-bg-secondary: #F2F2F7;
+            --macos-text-primary: #000000;
+            --macos-text-secondary: #3C3C43;
+            --macos-text-tertiary: #3C3C4399;
+            --macos-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --macos-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+            --macos-shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --macos-radius-small: 6px;
+            --macos-radius-medium: 8px;
+            --macos-radius-large: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+            background: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+            color: var(--macos-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            padding: 40px 0 60px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            border-radius: var(--macos-radius-large);
+            box-shadow: var(--macos-shadow-medium);
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--macos-blue), #5856D6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--macos-text-secondary);
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            color: var(--macos-text-tertiary);
+            max-width: 500px;
+            margin: 0 auto 48px;
+        }
+
+        /* Signup Form */
+        .signup-section {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 40px;
+            box-shadow: var(--macos-shadow-medium);
+            margin-bottom: 80px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .signup-title {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .signup-subtitle {
+            color: var(--macos-text-secondary);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .waitlist-stats {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-medium);
+            font-weight: 500;
+            color: var(--macos-text-secondary);
+        }
+
+        .signup-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 16px;
+            border: 1px solid var(--macos-gray-4);
+            border-radius: var(--macos-radius-medium);
+            font-size: 16px;
+            font-family: inherit;
+            background: var(--macos-bg-primary);
+            transition: all 0.2s ease;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: var(--macos-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .signup-button {
+            padding: 16px 32px;
+            background: var(--macos-blue);
+            color: white;
+            border: none;
+            border-radius: var(--macos-radius-medium);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .signup-button:hover {
+            background: var(--macos-blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .signup-button:disabled {
+            background: var(--macos-gray-3);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .privacy-text {
+            font-size: 14px;
+            color: var(--macos-text-tertiary);
+            text-align: center;
+        }
+
+        /* Features Section */
+        .features-section {
+            margin-bottom: 80px;
+        }
+
+        .features-title {
+            font-size: 32px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 32px;
+            box-shadow: var(--macos-shadow-light);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--macos-shadow-medium);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-description {
+            color: var(--macos-text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--macos-text-tertiary);
+            border-top: 1px solid var(--macos-gray-5);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-medium);
+            box-shadow: var(--macos-shadow-heavy);
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            max-width: 350px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease;
+            cursor: pointer;
+        }
+
+        .toast.success {
+            border-left-color: var(--macos-green);
+        }
+
+        .toast.error {
+            border-left-color: var(--macos-red);
+        }
+
+        .toast-message {
+            font-weight: 500;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .hero-subtitle {
+                font-size: 20px;
+            }
+
+            .signup-section {
+                margin: 0 20px 60px;
+                padding: 24px;
+            }
+
+            .signup-form {
+                flex-direction: column;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .feature-card {
+                padding: 24px;
+            }
+
+            .container {
+                padding: 0 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <img src="Tickedify logo.png" alt="Tickedify" class="logo">
+            <h1 class="hero-title">Tickedify</h1>
+            <p class="hero-subtitle">De ultieme productiviteitsapp</p>
+            <p class="hero-description">
+                Gebaseerd op de "Baas Over Je Tijd" methodologie. Binnenkort beschikbaar voor iedereen.
+            </p>
+        </header>
+
+        <!-- Signup Section -->
+        <section class="signup-section">
+            <h2 class="signup-title">Schrijf je in voor early access</h2>
+            <p class="signup-subtitle">Wees de eerste die Tickedify gebruikt wanneer we live gaan</p>
+            
+            <div class="waitlist-stats" id="waitlist-stats">
+                <span id="stats-text">Bezig met laden...</span>
+            </div>
+
+            <form class="signup-form" id="signup-form">
+                <input 
+                    type="email" 
+                    class="email-input" 
+                    id="email-input"
+                    placeholder="je@email.com" 
+                    required
+                >
+                <button type="submit" class="signup-button" id="signup-button">
+                    Schrijf je in
+                </button>
+            </form>
+
+            <p class="privacy-text">
+                We respecteren je privacy. Geen spam, alleen updates over Tickedify.
+            </p>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <h2 class="features-title">Wat maakt Tickedify anders?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">📋</span>
+                    <h3 class="feature-title">Uitklapbare Taken</h3>
+                    <p class="feature-description">
+                        Bekijk alle taakdetails met één klik. Opmerkingen, deadlines, en duur - alles overzichtelijk.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <span class="feature-icon">📧</span>
+                    <h3 class="feature-title">Email naar Taken</h3>
+                    <p class="feature-description">
+                        Stuur een email naar je persoonlijke import adres en het wordt automatisch een taak.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <span class="feature-icon">🔄</span>
+                    <h3 class="feature-title">Slimme Herhalingen</h3>
+                    <p class="feature-description">
+                        Van dagelijks tot "elke laatste vrijdag van de maand" - alle herhalingspatronen die je nodig hebt.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <span class="feature-icon">📅</span>
+                    <h3 class="feature-title">Dagelijkse Planning</h3>
+                    <p class="feature-description">
+                        Visuele dagplanning per uur. Sleep taken naar je agenda en behoud overzicht.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <span class="feature-icon">🎯</span>
+                    <h3 class="feature-title">Top 3 Prioriteiten</h3>
+                    <p class="feature-description">
+                        Focus op wat echt belangrijk is. Selecteer maximaal 3 must-complete taken per dag.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <span class="feature-icon">🧠</span>
+                    <h3 class="feature-title">Mind Dump Systeem</h3>
+                    <p class="feature-description">
+                        Gestructureerde brain dump met trigger woorden. Maak je hoofd leeg, organiseer je gedachten.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 Tickedify. Binnenkort beschikbaar.</p>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Toast notification system
+        class ToastManager {
+            constructor() {
+                this.container = document.getElementById('toast-container');
+            }
+
+            show(message, type = 'success', duration = 4000) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<div class="toast-message">${message}</div>`;
+
+                // Add click to dismiss
+                toast.addEventListener('click', () => {
+                    this.dismiss(toast);
+                });
+
+                this.container.appendChild(toast);
+
+                // Auto dismiss
+                setTimeout(() => {
+                    this.dismiss(toast);
+                }, duration);
+            }
+
+            dismiss(toast) {
+                if (toast.parentNode) {
+                    toast.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            }
+
+            success(message, duration) {
+                this.show(message, 'success', duration);
+            }
+
+            error(message, duration) {
+                this.show(message, 'error', duration);
+            }
+        }
+
+        const toast = new ToastManager();
+
+        // Load waitlist stats
+        async function loadWaitlistStats() {
+            try {
+                const response = await fetch('/api/waitlist/stats');
+                const data = await response.json();
+                
+                const statsText = document.getElementById('stats-text');
+                if (data.total === 0) {
+                    statsText.textContent = 'Wees de eerste op de wachtlijst! 🚀';
+                } else {
+                    statsText.textContent = `${data.message} wachten al op Tickedify 🎉`;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('stats-text').textContent = 'Join the waitlist! 🚀';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('email-input');
+            const submitButton = document.getElementById('signup-button');
+            const email = emailInput.value.trim();
+
+            // Basic validation
+            if (!email || !email.includes('@')) {
+                toast.error('Voer een geldig email adres in');
+                return;
+            }
+
+            // Disable form during submission
+            submitButton.disabled = true;
+            submitButton.textContent = 'Bezig...';
+
+            try {
+                const response = await fetch('/api/waitlist/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    toast.success(`Gelukt! Je bent nummer ${data.position} op de wachtlijst 🎉`, 6000);
+                    emailInput.value = '';
+                    loadWaitlistStats(); // Refresh stats
+                } else {
+                    if (data.already_exists) {
+                        toast.error('Dit email adres staat al op de wachtlijst');
+                    } else {
+                        toast.error(data.error || 'Er is een fout opgetreden');
+                    }
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                toast.error('Netwerk fout. Controleer je internetverbinding.');
+            } finally {
+                // Re-enable form
+                submitButton.disabled = false;
+                submitButton.textContent = 'Schrijf je in';
+            }
+        });
+
+        // Load stats on page load
+        loadWaitlistStats();
+    </script>
+</body>
+</html>

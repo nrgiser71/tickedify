@@ -1585,6 +1585,71 @@ app.post('/api/auth/logout', (req, res) => {
     });
 });
 
+// Waitlist API endpoint
+app.post('/api/waitlist/signup', async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        // Basic email validation
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ error: 'Geldig email adres is verplicht' });
+        }
+        
+        // Get client info for tracking
+        const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+        const userAgent = req.headers['user-agent'];
+        const referrer = req.headers.referer || req.headers.referrer;
+        
+        // Insert into waitlist
+        const result = await db.query(
+            'INSERT INTO waitlist (email, ip_address, user_agent, referrer) VALUES ($1, $2, $3, $4) RETURNING id, aangemaakt',
+            [email.toLowerCase().trim(), ipAddress, userAgent, referrer]
+        );
+        
+        console.log(`✅ New waitlist signup: ${email}`);
+        
+        // Get total waitlist count
+        const countResult = await db.query('SELECT COUNT(*) as total FROM waitlist');
+        const totalCount = parseInt(countResult.rows[0].total);
+        
+        res.json({ 
+            success: true, 
+            message: 'Je staat nu op de wachtlijst!',
+            position: totalCount,
+            id: result.rows[0].id
+        });
+        
+    } catch (error) {
+        console.error('Waitlist signup error:', error);
+        
+        // Handle duplicate email
+        if (error.code === '23505') { // Unique constraint violation
+            return res.status(409).json({ 
+                error: 'Dit email adres staat al op de wachtlijst',
+                already_exists: true 
+            });
+        }
+        
+        res.status(500).json({ error: 'Er is een fout opgetreden. Probeer het later opnieuw.' });
+    }
+});
+
+// Get waitlist stats (public endpoint)
+app.get('/api/waitlist/stats', async (req, res) => {
+    try {
+        const result = await db.query('SELECT COUNT(*) as total FROM waitlist');
+        const totalCount = parseInt(result.rows[0].total);
+        
+        res.json({ 
+            total: totalCount,
+            message: totalCount === 1 ? '1 persoon' : `${totalCount} mensen`
+        });
+    } catch (error) {
+        console.error('Waitlist stats error:', error);
+        res.status(500).json({ error: 'Fout bij ophalen statistieken' });
+    }
+});
+
 app.get('/api/auth/me', (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });

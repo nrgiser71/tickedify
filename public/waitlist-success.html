@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welkom op de Wachtlijst - Tickedify</title>
+    <link rel="icon" type="image/png" href="Tickedify logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --macos-blue: #007AFF;
+            --macos-green: #30D158;
+            --macos-text-primary: #000000;
+            --macos-text-secondary: #3C3C43;
+            --macos-text-tertiary: #3C3C4399;
+            --macos-bg-primary: #FFFFFF;
+            --macos-bg-secondary: #F2F2F7;
+            --macos-shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+            --macos-radius-large: 12px;
+            --macos-radius-medium: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+            background: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+            color: var(--macos-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .success-container {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 48px;
+            box-shadow: var(--macos-shadow-medium);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .success-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--macos-green);
+        }
+
+        .success-message {
+            font-size: 18px;
+            color: var(--macos-text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 16px 32px;
+            background: var(--macos-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--macos-radius-medium);
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: #0056CC;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .success-container {
+                padding: 32px 24px;
+                margin: 0 16px;
+            }
+
+            .success-title {
+                font-size: 24px;
+            }
+
+            .success-message {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">🎉</div>
+        <h1 class="success-title">Je staat op de wachtlijst!</h1>
+        <p class="success-message">
+            Bedankt voor je interesse in Tickedify. We houden je op de hoogte zodra we live gaan.
+            <br><br>
+            Verwacht updates over nieuwe features en je early access wanneer het zover is.
+        </p>
+        <a href="/waitlist.html" class="back-button">Terug naar wachtlijst</a>
+    </div>
+</body>
+</html>

@@ -146,6 +146,18 @@ const initDatabase = async () => {
       )
     `);
 
+    // Create waitlist table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS waitlist (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ip_address INET,
+        user_agent TEXT,
+        referrer TEXT
+      )
+    `);
+
     // Add position column to existing tables if it doesn't exist
     try {
       await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
