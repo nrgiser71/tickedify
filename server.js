@@ -1611,37 +1611,86 @@ app.post('/api/waitlist/signup', async (req, res) => {
         // Add to GoHighLevel if API key is configured
         if (process.env.GHL_API_KEY) {
             try {
-                const ghlResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
-                    method: 'POST',
+                const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
+                
+                // First, search for existing contact by email
+                const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
+                    method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
                         'Content-Type': 'application/json',
                         'Version': '2021-07-28'
-                    },
-                    body: JSON.stringify({
-                        email: email.toLowerCase().trim(),
-                        firstName: name ? name.split(' ')[0] : 'Waitlist',
-                        lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
-                        name: name || 'Waitlist User',
-                        locationId: process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt',
-                        tags: ['tickedify-waitlist-signup'],
-                        source: 'waitlist-signup',
-                        customFields: [
-                            {
-                                id: 'source',
-                                field_value: 'Tickedify Waitlist'
-                            }
-                        ]
-                    })
+                    }
                 });
 
-                if (ghlResponse.ok) {
-                    const ghlData = await ghlResponse.json();
-                    console.log(`✅ Contact added to GoHighLevel: ${ghlData.contact?.id || 'success'}`);
-                } else {
-                    const errorText = await ghlResponse.text();
-                    console.error(`⚠️ GoHighLevel API error: ${ghlResponse.status} - ${errorText}`);
+                let contactId = null;
+                let isExisting = false;
+
+                if (searchResponse.ok) {
+                    const searchData = await searchResponse.json();
+                    if (searchData.contact && searchData.contact.id) {
+                        contactId = searchData.contact.id;
+                        isExisting = true;
+                        console.log(`📍 Found existing contact: ${contactId}`);
+                    }
                 }
+
+                if (!contactId) {
+                    // Create new contact
+                    const createResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Version': '2021-07-28'
+                        },
+                        body: JSON.stringify({
+                            email: email.toLowerCase().trim(),
+                            firstName: name ? name.split(' ')[0] : 'Waitlist',
+                            lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
+                            name: name || 'Waitlist User',
+                            locationId: locationId,
+                            tags: ['tickedify-waitlist-signup'],
+                            source: 'waitlist-signup',
+                            customFields: [
+                                {
+                                    id: 'source',
+                                    field_value: 'Tickedify Waitlist'
+                                }
+                            ]
+                        })
+                    });
+
+                    if (createResponse.ok) {
+                        const createData = await createResponse.json();
+                        contactId = createData.contact?.id;
+                        console.log(`✅ New contact created: ${contactId}`);
+                    } else {
+                        const errorText = await createResponse.text();
+                        console.error(`⚠️ GoHighLevel create error: ${createResponse.status} - ${errorText}`);
+                    }
+                } else {
+                    // Add tag to existing contact
+                    const tagResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Version': '2021-07-28'
+                        },
+                        body: JSON.stringify({
+                            tags: ['tickedify-waitlist-signup']
+                        })
+                    });
+
+                    if (tagResponse.ok) {
+                        console.log(`✅ Tag added to existing contact: ${contactId}`);
+                    } else {
+                        const errorText = await tagResponse.text();
+                        console.error(`⚠️ GoHighLevel tag error: ${tagResponse.status} - ${errorText}`);
+                    }
+                }
+
             } catch (ghlError) {
                 console.error('⚠️ GoHighLevel integration error:', ghlError.message);
                 // Don't fail the whole signup if GHL fails
