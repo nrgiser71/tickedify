@@ -1757,6 +1757,32 @@ app.get('/api/waitlist/stats', async (req, res) => {
     }
 });
 
+// Admin endpoint to view waitlist data
+app.get('/api/admin/waitlist', requireAuth, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT id, email, aangemaakt, ip_address, user_agent, referrer 
+            FROM waitlist 
+            ORDER BY aangemaakt DESC
+        `);
+        
+        res.json({ 
+            total: result.rows.length,
+            signups: result.rows.map(row => ({
+                id: row.id,
+                email: row.email,
+                signup_date: row.aangemaakt,
+                ip_address: row.ip_address,
+                user_agent: row.user_agent,
+                referrer: row.referrer
+            }))
+        });
+    } catch (error) {
+        console.error('Admin waitlist error:', error);
+        res.status(500).json({ error: 'Fout bij ophalen waitlist data' });
+    }
+});
+
 // Test endpoint for GoHighLevel tag functionality
 app.post('/api/test/ghl-tag', async (req, res) => {
     try {
