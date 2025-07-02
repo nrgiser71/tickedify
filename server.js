@@ -1783,6 +1783,31 @@ app.get('/api/admin/waitlist', requireAuth, async (req, res) => {
     }
 });
 
+// Debug endpoint to preview waitlist (temporary)
+app.get('/api/debug/waitlist-preview', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT id, email, aangemaakt, ip_address 
+            FROM waitlist 
+            ORDER BY aangemaakt DESC
+            LIMIT 10
+        `);
+        
+        res.json({ 
+            total: result.rows.length,
+            preview: result.rows.map(row => ({
+                id: row.id,
+                email: row.email.replace(/(.{2}).*@/, '$1***@'), // Mask email for privacy
+                signup_date: row.aangemaakt,
+                ip_masked: row.ip_address ? row.ip_address.toString().split('.').slice(0, 2).join('.') + '.***' : null
+            }))
+        });
+    } catch (error) {
+        console.error('Debug waitlist preview error:', error);
+        res.status(500).json({ error: 'Fout bij preview' });
+    }
+});
+
 // Test endpoint for GoHighLevel tag functionality
 app.post('/api/test/ghl-tag', async (req, res) => {
     try {
