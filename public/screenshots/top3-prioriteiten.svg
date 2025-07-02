@@ -1,0 +1,48 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="#F8F8F8"/>
+  <rect x="50" y="50" width="1100" height="700" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1"/>
+  
+  <!-- Header -->
+  <rect x="50" y="50" width="1100" height="60" fill="#007AFF" fill-opacity="0.1"/>
+  <text x="600" y="90" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="24" font-weight="600" fill="#007AFF">Dagelijkse Planning</text>
+  
+  <!-- Main content area -->
+  <rect x="100" y="150" width="650" height="550" fill="#FAFAFA" stroke="#E0E0E0" rx="8"/>
+  
+  <!-- Planning sidebar -->
+  <rect x="800" y="150" width="300" height="550" fill="#F8F8F8" stroke="#E0E0E0" rx="8"/>
+  
+  <!-- Top 3 Priority Section with golden styling -->
+  <g transform="translate(820, 170)">
+    <rect x="0" y="0" width="260" height="180" fill="#FFD700" fill-opacity="0.1" stroke="#FFD700" rx="6"/>
+    <text x="130" y="25" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="600" fill="#B8860B">⭐ Top 3 Prioriteiten</text>
+    
+    <!-- Priority 1 -->
+    <rect x="10" y="40" width="240" height="40" fill="#FFFFFF" stroke="#FFD700" rx="4"/>
+    <text x="20" y="65" font-family="-apple-system, system-ui, sans-serif" font-size="14" fill="#333">1. Klantpresentatie afmaken</text>
+    
+    <!-- Priority 2 -->
+    <rect x="10" y="85" width="240" height="40" fill="#FFFFFF" stroke="#FFD700" rx="4"/>
+    <text x="20" y="110" font-family="-apple-system, system-ui, sans-serif" font-size="14" fill="#333">2. Budget rapport reviewen</text>
+    
+    <!-- Priority 3 -->
+    <rect x="10" y="130" width="240" height="40" fill="#FFFFFF" stroke="#FFD700" stroke-dasharray="5,5" rx="4"/>
+    <text x="130" y="155" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="14" fill="#999" font-style="italic">Sleep taak hierheen</text>
+  </g>
+  
+  <!-- Regular actions below -->
+  <g transform="translate(820, 370)">
+    <text x="130" y="20" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="16" font-weight="600" fill="#333">Overige acties</text>
+    
+    <rect x="10" y="35" width="240" height="35" fill="#FFFFFF" stroke="#E0E0E0" rx="4"/>
+    <text x="20" y="57" font-family="-apple-system, system-ui, sans-serif" font-size="14" fill="#333">Team standup</text>
+    
+    <rect x="10" y="75" width="240" height="35" fill="#FFFFFF" stroke="#E0E0E0" rx="4"/>
+    <text x="20" y="97" font-family="-apple-system, system-ui, sans-serif" font-size="14" fill="#333">Email inbox verwerken</text>
+  </g>
+  
+  <!-- Drag hint -->
+  <path d="M 750 250 Q 770 250 770 270" stroke="#007AFF" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+  <circle cx="750" cy="250" r="4" fill="#007AFF"/>
+  <text x="680" y="255" font-family="-apple-system, system-ui, sans-serif" font-size="14" fill="#007AFF" text-anchor="end">Sleep hier</text>
+</svg>

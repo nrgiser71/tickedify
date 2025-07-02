@@ -1,0 +1,54 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="#F8F8F8"/>
+  <rect x="50" y="50" width="1100" height="700" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1"/>
+  
+  <!-- Background blur effect -->
+  <rect x="50" y="50" width="1100" height="700" fill="#000000" fill-opacity="0.3"/>
+  
+  <!-- Popup modal -->
+  <rect x="300" y="150" width="600" height="500" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1" rx="12"/>
+  <rect x="300" y="150" width="600" height="60" fill="#F8F8F8" rx="12 12 0 0"/>
+  
+  <!-- Modal header -->
+  <text x="600" y="190" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="20" font-weight="600" fill="#333">Herhaling instellen</text>
+  
+  <!-- Close button -->
+  <circle cx="860" cy="180" r="15" fill="#E0E0E0"/>
+  <text x="860" y="185" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#666">×</text>
+  
+  <!-- Form content -->
+  <g transform="translate(350, 240)">
+    <!-- Radio options -->
+    <circle cx="10" cy="10" r="6" fill="#007AFF"/>
+    <circle cx="10" cy="10" r="3" fill="#FFFFFF"/>
+    <text x="30" y="15" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#333">Dagelijks</text>
+    
+    <circle cx="10" cy="50" r="6" fill="none" stroke="#999" stroke-width="1"/>
+    <text x="30" y="55" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#333">Wekelijks</text>
+    
+    <circle cx="10" cy="90" r="6" fill="none" stroke="#999" stroke-width="1"/>
+    <text x="30" y="95" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#333">Maandelijks</text>
+    
+    <circle cx="10" cy="130" r="6" fill="none" stroke="#999" stroke-width="1"/>
+    <text x="30" y="135" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#333">Aangepast patroon...</text>
+    
+    <!-- Advanced options -->
+    <rect x="250" y="40" width="250" height="150" fill="#F8F8F8" stroke="#E0E0E0" rx="6"/>
+    <text x="375" y="70" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="14" font-weight="500" fill="#666">Geavanceerde opties:</text>
+    <text x="270" y="100" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#333">• Elke werkdag</text>
+    <text x="270" y="125" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#333">• Laatste vrijdag v/d maand</text>
+    <text x="270" y="150" font-family="-apple-system, system-ui, sans-serif" font-size="13" fill="#333">• 10 dagen voor event</text>
+  </g>
+  
+  <!-- Preview text -->
+  <rect x="350" y="480" width="500" height="60" fill="#007AFF" fill-opacity="0.1" stroke="#007AFF" rx="6"/>
+  <text x="600" y="500" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="14" font-weight="500" fill="#007AFF">Deze taak herhaalt</text>
+  <text x="600" y="520" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="16" font-weight="600" fill="#007AFF">Elke dag</text>
+  
+  <!-- Action buttons -->
+  <rect x="350" y="570" width="120" height="40" fill="#FFFFFF" stroke="#999" rx="6"/>
+  <text x="410" y="595" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#333">Annuleren</text>
+  
+  <rect x="730" y="570" width="120" height="40" fill="#007AFF" rx="6"/>
+  <text x="790" y="595" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="16" font-weight="500" fill="#FFFFFF">Opslaan</text>
+</svg>

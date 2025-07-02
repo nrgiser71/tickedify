@@ -282,6 +282,238 @@
             }
         }
 
+        /* Screenshots Section */
+        .screenshots-section {
+            padding: 80px 0;
+            background: var(--macos-bg-secondary);
+        }
+
+        .screenshots-title {
+            font-size: 36px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .screenshots-subtitle {
+            font-size: 18px;
+            color: var(--macos-text-secondary);
+            text-align: center;
+            margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .screenshots-container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+            padding: 0 20px;
+        }
+
+        .screenshot-item {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .screenshot-item:hover {
+            transform: translateY(-8px);
+        }
+
+        /* macOS Window Styling */
+        .macos-window {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-medium);
+            box-shadow: var(--macos-shadow-heavy);
+            overflow: hidden;
+        }
+
+        .macos-titlebar {
+            background: linear-gradient(180deg, #F6F6F6 0%, #E3E3E3 100%);
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            position: relative;
+        }
+
+        .macos-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .macos-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .macos-button.close {
+            background: #FF5F57;
+        }
+
+        .macos-button.minimize {
+            background: #FFBD2E;
+        }
+
+        .macos-button.maximize {
+            background: #28CA42;
+        }
+
+        .macos-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .screenshot-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #F8F8F8;
+            min-height: 300px;
+        }
+
+        /* Carousel Indicators (Mobile) */
+        .carousel-indicators {
+            display: none;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--macos-gray-3);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .indicator.active {
+            background: var(--macos-blue);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* Demo CTA */
+        .demo-cta {
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        .demo-button {
+            padding: 16px 32px;
+            background: var(--macos-blue);
+            color: white;
+            border: none;
+            border-radius: var(--macos-radius-medium);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .demo-button:hover {
+            background: var(--macos-blue-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--macos-shadow-medium);
+        }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: none;
+            cursor: pointer;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lightbox.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            cursor: default;
+        }
+
+        .lightbox-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: var(--macos-radius-large);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 32px;
+            font-weight: 300;
+            cursor: pointer;
+            line-height: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .lightbox-close:hover {
+            opacity: 0.7;
+        }
+
+        .lightbox-caption {
+            position: absolute;
+            bottom: -40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+        }
+
+        .lightbox-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .lightbox-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-title {
@@ -318,6 +550,43 @@
             .container {
                 padding: 0 16px;
             }
+
+            /* Screenshots Mobile */
+            .screenshots-section {
+                padding: 60px 0;
+            }
+
+            .screenshots-title {
+                font-size: 28px;
+            }
+
+            .screenshots-subtitle {
+                font-size: 16px;
+                padding: 0 20px;
+            }
+
+            .screenshot-grid {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 20px;
+                padding: 0 20px 20px;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .screenshot-item {
+                flex: 0 0 100%;
+                scroll-snap-align: center;
+            }
+
+            .carousel-indicators {
+                display: flex;
+            }
+
+            .demo-button {
+                font-size: 16px;
+                padding: 14px 24px;
+            }
         }
     </style>
 </head>
@@ -331,6 +600,86 @@
                 Gebaseerd op de "Baas Over Je Tijd" methodologie. Binnenkort beschikbaar voor iedereen.
             </p>
         </header>
+
+        <!-- Screenshots Section -->
+        <section class="screenshots-section">
+            <h2 class="screenshots-title">Zie Tickedify in actie</h2>
+            <p class="screenshots-subtitle">Ontdek hoe Tickedify je helpt om baas over je tijd te worden</p>
+            
+            <div class="screenshots-container">
+                <div class="screenshot-grid">
+                    <div class="screenshot-item" data-title="Dagelijkse Planning" data-description="Sleep taken naar je dagplanning en behoud overzicht over je dag">
+                        <div class="macos-window">
+                            <div class="macos-titlebar">
+                                <div class="macos-buttons">
+                                    <span class="macos-button close"></span>
+                                    <span class="macos-button minimize"></span>
+                                    <span class="macos-button maximize"></span>
+                                </div>
+                                <span class="macos-title">Tickedify - Dagelijkse Planning</span>
+                            </div>
+                            <img src="screenshots/dagelijkse-planning.svg" alt="Dagelijkse Planning Interface" class="screenshot-image" loading="lazy">
+                        </div>
+                    </div>
+                    
+                    <div class="screenshot-item" data-title="Acties Lijst" data-description="Beheer al je taken met projecten en contexten">
+                        <div class="macos-window">
+                            <div class="macos-titlebar">
+                                <div class="macos-buttons">
+                                    <span class="macos-button close"></span>
+                                    <span class="macos-button minimize"></span>
+                                    <span class="macos-button maximize"></span>
+                                </div>
+                                <span class="macos-title">Tickedify - Acties</span>
+                            </div>
+                            <img src="screenshots/acties-lijst.svg" alt="Acties Lijst Interface" class="screenshot-image" loading="lazy">
+                        </div>
+                    </div>
+                    
+                    <div class="screenshot-item" data-title="Top 3 Prioriteiten" data-description="Focus op wat echt belangrijk is vandaag">
+                        <div class="macos-window">
+                            <div class="macos-titlebar">
+                                <div class="macos-buttons">
+                                    <span class="macos-button close"></span>
+                                    <span class="macos-button minimize"></span>
+                                    <span class="macos-button maximize"></span>
+                                </div>
+                                <span class="macos-title">Tickedify - Prioriteiten</span>
+                            </div>
+                            <img src="screenshots/top3-prioriteiten.svg" alt="Top 3 Prioriteiten Interface" class="screenshot-image" loading="lazy">
+                        </div>
+                    </div>
+                    
+                    <div class="screenshot-item" data-title="Herhalende Taken" data-description="Stel complexe herhalingspatronen in met gemak">
+                        <div class="macos-window">
+                            <div class="macos-titlebar">
+                                <div class="macos-buttons">
+                                    <span class="macos-button close"></span>
+                                    <span class="macos-button minimize"></span>
+                                    <span class="macos-button maximize"></span>
+                                </div>
+                                <span class="macos-title">Tickedify - Herhalingen</span>
+                            </div>
+                            <img src="screenshots/herhalende-taken.svg" alt="Herhalende Taken Popup" class="screenshot-image" loading="lazy">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile carousel indicators -->
+                <div class="carousel-indicators">
+                    <span class="indicator active" data-slide="0"></span>
+                    <span class="indicator" data-slide="1"></span>
+                    <span class="indicator" data-slide="2"></span>
+                    <span class="indicator" data-slide="3"></span>
+                </div>
+            </div>
+            
+            <div class="demo-cta">
+                <button class="demo-button" onclick="scrollToSignup()">
+                    Start nu met Tickedify →
+                </button>
+            </div>
+        </section>
 
         <!-- Signup Section -->
         <section class="signup-section">
@@ -438,6 +787,18 @@
 
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+            <img src="" alt="" class="lightbox-image" id="lightbox-image">
+            <div class="lightbox-caption">
+                <div class="lightbox-title" id="lightbox-title"></div>
+                <div class="lightbox-description" id="lightbox-description"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Toast notification system
@@ -567,6 +928,106 @@
 
         // Load stats on page load
         loadWaitlistStats();
+
+        // Screenshot Gallery & Lightbox
+        function initScreenshotGallery() {
+            const screenshots = document.querySelectorAll('.screenshot-item');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightbox-image');
+            const lightboxTitle = document.getElementById('lightbox-title');
+            const lightboxDescription = document.getElementById('lightbox-description');
+
+            screenshots.forEach((screenshot, index) => {
+                screenshot.addEventListener('click', () => {
+                    const image = screenshot.querySelector('.screenshot-image');
+                    const title = screenshot.dataset.title;
+                    const description = screenshot.dataset.description;
+
+                    lightboxImage.src = image.src;
+                    lightboxImage.alt = image.alt;
+                    lightboxTitle.textContent = title;
+                    lightboxDescription.textContent = description;
+                    lightbox.classList.add('active');
+                });
+            });
+
+            // Close lightbox on click
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                }
+            });
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+        }
+
+        // Mobile Carousel
+        function initMobileCarousel() {
+            const grid = document.querySelector('.screenshot-grid');
+            const indicators = document.querySelectorAll('.indicator');
+            const screenshots = document.querySelectorAll('.screenshot-item');
+            
+            if (window.innerWidth <= 768 && grid) {
+                let currentSlide = 0;
+
+                // Update indicators on scroll
+                grid.addEventListener('scroll', () => {
+                    const scrollLeft = grid.scrollLeft;
+                    const slideWidth = screenshots[0].offsetWidth;
+                    const newSlide = Math.round(scrollLeft / slideWidth);
+                    
+                    if (newSlide !== currentSlide) {
+                        currentSlide = newSlide;
+                        updateIndicators(currentSlide);
+                    }
+                });
+
+                // Click indicators to scroll
+                indicators.forEach((indicator, index) => {
+                    indicator.addEventListener('click', () => {
+                        const slideWidth = screenshots[0].offsetWidth;
+                        grid.scrollTo({
+                            left: slideWidth * index,
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            }
+        }
+
+        function updateIndicators(activeIndex) {
+            const indicators = document.querySelectorAll('.indicator');
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === activeIndex);
+            });
+        }
+
+        // Scroll to signup
+        function scrollToSignup() {
+            const signupSection = document.querySelector('.signup-section');
+            signupSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initScreenshotGallery();
+            initMobileCarousel();
+        });
+
+        // Reinitialize on resize
+        window.addEventListener('resize', () => {
+            initMobileCarousel();
+        });
     </script>
 </body>
 </html>
