@@ -1745,11 +1745,12 @@ app.post('/api/waitlist/signup', async (req, res) => {
 app.get('/api/waitlist/stats', async (req, res) => {
     try {
         const result = await pool.query('SELECT COUNT(*) as total FROM waitlist');
-        const totalCount = parseInt(result.rows[0].total);
+        const actualCount = parseInt(result.rows[0].total);
+        const displayCount = actualCount + 10; // Add 10 for marketing impression
         
         res.json({ 
-            total: totalCount,
-            message: totalCount === 1 ? '1 persoon' : `${totalCount} mensen`
+            total: displayCount,
+            message: displayCount === 1 ? '1 persoon' : `${displayCount} mensen`
         });
     } catch (error) {
         console.error('Waitlist stats error:', error);
