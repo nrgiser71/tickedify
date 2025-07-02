@@ -86,6 +86,24 @@ app.use((req, res, next) => {
     next();
 });
 
+// Redirect registration to waitlist
+app.get('/register', (req, res) => {
+    res.redirect('/waitlist.html');
+});
+
+app.get('/register.html', (req, res) => {
+    res.redirect('/waitlist.html');
+});
+
+app.post('/register', (req, res) => {
+    res.redirect('/waitlist.html');
+});
+
+// Redirect root to waitlist
+app.get('/', (req, res) => {
+    res.redirect('/waitlist.html');
+});
+
 // Test endpoints first
 app.get('/api/ping', (req, res) => {
     res.json({ message: 'pong', timestamp: new Date().toISOString(), version: '1.1' });

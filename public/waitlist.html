@@ -514,8 +514,29 @@
             }
         }
 
+        /* Waitlist Banner */
+        .waitlist-banner {
+            background: linear-gradient(135deg, #FF6B35, #F7931E);
+            color: white;
+            text-align: center;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: var(--macos-shadow-light);
+        }
+
+        .waitlist-banner .banner-emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
+            .waitlist-banner {
+                font-size: 14px;
+                padding: 10px 16px;
+            }
+
             .hero-title {
                 font-size: 36px;
             }
@@ -591,13 +612,20 @@
     </style>
 </head>
 <body>
+    <!-- Waitlist Banner -->
+    <div class="waitlist-banner">
+        <span class="banner-emoji">⏳</span>
+        Tickedify is nog niet openbaar beschikbaar - Schrijf je in voor early access!
+    </div>
+
     <div class="container">
         <!-- Header -->
         <header class="header">
             <img src="Tickedify logo.png" alt="Tickedify" class="logo">
-            <p class="hero-subtitle">De ultieme productiviteitsapp</p>
+            <h1 class="hero-title">Binnenkort Beschikbaar</h1>
+            <p class="hero-subtitle">De ultieme productiviteitsapp voor effectief tijdbeheer</p>
             <p class="hero-description">
-                Gebaseerd op de "Baas Over Je Tijd" methodologie. Binnenkort beschikbaar voor iedereen.
+                Gebaseerd op de "Baas Over Je Tijd" methodologie. Schrijf je in voor de wachtlijst en krijg als eerste toegang.
             </p>
         </header>
 
@@ -676,15 +704,15 @@
             
             <div class="demo-cta">
                 <button class="demo-button" onclick="scrollToSignup()">
-                    Start nu met Tickedify →
+                    📋 Schrijf je in voor early access →
                 </button>
             </div>
         </section>
 
         <!-- Signup Section -->
         <section class="signup-section">
-            <h2 class="signup-title">Schrijf je in voor early access</h2>
-            <p class="signup-subtitle">Wees de eerste die Tickedify gebruikt wanneer we live gaan</p>
+            <h2 class="signup-title">🎯 Zet je op de wachtlijst</h2>
+            <p class="signup-subtitle">Krijg als eerste toegang wanneer Tickedify live gaat en ontvang updates over de voortgang</p>
             
             <div class="waitlist-stats" id="waitlist-stats">
                 <span id="stats-text">Bezig met laden...</span>
@@ -716,7 +744,7 @@
                     required
                 >
                 <button type="submit" class="signup-button" id="signup-button">
-                    Schrijf je in
+                    📋 Zet me op de wachtlijst
                 </button>
             </form>
 
@@ -857,7 +885,7 @@
                 if (data.total === 0) {
                     statsText.textContent = 'Wees de eerste op de wachtlijst! 🚀';
                 } else {
-                    statsText.textContent = `${data.message} wachten al op Tickedify 🎉`;
+                    statsText.textContent = `${data.message} mensen staan al op de wachtlijst 🎉`;
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -904,16 +932,16 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    toast.success(`Gelukt! Je bent nummer ${data.position} op de wachtlijst 🎉`, 6000);
+                    toast.success(`🎉 Perfect! Je staat nu op positie ${data.position} op de wachtlijst. We houden je op de hoogte!`, 6000);
                     firstnameInput.value = '';
                     lastnameInput.value = '';
                     emailInput.value = '';
                     loadWaitlistStats(); // Refresh stats
                 } else {
                     if (data.already_exists) {
-                        toast.error('Dit email adres staat al op de wachtlijst');
+                        toast.error('Je staat al op de wachtlijst! We laten je weten zodra Tickedify beschikbaar is.');
                     } else {
-                        toast.error(data.error || 'Er is een fout opgetreden');
+                        toast.error(data.error || 'Er is een fout opgetreden bij het aanmelden');
                     }
                 }
             } catch (error) {
