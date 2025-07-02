@@ -16,12 +16,16 @@
       "dest": "/server.js"
     },
     {
+      "src": "/register(.html)?",
+      "dest": "/public/waitlist.html"
+    },
+    {
       "src": "/(.*\\.(js|css|html|png|jpg|jpeg|gif|svg|ico))",
       "dest": "/public/$1"
     },
     {
       "src": "/",
-      "dest": "/public/index.html"
+      "dest": "/public/waitlist.html"
     }
   ]
 }
