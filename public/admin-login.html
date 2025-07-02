@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Tickedify</title>
+    <link rel="icon" type="image/png" href="Tickedify logo.png">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #F2F2F7 0%, #E5E5EA 100%);
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+        }
+
+        .login-container {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 40px;
+            box-shadow: var(--macos-shadow-heavy);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            height: auto;
+            margin: 0 auto 24px;
+            display: block;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--macos-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: var(--macos-text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-input {
+            padding: 16px;
+            border: 1px solid var(--macos-gray-4);
+            border-radius: var(--macos-radius-medium);
+            font-size: 16px;
+            font-family: inherit;
+            background: var(--macos-bg-primary);
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--macos-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .login-button {
+            padding: 16px 32px;
+            background: var(--macos-blue);
+            color: white;
+            border: none;
+            border-radius: var(--macos-radius-medium);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .login-button:hover {
+            background: var(--macos-blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .login-button:disabled {
+            background: var(--macos-gray-3);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            color: var(--macos-red);
+            font-size: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .waitlist-link {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--macos-gray-5);
+        }
+
+        .waitlist-link a {
+            color: var(--macos-blue);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .waitlist-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="Tickedify logo.png" alt="Tickedify" class="logo">
+        <h1 class="login-title">Admin Login</h1>
+        <p class="login-subtitle">Toegang voor beheerders</p>
+        
+        <form class="login-form" id="loginForm">
+            <input 
+                type="email" 
+                class="form-input" 
+                id="email"
+                placeholder="Email adres" 
+                required
+                autocomplete="email"
+            >
+            <input 
+                type="password" 
+                class="form-input" 
+                id="password"
+                placeholder="Wachtwoord" 
+                required
+                autocomplete="current-password"
+            >
+            <button type="submit" class="login-button" id="loginButton">
+                Inloggen
+            </button>
+        </form>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="waitlist-link">
+            <a href="/waitlist.html">← Terug naar wachtlijst</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const button = document.getElementById('loginButton');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            // Reset error state
+            errorDiv.style.display = 'none';
+            button.disabled = true;
+            button.textContent = 'Bezig met inloggen...';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        wachtwoord: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Successful login - redirect to app
+                    window.location.href = '/app';
+                } else {
+                    // Show error
+                    errorDiv.textContent = data.error || 'Inloggen mislukt. Controleer je gegevens.';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Netwerkfout. Probeer het opnieuw.';
+                errorDiv.style.display = 'block';
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Inloggen';
+            }
+        });
+    </script>
+</body>
+</html>

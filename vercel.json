@@ -16,6 +16,18 @@
       "dest": "/server.js"
     },
     {
+      "src": "/admin/login",
+      "dest": "/public/admin-login.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/public/admin-login.html"
+    },
+    {
+      "src": "/app",
+      "dest": "/public/index.html"
+    },
+    {
       "src": "/register(.html)?",
       "dest": "/public/waitlist.html"
     },
