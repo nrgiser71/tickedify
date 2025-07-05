@@ -2667,13 +2667,13 @@ class Taakbeheer {
                         <span id="bulk-selection-count">0 taken geselecteerd</span>
                     </div>
                     <div class="bulk-actions">
-                        <button onclick="window.app.bulkActie('vandaag')" class="bulk-action-btn">Vandaag</button>
-                        <button onclick="window.app.bulkActie('morgen')" class="bulk-action-btn">Morgen</button>
-                        <button onclick="window.app.bulkActie('plus3')" class="bulk-action-btn">+3 dagen</button>
-                        <button onclick="window.app.bulkActie('week')" class="bulk-action-btn">+1 week</button>
-                        <button onclick="window.app.toggleBulkUitgesteldMenu()" class="bulk-action-btn">Uitstellen ▼</button>
+                        <button onclick="window.bulkDateAction('vandaag')" class="bulk-action-btn">Vandaag</button>
+                        <button onclick="window.bulkDateAction('morgen')" class="bulk-action-btn">Morgen</button>
+                        <button onclick="window.bulkDateAction('plus3')" class="bulk-action-btn">+3 dagen</button>
+                        <button onclick="window.bulkDateAction('week')" class="bulk-action-btn">+1 week</button>
+                        <button onclick="window.toggleBulkUitgesteldMenu()" class="bulk-action-btn">Uitstellen ▼</button>
                     </div>
-                    <button onclick="window.app.annuleerBulkModus()" class="bulk-cancel-btn">Annuleren</button>
+                    <button onclick="window.toggleBulkModus()" class="bulk-cancel-btn">Annuleren</button>
                 </div>
             </div>
         `;
@@ -8710,6 +8710,10 @@ class Taakbeheer {
         this.toggleBulkModus();
         this.laadHuidigeLijst();
     }
+
+    toggleBulkUitgesteldMenu() {
+        toast.info('Uitgesteld menu nog niet geïmplementeerd');
+    }
 }
 
 // Authentication Manager
@@ -9363,6 +9367,12 @@ window.deselecteerAlleTaken = function() {
 window.bulkDateAction = function(action) {
     if (app && app.bulkDateAction) {
         app.bulkDateAction(action);
+    }
+};
+
+window.toggleBulkUitgesteldMenu = function() {
+    if (app && app.toggleBulkUitgesteldMenu) {
+        app.toggleBulkUitgesteldMenu();
     }
 };
 
