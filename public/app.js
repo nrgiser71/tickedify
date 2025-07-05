@@ -9338,6 +9338,9 @@ const app = new Taakbeheer();
 const auth = new AuthManager();
 const updateManager = new UpdateManager();
 
+// Make app available globally for onclick handlers
+window.app = app;
+
 // Initialize mobile sidebar after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     app.initializeMobileSidebar();
