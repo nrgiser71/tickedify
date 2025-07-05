@@ -5996,6 +5996,14 @@ button:focus {
     transition: background-color 0.3s ease;
 }
 
+/* Add margin for bulk toolbar when bulk mode is active */
+.bulk-modus .taken-container,
+.bulk-modus #acties-lijst,
+.bulk-modus .acties-lijst {
+    margin-bottom: 100px; /* Space for bulk toolbar */
+    transition: margin-bottom 0.3s ease;
+}
+
 /* Bulk selection circles */
 .selectie-circle {
     width: 20px;
