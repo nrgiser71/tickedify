@@ -2649,7 +2649,7 @@ class Taakbeheer {
                     </label>
                 </div>
                 <div class="filter-groep" id="bulk-mode-toggle-container">
-                    <button onclick="app.toggleBulkModus()" id="bulk-mode-toggle" class="bulk-mode-toggle">
+                    <button id="bulk-mode-toggle" class="bulk-mode-toggle">
                         Bulk bewerken
                     </button>
                 </div>
@@ -2667,13 +2667,13 @@ class Taakbeheer {
                         <span id="bulk-selection-count">0 taken geselecteerd</span>
                     </div>
                     <div class="bulk-actions">
-                        <button onclick="app.bulkActie('vandaag')" class="bulk-action-btn">Vandaag</button>
-                        <button onclick="app.bulkActie('morgen')" class="bulk-action-btn">Morgen</button>
-                        <button onclick="app.bulkActie('plus3')" class="bulk-action-btn">+3 dagen</button>
-                        <button onclick="app.bulkActie('week')" class="bulk-action-btn">+1 week</button>
-                        <button onclick="app.toggleBulkUitgesteldMenu()" class="bulk-action-btn">Uitstellen ▼</button>
+                        <button id="bulk-action-vandaag" class="bulk-action-btn">Vandaag</button>
+                        <button id="bulk-action-morgen" class="bulk-action-btn">Morgen</button>
+                        <button id="bulk-action-plus3" class="bulk-action-btn">+3 dagen</button>
+                        <button id="bulk-action-week" class="bulk-action-btn">+1 week</button>
+                        <button id="bulk-action-uitstellen" class="bulk-action-btn">Uitstellen ▼</button>
                     </div>
-                    <button onclick="app.annuleerBulkModus()" class="bulk-cancel-btn">Annuleren</button>
+                    <button id="bulk-cancel-btn" class="bulk-cancel-btn">Annuleren</button>
                 </div>
             </div>
         `;
@@ -2737,7 +2737,7 @@ class Taakbeheer {
             
             // In bulk modus: toon selectie cirkels in plaats van checkboxes
             const checkboxHtml = this.bulkModus ?
-                `<div class="bulk-selectie-cirkel ${this.geselecteerdeTaken.has(taak.id) ? 'selected' : ''}" onclick="app.toggleBulkSelectie('${taak.id}')"></div>` :
+                `<div class="bulk-selectie-cirkel ${this.geselecteerdeTaken.has(taak.id) ? 'selected' : ''}" data-taak-id="${taak.id}"></div>` :
                 `<input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">`;
 
             li.innerHTML = `
@@ -2761,6 +2761,11 @@ class Taakbeheer {
             
             lijst.appendChild(li);
         });
+
+        // Bind bulk selection events if in bulk mode
+        if (this.bulkModus) {
+            this.bindBulkSelectieEvents();
+        }
     }
 
     renderActiesRows() {
@@ -5067,6 +5072,14 @@ class Taakbeheer {
             const newToekomstToggle = toekomstToggle.cloneNode(true);
             toekomstToggle.parentNode.replaceChild(newToekomstToggle, toekomstToggle);
             newToekomstToggle.addEventListener('change', () => this.toggleToekomstigeTaken());
+        }
+
+        // Bulk mode toggle event listener
+        const bulkToggle = document.getElementById('bulk-mode-toggle');
+        if (bulkToggle && bulkToggle.parentNode) {
+            const newBulkToggle = bulkToggle.cloneNode(true);
+            bulkToggle.parentNode.replaceChild(newBulkToggle, bulkToggle);
+            newBulkToggle.addEventListener('click', () => this.toggleBulkModus());
         }
 
         // Sort event listeners
@@ -8977,6 +8990,11 @@ class AuthManager {
         
         // Re-render the list
         this.renderActiesLijst();
+        
+        // Bind bulk toolbar events if in bulk mode
+        if (this.bulkModus) {
+            this.bindBulkToolbarEvents();
+        }
     }
 
     toggleBulkSelectie(taakId) {
@@ -9100,6 +9118,35 @@ class AuthManager {
     toggleBulkUitgesteldMenu() {
         // TODO: Implement uitgesteld menu for bulk actions
         toast.info('Uitstellen menu komt binnenkort!');
+    }
+
+    bindBulkToolbarEvents() {
+        // Bind bulk action buttons
+        const vandaagBtn = document.getElementById('bulk-action-vandaag');
+        const morgenBtn = document.getElementById('bulk-action-morgen');
+        const plus3Btn = document.getElementById('bulk-action-plus3');
+        const weekBtn = document.getElementById('bulk-action-week');
+        const uitstellenBtn = document.getElementById('bulk-action-uitstellen');
+        const cancelBtn = document.getElementById('bulk-cancel-btn');
+
+        if (vandaagBtn) vandaagBtn.addEventListener('click', () => this.bulkActie('vandaag'));
+        if (morgenBtn) morgenBtn.addEventListener('click', () => this.bulkActie('morgen'));
+        if (plus3Btn) plus3Btn.addEventListener('click', () => this.bulkActie('plus3'));
+        if (weekBtn) weekBtn.addEventListener('click', () => this.bulkActie('week'));
+        if (uitstellenBtn) uitstellenBtn.addEventListener('click', () => this.toggleBulkUitgesteldMenu());
+        if (cancelBtn) cancelBtn.addEventListener('click', () => this.annuleerBulkModus());
+    }
+
+    bindBulkSelectieEvents() {
+        // Bind all bulk selection circles
+        document.querySelectorAll('.bulk-selectie-cirkel').forEach(cirkel => {
+            cirkel.addEventListener('click', (e) => {
+                const taakId = e.target.getAttribute('data-taak-id');
+                if (taakId) {
+                    this.toggleBulkSelectie(taakId);
+                }
+            });
+        });
     }
 }
 
