@@ -9344,10 +9344,12 @@ window.app = app;
 
 // Explicitly expose bulk functions to window for debugging
 window.toggleBulkModus = function() {
+    console.log('Available methods on app:', Object.getOwnPropertyNames(Object.getPrototypeOf(app)));
     if (app && app.toggleBulkModus) {
         app.toggleBulkModus();
     } else {
         console.error('toggleBulkModus not found on app object');
+        console.log('app object:', app);
     }
 };
 
