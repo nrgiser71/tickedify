@@ -9336,10 +9336,15 @@ window.app = app;
 
 // Expose bulk functions to window
 window.toggleBulkModus = function() {
-    if (app && app.toggleBulkModus) {
+    console.log('window.toggleBulkModus called');
+    console.log('app exists:', !!app);
+    console.log('app.toggleBulkModus exists:', !!app?.toggleBulkModus);
+    console.log('typeof app:', typeof app);
+    if (app && typeof app.toggleBulkModus === 'function') {
         app.toggleBulkModus();
     } else {
         console.error('App not initialized or toggleBulkModus not found');
+        console.log('Available methods on app:', Object.getOwnPropertyNames(Object.getPrototypeOf(app || {})));
     }
 };
 
