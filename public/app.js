@@ -2667,11 +2667,7 @@ class Taakbeheer {
                         <span id="bulk-selection-count">0 taken geselecteerd</span>
                     </div>
                     <div class="bulk-actions">
-                        <button onclick="window.bulkDateAction('vandaag')" class="bulk-action-btn">Vandaag</button>
-                        <button onclick="window.bulkDateAction('morgen')" class="bulk-action-btn">Morgen</button>
-                        <button onclick="window.bulkDateAction('plus3')" class="bulk-action-btn">+3 dagen</button>
-                        <button onclick="window.bulkDateAction('week')" class="bulk-action-btn">+1 week</button>
-                        <button onclick="window.toggleBulkUitgesteldMenu()" class="bulk-action-btn">Uitstellen ▼</button>
+                        ${this.getBulkVerplaatsKnoppen()}
                     </div>
                     <button onclick="window.toggleBulkModus()" class="bulk-cancel-btn">Annuleren</button>
                 </div>
@@ -8719,48 +8715,58 @@ class Taakbeheer {
         }
     }
 
-    toggleBulkUitgesteldMenu() {
-        // Check if menu already exists
-        const existingMenu = document.getElementById('bulk-uitgesteld-dropdown');
-        if (existingMenu) {
-            existingMenu.remove();
-            return;
+    getBulkVerplaatsKnoppen() {
+        // Use the same logic as individual task dropdown menus
+        if (this.huidigeLijst === 'acties') {
+            // For actions list: show dagens datum opties + uitgesteld opties
+            return `
+                <button onclick="window.bulkDateAction('vandaag')" class="bulk-action-btn">Vandaag</button>
+                <button onclick="window.bulkDateAction('morgen')" class="bulk-action-btn">Morgen</button>
+                <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Opvolgen</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Wekelijks</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-maandelijks')" class="bulk-action-btn">Maandelijks</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-3maandelijks')" class="bulk-action-btn">3-maandelijks</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-6maandelijks')" class="bulk-action-btn">6-maandelijks</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Jaarlijks</button>
+            `;
+        } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
+            // For uitgesteld lists: show options to move back to main lists
+            const alleOpties = [
+                { key: 'inbox', label: 'Inbox' },
+                { key: 'acties', label: 'Acties' },
+                { key: 'opvolgen', label: 'Opvolgen' },
+                { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
+                { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
+                { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
+                { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
+                { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+            ];
+
+            return alleOpties
+                .filter(optie => optie.key !== this.huidigeLijst)
+                .map(optie => `<button onclick="window.bulkVerplaatsNaar('${optie.key}')" class="bulk-action-btn">${optie.label}</button>`)
+                .join('');
+        } else {
+            // For other lists: show basic move options
+            const alleOpties = [
+                { key: 'acties', label: 'Acties' },
+                { key: 'opvolgen', label: 'Opvolgen' },
+                { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
+                { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
+                { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
+                { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
+                { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+            ];
+
+            return alleOpties
+                .filter(optie => optie.key !== this.huidigeLijst)
+                .map(optie => `<button onclick="window.bulkVerplaatsNaar('${optie.key}')" class="bulk-action-btn">${optie.label}</button>`)
+                .join('');
         }
-        
-        // Create dropdown menu
-        const dropdown = document.createElement('div');
-        dropdown.id = 'bulk-uitgesteld-dropdown';
-        dropdown.className = 'bulk-uitgesteld-dropdown';
-        dropdown.innerHTML = `
-            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-wekelijks')">📅 Wekelijks</div>
-            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-maandelijks')">📅 Maandelijks</div>
-            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-3maandelijks')">📅 3-maandelijks</div>
-            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-6maandelijks')">📅 6-maandelijks</div>
-            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-jaarlijks')">📅 Jaarlijks</div>
-        `;
-        
-        // Position dropdown above the uitstellen button
-        const uitstellenButton = event.target;
-        const rect = uitstellenButton.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.bottom = '120px';
-        dropdown.style.right = '200px';
-        dropdown.style.zIndex = '1001';
-        
-        document.body.appendChild(dropdown);
-        
-        // Close dropdown when clicking outside
-        setTimeout(() => {
-            document.addEventListener('click', function closeDropdown(e) {
-                if (!dropdown.contains(e.target) && e.target !== uitstellenButton) {
-                    dropdown.remove();
-                    document.removeEventListener('click', closeDropdown);
-                }
-            });
-        }, 100);
     }
 
-    async bulkUitstellen(lijstNaam) {
+
+    async bulkVerplaatsNaar(lijstNaam) {
         if (this.geselecteerdeTaken.size === 0) {
             toast.warning('Selecteer eerst een of meer taken.');
             return;
@@ -8794,6 +8800,9 @@ class Taakbeheer {
             }
             
             const lijstLabels = {
+                'inbox': 'Inbox',
+                'acties': 'Acties',
+                'opvolgen': 'Opvolgen',
                 'uitgesteld-wekelijks': 'Wekelijks',
                 'uitgesteld-maandelijks': 'Maandelijks',
                 'uitgesteld-3maandelijks': '3-maandelijks',
@@ -8801,7 +8810,7 @@ class Taakbeheer {
                 'uitgesteld-jaarlijks': 'Jaarlijks'
             };
             
-            toast.success(`${successCount} taken uitgesteld naar ${lijstLabels[lijstNaam]}`);
+            toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
             
             // Reset bulk mode and reload
             this.toggleBulkModus();
@@ -9467,15 +9476,10 @@ window.bulkDateAction = function(action) {
     }
 };
 
-window.toggleBulkUitgesteldMenu = function() {
-    if (app && app.toggleBulkUitgesteldMenu) {
-        app.toggleBulkUitgesteldMenu();
-    }
-};
 
-window.bulkUitstellen = function(lijstNaam) {
-    if (app && app.bulkUitstellen) {
-        app.bulkUitstellen(lijstNaam);
+window.bulkVerplaatsNaar = function(lijstNaam) {
+    if (app && app.bulkVerplaatsNaar) {
+        app.bulkVerplaatsNaar(lijstNaam);
     }
 };
 
