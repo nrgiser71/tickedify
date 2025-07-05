@@ -8953,6 +8953,11 @@ class AuthManager {
         return this.isAuthenticated;
     }
 
+    testFunction() {
+        console.log('Test function works!');
+        return true;
+    }
+
     toggleBulkModus() {
         this.bulkModus = !this.bulkModus;
         this.geselecteerdeTaken.clear(); // Reset selections
@@ -9345,6 +9350,12 @@ window.app = app;
 // Explicitly expose bulk functions to window for debugging
 window.toggleBulkModus = function() {
     console.log('Available methods on app:', Object.getOwnPropertyNames(Object.getPrototypeOf(app)));
+    console.log('testFunction exists:', !!app.testFunction);
+    console.log('toggleBulkModus exists:', !!app.toggleBulkModus);
+    if (app && app.testFunction) {
+        console.log('Calling testFunction first...');
+        app.testFunction();
+    }
     if (app && app.toggleBulkModus) {
         app.toggleBulkModus();
     } else {
