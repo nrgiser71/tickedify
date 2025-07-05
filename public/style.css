@@ -5964,3 +5964,149 @@ button:focus {
         font-size: 18px;
     }
 }
+
+/* Bulk Mode Styles */
+.bulk-mode-toggle {
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bulk-mode-toggle:hover {
+    background: #005ec1;
+}
+
+.bulk-mode-toggle.active {
+    background: #dc3545;
+}
+
+.bulk-mode-toggle.active:hover {
+    background: #c82333;
+}
+
+/* Bulk mode container styling */
+.main-content.bulk-modus {
+    background-color: #f0f4ff;
+    transition: background-color 0.3s ease;
+}
+
+/* Bulk selection circles */
+.bulk-selectie-cirkel {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #007aff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+    position: relative;
+}
+
+.bulk-selectie-cirkel:hover {
+    background-color: rgba(0, 122, 255, 0.1);
+}
+
+.bulk-selectie-cirkel.selected {
+    background-color: #007aff;
+}
+
+.bulk-selectie-cirkel.selected::after {
+    content: '✓';
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Bulk selected task styling */
+.taak-item.bulk-selected {
+    background-color: rgba(0, 122, 255, 0.1);
+    border-left: 3px solid #007aff;
+}
+
+/* Bulk toolbar */
+.bulk-toolbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #e5e5e7;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 16px 24px;
+}
+
+.bulk-toolbar-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.bulk-selection-info {
+    font-weight: 500;
+    color: #333;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.bulk-action-btn {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bulk-action-btn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.bulk-cancel-btn {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    color: #6b7280;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bulk-cancel-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+/* Overdue task indicator adjustments for bulk mode */
+.bulk-modus .taak-item.overdue {
+    background-color: rgba(255, 59, 48, 0.05);
+}
+
+.bulk-modus .taak-item.overdue.bulk-selected {
+    background-color: rgba(0, 122, 255, 0.1);
+    border-left: 3px solid #007aff;
+}
+}
