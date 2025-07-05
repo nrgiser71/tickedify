@@ -8953,159 +8953,146 @@ class AuthManager {
         return this.isAuthenticated;
     }
 
-    testFunction() {
-        console.log('Test function works!');
-        return true;
-    }
-
+    // Workaround: Add bulk functionality here
     toggleBulkModus() {
         this.bulkModus = !this.bulkModus;
-        this.geselecteerdeTaken.clear(); // Reset selections
+        this.geselecteerdeTaken.clear();
         
         const actiesContainer = document.querySelector('.main-content');
         const bulkToolbar = document.getElementById('bulk-toolbar');
         const toggleButton = document.getElementById('bulk-mode-toggle');
         
         if (this.bulkModus) {
-            // Enter bulk mode
             actiesContainer.classList.add('bulk-modus');
             bulkToolbar.style.display = 'block';
             toggleButton.textContent = 'Bulk modus actief (Annuleren)';
             toggleButton.classList.add('active');
         } else {
-            // Exit bulk mode
             actiesContainer.classList.remove('bulk-modus');
             bulkToolbar.style.display = 'none';
             toggleButton.textContent = 'Bulk bewerken';
             toggleButton.classList.remove('active');
         }
         
-        // Re-render the list
         this.renderActiesLijst();
     }
 
-    toggleBulkSelectie(taakId) {
-        if (!this.bulkModus) return;
-        
+    toggleTaakSelectie(taakId) {
         if (this.geselecteerdeTaken.has(taakId)) {
             this.geselecteerdeTaken.delete(taakId);
         } else {
             this.geselecteerdeTaken.add(taakId);
         }
         
-        // Update UI
-        this.updateBulkSelectieUI(taakId);
+        // Update visual selection
+        const taakElement = document.querySelector(`[data-id="${taakId}"]`);
+        if (taakElement) {
+            const selectieCircle = taakElement.querySelector('.selectie-circle');
+            if (selectieCircle) {
+                selectieCircle.classList.toggle('geselecteerd', this.geselecteerdeTaken.has(taakId));
+            }
+        }
+        
+        // Update bulk toolbar count
         this.updateBulkToolbar();
     }
 
-    updateBulkSelectieUI(taakId) {
-        const taakElement = document.querySelector(`[data-id="${taakId}"]`);
-        const cirkel = taakElement?.querySelector('.bulk-selectie-cirkel');
-        
-        if (taakElement && cirkel) {
-            if (this.geselecteerdeTaken.has(taakId)) {
-                taakElement.classList.add('bulk-selected');
-                cirkel.classList.add('selected');
-            } else {
-                taakElement.classList.remove('bulk-selected');
-                cirkel.classList.remove('selected');
+    selecteerAlleTaken() {
+        const alleTaken = document.querySelectorAll('.actie-item[data-id]');
+        alleTaken.forEach(item => {
+            const taakId = item.dataset.id;
+            this.geselecteerdeTaken.add(taakId);
+            const selectieCircle = item.querySelector('.selectie-circle');
+            if (selectieCircle) {
+                selectieCircle.classList.add('geselecteerd');
             }
-        }
+        });
+        this.updateBulkToolbar();
+    }
+
+    deselecteerAlleTaken() {
+        this.geselecteerdeTaken.clear();
+        document.querySelectorAll('.selectie-circle.geselecteerd').forEach(circle => {
+            circle.classList.remove('geselecteerd');
+        });
+        this.updateBulkToolbar();
     }
 
     updateBulkToolbar() {
         const countElement = document.getElementById('bulk-selection-count');
+        const actionButtons = document.querySelectorAll('#bulk-toolbar .bulk-action-button');
+        
         if (countElement) {
             const count = this.geselecteerdeTaken.size;
-            countElement.textContent = `${count} ${count === 1 ? 'taak' : 'taken'} geselecteerd`;
+            countElement.textContent = count;
+            
+            // Enable/disable action buttons based on selection
+            actionButtons.forEach(button => {
+                button.disabled = count === 0;
+            });
         }
     }
 
-    annuleerBulkModus() {
-        this.bulkModus = true; // Set to true so toggleBulkModus will turn it off
-        this.geselecteerdeTaken.clear();
-        this.toggleBulkModus();
-    }
-
-    async bulkActie(actie) {
+    async bulkDateAction(action) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Selecteer eerst één of meer taken');
+            toast.warning('Selecteer eerst een of meer taken.');
             return;
         }
 
-        await loading.withLoading(async () => {
-            const taken = Array.from(this.geselecteerdeTaken);
-            const vandaag = new Date();
-            
-            for (const taakId of taken) {
-                const taak = this.taken.find(t => t.id === taakId);
-                if (!taak) continue;
+        let newDate;
+        const today = new Date();
+        
+        switch (action) {
+            case 'vandaag':
+                newDate = today.toISOString().split('T')[0];
+                break;
+            case 'morgen':
+                const morgen = new Date(today);
+                morgen.setDate(today.getDate() + 1);
+                newDate = morgen.toISOString().split('T')[0];
+                break;
+            case 'plus3':
+                const plus3 = new Date(today);
+                plus3.setDate(today.getDate() + 3);
+                newDate = plus3.toISOString().split('T')[0];
+                break;
+            case 'week':
+                const week = new Date(today);
+                week.setDate(today.getDate() + 7);
+                newDate = week.toISOString().split('T')[0];
+                break;
+            default:
+                console.error('Onbekende bulk actie:', action);
+                return;
+        }
+
+        // Process selected tasks
+        const selectedIds = Array.from(this.geselecteerdeTaken);
+        let successCount = 0;
+        
+        for (const taakId of selectedIds) {
+            try {
+                const response = await fetch(`/api/taak/${taakId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ verschijndatum: newDate })
+                });
                 
-                let nieuweDatum;
-                switch (actie) {
-                    case 'vandaag':
-                        nieuweDatum = vandaag;
-                        break;
-                    case 'morgen':
-                        nieuweDatum = new Date(vandaag);
-                        nieuweDatum.setDate(nieuweDatum.getDate() + 1);
-                        break;
-                    case 'plus3':
-                        nieuweDatum = new Date(vandaag);
-                        nieuweDatum.setDate(nieuweDatum.getDate() + 3);
-                        break;
-                    case 'week':
-                        nieuweDatum = new Date(vandaag);
-                        nieuweDatum.setDate(nieuweDatum.getDate() + 7);
-                        break;
+                if (response.ok) {
+                    successCount++;
                 }
-                
-                if (nieuweDatum) {
-                    // Format datum naar YYYY-MM-DD
-                    const jaar = nieuweDatum.getFullYear();
-                    const maand = String(nieuweDatum.getMonth() + 1).padStart(2, '0');
-                    const dag = String(nieuweDatum.getDate()).padStart(2, '0');
-                    const datumString = `${jaar}-${maand}-${dag}`;
-                    
-                    // Update de taak
-                    const updateData = {
-                        lijst: this.huidigeLijst,
-                        tekst: taak.tekst,
-                        projectId: taak.projectId,
-                        contextId: taak.contextId,
-                        verschijndatum: datumString,
-                        duur: taak.duur,
-                        opmerkingen: taak.opmerkingen,
-                        type: taak.type,
-                        herhalingType: taak.herhalingType,
-                        herhalingActief: taak.herhalingActief
-                    };
-                    
-                    await fetch(`/api/taak/${taakId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updateData)
-                    });
-                }
+            } catch (error) {
+                console.error('Fout bij bulk update:', error);
             }
-            
-            // Exit bulk mode and refresh
-            this.bulkModus = true; // Set to true so toggleBulkModus will turn it off
-            this.geselecteerdeTaken.clear();
-            this.toggleBulkModus();
-            await this.laadHuidigeLijst();
-            toast.success(`${taken.length} ${taken.length === 1 ? 'taak' : 'taken'} bijgewerkt`);
-        }, {
-            operationId: 'bulk-update',
-            showGlobal: true,
-            message: 'Taken worden bijgewerkt...'
-        });
+        }
+        
+        toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
+        
+        // Reset bulk mode and reload
+        this.toggleBulkModus();
+        this.laadHuidigeLijst();
     }
 
-    toggleBulkUitgesteldMenu() {
-        // TODO: Implement uitgesteld menu for bulk actions
-        toast.info('Uitstellen menu komt binnenkort!');
-    }
 
 }
 
@@ -9347,20 +9334,36 @@ const updateManager = new UpdateManager();
 // Make app available globally for onclick handlers
 window.app = app;
 
-// Explicitly expose bulk functions to window for debugging
+// Expose bulk functions to window
 window.toggleBulkModus = function() {
-    console.log('Available methods on app:', Object.getOwnPropertyNames(Object.getPrototypeOf(app)));
-    console.log('testFunction exists:', !!app.testFunction);
-    console.log('toggleBulkModus exists:', !!app.toggleBulkModus);
-    if (app && app.testFunction) {
-        console.log('Calling testFunction first...');
-        app.testFunction();
-    }
     if (app && app.toggleBulkModus) {
         app.toggleBulkModus();
     } else {
-        console.error('toggleBulkModus not found on app object');
-        console.log('app object:', app);
+        console.error('App not initialized or toggleBulkModus not found');
+    }
+};
+
+window.toggleTaakSelectie = function(taakId) {
+    if (app && app.toggleTaakSelectie) {
+        app.toggleTaakSelectie(taakId);
+    }
+};
+
+window.selecteerAlleTaken = function() {
+    if (app && app.selecteerAlleTaken) {
+        app.selecteerAlleTaken();
+    }
+};
+
+window.deselecteerAlleTaken = function() {
+    if (app && app.deselecteerAlleTaken) {
+        app.deselecteerAlleTaken();
+    }
+};
+
+window.bulkDateAction = function(action) {
+    if (app && app.bulkDateAction) {
+        app.bulkDateAction(action);
     }
 };
 
