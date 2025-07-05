@@ -8570,6 +8570,146 @@ class Taakbeheer {
             output.textContent += '\n<i class="fas fa-check"></i> Copied to clipboard!';
         });
     }
+
+    // Bulk mode functionality
+    toggleBulkModus() {
+        this.bulkModus = !this.bulkModus;
+        this.geselecteerdeTaken.clear();
+        
+        const actiesContainer = document.querySelector('.main-content');
+        const bulkToolbar = document.getElementById('bulk-toolbar');
+        const toggleButton = document.getElementById('bulk-mode-toggle');
+        
+        if (this.bulkModus) {
+            actiesContainer.classList.add('bulk-modus');
+            bulkToolbar.style.display = 'block';
+            toggleButton.textContent = 'Bulk modus actief (Annuleren)';
+            toggleButton.classList.add('active');
+        } else {
+            actiesContainer.classList.remove('bulk-modus');
+            bulkToolbar.style.display = 'none';
+            toggleButton.textContent = 'Bulk bewerken';
+            toggleButton.classList.remove('active');
+        }
+        
+        this.renderActiesLijst();
+    }
+
+    toggleTaakSelectie(taakId) {
+        if (this.geselecteerdeTaken.has(taakId)) {
+            this.geselecteerdeTaken.delete(taakId);
+        } else {
+            this.geselecteerdeTaken.add(taakId);
+        }
+        
+        // Update visual selection
+        const taakElement = document.querySelector(`[data-id="${taakId}"]`);
+        if (taakElement) {
+            const selectieCircle = taakElement.querySelector('.selectie-circle');
+            if (selectieCircle) {
+                selectieCircle.classList.toggle('geselecteerd', this.geselecteerdeTaken.has(taakId));
+            }
+        }
+        
+        // Update bulk toolbar count
+        this.updateBulkToolbar();
+    }
+
+    selecteerAlleTaken() {
+        const alleTaken = document.querySelectorAll('.actie-item[data-id]');
+        alleTaken.forEach(item => {
+            const taakId = item.dataset.id;
+            this.geselecteerdeTaken.add(taakId);
+            const selectieCircle = item.querySelector('.selectie-circle');
+            if (selectieCircle) {
+                selectieCircle.classList.add('geselecteerd');
+            }
+        });
+        this.updateBulkToolbar();
+    }
+
+    deselecteerAlleTaken() {
+        this.geselecteerdeTaken.clear();
+        document.querySelectorAll('.selectie-circle.geselecteerd').forEach(circle => {
+            circle.classList.remove('geselecteerd');
+        });
+        this.updateBulkToolbar();
+    }
+
+    updateBulkToolbar() {
+        const countElement = document.getElementById('bulk-selection-count');
+        const actionButtons = document.querySelectorAll('#bulk-toolbar .bulk-action-button');
+        
+        if (countElement) {
+            const count = this.geselecteerdeTaken.size;
+            countElement.textContent = count;
+            
+            // Enable/disable action buttons based on selection
+            actionButtons.forEach(button => {
+                button.disabled = count === 0;
+            });
+        }
+    }
+
+    async bulkDateAction(action) {
+        if (this.geselecteerdeTaken.size === 0) {
+            toast.warning('Selecteer eerst een of meer taken.');
+            return;
+        }
+
+        let newDate;
+        const today = new Date();
+        
+        switch (action) {
+            case 'vandaag':
+                newDate = today.toISOString().split('T')[0];
+                break;
+            case 'morgen':
+                const morgen = new Date(today);
+                morgen.setDate(today.getDate() + 1);
+                newDate = morgen.toISOString().split('T')[0];
+                break;
+            case 'plus3':
+                const plus3 = new Date(today);
+                plus3.setDate(today.getDate() + 3);
+                newDate = plus3.toISOString().split('T')[0];
+                break;
+            case 'week':
+                const week = new Date(today);
+                week.setDate(today.getDate() + 7);
+                newDate = week.toISOString().split('T')[0];
+                break;
+            default:
+                console.error('Onbekende bulk actie:', action);
+                return;
+        }
+
+        // Process selected tasks
+        const selectedIds = Array.from(this.geselecteerdeTaken);
+        let successCount = 0;
+        
+        for (const taakId of selectedIds) {
+            try {
+                const response = await fetch(`/api/taak/${taakId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ verschijndatum: newDate })
+                });
+                
+                if (response.ok) {
+                    successCount++;
+                }
+            } catch (error) {
+                console.error('Fout bij bulk update:', error);
+            }
+        }
+        
+        toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
+        
+        // Reset bulk mode and reload
+        this.toggleBulkModus();
+        this.laadHuidigeLijst();
+    }
 }
 
 // Authentication Manager
@@ -8953,147 +9093,6 @@ class AuthManager {
         return this.isAuthenticated;
     }
 
-    // Workaround: Add bulk functionality here
-    toggleBulkModus() {
-        this.bulkModus = !this.bulkModus;
-        this.geselecteerdeTaken.clear();
-        
-        const actiesContainer = document.querySelector('.main-content');
-        const bulkToolbar = document.getElementById('bulk-toolbar');
-        const toggleButton = document.getElementById('bulk-mode-toggle');
-        
-        if (this.bulkModus) {
-            actiesContainer.classList.add('bulk-modus');
-            bulkToolbar.style.display = 'block';
-            toggleButton.textContent = 'Bulk modus actief (Annuleren)';
-            toggleButton.classList.add('active');
-        } else {
-            actiesContainer.classList.remove('bulk-modus');
-            bulkToolbar.style.display = 'none';
-            toggleButton.textContent = 'Bulk bewerken';
-            toggleButton.classList.remove('active');
-        }
-        
-        this.renderActiesLijst();
-    }
-
-    toggleTaakSelectie(taakId) {
-        if (this.geselecteerdeTaken.has(taakId)) {
-            this.geselecteerdeTaken.delete(taakId);
-        } else {
-            this.geselecteerdeTaken.add(taakId);
-        }
-        
-        // Update visual selection
-        const taakElement = document.querySelector(`[data-id="${taakId}"]`);
-        if (taakElement) {
-            const selectieCircle = taakElement.querySelector('.selectie-circle');
-            if (selectieCircle) {
-                selectieCircle.classList.toggle('geselecteerd', this.geselecteerdeTaken.has(taakId));
-            }
-        }
-        
-        // Update bulk toolbar count
-        this.updateBulkToolbar();
-    }
-
-    selecteerAlleTaken() {
-        const alleTaken = document.querySelectorAll('.actie-item[data-id]');
-        alleTaken.forEach(item => {
-            const taakId = item.dataset.id;
-            this.geselecteerdeTaken.add(taakId);
-            const selectieCircle = item.querySelector('.selectie-circle');
-            if (selectieCircle) {
-                selectieCircle.classList.add('geselecteerd');
-            }
-        });
-        this.updateBulkToolbar();
-    }
-
-    deselecteerAlleTaken() {
-        this.geselecteerdeTaken.clear();
-        document.querySelectorAll('.selectie-circle.geselecteerd').forEach(circle => {
-            circle.classList.remove('geselecteerd');
-        });
-        this.updateBulkToolbar();
-    }
-
-    updateBulkToolbar() {
-        const countElement = document.getElementById('bulk-selection-count');
-        const actionButtons = document.querySelectorAll('#bulk-toolbar .bulk-action-button');
-        
-        if (countElement) {
-            const count = this.geselecteerdeTaken.size;
-            countElement.textContent = count;
-            
-            // Enable/disable action buttons based on selection
-            actionButtons.forEach(button => {
-                button.disabled = count === 0;
-            });
-        }
-    }
-
-    async bulkDateAction(action) {
-        if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Selecteer eerst een of meer taken.');
-            return;
-        }
-
-        let newDate;
-        const today = new Date();
-        
-        switch (action) {
-            case 'vandaag':
-                newDate = today.toISOString().split('T')[0];
-                break;
-            case 'morgen':
-                const morgen = new Date(today);
-                morgen.setDate(today.getDate() + 1);
-                newDate = morgen.toISOString().split('T')[0];
-                break;
-            case 'plus3':
-                const plus3 = new Date(today);
-                plus3.setDate(today.getDate() + 3);
-                newDate = plus3.toISOString().split('T')[0];
-                break;
-            case 'week':
-                const week = new Date(today);
-                week.setDate(today.getDate() + 7);
-                newDate = week.toISOString().split('T')[0];
-                break;
-            default:
-                console.error('Onbekende bulk actie:', action);
-                return;
-        }
-
-        // Process selected tasks
-        const selectedIds = Array.from(this.geselecteerdeTaken);
-        let successCount = 0;
-        
-        for (const taakId of selectedIds) {
-            try {
-                const response = await fetch(`/api/taak/${taakId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ verschijndatum: newDate })
-                });
-                
-                if (response.ok) {
-                    successCount++;
-                }
-            } catch (error) {
-                console.error('Fout bij bulk update:', error);
-            }
-        }
-        
-        toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
-        
-        // Reset bulk mode and reload
-        this.toggleBulkModus();
-        this.laadHuidigeLijst();
-    }
-
-
 }
 
 // Update Manager Class
@@ -9336,15 +9335,10 @@ window.app = app;
 
 // Expose bulk functions to window
 window.toggleBulkModus = function() {
-    console.log('window.toggleBulkModus called');
-    console.log('app exists:', !!app);
-    console.log('app.toggleBulkModus exists:', !!app?.toggleBulkModus);
-    console.log('typeof app:', typeof app);
-    if (app && typeof app.toggleBulkModus === 'function') {
+    if (app && app.toggleBulkModus) {
         app.toggleBulkModus();
     } else {
         console.error('App not initialized or toggleBulkModus not found');
-        console.log('Available methods on app:', Object.getOwnPropertyNames(Object.getPrototypeOf(app || {})));
     }
 };
 
