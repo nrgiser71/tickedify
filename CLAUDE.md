@@ -156,6 +156,56 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **STATUS**: Top 3 Prioriteiten feature 100% voltooid en gepolijst voor productie gebruik.
 
+## BULK ACTIE MODUS VOLLEDIG GEÏMPLEMENTEERD (Juli 5, 2025) ✨✅
+
+**🎯 MAJOR FEATURE VOLTOOID: Versie 0.9.171-0.9.191**
+- **User request**: "Ik wil tijd kunnen besparen op de verwerking van de acties lijst wanneer er veel overtijd taken zijn. Optie A."
+- **Probleem**: Elke overdue taak moest individueel worden aangeklikt om naar vandaag/morgen/uitgesteld te verplaatsen
+- **Oplossing**: Complete bulk selectie en actie systeem voor efficiënte verwerking van meerdere taken tegelijkertijd
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Bulk modus toggle**: "Bulk bewerken" knop in acties filter toolbar, altijd zichtbaar
+- **Selectie UI**: Blauwe cirkels vervangen checkboxes, visuele selectie feedback met ✓
+- **Contextafhankelijke knoppen**: Bulk toolbar toont relevante opties op basis van huidige lijst
+- **Loading indicators**: Global loading feedback bij alle bulk operaties
+- **Smart filtering**: Bulk knoppen filteren huidige lijst uit opties
+
+**🎨 UX/UI ACHIEVEMENTS:**
+- **Visual bulk mode**: Lichtblauwe achtergrond + verborgen checkboxes tijdens bulk modus
+- **Fixed bottom toolbar**: Glass morphism styling met 100px margin-bottom voor content
+- **Selection feedback**: Geselecteerde taken krijgen blauwe cirkel met witte ✓
+- **Count indicator**: Real-time update van geselecteerde taken aantal
+- **Auto-refresh**: Sluit bulk mode en vernieuwt lijst na elke bulk actie
+
+**🔧 CONTEXTAFHANKELIJKE LOGICA:**
+- **Acties lijst**: Vandaag, Morgen, Opvolgen + alle uitgesteld opties
+- **Uitgesteld lijsten**: Inbox, Acties, Opvolgen + andere uitgesteld opties (behalve huidige)
+- **Andere lijsten**: Acties, Opvolgen + uitgesteld opties (behalve huidige)
+- **Datum acties**: Alleen voor acties lijst (Vandaag/Morgen)
+- **Lijst verplaatsing**: Voor alle lijsten via `/api/taak/:id` met `{ lijst: naam }`
+
+**🚀 BULK OPERATIES:**
+- **Selectie beheer**: Toggle individuele taken, selecteer/deselecteer alles
+- **Datum acties**: Bulk verplaats naar Vandaag, Morgen
+- **Lijst verplaatsing**: Bulk verplaats naar Opvolgen, Uitgesteld lijsten
+- **Loading feedback**: Loading indicators met specifieke berichten
+- **Success meldingen**: Toast notifications met aantal verplaatste taken
+
+**🎯 EFFICIËNTIE VERBETERING:**
+- **Voor**: 20 overtijd taken = 20 individuele clicks met dropdown navigatie
+- **Na**: 20 overtijd taken = Bulk mode + selecteer alles + 1 click actie
+- **Tijdsbesparing**: ~95% minder clicks voor grote hoeveelheden overtijd taken
+- **Workflow**: Ideaal voor weekly review en overtijd taken opruiming
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkende** bulk selectie en actie systeem voor tijdsbesparing
+- **Contextafhankelijke UI** die past bij elke lijst type
+- **Professional UX** met loading indicators en smooth animaties
+- **Production-ready** met error handling en auto-refresh
+- **macOS design** consistent met rest van applicatie
+
+**STATUS**: Bulk actie modus 100% voltooid en geoptimaliseerd voor productie gebruik.
+
 ## FILTER ALIGNMENT PROBLEEM DEFINITIEF OPGELOST (December 28, 2025) ✅
 
 **🎯 UI/UX VERBETERING VOLTOOID: Versie 0.9.72-0.9.73**
