@@ -8658,7 +8658,7 @@ class Taakbeheer {
         }
 
         // Show loading indicator
-        loading.showGlobal('Bulk actie uitvoeren...');
+        loading.show('Bulk actie uitvoeren...');
 
         try {
             let newDate;
@@ -8715,7 +8715,7 @@ class Taakbeheer {
             this.laadHuidigeLijst();
             
         } finally {
-            loading.hideGlobal();
+            loading.hide();
         }
     }
 
@@ -8771,7 +8771,7 @@ class Taakbeheer {
         if (dropdown) dropdown.remove();
 
         // Show loading indicator
-        loading.showGlobal('Taken uitstellen...');
+        loading.show('Taken uitstellen...');
 
         try {
             const selectedIds = Array.from(this.geselecteerdeTaken);
@@ -8808,7 +8808,7 @@ class Taakbeheer {
             this.laadHuidigeLijst();
             
         } finally {
-            loading.hideGlobal();
+            loading.hide();
         }
     }
 }
@@ -9854,7 +9854,7 @@ async function deleteAllTasks() {
     } finally {
         // Hide loading if it exists
         if (window.loading && loading.hideGlobal) {
-            loading.hideGlobal();
+            loading.hide();
         }
     }
 }
