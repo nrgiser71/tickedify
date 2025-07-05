@@ -2649,7 +2649,7 @@ class Taakbeheer {
                     </label>
                 </div>
                 <div class="filter-groep" id="bulk-mode-toggle-container">
-                    <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.app.toggleBulkModus()">
+                    <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
                         Bulk bewerken
                     </button>
                 </div>
@@ -9341,6 +9341,15 @@ const updateManager = new UpdateManager();
 
 // Make app available globally for onclick handlers
 window.app = app;
+
+// Explicitly expose bulk functions to window for debugging
+window.toggleBulkModus = function() {
+    if (app && app.toggleBulkModus) {
+        app.toggleBulkModus();
+    } else {
+        console.error('toggleBulkModus not found on app object');
+    }
+};
 
 // Initialize mobile sidebar after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
