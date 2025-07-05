@@ -2648,7 +2648,7 @@ class Taakbeheer {
                         Toon toekomstige taken
                     </label>
                 </div>
-                <div class="filter-groep" id="bulk-mode-toggle-container" style="display: none;">
+                <div class="filter-groep" id="bulk-mode-toggle-container">
                     <button onclick="app.toggleBulkModus()" id="bulk-mode-toggle" class="bulk-mode-toggle">
                         Bulk bewerken
                     </button>
@@ -2681,7 +2681,6 @@ class Taakbeheer {
         await this.vulFilterDropdowns();
         this.renderActiesLijst();
         this.bindActiesEvents();
-        this.checkVoorOvertijdTaken();
     }
 
     renderActiesLijst() {
@@ -8953,18 +8952,6 @@ class AuthManager {
     }
 
     // Bulk modus functies
-    checkVoorOvertijdTaken() {
-        // Check if there are overdue tasks
-        const overtijdTaken = this.taken.filter(taak => {
-            return this.getTaakDatumStatus(taak.verschijndatum) === 'verleden';
-        });
-        
-        // Show/hide bulk mode toggle based on overdue tasks
-        const toggleContainer = document.getElementById('bulk-mode-toggle-container');
-        if (toggleContainer) {
-            toggleContainer.style.display = overtijdTaken.length > 0 ? 'block' : 'none';
-        }
-    }
 
     toggleBulkModus() {
         this.bulkModus = !this.bulkModus;
