@@ -8779,7 +8779,7 @@ class Taakbeheer {
             
             for (const taakId of selectedIds) {
                 try {
-                    const response = await fetch(`/api/taak/${taakId}/verplaats`, {
+                    const response = await fetch(`/api/taak/${taakId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ lijst: lijstNaam })
