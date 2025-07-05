@@ -2649,7 +2649,7 @@ class Taakbeheer {
                     </label>
                 </div>
                 <div class="filter-groep" id="bulk-mode-toggle-container">
-                    <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="console.log('window.app:', window.app); console.log('toggleBulkModus:', window.app ? window.app.toggleBulkModus : 'undefined'); if(window.app && window.app.toggleBulkModus) { window.app.toggleBulkModus(); } else { alert('Function not available'); }">
+                    <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.app.toggleBulkModus()">
                         Bulk bewerken
                     </button>
                 </div>
@@ -8952,8 +8952,6 @@ class AuthManager {
     isLoggedIn() {
         return this.isAuthenticated;
     }
-
-    // Bulk modus functies
 
     toggleBulkModus() {
         this.bulkModus = !this.bulkModus;
