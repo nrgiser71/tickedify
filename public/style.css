@@ -6111,6 +6111,35 @@ button:focus {
     border-color: #9ca3af;
 }
 
+/* Bulk uitgesteld dropdown */
+.bulk-uitgesteld-dropdown {
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    max-width: 200px;
+    padding: 8px 0;
+    backdrop-filter: blur(10px);
+}
+
+.bulk-uitgesteld-dropdown .dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.bulk-uitgesteld-dropdown .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.bulk-uitgesteld-dropdown .dropdown-item:hover {
+    background-color: #f9fafb;
+}
+
 /* Overdue task indicator adjustments for bulk mode */
 .bulk-modus .taak-item.overdue {
     background-color: rgba(255, 59, 48, 0.05);

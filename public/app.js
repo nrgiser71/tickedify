@@ -8657,62 +8657,159 @@ class Taakbeheer {
             return;
         }
 
-        let newDate;
-        const today = new Date();
-        
-        switch (action) {
-            case 'vandaag':
-                newDate = today.toISOString().split('T')[0];
-                break;
-            case 'morgen':
-                const morgen = new Date(today);
-                morgen.setDate(today.getDate() + 1);
-                newDate = morgen.toISOString().split('T')[0];
-                break;
-            case 'plus3':
-                const plus3 = new Date(today);
-                plus3.setDate(today.getDate() + 3);
-                newDate = plus3.toISOString().split('T')[0];
-                break;
-            case 'week':
-                const week = new Date(today);
-                week.setDate(today.getDate() + 7);
-                newDate = week.toISOString().split('T')[0];
-                break;
-            default:
-                console.error('Onbekende bulk actie:', action);
-                return;
-        }
+        // Show loading indicator
+        loading.showGlobal('Bulk actie uitvoeren...');
 
-        // Process selected tasks
-        const selectedIds = Array.from(this.geselecteerdeTaken);
-        let successCount = 0;
-        
-        for (const taakId of selectedIds) {
-            try {
-                const response = await fetch(`/api/taak/${taakId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ verschijndatum: newDate })
-                });
-                
-                if (response.ok) {
-                    successCount++;
-                }
-            } catch (error) {
-                console.error('Fout bij bulk update:', error);
+        try {
+            let newDate;
+            const today = new Date();
+            
+            switch (action) {
+                case 'vandaag':
+                    newDate = today.toISOString().split('T')[0];
+                    break;
+                case 'morgen':
+                    const morgen = new Date(today);
+                    morgen.setDate(today.getDate() + 1);
+                    newDate = morgen.toISOString().split('T')[0];
+                    break;
+                case 'plus3':
+                    const plus3 = new Date(today);
+                    plus3.setDate(today.getDate() + 3);
+                    newDate = plus3.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const week = new Date(today);
+                    week.setDate(today.getDate() + 7);
+                    newDate = week.toISOString().split('T')[0];
+                    break;
+                default:
+                    console.error('Onbekende bulk actie:', action);
+                    return;
             }
+
+            // Process selected tasks
+            const selectedIds = Array.from(this.geselecteerdeTaken);
+            let successCount = 0;
+            
+            for (const taakId of selectedIds) {
+                try {
+                    const response = await fetch(`/api/taak/${taakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ verschijndatum: newDate })
+                    });
+                    
+                    if (response.ok) {
+                        successCount++;
+                    }
+                } catch (error) {
+                    console.error('Fout bij bulk update:', error);
+                }
+            }
+            
+            toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
+            
+            // Reset bulk mode and reload
+            this.toggleBulkModus();
+            this.laadHuidigeLijst();
+            
+        } finally {
+            loading.hideGlobal();
         }
-        
-        toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
-        
-        // Reset bulk mode and reload
-        this.toggleBulkModus();
-        this.laadHuidigeLijst();
     }
 
     toggleBulkUitgesteldMenu() {
-        toast.info('Uitgesteld menu nog niet geïmplementeerd');
+        // Check if menu already exists
+        const existingMenu = document.getElementById('bulk-uitgesteld-dropdown');
+        if (existingMenu) {
+            existingMenu.remove();
+            return;
+        }
+        
+        // Create dropdown menu
+        const dropdown = document.createElement('div');
+        dropdown.id = 'bulk-uitgesteld-dropdown';
+        dropdown.className = 'bulk-uitgesteld-dropdown';
+        dropdown.innerHTML = `
+            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-wekelijks')">📅 Wekelijks</div>
+            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-maandelijks')">📅 Maandelijks</div>
+            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-3maandelijks')">📅 3-maandelijks</div>
+            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-6maandelijks')">📅 6-maandelijks</div>
+            <div class="dropdown-item" onclick="window.bulkUitstellen('uitgesteld-jaarlijks')">📅 Jaarlijks</div>
+        `;
+        
+        // Position dropdown above the uitstellen button
+        const uitstellenButton = event.target;
+        const rect = uitstellenButton.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.bottom = '120px';
+        dropdown.style.right = '200px';
+        dropdown.style.zIndex = '1001';
+        
+        document.body.appendChild(dropdown);
+        
+        // Close dropdown when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!dropdown.contains(e.target) && e.target !== uitstellenButton) {
+                    dropdown.remove();
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        }, 100);
+    }
+
+    async bulkUitstellen(lijstNaam) {
+        if (this.geselecteerdeTaken.size === 0) {
+            toast.warning('Selecteer eerst een of meer taken.');
+            return;
+        }
+
+        // Close dropdown
+        const dropdown = document.getElementById('bulk-uitgesteld-dropdown');
+        if (dropdown) dropdown.remove();
+
+        // Show loading indicator
+        loading.showGlobal('Taken uitstellen...');
+
+        try {
+            const selectedIds = Array.from(this.geselecteerdeTaken);
+            let successCount = 0;
+            
+            for (const taakId of selectedIds) {
+                try {
+                    const response = await fetch(`/api/taak/${taakId}/verplaats`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lijst: lijstNaam })
+                    });
+                    
+                    if (response.ok) {
+                        successCount++;
+                    }
+                } catch (error) {
+                    console.error('Fout bij bulk uitstellen:', error);
+                }
+            }
+            
+            const lijstLabels = {
+                'uitgesteld-wekelijks': 'Wekelijks',
+                'uitgesteld-maandelijks': 'Maandelijks',
+                'uitgesteld-3maandelijks': '3-maandelijks',
+                'uitgesteld-6maandelijks': '6-maandelijks',
+                'uitgesteld-jaarlijks': 'Jaarlijks'
+            };
+            
+            toast.success(`${successCount} taken uitgesteld naar ${lijstLabels[lijstNaam]}`);
+            
+            // Reset bulk mode and reload
+            this.toggleBulkModus();
+            this.laadHuidigeLijst();
+            
+        } finally {
+            loading.hideGlobal();
+        }
     }
 }
 
@@ -9373,6 +9470,12 @@ window.bulkDateAction = function(action) {
 window.toggleBulkUitgesteldMenu = function() {
     if (app && app.toggleBulkUitgesteldMenu) {
         app.toggleBulkUitgesteldMenu();
+    }
+};
+
+window.bulkUitstellen = function(lijstNaam) {
+    if (app && app.bulkUitstellen) {
+        app.bulkUitstellen(lijstNaam);
     }
 };
 
