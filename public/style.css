@@ -5997,7 +5997,7 @@ button:focus {
 }
 
 /* Bulk selection circles */
-.bulk-selectie-cirkel {
+.selectie-circle {
     width: 20px;
     height: 20px;
     border: 2px solid #007aff;
@@ -6008,15 +6008,15 @@ button:focus {
     position: relative;
 }
 
-.bulk-selectie-cirkel:hover {
+.selectie-circle:hover {
     background-color: rgba(0, 122, 255, 0.1);
 }
 
-.bulk-selectie-cirkel.selected {
+.selectie-circle.geselecteerd {
     background-color: #007aff;
 }
 
-.bulk-selectie-cirkel.selected::after {
+.selectie-circle.geselecteerd::after {
     content: '✓';
     color: white;
     position: absolute;

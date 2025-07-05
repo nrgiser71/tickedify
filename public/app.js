@@ -2737,7 +2737,7 @@ class Taakbeheer {
             
             // In bulk modus: toon selectie cirkels in plaats van checkboxes
             const checkboxHtml = this.bulkModus ?
-                `<div class="bulk-selectie-cirkel ${this.geselecteerdeTaken.has(taak.id) ? 'selected' : ''}" onclick="window.app.toggleBulkSelectie('${taak.id}')"></div>` :
+                `<div class="selectie-circle ${this.geselecteerdeTaken.has(taak.id) ? 'geselecteerd' : ''}" onclick="window.toggleTaakSelectie('${taak.id}')"></div>` :
                 `<input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">`;
 
             li.innerHTML = `
