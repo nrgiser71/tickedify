@@ -1143,8 +1143,8 @@ class Taakbeheer {
     }
 
     async navigeerNaarLijst(lijst) {
-        // If we're coming from contextenbeheer, restore normal structure
-        if (this.huidigeLijst === 'contextenbeheer' && lijst !== 'contextenbeheer') {
+        // If we're coming from contextenbeheer or dagelijkse-planning, restore normal structure
+        if ((this.huidigeLijst === 'contextenbeheer' || this.huidigeLijst === 'dagelijkse-planning') && lijst !== 'contextenbeheer' && lijst !== 'dagelijkse-planning') {
             this.restoreNormalContainer();
         }
 
