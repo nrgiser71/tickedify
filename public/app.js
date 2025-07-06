@@ -70,6 +70,23 @@ class ToastManager {
 // Global toast instance
 const toast = new ToastManager();
 
+// Debug functie voor titel check
+window.debugTitle = function() {
+    const pageTitle = document.getElementById('page-title');
+    const h1Elements = document.querySelectorAll('h1');
+    console.log('DEBUG TITLE CHECK:', {
+        pageTitleElement: pageTitle,
+        pageTitleText: pageTitle ? pageTitle.textContent : 'NOT FOUND',
+        allH1Elements: Array.from(h1Elements).map(h1 => ({ 
+            id: h1.id, 
+            text: h1.textContent, 
+            parent: h1.parentElement?.className 
+        })),
+        currentList: window.app?.huidigeLijst,
+        documentTitle: document.title
+    });
+};
+
 // Tip Toast System for centered, long-duration tips
 class TipToast {
     constructor() {
@@ -5557,6 +5574,15 @@ class Taakbeheer {
                     </div>
                 `;
                 console.log('restoreNormalContainer: main-content restored');
+                
+                // Force a small delay to ensure DOM is updated
+                setTimeout(() => {
+                    const verifyTitle = document.getElementById('page-title');
+                    console.log('restoreNormalContainer: title verification after DOM update:', {
+                        found: !!verifyTitle,
+                        text: verifyTitle ? verifyTitle.textContent : 'NOT FOUND'
+                    });
+                }, 10);
                 return;
             }
 
