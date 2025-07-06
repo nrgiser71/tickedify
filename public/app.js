@@ -1969,19 +1969,16 @@ class Taakbeheer {
                     case 'F2':
                         e.preventDefault();
                         app.focusAndOpenDropdown('projectSelect');
-                        app.showQuickTip("Project dropdown geopend");
                         break;
                         
                     case 'F3':
                         e.preventDefault();
                         app.setDateToday();
-                        app.showQuickTip("Datum ingesteld op vandaag");
                         break;
                         
                     case 'F4':
                         e.preventDefault();
                         app.setDateTomorrow();
-                        app.showQuickTip("Datum ingesteld op morgen");
                         break;
                         
                     case 'F6':
@@ -1991,31 +1988,26 @@ class Taakbeheer {
                         if (dateField.showPicker) {
                             dateField.showPicker();
                         }
-                        app.showQuickTip("Datum picker geopend");
                         break;
                         
                     case 'F7':
                         e.preventDefault();
                         app.focusAndOpenDropdown('contextSelect');
-                        app.showQuickTip("Context dropdown geopend");
                         break;
                         
                     case 'F8':
                         e.preventDefault();
                         app.cycleDuration();
-                        app.showQuickTip("Duur cyclisch bijgewerkt");
                         break;
                         
                     case 'F9':
                         e.preventDefault();
                         document.getElementById('opmerkingen').focus();
-                        app.showQuickTip("Focus op opmerkingen");
                         break;
                         
                     case 'F10':
                         e.preventDefault();
                         app.openHerhalingPopup();
-                        app.showQuickTip("Herhaling popup geopend");
                         break;
                 }
             }
