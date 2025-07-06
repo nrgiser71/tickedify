@@ -1145,7 +1145,7 @@ class Taakbeheer {
     async navigeerNaarLijst(lijst) {
         // If we're coming from contextenbeheer or dagelijkse-planning, restore normal structure
         if ((this.huidigeLijst === 'contextenbeheer' || this.huidigeLijst === 'dagelijkse-planning') && lijst !== 'contextenbeheer' && lijst !== 'dagelijkse-planning') {
-            this.restoreNormalContainer();
+            this.restoreNormalContainer(lijst);
         }
 
         // Update actieve lijst in sidebar - remove actief from both lijst items and tool items
@@ -5454,7 +5454,7 @@ class Taakbeheer {
         this.renderContextenBeheer();
     }
 
-    restoreNormalContainer() {
+    restoreNormalContainer(targetLijst = null) {
         console.log('restoreNormalContainer: starting restoration...');
         
         // Ensure sidebar is visible
@@ -5507,7 +5507,7 @@ class Taakbeheer {
                     'uitgesteld-6maandelijks': '6-maandelijks',
                     'uitgesteld-jaarlijks': 'Jaarlijks'
                 };
-                const currentTitle = titles[this.huidigeLijst] || 'Inbox';
+                const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
                 
                 let headerHTML;
                 if (header) {
