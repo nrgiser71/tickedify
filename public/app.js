@@ -468,7 +468,7 @@ class Taakbeheer {
                 const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks', 
                                   'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
                                   'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen',
-                                  'contextenbeheer'];
+                                  'contextenbeheer', 'dagelijkse-planning'];
                 if (validLists.includes(saved)) {
                     console.log(`<i class="fas fa-redo"></i> Restored last selected list: ${saved}`);
                     return saved;
