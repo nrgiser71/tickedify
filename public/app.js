@@ -570,6 +570,11 @@ class Taakbeheer {
         
         await this.laadProjecten();
         await this.laadContexten();
+        
+        // Hide loading indicator after app is fully loaded
+        if (window.loading) {
+            loading.hideGlobal();
+        }
     }
     
     updateSidebarState(lijst) {
@@ -9069,6 +9074,11 @@ class AuthManager {
                     app.taken = [];
                     app.renderTaken();
                 }
+                
+                // Hide loading indicator for unauthenticated users
+                if (window.loading) {
+                    loading.hideGlobal();
+                }
             }
             
             this.updateUI();
@@ -9076,6 +9086,12 @@ class AuthManager {
             console.error('Auth check error:', error);
             this.currentUser = null;
             this.isAuthenticated = false;
+            
+            // Hide loading indicator on error
+            if (window.loading) {
+                loading.hideGlobal();
+            }
+            
             this.updateUI();
         }
     }
@@ -9437,6 +9453,11 @@ class UpdateManager {
 async function loadVersionNumber() {
     // This is now handled by UpdateManager
     return;
+}
+
+// Show loading indicator immediately on app startup
+if (window.loading) {
+    loading.showGlobal('App wordt geladen...');
 }
 
 // Initialize app and authentication
