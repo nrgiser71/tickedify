@@ -1143,8 +1143,11 @@ class Taakbeheer {
     }
 
     async navigeerNaarLijst(lijst) {
+        console.log('navigeerNaarLijst called:', { from: this.huidigeLijst, to: lijst });
+        
         // If we're coming from contextenbeheer or dagelijkse-planning, restore normal structure
         if ((this.huidigeLijst === 'contextenbeheer' || this.huidigeLijst === 'dagelijkse-planning') && lijst !== 'contextenbeheer' && lijst !== 'dagelijkse-planning') {
+            console.log('Calling restoreNormalContainer with target:', lijst);
             this.restoreNormalContainer(lijst);
         }
 
@@ -1177,7 +1180,10 @@ class Taakbeheer {
         };
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
+            console.log('navigeerNaarLijst: updating page title to:', titles[lijst] || lijst);
             pageTitle.textContent = titles[lijst] || lijst;
+        } else {
+            console.warn('navigeerNaarLijst: page-title element not found!');
         }
 
         // Update input visibility (alleen inbox heeft input)
@@ -5455,7 +5461,10 @@ class Taakbeheer {
     }
 
     restoreNormalContainer(targetLijst = null) {
-        console.log('restoreNormalContainer: starting restoration...');
+        console.log('restoreNormalContainer: starting restoration...', { 
+            targetLijst, 
+            currentLijst: this.huidigeLijst 
+        });
         
         // Ensure sidebar is visible
         const sidebar = document.querySelector('.sidebar');
@@ -5508,6 +5517,7 @@ class Taakbeheer {
                     'uitgesteld-jaarlijks': 'Jaarlijks'
                 };
                 const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
+                console.log('restoreNormalContainer: setting title to:', currentTitle, { targetLijst, currentLijst: this.huidigeLijst });
                 
                 let headerHTML;
                 if (header) {
