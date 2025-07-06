@@ -559,11 +559,32 @@ class Taakbeheer {
         // Called by AuthManager after successful login
         // await this.laadTellingen(); // Disabled - tellers removed from sidebar
         
-        // Navigate to the restored current list (includes sidebar update)
-        await this.navigeerNaarLijst(this.huidigeLijst);
+        // Restore the correct list without showing intermediate states
+        const targetList = this.huidigeLijst;
+        
+        // Immediately set the correct sidebar state to prevent flashing
+        this.updateSidebarState(targetList);
+        
+        // Navigate directly to the restored current list (includes sidebar update)
+        await this.navigeerNaarLijst(targetList);
         
         await this.laadProjecten();
         await this.laadContexten();
+    }
+    
+    updateSidebarState(lijst) {
+        // Update actieve lijst in sidebar immediately
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+        document.querySelectorAll('[data-tool]').forEach(item => {
+            item.classList.remove('actief');
+        });
+        
+        const listItem = document.querySelector(`[data-lijst="${lijst}"]`);
+        if (listItem) {
+            listItem.classList.add('actief');
+        }
     }
 
     bindEvents() {

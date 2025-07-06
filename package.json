@@ -1,6 +1,6 @@
 {
   "name": "tickedify",
-  "version": "0.9.200",
+  "version": "0.9.201",
   "description": "Tickedify - Smart task management that gets things done",
   "main": "server.js",
   "scripts": {
