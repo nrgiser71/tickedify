@@ -9709,13 +9709,13 @@ class KeyboardHelpModal {
     }
     
     updateShortcutsForOS() {
-        // F12 is the same on all platforms - much simpler!
-        const shortcutCombo = 'F12';
+        // SHIFT+F12 is the same on all platforms - much simpler!
+        const shortcutCombo = 'SHIFT+F12';
         
         // Update all shortcuts in help modal
         const shortcuts = this.modal.querySelectorAll('kbd');
         shortcuts.forEach(kbd => {
-            if (kbd.textContent.includes('Ctrl+Shift+N')) {
+            if (kbd.textContent.includes('SHIFT+F12')) {
                 kbd.textContent = shortcutCombo;
             }
         });
