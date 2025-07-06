@@ -1146,9 +1146,11 @@ class Taakbeheer {
         console.log('navigeerNaarLijst called:', { from: this.huidigeLijst, to: lijst });
         
         // If we're coming from contextenbeheer or dagelijkse-planning, restore normal structure
+        let titleAlreadySet = false;
         if ((this.huidigeLijst === 'contextenbeheer' || this.huidigeLijst === 'dagelijkse-planning') && lijst !== 'contextenbeheer' && lijst !== 'dagelijkse-planning') {
             console.log('Calling restoreNormalContainer with target:', lijst);
             this.restoreNormalContainer(lijst);
+            titleAlreadySet = true; // Title is set by restoreNormalContainer
         }
 
         // Update actieve lijst in sidebar - remove actief from both lijst items and tool items
@@ -1178,12 +1180,17 @@ class Taakbeheer {
             'uitgesteld-6maandelijks': '6-maandelijks',
             'uitgesteld-jaarlijks': 'Jaarlijks'
         };
-        const pageTitle = document.getElementById('page-title');
-        if (pageTitle) {
-            console.log('navigeerNaarLijst: updating page title to:', titles[lijst] || lijst);
-            pageTitle.textContent = titles[lijst] || lijst;
+        // Only update title if it wasn't already set by restoreNormalContainer
+        if (!titleAlreadySet) {
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) {
+                console.log('navigeerNaarLijst: updating page title to:', titles[lijst] || lijst);
+                pageTitle.textContent = titles[lijst] || lijst;
+            } else {
+                console.warn('navigeerNaarLijst: page-title element not found!');
+            }
         } else {
-            console.warn('navigeerNaarLijst: page-title element not found!');
+            console.log('navigeerNaarLijst: title already set by restoreNormalContainer, skipping update');
         }
 
         // Update input visibility (alleen inbox heeft input)
@@ -5533,7 +5540,7 @@ class Taakbeheer {
                 }
                 
                 // Only show input container for inbox
-                const inputContainerHTML = this.huidigeLijst === 'inbox' ? `
+                const inputContainerHTML = (targetLijst || this.huidigeLijst) === 'inbox' ? `
                     <div class="taak-input-container" id="taak-input-container">
                         <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
                         <button id="toevoegBtn">Toevoegen</button>
