@@ -2078,7 +2078,6 @@ class Taakbeheer {
         
         // Show cycle indicator
         this.showDurationCycle(durations, nextIndex);
-        this.showQuickTip(`Duur: ${nextDuration} minuten`);
     }
     
     // Show duration cycle indicator
