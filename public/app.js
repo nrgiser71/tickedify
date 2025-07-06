@@ -7663,12 +7663,12 @@ class Taakbeheer {
             
             if (totaalMinuten > 0) {
                 if (uurTotaalElement) {
-                    uurTotaalElement.textContent = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
+                    uurTotaalElement.innerHTML = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
                 } else {
                     // Add totaal tijd element if it doesn't exist
                     const newTotaalElement = document.createElement('div');
                     newTotaalElement.className = 'uur-totaal-tijd';
-                    newTotaalElement.textContent = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
+                    newTotaalElement.innerHTML = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
                     uurLabelElement.appendChild(newTotaalElement);
                 }
             } else if (uurTotaalElement) {
