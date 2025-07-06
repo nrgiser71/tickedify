@@ -5521,9 +5521,7 @@ class Taakbeheer {
             
             // Check if we're coming from daily planning FIRST (before checking contentArea)
             if (mainContent && mainContent.querySelector('.dagelijkse-planning-layout')) {
-                console.log('restoreNormalContainer: detected daily planning layout, restoring main-content...');
-                // Daily planning completely replaced main-content structure
-                const header = mainContent.querySelector('.main-header');
+                console.log('restoreNormalContainer: detected daily planning layout, completely replacing...');
                 
                 // Get the correct title for the current list
                 const titles = {
@@ -5543,19 +5541,6 @@ class Taakbeheer {
                 const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
                 console.log('restoreNormalContainer: setting title to:', currentTitle, { targetLijst, currentLijst: this.huidigeLijst });
                 
-                let headerHTML;
-                if (header) {
-                    // Update existing header with correct title
-                    const titleElement = header.querySelector('#page-title');
-                    if (titleElement) {
-                        titleElement.textContent = currentTitle;
-                    }
-                    headerHTML = header.outerHTML;
-                } else {
-                    // Create new header with correct title
-                    headerHTML = `<header class="main-header"><h1 id="page-title">${currentTitle}</h1></header>`;
-                }
-                
                 // Only show input container for inbox
                 const inputContainerHTML = (targetLijst || this.huidigeLijst) === 'inbox' ? `
                     <div class="taak-input-container" id="taak-input-container">
@@ -5564,8 +5549,15 @@ class Taakbeheer {
                     </div>
                 ` : '';
                 
-                mainContent.innerHTML = `
-                    ${headerHTML}
+                const newHTML = `
+                    <header class="main-header">
+                        <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                        <h1 id="page-title">${currentTitle}</h1>
+                    </header>
                     <div class="content-area">
                         ${inputContainerHTML}
                         <div class="taken-container">
@@ -5573,16 +5565,22 @@ class Taakbeheer {
                         </div>
                     </div>
                 `;
-                console.log('restoreNormalContainer: main-content restored');
                 
-                // Force a small delay to ensure DOM is updated
-                setTimeout(() => {
-                    const verifyTitle = document.getElementById('page-title');
-                    console.log('restoreNormalContainer: title verification after DOM update:', {
-                        found: !!verifyTitle,
-                        text: verifyTitle ? verifyTitle.textContent : 'NOT FOUND'
-                    });
-                }, 10);
+                console.log('restoreNormalContainer: about to replace mainContent.innerHTML');
+                console.log('restoreNormalContainer: newHTML preview:', newHTML.substring(0, 200) + '...');
+                
+                mainContent.innerHTML = newHTML;
+                
+                console.log('restoreNormalContainer: main-content innerHTML replaced');
+                
+                // Verify immediately
+                const verifyTitle = document.getElementById('page-title');
+                console.log('restoreNormalContainer: immediate verification:', {
+                    found: !!verifyTitle,
+                    text: verifyTitle ? verifyTitle.textContent : 'NOT FOUND',
+                    mainContentHTML: mainContent.innerHTML.substring(0, 200) + '...'
+                });
+                
                 return;
             }
 
