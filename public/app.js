@@ -70,23 +70,6 @@ class ToastManager {
 // Global toast instance
 const toast = new ToastManager();
 
-// Debug functie voor titel check
-window.debugTitle = function() {
-    const pageTitle = document.getElementById('page-title');
-    const h1Elements = document.querySelectorAll('h1');
-    console.log('DEBUG TITLE CHECK:', {
-        pageTitleElement: pageTitle,
-        pageTitleText: pageTitle ? pageTitle.textContent : 'NOT FOUND',
-        allH1Elements: Array.from(h1Elements).map(h1 => ({ 
-            id: h1.id, 
-            text: h1.textContent, 
-            parent: h1.parentElement?.className 
-        })),
-        currentList: window.app?.huidigeLijst,
-        documentTitle: document.title
-    });
-};
-
 // Tip Toast System for centered, long-duration tips
 class TipToast {
     constructor() {
@@ -1160,12 +1143,9 @@ class Taakbeheer {
     }
 
     async navigeerNaarLijst(lijst) {
-        console.log('navigeerNaarLijst called:', { from: this.huidigeLijst, to: lijst });
-        
         // If we're coming from contextenbeheer or dagelijkse-planning, restore normal structure
         let titleAlreadySet = false;
         if ((this.huidigeLijst === 'contextenbeheer' || this.huidigeLijst === 'dagelijkse-planning') && lijst !== 'contextenbeheer' && lijst !== 'dagelijkse-planning') {
-            console.log('Calling restoreNormalContainer with target:', lijst);
             this.restoreNormalContainer(lijst);
             titleAlreadySet = true; // Title is set by restoreNormalContainer
         }
@@ -1201,13 +1181,8 @@ class Taakbeheer {
         if (!titleAlreadySet) {
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) {
-                console.log('navigeerNaarLijst: updating page title to:', titles[lijst] || lijst);
                 pageTitle.textContent = titles[lijst] || lijst;
-            } else {
-                console.warn('navigeerNaarLijst: page-title element not found!');
             }
-        } else {
-            console.log('navigeerNaarLijst: title already set by restoreNormalContainer, skipping update');
         }
 
         // Update input visibility (alleen inbox heeft input)
@@ -5485,10 +5460,6 @@ class Taakbeheer {
     }
 
     restoreNormalContainer(targetLijst = null) {
-        console.log('restoreNormalContainer: starting restoration...', { 
-            targetLijst, 
-            currentLijst: this.huidigeLijst 
-        });
         
         // Ensure sidebar is visible
         const sidebar = document.querySelector('.sidebar');
@@ -5496,33 +5467,20 @@ class Taakbeheer {
         if (sidebar) {
             sidebar.style.display = '';
             sidebar.style.width = '';
-            console.log('restoreNormalContainer: sidebar visibility restored');
         }
         if (appLayout) {
             appLayout.style.flexDirection = '';
-            console.log('restoreNormalContainer: app layout restored');
         }
         
         // Restore the normal taken container structure
         const takenLijst = document.getElementById('takenLijst');
         if (!takenLijst) {
-            console.log('restoreNormalContainer: takenLijst not found, checking DOM state...');
             // If takenLijst doesn't exist, find the content area and restore structure
             const contentArea = document.querySelector('.content-area');
             const mainContent = document.querySelector('.main-content');
-            const dailyPlanning = document.querySelector('.dagelijkse-planning-layout');
-            
-            console.log('restoreNormalContainer: DOM check:', {
-                contentArea: !!contentArea,
-                mainContent: !!mainContent,
-                dailyPlanning: !!dailyPlanning,
-                dailyPlanningInMain: !!(mainContent && mainContent.querySelector('.dagelijkse-planning-layout'))
-            });
             
             // Check if we're coming from daily planning FIRST (before checking contentArea)
             if (mainContent && mainContent.querySelector('.dagelijkse-planning-layout')) {
-                console.log('restoreNormalContainer: detected daily planning layout, completely replacing...');
-                
                 // Get the correct title for the current list
                 const titles = {
                     'inbox': 'Inbox',
@@ -5539,7 +5497,6 @@ class Taakbeheer {
                     'uitgesteld-jaarlijks': 'Jaarlijks'
                 };
                 const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
-                console.log('restoreNormalContainer: setting title to:', currentTitle, { targetLijst, currentLijst: this.huidigeLijst });
                 
                 // Only show input container for inbox
                 const inputContainerHTML = (targetLijst || this.huidigeLijst) === 'inbox' ? `
@@ -5549,7 +5506,7 @@ class Taakbeheer {
                     </div>
                 ` : '';
                 
-                const newHTML = `
+                mainContent.innerHTML = `
                     <header class="main-header">
                         <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
                             <span></span>
@@ -5565,21 +5522,6 @@ class Taakbeheer {
                         </div>
                     </div>
                 `;
-                
-                console.log('restoreNormalContainer: about to replace mainContent.innerHTML');
-                console.log('restoreNormalContainer: newHTML preview:', newHTML.substring(0, 200) + '...');
-                
-                mainContent.innerHTML = newHTML;
-                
-                console.log('restoreNormalContainer: main-content innerHTML replaced');
-                
-                // Verify immediately
-                const verifyTitle = document.getElementById('page-title');
-                console.log('restoreNormalContainer: immediate verification:', {
-                    found: !!verifyTitle,
-                    text: verifyTitle ? verifyTitle.textContent : 'NOT FOUND',
-                    mainContentHTML: mainContent.innerHTML.substring(0, 200) + '...'
-                });
                 
                 return;
             }
