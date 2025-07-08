@@ -2523,15 +2523,11 @@ class Taakbeheer {
     }
 
     getVerplaatsOptiesUitgesteld(taakId) {
+        // Simplified dropdown - only non-uitgesteld options since drag & drop handles uitgesteld moves
         const alleOpties = [
             { key: 'inbox', label: 'Inbox' },
             { key: 'acties', label: 'Acties' },
-            { key: 'opvolgen', label: 'Opvolgen' },
-            { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
-            { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
-            { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
-            { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
-            { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+            { key: 'opvolgen', label: 'Opvolgen' }
         ];
 
         return alleOpties
@@ -8570,6 +8566,9 @@ class Taakbeheer {
 
         // Reinitialize mobile menu for the new header
         this.initializeMobileSidebar();
+        
+        // Setup drop zones for drag & drop between lists
+        this.setupUitgesteldDropZones();
     }
 
     async toggleUitgesteldSectie(categoryKey) {
@@ -8651,6 +8650,7 @@ class Taakbeheer {
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
             
+            li.draggable = true;
             li.innerHTML = `
                 <div class="taak-content">
                     <span class="taak-tekst" title="${tooltipContent}">${taak.tekst}${recurringIndicator}</span>
@@ -8665,8 +8665,148 @@ class Taakbeheer {
                     <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">×</button>
                 </div>
             `;
+            
+            // Add drag event listeners
+            li.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'uitgesteld-taak',
+                    taakId: taak.id,
+                    bronLijst: categoryKey,
+                    taakTekst: taak.tekst
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+                li.style.opacity = '0.5';
+            });
+            
+            li.addEventListener('dragend', (e) => {
+                li.style.opacity = '1';
+            });
 
             lijst.appendChild(li);
+        });
+    }
+
+    setupUitgesteldDropZones() {
+        // Setup drop zones for all uitgesteld section headers
+        const uitgesteldCategories = [
+            'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
+            'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks'
+        ];
+
+        uitgesteldCategories.forEach(categoryKey => {
+            // Drop zone for section header (closed sections)
+            const header = document.querySelector(`[data-category="${categoryKey}"] .sectie-header`);
+            if (header) {
+                this.setupDropZone(header, categoryKey, 'header');
+            }
+
+            // Drop zone for content area (open sections)
+            const content = document.getElementById(`content-${categoryKey}`);
+            if (content) {
+                this.setupDropZone(content, categoryKey, 'content');
+            }
+        });
+    }
+
+    setupDropZone(element, targetCategory, zoneType) {
+        element.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            // Add visual feedback
+            if (zoneType === 'header') {
+                element.classList.add('drop-target-header');
+            } else {
+                element.classList.add('drop-target-content');
+            }
+        });
+
+        element.addEventListener('dragleave', (e) => {
+            // Remove visual feedback
+            element.classList.remove('drop-target-header', 'drop-target-content');
+        });
+
+        element.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            
+            // Remove visual feedback
+            element.classList.remove('drop-target-header', 'drop-target-content');
+            
+            try {
+                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                
+                if (dragData.type === 'uitgesteld-taak') {
+                    const { taakId, bronLijst } = dragData;
+                    
+                    // Don't move to same list
+                    if (bronLijst === targetCategory) {
+                        return;
+                    }
+                    
+                    // Perform the move
+                    await this.handleUitgesteldDrop(taakId, bronLijst, targetCategory);
+                }
+            } catch (error) {
+                console.error('Error processing drop:', error);
+                toast.error('Fout bij verplaatsen van taak');
+            }
+        });
+    }
+
+    async handleUitgesteldDrop(taakId, bronLijst, doelLijst) {
+        await loading.withLoading(async () => {
+            try {
+                // Use existing move function
+                const response = await fetch(`/api/taak/${taakId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        lijst: doelLijst
+                    })
+                });
+
+                if (response.ok) {
+                    // Remove from source list DOM
+                    const sourceItem = document.querySelector(`[data-id="${taakId}"]`);
+                    if (sourceItem) {
+                        sourceItem.remove();
+                        
+                        // Update source count
+                        const sourceHeader = document.querySelector(`[data-category="${bronLijst}"] .taken-count`);
+                        if (sourceHeader) {
+                            const currentCount = parseInt(sourceHeader.textContent.match(/\d+/)[0]);
+                            sourceHeader.textContent = `(${currentCount - 1})`;
+                        }
+                    }
+
+                    // Update target count and reload if section is open
+                    const targetHeader = document.querySelector(`[data-category="${doelLijst}"] .taken-count`);
+                    if (targetHeader) {
+                        const currentCount = parseInt(targetHeader.textContent.match(/\d+/)[0]);
+                        targetHeader.textContent = `(${currentCount + 1})`;
+                    }
+
+                    // Reload target section if it's open
+                    const targetContent = document.getElementById(`content-${doelLijst}`);
+                    if (targetContent && targetContent.style.display !== 'none') {
+                        await this.loadUitgesteldSectieData(doelLijst);
+                    }
+
+                    toast.success(`Taak verplaatst naar ${doelLijst.replace('uitgesteld-', '')}`);
+                } else {
+                    const error = await response.json();
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
+                }
+            } catch (error) {
+                console.error('Error moving task:', error);
+                toast.error('Fout bij verplaatsen van taak');
+            }
+        }, {
+            operationId: 'drag-drop-move',
+            showGlobal: true,
+            message: 'Taak verplaatsen...'
         });
     }
 

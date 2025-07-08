@@ -6383,6 +6383,36 @@ button:focus {
     transform: scale(1.1);
 }
 
+/* Drag & Drop Visual Feedback */
+.uitgesteld-taak-item[draggable="true"] {
+    cursor: grab;
+}
+
+.uitgesteld-taak-item[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.drop-target-header {
+    background: var(--macos-blue) !important;
+    color: white !important;
+    transition: all 0.15s ease;
+}
+
+.drop-target-header .sectie-titel,
+.drop-target-header .sectie-titel span {
+    color: white !important;
+}
+
+.drop-target-header .sectie-titel i {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.drop-target-content {
+    background: rgba(0, 122, 255, 0.1) !important;
+    border: 2px dashed var(--macos-blue) !important;
+    transition: all 0.15s ease;
+}
+
 .loading-placeholder,
 .loading-state,
 .empty-state {
