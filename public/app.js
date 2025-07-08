@@ -5558,6 +5558,27 @@ class Taakbeheer {
             if (contentArea) {
                 contentArea.innerHTML = '';
                 
+                // Update the title as well when cleaning up uitgesteld
+                const titles = {
+                    'inbox': 'Inbox',
+                    'acties': 'Acties',
+                    'projecten': 'Projecten',
+                    'opvolgen': 'Opvolgen',
+                    'afgewerkte-taken': 'Afgewerkt',
+                    'dagelijkse-planning': 'Dagelijkse Planning',
+                    'contextenbeheer': 'Contexten Beheer',
+                    'uitgesteld-wekelijks': 'Wekelijks',
+                    'uitgesteld-maandelijks': 'Maandelijks',
+                    'uitgesteld-3maandelijks': '3-maandelijks',
+                    'uitgesteld-6maandelijks': '6-maandelijks',
+                    'uitgesteld-jaarlijks': 'Jaarlijks'
+                };
+                
+                const pageTitle = document.getElementById('page-title');
+                if (pageTitle) {
+                    pageTitle.textContent = titles[targetLijst || this.huidigeLijst] || 'Inbox';
+                }
+                
                 // Create proper structure based on target list
                 const isInbox = (targetLijst || this.huidigeLijst) === 'inbox';
                 if (isInbox) {
