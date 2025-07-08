@@ -6175,3 +6175,115 @@ button:focus {
     transform: translateY(-1px);
     box-shadow: 0 4px 16px rgba(255, 149, 0, 0.4);
 }
+
+/* Uitgesteld Accordion Styling */
+.uitgesteld-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+}
+
+.uitgesteld-sectie {
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-large);
+    border: 1px solid var(--macos-gray-5);
+    box-shadow: var(--macos-shadow-light);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.uitgesteld-sectie:hover {
+    border-color: var(--macos-gray-4);
+    box-shadow: var(--macos-shadow-medium);
+}
+
+.uitgesteld-sectie .sectie-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    background: var(--macos-bg-primary);
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+    margin-bottom: 0;
+    text-transform: none;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--macos-text-primary);
+}
+
+.uitgesteld-sectie .sectie-header:hover {
+    background: var(--macos-gray-6);
+}
+
+.sectie-titel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+}
+
+.sectie-titel i {
+    color: var(--macos-blue);
+    width: 20px;
+    text-align: center;
+}
+
+.taken-count {
+    color: var(--macos-text-secondary);
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.sectie-chevron {
+    transition: transform 0.2s ease;
+}
+
+.sectie-chevron i {
+    color: var(--macos-text-secondary);
+    font-size: 12px;
+}
+
+.uitgesteld-sectie .sectie-content {
+    padding: 0 20px 20px 20px;
+    border-top: 1px solid var(--macos-gray-5);
+    background: var(--macos-bg-secondary);
+}
+
+.uitgesteld-sectie .sectie-content[style*="block"] {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+}
+
+.loading-placeholder,
+.loading-state,
+.empty-state {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--macos-text-secondary);
+    font-style: italic;
+}
+
+.loading-state {
+    color: var(--macos-blue);
+}
+
+.empty-state {
+    color: var(--macos-text-tertiary);
+}

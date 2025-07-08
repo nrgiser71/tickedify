@@ -1202,6 +1202,7 @@ class Taakbeheer {
             'opvolgen': 'Opvolgen',
             'afgewerkte-taken': 'Afgewerkt',
             'dagelijkse-planning': 'Dagelijkse Planning',
+            'uitgesteld': 'Uitgesteld',
             'uitgesteld-wekelijks': 'Wekelijks',
             'uitgesteld-maandelijks': 'Maandelijks',
             'uitgesteld-3maandelijks': '3-maandelijks',
@@ -2255,6 +2256,11 @@ class Taakbeheer {
                         this.projecten = await response.json();
                     }
                     this.taken = []; // Projecten hebben geen taken
+                } else if (this.huidigeLijst === 'uitgesteld') {
+                    // Voor uitgesteld laden we alle uitgesteld lijsten
+                    this.taken = []; // Will be loaded per section in accordion
+                    await this.renderUitgesteldConsolidated();
+                    return; // Skip normal renderTaken
                 } else {
                     const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
                     if (response.ok) {
@@ -8464,6 +8470,196 @@ class Taakbeheer {
             console.error('Error adding test tasks:', error);
             toast.error('Fout bij toevoegen van test taken');
         }
+    }
+
+    async renderUitgesteldConsolidated() {
+        const container = document.querySelector('.main-content');
+        if (!container) return;
+
+        // Define the uitgesteld categories
+        const uitgesteldCategories = [
+            { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-calendar-week' },
+            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-calendar-month' },
+            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-calendar' },
+            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-calendar' },
+            { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-calendar-year' }
+        ];
+
+        // Load counts for each category
+        const categoryCounts = {};
+        for (const category of uitgesteldCategories) {
+            try {
+                const response = await fetch(`/api/lijst/${category.key}`);
+                if (response.ok) {
+                    const taken = await response.json();
+                    categoryCounts[category.key] = taken.length;
+                } else {
+                    categoryCounts[category.key] = 0;
+                }
+            } catch (error) {
+                console.error(`Error loading count for ${category.key}:`, error);
+                categoryCounts[category.key] = 0;
+            }
+        }
+
+        container.innerHTML = `
+            <header class="main-header">
+                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h1 id="page-title">Uitgesteld</h1>
+            </header>
+
+            <div class="content-area">
+                <div class="uitgesteld-accordion">
+                    ${uitgesteldCategories.map(category => `
+                        <div class="uitgesteld-sectie" data-category="${category.key}">
+                            <div class="sectie-header" onclick="app.toggleUitgesteldSectie('${category.key}')">
+                                <div class="sectie-titel">
+                                    <i class="${category.icon}"></i>
+                                    <span>${category.name}</span>
+                                    <span class="taken-count">(${categoryCounts[category.key]})</span>
+                                </div>
+                                <div class="sectie-chevron">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </div>
+                            <div class="sectie-content" id="content-${category.key}" style="display: none;">
+                                <div class="loading-placeholder">
+                                    Klik om taken te laden...
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Reinitialize mobile menu for the new header
+        this.initializeMobileSidebar();
+    }
+
+    async toggleUitgesteldSectie(categoryKey) {
+        const sectie = document.querySelector(`[data-category="${categoryKey}"]`);
+        const content = document.getElementById(`content-${categoryKey}`);
+        const chevron = sectie.querySelector('.sectie-chevron i');
+        
+        if (!sectie || !content) return;
+
+        const isOpen = content.style.display !== 'none';
+        
+        if (isOpen) {
+            // Close section
+            content.style.display = 'none';
+            chevron.classList.remove('fa-chevron-down');
+            chevron.classList.add('fa-chevron-right');
+        } else {
+            // Open section and load data if needed
+            content.style.display = 'block';
+            chevron.classList.remove('fa-chevron-right');
+            chevron.classList.add('fa-chevron-down');
+            
+            // Load data if not already loaded
+            if (content.querySelector('.loading-placeholder')) {
+                await this.loadUitgesteldSectieData(categoryKey);
+            }
+        }
+    }
+
+    async loadUitgesteldSectieData(categoryKey) {
+        const content = document.getElementById(`content-${categoryKey}`);
+        if (!content) return;
+
+        try {
+            // Show loading state
+            content.innerHTML = '<div class="loading-state">Laden...</div>';
+            
+            // Load data from API
+            const response = await fetch(`/api/lijst/${categoryKey}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            
+            const taken = await response.json();
+            
+            if (taken.length === 0) {
+                content.innerHTML = '<div class="empty-state">Geen taken in deze categorie</div>';
+                return;
+            }
+
+            // Create table for the tasks
+            content.innerHTML = `
+                <div class="uitgesteld-tabel-container">
+                    <table class="taken-tabel uitgesteld-tabel">
+                        <thead>
+                            <tr>
+                                <th width="30"></th>
+                                <th>Taak</th>
+                                <th>Project</th>
+                                <th>Context</th>
+                                <th>Datum</th>
+                                <th>Duur</th>
+                                <th width="60">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-${categoryKey}">
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Render the tasks in the table
+            this.renderUitgesteldSectieRows(categoryKey, taken);
+
+        } catch (error) {
+            console.error(`Error loading data for ${categoryKey}:`, error);
+            content.innerHTML = '<div class="error-state">Fout bij laden van taken</div>';
+        }
+    }
+
+    renderUitgesteldSectieRows(categoryKey, taken) {
+        const tbody = document.getElementById(`tbody-${categoryKey}`);
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        taken.forEach(taak => {
+            const tr = document.createElement('tr');
+            tr.className = 'actie-row';
+            tr.dataset.id = taak.id;
+            
+            const projectNaam = this.getProjectNaam(taak.projectId);
+            const contextNaam = this.getContextNaam(taak.contextId);
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
+            const duurText = taak.duur ? `${taak.duur} min` : '';
+            const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
+            
+            tr.innerHTML = `
+                <td>
+                    <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
+                </td>
+                <td class="actie-tekst" onclick="app.bewerk('${taak.id}')" title="${tooltipContent}">
+                    ${taak.tekst}${recurringIndicator}
+                </td>
+                <td class="actie-project">${projectNaam}</td>
+                <td class="actie-context">${contextNaam}</td>
+                <td class="actie-datum">${datum}</td>
+                <td class="actie-duur">${duurText}</td>
+                <td class="actie-buttons">
+                    <div class="verplaats-dropdown">
+                        <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
+                        <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
+                            ${this.getVerplaatsOptiesUitgesteld(taak.id)}
+                        </div>
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
     }
 
     filterPlanningActies() {
