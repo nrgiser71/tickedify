@@ -636,6 +636,11 @@ class Taakbeheer {
             }
         });
 
+        // Test taken toevoegen
+        document.getElementById('testTakenBtn').addEventListener('click', () => {
+            this.voegTestTakenToe();
+        });
+
         document.getElementById('taakInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && this.huidigeLijst === 'inbox') {
                 this.voegTaakToe();
@@ -8406,6 +8411,59 @@ class Taakbeheer {
                 <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
             </div>
         `;
+    }
+
+    async voegTestTakenToe() {
+        const testTaken = [
+            { tekst: 'Test taak 1 - Normale taak', project: 'Test Project', context: 'test', duur: 30 },
+            { tekst: 'Test taak 2 - Dagelijkse herhaling', project: 'Test Project', context: 'test', duur: 15, herhaling: 'dagelijks' },
+            { tekst: 'Test taak 3 - Wekelijkse herhaling', project: 'Test Project', context: 'test', duur: 60, herhaling: 'weekly-1-1' },
+            { tekst: 'Test taak 4 - Maandelijkse herhaling', project: 'Test Project', context: 'test', duur: 45, herhaling: 'monthly-day-1-1' },
+            { tekst: 'Test taak 5 - Lange taak naam voor testen van layout en responsive design', project: 'Test Project', context: 'test', duur: 120 }
+        ];
+
+        toast.info(`${testTaken.length} test taken toevoegen...`);
+
+        try {
+            for (const taak of testTaken) {
+                const taskData = {
+                    id: `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    tekst: taak.tekst,
+                    projectId: taak.project,
+                    contextId: taak.context,
+                    duur: taak.duur,
+                    verschijndatum: new Date().toISOString().split('T')[0],
+                    lijst: 'inbox',
+                    herhalingType: taak.herhaling || null,
+                    herhalingActief: !!taak.herhaling,
+                    opmerkingen: 'Test taak - gegenereerd door test knop'
+                };
+
+                const response = await fetch('/api/debug/add-single-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(taskData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                // Small delay to prevent overwhelming the server
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            toast.success('Test taken succesvol toegevoegd!');
+            
+            // Refresh the current list if we're in inbox
+            if (this.huidigeLijst === 'inbox') {
+                await this.laadHuidigeLijst();
+            }
+
+        } catch (error) {
+            console.error('Error adding test tasks:', error);
+            toast.error('Fout bij toevoegen van test taken');
+        }
     }
 
     filterPlanningActies() {

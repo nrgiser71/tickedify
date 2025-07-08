@@ -6150,3 +6150,23 @@ button:focus {
     border-left: 3px solid #007aff;
 }
 }
+/* Test button styling */
+.test-button {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, var(--macos-orange) 0%, #ff6b35 100%);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--macos-radius-medium);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+    margin-left: 8px;
+}
+
+.test-button:hover {
+    background: linear-gradient(135deg, #ff6b35 0%, var(--macos-orange) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(255, 149, 0, 0.4);
+}
