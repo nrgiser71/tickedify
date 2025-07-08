@@ -609,10 +609,7 @@ class Taakbeheer {
             }
         });
 
-        // Dropdown functionaliteit
-        document.getElementById('uitgesteld-dropdown').addEventListener('click', () => {
-            this.toggleDropdown('uitgesteld');
-        });
+        // Skip uitgesteld dropdown - now using direct button navigation
 
         // Tools dropdown functionaliteit
         document.getElementById('tools-dropdown').addEventListener('click', () => {
@@ -9867,9 +9864,9 @@ if (window.loading) {
     loading.showGlobal('App wordt geladen...');
 }
 
-// Initialize app and authentication
-const app = new Taakbeheer();
+// Initialize authentication first, then app
 const auth = new AuthManager();
+const app = new Taakbeheer();
 const updateManager = new UpdateManager();
 
 // Make app available globally for onclick handlers
