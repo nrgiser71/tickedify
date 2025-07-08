@@ -6176,42 +6176,42 @@ button:focus {
     box-shadow: 0 4px 16px rgba(255, 149, 0, 0.4);
 }
 
-/* Uitgesteld Accordion Styling */
+/* Uitgesteld Accordion Styling - Apple Native Style */
 .uitgesteld-accordion {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
+    gap: 0;
+    padding: 0;
+    background: var(--macos-bg-primary);
 }
 
 .uitgesteld-sectie {
     background: var(--macos-bg-primary);
-    border-radius: var(--macos-radius-large);
-    border: 1px solid var(--macos-gray-5);
-    box-shadow: var(--macos-shadow-light);
+    border: none;
+    box-shadow: none;
     overflow: hidden;
-    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--macos-gray-5);
 }
 
-.uitgesteld-sectie:hover {
-    border-color: var(--macos-gray-4);
-    box-shadow: var(--macos-shadow-medium);
+.uitgesteld-sectie:last-child {
+    border-bottom: none;
 }
 
 .uitgesteld-sectie .sectie-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
+    padding: 12px 20px;
     cursor: pointer;
     background: var(--macos-bg-primary);
-    border-bottom: 1px solid transparent;
-    transition: all 0.2s ease;
+    border: none;
+    transition: background-color 0.15s ease;
     margin-bottom: 0;
     text-transform: none;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 400;
     color: var(--macos-text-primary);
+    min-height: 44px;
 }
 
 .uitgesteld-sectie .sectie-header:hover {
@@ -6221,35 +6221,37 @@ button:focus {
 .sectie-titel {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-weight: 500;
+    gap: 8px;
+    font-weight: 400;
 }
 
 .sectie-titel i {
-    color: var(--macos-text-primary);
-    width: 20px;
+    color: var(--macos-text-secondary);
+    width: 16px;
     text-align: center;
+    font-size: 12px;
 }
 
 .taken-count {
     color: var(--macos-text-secondary);
     font-weight: 400;
-    font-size: 14px;
+    font-size: 12px;
+    margin-left: 4px;
 }
 
 .sectie-chevron {
-    transition: transform 0.2s ease;
+    transition: transform 0.15s ease;
 }
 
 .sectie-chevron i {
     color: var(--macos-text-secondary);
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .uitgesteld-sectie .sectie-content {
-    padding: 0 20px 20px 20px;
-    border-top: 1px solid var(--macos-gray-5);
-    background: var(--macos-bg-secondary);
+    padding: 0;
+    border-top: none;
+    background: var(--macos-bg-primary);
     max-height: 400px;
     overflow-y: auto;
 }
@@ -6262,20 +6264,17 @@ button:focus {
     from {
         opacity: 0;
         max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
     }
     to {
         opacity: 1;
         max-height: 400px;
-        padding-top: 20px;
-        padding-bottom: 20px;
     }
 }
 
-/* Uitgesteld taken lijst styling */
+/* Native macOS List Styling */
 .uitgesteld-lijst-container {
     padding: 0;
+    background: var(--macos-bg-primary);
 }
 
 .uitgesteld-taken-lijst {
@@ -6284,23 +6283,27 @@ button:focus {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
 }
 
 .uitgesteld-taak-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: 8px 20px;
     background: var(--macos-bg-primary);
-    border-radius: var(--macos-radius-button);
-    border: 1px solid var(--macos-gray-5);
-    transition: all 0.2s ease;
+    border: none;
+    border-bottom: 1px solid var(--macos-gray-5);
+    transition: background-color 0.15s ease;
+    min-height: 32px;
+}
+
+.uitgesteld-taak-item:last-child {
+    border-bottom: none;
 }
 
 .uitgesteld-taak-item:hover {
-    border-color: var(--macos-gray-4);
-    box-shadow: var(--macos-shadow-light);
+    background: var(--macos-gray-6);
 }
 
 .taak-content {
@@ -6309,48 +6312,56 @@ button:focus {
 }
 
 .taak-tekst {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--macos-text-primary);
-    line-height: 1.4;
+    line-height: 1.3;
     cursor: pointer;
     word-wrap: break-word;
+    font-weight: 400;
 }
 
 .taak-acties {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.uitgesteld-taak-item:hover .taak-acties {
+    opacity: 1;
 }
 
 .verplaats-btn-small,
 .delete-btn-small {
-    padding: 6px 8px;
-    background: var(--macos-bg-secondary);
-    border: 1px solid var(--macos-gray-4);
-    border-radius: var(--macos-radius-small);
+    padding: 4px 6px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s ease;
-    min-width: 28px;
-    height: 28px;
+    font-size: 11px;
+    transition: background-color 0.15s ease;
+    min-width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--macos-text-secondary);
 }
 
 .verplaats-btn-small:hover {
-    background: var(--macos-gray-6);
-    border-color: var(--macos-gray-3);
+    background: var(--macos-gray-4);
+    color: var(--macos-text-primary);
 }
 
 .delete-btn-small {
-    color: var(--macos-red);
+    color: var(--macos-text-secondary);
 }
 
 .delete-btn-small:hover {
-    background: rgba(255, 59, 48, 0.1);
-    border-color: var(--macos-red);
+    background: var(--macos-red);
+    color: white;
 }
 
 .loading-placeholder,
