@@ -1171,9 +1171,14 @@ class Taakbeheer {
     }
 
     async navigeerNaarLijst(lijst) {
-        // If we're coming from contextenbeheer or dagelijkse-planning, restore normal structure
+        // If we're coming from contextenbeheer, dagelijkse-planning, or uitgesteld, restore normal structure
         let titleAlreadySet = false;
-        if ((this.huidigeLijst === 'contextenbeheer' || this.huidigeLijst === 'dagelijkse-planning') && lijst !== 'contextenbeheer' && lijst !== 'dagelijkse-planning') {
+        if ((this.huidigeLijst === 'contextenbeheer' || 
+             this.huidigeLijst === 'dagelijkse-planning' || 
+             this.huidigeLijst === 'uitgesteld') && 
+            lijst !== 'contextenbeheer' && 
+            lijst !== 'dagelijkse-planning' && 
+            lijst !== 'uitgesteld') {
             this.restoreNormalContainer(lijst);
             titleAlreadySet = true; // Title is set by restoreNormalContainer
         }
@@ -5543,6 +5548,37 @@ class Taakbeheer {
         }
         if (appLayout) {
             appLayout.style.flexDirection = '';
+        }
+        
+        // First check if we're coming from uitgesteld consolidated view
+        const uitgesteldContainer = document.querySelector('.uitgesteld-consolidated-container');
+        if (uitgesteldContainer) {
+            // Remove the uitgesteld accordion container completely
+            const contentArea = document.querySelector('.content-area');
+            if (contentArea) {
+                contentArea.innerHTML = '';
+                
+                // Create proper structure based on target list
+                const isInbox = (targetLijst || this.huidigeLijst) === 'inbox';
+                if (isInbox) {
+                    contentArea.innerHTML = `
+                        <div class="taak-input-container" id="taak-input-container">
+                            <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                            <button id="toevoegBtn">Toevoegen</button>
+                        </div>
+                        <div class="taken-container">
+                            <ul id="takenLijst"></ul>
+                        </div>
+                    `;
+                } else {
+                    contentArea.innerHTML = `
+                        <div class="taken-container">
+                            <ul id="takenLijst"></ul>
+                        </div>
+                    `;
+                }
+                return;
+            }
         }
         
         // Restore the normal taken container structure
