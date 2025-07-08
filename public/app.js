@@ -5957,6 +5957,9 @@ class Taakbeheer {
             taakInputContainer.style.display = 'none';
         }
 
+        // Restore normal container structure if needed
+        this.restoreNormalContainer();
+
         // Get content container
         const container = document.getElementById('takenLijst');
         if (!container) return;
