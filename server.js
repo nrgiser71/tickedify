@@ -2477,6 +2477,8 @@ const testModule = require('./test-runner');
 
 // Version endpoint voor deployment tracking
 app.get('/api/version', (req, res) => {
+    // Clear require cache for package.json to get fresh version
+    delete require.cache[require.resolve('./package.json')];
     const packageJson = require('./package.json');
     res.json({
         version: packageJson.version,
