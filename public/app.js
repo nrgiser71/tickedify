@@ -5551,7 +5551,7 @@ class Taakbeheer {
         }
         
         // First check if we're coming from uitgesteld consolidated view
-        const uitgesteldContainer = document.querySelector('.uitgesteld-consolidated-container');
+        const uitgesteldContainer = document.querySelector('.uitgesteld-accordion');
         if (uitgesteldContainer) {
             // Remove the uitgesteld accordion container completely
             const contentArea = document.querySelector('.content-area');
