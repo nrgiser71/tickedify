@@ -2523,10 +2523,9 @@ class Taakbeheer {
     }
 
     getVerplaatsOptiesUitgesteld(taakId) {
-        // Simplified dropdown - only non-uitgesteld options since drag & drop handles uitgesteld moves
+        // Simplified dropdown - only inbox and opvolgen since drag & drop handles uitgesteld moves
         const alleOpties = [
             { key: 'inbox', label: 'Inbox' },
-            { key: 'acties', label: 'Acties' },
             { key: 'opvolgen', label: 'Opvolgen' }
         ];
 

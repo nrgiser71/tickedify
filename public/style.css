@@ -633,39 +633,45 @@ body {
 
 .verplaats-menu {
     position: fixed;
-    background: var(--macos-bg-primary);
+    background: rgba(255, 255, 255, 0.95);
     border: 1px solid var(--macos-gray-4);
-    border-radius: var(--macos-radius-medium);
-    box-shadow: var(--macos-shadow-medium);
+    border-radius: var(--macos-radius-large);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     z-index: 9999;
-    min-width: 140px;
+    min-width: 120px;
     backdrop-filter: blur(20px);
+    padding: 4px;
 }
 
 .verplaats-menu button {
     display: block;
     width: 100%;
-    padding: 8px 12px;
+    padding: 8px 16px;
     border: none;
     background: none;
     text-align: left;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     color: var(--macos-text-primary);
-    transition: background-color 0.2s ease;
+    transition: all 0.15s ease;
+    border-radius: var(--macos-radius-button);
+    margin: 1px 0;
 }
 
 .verplaats-menu button:hover {
     background: var(--macos-blue);
     color: white;
+    transform: none;
 }
 
 .verplaats-menu button:first-child {
-    border-radius: var(--macos-radius-medium) var(--macos-radius-medium) 0 0;
+    border-radius: var(--macos-radius-button);
+    margin-top: 0;
 }
 
 .verplaats-menu button:last-child {
-    border-radius: 0 0 var(--macos-radius-medium) var(--macos-radius-medium);
+    border-radius: var(--macos-radius-button);
+    margin-bottom: 0;
 }
 
 /* ===== DATUM STATUS INDICATORS ===== */
