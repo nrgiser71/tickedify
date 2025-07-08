@@ -5986,23 +5986,23 @@ class Taakbeheer {
                                 <div class="checkbox-group">
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-inbox" checked>
-                                        <span><i class="ti ti-inbox"></i> Inbox</span>
+                                        <span>Inbox</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-acties" checked>
-                                        <span><i class="fas fa-clipboard"></i> Acties</span>
+                                        <span>Acties</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-opvolgen" checked>
-                                        <span>⏳ Opvolgen</span>
+                                        <span>Opvolgen</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-uitgesteld" checked>
-                                        <span><i class="ti ti-calendar"></i> Uitgesteld</span>
+                                        <span>Uitgesteld</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-afgewerkt">
-                                        <span><i class="fas fa-check"></i> Afgewerkt</span>
+                                        <span>Afgewerkt</span>
                                     </label>
                                 </div>
                             </div>
