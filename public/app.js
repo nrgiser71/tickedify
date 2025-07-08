@@ -2998,8 +2998,8 @@ class Taakbeheer {
                                     this.planningActies.push(newTask);
                                 }
                                 
-                                // Re-render taken to show the new recurring task
-                                this.preserveScrollPosition(() => this.renderTaken());
+                                // Add new recurring task to DOM without full refresh
+                                this.addNewTaskToDOM(newTask);
                             }
                         } catch (error) {
                             console.error('Error fetching new recurring task:', error);
@@ -8270,6 +8270,123 @@ class Taakbeheer {
             button: checkboxElement?.closest('.task-checkbox'),
             message: 'Taak afwerken...'
         });
+    }
+
+    addNewTaskToDOM(newTask) {
+        // Add new recurring task to DOM without full refresh
+        if (this.huidigeLijst === 'acties') {
+            // Check if we're in table view or list view
+            const tableBody = document.querySelector('.taken-tabel tbody');
+            const taskList = document.querySelector('.taken-lijst');
+            
+            if (tableBody) {
+                // Table view - add as table row
+                const tr = document.createElement('tr');
+                tr.className = 'taak-row';
+                tr.innerHTML = this.createTaskRowHTML(newTask);
+                
+                // Add with slide-in animation
+                tr.style.opacity = '0';
+                tr.style.transform = 'translateY(-20px)';
+                tr.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                
+                // Insert at top of table
+                tableBody.insertBefore(tr, tableBody.firstChild);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    tr.style.opacity = '1';
+                    tr.style.transform = 'translateY(0)';
+                }, 50);
+            } else if (taskList) {
+                // List view - add as list item
+                const li = document.createElement('li');
+                li.className = 'taak-item';
+                li.innerHTML = this.createTaskListHTML(newTask);
+                
+                // Add with slide-in animation
+                li.style.opacity = '0';
+                li.style.transform = 'translateY(-20px)';
+                li.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                
+                // Insert at top of list
+                taskList.insertBefore(li, taskList.firstChild);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    li.style.opacity = '1';
+                    li.style.transform = 'translateY(0)';
+                }, 50);
+            }
+            
+            console.log('✨ New recurring task added to DOM without full refresh');
+        }
+    }
+
+    createTaskRowHTML(taak) {
+        // Create HTML for table row (actions table view)
+        const projectNaam = this.getProjectNaam(taak.projectId);
+        const contextNaam = this.getContextNaam(taak.contextId);
+        const herhalingIndicator = taak.herhalingActief ? ' 🔄' : '';
+        const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+        
+        return `
+            <td title="Taak afwerken">
+                <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
+            </td>
+            <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}${taak.opmerkingen ? '\n\nOpmerkingen:\n' + this.escapeHtml(taak.opmerkingen) : ''}">${taak.tekst}${herhalingIndicator}</td>
+            <td title="${this.escapeHtml(projectNaam)}">${projectNaam}</td>
+            <td title="${this.escapeHtml(contextNaam)}">${contextNaam}</td>
+            <td title="${datum}">${datum}</td>
+            <td title="${taak.duur} minuten">${taak.duur} min</td>
+            <td>
+                <div class="actie-buttons">
+                    <div class="verplaats-dropdown">
+                        <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdown('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
+                        <div class="verplaats-menu" id="verplaats-${taak.id}" style="display: none;">
+                            <button onclick="app.verplaatsActie('${taak.id}', 'opvolgen')">Opvolgen</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-wekelijks')">Wekelijks</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-maandelijks')">Maandelijks</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-3maandelijks')">3-maandelijks</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-6maandelijks')">6-maandelijks</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-jaarlijks')">Jaarlijks</button>
+                        </div>
+                    </div>
+                    <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
+                </div>
+            </td>
+        `;
+    }
+
+    createTaskListHTML(taak) {
+        // Create HTML for list item (actions list view)
+        const projectNaam = this.getProjectNaam(taak.projectId);
+        const contextNaam = this.getContextNaam(taak.contextId);
+        const herhalingIndicator = taak.herhalingActief ? ' 🔄' : '';
+        
+        // Build extra info
+        const extraInfo = [];
+        if (projectNaam !== 'Geen project') extraInfo.push(projectNaam);
+        if (contextNaam) extraInfo.push('@' + contextNaam);
+        if (taak.verschijndatum) extraInfo.push(new Date(taak.verschijndatum).toLocaleDateString('nl-NL'));
+        if (taak.duur) extraInfo.push(taak.duur + ' min');
+        
+        const extraInfoHtml = extraInfo.length > 0 ? 
+            `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';
+        
+        return `
+            <div class="taak-checkbox">
+                <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
+            </div>
+            <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
+                <div class="taak-titel">${taak.tekst}${herhalingIndicator}</div>
+                ${extraInfoHtml}
+            </div>
+            <div class="taak-acties">
+                <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
+                <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
+            </div>
+        `;
     }
 
     filterPlanningActies() {
