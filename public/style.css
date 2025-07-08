@@ -701,6 +701,9 @@ body {
 
 .filter-checkbox input[type="checkbox"] {
     margin: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 /* Checkbox wrapper styling */
@@ -715,6 +718,8 @@ body {
 
 .checkbox-wrapper input[type="checkbox"] {
     margin: 0;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
 }
 
