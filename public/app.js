@@ -8662,7 +8662,7 @@ class Taakbeheer {
                             ${this.getVerplaatsOptiesUitgesteld(taak.id)}
                         </div>
                     </div>
-                    <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">🗑️</button>
+                    <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">×</button>
                 </div>
             `;
 

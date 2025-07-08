@@ -6207,10 +6207,11 @@ button:focus {
     border: none;
     transition: background-color 0.15s ease;
     margin-bottom: 0;
-    text-transform: none;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--macos-text-primary);
+    text-transform: none !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    color: var(--macos-text-primary) !important;
+    letter-spacing: normal !important;
     min-height: 44px;
 }
 
@@ -6323,18 +6324,12 @@ button:focus {
 .taak-acties {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-}
-
-.uitgesteld-taak-item:hover .taak-acties {
     opacity: 1;
 }
 
-.verplaats-btn-small,
-.delete-btn-small {
+.verplaats-btn-small {
     padding: 4px 6px;
     background: transparent;
     border: none;
@@ -6356,12 +6351,24 @@ button:focus {
 }
 
 .delete-btn-small {
-    color: var(--macos-text-secondary);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--macos-red);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    transition: all 0.15s ease;
+    padding: 0;
 }
 
 .delete-btn-small:hover {
-    background: var(--macos-red);
-    color: white;
+    background: #d70015;
+    transform: scale(1.1);
 }
 
 .loading-placeholder,
