@@ -3055,7 +3055,7 @@ class Taakbeheer {
             return result.success;
         }, {
             operationId: 'complete-task',
-            showGlobal: false,
+            showGlobal: true,
             message: 'Taak afwerken...'
         });
     }
@@ -8027,6 +8027,10 @@ class Taakbeheer {
     async completePlanningTask(actieId, checkboxElement) {
         console.log('🎯 completePlanningTask called with actieId:', actieId);
         
+        // Optimistische UI update: checkbox direct aanvinken
+        checkboxElement.checked = true;
+        checkboxElement.disabled = true; // Voorkom dubbele clicks
+        
         return await loading.withLoading(async () => {
             try {
                 // Find the task in planning actions array first, then fall back to main tasks
@@ -8102,6 +8106,21 @@ class Taakbeheer {
                     this.planningActies = this.planningActies.filter(t => t.id !== actieId);
                 }
                 console.log('📊 Arrays updated, current list type:', this.huidigeLijst);
+                
+                // Chirurgische DOM update: verwijder het planning item direct uit de kalender
+                const planningElement = document.querySelector(`[data-actie-id="${actieId}"]`);
+                if (planningElement) {
+                    // Fade out animatie voor smooth removal
+                    planningElement.style.opacity = '0';
+                    planningElement.style.transform = 'scale(0.9)';
+                    planningElement.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                    
+                    // Verwijder het element na animatie
+                    setTimeout(() => {
+                        planningElement.remove();
+                        console.log('✨ Planning item removed from DOM');
+                    }, 200);
+                }
                 
                 // Refresh the daily planning view to update both actions list and calendar
                 if (this.huidigeLijst === 'dagelijkse-planning') {
@@ -8231,12 +8250,19 @@ class Taakbeheer {
             } else {
                 // Revert checkbox if completion failed
                 checkboxElement.checked = false;
+                checkboxElement.disabled = false;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
             } catch (error) {
                 console.error('Error completing planning task:', error);
                 checkboxElement.checked = false;
+                checkboxElement.disabled = false;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+            } finally {
+                // Re-enable checkbox after completion
+                if (checkboxElement.disabled) {
+                    checkboxElement.disabled = false;
+                }
             }
         }, {
             operationId: 'complete-planning-task',
