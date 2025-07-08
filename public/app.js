@@ -2913,6 +2913,16 @@ class Taakbeheer {
         
         const isRecurring = taak.herhalingActief && taak.herhalingType;
         
+        // Direct feedback - geen wachten op API
+        const checkbox = document.querySelector(`input[onchange*="${id}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+            checkbox.disabled = true;
+        }
+        
+        // Instant toast voor directe feedback
+        toast.info('Taak wordt afgewerkt...');
+        
         try {
             return await loading.withLoading(async () => {
             taak.afgewerkt = new Date().toISOString();
@@ -3012,8 +3022,12 @@ class Taakbeheer {
                 // No need to re-render - DOM element already removed above
                 // Local array is correct, server background sync handles persistence
             } else {
-                // Rollback the afgewerkt timestamp
+                // Rollback the afgewerkt timestamp and checkbox state
                 delete taak.afgewerkt;
+                if (checkbox) {
+                    checkbox.checked = false;
+                    checkbox.disabled = false;
+                }
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
             
@@ -3021,11 +3035,16 @@ class Taakbeheer {
             this.activeCompletions.delete(id);
         }, {
             operationId: `complete-task-${id}`,
-            showGlobal: true,
+            showGlobal: false, // We use instant toast instead
             message: 'Taak afwerken...'
         });
         } catch (error) {
             console.error('Error in taakAfwerken:', error);
+            // Rollback checkbox state on error
+            if (checkbox) {
+                checkbox.checked = false;
+                checkbox.disabled = false;
+            }
             this.activeCompletions.delete(id);
             throw error;
         }
