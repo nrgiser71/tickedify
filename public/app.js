@@ -8561,11 +8561,11 @@ class Taakbeheer {
 
         // Define the uitgesteld categories
         const uitgesteldCategories = [
-            { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-folder' },
-            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-folder' },
-            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-folder' },
-            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-folder' },
-            { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-folder' }
+            { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-pause-circle' }
         ];
 
         // Load counts for each category
