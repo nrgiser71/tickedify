@@ -3119,9 +3119,27 @@ class Taakbeheer {
         });
     }
 
-    async verwijderTaak(id) {
-        const taak = this.taken.find(t => t.id === id);
-        if (!taak) return;
+    async verwijderTaak(id, categoryKey = null) {
+        let taak;
+        
+        // For uitgesteld interface, we need to fetch task details from API
+        if (categoryKey) {
+            try {
+                const response = await fetch(`/api/taak/${id}`);
+                if (response.ok) {
+                    taak = await response.json();
+                }
+            } catch (error) {
+                console.error('Error fetching task for deletion:', error);
+            }
+        } else {
+            taak = this.taken.find(t => t.id === id);
+        }
+        
+        if (!taak) {
+            toast.error('Taak niet gevonden');
+            return;
+        }
         
         const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
@@ -3134,18 +3152,34 @@ class Taakbeheer {
                 });
                 
                 if (response.ok) {
-                    // Remove from local array
-                    this.taken = this.taken.filter(taak => taak.id !== id);
-                    
-                    // Re-render with preserved filters and scroll position for actions list
-                    if (this.huidigeLijst === 'acties') {
-                        await this.preserveActionsFilters(() => this.renderTaken());
+                    if (categoryKey) {
+                        // For uitgesteld interface: remove from DOM and update count
+                        const taakElement = document.querySelector(`[data-id="${id}"]`);
+                        if (taakElement) {
+                            taakElement.remove();
+                        }
+                        
+                        // Update count in header
+                        const header = document.querySelector(`[data-category="${categoryKey}"] .taken-count`);
+                        if (header) {
+                            const currentCount = parseInt(header.textContent.match(/\d+/)[0]);
+                            header.textContent = `(${currentCount - 1})`;
+                        }
+                        
+                        toast.success('Taak verwijderd');
                     } else {
-                        this.renderTaken();
+                        // Normal list interface
+                        this.taken = this.taken.filter(taak => taak.id !== id);
+                        
+                        // Re-render with preserved filters and scroll position for actions list
+                        if (this.huidigeLijst === 'acties') {
+                            await this.preserveActionsFilters(() => this.renderTaken());
+                        } else {
+                            this.renderTaken();
+                        }
+                        
+                        console.log(`<i class="fas fa-check"></i> Task ${id} deleted successfully`);
                     }
-                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-                    
-                    console.log(`<i class="fas fa-check"></i> Task ${id} deleted successfully`);
                 } else {
                     const error = await response.json();
                     toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
@@ -8476,9 +8510,9 @@ class Taakbeheer {
         // Define the uitgesteld categories
         const uitgesteldCategories = [
             { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-calendar-week' },
-            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-calendar-month' },
-            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-calendar' },
-            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-calendar' },
+            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-calendar-alt' },
+            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-calendar-day' },
+            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-calendar-check' },
             { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-calendar-year' }
         ];
 
@@ -8586,24 +8620,11 @@ class Taakbeheer {
                 return;
             }
 
-            // Create table for the tasks
+            // Create simplified list for the tasks
             content.innerHTML = `
-                <div class="uitgesteld-tabel-container">
-                    <table class="taken-tabel uitgesteld-tabel">
-                        <thead>
-                            <tr>
-                                <th width="30"></th>
-                                <th>Taak</th>
-                                <th>Project</th>
-                                <th>Context</th>
-                                <th>Datum</th>
-                                <th>Duur</th>
-                                <th width="60">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-${categoryKey}">
-                        </tbody>
-                    </table>
+                <div class="uitgesteld-lijst-container">
+                    <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
+                    </ul>
                 </div>
             `;
 
@@ -8617,45 +8638,35 @@ class Taakbeheer {
     }
 
     renderUitgesteldSectieRows(categoryKey, taken) {
-        const tbody = document.getElementById(`tbody-${categoryKey}`);
-        if (!tbody) return;
+        const lijst = document.getElementById(`lijst-${categoryKey}`);
+        if (!lijst) return;
 
-        tbody.innerHTML = '';
+        lijst.innerHTML = '';
 
         taken.forEach(taak => {
-            const tr = document.createElement('tr');
-            tr.className = 'actie-row';
-            tr.dataset.id = taak.id;
+            const li = document.createElement('li');
+            li.className = 'uitgesteld-taak-item';
+            li.dataset.id = taak.id;
             
-            const projectNaam = this.getProjectNaam(taak.projectId);
-            const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
-            const duurText = taak.duur ? `${taak.duur} min` : '';
             const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
             
-            tr.innerHTML = `
-                <td>
-                    <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
-                </td>
-                <td class="actie-tekst" onclick="app.bewerk('${taak.id}')" title="${tooltipContent}">
-                    ${taak.tekst}${recurringIndicator}
-                </td>
-                <td class="actie-project">${projectNaam}</td>
-                <td class="actie-context">${contextNaam}</td>
-                <td class="actie-datum">${datum}</td>
-                <td class="actie-duur">${duurText}</td>
-                <td class="actie-buttons">
+            li.innerHTML = `
+                <div class="taak-content">
+                    <span class="taak-tekst" title="${tooltipContent}">${taak.tekst}${recurringIndicator}</span>
+                </div>
+                <div class="taak-acties">
                     <div class="verplaats-dropdown">
                         <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
                         <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
                             ${this.getVerplaatsOptiesUitgesteld(taak.id)}
                         </div>
                     </div>
-                </td>
+                    <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">🗑️</button>
+                </div>
             `;
 
-            tbody.appendChild(tr);
+            lijst.appendChild(li);
         });
     }
 

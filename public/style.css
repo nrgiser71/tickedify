@@ -6226,7 +6226,7 @@ button:focus {
 }
 
 .sectie-titel i {
-    color: var(--macos-blue);
+    color: var(--macos-text-primary);
     width: 20px;
     text-align: center;
 }
@@ -6250,6 +6250,8 @@ button:focus {
     padding: 0 20px 20px 20px;
     border-top: 1px solid var(--macos-gray-5);
     background: var(--macos-bg-secondary);
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
@@ -6265,10 +6267,90 @@ button:focus {
     }
     to {
         opacity: 1;
-        max-height: 500px;
+        max-height: 400px;
         padding-top: 20px;
         padding-bottom: 20px;
     }
+}
+
+/* Uitgesteld taken lijst styling */
+.uitgesteld-lijst-container {
+    padding: 0;
+}
+
+.uitgesteld-taken-lijst {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.uitgesteld-taak-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-button);
+    border: 1px solid var(--macos-gray-5);
+    transition: all 0.2s ease;
+}
+
+.uitgesteld-taak-item:hover {
+    border-color: var(--macos-gray-4);
+    box-shadow: var(--macos-shadow-light);
+}
+
+.taak-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.taak-tekst {
+    font-size: 14px;
+    color: var(--macos-text-primary);
+    line-height: 1.4;
+    cursor: pointer;
+    word-wrap: break-word;
+}
+
+.taak-acties {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.verplaats-btn-small,
+.delete-btn-small {
+    padding: 6px 8px;
+    background: var(--macos-bg-secondary);
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.verplaats-btn-small:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.delete-btn-small {
+    color: var(--macos-red);
+}
+
+.delete-btn-small:hover {
+    background: rgba(255, 59, 48, 0.1);
+    border-color: var(--macos-red);
 }
 
 .loading-placeholder,
