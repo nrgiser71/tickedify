@@ -6224,6 +6224,18 @@ button:focus {
     align-items: center;
     gap: 8px;
     font-weight: 400;
+    color: var(--macos-text-primary) !important;
+}
+
+.sectie-titel span {
+    color: var(--macos-text-primary) !important;
+}
+
+.uitgesteld-sectie .sectie-titel,
+.uitgesteld-sectie .sectie-titel span,
+.uitgesteld-accordion .sectie-titel,
+.uitgesteld-accordion .sectie-titel span {
+    color: var(--macos-text-primary) !important;
 }
 
 .sectie-titel i {
