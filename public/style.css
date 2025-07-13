@@ -6439,7 +6439,7 @@ button:focus {
 /* Floating Drop Panel */
 .floating-drop-panel {
     position: fixed;
-    bottom: -300px; /* Hidden by default */
+    top: -300px; /* Hidden by default */
     right: 30px;
     width: 280px;
     background: rgba(255, 255, 255, 0.95);
@@ -6449,12 +6449,12 @@ button:focus {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 
                 0 0 1px rgba(0, 0, 0, 0.1);
     z-index: 10000;
-    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .floating-drop-panel.active {
-    bottom: 30px;
+    top: 80px;
 }
 
 .drop-panel-content {
