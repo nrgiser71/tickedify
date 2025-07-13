@@ -8669,17 +8669,11 @@ class Taakbeheer {
                 return;
             }
 
-            // Create wrapper with indicators outside the scroll area
+            // Simple list - indicators will be added by JavaScript
             content.innerHTML = `
-                <div class="scroll-wrapper">
-                    <div class="scroll-indicator-top" id="indicator-top-${categoryKey}">▲</div>
-                    <div class="scroll-content-wrapper">
-                        <div class="uitgesteld-lijst-container">
-                            <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="scroll-indicator-bottom" id="indicator-bottom-${categoryKey}">▼</div>
+                <div class="uitgesteld-lijst-container">
+                    <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
+                    </ul>
                 </div>
             `;
 
@@ -8870,66 +8864,80 @@ class Taakbeheer {
     }
 
     setupIntelligentScrollIndicators(categoryKey) {
-        const outerContainer = document.getElementById(`content-${categoryKey}`);
-        const scrollContainer = outerContainer.querySelector('.scroll-content-wrapper');
-        const topIndicator = document.getElementById(`indicator-top-${categoryKey}`);
-        const bottomIndicator = document.getElementById(`indicator-bottom-${categoryKey}`);
-        
-        if (!outerContainer || !scrollContainer || !topIndicator || !bottomIndicator) return;
-        
-        // Move scroll behavior to the outer container
-        outerContainer.style.overflow = 'hidden';
-        scrollContainer.style.height = '100%';
-        scrollContainer.style.overflowY = 'auto';
+        const scrollContainer = document.getElementById(`content-${categoryKey}`);
+        if (!scrollContainer) return;
+
+        // Create and insert fixed indicators
+        const topIndicator = document.createElement('div');
+        topIndicator.className = 'scroll-indicator-fixed scroll-indicator-top';
+        topIndicator.innerHTML = '▲';
+        topIndicator.style.cssText = `
+            position: fixed;
+            top: ${scrollContainer.getBoundingClientRect().top}px;
+            left: ${scrollContainer.getBoundingClientRect().left}px;
+            width: ${scrollContainer.offsetWidth}px;
+            height: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0,0,0,0.6);
+            font-size: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        `;
+
+        const bottomIndicator = document.createElement('div');
+        bottomIndicator.className = 'scroll-indicator-fixed scroll-indicator-bottom';
+        bottomIndicator.innerHTML = '▼';
+        bottomIndicator.style.cssText = `
+            position: fixed;
+            top: ${scrollContainer.getBoundingClientRect().bottom - 20}px;
+            left: ${scrollContainer.getBoundingClientRect().left}px;
+            width: ${scrollContainer.offsetWidth}px;
+            height: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0,0,0,0.6);
+            font-size: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        `;
+
+        document.body.appendChild(topIndicator);
+        document.body.appendChild(bottomIndicator);
 
         const updateScrollIndicators = () => {
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-            
-            // Removed debug logging
-            
-            // Check if content is scrollable
             const isScrollable = scrollHeight > clientHeight;
             
             if (!isScrollable) {
-                // Hide both indicators if content fits
-                topIndicator.classList.remove('visible');
-                bottomIndicator.classList.remove('visible');
+                topIndicator.style.opacity = '0';
+                bottomIndicator.style.opacity = '0';
                 return;
             }
             
-            // Show top indicator if scrolled down
             const canScrollUp = scrollTop > 10;
-            // Show bottom indicator if can scroll down
             const canScrollDown = scrollTop < scrollHeight - clientHeight - 10;
             
-            topIndicator.classList.toggle('visible', canScrollUp);
-            bottomIndicator.classList.toggle('visible', canScrollDown);
+            topIndicator.style.opacity = canScrollUp ? '1' : '0';
+            bottomIndicator.style.opacity = canScrollDown ? '1' : '0';
         };
 
-        // Add scroll event listener
         scrollContainer.addEventListener('scroll', updateScrollIndicators, { passive: true });
-        
-        // Use ResizeObserver to detect when content is ready
-        if (window.ResizeObserver) {
-            const resizeObserver = new ResizeObserver(() => {
-                updateScrollIndicators();
-            });
-            resizeObserver.observe(scrollContainer);
-            
-            // Stop observing after 2 seconds to prevent memory leaks
-            setTimeout(() => {
-                resizeObserver.disconnect();
-            }, 2000);
-        }
-        
-        // Multiple checks to ensure we catch the right moment
         setTimeout(updateScrollIndicators, 100);
-        setTimeout(updateScrollIndicators, 300);
-        setTimeout(updateScrollIndicators, 600);
-        setTimeout(updateScrollIndicators, 1000);
-        
-        // Also check after any window resize
-        window.addEventListener('resize', updateScrollIndicators, { passive: true });
+
+        // Cleanup function for later
+        scrollContainer._cleanupIndicators = () => {
+            if (topIndicator.parentNode) document.body.removeChild(topIndicator);
+            if (bottomIndicator.parentNode) document.body.removeChild(bottomIndicator);
+        };
     }
 
     showFloatingDropPanel() {
