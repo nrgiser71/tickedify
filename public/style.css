@@ -6274,9 +6274,13 @@ button:focus {
     max-height: 400px;
     overflow-y: auto;
     position: relative; /* Voor absolute positioned scroll indicators */
+    
+    /* CSS custom properties voor intelligente scroll indicators */
+    --show-top-indicator: 0;
+    --show-bottom-indicator: 1; /* Default show bottom when content loads */
 }
 
-/* Scroll indicators met pijltjes */
+/* Intelligente scroll indicators met pijltjes */
 .uitgesteld-sectie .sectie-content::before {
     content: '▲';
     position: absolute;
@@ -6290,13 +6294,14 @@ button:focus {
         transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: 1;
+    opacity: var(--show-top-indicator);
     display: flex;
     align-items: center;
     justify-content: center;
     color: rgba(0, 0, 0, 0.6);
     font-size: 10px;
     line-height: 1;
+    transition: opacity 0.3s ease;
 }
 
 .uitgesteld-sectie .sectie-content::after {
@@ -6312,13 +6317,14 @@ button:focus {
         transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: 1;
+    opacity: var(--show-bottom-indicator);
     display: flex;
     align-items: center;
     justify-content: center;
     color: rgba(0, 0, 0, 0.6);
     font-size: 10px;
     line-height: 1;
+    transition: opacity 0.3s ease;
 }
 
 /* Hover effect voor extra duidelijkheid */

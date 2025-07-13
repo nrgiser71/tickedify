@@ -8679,6 +8679,9 @@ class Taakbeheer {
 
             // Render the tasks in the table
             this.renderUitgesteldSectieRows(categoryKey, taken);
+            
+            // Setup intelligent scroll indicators
+            this.setupIntelligentScrollIndicators(categoryKey);
 
         } catch (error) {
             console.error(`Error loading data for ${categoryKey}:`, error);
@@ -8860,6 +8863,41 @@ class Taakbeheer {
         });
     }
 
+    setupIntelligentScrollIndicators(categoryKey) {
+        const scrollContainer = document.getElementById(`content-${categoryKey}`);
+        if (!scrollContainer) return;
+
+        const updateScrollIndicators = () => {
+            const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+            
+            // Check if content is scrollable
+            const isScrollable = scrollHeight > clientHeight;
+            
+            if (!isScrollable) {
+                // Hide both indicators if content fits
+                scrollContainer.style.setProperty('--show-top-indicator', '0');
+                scrollContainer.style.setProperty('--show-bottom-indicator', '0');
+                return;
+            }
+            
+            // Show top indicator if scrolled down
+            const canScrollUp = scrollTop > 10;
+            // Show bottom indicator if can scroll down
+            const canScrollDown = scrollTop < scrollHeight - clientHeight - 10;
+            
+            scrollContainer.style.setProperty('--show-top-indicator', canScrollUp ? '1' : '0');
+            scrollContainer.style.setProperty('--show-bottom-indicator', canScrollDown ? '1' : '0');
+        };
+
+        // Add scroll event listener
+        scrollContainer.addEventListener('scroll', updateScrollIndicators, { passive: true });
+        
+        // Initial check after content is rendered
+        setTimeout(updateScrollIndicators, 100);
+        
+        // Also check after any window resize
+        window.addEventListener('resize', updateScrollIndicators, { passive: true });
+    }
 
     showFloatingDropPanel() {
         const panel = document.getElementById('floatingDropPanel');
