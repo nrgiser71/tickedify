@@ -8870,6 +8870,14 @@ class Taakbeheer {
         const updateScrollIndicators = () => {
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
             
+            // Log for debugging
+            console.log(`Scroll check for ${categoryKey}:`, {
+                scrollHeight,
+                clientHeight,
+                scrollable: scrollHeight > clientHeight,
+                scrollTop
+            });
+            
             // Check if content is scrollable
             const isScrollable = scrollHeight > clientHeight;
             
@@ -8892,8 +8900,24 @@ class Taakbeheer {
         // Add scroll event listener
         scrollContainer.addEventListener('scroll', updateScrollIndicators, { passive: true });
         
-        // Initial check after content is rendered
+        // Use ResizeObserver to detect when content is ready
+        if (window.ResizeObserver) {
+            const resizeObserver = new ResizeObserver(() => {
+                updateScrollIndicators();
+            });
+            resizeObserver.observe(scrollContainer);
+            
+            // Stop observing after 2 seconds to prevent memory leaks
+            setTimeout(() => {
+                resizeObserver.disconnect();
+            }, 2000);
+        }
+        
+        // Multiple checks to ensure we catch the right moment
         setTimeout(updateScrollIndicators, 100);
+        setTimeout(updateScrollIndicators, 300);
+        setTimeout(updateScrollIndicators, 600);
+        setTimeout(updateScrollIndicators, 1000);
         
         // Also check after any window resize
         window.addEventListener('resize', updateScrollIndicators, { passive: true });

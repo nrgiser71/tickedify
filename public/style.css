@@ -6277,7 +6277,7 @@ button:focus {
     
     /* CSS custom properties voor intelligente scroll indicators */
     --show-top-indicator: 0;
-    --show-bottom-indicator: 1; /* Default show bottom when content loads */
+    --show-bottom-indicator: 0; /* Default hidden until JS checks */
 }
 
 /* Intelligente scroll indicators met pijltjes */
