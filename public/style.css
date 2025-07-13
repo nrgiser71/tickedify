@@ -6274,44 +6274,46 @@ button:focus {
     max-height: 400px;
     overflow-y: auto;
     position: relative; /* Voor absolute positioned scroll indicators */
-    border: 5px solid red !important; /* DEBUG: zeer opvallende test border */
 }
 
-/* Zeer opvallende scroll indicators voor testing */
+/* Intelligente scroll indicators voor uitgesteld secties */
+.uitgesteld-sectie .sectie-content {
+    --scroll-top-opacity: 0;
+    --scroll-bottom-opacity: 1; /* Default show bottom for scrollable content */
+}
+
 .uitgesteld-sectie .sectie-content::before {
-    content: '↑ SCROLL UP ↑';
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 30px;
-    background: rgba(255, 0, 0, 0.8);
-    color: white;
-    text-align: center;
-    line-height: 30px;
-    font-weight: bold;
-    font-size: 12px;
+    height: 15px;
+    background: linear-gradient(to bottom, 
+        rgba(0, 0, 0, 0.1) 0%, 
+        rgba(0, 0, 0, 0.05) 50%, 
+        transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: 1; /* Always visible for testing */
+    opacity: var(--scroll-top-opacity);
+    transition: opacity 0.3s ease;
 }
 
 .uitgesteld-sectie .sectie-content::after {
-    content: '↓ SCROLL DOWN ↓';
+    content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 30px;
-    background: rgba(0, 255, 0, 0.8);
-    color: white;
-    text-align: center;
-    line-height: 30px;
-    font-weight: bold;
-    font-size: 12px;
+    height: 15px;
+    background: linear-gradient(to top, 
+        rgba(0, 0, 0, 0.1) 0%, 
+        rgba(0, 0, 0, 0.05) 50%, 
+        transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: 1; /* Always visible for testing */
+    opacity: var(--scroll-bottom-opacity);
+    transition: opacity 0.3s ease;
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
@@ -6677,69 +6679,3 @@ body.dagkalender-focus-active {
     }
 }
 
-/* Scroll Indicators voor uitgesteld lijsten */
-.sectie-container {
-    position: relative;
-}
-
-.scroll-indicator {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 20px;
-    z-index: 10;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-/* Scroll indicators specifiek voor uitgesteld secties */
-.uitgesteld-sectie .scroll-indicator {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 15px;
-    z-index: 10;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.scroll-indicator.visible {
-    opacity: 1;
-}
-
-.scroll-indicator-top {
-    top: 0;
-    background: linear-gradient(to bottom, 
-        var(--macos-bg-primary) 0%, 
-        rgba(242, 242, 247, 0.8) 50%, 
-        transparent 100%);
-}
-
-.scroll-indicator-bottom {
-    bottom: 0;
-    background: linear-gradient(to top, 
-        var(--macos-bg-primary) 0%, 
-        rgba(242, 242, 247, 0.8) 50%, 
-        transparent 100%);
-}
-
-/* Indicator voor uitgesteld secties */
-.uitgesteld-sectie .sectie-container {
-    position: relative;
-}
-
-.uitgesteld-sectie .scroll-indicator-top {
-    background: linear-gradient(to bottom, 
-        var(--macos-bg-primary) 0%, 
-        rgba(255, 255, 255, 0.8) 50%, 
-        transparent 100%);
-}
-
-.uitgesteld-sectie .scroll-indicator-bottom {
-    background: linear-gradient(to top, 
-        var(--macos-bg-primary) 0%, 
-        rgba(255, 255, 255, 0.8) 50%, 
-        transparent 100%);
-}
