@@ -5202,7 +5202,7 @@ class Taakbeheer {
             await this.verplaatsTaakNaarLijst(actie, naarLijst);
             // Remove from local list (no need to save - already done by server)
             this.taken = this.taken.filter(t => t.id !== id);
-            this.renderTaken();
+            await this.preserveActionsFilters(() => this.renderTaken());
         }, {
             operationId: 'verplaats-actie',
             showGlobal: true,
@@ -9366,9 +9366,9 @@ class Taakbeheer {
             
             toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
             
-            // Reset bulk mode and reload
+            // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
-            this.laadHuidigeLijst();
+            await this.preserveActionsFilters(() => this.laadHuidigeLijst());
             
         } finally {
             loading.hide();
@@ -9472,9 +9472,9 @@ class Taakbeheer {
             
             toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
             
-            // Reset bulk mode and reload
+            // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
-            this.laadHuidigeLijst();
+            await this.preserveActionsFilters(() => this.laadHuidigeLijst());
             
         } finally {
             loading.hide();
