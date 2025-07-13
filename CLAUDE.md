@@ -77,6 +77,39 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **LAATSTE UPDATE**: De ARCHITECTURE.md is aangemaakt op Juli 10, 2025 en moet vanaf nu bij elke code wijziging worden bijgewerkt!
 
+## FLOATING DROP PANEL VOOR UITGESTELD DRAG & DROP VOLTOOID (Juli 13, 2025) ✨✅
+
+**🎯 MAJOR UX IMPROVEMENT: Versie 0.11.0-0.11.1**
+- **User request**: "Ik wil de werking van de uitgesteld lijsten aanpassen. Dropdown knoppen moeten weg en vervangen door drag & drop"
+- **Probleem**: Uitgesteld taken naar inbox/opvolgen vereiste dropdown knoppen per taak
+- **Oplossing**: Moderne floating drop panel dat automatisch verschijnt tijdens drag operaties
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Floating panel HTML**: Elegante drop zones voor Inbox en Opvolgen in index.html
+- **CSS animaties**: Blur effects, smooth slide-in/out transitions, visual feedback
+- **JavaScript integration**: Automatische detectie van uitgesteld drag operations
+- **Event handling**: dragstart toont panel, dragend verbergt panel, drop handlers voor lijst verplaatsing
+- **Cleanup**: Volledige verwijdering van dropdown knoppen en gerelateerde functies
+
+**🎨 DESIGN ACHIEVEMENTS:**
+- **Floating position**: Panel verschijnt rechtsboven (top: 80px) voor optimale toegankelijkheid  
+- **Visual feedback**: Hover states, drag-over styling met border changes en scaling
+- **Smooth animaties**: 0.3s cubic-bezier transitions voor professionele feel
+- **Mobile responsive**: Horizontale layout op kleinere schermen
+- **macOS consistent**: Blur effects en styling consistent met app design
+
+**🔧 VERSIE PROGRESSIE:**
+- **v0.11.0**: Floating panel implementatie met rightsbottom positie
+- **v0.11.1**: Panel verplaatst naar rechtstop op user feedback voor betere UX
+
+**✨ EINDRESULTAAT:**
+- **Perfect drag & drop workflow** van uitgesteld naar inbox/opvolgen
+- **Geen dropdown knoppen** meer - volledig intuïtieve interface
+- **Modern floating UI** met professional animaties en feedback
+- **Optimale positionering** rechtsboven voor beste toegankelijkheid tijdens slepen
+
+**STATUS**: Floating drop panel feature volledig voltooid en geoptimaliseerd voor productie gebruik.
+
 ## UI/UX VERBETERINGEN UITGESTELD & ZOEKEN VOLTOOID (Juli 8, 2025) 🎯✅
 
 **🎯 UI CLEANUP & VERBETERING: Versie 0.9.224-0.10.4**

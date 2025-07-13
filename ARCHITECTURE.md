@@ -87,13 +87,21 @@ email_import_code VARCHAR(20) UNIQUE
 - `LoadingManager` class - regel ~8,000 - Loading indicators
 - `showCSSDebugger()` - regel ~8,400 - CSS debug tool
 
-**Utility Functions (regels 8,500-10,507)**
+**Uitgesteld Drag & Drop + Floating Panel (regels 8,500-9,000)**
+- `setupUitgesteldDropZones()` - regel ~8,748 - Drop zones voor uitgesteld sectie headers
+- `handleUitgesteldDrop()` - regel ~8,815 - Drop handler voor uitgesteld lijst moves
+- `showFloatingDropPanel()` - regel ~8,878 - Toon floating panel bij drag start
+- `hideFloatingDropPanel()` - regel ~8,892 - Verberg panel na drag end
+- `setupFloatingDropZones()` - regel ~8,905 - Event handlers voor floating drop zones
+- `handleFloatingDropZoneDrop()` - regel ~8,938 - Drop verwerking naar inbox/opvolgen
+
+**Utility Functions (regels 9,000-10,507)**
 - `formatDuration()` - regel ~8,600
 - `parseRecurringPattern()` - regel ~9,000
 - Email import functies - regels ~9,500-10,000
 - Keyboard shortcuts - regels ~10,000-10,500
 
-#### style.css (6,437 regels)
+#### style.css (6,542 regels)
 - Basic layout: regels 1-500
 - Sidebar styling: regels 500-1,000
 - Taken lijst styling: regels 1,000-2,000
@@ -102,7 +110,8 @@ email_import_code VARCHAR(20) UNIQUE
 - Toast notifications: regels 3,500-4,000
 - Loading indicators: regels 4,000-4,500
 - Responsive design: regels 4,500-5,000
-- Utilities & animations: regels 5,000-6,437
+- Utilities & animations: regels 5,000-6,400
+- **Floating Drop Panel**: regels 6,439-6,542 - Panel styling met blur effects en animaties
 
 ### Backend
 
@@ -215,6 +224,14 @@ email_import_code VARCHAR(20) UNIQUE
 - **Parsing**: Email body parsing in server.js:4700
 - **UI**: Import email in header, app.js:9500
 
+### Floating Drop Panel (Uitgesteld Drag & Drop)
+- **Show/Hide**: `showFloatingDropPanel()`, `hideFloatingDropPanel()` in app.js:8878-8903
+- **Setup**: `setupFloatingDropZones()` in app.js:8905-8936
+- **Drop Handler**: `handleFloatingDropZoneDrop()` in app.js:8938-8983
+- **HTML**: Floating panel HTML in index.html:683-699
+- **CSS**: Panel styling met blur effects in style.css:6439-6542
+- **Positioning**: top: 80px rechts, smooth slide-in animaties
+
 ## 🚀 Development Workflow
 
 ### Bij nieuwe feature:
@@ -258,6 +275,7 @@ email_import_code VARCHAR(20) UNIQUE
 - `createDragImage()` - app.js:1800
 - `getDragData()` - app.js:1900
 - Visual feedback - style.css:3000-3500
+- **Floating Panel**: app.js:8878-8983 + style.css:6439-6542
 
 ### API Helpers
 - Fetch wrappers - app.js:500-600
@@ -266,5 +284,5 @@ email_import_code VARCHAR(20) UNIQUE
 
 ---
 
-**LAATSTE UPDATE**: Juli 10, 2025
+**LAATSTE UPDATE**: Juli 13, 2025 - Floating Drop Panel toegevoegd
 **BELANGRIJK**: Update dit document bij ELKE wijziging aan de codebase structuur!
