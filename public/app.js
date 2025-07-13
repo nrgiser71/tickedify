@@ -1774,10 +1774,14 @@ class Taakbeheer {
             toekomstToggle: document.getElementById('toonToekomstToggle')?.checked || false
         };
         
-        // Save scroll position - check different possible scroll containers
-        const savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-        const mainContent = document.querySelector('.main-content');
-        const savedMainContentScroll = mainContent ? mainContent.scrollTop : 0;
+        // Save scroll position - use same logic as preserveScrollPosition()
+        const scrollContainer = document.querySelector('#acties-lijst') || 
+                               document.querySelector('.acties-lijst') || 
+                               document.querySelector('.taak-lijst') ||
+                               document.querySelector('.main-content');
+        const savedScrollPosition = scrollContainer?.scrollTop || 0;
+        const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
+        console.log(`💾 preserveActionsFilters: Saving scroll position: ${savedScrollPosition}px for container:`, containerInfo);
         
         const result = callback();
         
@@ -1801,15 +1805,14 @@ class Taakbeheer {
                 this.filterActies(); // Apply the restored filter values
             }
             
-            // Restore scroll position
+            // Restore scroll position to correct container
             setTimeout(() => {
-                if (savedScrollPosition > 0) {
-                    window.scrollTo(0, savedScrollPosition);
+                if (scrollContainer && savedScrollPosition > 0) {
+                    scrollContainer.scrollTop = savedScrollPosition;
+                    const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
+                    console.log(`📍 preserveActionsFilters: Restored scroll position: ${savedScrollPosition}px for container:`, containerInfo);
                 }
-                if (savedMainContentScroll > 0 && mainContent) {
-                    mainContent.scrollTop = savedMainContentScroll;
-                }
-            }, 50); // Slightly longer delay for scroll restoration
+            }, 200); // Longer delay like preserveScrollPosition
         };
         
         // Restore filters after DOM updates
