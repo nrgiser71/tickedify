@@ -1728,7 +1728,8 @@ class Taakbeheer {
     // Helper function to preserve scroll position during re-renders
     preserveScrollPosition(callback) {
         // Try multiple selectors to find the correct scroll container
-        const scrollContainer = document.querySelector('#acties-lijst') || 
+        const scrollContainer = document.querySelector('.taken-container') ||
+                               document.querySelector('#acties-lijst') || 
                                document.querySelector('.acties-lijst') || 
                                document.querySelector('.taak-lijst') ||
                                document.querySelector('.main-content');
@@ -1774,8 +1775,9 @@ class Taakbeheer {
             toekomstToggle: document.getElementById('toonToekomstToggle')?.checked || false
         };
         
-        // Save scroll position - use same logic as preserveScrollPosition()
-        const scrollContainer = document.querySelector('#acties-lijst') || 
+        // Save scroll position - target the actual scroll container
+        const scrollContainer = document.querySelector('.taken-container') ||
+                               document.querySelector('#acties-lijst') || 
                                document.querySelector('.acties-lijst') || 
                                document.querySelector('.taak-lijst') ||
                                document.querySelector('.main-content');
@@ -3539,8 +3541,8 @@ class Taakbeheer {
                 // Update lokale taak
                 taak.verschijndatum = datumString;
                 
-                // Herlaad de lijst en tellingen om de update te tonen
-                await this.laadHuidigeLijst();
+                // Herlaad de lijst met preserved scroll position
+                await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                 // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 
                 const dagNaam = dagenVoorruit === 0 ? 'vandaag' : 
