@@ -6539,3 +6539,99 @@ button:focus {
         font-size: 14px;
     }
 }
+
+/* ===== DAGKALENDER FOCUS MODUS ===== */
+
+/* Fullscreen dagkalender styling */
+.dag-kalender-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 1000;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 30px;
+    margin: 0 !important;
+    background: var(--macos-bg-primary);
+    box-shadow: none;
+    border-radius: 0;
+    flex-shrink: unset !important;
+}
+
+/* Header styling in fullscreen */
+.dag-kalender-fullscreen .kalender-header {
+    position: relative;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--macos-gray-5);
+}
+
+.dag-kalender-fullscreen .kalender-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* Grid takes full available height in fullscreen */
+.dag-kalender-fullscreen .kalender-grid {
+    height: calc(100vh - 150px) !important; /* Full height minus header and padding */
+    overflow-y: auto;
+    max-height: none !important;
+}
+
+/* Focus mode toggle button styling */
+.btn-focus-mode {
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: var(--macos-radius-small);
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-focus-mode:hover {
+    background: var(--macos-blue-dark);
+    transform: translateY(-1px);
+}
+
+.btn-focus-mode:active {
+    transform: translateY(0);
+}
+
+/* Exit focus mode button styling */
+.btn-exit-focus {
+    background: var(--macos-gray-3);
+    color: var(--macos-text-primary);
+    border: 1px solid var(--macos-gray-4);
+}
+
+.btn-exit-focus:hover {
+    background: var(--macos-gray-4);
+}
+
+/* Hide body scroll when in focus mode */
+body.dagkalender-focus-active {
+    overflow: hidden !important;
+}
+
+/* Responsive adjustments for focus mode */
+@media (max-width: 768px) {
+    .dag-kalender-fullscreen {
+        padding: 15px;
+    }
+    
+    .dag-kalender-fullscreen .kalender-header h2 {
+        font-size: 20px;
+    }
+    
+    .dag-kalender-fullscreen .kalender-grid {
+        height: calc(100vh - 120px) !important;
+    }
+}

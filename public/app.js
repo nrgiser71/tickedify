@@ -6892,6 +6892,9 @@ class Taakbeheer {
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="header-actions">
                             <span id="totaalGeplandeTijd" class="totaal-tijd">Totaal: 0 min</span>
+                            <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus modus - alleen dagplanning tonen">
+                                📺 Focus
+                            </button>
                             <button class="btn-clear-planning" id="btnClearPlanning" title="Planning leegmaken">
                                 🗑️ Leegmaken
                             </button>
@@ -6917,6 +6920,9 @@ class Taakbeheer {
         
         // Start current hour tracking for this daily planning view
         this.startCurrentHourTracking();
+        
+        // Restore focus mode if it was previously enabled
+        this.restoreFocusMode();
     }
 
     renderPrioriteitSlots() {
@@ -9163,6 +9169,77 @@ class Taakbeheer {
         });
     }
 
+    // Dagkalender focus mode functionality
+    toggleDagkalenderFocus() {
+        const dagKalender = document.querySelector('.dag-kalender');
+        const focusBtn = document.getElementById('btnFocusMode');
+        
+        if (!dagKalender || !focusBtn) {
+            console.error('Dagkalender of focus button niet gevonden');
+            return;
+        }
+        
+        const isFullscreen = dagKalender.classList.contains('dag-kalender-fullscreen');
+        
+        if (isFullscreen) {
+            // Exit focus mode
+            this.exitFocusMode(dagKalender, focusBtn);
+        } else {
+            // Enter focus mode  
+            this.enterFocusMode(dagKalender, focusBtn);
+        }
+    }
+    
+    enterFocusMode(dagKalender, focusBtn) {
+        // Add fullscreen class
+        dagKalender.classList.add('dag-kalender-fullscreen');
+        
+        // Prevent body scroll
+        document.body.classList.add('dagkalender-focus-active');
+        
+        // Update button
+        focusBtn.innerHTML = '↙️ Terug';
+        focusBtn.className = 'btn-focus-mode btn-exit-focus';
+        focusBtn.title = 'Terug naar normale weergave';
+        
+        // Save focus mode preference
+        localStorage.setItem('dagkalender-focus-mode', 'true');
+        
+        // Show toast notification
+        toast.success('Focus modus ingeschakeld - ESC om terug te gaan');
+        
+        console.log('🎯 Focus modus ingeschakeld');
+    }
+    
+    exitFocusMode(dagKalender, focusBtn) {
+        // Remove fullscreen class
+        dagKalender.classList.remove('dag-kalender-fullscreen');
+        
+        // Restore body scroll
+        document.body.classList.remove('dagkalender-focus-active');
+        
+        // Update button
+        focusBtn.innerHTML = '📺 Focus';
+        focusBtn.className = 'btn-focus-mode';
+        focusBtn.title = 'Focus modus - alleen dagplanning tonen';
+        
+        // Save focus mode preference
+        localStorage.setItem('dagkalender-focus-mode', 'false');
+        
+        console.log('🎯 Focus modus uitgeschakeld');
+    }
+    
+    // Check and restore focus mode from localStorage on page load
+    restoreFocusMode() {
+        const savedFocusMode = localStorage.getItem('dagkalender-focus-mode');
+        if (savedFocusMode === 'true') {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                this.toggleDagkalenderFocus();
+            }, 100);
+        }
+    }
+
     addCSSDebugger() {
         // Only add once
         if (document.getElementById('css-debugger')) return;
@@ -10515,8 +10592,27 @@ class KeyboardShortcutManager {
                 return;
             }
             
-            // Escape key to close any open modals
+            // F11 - Toggle dagkalender focus mode (only when in daily planning)
+            if (e.key === 'F11' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                const dagKalender = document.querySelector('.dag-kalender');
+                if (dagKalender) {
+                    e.preventDefault();
+                    app.toggleDagkalenderFocus();
+                    return;
+                }
+            }
+            
+            // Escape key to close any open modals or exit focus mode
             if (e.key === 'Escape') {
+                // Check if we're in focus mode first
+                const dagKalender = document.querySelector('.dag-kalender');
+                if (dagKalender && dagKalender.classList.contains('dag-kalender-fullscreen')) {
+                    e.preventDefault();
+                    app.toggleDagkalenderFocus();
+                    return;
+                }
+                
+                // Otherwise close modals as usual
                 this.quickAddModal.hide();
                 this.keyboardHelpModal.hide();
             }
