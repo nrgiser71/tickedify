@@ -6294,6 +6294,8 @@ button:focus {
 .uitgesteld-lijst-container {
     padding: 0;
     background: var(--macos-bg-primary);
+    overflow-y: auto;
+    max-height: inherit;
 }
 
 .uitgesteld-taken-lijst {
@@ -6634,4 +6636,59 @@ body.dagkalender-focus-active {
     .dag-kalender-fullscreen .kalender-grid {
         height: calc(100vh - 120px) !important;
     }
+}
+
+/* Scroll Indicators voor uitgesteld lijsten */
+.sectie-container {
+    position: relative;
+}
+
+.scroll-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 20px;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-indicator.visible {
+    opacity: 1;
+}
+
+.scroll-indicator-top {
+    top: 0;
+    background: linear-gradient(to bottom, 
+        var(--macos-bg-primary) 0%, 
+        rgba(242, 242, 247, 0.8) 50%, 
+        transparent 100%);
+}
+
+.scroll-indicator-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, 
+        var(--macos-bg-primary) 0%, 
+        rgba(242, 242, 247, 0.8) 50%, 
+        transparent 100%);
+}
+
+/* Indicator voor uitgesteld secties */
+.uitgesteld-sectie .sectie-container {
+    position: relative;
+}
+
+.uitgesteld-sectie .scroll-indicator-top {
+    background: linear-gradient(to bottom, 
+        var(--macos-bg-primary) 0%, 
+        rgba(255, 255, 255, 0.8) 50%, 
+        transparent 100%);
+}
+
+.uitgesteld-sectie .scroll-indicator-bottom {
+    background: linear-gradient(to top, 
+        var(--macos-bg-primary) 0%, 
+        rgba(255, 255, 255, 0.8) 50%, 
+        transparent 100%);
 }
