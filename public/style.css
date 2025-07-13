@@ -6277,39 +6277,41 @@ button:focus {
     border: 5px solid red !important; /* DEBUG: zeer opvallende test border */
 }
 
-/* Pseudo-element scroll indicators voor uitgesteld secties */
+/* Zeer opvallende scroll indicators voor testing */
 .uitgesteld-sectie .sectie-content::before {
-    content: '';
+    content: '↑ SCROLL UP ↑';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 20px;
-    background: linear-gradient(to bottom, 
-        var(--macos-bg-primary) 0%, 
-        rgba(255, 255, 255, 0.8) 70%, 
-        transparent 100%);
-    z-index: 5;
+    height: 30px;
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 10;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    opacity: 1; /* Always visible for testing */
 }
 
 .uitgesteld-sectie .sectie-content::after {
-    content: '';
+    content: '↓ SCROLL DOWN ↓';
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 20px;
-    background: linear-gradient(to top, 
-        var(--macos-bg-primary) 0%, 
-        rgba(255, 255, 255, 0.8) 70%, 
-        transparent 100%);
-    z-index: 5;
+    height: 30px;
+    background: rgba(0, 255, 0, 0.8);
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 10;
     pointer-events: none;
     opacity: 1; /* Always visible for testing */
-    transition: opacity 0.3s ease;
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
