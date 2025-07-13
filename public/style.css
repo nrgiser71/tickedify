@@ -6276,9 +6276,9 @@ button:focus {
     position: relative; /* Voor absolute positioned scroll indicators */
 }
 
-/* Duidelijke scroll indicators */
+/* Scroll indicators met pijltjes */
 .uitgesteld-sectie .sectie-content::before {
-    content: '';
+    content: '▲';
     position: absolute;
     top: 0;
     left: 0;
@@ -6291,10 +6291,16 @@ button:focus {
     z-index: 10;
     pointer-events: none;
     opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 10px;
+    line-height: 1;
 }
 
 .uitgesteld-sectie .sectie-content::after {
-    content: '';
+    content: '▼';
     position: absolute;
     bottom: 0;
     left: 0;
@@ -6307,15 +6313,21 @@ button:focus {
     z-index: 10;
     pointer-events: none;
     opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 10px;
+    line-height: 1;
 }
 
 /* Hover effect voor extra duidelijkheid */
-.uitgesteld-sectie .sectie-content:hover::before,
-.uitgesteld-sectie .sectie-content:hover::after {
+.uitgesteld-sectie .sectie-content:hover::before {
     background: linear-gradient(to bottom, 
         rgba(0, 122, 255, 0.12) 0%, 
         rgba(0, 122, 255, 0.06) 60%, 
         transparent 100%);
+    color: var(--macos-blue);
 }
 
 .uitgesteld-sectie .sectie-content:hover::after {
@@ -6323,6 +6335,7 @@ button:focus {
         rgba(0, 122, 255, 0.12) 0%, 
         rgba(0, 122, 255, 0.06) 60%, 
         transparent 100%);
+    color: var(--macos-blue);
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
