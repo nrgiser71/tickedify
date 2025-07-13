@@ -8669,21 +8669,16 @@ class Taakbeheer {
                 return;
             }
 
-            // Create simplified list for the tasks with scroll indicators
+            // Create simplified list for the tasks
             content.innerHTML = `
-                <div class="scroll-indicator scroll-indicator-top" id="scroll-top-${categoryKey}"></div>
                 <div class="uitgesteld-lijst-container">
                     <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
                     </ul>
                 </div>
-                <div class="scroll-indicator scroll-indicator-bottom" id="scroll-bottom-${categoryKey}"></div>
             `;
 
             // Render the tasks in the table
             this.renderUitgesteldSectieRows(categoryKey, taken);
-            
-            // Setup scroll indicators after rendering
-            this.setupScrollIndicators(categoryKey);
 
         } catch (error) {
             console.error(`Error loading data for ${categoryKey}:`, error);
@@ -8865,43 +8860,6 @@ class Taakbeheer {
         });
     }
 
-    setupScrollIndicators(categoryKey) {
-        // The actual scroll container is the sectie-content element
-        const scrollContent = document.getElementById(`content-${categoryKey}`);
-        const topIndicator = document.getElementById(`scroll-top-${categoryKey}`);
-        const bottomIndicator = document.getElementById(`scroll-bottom-${categoryKey}`);
-        
-        if (!scrollContent || !topIndicator || !bottomIndicator) {
-            console.log('Scroll indicators not found:', { scrollContent: !!scrollContent, topIndicator: !!topIndicator, bottomIndicator: !!bottomIndicator });
-            return;
-        }
-
-        // Throttled scroll handler for better performance
-        let scrollTimeout;
-        const updateScrollIndicators = () => {
-            if (scrollTimeout) {
-                clearTimeout(scrollTimeout);
-            }
-            
-            scrollTimeout = setTimeout(() => {
-                const { scrollTop, scrollHeight, clientHeight } = scrollContent;
-                
-                // Show top indicator if scrolled down
-                const canScrollUp = scrollTop > 10;
-                topIndicator.classList.toggle('visible', canScrollUp);
-                
-                // Show bottom indicator if can scroll down
-                const canScrollDown = scrollTop < scrollHeight - clientHeight - 10;
-                bottomIndicator.classList.toggle('visible', canScrollDown);
-            }, 16); // ~60fps
-        };
-
-        // Add scroll event listener
-        scrollContent.addEventListener('scroll', updateScrollIndicators, { passive: true });
-        
-        // Initial check after a brief delay to ensure content is rendered
-        setTimeout(updateScrollIndicators, 100);
-    }
 
     showFloatingDropPanel() {
         const panel = document.getElementById('floatingDropPanel');

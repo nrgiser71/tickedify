@@ -6276,6 +6276,41 @@ button:focus {
     position: relative; /* Voor absolute positioned scroll indicators */
 }
 
+/* Pseudo-element scroll indicators voor uitgesteld secties */
+.uitgesteld-sectie .sectie-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to bottom, 
+        var(--macos-bg-primary) 0%, 
+        rgba(255, 255, 255, 0.8) 70%, 
+        transparent 100%);
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.uitgesteld-sectie .sectie-content::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to top, 
+        var(--macos-bg-primary) 0%, 
+        rgba(255, 255, 255, 0.8) 70%, 
+        transparent 100%);
+    z-index: 5;
+    pointer-events: none;
+    opacity: 1; /* Always visible for testing */
+    transition: opacity 0.3s ease;
+}
+
 .uitgesteld-sectie .sectie-content[style*="block"] {
     animation: slideDown 0.3s ease;
 }
