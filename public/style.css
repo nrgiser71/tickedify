@@ -6276,21 +6276,21 @@ button:focus {
     position: relative; /* Voor absolute positioned scroll indicators */
 }
 
-/* Eenvoudige always-visible scroll indicators */
+/* Duidelijke scroll indicators */
 .uitgesteld-sectie .sectie-content::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 10px;
+    height: 20px;
     background: linear-gradient(to bottom, 
-        rgba(0, 0, 0, 0.08) 0%, 
-        rgba(0, 0, 0, 0.04) 70%, 
+        rgba(0, 0, 0, 0.15) 0%, 
+        rgba(0, 0, 0, 0.08) 60%, 
         transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: 0.6;
+    opacity: 1;
 }
 
 .uitgesteld-sectie .sectie-content::after {
@@ -6299,20 +6299,30 @@ button:focus {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 10px;
+    height: 20px;
     background: linear-gradient(to top, 
-        rgba(0, 0, 0, 0.08) 0%, 
-        rgba(0, 0, 0, 0.04) 70%, 
+        rgba(0, 0, 0, 0.15) 0%, 
+        rgba(0, 0, 0, 0.08) 60%, 
         transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: 0.6;
+    opacity: 1;
 }
 
-/* Hover effect voor duidelijkheid */
+/* Hover effect voor extra duidelijkheid */
 .uitgesteld-sectie .sectie-content:hover::before,
 .uitgesteld-sectie .sectie-content:hover::after {
-    opacity: 0.9;
+    background: linear-gradient(to bottom, 
+        rgba(0, 122, 255, 0.12) 0%, 
+        rgba(0, 122, 255, 0.06) 60%, 
+        transparent 100%);
+}
+
+.uitgesteld-sectie .sectie-content:hover::after {
+    background: linear-gradient(to top, 
+        rgba(0, 122, 255, 0.12) 0%, 
+        rgba(0, 122, 255, 0.06) 60%, 
+        transparent 100%);
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
