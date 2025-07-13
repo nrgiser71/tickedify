@@ -6274,6 +6274,7 @@ button:focus {
     max-height: 400px;
     overflow-y: auto;
     position: relative; /* Voor absolute positioned scroll indicators */
+    border: 5px solid red !important; /* DEBUG: zeer opvallende test border */
 }
 
 /* Pseudo-element scroll indicators voor uitgesteld secties */
