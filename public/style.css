@@ -6363,8 +6363,7 @@ button:focus {
 .uitgesteld-lijst-container {
     padding: 0;
     background: var(--macos-bg-primary);
-    overflow-y: auto;
-    max-height: inherit;
+    /* Removed overflow and max-height - parent handles scrolling */
 }
 
 .uitgesteld-taken-lijst {
