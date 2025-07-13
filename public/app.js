@@ -8669,12 +8669,14 @@ class Taakbeheer {
                 return;
             }
 
-            // Create simplified list for the tasks
+            // Create list with real scroll indicator elements
             content.innerHTML = `
+                <div class="scroll-indicator-top" id="indicator-top-${categoryKey}">▲</div>
                 <div class="uitgesteld-lijst-container">
                     <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
                     </ul>
                 </div>
+                <div class="scroll-indicator-bottom" id="indicator-bottom-${categoryKey}">▼</div>
             `;
 
             // Render the tasks in the table
@@ -8865,7 +8867,10 @@ class Taakbeheer {
 
     setupIntelligentScrollIndicators(categoryKey) {
         const scrollContainer = document.getElementById(`content-${categoryKey}`);
-        if (!scrollContainer) return;
+        const topIndicator = document.getElementById(`indicator-top-${categoryKey}`);
+        const bottomIndicator = document.getElementById(`indicator-bottom-${categoryKey}`);
+        
+        if (!scrollContainer || !topIndicator || !bottomIndicator) return;
 
         const updateScrollIndicators = () => {
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
@@ -8883,8 +8888,8 @@ class Taakbeheer {
             
             if (!isScrollable) {
                 // Hide both indicators if content fits
-                scrollContainer.style.setProperty('--show-top-indicator', '0');
-                scrollContainer.style.setProperty('--show-bottom-indicator', '0');
+                topIndicator.classList.remove('visible');
+                bottomIndicator.classList.remove('visible');
                 return;
             }
             
@@ -8893,8 +8898,8 @@ class Taakbeheer {
             // Show bottom indicator if can scroll down
             const canScrollDown = scrollTop < scrollHeight - clientHeight - 10;
             
-            scrollContainer.style.setProperty('--show-top-indicator', canScrollUp ? '1' : '0');
-            scrollContainer.style.setProperty('--show-bottom-indicator', canScrollDown ? '1' : '0');
+            topIndicator.classList.toggle('visible', canScrollUp);
+            bottomIndicator.classList.toggle('visible', canScrollDown);
         };
 
         // Add scroll event listener
