@@ -8669,14 +8669,18 @@ class Taakbeheer {
                 return;
             }
 
-            // Create list with real scroll indicator elements
+            // Create wrapper with indicators outside the scroll area
             content.innerHTML = `
-                <div class="scroll-indicator-top" id="indicator-top-${categoryKey}">▲</div>
-                <div class="uitgesteld-lijst-container">
-                    <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
-                    </ul>
+                <div class="scroll-wrapper">
+                    <div class="scroll-indicator-top" id="indicator-top-${categoryKey}">▲</div>
+                    <div class="scroll-content-wrapper">
+                        <div class="uitgesteld-lijst-container">
+                            <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="scroll-indicator-bottom" id="indicator-bottom-${categoryKey}">▼</div>
                 </div>
-                <div class="scroll-indicator-bottom" id="indicator-bottom-${categoryKey}">▼</div>
             `;
 
             // Render the tasks in the table
@@ -8866,22 +8870,22 @@ class Taakbeheer {
     }
 
     setupIntelligentScrollIndicators(categoryKey) {
-        const scrollContainer = document.getElementById(`content-${categoryKey}`);
+        const outerContainer = document.getElementById(`content-${categoryKey}`);
+        const scrollContainer = outerContainer.querySelector('.scroll-content-wrapper');
         const topIndicator = document.getElementById(`indicator-top-${categoryKey}`);
         const bottomIndicator = document.getElementById(`indicator-bottom-${categoryKey}`);
         
-        if (!scrollContainer || !topIndicator || !bottomIndicator) return;
+        if (!outerContainer || !scrollContainer || !topIndicator || !bottomIndicator) return;
+        
+        // Move scroll behavior to the outer container
+        outerContainer.style.overflow = 'hidden';
+        scrollContainer.style.height = '100%';
+        scrollContainer.style.overflowY = 'auto';
 
         const updateScrollIndicators = () => {
             const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
             
-            // Log for debugging
-            console.log(`Scroll check for ${categoryKey}:`, {
-                scrollHeight,
-                clientHeight,
-                scrollable: scrollHeight > clientHeight,
-                scrollTop
-            });
+            // Removed debug logging
             
             // Check if content is scrollable
             const isScrollable = scrollHeight > clientHeight;

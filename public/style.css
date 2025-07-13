@@ -6277,6 +6277,19 @@ button:focus {
     
 }
 
+/* Scroll wrapper structuur */
+.scroll-wrapper {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+}
+
 /* Intelligente scroll indicators als echte elementen */
 .scroll-indicator-top,
 .scroll-indicator-bottom {
