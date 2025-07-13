@@ -8671,14 +8671,12 @@ class Taakbeheer {
 
             // Create simplified list for the tasks with scroll indicators
             content.innerHTML = `
-                <div class="sectie-container">
-                    <div class="scroll-indicator scroll-indicator-top" id="scroll-top-${categoryKey}"></div>
-                    <div class="uitgesteld-lijst-container" id="scroll-content-${categoryKey}">
-                        <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
-                        </ul>
-                    </div>
-                    <div class="scroll-indicator scroll-indicator-bottom" id="scroll-bottom-${categoryKey}"></div>
+                <div class="scroll-indicator scroll-indicator-top" id="scroll-top-${categoryKey}"></div>
+                <div class="uitgesteld-lijst-container">
+                    <ul class="uitgesteld-taken-lijst" id="lijst-${categoryKey}">
+                    </ul>
                 </div>
+                <div class="scroll-indicator scroll-indicator-bottom" id="scroll-bottom-${categoryKey}"></div>
             `;
 
             // Render the tasks in the table
@@ -8868,11 +8866,13 @@ class Taakbeheer {
     }
 
     setupScrollIndicators(categoryKey) {
-        const scrollContent = document.getElementById(`scroll-content-${categoryKey}`);
+        // The actual scroll container is the sectie-content element
+        const scrollContent = document.getElementById(`content-${categoryKey}`);
         const topIndicator = document.getElementById(`scroll-top-${categoryKey}`);
         const bottomIndicator = document.getElementById(`scroll-bottom-${categoryKey}`);
         
         if (!scrollContent || !topIndicator || !bottomIndicator) {
+            console.log('Scroll indicators not found:', { scrollContent: !!scrollContent, topIndicator: !!topIndicator, bottomIndicator: !!bottomIndicator });
             return;
         }
 

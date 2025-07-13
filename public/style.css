@@ -6273,6 +6273,7 @@ button:focus {
     background: var(--macos-bg-primary);
     max-height: 400px;
     overflow-y: auto;
+    position: relative; /* Voor absolute positioned scroll indicators */
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
@@ -6648,6 +6649,18 @@ body.dagkalender-focus-active {
     left: 0;
     right: 0;
     height: 20px;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Scroll indicators specifiek voor uitgesteld secties */
+.uitgesteld-sectie .scroll-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 15px;
     z-index: 10;
     pointer-events: none;
     opacity: 0;
