@@ -1764,6 +1764,43 @@ class Taakbeheer {
         }
     }
 
+    // Helper function to find the actual scroll container that has scrollable content
+    findActualScrollContainer() {
+        // Try all possible scroll containers in order of specificity
+        const containers = [
+            document.querySelector('#acties-lijst'),     // Primary: The actual actions list UL
+            document.querySelector('.acties-lijst'),     // Secondary: Class-based selector
+            document.querySelector('.taken-container'),  // Fallback: Original container
+            document.querySelector('.taak-lijst'),       // Alternative: Generic task list
+            document.querySelector('.main-content')      // Last resort: Main content area
+        ];
+        
+        for (const container of containers) {
+            if (container) {
+                // Check if this container actually has scrollable content
+                const hasOverflow = container.scrollHeight > container.clientHeight;
+                const hasScrollStyle = getComputedStyle(container).overflowY === 'auto' || 
+                                      getComputedStyle(container).overflowY === 'scroll';
+                
+                console.log(`🔍 Checking container:`, {
+                    element: container.id || container.className || container.tagName,
+                    scrollHeight: container.scrollHeight,
+                    clientHeight: container.clientHeight,
+                    hasOverflow,
+                    hasScrollStyle,
+                    scrollTop: container.scrollTop
+                });
+                
+                if (hasOverflow && hasScrollStyle) {
+                    return container;
+                }
+            }
+        }
+        
+        // If no scrollable container found, return the first available one
+        return containers.find(c => c) || null;
+    }
+
     // Helper function to preserve actions filter state and scroll position during re-renders
     preserveActionsFilters(callback) {
         // Save current filter values for actions list
@@ -1775,12 +1812,8 @@ class Taakbeheer {
             toekomstToggle: document.getElementById('toonToekomstToggle')?.checked || false
         };
         
-        // Save scroll position - target the actual scroll container
-        const scrollContainer = document.querySelector('.taken-container') ||
-                               document.querySelector('#acties-lijst') || 
-                               document.querySelector('.acties-lijst') || 
-                               document.querySelector('.taak-lijst') ||
-                               document.querySelector('.main-content');
+        // Find the actual scroll container before DOM changes
+        const scrollContainer = this.findActualScrollContainer();
         const savedScrollPosition = scrollContainer?.scrollTop || 0;
         const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
         console.log(`💾 preserveActionsFilters: Saving scroll position: ${savedScrollPosition}px for container:`, containerInfo);
@@ -1807,14 +1840,31 @@ class Taakbeheer {
                 this.filterActies(); // Apply the restored filter values
             }
             
-            // Restore scroll position to correct container
+            // Find the scroll container again after DOM changes and restore scroll position
             setTimeout(() => {
-                if (scrollContainer && savedScrollPosition > 0) {
-                    scrollContainer.scrollTop = savedScrollPosition;
-                    const containerInfo = scrollContainer?.id || scrollContainer?.className || 'unknown';
+                const newScrollContainer = this.findActualScrollContainer();
+                if (newScrollContainer && savedScrollPosition > 0) {
+                    newScrollContainer.scrollTop = savedScrollPosition;
+                    const containerInfo = newScrollContainer?.id || newScrollContainer?.className || 'unknown';
                     console.log(`📍 preserveActionsFilters: Restored scroll position: ${savedScrollPosition}px for container:`, containerInfo);
+                    
+                    // Verify scroll was actually set
+                    setTimeout(() => {
+                        const actualScroll = newScrollContainer.scrollTop;
+                        console.log(`✅ Scroll verification: expected ${savedScrollPosition}px, actual ${actualScroll}px`);
+                        if (Math.abs(actualScroll - savedScrollPosition) > 5) {
+                            console.warn(`⚠️ Scroll restoration failed! Trying alternative method...`);
+                            // Try scrolling with behavior smooth as fallback
+                            newScrollContainer.scrollTo({
+                                top: savedScrollPosition,
+                                behavior: 'instant'
+                            });
+                        }
+                    }, 50);
+                } else {
+                    console.warn(`⚠️ Could not find scroll container for restoration. Container:`, newScrollContainer, 'Position:', savedScrollPosition);
                 }
-            }, 200); // Longer delay like preserveScrollPosition
+            }, 250); // Increased delay to ensure DOM is fully updated
         };
         
         // Restore filters after DOM updates
