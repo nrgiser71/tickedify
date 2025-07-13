@@ -6276,27 +6276,21 @@ button:focus {
     position: relative; /* Voor absolute positioned scroll indicators */
 }
 
-/* Intelligente scroll indicators voor uitgesteld secties */
-.uitgesteld-sectie .sectie-content {
-    --scroll-top-opacity: 0;
-    --scroll-bottom-opacity: 1; /* Default show bottom for scrollable content */
-}
-
+/* Eenvoudige always-visible scroll indicators */
 .uitgesteld-sectie .sectie-content::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 15px;
+    height: 10px;
     background: linear-gradient(to bottom, 
-        rgba(0, 0, 0, 0.1) 0%, 
-        rgba(0, 0, 0, 0.05) 50%, 
+        rgba(0, 0, 0, 0.08) 0%, 
+        rgba(0, 0, 0, 0.04) 70%, 
         transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: var(--scroll-top-opacity);
-    transition: opacity 0.3s ease;
+    opacity: 0.6;
 }
 
 .uitgesteld-sectie .sectie-content::after {
@@ -6305,15 +6299,20 @@ button:focus {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 15px;
+    height: 10px;
     background: linear-gradient(to top, 
-        rgba(0, 0, 0, 0.1) 0%, 
-        rgba(0, 0, 0, 0.05) 50%, 
+        rgba(0, 0, 0, 0.08) 0%, 
+        rgba(0, 0, 0, 0.04) 70%, 
         transparent 100%);
     z-index: 10;
     pointer-events: none;
-    opacity: var(--scroll-bottom-opacity);
-    transition: opacity 0.3s ease;
+    opacity: 0.6;
+}
+
+/* Hover effect voor duidelijkheid */
+.uitgesteld-sectie .sectie-content:hover::before,
+.uitgesteld-sectie .sectie-content:hover::after {
+    opacity: 0.9;
 }
 
 .uitgesteld-sectie .sectie-content[style*="block"] {

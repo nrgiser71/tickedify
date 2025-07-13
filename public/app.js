@@ -8679,9 +8679,6 @@ class Taakbeheer {
 
             // Render the tasks in the table
             this.renderUitgesteldSectieRows(categoryKey, taken);
-            
-            // Setup scroll indicator logic
-            this.setupScrollIndicators(categoryKey);
 
         } catch (error) {
             console.error(`Error loading data for ${categoryKey}:`, error);
@@ -8863,29 +8860,6 @@ class Taakbeheer {
         });
     }
 
-    setupScrollIndicators(categoryKey) {
-        const scrollContainer = document.getElementById(`content-${categoryKey}`);
-        if (!scrollContainer) return;
-
-        const updateIndicators = () => {
-            const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-            
-            // Show top indicator if scrolled down
-            const showTop = scrollTop > 10;
-            // Show bottom indicator if can scroll down
-            const showBottom = scrollTop < scrollHeight - clientHeight - 10;
-            
-            // Update CSS custom properties to control opacity
-            scrollContainer.style.setProperty('--scroll-top-opacity', showTop ? '1' : '0');
-            scrollContainer.style.setProperty('--scroll-bottom-opacity', showBottom ? '1' : '0');
-        };
-
-        // Add scroll event listener
-        scrollContainer.addEventListener('scroll', updateIndicators, { passive: true });
-        
-        // Initial check
-        setTimeout(updateIndicators, 100);
-    }
 
     showFloatingDropPanel() {
         const panel = document.getElementById('floatingDropPanel');
