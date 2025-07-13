@@ -6277,76 +6277,7 @@ button:focus {
     
 }
 
-/* Scroll wrapper structuur */
-.scroll-wrapper {
-    position: relative;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.scroll-content-wrapper {
-    flex: 1;
-    overflow-y: auto;
-}
-
-/* Intelligente scroll indicators als echte elementen */
-.scroll-indicator-top,
-.scroll-indicator-bottom {
-    position: absolute;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: 20px;
-    z-index: 10;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 10px;
-    line-height: 1;
-    transition: opacity 0.3s ease;
-    opacity: 0;
-}
-
-.scroll-indicator-top {
-    top: 0;
-    background: linear-gradient(to bottom, 
-        rgba(0, 0, 0, 0.15) 0%, 
-        rgba(0, 0, 0, 0.08) 60%, 
-        transparent 100%);
-}
-
-.scroll-indicator-bottom {
-    bottom: 0;
-    background: linear-gradient(to top, 
-        rgba(0, 0, 0, 0.15) 0%, 
-        rgba(0, 0, 0, 0.08) 60%, 
-        transparent 100%);
-}
-
-.scroll-indicator-top.visible,
-.scroll-indicator-bottom.visible {
-    opacity: 1;
-}
-
-/* Hover effect voor scroll indicators */
-.uitgesteld-sectie .sectie-content:hover .scroll-indicator-top.visible,
-.uitgesteld-sectie .sectie-content:hover .scroll-indicator-bottom.visible {
-    background: linear-gradient(to bottom, 
-        rgba(0, 122, 255, 0.12) 0%, 
-        rgba(0, 122, 255, 0.06) 60%, 
-        transparent 100%);
-    color: var(--macos-blue);
-}
-
-.uitgesteld-sectie .sectie-content:hover .scroll-indicator-bottom.visible {
-    background: linear-gradient(to top, 
-        rgba(0, 122, 255, 0.12) 0%, 
-        rgba(0, 122, 255, 0.06) 60%, 
-        transparent 100%);
-}
+/* Scroll indicators now handled via JavaScript with position:fixed */
 
 .uitgesteld-sectie .sectie-content[style*="block"] {
     animation: slideDown 0.3s ease;
