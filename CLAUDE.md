@@ -44,6 +44,39 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## ARCHITECTUUR DOCUMENTATIE VERPLICHT GEBRUIK 📋
+
+**KRITIEK BELANGRIJK**: Er is nu een ARCHITECTURE.md bestand dat de volledige codebase structuur documenteert.
+
+**VERPLICHTE WORKFLOW:**
+- ✅ **ALTIJD eerst ARCHITECTURE.md lezen** voordat je aan code begint te werken
+- ✅ **Gebruik de documentatie** om snel functies, locaties en structuur te vinden
+- ✅ **Update ARCHITECTURE.md** bij ELKE wijziging aan de codebase structuur
+- ✅ **Voeg nieuwe functies toe** met exacte regelnummers en beschrijvingen
+- ✅ **Houd secties actueel** wanneer code wordt verplaatst of gerefactored
+
+**WAT STAAT IN ARCHITECTURE.md:**
+- Database schema met alle tabellen en kolommen
+- File structuur met regelnummer referenties voor alle belangrijke functies
+- API endpoints overzicht met locaties in server.js
+- Feature locaties (herhalende taken, prioriteiten, bulk acties, etc.)
+- UI componenten en hun implementatie details
+- Development workflow instructies
+
+**HOE TE GEBRUIKEN:**
+1. Bij nieuwe taak → eerst ARCHITECTURE.md raadplegen voor bestaande patterns
+2. Zoek functie locatie → gebruik regelnummer referenties
+3. Na implementatie → update ARCHITECTURE.md met nieuwe informatie
+4. Bij refactoring → update alle betrokken secties
+
+**WAAROM DIT BELANGRIJK IS:**
+- Bespaart 20-30% tijd bij het navigeren door 10,000+ regels code
+- Voorkomt dubbele implementaties of gemiste dependencies
+- Houdt codebase onderhoudbaar ondanks grootte
+- Maakt onboarding van nieuwe features sneller
+
+**LAATSTE UPDATE**: De ARCHITECTURE.md is aangemaakt op Juli 10, 2025 en moet vanaf nu bij elke code wijziging worden bijgewerkt!
+
 ## UI/UX VERBETERINGEN UITGESTELD & ZOEKEN VOLTOOID (Juli 8, 2025) 🎯✅
 
 **🎯 UI CLEANUP & VERBETERING: Versie 0.9.224-0.10.4**

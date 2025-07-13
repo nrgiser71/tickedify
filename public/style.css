@@ -6435,3 +6435,107 @@ button:focus {
 .empty-state {
     color: var(--macos-text-tertiary);
 }
+
+/* Floating Drop Panel */
+.floating-drop-panel {
+    position: fixed;
+    bottom: -300px; /* Hidden by default */
+    right: 30px;
+    width: 280px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 
+                0 0 1px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.floating-drop-panel.active {
+    bottom: 30px;
+}
+
+.drop-panel-content {
+    padding: 20px;
+}
+
+.drop-panel-header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--macos-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.drop-zones {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.drop-zone-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--macos-bg-secondary);
+    border: 2px dashed var(--macos-gray-3);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.drop-zone-item:hover {
+    background: var(--macos-bg-primary);
+    border-color: var(--macos-gray-2);
+    transform: translateY(-1px);
+}
+
+.drop-zone-item.drag-over {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: var(--macos-blue);
+    border-style: solid;
+    transform: scale(1.02);
+}
+
+.drop-zone-item i {
+    font-size: 20px;
+    color: var(--macos-gray-1);
+    transition: color 0.2s ease;
+}
+
+.drop-zone-item.drag-over i {
+    color: var(--macos-blue);
+}
+
+.drop-zone-item span {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--macos-text-primary);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .floating-drop-panel {
+        right: 20px;
+        left: 20px;
+        width: auto;
+    }
+    
+    .drop-zones {
+        flex-direction: row;
+        gap: 8px;
+    }
+    
+    .drop-zone-item {
+        flex: 1;
+        padding: 12px 16px;
+        justify-content: center;
+    }
+    
+    .drop-zone-item span {
+        font-size: 14px;
+    }
+}

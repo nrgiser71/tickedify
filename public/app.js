@@ -2498,12 +2498,7 @@ class Taakbeheer {
                 <td class="actie-datum">${datum}</td>
                 <td class="actie-duur">${duurText}</td>
                 <td class="actie-buttons">
-                    <div class="verplaats-dropdown">
-                        <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
-                        <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
-                            ${this.getVerplaatsOptiesUitgesteld(taak.id)}
-                        </div>
-                    </div>
+                    <!-- Drag & drop naar inbox/opvolgen via floating panel -->
                 </td>
             `;
 
@@ -2527,71 +2522,6 @@ class Taakbeheer {
             .join('');
     }
 
-    getVerplaatsOptiesUitgesteld(taakId) {
-        // Simplified dropdown - only inbox and opvolgen since drag & drop handles uitgesteld moves
-        const alleOpties = [
-            { key: 'inbox', label: 'Inbox' },
-            { key: 'opvolgen', label: 'Opvolgen' }
-        ];
-
-        return alleOpties
-            .filter(optie => optie.key !== this.huidigeLijst)
-            .map(optie => `<button onclick="app.verplaatsUitgesteldeTaak('${taakId}', '${optie.key}')">${optie.label}</button>`)
-            .join('');
-    }
-
-    toggleVerplaatsDropdownUitgesteld(id) {
-        // Sluit alle andere dropdowns
-        document.querySelectorAll('.verplaats-menu').forEach(menu => {
-            if (menu.id !== `verplaats-uitgesteld-${id}`) {
-                menu.style.display = 'none';
-            }
-        });
-
-        // Toggle de specifieke dropdown
-        const menu = document.getElementById(`verplaats-uitgesteld-${id}`);
-        if (menu) {
-            if (menu.style.display === 'none' || menu.style.display === '') {
-                // Position the menu below the button using fixed positioning
-                const button = menu.previousElementSibling;
-                const rect = button.getBoundingClientRect();
-                
-                menu.style.position = 'fixed';
-                menu.style.top = (rect.bottom + 2) + 'px';
-                menu.style.left = (rect.right - 140) + 'px'; // Align right edge
-                menu.style.display = 'block';
-            } else {
-                menu.style.display = 'none';
-            }
-        }
-    }
-
-    async verplaatsUitgesteldeTaak(id, naarLijst) {
-        const taak = this.taken.find(t => t.id === id);
-        if (!taak) return;
-
-        // Als het naar dezelfde lijst gaat, doe niets
-        if (naarLijst === this.huidigeLijst) {
-            this.sluitAlleDropdowns();
-            return;
-        }
-
-        await loading.withLoading(async () => {
-            await this.verplaatsTaakNaarLijst(taak, naarLijst);
-            // Remove from local list (no need to save - already done by server)
-            this.taken = this.taken.filter(t => t.id !== id);
-            await this.renderTaken();
-            // Update counts 
-            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-        }, {
-            operationId: 'verplaats-uitgestelde-taak',
-            showGlobal: true,
-            message: `Taak wordt verplaatst naar ${naarLijst}...`
-        });
-        
-        // Sluit dropdown
-        this.sluitAlleDropdowns();
-    }
 
     bindUitgesteldDropdownEvents() {
         // Close verplaats dropdowns bij klik buiten
@@ -8715,12 +8645,6 @@ class Taakbeheer {
                     <span class="taak-tekst" title="${tooltipContent}">${taak.tekst}${recurringIndicator}</span>
                 </div>
                 <div class="taak-acties">
-                    <div class="verplaats-dropdown">
-                        <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdownUitgesteld('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
-                        <div class="verplaats-menu" id="verplaats-uitgesteld-${taak.id}" style="display: none;">
-                            ${this.getVerplaatsOptiesUitgesteld(taak.id)}
-                        </div>
-                    </div>
                     <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">×</button>
                 </div>
             `;
@@ -8735,10 +8659,16 @@ class Taakbeheer {
                 }));
                 e.dataTransfer.effectAllowed = 'move';
                 li.style.opacity = '0.5';
+                
+                // Show floating drop panel
+                this.showFloatingDropPanel();
             });
             
             li.addEventListener('dragend', (e) => {
                 li.style.opacity = '1';
+                
+                // Hide floating drop panel
+                this.hideFloatingDropPanel();
             });
 
             lijst.appendChild(li);
@@ -8864,6 +8794,113 @@ class Taakbeheer {
             }
         }, {
             operationId: 'drag-drop-move',
+            showGlobal: true,
+            message: 'Taak verplaatsen...'
+        });
+    }
+
+    showFloatingDropPanel() {
+        const panel = document.getElementById('floatingDropPanel');
+        if (panel) {
+            panel.classList.add('active');
+            panel.style.display = 'block';
+            
+            // Setup drop zones if not already done
+            if (!this.floatingDropZonesSetup) {
+                this.setupFloatingDropZones();
+                this.floatingDropZonesSetup = true;
+            }
+        }
+    }
+
+    hideFloatingDropPanel() {
+        const panel = document.getElementById('floatingDropPanel');
+        if (panel) {
+            panel.classList.remove('active');
+            // Delay hiding to allow for smooth animation
+            setTimeout(() => {
+                if (!panel.classList.contains('active')) {
+                    panel.style.display = 'none';
+                }
+            }, 300);
+        }
+    }
+
+    setupFloatingDropZones() {
+        const dropZones = document.querySelectorAll('.drop-zone-item');
+        
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                zone.classList.add('drag-over');
+            });
+            
+            zone.addEventListener('dragleave', (e) => {
+                zone.classList.remove('drag-over');
+            });
+            
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                
+                try {
+                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    
+                    if (dragData.type === 'uitgesteld-taak') {
+                        const targetList = zone.dataset.target;
+                        await this.handleFloatingDropZoneDrop(dragData, targetList);
+                    }
+                } catch (error) {
+                    console.error('Error processing drop:', error);
+                    toast.error('Fout bij verplaatsen van taak');
+                }
+            });
+        });
+    }
+
+    async handleFloatingDropZoneDrop(dragData, targetList) {
+        const { taakId, bronLijst } = dragData;
+        
+        await loading.withLoading(async () => {
+            try {
+                // Use existing API to move task
+                const response = await fetch(`/api/taak/${taakId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        lijst: targetList
+                    })
+                });
+
+                if (response.ok) {
+                    // Remove from source list DOM
+                    const sourceItem = document.querySelector(`[data-id="${taakId}"]`);
+                    if (sourceItem) {
+                        sourceItem.remove();
+                        
+                        // Update source count
+                        const sourceHeader = document.querySelector(`[data-category="${bronLijst}"] .taken-count`);
+                        if (sourceHeader) {
+                            const currentCount = parseInt(sourceHeader.textContent.match(/\d+/)[0]);
+                            sourceHeader.textContent = `(${currentCount - 1})`;
+                        }
+                    }
+
+                    const targetName = targetList === 'inbox' ? 'Inbox' : 'Opvolgen';
+                    toast.success(`Taak verplaatst naar ${targetName}`);
+                } else {
+                    const error = await response.json();
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
+                }
+            } catch (error) {
+                console.error('Error moving task:', error);
+                toast.error('Fout bij verplaatsen van taak');
+            }
+        }, {
+            operationId: 'floating-drop-move',
             showGlobal: true,
             message: 'Taak verplaatsen...'
         });
