@@ -2021,7 +2021,7 @@ class Taakbeheer {
         popup.addEventListener('keydown', (e) => {
             
             // Only handle F-keys when popup is visible
-            if (!popup.style.display || popup.style.display === 'none') return;
+            if (popup.style.display === 'none') return;
             
             // Skip if in textarea (except F9 which should focus textarea)
             if (e.target.tagName === 'TEXTAREA' && e.key !== 'F9') return;
