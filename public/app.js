@@ -2023,8 +2023,8 @@ class Taakbeheer {
             // Only handle F-keys when popup is visible
             if (!popup.style.display || popup.style.display === 'none') return;
             
-            // Skip if in textarea (except F8 which should focus textarea)
-            if (e.target.tagName === 'TEXTAREA' && e.key !== 'F8') return;
+            // Skip if in textarea (except F9 which should focus textarea)
+            if (e.target.tagName === 'TEXTAREA' && e.key !== 'F9') return;
             
             // F2-F9 shortcuts (F1 is reserved for global help)
             if (!e.ctrlKey && !e.altKey && !e.metaKey) {

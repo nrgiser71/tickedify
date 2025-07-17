@@ -77,6 +77,41 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **LAATSTE UPDATE**: De ARCHITECTURE.md is aangemaakt op Juli 10, 2025 en moet vanaf nu bij elke code wijziging worden bijgewerkt!
 
+## SCROLL INDICATOREN VOOR UITGESTELD LIJSTEN VOLTOOID (Juli 13, 2025) ✅✨
+
+**🎯 UX VERBETERING VOLTOOID: Versie 0.11.18-0.11.19**
+- **User request**: "In het scherm met de uitgesteld lijsten, wanneer je één van de lijsten open klikt is het niet duidelijk dat er nog kan gescroltd worden... het zou veel duidelijker moeten zijn"
+- **Probleem**: Gebruikers wisten niet dat er meer taken beschikbaar waren door te scrollen in uitgesteld lijsten
+- **Oplossing**: Intelligente scroll indicatoren met pijltjes die alleen verschijnen wanneer scrollen mogelijk is
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Position:fixed indicators**: Pijltjes (▲▼) blijven op hun plaats tijdens scrollen
+- **JavaScript scroll detection**: Real-time check of content scrollable is en huidige scroll positie
+- **Dynamic visibility**: Top indicator verschijnt na scroll down (>10px), bottom indicator verdwijnt bij scroll end
+- **getBoundingClientRect() positioning**: Exacte pixel positioning voor perfect alignment
+- **Cleanup management**: Memory leak preventie door proper element removal
+
+**🎨 DESIGN ACHIEVEMENTS:**
+- **Intelligente weergave**: Alleen zichtbaar wanneer er daadwerkelijk gescrolld kan worden
+- **Visual feedback**: Duidelijke ▲ en ▼ pijltjes met gradient achtergrond
+- **Smooth transitions**: 0.3s opacity animaties voor professionele uitstraling
+- **Non-intrusive**: Pointer-events none en subtiele styling
+- **macOS consistent**: Gradient kleuren en font styling consistent met app design
+
+**🔧 VERSIE PROGRESSIE:**
+- **v0.11.6-0.11.12**: Verschillende implementatie pogingen met CSS pseudo-elements en complex positioning
+- **v0.11.13-0.11.17**: JavaScript met CSS custom properties, wrapper structuren en DOM manipulatie
+- **v0.11.18**: Breakthrough - position:fixed met inline styles en getBoundingClientRect()
+- **v0.11.19**: Final cleanup en feature completion
+
+**✨ EINDRESULTAAT:**
+- **Perfect scroll feedback** voor alle uitgesteld lijsten (wekelijks, maandelijks, etc.)
+- **Kristalheldere UX** - gebruikers weten altijd wanneer er meer content beschikbaar is
+- **Intelligent gedrag** - indicators verschijnen/verdwijnen op basis van scroll mogelijkheden
+- **Solid implementation** met position:fixed voor garanteerde stabiliteit
+
+**STATUS**: Scroll indicatoren feature volledig voltooid en production-ready.
+
 ## FLOATING DROP PANEL VOOR UITGESTELD DRAG & DROP VOLTOOID (Juli 13, 2025) ✨✅
 
 **🎯 MAJOR UX IMPROVEMENT: Versie 0.11.0-0.11.1**

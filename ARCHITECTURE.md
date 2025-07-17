@@ -232,6 +232,13 @@ email_import_code VARCHAR(20) UNIQUE
 - **CSS**: Panel styling met blur effects in style.css:6439-6542
 - **Positioning**: top: 80px rechts, smooth slide-in animaties
 
+### Scroll Indicators (Uitgesteld Lijsten)
+- **Setup**: `setupIntelligentScrollIndicators()` in app.js:~9000-9200
+- **Detection**: ResizeObserver en scroll event handlers
+- **Positioning**: position:fixed met getBoundingClientRect()
+- **Styling**: CSS gradients met ▲▼ arrow symbols
+- **Smart Display**: Alleen zichtbaar wanneer scrollen mogelijk is
+
 ## 🚀 Development Workflow
 
 ### Bij nieuwe feature:
@@ -277,6 +284,11 @@ email_import_code VARCHAR(20) UNIQUE
 - Visual feedback - style.css:3000-3500
 - **Floating Panel**: app.js:8878-8983 + style.css:6439-6542
 
+### Scroll & Visibility Helpers
+- `setupIntelligentScrollIndicators()` - app.js:~9000-9200
+- Position:fixed scroll indicators voor uitgesteld lijsten
+- ResizeObserver voor content detection
+
 ### API Helpers
 - Fetch wrappers - app.js:500-600
 - Error handling - throughout app.js
@@ -284,5 +296,8 @@ email_import_code VARCHAR(20) UNIQUE
 
 ---
 
-**LAATSTE UPDATE**: Juli 13, 2025 - Floating Drop Panel toegevoegd
+**LAATSTE UPDATE**: Juli 13, 2025 - Scroll Indicators voor uitgesteld lijsten toegevoegd
+**BELANGRIJKSTE UPDATES**:
+- Juli 13: Scroll Indicators - Intelligente scroll feedback voor uitgesteld lijsten
+- Juli 13: Floating Drop Panel - Moderne drag & drop interface 
 **BELANGRIJK**: Update dit document bij ELKE wijziging aan de codebase structuur!
