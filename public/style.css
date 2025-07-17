@@ -5864,6 +5864,41 @@ button:focus {
     box-shadow: 0 1px 4px rgba(255, 59, 48, 0.2);
 }
 
+/* Responsive adjustments for tablet/smaller laptops */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .kalender-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .kalender-header h2 {
+        font-size: 18px;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    
+    .header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .header-actions .btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        min-width: 70px;
+    }
+    
+    .totaal-tijd {
+        flex: 1;
+        min-width: 120px;
+        font-size: 12px;
+        text-align: center;
+    }
+}
+
 /* Responsive adjustments for clear planning button */
 @media (max-width: 768px) {
     .kalender-header {
