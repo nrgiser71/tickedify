@@ -3064,22 +3064,22 @@ button:focus {
 
 /* Drop zone styling */
 .drop-zone {
-    height: 8px;
-    margin: 6px 0;
+    height: 2px;
+    margin: 2px 0;
     border-radius: 1px;
     transition: all 0.2s ease;
     opacity: 0;
     background: transparent;
 }
 
-.uur-planning:hover .drop-zone,
-.drag-over .drop-zone {
+/* Only show drop zones when actively dragging */
+.dragging-active .drop-zone {
     opacity: 0.3;
     background: var(--macos-gray-3);
 }
 
 .drop-zone-active {
-    height: 12px;
+    height: 80px;
     background: var(--macos-blue);
     opacity: 1 !important;
     margin: 8px 0;

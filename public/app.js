@@ -4745,6 +4745,8 @@ class Taakbeheer {
         
         // Enable drag for existing priority tasks
         const prioriteitTaken = document.querySelectorAll('.prioriteit-taak');
+        const planningContainer = document.querySelector('.dagelijkse-planning-layout');
+        
         prioriteitTaken.forEach(taak => {
             taak.addEventListener('dragstart', (e) => {
                 const slot = taak.closest('.prioriteit-slot');
@@ -4761,6 +4763,18 @@ class Taakbeheer {
                     duurMinuten: duurMinuten
                 }));
                 e.dataTransfer.effectAllowed = 'move';
+                
+                // Add dragging-active class to show drop zones
+                if (planningContainer) {
+                    planningContainer.classList.add('dragging-active');
+                }
+            });
+            
+            taak.addEventListener('dragend', (e) => {
+                // Remove dragging-active class to hide drop zones
+                if (planningContainer) {
+                    planningContainer.classList.remove('dragging-active');
+                }
             });
         });
     }
@@ -7225,6 +7239,9 @@ class Taakbeheer {
         // Remove existing drag/drop event listeners to prevent duplicates
         this.removeDragAndDropEvents();
         
+        // Get the planning container for drag state tracking
+        const planningContainer = document.querySelector('.dagelijkse-planning-layout');
+        
         // Template drag start
         document.querySelectorAll('.template-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
@@ -7256,10 +7273,18 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
+                // Add dragging-active class to show drop zones
+                if (planningContainer) {
+                    planningContainer.classList.add('dragging-active');
+                }
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                // Remove dragging-active class to hide drop zones
+                if (planningContainer) {
+                    planningContainer.classList.remove('dragging-active');
+                }
             });
         });
         
@@ -7294,10 +7319,18 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
+                // Add dragging-active class to show drop zones
+                if (planningContainer) {
+                    planningContainer.classList.add('dragging-active');
+                }
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                // Remove dragging-active class to hide drop zones
+                if (planningContainer) {
+                    planningContainer.classList.remove('dragging-active');
+                }
             });
         });
 
@@ -7334,10 +7367,18 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
+                // Add dragging-active class to show drop zones
+                if (planningContainer) {
+                    planningContainer.classList.add('dragging-active');
+                }
             });
 
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                // Remove dragging-active class to hide drop zones
+                if (planningContainer) {
+                    planningContainer.classList.remove('dragging-active');
+                }
             });
         });
         
@@ -7865,6 +7906,9 @@ class Taakbeheer {
     }
     
     bindActionsListEvents() {
+        // Get the planning container for drag state tracking
+        const planningContainer = document.querySelector('.dagelijkse-planning-layout');
+        
         // Only bind drag events for action items in the planning actions list
         document.querySelectorAll('#planningActiesLijst [data-actie-id]').forEach(item => {
             item.addEventListener('dragstart', (e) => {
@@ -7896,11 +7940,20 @@ class Taakbeheer {
                         document.body.removeChild(dragImage);
                     }
                 }, 100);
+                
+                // Add dragging-active class to show drop zones
+                if (planningContainer) {
+                    planningContainer.classList.add('dragging-active');
+                }
             });
             
             item.addEventListener('dragend', (e) => {
                 // Restore opacity
                 item.style.opacity = '1';
+                // Remove dragging-active class to hide drop zones
+                if (planningContainer) {
+                    planningContainer.classList.remove('dragging-active');
+                }
             });
         });
     }
