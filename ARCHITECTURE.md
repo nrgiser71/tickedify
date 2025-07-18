@@ -111,6 +111,7 @@ email_import_code VARCHAR(20) UNIQUE
 - Loading indicators: regels 4,000-4,500
 - Responsive design: regels 4,500-5,000
 - Utilities & animations: regels 5,000-6,400
+- **Focus Mode**: regels 6,634-6,787 - Dagkalender fullscreen CSS overrides
 - **Floating Drop Panel**: regels 6,439-6,542 - Panel styling met blur effects en animaties
 
 ### Backend
@@ -271,6 +272,14 @@ email_import_code VARCHAR(20) UNIQUE
 - **Planning**: Planning popup in index.html
 - **Event datum**: Event popup voor recurring taken
 
+### Focus Mode (Dagelijkse Planning)
+- **Toggle**: `toggleDagkalenderFocus()` in app.js:~4500
+- **Enter/Exit**: `enterFocusMode()`, `exitFocusMode()` in app.js:~4600-4700
+- **Restore**: `restoreFocusMode()` in app.js:~4800 - localStorage persistence
+- **Keyboard**: F11 toggle, ESC exit shortcuts
+- **CSS**: `.dag-kalender-fullscreen` styling in style.css:6634-6787
+- **Properties**: Position:fixed, z-index:9999, agressieve layout overrides
+
 ## 🔧 Utility Locaties
 
 ### Date Helpers
@@ -294,10 +303,36 @@ email_import_code VARCHAR(20) UNIQUE
 - Error handling - throughout app.js
 - Loading integration - via LoadingManager
 
+## 🚨 Troubleshooting & Known Issues
+
+### Focus Mode Troubleshooting
+**Probleem**: Focus mode bedekt niet volledig het scherm
+- **Oplossing**: Check z-index:9999 en background-color fallback in style.css:6634-6687
+- **CSS**: `.dag-kalender-fullscreen` positioning moet position:fixed zijn
+
+**Probleem**: Taken niet correct gepositioneerd per uur
+- **Oplossing**: Forceer position:relative voor alle child elements
+- **CSS**: `.dag-kalender-fullscreen .kalender-uur` overrides in style.css:6679-6686
+
+**Probleem**: Uur blokken groeien niet mee met inhoud
+- **Oplossing**: Gebruik height:auto + max-height:none + flex-shrink:0
+- **CSS**: Agressieve overrides in style.css:6688-6703
+
+### Recurring Tasks Issues
+**Probleem**: Herhalende taken verdwijnen bij PUT requests
+- **Oplossing**: Check database.js updateTask() query parameter mapping
+- **Debug**: Gebruik forensic logging of recovery tools
+
+### Drag & Drop Issues
+**Probleem**: Wereldbol cursor tijdens slepen
+- **Oplossung**: Custom drag image in createDragImage() app.js:1800
+- **Visual**: Transparante taak + 📋 emoji cursor
+
 ---
 
-**LAATSTE UPDATE**: Juli 13, 2025 - Scroll Indicators voor uitgesteld lijsten toegevoegd
+**LAATSTE UPDATE**: Juli 18, 2025 - Focus Mode fixes gedocumenteerd
 **BELANGRIJKSTE UPDATES**:
+- Juli 18: Focus Mode - Volledige CSS overrides voor perfect fullscreen gedrag
 - Juli 13: Scroll Indicators - Intelligente scroll feedback voor uitgesteld lijsten
 - Juli 13: Floating Drop Panel - Moderne drag & drop interface 
 **BELANGRIJK**: Update dit document bij ELKE wijziging aan de codebase structuur!

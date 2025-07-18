@@ -77,6 +77,51 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **LAATSTE UPDATE**: De ARCHITECTURE.md is aangemaakt op Juli 10, 2025 en moet vanaf nu bij elke code wijziging worden bijgewerkt!
 
+## FOCUS MODE LAYOUT FIXES VOLTOOID (Juli 18, 2025) ✅🎯
+
+**🚀 MAJOR UI FIX VOLTOOID: Versie 0.11.31-0.11.34**
+- **User request**: "Focus mode bedekt niet meer de volledige app" + "De taken niet juist gepositioneerd in de blokken" + "Blokken groeien niet mee"
+- **Probleem**: Drie verschillende focus mode issues die de UX verstoren
+- **Oplossing**: Complete focus mode rebuild met agressieve CSS overrides
+
+**🔧 TECHNISCHE IMPLEMENTATIE:**
+- **Volledige scherm coverage**: Z-index verhoogd naar 9999, fallback background-color, min-width/height 100vw/vh
+- **Correcte taak positionering**: Position: relative !important voor kalender-uur, uur-content, uur-planning
+- **Automatische blok grootte**: Height: auto + max-height: none + flex-shrink: 0 voor alle focus mode elementen
+- **Responsive compatibility**: Dezelfde overrides voor mobile focus mode
+
+**🎨 UX ACHIEVEMENTS:**
+- **Perfect fullscreen**: Focus mode bedekt nu volledig het scherm zonder gaten
+- **Juiste positionering**: Taken staan correct gepositioneerd per uur zoals in normale modus
+- **Dynamische grootte**: Blokken groeien automatisch mee met inhoud voor optimale leesbaarheid
+- **Consistent gedrag**: Focus mode werkt identiek aan normale modus, alleen fullscreen
+
+**📋 CSS OVERRIDES STRATEGISCH:**
+```css
+.dag-kalender-fullscreen .kalender-uur {
+    position: relative !important;
+    display: flex !important;
+    min-height: 80px !important;
+    height: auto !important;
+    max-height: none !important;
+    flex-shrink: 0 !important;
+}
+```
+
+**🔄 VERSIE PROGRESSIE:**
+- **v0.11.31**: Volledige scherm coverage fix (z-index + background)
+- **v0.11.32**: Taak positionering fix (position: relative + flex layout)
+- **v0.11.33**: Automatische blok grootte (height: auto)
+- **v0.11.34**: Agressieve CSS overrides (max-height: none + flex-shrink: 0)
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkende focus mode** met volledige scherm coverage
+- **Identieke layout** aan normale modus maar fullscreen
+- **Dynamische blok grootte** die meeschaalt met inhoud
+- **Production-ready** met cross-browser compatibility
+
+**STATUS**: Focus mode volledig geoptimaliseerd en production-ready.
+
 ## SCROLL INDICATOREN VOOR UITGESTELD LIJSTEN VOLTOOID (Juli 13, 2025) ✅✨
 
 **🎯 UX VERBETERING VOLTOOID: Versie 0.11.18-0.11.19**
