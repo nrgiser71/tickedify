@@ -8047,9 +8047,9 @@ class Taakbeheer {
             if (chevron) chevron.textContent = '▶';
         }
         
-        // Provide immediate visual feedback - hide the item
+        // Provide immediate visual feedback - make item semi-transparent
         planningItem.style.transition = 'opacity 0.2s ease-out';
-        planningItem.style.opacity = '0.3';
+        planningItem.style.opacity = '0.5';
         planningItem.style.pointerEvents = 'none';
         
         await loading.withLoading(async () => {
@@ -8115,29 +8115,58 @@ class Taakbeheer {
     removePlanningItemLocally(planningId) {
         console.log('🗑️ removePlanningItemLocally called for:', planningId);
         
+        // First try to find the DOM element to get the hour
+        const domElement = document.querySelector(`[data-planning-id="${planningId}"]`);
+        let affectedHour = null;
+        
+        if (domElement) {
+            // Get the hour from the parent element
+            const hourElement = domElement.closest('[data-uur]');
+            if (hourElement) {
+                affectedHour = parseInt(hourElement.dataset.uur);
+                console.log('📍 Found hour from DOM:', affectedHour);
+            }
+            
+            // Remove the DOM element immediately with fade effect
+            console.log('🎯 Fading out DOM element');
+            domElement.style.transition = 'opacity 0.2s ease-out';
+            domElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (domElement.parentNode) {
+                    domElement.remove();
+                    console.log('✅ DOM element removed');
+                }
+            }, 200);
+        }
+        
         if (!this.currentPlanningData) {
             console.error('❌ No currentPlanningData available');
             return;
         }
         
-        // Find the item to get its hour before removing
+        // Find the item in planning data
         const item = this.currentPlanningData.find(p => p.id === planningId);
-        if (!item) {
-            console.error('❌ Item not found in currentPlanningData:', planningId);
-            return;
+        if (item) {
+            affectedHour = item.uur;
+            console.log('📍 Item found in data, hour:', affectedHour);
+            console.log('📊 Before removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
+            
+            // Remove from local data
+            this.currentPlanningData = this.currentPlanningData.filter(p => p.id !== planningId);
+            console.log('📊 After removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
+        } else {
+            console.log('⚠️ Item not found in currentPlanningData (may have been removed already)');
         }
         
-        const affectedHour = item.uur;
-        console.log('📍 Item found in hour:', affectedHour);
-        console.log('📊 Before removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
-        
-        // Remove from local data
-        this.currentPlanningData = this.currentPlanningData.filter(p => p.id !== planningId);
-        console.log('📊 After removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
-        
-        // Update the hour display immediately - this will remove the item from DOM
-        console.log('🔄 Updating hour display for:', affectedHour);
-        this.updateSingleHourDisplay(affectedHour);
+        // Update the hour display if we found the hour
+        if (affectedHour !== null) {
+            // Wait a bit to ensure DOM element is removed first
+            setTimeout(() => {
+                console.log('🔄 Updating hour display for:', affectedHour);
+                this.updateSingleHourDisplay(affectedHour);
+            }, 250);
+        }
     }
 
     editPlanningItemName(planningId, spanElement) {
