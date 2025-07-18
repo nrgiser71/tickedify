@@ -8030,13 +8030,27 @@ class Taakbeheer {
             event.preventDefault();
         }
         
-        // Collapse the item first if it's expanded
+        console.log('🗑️ deletePlanningItem called for:', planningId);
+        
+        // Get the planning item element
         const planningItem = document.querySelector(`[data-planning-id="${planningId}"]`);
-        if (planningItem && planningItem.classList.contains('expanded')) {
+        if (!planningItem) {
+            console.error('❌ Planning item DOM element not found:', planningId);
+            toast.error('Planning item niet gevonden');
+            return;
+        }
+        
+        // Collapse the item first if it's expanded
+        if (planningItem.classList.contains('expanded')) {
             planningItem.classList.remove('expanded');
             const chevron = planningItem.querySelector('.expand-chevron');
             if (chevron) chevron.textContent = '▶';
         }
+        
+        // Provide immediate visual feedback - hide the item
+        planningItem.style.transition = 'opacity 0.2s ease-out';
+        planningItem.style.opacity = '0.3';
+        planningItem.style.pointerEvents = 'none';
         
         await loading.withLoading(async () => {
             try {
@@ -8045,15 +8059,23 @@ class Taakbeheer {
                 });
                 
                 if (response.ok) {
+                    console.log('✅ Server delete successful');
                     // Remove from local data and update only the affected area
                     this.removePlanningItemLocally(planningId);
                     this.updateTotaalTijd(); // Update total time
                     toast.success('Planning item verwijderd!');
                 } else {
+                    console.error('❌ Server delete failed:', response.status);
+                    // Restore the item visibility on error
+                    planningItem.style.opacity = '1';
+                    planningItem.style.pointerEvents = 'auto';
                     toast.error('Fout bij verwijderen planning item');
                 }
             } catch (error) {
                 console.error('Error deleting planning item:', error);
+                // Restore the item visibility on error
+                planningItem.style.opacity = '1';
+                planningItem.style.pointerEvents = 'auto';
                 toast.error('Fout bij verwijderen planning item');
             }
         }, {
@@ -8091,19 +8113,44 @@ class Taakbeheer {
     }
     
     removePlanningItemLocally(planningId) {
-        if (!this.currentPlanningData) return;
+        console.log('🗑️ removePlanningItemLocally called for:', planningId);
+        
+        if (!this.currentPlanningData) {
+            console.error('❌ No currentPlanningData available');
+            return;
+        }
         
         // Find the item to get its hour before removing
         const item = this.currentPlanningData.find(p => p.id === planningId);
-        if (!item) return;
+        if (!item) {
+            console.error('❌ Item not found in currentPlanningData:', planningId);
+            return;
+        }
         
         const affectedHour = item.uur;
+        console.log('📍 Item found in hour:', affectedHour);
+        console.log('📊 Before removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
         
         // Remove from local data
         this.currentPlanningData = this.currentPlanningData.filter(p => p.id !== planningId);
+        console.log('📊 After removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
         
-        // Update only the affected hour display
-        this.updateSingleHourDisplay(affectedHour);
+        // Force remove the DOM element as immediate feedback
+        const domElement = document.querySelector(`[data-planning-id="${planningId}"]`);
+        if (domElement) {
+            console.log('🎯 Removing DOM element directly');
+            domElement.style.transition = 'opacity 0.2s ease-out';
+            domElement.style.opacity = '0';
+            setTimeout(() => {
+                domElement.remove();
+            }, 200);
+        }
+        
+        // Update the hour display after a small delay to ensure DOM is ready
+        setTimeout(() => {
+            console.log('🔄 Updating hour display for:', affectedHour);
+            this.updateSingleHourDisplay(affectedHour);
+        }, 250);
     }
 
     editPlanningItemName(planningId, spanElement) {
