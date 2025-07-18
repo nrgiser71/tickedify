@@ -6640,15 +6640,19 @@ button:focus {
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    z-index: 1000;
+    z-index: 9999;
     width: 100vw !important;
     height: 100vh !important;
     padding: 30px;
     margin: 0 !important;
-    background: var(--macos-bg-primary);
+    background: var(--macos-bg-primary) !important;
+    background-color: #FFFFFF !important; /* Fallback for better coverage */
     box-shadow: none;
     border-radius: 0;
     flex-shrink: unset !important;
+    /* Ensure complete coverage */
+    min-width: 100vw !important;
+    min-height: 100vh !important;
 }
 
 /* Header styling in fullscreen */
