@@ -9,6 +9,15 @@ const PORT = process.env.PORT || 3000;
 // Import PostgreSQL session store
 const pgSession = require('connect-pg-simple')(session);
 
+// Security headers middleware
+app.use((req, res, next) => {
+    // Basic security headers (safe for existing apps)
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
+
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add URL-encoded parsing for Mailgun
@@ -5214,6 +5223,50 @@ app.post('/api/admin/maintenance', async (req, res) => {
         console.error('Admin maintenance error:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+// Admin Authentication Endpoint
+app.post('/api/admin/auth', async (req, res) => {
+    try {
+        const { password } = req.body;
+        const adminPassword = process.env.ADMIN_PASSWORD || 'tefhi5-kudgIr-girjot'; // fallback to current password
+        
+        if (!password) {
+            return res.status(400).json({ error: 'Password is required' });
+        }
+        
+        if (password === adminPassword) {
+            // Set admin session flag
+            req.session.isAdmin = true;
+            req.session.adminLoginTime = new Date().toISOString();
+            
+            res.json({ 
+                success: true, 
+                message: 'Admin authentication successful',
+                loginTime: req.session.adminLoginTime
+            });
+        } else {
+            res.status(401).json({ error: 'Invalid admin password' });
+        }
+    } catch (error) {
+        console.error('Admin auth error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+    }
+});
+
+// Admin Session Check Endpoint
+app.get('/api/admin/session', (req, res) => {
+    res.json({ 
+        isAuthenticated: !!req.session.isAdmin,
+        loginTime: req.session.adminLoginTime || null
+    });
+});
+
+// Admin Logout Endpoint
+app.post('/api/admin/logout', (req, res) => {
+    req.session.isAdmin = false;
+    req.session.adminLoginTime = null;
+    res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // ===== V1 API - URL-based endpoints for external integrations =====

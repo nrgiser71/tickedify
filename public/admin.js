@@ -32,6 +32,32 @@ class AdminDashboard {
         const password = document.getElementById('adminPassword').value;
         const errorDiv = document.getElementById('loginError');
         
+        try {
+            // Try server-side authentication first
+            const response = await fetch('/api/admin/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password })
+            });
+            
+            if (response.ok) {
+                // Server-side authentication succeeded
+                this.isAuthenticated = true;
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                errorDiv.style.display = 'none';
+                
+                await this.loadDashboard();
+                this.startAutoRefresh();
+                return;
+            }
+        } catch (error) {
+            console.warn('Server-side auth failed, falling back to client-side:', error);
+        }
+        
+        // Fallback to client-side authentication
         if (password === this.adminPassword) {
             this.isAuthenticated = true;
             document.getElementById('loginContainer').style.display = 'none';
@@ -47,7 +73,20 @@ class AdminDashboard {
         }
     }
 
-    logout() {
+    async logout() {
+        try {
+            // Try server-side logout
+            await fetch('/api/admin/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (error) {
+            console.warn('Server-side logout failed:', error);
+        }
+        
+        // Always perform client-side logout
         this.isAuthenticated = false;
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('adminDashboard').style.display = 'none';
