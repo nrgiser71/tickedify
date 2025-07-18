@@ -2,7 +2,6 @@
 class AdminDashboard {
     constructor() {
         this.isAuthenticated = false;
-        this.adminPassword = 'tefhi5-kudgIr-girjot'; // Admin wachtwoord
         this.data = {};
         this.refreshInterval = null;
         
@@ -54,19 +53,8 @@ class AdminDashboard {
                 return;
             }
         } catch (error) {
-            console.warn('Server-side auth failed, falling back to client-side:', error);
-        }
-        
-        // Fallback to client-side authentication
-        if (password === this.adminPassword) {
-            this.isAuthenticated = true;
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('adminDashboard').style.display = 'block';
-            errorDiv.style.display = 'none';
-            
-            await this.loadDashboard();
-            this.startAutoRefresh();
-        } else {
+            console.error('Server-side auth failed:', error);
+            errorDiv.textContent = 'Login service niet beschikbaar. Probeer later opnieuw.';
             errorDiv.style.display = 'block';
             document.getElementById('adminPassword').value = '';
             document.getElementById('adminPassword').focus();
