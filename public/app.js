@@ -7008,6 +7008,9 @@ class Taakbeheer {
             return `
                 <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-row">
+                        <div class="actie-checkbox">
+                            <input type="checkbox" onchange="app.taakAfwerken('${actie.id}')" title="Taak afwerken">
+                        </div>
                         <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
                             ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}

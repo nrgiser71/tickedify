@@ -2589,7 +2589,7 @@ button:focus {
 }
 
 .planning-actie-item {
-    padding: 12px 12px 12px 20px;
+    padding: 12px 12px 12px 45px;
     border: 2px dashed var(--macos-gray-4);
     border-radius: var(--macos-radius-small);
     cursor: default; /* Default cursor for scrolling */
@@ -2607,7 +2607,7 @@ button:focus {
 .planning-actie-item::before {
     content: "⋮⋮";
     position: absolute;
-    left: 6px;
+    left: 25px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 10px;
@@ -2665,6 +2665,20 @@ button:focus {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.planning-actie-item .actie-checkbox {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.planning-actie-item .actie-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0;
 }
 
 .actie-tekst {
