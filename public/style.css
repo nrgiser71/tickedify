@@ -6681,6 +6681,8 @@ button:focus {
     display: flex !important;
     min-height: 80px !important;
     height: auto !important;
+    max-height: none !important;
+    flex-shrink: 0 !important;
 }
 
 .dag-kalender-fullscreen .uur-content {
@@ -6688,12 +6690,16 @@ button:focus {
     flex: 1 !important;
     min-height: 60px !important;
     height: auto !important;
+    max-height: none !important;
+    flex-shrink: 0 !important;
 }
 
 .dag-kalender-fullscreen .uur-planning {
     position: relative !important;
     display: flex !important;
     flex-direction: column !important;
+    height: auto !important;
+    max-height: none !important;
 }
 
 /* Focus mode toggle button styling */
@@ -6757,6 +6763,8 @@ body.dagkalender-focus-active {
         display: flex !important;
         min-height: 80px !important;
         height: auto !important;
+        max-height: none !important;
+        flex-shrink: 0 !important;
     }
     
     .dag-kalender-fullscreen .uur-content {
@@ -6764,12 +6772,16 @@ body.dagkalender-focus-active {
         flex: 1 !important;
         min-height: 60px !important;
         height: auto !important;
+        max-height: none !important;
+        flex-shrink: 0 !important;
     }
     
     .dag-kalender-fullscreen .uur-planning {
         position: relative !important;
         display: flex !important;
         flex-direction: column !important;
+        height: auto !important;
+        max-height: none !important;
     }
 }
 
