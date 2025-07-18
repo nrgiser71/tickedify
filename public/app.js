@@ -7009,7 +7009,7 @@ class Taakbeheer {
                 <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-row">
                         <div class="actie-checkbox">
-                            <input type="checkbox" onchange="app.taakAfwerken('${actie.id}')" title="Taak afwerken">
+                            <input type="checkbox" onclick="app.completePlanningTask('${actie.id}', this)" title="Taak afwerken">
                         </div>
                         <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
