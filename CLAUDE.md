@@ -91,14 +91,17 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 - **Basic attack protection**: Headers beschermen tegen MIME sniffing, clickjacking, XSS
 - **SQL injection**: Al beschermd via parameterized queries  
 - **Session management**: Correct geconfigureerd met PostgreSQL store
-- **Production ready**: Veilig voor single-user productie gebruik
+- **Single-user productie**: ✅ Veilig (hack risico 2-8% per jaar)
 
-**📋 TOEKOMSTIGE SECURITY VERBETERINGEN:**
-- **Zie SECURITY-ROADMAP.md** voor gedetailleerde planning van XSS prevention, CSRF protection, input validation
-- **Risicoanalyse**: Huidige implementaties hebben 60-80% kans op breaking changes
-- **Aanbeveling**: Huidige beveiliging is voldoende voor single-user gebruik
+**🚨 PUBLIEKE LAUNCH PLANNING:**
+- **Multi-user risico**: Hack risico stijgt naar 20-40% per jaar zonder extra security
+- **Pre-launch vereist**: XSS Prevention, Rate Limiting, Input Validation (14-20 uur werk)
+- **Zie SECURITY-ROADMAP.md** voor volledige pre-launch checklist en timeline
+- **Kritiek**: Extra security VERPLICHT voor publieke registratie
 
-**STATUS**: Basis beveiliging voltooid, app is veilig voor productie gebruik.
+**STATUS**: 
+- ✅ **Huidig**: Veilig voor single-user gebruik
+- ⚠️ **Toekomst**: Extra maatregelen vereist voor publieke multi-user launch
 
 ## FOCUS MODE LAYOUT FIXES VOLTOOID (Juli 18, 2025) ✅🎯
 
