@@ -6675,6 +6675,24 @@ button:focus {
     max-height: none !important;
 }
 
+/* Ensure hour blocks maintain their normal layout in focus mode */
+.dag-kalender-fullscreen .kalender-uur {
+    position: relative !important;
+    display: flex !important;
+    min-height: 80px !important;
+}
+
+.dag-kalender-fullscreen .uur-content {
+    position: relative !important;
+    flex: 1 !important;
+}
+
+.dag-kalender-fullscreen .uur-planning {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
 /* Focus mode toggle button styling */
 .btn-focus-mode {
     background: var(--macos-blue);
@@ -6728,6 +6746,24 @@ body.dagkalender-focus-active {
     
     .dag-kalender-fullscreen .kalender-grid {
         height: calc(100vh - 120px) !important;
+    }
+    
+    /* Ensure mobile focus mode also maintains layout */
+    .dag-kalender-fullscreen .kalender-uur {
+        position: relative !important;
+        display: flex !important;
+        min-height: 80px !important;
+    }
+    
+    .dag-kalender-fullscreen .uur-content {
+        position: relative !important;
+        flex: 1 !important;
+    }
+    
+    .dag-kalender-fullscreen .uur-planning {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 }
 
