@@ -3064,12 +3064,27 @@ button:focus {
 
 /* Drop zone styling */
 .drop-zone {
+    position: relative;
     height: 2px;
     margin: 2px 0;
     border-radius: 1px;
-    transition: all 0.2s ease;
+    transition: height 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
     opacity: 0;
     background: transparent;
+}
+
+/* Invisible hit area to prevent flickering */
+.drop-zone::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 40px; /* Always 40px for stable hover detection */
+    background: transparent;
+    pointer-events: auto;
+    z-index: 1;
 }
 
 /* Only show drop zones when actively dragging */
@@ -3084,6 +3099,12 @@ button:focus {
     opacity: 1 !important;
     margin: 8px 0;
     box-shadow: 0 0 8px rgba(0, 122, 255, 0.3);
+    transition-delay: 0.1s; /* Small delay to prevent flicker */
+}
+
+/* Ensure smooth transition back */
+.drop-zone:not(.drop-zone-active) {
+    transition-delay: 0.1s;
 }
 
 /* Dragging feedback */
