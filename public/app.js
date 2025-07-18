@@ -7161,7 +7161,7 @@ class Taakbeheer {
                     ${priorityIcon}
                     ${naamElement}
                     <span class="planning-duur">${planningItem.duurMinuten}min</span>
-                    <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}')">×</button>
+                    <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}', event)">×</button>
                 </div>
                 ${detailsHtml}
             </div>
@@ -8023,7 +8023,21 @@ class Taakbeheer {
         }
     }
 
-    async deletePlanningItem(planningId) {
+    async deletePlanningItem(planningId, event) {
+        // Stop event propagation to prevent expand/collapse from triggering
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        
+        // Collapse the item first if it's expanded
+        const planningItem = document.querySelector(`[data-planning-id="${planningId}"]`);
+        if (planningItem && planningItem.classList.contains('expanded')) {
+            planningItem.classList.remove('expanded');
+            const chevron = planningItem.querySelector('.expand-chevron');
+            if (chevron) chevron.textContent = '▶';
+        }
+        
         await loading.withLoading(async () => {
             try {
                 const response = await fetch(`/api/dagelijkse-planning/${planningId}`, {
