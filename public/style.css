@@ -3065,16 +3065,16 @@ button:focus {
 /* Drop zone styling */
 .drop-zone {
     position: relative;
-    height: 20px;
-    margin: 4px 0;
-    border-radius: 4px;
+    height: 2px;
+    margin: 0;
+    border-radius: 1px;
     transition: height 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
     opacity: 0;
     background: transparent;
 }
 
-/* Invisible hit area to prevent flickering */
-.drop-zone::before {
+/* Invisible hit area to prevent flickering - only during dragging */
+.dragging-active .drop-zone::before {
     content: '';
     position: absolute;
     left: 0;
@@ -3089,6 +3089,8 @@ button:focus {
 
 /* Only show drop zones when actively dragging */
 .dragging-active .drop-zone {
+    height: 20px;
+    margin: 4px 0;
     opacity: 0.3;
     background: var(--macos-gray-3);
 }
