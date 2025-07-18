@@ -6680,11 +6680,14 @@ button:focus {
     position: relative !important;
     display: flex !important;
     min-height: 80px !important;
+    height: auto !important;
 }
 
 .dag-kalender-fullscreen .uur-content {
     position: relative !important;
     flex: 1 !important;
+    min-height: 60px !important;
+    height: auto !important;
 }
 
 .dag-kalender-fullscreen .uur-planning {
@@ -6753,11 +6756,14 @@ body.dagkalender-focus-active {
         position: relative !important;
         display: flex !important;
         min-height: 80px !important;
+        height: auto !important;
     }
     
     .dag-kalender-fullscreen .uur-content {
         position: relative !important;
         flex: 1 !important;
+        min-height: 60px !important;
+        height: auto !important;
     }
     
     .dag-kalender-fullscreen .uur-planning {
