@@ -8135,22 +8135,9 @@ class Taakbeheer {
         this.currentPlanningData = this.currentPlanningData.filter(p => p.id !== planningId);
         console.log('📊 After removal - items in hour:', this.currentPlanningData.filter(p => p.uur === affectedHour).length);
         
-        // Force remove the DOM element as immediate feedback
-        const domElement = document.querySelector(`[data-planning-id="${planningId}"]`);
-        if (domElement) {
-            console.log('🎯 Removing DOM element directly');
-            domElement.style.transition = 'opacity 0.2s ease-out';
-            domElement.style.opacity = '0';
-            setTimeout(() => {
-                domElement.remove();
-            }, 200);
-        }
-        
-        // Update the hour display after a small delay to ensure DOM is ready
-        setTimeout(() => {
-            console.log('🔄 Updating hour display for:', affectedHour);
-            this.updateSingleHourDisplay(affectedHour);
-        }, 250);
+        // Update the hour display immediately - this will remove the item from DOM
+        console.log('🔄 Updating hour display for:', affectedHour);
+        this.updateSingleHourDisplay(affectedHour);
     }
 
     editPlanningItemName(planningId, spanElement) {
