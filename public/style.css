@@ -3095,7 +3095,7 @@ button:focus {
     background: var(--macos-gray-3);
 }
 
-.drop-zone-active {
+.dragging-active .drop-zone-active {
     height: 80px;
     background: var(--macos-blue);
     opacity: 1 !important;
