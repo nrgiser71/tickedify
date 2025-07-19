@@ -4353,12 +4353,12 @@ button:focus {
 }
 
 .btn-auth {
-    padding: 8px 16px;
+    padding: 10px 20px;
     border: 1px solid var(--macos-gray-4);
     border-radius: var(--macos-radius-button);
     background: var(--macos-bg-primary);
     color: var(--macos-text-primary);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -4480,9 +4480,9 @@ button:focus {
 }
 
 .auth-modal .popup-acties button {
-    padding: 8px 16px;
+    padding: 12px 24px;
     border-radius: var(--macos-radius-button);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -4907,23 +4907,6 @@ button:focus {
     display: flex;
     flex-direction: column;
     gap: 8px;
-}
-
-.btn-auth {
-    padding: 8px 16px;
-    border-radius: var(--macos-radius-button);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid var(--macos-gray-4);
-    background: var(--macos-bg-primary);
-    color: var(--macos-text-primary);
-}
-
-.btn-auth:hover {
-    background: var(--macos-gray-6);
-    border-color: var(--macos-gray-3);
 }
 
 .btn-login {

@@ -9892,7 +9892,17 @@ class AuthManager {
         const modal = document.getElementById('loginModal');
         if (modal) {
             modal.style.display = 'flex';
-            document.getElementById('loginEmail').focus();
+            // Focus op email veld, of wachtwoord veld als email al ingevuld is
+            const emailField = document.getElementById('loginEmail');
+            const passwordField = document.getElementById('loginPassword');
+            
+            if (emailField && passwordField) {
+                if (emailField.value.trim()) {
+                    passwordField.focus();
+                } else {
+                    emailField.focus();
+                }
+            }
         }
     }
 
