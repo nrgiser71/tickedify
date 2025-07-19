@@ -2657,10 +2657,10 @@ class Taakbeheer {
                     <label>Datum:</label>
                     <input type="date" id="datumFilter">
                 </div>
-                <div class="filter-checkbox">
+                <label class="simple-checkbox">
                     <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                    <label for="toonToekomstToggle">Toon toekomstige taken</label>
-                </div>
+                    Toon toekomstige taken
+                </label>
                 <div class="filter-groep" style="display: none;">
                     <button onclick="deleteAllTasks()" 
                             style="background: #ff3b30; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">

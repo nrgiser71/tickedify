@@ -698,31 +698,21 @@ body {
     min-height: 32px;
 }
 
-/* Houd checkbox rechts op laptop schermen */
-@media (max-width: 1400px) {
-    .acties-filters {
-        flex-wrap: nowrap; /* Geen wrapping op laptop schermen */
-        gap: 8px; /* Kleinere gaps */
-    }
-    
-    .filter-groep {
-        max-width: 140px; /* Beperk breedte van filter groepen */
-    }
-    
-    .filter-groep select,
-    .filter-groep input[type="text"],
-    .filter-groep input[type="date"] {
-        max-width: 120px; /* Compactere inputs */
-        min-width: 80px;
-    }
-    
-    .filter-checkbox {
-        margin-left: auto; /* Push naar rechts */
-        flex-shrink: 0; /* Niet laten krimpen */
-        white-space: nowrap; /* Geen tekst wrapping */
-        flex-basis: auto !important; /* Override de 100% basis */
-        width: auto !important; /* Override eventuele width */
-    }
+.simple-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--macos-text-primary);
+}
+
+.simple-checkbox input[type="checkbox"] {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 .filter-checkbox label {
