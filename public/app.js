@@ -2663,17 +2663,17 @@ class Taakbeheer {
                         Toon toekomstige taken
                     </label>
                 </div>
-                <div class="filter-groep" id="bulk-mode-toggle-container">
-                    <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
-                        Bulk bewerken
-                    </button>
-                </div>
                 <div class="filter-groep" style="display: none;">
                     <button onclick="deleteAllTasks()" 
                             style="background: #ff3b30; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">
                         🗑️ Alles Wissen (Tijdelijk)
                     </button>
                 </div>
+            </div>
+            <div class="bulk-controls-container">
+                <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
+                    Bulk bewerken
+                </button>
             </div>
             <ul id="acties-lijst" class="taak-lijst"></ul>
             <div id="bulk-toolbar" class="bulk-toolbar" style="display: none;">

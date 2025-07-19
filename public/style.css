@@ -691,7 +691,6 @@ body {
 }
 
 .filter-checkbox {
-    margin-left: auto; /* Push to the right */
     align-items: center;
     align-self: flex-end; /* Align to bottom of flex container */
 }
@@ -3477,6 +3476,17 @@ button:focus {
         max-width: 110px !important;
     }
     
+    /* Compact bulk controls on smaller screens */
+    .bulk-controls-container {
+        padding: 6px 8px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .bulk-mode-toggle {
+        padding: 6px 12px !important;
+        font-size: 13px !important;
+    }
+    
     /* Maximum space efficiency on laptop */
     .templates-sectie.collapsed,
     .tijd-sectie.collapsed,
@@ -6150,6 +6160,19 @@ button:focus {
     .feature-icon .fas {
         font-size: 18px;
     }
+}
+
+/* Bulk Controls Container */
+.bulk-controls-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: var(--macos-gray-6);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-5);
 }
 
 /* Bulk Mode Styles */
