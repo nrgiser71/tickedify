@@ -698,7 +698,6 @@ body {
     align-self: flex-end;
     flex-shrink: 0;
     margin-left: auto;
-    min-width: fit-content; /* Only take space needed */
 }
 
 .filter-checkbox label {
