@@ -720,6 +720,8 @@ body {
         margin-left: auto; /* Push naar rechts */
         flex-shrink: 0; /* Niet laten krimpen */
         white-space: nowrap; /* Geen tekst wrapping */
+        flex-basis: auto !important; /* Override de 100% basis */
+        width: auto !important; /* Override eventuele width */
     }
 }
 
