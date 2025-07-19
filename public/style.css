@@ -4492,6 +4492,7 @@ button:focus {
     background: var(--macos-bg-primary);
     border: 1px solid var(--macos-gray-4);
     color: var(--macos-text-primary);
+    flex: 1;
 }
 
 .auth-modal .popup-acties button[type="button"]:hover {
@@ -4503,6 +4504,9 @@ button:focus {
     background: var(--soft-blue);
     border: 1px solid var(--soft-blue);
     color: white;
+    width: auto;
+    margin-top: 0;
+    flex: 1;
 }
 
 .auth-modal .popup-acties .actie-btn:hover {
