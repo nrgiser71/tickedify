@@ -1907,6 +1907,47 @@ button:focus {
     overflow-y: auto;
 }
 
+.herhaling-popup .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.herhaling-popup .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 0 0 auto;
+}
+
+.herhaling-popup .popup-acties .actie-btn {
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+    width: auto;
+    margin-top: 0;
+}
+
+.herhaling-popup .popup-acties .actie-btn:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
+.herhaling-popup .popup-acties button:not(.actie-btn) {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+.herhaling-popup .popup-acties button:not(.actie-btn):hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
 .herhaling-categorieën {
     display: grid;
     grid-template-columns: 1fr 1fr;
