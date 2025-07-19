@@ -702,11 +702,24 @@ body {
 @media (max-width: 1400px) {
     .acties-filters {
         flex-wrap: nowrap; /* Geen wrapping op laptop schermen */
+        gap: 8px; /* Kleinere gaps */
+    }
+    
+    .filter-groep {
+        max-width: 140px; /* Beperk breedte van filter groepen */
+    }
+    
+    .filter-groep select,
+    .filter-groep input[type="text"],
+    .filter-groep input[type="date"] {
+        max-width: 120px; /* Compactere inputs */
+        min-width: 80px;
     }
     
     .filter-checkbox {
         margin-left: auto; /* Push naar rechts */
         flex-shrink: 0; /* Niet laten krimpen */
+        white-space: nowrap; /* Geen tekst wrapping */
     }
 }
 
