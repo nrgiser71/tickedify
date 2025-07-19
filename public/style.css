@@ -691,8 +691,11 @@ body {
 }
 
 .filter-checkbox {
+    display: flex;
+    flex-direction: row; /* Override the column direction from filter-groep */
     align-items: center;
     align-self: flex-end; /* Align to bottom of flex container */
+    margin-left: auto; /* Push to the right side of the filter container */
 }
 
 .filter-checkbox label {
