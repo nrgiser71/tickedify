@@ -700,6 +700,14 @@ body {
     margin-left: auto;
 }
 
+/* Fix voor overlap bij 1200px+ schermbreedtes */
+@media (min-width: 1200px) and (max-width: 1400px) {
+    .filter-checkbox {
+        margin-left: 12px; /* Normale gap in plaats van auto */
+        flex-shrink: 1; /* Laat het inkrimpen indien nodig */
+    }
+}
+
 .filter-checkbox label {
     display: flex;
     align-items: center;
