@@ -692,19 +692,22 @@ body {
 
 .filter-checkbox {
     display: flex;
-    flex-direction: row; /* Override the column direction from filter-groep */
+    flex-direction: row;
     align-items: center;
-    align-self: flex-end; /* Align to bottom of flex container */
-    margin-left: auto; /* Push to the right side of the filter container */
+    align-self: flex-end;
+    flex-shrink: 0; /* Don't shrink */
+    max-width: 200px; /* Enough space for text */
+    margin-left: auto;
+    padding-right: 8px; /* Ensure it stays within container */
 }
 
 .filter-checkbox label {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px; /* Consistent and appropriate gap */
     font-size: 13px;
     cursor: pointer;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
 }
 
 .filter-checkbox input[type="checkbox"] {
@@ -712,6 +715,7 @@ body {
     width: 16px;
     height: 16px;
     cursor: pointer;
+    flex-shrink: 0; /* Prevent checkbox from shrinking */
 }
 
 /* Checkbox wrapper styling */
