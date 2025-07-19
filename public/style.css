@@ -373,6 +373,7 @@ body {
     border: 1px solid var(--macos-gray-5);
     flex-shrink: 0; /* Don't shrink filters */
     flex-wrap: wrap; /* Allow wrapping on narrow screens */
+    justify-content: flex-start; /* Normal alignment for most filters */
 }
 
 /* Acties lijst container */
@@ -695,10 +696,9 @@ body {
     flex-direction: row;
     align-items: center;
     align-self: flex-end;
-    flex-shrink: 0; /* Don't shrink */
-    max-width: 200px; /* Enough space for text */
+    flex-shrink: 0;
     margin-left: auto;
-    padding-right: 8px; /* Ensure it stays within container */
+    min-width: fit-content; /* Only take space needed */
 }
 
 .filter-checkbox label {
@@ -3481,6 +3481,14 @@ button:focus {
     
     .filter-groep {
         max-width: 110px !important;
+    }
+    
+    /* Force checkbox to new line on smaller screens */
+    .filter-checkbox {
+        flex-basis: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+        justify-content: flex-end !important;
     }
     
     /* Compact bulk controls on smaller screens */
