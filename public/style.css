@@ -1985,7 +1985,8 @@ button:focus {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 120px;
 }
 
 #planningPopup .popup-acties .actie-btn {
@@ -4619,7 +4620,8 @@ button:focus {
     background: var(--macos-bg-primary);
     border: 1px solid var(--macos-gray-4);
     color: var(--macos-text-primary);
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 120px;
 }
 
 .auth-modal .popup-acties button[type="button"]:hover {
@@ -4633,7 +4635,8 @@ button:focus {
     color: white;
     width: auto;
     margin-top: 0;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 120px;
 }
 
 .auth-modal .popup-acties .actie-btn:hover {
@@ -4656,7 +4659,8 @@ button:focus {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 120px;
 }
 
 #confirmModal .popup-acties .actie-btn {
@@ -4696,7 +4700,8 @@ button:focus {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 120px;
 }
 
 #inputModal .popup-acties .actie-btn {
@@ -4736,7 +4741,8 @@ button:focus {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 120px;
 }
 
 #eventDatePopup .popup-acties .actie-btn {
