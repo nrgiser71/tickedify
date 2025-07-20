@@ -3195,8 +3195,8 @@ button:focus {
     background: transparent;
 }
 
-/* Invisible hit area to prevent flickering - only during dragging */
-.dragging-active .drop-zone::before {
+/* Invisible hit area to prevent flickering - only when hovering specific time block */
+.kalender-uur.hover-active .drop-zone::before {
     content: '';
     position: absolute;
     left: 0;
@@ -3209,15 +3209,15 @@ button:focus {
     z-index: 1;
 }
 
-/* Only show drop zones when actively dragging */
-.dragging-active .drop-zone {
+/* Only show drop zones when hovering over specific time block */
+.kalender-uur.hover-active .drop-zone {
     height: 20px;
     margin: 4px 0;
     opacity: 0.3;
     background: var(--macos-gray-3);
 }
 
-.dragging-active .drop-zone-active {
+.kalender-uur.hover-active .drop-zone-active {
     height: 80px;
     background: var(--macos-blue);
     opacity: 1 !important;

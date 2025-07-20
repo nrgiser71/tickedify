@@ -77,6 +77,38 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **LAATSTE UPDATE**: De ARCHITECTURE.md is aangemaakt op Juli 10, 2025 en moet vanaf nu bij elke code wijziging worden bijgewerkt!
 
+## CSS ALIGNMENT BUG MARATHON VOLTOOID (Juli 19, 2025) 🔧✅
+
+**🚨 BELANGRIJKE DEVELOPMENT LESSON: 1.5 UUR VERSPILD AAN SIMPELE CSS BUG**
+- **Probleem**: "Toon toekomstige taken" checkbox overlapte/verkeerde positionering in acties filter
+- **Poging 1-8**: Complexe CSS fixes met media queries, !important overrides, flex-basis hacks
+- **Uiteindelijke oplossing**: Simpele `.simple-checkbox` class zonder conflicterende CSS
+- **Tijd verspild**: 1.5 uur voor wat een 10-minuten fix had moeten zijn
+
+**🎯 KRITIEKE DEVELOPMENT LESSONS:**
+- ✅ **Start altijd met simpelste oplossing** - nieuwe CSS class > complexe overrides
+- ✅ **Gebruik developer tools vroeg** - had 1 uur eerder de `flex-basis: 100%` gezien
+- ✅ **Vermijd CSS conflicts** - `.filter-groep + .filter-checkbox` gaf inheritance problemen
+- ✅ **Test op verschillende schermbreedtes** - responsive issues zijn lastig te debuggen
+
+**📋 FINALE OPLOSSING (v0.11.60):**
+```html
+<label class="simple-checkbox">
+    <input type="checkbox" id="toonToekomstToggle">
+    Toon toekomstige taken
+</label>
+```
+
+**CSS DEVELOPMENT WORKFLOW VOOR TOEKOMST:**
+1. **Probeer eerst**: Nieuwe, simpele CSS class
+2. **Gebruik developer tools**: Meteen bij eerste probleem
+3. **Vermijd complexe overrides**: !important is vaak verkeerd signaal
+4. **Test responsive**: Check verschillende schermbreedtes direct
+
+**STATUS**: 
+- ✅ **Bug opgelost**: Checkbox staat correct naast datum veld op alle schermen
+- ⚠️ **Tijd management**: Volgende keer simpeler aanpak voor snellere oplossing
+
 ## BEVEILIGINGSVERBETERINGEN VOLTOOID (Juli 18, 2025) 🛡️✅
 
 **🔐 SECURITY AUDIT & FIXES COMPLEET: Versie 0.11.41-0.11.42**

@@ -4762,17 +4762,13 @@ class Taakbeheer {
                 }));
                 e.dataTransfer.effectAllowed = 'move';
                 
-                // Add dragging-active class to show drop zones
-                if (planningContainer) {
-                    planningContainer.classList.add('dragging-active');
-                }
+                // Setup hover listeners for time blocks to show drop zones
+                this.setupTimeBlockHoverListeners();
             });
             
             taak.addEventListener('dragend', (e) => {
-                // Remove dragging-active class to hide drop zones
-                if (planningContainer) {
-                    planningContainer.classList.remove('dragging-active');
-                }
+                // Clear any remaining hover states
+                this.clearTimeBlockHoverStates();
             });
         });
     }
@@ -7274,18 +7270,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Add dragging-active class to show drop zones
-                if (planningContainer) {
-                    planningContainer.classList.add('dragging-active');
-                }
+                // Setup hover listeners for time blocks to show drop zones
+                this.setupTimeBlockHoverListeners();
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Remove dragging-active class to hide drop zones
-                if (planningContainer) {
-                    planningContainer.classList.remove('dragging-active');
-                }
+                // Clear any remaining hover states
+                this.clearTimeBlockHoverStates();
             });
         });
         
@@ -7320,18 +7312,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Add dragging-active class to show drop zones
-                if (planningContainer) {
-                    planningContainer.classList.add('dragging-active');
-                }
+                // Setup hover listeners for time blocks to show drop zones
+                this.setupTimeBlockHoverListeners();
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Remove dragging-active class to hide drop zones
-                if (planningContainer) {
-                    planningContainer.classList.remove('dragging-active');
-                }
+                // Clear any remaining hover states
+                this.clearTimeBlockHoverStates();
             });
         });
 
@@ -7368,18 +7356,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Add dragging-active class to show drop zones
-                if (planningContainer) {
-                    planningContainer.classList.add('dragging-active');
-                }
+                // Setup hover listeners for time blocks to show drop zones
+                this.setupTimeBlockHoverListeners();
             });
 
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Remove dragging-active class to hide drop zones
-                if (planningContainer) {
-                    planningContainer.classList.remove('dragging-active');
-                }
+                // Clear any remaining hover states
+                this.clearTimeBlockHoverStates();
             });
         });
         
@@ -7599,6 +7583,41 @@ class Taakbeheer {
             if (zone.parentNode) {
                 zone.parentNode.replaceChild(newZone, zone);
             }
+        });
+    }
+
+    setupTimeBlockHoverListeners() {
+        // Remove any existing hover listeners first
+        this.clearTimeBlockHoverStates();
+        
+        document.querySelectorAll('.kalender-uur').forEach(timeBlock => {
+            timeBlock.addEventListener('dragenter', this.handleTimeBlockDragEnter.bind(this));
+            timeBlock.addEventListener('dragleave', this.handleTimeBlockDragLeave.bind(this));
+        });
+    }
+
+    handleTimeBlockDragEnter(e) {
+        e.preventDefault();
+        const timeBlock = e.currentTarget;
+        
+        // Add hover-active class to show drop zones for this time block
+        timeBlock.classList.add('hover-active');
+    }
+
+    handleTimeBlockDragLeave(e) {
+        e.preventDefault();
+        const timeBlock = e.currentTarget;
+        
+        // Only remove hover-active if we're actually leaving the time block
+        // Check if the related target is still within this time block
+        if (!timeBlock.contains(e.relatedTarget)) {
+            timeBlock.classList.remove('hover-active');
+        }
+    }
+
+    clearTimeBlockHoverStates() {
+        document.querySelectorAll('.kalender-uur.hover-active').forEach(timeBlock => {
+            timeBlock.classList.remove('hover-active');
         });
     }
 
@@ -7942,19 +7961,15 @@ class Taakbeheer {
                     }
                 }, 100);
                 
-                // Add dragging-active class to show drop zones
-                if (planningContainer) {
-                    planningContainer.classList.add('dragging-active');
-                }
+                // Setup hover listeners for time blocks to show drop zones
+                this.setupTimeBlockHoverListeners();
             });
             
             item.addEventListener('dragend', (e) => {
                 // Restore opacity
                 item.style.opacity = '1';
-                // Remove dragging-active class to hide drop zones
-                if (planningContainer) {
-                    planningContainer.classList.remove('dragging-active');
-                }
+                // Clear any remaining hover states
+                this.clearTimeBlockHoverStates();
             });
         });
     }
