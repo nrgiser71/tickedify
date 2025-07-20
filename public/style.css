@@ -4641,6 +4641,152 @@ button:focus {
     border-color: var(--soft-blue-hover);
 }
 
+/* Custom Confirm Modal button styling */
+#confirmModal .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+#confirmModal .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+#confirmModal .popup-acties .actie-btn {
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+}
+
+#confirmModal .popup-acties .actie-btn:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
+#confirmModal .popup-acties button:not(.actie-btn) {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+#confirmModal .popup-acties button:not(.actie-btn):hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+/* Custom Input Modal button styling */
+#inputModal .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+#inputModal .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+#inputModal .popup-acties .actie-btn {
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+}
+
+#inputModal .popup-acties .actie-btn:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
+#inputModal .popup-acties button:not(.actie-btn) {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+#inputModal .popup-acties button:not(.actie-btn):hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+/* Event Date Popup button styling */
+#eventDatePopup .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+#eventDatePopup .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+#eventDatePopup .popup-acties .actie-btn {
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+}
+
+#eventDatePopup .popup-acties .actie-btn:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
+#eventDatePopup .popup-acties button:not(.actie-btn) {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+#eventDatePopup .popup-acties button:not(.actie-btn):hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+/* Keyboard Help Modal button styling */
+#keyboardHelpModal .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+#keyboardHelpModal .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+    min-width: 120px;
+}
+
+#keyboardHelpModal .popup-acties button:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
 /* ===== WELCOME MESSAGE ===== */
 .welcome-message {
     padding: 20px;
