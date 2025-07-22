@@ -4894,6 +4894,8 @@ button:focus {
     background: var(--soft-blue);
     border: 1px solid var(--soft-blue);
     color: white;
+    width: auto;
+    margin-top: 0;
 }
 
 #projectModal .popup-acties .actie-btn:hover {
