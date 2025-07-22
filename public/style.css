@@ -4871,6 +4871,47 @@ button:focus {
     border-color: var(--macos-gray-3);
 }
 
+/* Project Modal button styling */
+#projectModal .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+#projectModal .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+#projectModal .popup-acties .actie-btn {
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+}
+
+#projectModal .popup-acties .actie-btn:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
+#projectModal .popup-acties button:not(.actie-btn) {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+#projectModal .popup-acties button:not(.actie-btn):hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
 /* Event Date Popup button styling */
 #eventDatePopup .popup-acties {
     display: flex;
