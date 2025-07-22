@@ -970,6 +970,147 @@ body {
     color: var(--macos-red);
 }
 
+/* ===== PROJECT MODAL STYLING ===== */
+.project-modal-content {
+    width: 450px;
+    max-width: 90vw;
+}
+
+.project-modal-content .form-groep {
+    margin-bottom: 16px;
+}
+
+.project-modal-content label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--macos-text-primary);
+}
+
+.project-modal-content input[type="text"],
+.project-modal-content input[type="date"],
+.project-modal-content textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    font-size: 14px;
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    box-sizing: border-box;
+}
+
+.project-modal-content input:focus,
+.project-modal-content textarea:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+.project-modal-content textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ===== DUE DATE BADGES ===== */
+.due-date-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    margin-left: 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.due-date-badge.overdue {
+    background: var(--macos-red);
+    color: white;
+}
+
+.due-date-badge.today {
+    background: var(--macos-orange);
+    color: white;
+}
+
+.due-date-badge.tomorrow {
+    background: var(--macos-orange);
+    color: white;
+}
+
+.due-date-badge.soon {
+    background: var(--macos-yellow);
+    color: var(--macos-text-primary);
+}
+
+.due-date-badge.future {
+    background: var(--macos-gray-5);
+    color: var(--macos-text-secondary);
+}
+
+/* ===== PROJECT DETAILS SECTION ===== */
+.project-details-sectie {
+    background: var(--macos-gray-6);
+    border-radius: var(--macos-radius-medium);
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--macos-gray-5);
+}
+
+.project-details-header {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    border-bottom: 1px solid var(--macos-gray-5);
+    padding-bottom: 8px;
+}
+
+.project-details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.project-detail-item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--macos-text-primary);
+}
+
+.project-detail-item strong {
+    margin-right: 8px;
+    min-width: 70px;
+}
+
+.project-opmerkingen {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--macos-text-primary);
+    margin-top: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Flexbox layout aanpassing voor project naam row */
+.project-naam-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.project-naam {
+    flex: 1;
+    min-width: 0; /* Allows text truncation */
+}
+
 /* ===== UITGESTELD LIJSTEN STYLING ===== */
 .uitgesteld-item {
     border-left-color: var(--macos-orange);

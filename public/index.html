@@ -590,6 +590,29 @@
         </div>
     </div>
 
+    <!-- Project Modal -->
+    <div id="projectModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content project-modal-content">
+            <h3 id="projectModalTitle">Project</h3>
+            <div class="form-groep">
+                <label for="projectModalNaam">Naam:</label>
+                <input type="text" id="projectModalNaam" required>
+            </div>
+            <div class="form-groep">
+                <label for="projectModalDueDate">Deadline:</label>
+                <input type="date" id="projectModalDueDate">
+            </div>
+            <div class="form-groep">
+                <label for="projectModalOpmerkingen">Opmerkingen:</label>
+                <textarea id="projectModalOpmerkingen" rows="4" placeholder="Optionele opmerkingen over dit project..."></textarea>
+            </div>
+            <div class="popup-acties">
+                <button id="projectModalCancel">Annuleren</button>
+                <button id="projectModalOk" class="actie-btn">Opslaan</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Confirm Modal -->
     <div id="confirmModal" class="popup-overlay" style="display: none;">
         <div class="popup-content">

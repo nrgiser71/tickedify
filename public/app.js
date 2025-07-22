@@ -275,9 +275,83 @@ class ConfirmModal {
     }
 }
 
+class ProjectModal {
+    constructor() {
+        this.modal = document.getElementById('projectModal');
+        this.titleEl = document.getElementById('projectModalTitle');
+        this.naamEl = document.getElementById('projectModalNaam');
+        this.dueDateEl = document.getElementById('projectModalDueDate');
+        this.opmerkingenEl = document.getElementById('projectModalOpmerkingen');
+        this.cancelBtn = document.getElementById('projectModalCancel');
+        this.okBtn = document.getElementById('projectModalOk');
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        this.cancelBtn.addEventListener('click', () => this.hide(null));
+        this.okBtn.addEventListener('click', () => this.handleOk());
+        
+        // Enter to submit when in naam field
+        this.naamEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.handleOk();
+        });
+        
+        // Escape to cancel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.style.display === 'flex') {
+                this.hide(null);
+            }
+        });
+        
+        // Click outside to cancel
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.hide(null);
+        });
+    }
+    
+    show(title, defaultValues = {}) {
+        return new Promise((resolve) => {
+            this.resolve = resolve;
+            this.titleEl.textContent = title;
+            this.naamEl.value = defaultValues.naam || '';
+            this.dueDateEl.value = defaultValues.dueDate || '';
+            this.opmerkingenEl.value = defaultValues.opmerkingen || '';
+            this.modal.style.display = 'flex';
+            this.naamEl.focus();
+            this.naamEl.select();
+        });
+    }
+    
+    hide(value) {
+        this.modal.style.display = 'none';
+        if (this.resolve) {
+            this.resolve(value);
+            this.resolve = null;
+        }
+    }
+    
+    handleOk() {
+        const naam = this.naamEl.value.trim();
+        if (!naam) {
+            this.naamEl.focus();
+            return;
+        }
+        
+        const projectData = {
+            naam: naam,
+            dueDate: this.dueDateEl.value || null,
+            opmerkingen: this.opmerkingenEl.value.trim() || null
+        };
+        
+        this.hide(projectData);
+    }
+}
+
 // Global modal instances
 const inputModal = new InputModal();
 const confirmModal = new ConfirmModal();
+const projectModal = new ProjectModal();
 
 // Loading Manager System
 class LoadingManager {
@@ -1294,6 +1368,37 @@ class Taakbeheer {
         this.bindProjectenEvents();
     }
 
+    formatDueDateBadge(dueDate) {
+        if (!dueDate) return '';
+        
+        const today = new Date();
+        const due = new Date(dueDate);
+        const diffTime = due - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let badgeClass = 'due-date-badge';
+        let text = '';
+        
+        if (diffDays < 0) {
+            badgeClass += ' overdue';
+            text = `${Math.abs(diffDays)} dagen te laat`;
+        } else if (diffDays === 0) {
+            badgeClass += ' today';
+            text = 'Vandaag';
+        } else if (diffDays === 1) {
+            badgeClass += ' tomorrow';
+            text = 'Morgen';
+        } else if (diffDays <= 7) {
+            badgeClass += ' soon';
+            text = `Over ${diffDays} dagen`;
+        } else {
+            badgeClass += ' future';
+            text = due.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+        }
+        
+        return `<span class="${badgeClass}">${text}</span>`;
+    }
+
     async renderProjectenItems() {
         const container = document.getElementById('projecten-lijst');
         if (!container) return;
@@ -1310,6 +1415,7 @@ class Taakbeheer {
             div.dataset.id = project.id;
             
             const actiesInfo = taskCounts[project.id] || { open: 0, afgewerkt: 0 };
+            const dueDateBadge = this.formatDueDateBadge(project.dueDate);
             
             div.innerHTML = `
                 <div class="project-item" onclick="app.toggleProject('${project.id}')">
@@ -1317,6 +1423,7 @@ class Taakbeheer {
                         <div class="project-naam-row">
                             <span class="project-expand-arrow" id="arrow-${project.id}">▶</span>
                             <div class="project-naam" title="${this.escapeHtml(project.naam)}">${project.naam}</div>
+                            ${dueDateBadge}
                         </div>
                         <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt</div>
                     </div>
@@ -1389,12 +1496,14 @@ class Taakbeheer {
     }
 
     async maakNieuwProjectViaLijst() {
-        const naam = await inputModal.show('Nieuw Project', 'Naam voor het nieuwe project:');
-        if (naam && naam.trim()) {
+        const projectData = await projectModal.show('Nieuw Project');
+        if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
-                naam: naam.trim(),
-                aangemaakt: new Date().toISOString()
+                naam: projectData.naam,
+                aangemaakt: new Date().toISOString(),
+                dueDate: projectData.dueDate,
+                opmerkingen: projectData.opmerkingen
             };
             
             this.projecten.push(nieuwProject);
@@ -1408,9 +1517,17 @@ class Taakbeheer {
         const project = this.projecten.find(p => p.id === id);
         if (!project) return;
         
-        const nieuweNaam = await inputModal.show('Project Bewerken', 'Nieuwe naam voor het project:', project.naam);
-        if (nieuweNaam && nieuweNaam.trim() && nieuweNaam.trim() !== project.naam) {
-            project.naam = nieuweNaam.trim();
+        const defaultValues = {
+            naam: project.naam,
+            dueDate: project.dueDate || '',
+            opmerkingen: project.opmerkingen || ''
+        };
+        
+        const projectData = await projectModal.show('Project Bewerken', defaultValues);
+        if (projectData) {
+            project.naam = projectData.naam;
+            project.dueDate = projectData.dueDate;
+            project.opmerkingen = projectData.opmerkingen;
             await this.slaProjectenOp();
             await this.renderProjectenItems();
         }
@@ -1482,7 +1599,8 @@ class Taakbeheer {
                 afgewerkteActies = alleAfgewerkte.filter(taak => taak.projectId === projectId && taak.type === 'actie');
             }
             
-            this.renderProjectActies(container, openActies, afgewerkteActies);
+            const project = this.projecten.find(p => p.id === projectId);
+            this.renderProjectActies(container, openActies, afgewerkteActies, project);
             
         } catch (error) {
             console.error('Fout bij laden project acties:', error);
@@ -1490,8 +1608,28 @@ class Taakbeheer {
         }
     }
 
-    renderProjectActies(container, openActies, afgewerkteActies) {
+    renderProjectActies(container, openActies, afgewerkteActies, project) {
         let html = '<div class="project-taken-lijst">';
+        
+        // Project details sectie
+        if (project && (project.dueDate || project.opmerkingen)) {
+            html += '<div class="project-details-sectie">';
+            html += '<h4 class="project-details-header">Project details</h4>';
+            html += '<div class="project-details-content">';
+            
+            if (project.dueDate) {
+                const dueDateBadge = this.formatDueDateBadge(project.dueDate);
+                html += `<div class="project-detail-item"><strong>Deadline:</strong> ${dueDateBadge}</div>`;
+            }
+            
+            if (project.opmerkingen) {
+                html += `<div class="project-detail-item"><strong>Opmerkingen:</strong></div>`;
+                html += `<div class="project-opmerkingen">${this.escapeHtml(project.opmerkingen).replace(/\n/g, '<br>')}</div>`;
+            }
+            
+            html += '</div>';
+            html += '</div>';
+        }
         
         // Open acties
         if (openActies.length > 0) {
@@ -3700,12 +3838,14 @@ class Taakbeheer {
     }
 
     async maakNieuwProject() {
-        const naam = await inputModal.show('Nieuw Project', 'Naam voor het nieuwe project:');
-        if (naam && naam.trim()) {
+        const projectData = await projectModal.show('Nieuw Project');
+        if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
-                naam: naam.trim(),
-                aangemaakt: new Date().toISOString()
+                naam: projectData.naam,
+                aangemaakt: new Date().toISOString(),
+                dueDate: projectData.dueDate,
+                opmerkingen: projectData.opmerkingen
             };
             
             this.projecten.push(nieuwProject);

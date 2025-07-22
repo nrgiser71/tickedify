@@ -175,6 +175,15 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add user_id columns (might already exist):', error.message);
     }
 
+    // Add due_date and opmerkingen columns to projecten table
+    try {
+      await pool.query('ALTER TABLE projecten ADD COLUMN IF NOT EXISTS due_date DATE');
+      await pool.query('ALTER TABLE projecten ADD COLUMN IF NOT EXISTS opmerkingen TEXT');
+      console.log('✅ Due date and opmerkingen columns added to projecten table');
+    } catch (error) {
+      console.log('⚠️ Could not add projecten columns (might already exist):', error.message);
+    }
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
