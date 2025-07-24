@@ -2651,7 +2651,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
+                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}', null, this)" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
                     <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                 </div>
             `;
@@ -2902,7 +2902,7 @@ class Taakbeheer {
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
+                    <button onclick="app.toonActiesMenu('${taak.id}', 'acties', null, null, this)" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
                     <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                 </div>
             `;
@@ -3540,9 +3540,17 @@ class Taakbeheer {
         return false;
     }
 
-    toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null, position = null) {
+    toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null, position = null, sourceElement = null) {
         const taak = this.taken.find(t => t.id === taakId);
         if (!taak) return;
+
+        // Als sourceElement is gegeven (button click), vind het parent taak item
+        if (sourceElement && !position) { // Button click, niet context menu
+            const taakItem = sourceElement.closest('.taak-item');
+            if (taakItem) {
+                this.contextMenuTaakItem = taakItem;
+            }
+        }
 
         // Verwijder bestaande menu als die er is
         const bestaandMenu = document.querySelector('.acties-menu-overlay');
@@ -8942,7 +8950,7 @@ class Taakbeheer {
                 ${extraInfoHtml}
             </div>
             <div class="taak-acties">
-                <button onclick="app.toonActiesMenu('${taak.id}')" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
+                <button onclick="app.toonActiesMenu('${taak.id}', 'acties', null, null, this)" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
                 <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
             </div>
         `;
