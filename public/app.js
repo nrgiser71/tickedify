@@ -3576,7 +3576,7 @@ class Taakbeheer {
                     ${weekdagenHTML}
                 </div>
                 
-                <h3>Uitgesteld</h3>
+                <h3>Verplaats naar uitgesteld</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-wekelijks')" class="menu-item">Wekelijks</button>
                     <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-maandelijks')" class="menu-item">Maandelijks</button>
@@ -3585,10 +3585,12 @@ class Taakbeheer {
                     <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
                 </div>
                 
+                <h3>Verplaats naar Opvolgen</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
                 
+                <h3>Acties</h3>
                 <div class="menu-section">
                     <button onclick="app.verwijderTaak('${taakId}'); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
@@ -3617,15 +3619,17 @@ class Taakbeheer {
                     <button onclick="app.verplaatsNaarInbox('${taakId}')" class="menu-item inbox-item"><i class="ti ti-inbox"></i> Inbox</button>
                 </div>
                 
-                <h3>Andere uitgesteld lijsten</h3>
+                <h3>Verplaats naar uitgesteld</h3>
                 <div class="menu-section">
                     ${uitgesteldButtonsHTML}
                 </div>
                 
+                <h3>Verplaats naar Opvolgen</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
                 
+                <h3>Acties</h3>
                 <div class="menu-section">
                     <button onclick="app.verwijderTaak('${taakId}'); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
