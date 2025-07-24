@@ -3663,6 +3663,12 @@ class Taakbeheer {
         menuOverlay.appendChild(menuContent);
         document.body.appendChild(menuOverlay);
         
+        // Highlight taak als dit een context menu is (na overlay aanmaken)
+        if (this.contextMenuTaakItem && this.ENABLE_HIGHLIGHTED_CONTEXT_MENU) {
+            this.highlightTaskForContextMenu(this.contextMenuTaakItem, menuOverlay);
+            this.contextMenuTaakItem = null; // Cleanup
+        }
+        
         // Als er een positie is gegeven (context menu), positioneer op die locatie
         if (position) {
             const menuElement = menuContent.querySelector('.acties-menu');
@@ -3711,10 +3717,8 @@ class Taakbeheer {
         const taakId = taakItem.getAttribute('data-id');
         if (!taakId) return;
         
-        // Highlight de geklikte taak (indien feature enabled)
-        if (this.ENABLE_HIGHLIGHTED_CONTEXT_MENU) {
-            this.highlightTaskForContextMenu(taakItem);
-        }
+        // Store taakItem voor later gebruik in toonActiesMenu
+        this.contextMenuTaakItem = taakItem;
         
         // Bepaal menu type op basis van huidige lijst
         let menuType = 'acties';
@@ -3735,7 +3739,7 @@ class Taakbeheer {
     }
 
     // Highlight de geklikte taak door een clone boven de blur overlay te plaatsen
-    highlightTaskForContextMenu(taakItem) {
+    highlightTaskForContextMenu(taakItem, menuOverlay = null) {
         // Cleanup eventuele vorige highlights
         this.removeContextMenuHighlight();
         
@@ -3763,14 +3767,18 @@ class Taakbeheer {
         clone.style.width = rect.width + 'px';
         clone.style.height = rect.height + 'px';
         clone.style.margin = '0';
-        clone.style.zIndex = '2500'; // Boven blur overlay (2000), onder menu content (3000)
+        clone.style.zIndex = '1'; // Binnen menu overlay, onder menu content
         
         // Maak originele taak transparent
         taakItem.style.opacity = '0.1';
         taakItem.dataset.originallyHighlighted = 'true';
         
-        // Voeg clone toe aan body
-        document.body.appendChild(clone);
+        // Voeg clone toe aan menu overlay (of body als fallback)
+        if (menuOverlay) {
+            menuOverlay.appendChild(clone);
+        } else {
+            document.body.appendChild(clone);
+        }
     }
 
     // Verwijder context menu highlight

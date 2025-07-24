@@ -1308,7 +1308,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 .acties-menu-content {
     animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    z-index: 3000;
+    z-index: 2;
 }
 
 @keyframes slideUp {
@@ -1332,7 +1332,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     overflow-y: auto;
     padding: 20px;
     position: relative;
-    z-index: 3001;
+    z-index: 2;
 }
 
 .acties-menu h3 {
@@ -1440,7 +1440,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     border-radius: 8px !important;
     backdrop-filter: none !important;
     position: fixed !important;
-    z-index: 2500 !important;
+    z-index: 1 !important;
     pointer-events: none !important;
     transition: none !important;
 }
