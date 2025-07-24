@@ -14,6 +14,7 @@
     --macos-red-hover: #E6342A;
     --macos-orange: #FF9500;
     --macos-purple: #AF52DE;
+    --macos-purple-hover: #9A42C8;
     
     /* macOS Gray Scale */
     --macos-gray-1: #8E8E93;
@@ -1378,6 +1379,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 .menu-item.opvolgen:hover {
     background: var(--macos-purple-hover);
     border-color: var(--macos-purple-hover);
+    color: white !important;
 }
 
 .menu-item.inbox-item {
@@ -1390,18 +1392,20 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 .menu-item.inbox-item:hover {
     background: var(--macos-green-hover);
     border-color: var(--macos-green-hover);
+    color: white !important;
 }
 
 .menu-item.menu-delete {
-    background: var(--macos-red);
-    color: white;
-    border-color: var(--macos-red);
+    background: var(--macos-red) !important;
+    color: white !important;
+    border-color: var(--macos-red) !important;
     font-weight: 600;
 }
 
 .menu-item.menu-delete:hover {
-    background: var(--macos-red-hover);
-    border-color: var(--macos-red-hover);
+    background: var(--macos-red-hover) !important;
+    border-color: var(--macos-red-hover) !important;
+    color: white !important;
 }
 
 .menu-close {
