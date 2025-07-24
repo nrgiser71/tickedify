@@ -5461,6 +5461,24 @@ app.put('/api/admin/feedback/:id', async (req, res) => {
     }
 });
 
+// Debug endpoint voor feedback (tijdelijk)
+app.get('/api/debug/feedback-count', async (req, res) => {
+    try {
+        const result = await db.query('SELECT COUNT(*) as total FROM feedback');
+        const feedbackSummary = await db.query(`
+            SELECT type, status, COUNT(*) as count 
+            FROM feedback 
+            GROUP BY type, status
+        `);
+        res.json({
+            total: result.rows[0].total,
+            summary: feedbackSummary.rows
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 
