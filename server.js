@@ -5344,6 +5344,123 @@ app.post('/api/admin/logout', (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
+// Admin Feedback Endpoints
+app.get('/api/admin/feedback', async (req, res) => {
+    try {
+        // Check admin authentication
+        if (!req.session.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Get all feedback with user information
+        const feedback = await db.query(`
+            SELECT 
+                f.*,
+                u.naam as gebruiker_naam,
+                u.email as gebruiker_email
+            FROM feedback f
+            LEFT JOIN users u ON f.user_id = u.id
+            ORDER BY f.aangemaakt DESC
+        `);
+
+        res.json({
+            success: true,
+            feedback: feedback.rows || []
+        });
+    } catch (error) {
+        console.error('Error fetching admin feedback:', error);
+        res.status(500).json({ 
+            error: 'Database error',
+            message: error.message 
+        });
+    }
+});
+
+app.get('/api/admin/feedback/stats', async (req, res) => {
+    try {
+        // Check admin authentication
+        if (!req.session.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Get feedback statistics
+        const stats = await db.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE type = 'bug') as bugs,
+                COUNT(*) FILTER (WHERE type = 'feature') as features,
+                COUNT(*) FILTER (WHERE status = 'nieuw') as nieuw,
+                COUNT(*) FILTER (WHERE status = 'bekeken') as bekeken,
+                COUNT(*) FILTER (WHERE status = 'in_behandeling') as in_behandeling,
+                COUNT(*) FILTER (WHERE status = 'opgelost') as opgelost,
+                COUNT(*) as totaal
+            FROM feedback
+        `);
+
+        res.json({
+            success: true,
+            stats: stats.rows[0] || {
+                bugs: 0,
+                features: 0,
+                nieuw: 0,
+                bekeken: 0,
+                in_behandeling: 0,
+                opgelost: 0,
+                totaal: 0
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching feedback stats:', error);
+        res.status(500).json({ 
+            error: 'Database error',
+            message: error.message 
+        });
+    }
+});
+
+app.put('/api/admin/feedback/:id', async (req, res) => {
+    try {
+        // Check admin authentication
+        if (!req.session.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { id } = req.params;
+        const { status } = req.body;
+
+        // Validate status
+        const validStatuses = ['nieuw', 'bekeken', 'in_behandeling', 'opgelost'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ 
+                error: 'Invalid status',
+                valid: validStatuses 
+            });
+        }
+
+        // Update feedback status
+        const result = await db.query(`
+            UPDATE feedback 
+            SET status = $1, bijgewerkt = CURRENT_TIMESTAMP
+            WHERE id = $2
+            RETURNING *
+        `, [status, id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Feedback not found' });
+        }
+
+        res.json({
+            success: true,
+            feedback: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error updating feedback:', error);
+        res.status(500).json({ 
+            error: 'Database error',
+            message: error.message 
+        });
+    }
+});
+
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 

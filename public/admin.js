@@ -108,7 +108,9 @@ class AdminDashboard {
             '/api/admin/contexts',
             '/api/admin/errors',
             '/api/admin/api-usage',
-            '/api/admin/email-stats'
+            '/api/admin/email-stats',
+            '/api/admin/feedback/stats',
+            '/api/admin/feedback'
         ];
 
         const results = await Promise.allSettled(
@@ -125,7 +127,9 @@ class AdminDashboard {
             contexts: results[6].status === 'fulfilled' ? results[6].value : {},
             errors: results[7].status === 'fulfilled' ? results[7].value : {},
             apiUsage: results[8].status === 'fulfilled' ? results[8].value : {},
-            emailStats: results[9].status === 'fulfilled' ? results[9].value : {}
+            emailStats: results[9].status === 'fulfilled' ? results[9].value : {},
+            feedbackStats: results[10].status === 'fulfilled' ? results[10].value : {},
+            feedback: results[11].status === 'fulfilled' ? results[11].value : {}
         };
     }
 
@@ -164,6 +168,15 @@ class AdminDashboard {
         document.getElementById('dbSize').textContent = this.formatBytes(this.data.system.dbSize) || '-';
         document.getElementById('totalRecords').textContent = this.data.system.totalRecords || 0;
         document.getElementById('dbGrowth').textContent = this.data.system.dailyGrowth || 0;
+
+        // Feedback
+        if (this.data.feedbackStats && this.data.feedbackStats.stats) {
+            const stats = this.data.feedbackStats.stats;
+            document.getElementById('feedbackTotal').textContent = stats.totaal || 0;
+            document.getElementById('feedbackNieuw').textContent = stats.nieuw || 0;
+            document.getElementById('feedbackBugs').textContent = stats.bugs || 0;
+            document.getElementById('feedbackFeatures').textContent = stats.features || 0;
+        }
     }
 
     updateTables() {
@@ -227,6 +240,69 @@ class AdminDashboard {
             api.error_count,
             api.last_called ? this.formatDateTime(api.last_called) : '-'
         ]);
+
+        // Feedback tabel
+        this.renderFeedbackTable();
+    }
+
+    renderFeedbackTable() {
+        const container = document.getElementById('feedbackTable');
+        const feedbackData = this.data.feedback && this.data.feedback.feedback || [];
+        
+        if (!feedbackData || feedbackData.length === 0) {
+            container.innerHTML = '<div class="loading">Geen feedback beschikbaar</div>';
+            return;
+        }
+
+        let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
+        html += '<div>Type</div><div>Titel</div><div>Gebruiker</div><div>Datum</div><div>Status</div>';
+        html += '</div>';
+
+        feedbackData.forEach(item => {
+            html += `<div class="table-row feedback-row" onclick="showFeedbackDetail('${item.id}')" data-feedback='${JSON.stringify(item).replace(/'/g, '&#39;')}'>`;
+            html += `<div>${item.type === 'bug' ? '🐛 Bug' : '💡 Feature'}</div>`;
+            html += `<div>${this.escapeHtml(item.titel)}</div>`;
+            html += `<div>${this.escapeHtml(item.gebruiker_naam || 'Onbekend')}</div>`;
+            html += `<div>${this.formatRelativeTime(item.aangemaakt)}</div>`;
+            html += `<div><span class="status-badge status-${item.status}">${this.getStatusLabel(item.status)}</span></div>`;
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    getStatusLabel(status) {
+        const labels = {
+            'nieuw': '🆕 Nieuw',
+            'bekeken': '👁️ Bekeken',
+            'in_behandeling': '🔄 In behandeling',
+            'opgelost': '✅ Opgelost'
+        };
+        return labels[status] || status;
+    }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    formatRelativeTime(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+        
+        if (minutes < 1) return 'Zojuist';
+        if (minutes < 60) return `${minutes}m geleden`;
+        if (hours < 24) return `${hours}u geleden`;
+        if (days < 7) return `${days}d geleden`;
+        return this.formatDate(dateString);
     }
 
     renderTable(containerId, data, headers, rowMapper) {
@@ -385,3 +461,102 @@ window.addEventListener('beforeunload', () => {
         clearInterval(adminDashboard.refreshInterval);
     }
 });
+
+// Feedback modal functions
+let currentFeedbackId = null;
+
+function showFeedbackDetail(feedbackId) {
+    const row = document.querySelector(`[onclick="showFeedbackDetail('${feedbackId}')"]`);
+    if (!row) return;
+    
+    const feedback = JSON.parse(row.getAttribute('data-feedback'));
+    currentFeedbackId = feedbackId;
+    
+    // Set modal content
+    document.getElementById('feedbackModalTitle').textContent = 
+        `${feedback.type === 'bug' ? '🐛 Bug Report' : '💡 Feature Request'}`;
+    
+    document.getElementById('feedbackType').textContent = 
+        feedback.type === 'bug' ? '🐛 Bug' : '💡 Feature';
+    
+    document.getElementById('feedbackUser').textContent = 
+        `${feedback.gebruiker_naam || 'Onbekend'} (${feedback.gebruiker_email || '-'})`;
+    
+    document.getElementById('feedbackDate').textContent = 
+        new Date(feedback.aangemaakt).toLocaleString('nl-NL');
+    
+    document.getElementById('feedbackStatus').value = feedback.status;
+    
+    document.getElementById('feedbackTitel').textContent = feedback.titel;
+    document.getElementById('feedbackBeschrijving').textContent = feedback.beschrijving;
+    
+    // Show/hide steps if available
+    const stappenRow = document.getElementById('feedbackStappenRow');
+    if (feedback.stappen) {
+        document.getElementById('feedbackStappen').textContent = feedback.stappen;
+        stappenRow.style.display = 'flex';
+    } else {
+        stappenRow.style.display = 'none';
+    }
+    
+    // Format context
+    if (feedback.context) {
+        const contextDiv = document.getElementById('feedbackContext');
+        let contextHtml = '';
+        if (feedback.context.browser) contextHtml += `<div><strong>Browser:</strong> ${feedback.context.browser}</div>`;
+        if (feedback.context.scherm) contextHtml += `<div><strong>Scherm:</strong> ${feedback.context.scherm}</div>`;
+        if (feedback.context.huidigePagina) contextHtml += `<div><strong>Pagina:</strong> ${feedback.context.huidigePagina}</div>`;
+        contextDiv.innerHTML = contextHtml || '<div>Geen context beschikbaar</div>';
+    } else {
+        document.getElementById('feedbackContext').innerHTML = '<div>Geen context beschikbaar</div>';
+    }
+    
+    // Show modal
+    document.getElementById('feedbackModal').style.display = 'block';
+}
+
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').style.display = 'none';
+    currentFeedbackId = null;
+}
+
+async function updateFeedbackStatus() {
+    if (!currentFeedbackId) return;
+    
+    const newStatus = document.getElementById('feedbackStatus').value;
+    
+    try {
+        const response = await fetch(`/api/admin/feedback/${currentFeedbackId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+        
+        // Refresh data to show updated status
+        await adminDashboard.refreshData();
+        
+        // Update the modal if still open
+        if (document.getElementById('feedbackModal').style.display === 'block') {
+            showFeedbackDetail(currentFeedbackId);
+        }
+        
+        adminDashboard.showSuccess('Status bijgewerkt');
+    } catch (error) {
+        console.error('Error updating feedback status:', error);
+        adminDashboard.showError('Fout bij updaten status');
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('feedbackModal');
+    if (event.target === modal) {
+        closeFeedbackModal();
+    }
+}
