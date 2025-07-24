@@ -5352,6 +5352,8 @@ app.get('/api/admin/feedback', async (req, res) => {
             return res.status(403).json({ error: 'Admin access required' });
         }
 
+        console.log('Admin feedback request - fetching feedback data...');
+
         // Get all feedback with user information
         const feedback = await db.query(`
             SELECT 
@@ -5362,6 +5364,8 @@ app.get('/api/admin/feedback', async (req, res) => {
             LEFT JOIN users u ON f.user_id = u.id
             ORDER BY f.aangemaakt DESC
         `);
+
+        console.log(`Found ${feedback.rows ? feedback.rows.length : 0} feedback items`);
 
         res.json({
             success: true,
@@ -5383,6 +5387,8 @@ app.get('/api/admin/feedback/stats', async (req, res) => {
             return res.status(403).json({ error: 'Admin access required' });
         }
 
+        console.log('Admin feedback stats request...');
+
         // Get feedback statistics
         const stats = await db.query(`
             SELECT 
@@ -5395,6 +5401,8 @@ app.get('/api/admin/feedback/stats', async (req, res) => {
                 COUNT(*) as totaal
             FROM feedback
         `);
+
+        console.log('Feedback stats:', stats.rows[0]);
 
         res.json({
             success: true,
@@ -5476,6 +5484,48 @@ app.get('/api/debug/feedback-count', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Tijdelijke debug endpoint zonder auth
+app.get('/api/debug/feedback-test', async (req, res) => {
+    try {
+        // Test stats query
+        const stats = await db.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE type = 'bug') as bugs,
+                COUNT(*) FILTER (WHERE type = 'feature') as features,
+                COUNT(*) FILTER (WHERE status = 'nieuw') as nieuw,
+                COUNT(*) FILTER (WHERE status = 'bekeken') as bekeken,
+                COUNT(*) FILTER (WHERE status = 'in_behandeling') as in_behandeling,
+                COUNT(*) FILTER (WHERE status = 'opgelost') as opgelost,
+                COUNT(*) as totaal
+            FROM feedback
+        `);
+
+        // Test feedback list query
+        const feedback = await db.query(`
+            SELECT 
+                f.*,
+                u.naam as gebruiker_naam,
+                u.email as gebruiker_email
+            FROM feedback f
+            LEFT JOIN users u ON f.user_id = u.id
+            ORDER BY f.aangemaakt DESC
+            LIMIT 10
+        `);
+
+        res.json({
+            stats: stats.rows[0],
+            feedback_count: feedback.rows.length,
+            sample_feedback: feedback.rows
+        });
+    } catch (error) {
+        console.error('Debug feedback test error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack 
+        });
     }
 });
 
