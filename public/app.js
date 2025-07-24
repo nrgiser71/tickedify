@@ -3641,6 +3641,12 @@ class Taakbeheer {
         // Maak de menu overlay
         const menuOverlay = document.createElement('div');
         menuOverlay.className = 'acties-menu-overlay';
+        
+        // Als er een highlighted taak is, schakel blur uit voor betere zichtbaarheid
+        if (this.highlightedTaskRect) {
+            menuOverlay.classList.add('no-blur');
+        }
+        
         menuOverlay.onclick = (e) => {
             if (e.target === menuOverlay) {
                 this.removeContextMenuHighlight();
@@ -3761,7 +3767,7 @@ class Taakbeheer {
         clone.style.width = rect.width + 'px';
         clone.style.height = rect.height + 'px';
         clone.style.margin = '0';
-        clone.style.zIndex = '2001'; // Boven menu overlay (2000)
+        clone.style.zIndex = '1999'; // Onder menu overlay (2000) maar zichtbaar
         
         // Maak originele taak transparent
         taakItem.style.opacity = '0.1';
