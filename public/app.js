@@ -11273,7 +11273,6 @@ class FeedbackManager {
         const titel = document.getElementById('feedbackTitel').value.trim();
         const beschrijving = document.getElementById('feedbackBeschrijving').value.trim();
         const stappen = document.getElementById('feedbackStappen').value.trim();
-        const prioriteit = document.getElementById('feedbackPrioriteit').value;
         
         if (!titel || !beschrijving) {
             toast.warning('Vul alstublieft alle verplichte velden in');
@@ -11292,7 +11291,6 @@ class FeedbackManager {
                 titel,
                 beschrijving,
                 stappen: this.currentType === 'bug' ? stappen : null,
-                prioriteit,
                 context
             };
             
@@ -11304,7 +11302,10 @@ class FeedbackManager {
             
             if (response.ok) {
                 toast.success('Bedankt voor je feedback! We gaan er mee aan de slag.');
-                this.closeModal();
+                // Wacht even zodat gebruiker de success melding ziet
+                setTimeout(() => {
+                    this.closeModal();
+                }, 1500);
             } else {
                 const error = await response.text();
                 toast.error('Er ging iets mis: ' + error);
