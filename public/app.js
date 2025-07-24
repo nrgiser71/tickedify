@@ -3761,7 +3761,7 @@ class Taakbeheer {
         clone.style.width = rect.width + 'px';
         clone.style.height = rect.height + 'px';
         clone.style.margin = '0';
-        clone.style.zIndex = '2001'; // Boven menu overlay (2000)
+        clone.style.zIndex = '1999'; // Onder menu overlay (2000)
         
         // Maak originele taak transparent
         taakItem.style.opacity = '0.1';
