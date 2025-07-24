@@ -1287,14 +1287,16 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     transform: scale(1.1);
 }
 
-/* Acties menu overlay - NO BLUR to prevent highlighted task conflict */
+/* Acties menu overlay - Full blur for cool effect */
 .acties-menu-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1319,9 +1321,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 }
 
 .acties-menu {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--macos-bg-primary);
     border-radius: var(--macos-radius-large);
     box-shadow: var(--macos-shadow-heavy);
     border: 1px solid var(--macos-gray-4);
@@ -1329,6 +1329,8 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     max-height: 80vh;
     overflow-y: auto;
     padding: 20px;
+    position: relative;
+    z-index: 3000;
 }
 
 .acties-menu h3 {
@@ -1436,7 +1438,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     border-radius: 8px !important;
     backdrop-filter: none !important;
     position: fixed !important;
-    z-index: 1999 !important;
+    z-index: 2500 !important;
     pointer-events: none !important;
     transition: none !important;
 }
