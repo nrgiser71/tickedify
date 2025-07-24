@@ -5355,7 +5355,7 @@ app.get('/api/admin/feedback', async (req, res) => {
         console.log('Admin feedback request - fetching feedback data...');
 
         // Get all feedback with user information
-        const feedback = await db.query(`
+        const feedback = await pool.query(`
             SELECT 
                 f.*,
                 u.naam as gebruiker_naam,
@@ -5390,7 +5390,7 @@ app.get('/api/admin/feedback/stats', async (req, res) => {
         console.log('Admin feedback stats request...');
 
         // Get feedback statistics
-        const stats = await db.query(`
+        const stats = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE type = 'bug') as bugs,
                 COUNT(*) FILTER (WHERE type = 'feature') as features,
@@ -5445,7 +5445,7 @@ app.put('/api/admin/feedback/:id', async (req, res) => {
         }
 
         // Update feedback status
-        const result = await db.query(`
+        const result = await pool.query(`
             UPDATE feedback 
             SET status = $1, bijgewerkt = CURRENT_TIMESTAMP
             WHERE id = $2
@@ -5472,8 +5472,8 @@ app.put('/api/admin/feedback/:id', async (req, res) => {
 // Debug endpoint voor feedback (tijdelijk)
 app.get('/api/debug/feedback-count', async (req, res) => {
     try {
-        const result = await db.query('SELECT COUNT(*) as total FROM feedback');
-        const feedbackSummary = await db.query(`
+        const result = await pool.query('SELECT COUNT(*) as total FROM feedback');
+        const feedbackSummary = await pool.query(`
             SELECT type, status, COUNT(*) as count 
             FROM feedback 
             GROUP BY type, status
@@ -5491,7 +5491,7 @@ app.get('/api/debug/feedback-count', async (req, res) => {
 app.get('/api/debug/feedback-test', async (req, res) => {
     try {
         // Test stats query
-        const stats = await db.query(`
+        const stats = await pool.query(`
             SELECT 
                 COUNT(*) FILTER (WHERE type = 'bug') as bugs,
                 COUNT(*) FILTER (WHERE type = 'feature') as features,
@@ -5504,7 +5504,7 @@ app.get('/api/debug/feedback-test', async (req, res) => {
         `);
 
         // Test feedback list query
-        const feedback = await db.query(`
+        const feedback = await pool.query(`
             SELECT 
                 f.*,
                 u.naam as gebruiker_naam,
