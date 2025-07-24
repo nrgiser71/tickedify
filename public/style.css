@@ -1435,7 +1435,7 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     border-radius: 8px !important;
     backdrop-filter: none !important;
     position: fixed !important;
-    z-index: 1999 !important;
+    z-index: 2001 !important;
     pointer-events: none !important;
     transition: none !important;
 }
