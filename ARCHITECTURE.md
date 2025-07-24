@@ -40,6 +40,19 @@ username VARCHAR(255) UNIQUE NOT NULL
 password_hash VARCHAR(255) NOT NULL
 email VARCHAR(255) UNIQUE
 email_import_code VARCHAR(20) UNIQUE
+
+-- feedback (Beta feedback systeem)
+id VARCHAR(50) PRIMARY KEY
+user_id VARCHAR(50) REFERENCES users(id)
+type VARCHAR(20) CHECK (type IN ('bug', 'feature'))
+titel VARCHAR(255) NOT NULL
+beschrijving TEXT NOT NULL
+stappen TEXT
+status VARCHAR(20) DEFAULT 'nieuw' CHECK (status IN ('nieuw', 'bekeken', 'in_behandeling', 'opgelost'))
+prioriteit VARCHAR(20) DEFAULT 'normaal'
+context JSONB -- browser, scherm, pagina info
+aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ```
 
 ## 🗂️ File Structuur & Belangrijke Locaties
@@ -86,6 +99,12 @@ email_import_code VARCHAR(20) UNIQUE
 - `ToastManager` class - regel ~7,600 - Toast notifications
 - `LoadingManager` class - regel ~8,000 - Loading indicators
 - `showCSSDebugger()` - regel ~8,400 - CSS debug tool
+
+**Feedback Systeem (regels 11,200-11,400)**
+- `FeedbackManager` class - regel ~11,247 - Feedback modal beheer
+- `openFeedbackModal()` - regel ~11,270 - Open bug/feature modal
+- `submitFeedback()` - regel ~11,327 - Verzend feedback naar server
+- `collectContextInfo()` - regel ~11,296 - Verzamel browser/scherm info
 
 **Context Menu & Highlighting System (regels 3,700-3,800)**
 - `addContextMenuToTaskItems()` - regel ~3,687 - Voegt right-click listeners toe aan alle taak items
@@ -146,6 +165,11 @@ email_import_code VARCHAR(20) UNIQUE
 - `PUT /api/taak/:id` - regel ~2,400
 - `DELETE /api/taak/:id` - regel ~2,800
 - `POST /api/taak/recurring` - regel ~3,200
+
+**Feedback Endpoints (regels 1,950-2,150)**
+- `POST /api/feedback` - regel ~1,950 - Nieuwe feedback indienen
+- `GET /api/feedback` - regel ~2,050 - Gebruiker's eigen feedback ophalen
+- `PUT /api/feedback/:id/status` - regel ~2,150 - Status update (admin only)
 
 **Planning Endpoints (regels 3,500-4,500)**
 - `GET /api/dagelijkse-planning/:datum` - regel ~3,600
@@ -241,6 +265,21 @@ email_import_code VARCHAR(20) UNIQUE
 - **HTML**: Floating panel HTML in index.html:683-699
 - **CSS**: Panel styling met blur effects in style.css:6439-6542
 - **Positioning**: top: 80px rechts, smooth slide-in animaties
+
+### Beta Feedback Systeem
+- **Frontend Manager**: `FeedbackManager` class in app.js:11247-11400
+- **Sidebar Buttons**: Bug Melden & Feature Request in index.html sidebar
+- **Modal Forms**: Feedback modals in index.html:767-834
+- **API Endpoints**: 
+  - `POST /api/feedback` - Nieuwe feedback
+  - `GET /api/feedback` - Gebruiker feedback
+  - Admin endpoints in server.js:5348-5462
+- **Admin Dashboard**: 
+  - Feedback stats card in admin.html:388-395
+  - Feedback tabel in admin.html:465-473
+  - Detail modal in admin.html:477-525
+  - Management functies in admin.js:248-306, 468-562
+- **Database**: `feedback` tabel met JSONB context veld
 
 ### Scroll Indicators (Uitgesteld Lijsten)
 - **Setup**: `setupIntelligentScrollIndicators()` in app.js:~9000-9200
