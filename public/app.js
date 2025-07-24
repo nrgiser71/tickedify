@@ -11280,8 +11280,8 @@ class FeedbackManager {
         }
         
         // Show loading
-        if (loading) {
-            loading.showGlobal('Feedback verzenden...');
+        if (window.loading && window.loading.showGlobal) {
+            window.loading.showGlobal('Feedback verzenden...');
         }
         
         try {
@@ -11314,8 +11314,8 @@ class FeedbackManager {
             toast.error('Er ging iets mis bij het verzenden van je feedback');
             console.error('Feedback error:', error);
         } finally {
-            if (loading) {
-                loading.hideGlobal();
+            if (window.loading && window.loading.hideGlobal) {
+                window.loading.hideGlobal();
             }
         }
     }
