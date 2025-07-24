@@ -1287,16 +1287,14 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     transform: scale(1.1);
 }
 
-/* Acties menu overlay */
+/* Acties menu overlay - NO BLUR to prevent highlighted task conflict */
 .acties-menu-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.4);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1304,12 +1302,6 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     animation: fadeIn 0.2s ease;
 }
 
-/* No blur variant for context menu overlay when highlighted task is active */
-.acties-menu-overlay.no-blur {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgba(0, 0, 0, 0.2);
-}
 
 .acties-menu-content {
     animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1327,7 +1319,9 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
 }
 
 .acties-menu {
-    background: var(--macos-bg-primary);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-radius: var(--macos-radius-large);
     box-shadow: var(--macos-shadow-heavy);
     border: 1px solid var(--macos-gray-4);

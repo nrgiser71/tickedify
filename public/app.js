@@ -3642,10 +3642,6 @@ class Taakbeheer {
         const menuOverlay = document.createElement('div');
         menuOverlay.className = 'acties-menu-overlay';
         
-        // Als er een highlighted taak is, schakel blur uit voor betere zichtbaarheid
-        if (this.highlightedTaskRect) {
-            menuOverlay.classList.add('no-blur');
-        }
         
         menuOverlay.onclick = (e) => {
             if (e.target === menuOverlay) {
