@@ -2619,6 +2619,7 @@ class Taakbeheer {
         this.taken.forEach(taak => {
             const li = document.createElement('li');
             li.className = 'taak-item actie-item';
+            li.dataset.id = taak.id;
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
@@ -2655,6 +2656,9 @@ class Taakbeheer {
             
             lijst.appendChild(li);
         });
+
+        // Voeg context menu functionaliteit toe aan alle taak items
+        this.addContextMenuToTaskItems();
     }
     
     renderUitgesteldRows() {
@@ -2909,6 +2913,8 @@ class Taakbeheer {
             lijst.appendChild(li);
         });
 
+        // Voeg context menu functionaliteit toe aan alle taak items
+        this.addContextMenuToTaskItems();
     }
 
     renderActiesRows() {
@@ -3532,7 +3538,7 @@ class Taakbeheer {
         return false;
     }
 
-    toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null) {
+    toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null, position = null) {
         const taak = this.taken.find(t => t.id === taakId);
         if (!taak) return;
 
@@ -3582,6 +3588,10 @@ class Taakbeheer {
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
+                
+                <div class="menu-section">
+                    <button onclick="app.verwijderTaak('${taakId}'); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
+                </div>
             `;
         } else if (menuType === 'uitgesteld') {
             // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten (exclusief huidige) + opvolgen
@@ -3615,6 +3625,10 @@ class Taakbeheer {
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
+                
+                <div class="menu-section">
+                    <button onclick="app.verwijderTaak('${taakId}'); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
+                </div>
             `;
         }
 
@@ -3639,6 +3653,71 @@ class Taakbeheer {
 
         menuOverlay.appendChild(menuContent);
         document.body.appendChild(menuOverlay);
+        
+        // Als er een positie is gegeven (context menu), positioneer op die locatie
+        if (position) {
+            const menuElement = menuContent.querySelector('.acties-menu');
+            const menuRect = menuElement.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Bereken optimale positie (voorkom buiten scherm vallen)
+            let left = position.x;
+            let top = position.y;
+            
+            if (left + menuRect.width > viewportWidth) {
+                left = viewportWidth - menuRect.width - 10;
+            }
+            if (top + menuRect.height > viewportHeight) {
+                top = viewportHeight - menuRect.height - 10;
+            }
+            
+            // Verander van center naar absolute positionering
+            menuOverlay.style.justifyContent = 'flex-start';
+            menuOverlay.style.alignItems = 'flex-start';
+            menuContent.style.position = 'absolute';
+            menuContent.style.left = `${left}px`;
+            menuContent.style.top = `${top}px`;
+        }
+    }
+
+    // Context menu functionaliteit voor taak items
+    addContextMenuToTaskItems() {
+        // Voeg context menu listeners toe aan alle taak items
+        const taakItems = document.querySelectorAll('.taak-item');
+        
+        taakItems.forEach(taakItem => {
+            // Verwijder bestaande listeners om duplicaten te voorkomen
+            taakItem.removeEventListener('contextmenu', this.handleTaskContextMenu);
+            
+            // Voeg nieuwe listener toe
+            taakItem.addEventListener('contextmenu', (e) => this.handleTaskContextMenu(e, taakItem));
+        });
+    }
+    
+    handleTaskContextMenu(e, taakItem) {
+        e.preventDefault(); // Voorkom standaard browser context menu
+        
+        // Haal taak ID op uit het element
+        const taakId = taakItem.getAttribute('data-id');
+        if (!taakId) return;
+        
+        // Bepaal menu type op basis van huidige lijst
+        let menuType = 'acties';
+        let huidigeLijst = null;
+        
+        if (this.huidigeLijst && this.huidigeLijst.startsWith('uitgesteld-')) {
+            menuType = 'uitgesteld';
+            huidigeLijst = this.huidigeLijst;
+        }
+        
+        // Toon menu op cursor positie
+        const position = {
+            x: e.clientX,
+            y: e.clientY
+        };
+        
+        this.toonActiesMenu(taakId, menuType, huidigeLijst, position);
     }
 
     async verplaatsNaarInbox(taakId) {

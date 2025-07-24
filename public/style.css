@@ -1391,6 +1391,18 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     border-color: var(--macos-green-hover);
 }
 
+.menu-item.menu-delete {
+    background: var(--macos-red);
+    color: white;
+    border-color: var(--macos-red);
+    font-weight: 600;
+}
+
+.menu-item.menu-delete:hover {
+    background: var(--macos-red-hover);
+    border-color: var(--macos-red-hover);
+}
+
 .menu-close {
     width: 100%;
     padding: 10px;
