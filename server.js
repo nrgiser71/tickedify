@@ -2108,6 +2108,81 @@ app.get('/api/debug/all-users-data', async (req, res) => {
     }
 });
 
+// Feedback API endpoints
+app.post('/api/feedback', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+        const feedbackData = {
+            userId,
+            ...req.body
+        };
+        
+        const result = await db.createFeedback(feedbackData);
+        
+        // Log feedback for monitoring
+        console.log('📝 New feedback received:', {
+            type: feedbackData.type,
+            titel: feedbackData.titel,
+            userId,
+            prioriteit: feedbackData.prioriteit
+        });
+        
+        res.json({ success: true, feedback: result });
+    } catch (error) {
+        console.error('Error creating feedback:', error);
+        res.status(500).json({ error: 'Fout bij opslaan van feedback' });
+    }
+});
+
+app.get('/api/feedback', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+        
+        // Check if user is admin
+        const { pool } = require('./database');
+        const userResult = await pool.query(
+            'SELECT rol FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        const isAdmin = userResult.rows.length > 0 && userResult.rows[0].rol === 'admin';
+        
+        const feedback = await db.getFeedback(userId, isAdmin);
+        res.json({ success: true, feedback, isAdmin });
+    } catch (error) {
+        console.error('Error getting feedback:', error);
+        res.status(500).json({ error: 'Fout bij ophalen van feedback' });
+    }
+});
+
+app.put('/api/feedback/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const userId = getCurrentUserId(req);
+        
+        // Check if user is admin
+        const { pool } = require('./database');
+        const userResult = await pool.query(
+            'SELECT rol FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        const isAdmin = userResult.rows.length > 0 && userResult.rows[0].rol === 'admin';
+        
+        const result = await db.updateFeedbackStatus(id, status, userId, isAdmin);
+        
+        if (!result) {
+            return res.status(404).json({ error: 'Feedback niet gevonden of geen toegang' });
+        }
+        
+        res.json({ success: true, feedback: result });
+    } catch (error) {
+        console.error('Error updating feedback status:', error);
+        res.status(500).json({ error: 'Fout bij bijwerken van feedback status' });
+    }
+});
+
 // Database cleanup endpoint - removes all task data but keeps users
 app.post('/api/debug/clean-database', async (req, res) => {
     try {

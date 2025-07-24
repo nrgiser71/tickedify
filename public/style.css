@@ -7313,3 +7313,95 @@ body.dagkalender-focus-active {
     }
 }
 
+/* ===== FEEDBACK SYSTEM STYLING ===== */
+
+/* Feedback sidebar items */
+.feedback-item .lijst-icon .fa-bug {
+    color: var(--macos-red);
+}
+
+.feedback-item .lijst-icon .fa-lightbulb {
+    color: var(--macos-yellow);
+}
+
+.feedback-item:hover .lijst-icon .fa-bug {
+    color: var(--macos-red);
+}
+
+.feedback-item:hover .lijst-icon .fa-lightbulb {
+    color: var(--macos-yellow);
+}
+
+/* Feedback modal */
+.feedback-modal {
+    max-width: 500px;
+    width: 90%;
+}
+
+.feedback-modal h3 {
+    margin-bottom: 20px;
+    color: var(--macos-text-primary);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.feedback-modal textarea {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.feedback-modal #feedbackBeschrijving {
+    min-height: 120px;
+}
+
+.feedback-modal #feedbackStappen {
+    min-height: 100px;
+}
+
+.feedback-modal select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-button);
+    background: var(--macos-bg-primary);
+    color: var(--macos-text-primary);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.feedback-modal select:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+/* Hide bug-specific field by default */
+#bugDetails {
+    margin-top: -10px;
+    transition: all 0.3s ease;
+}
+
+/* Bug report icon in header */
+.feedback-modal h3::before {
+    content: '🐛 ';
+    margin-right: 4px;
+}
+
+.feedback-modal[data-type="feature"] h3::before {
+    content: '✨ ';
+}
+
+/* Priority color coding */
+.feedback-modal select option[value="laag"] {
+    color: var(--macos-green);
+}
+
+.feedback-modal select option[value="hoog"] {
+    color: var(--macos-orange);
+}
+
+.feedback-modal select option[value="kritiek"] {
+    color: var(--macos-red);
+}
+

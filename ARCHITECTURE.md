@@ -87,6 +87,13 @@ email_import_code VARCHAR(20) UNIQUE
 - `LoadingManager` class - regel ~8,000 - Loading indicators
 - `showCSSDebugger()` - regel ~8,400 - CSS debug tool
 
+**Context Menu & Highlighting System (regels 3,700-3,800)**
+- `addContextMenuToTaskItems()` - regel ~3,687 - Voegt right-click listeners toe aan alle taak items
+- `handleTaskContextMenu()` - regel ~3,707 - Verwerkt right-click events en prepareert taak highlighting
+- `highlightTaskForContextMenu()` - regel ~3,742 - Creëert scherpe clone van taak boven blur overlay
+- `removeContextMenuHighlight()` - regel ~3,785 - Cleanup van highlighted clones en reset opacity
+- `toonActiesMenu()` - regel ~3,543 - Extended met sourceElement support voor consistente UX
+
 **Uitgesteld Drag & Drop + Floating Panel (regels 8,500-9,000)**
 - `setupUitgesteldDropZones()` - regel ~8,748 - Drop zones voor uitgesteld sectie headers
 - `handleUitgesteldDrop()` - regel ~8,815 - Drop handler voor uitgesteld lijst moves
@@ -113,6 +120,8 @@ email_import_code VARCHAR(20) UNIQUE
 - Utilities & animations: regels 5,000-6,400
 - **Focus Mode**: regels 6,634-6,787 - Dagkalender fullscreen CSS overrides
 - **Floating Drop Panel**: regels 6,439-6,542 - Panel styling met blur effects en animaties
+- **Context Menu Highlighting**: regels 1,428-1,452 - `.context-menu-highlighted` met glow animatie
+- **Acties Menu Overlay**: regels 1,290-1,305 - Blur overlay styling voor menu achtergrond
 
 ### Backend
 
@@ -240,6 +249,48 @@ email_import_code VARCHAR(20) UNIQUE
 - **Styling**: CSS gradients met ▲▼ arrow symbols
 - **Smart Display**: Alleen zichtbaar wanneer scrollen mogelijk is
 
+### Highlighted Context Menu System
+**Complete implementation voor visueel aantrekkelijke context menus met task highlighting**
+
+**Core Functionaliteit:**
+- **Feature Flag**: `this.ENABLE_HIGHLIGHTED_CONTEXT_MENU = true` in constructor
+- **Right-Click Setup**: `addContextMenuToTaskItems()` in app.js:3687 - Voegt contextmenu event listeners toe
+- **Event Handler**: `handleTaskContextMenu()` in app.js:3707 - Verwerkt right-click events
+- **Menu Function**: `toonActiesMenu(taakId, menuType, huidigeLijst, position, sourceElement)` - Extended signature
+- **Highlighting Logic**: `highlightTaskForContextMenu(taakItem, menuOverlay)` in app.js:3742
+- **Cleanup**: `removeContextMenuHighlight()` in app.js:3785 - Volledige cleanup van DOM en styles
+
+**Highlighting Mechanisme:**
+- **DOM Cloning**: `taakItem.cloneNode(true)` voor exacte kopie van originele taak
+- **Positioning Strategy**: `getBoundingClientRect()` voor pixel-perfect clone positionering
+- **Opacity Control**: Originele taak wordt 0.1 opacity, clone blijft 1.0 (volledig zichtbaar)
+- **DOM Architecture**: Clone wordt toegevoegd aan menu overlay container (kritiek voor z-index)
+- **CSS Classes**: `.context-menu-highlighted` met glow animation en enhanced styling
+
+**Z-Index Hiërarchie:**
+- Menu overlay backdrop: z-index 2000 (blur effect)
+- Highlighted clone: z-index 1 (boven blur, onder menu)
+- Menu content: z-index 2 (bovenop alles)
+- **Waarom Dit Werkt**: Clone in overlay container voorkomt stacking context conflicts
+
+**Consistent UX Implementation:**
+- **Right-Click**: Direct taak highlighting via `handleTaskContextMenu()`
+- **Button Clicks**: Source detection via `sourceElement.closest('.taak-item')`
+- **Button Integration**: Alle HTML onclick calls uitgebreid: `onclick="app.toonActiesMenu(..., this)"`
+- **Unified Experience**: Identieke highlighting voor beide interaction methods
+
+**Menu Structuur (4 Logische Groepen):**
+1. **Plan op**: Vandaag, Morgen (alleen voor acties lijst)
+2. **Verplaats naar uitgesteld**: Wekelijks, Maandelijks, 3-maandelijks, etc.
+3. **Verplaats naar Opvolgen**: Enkele optie met eigen groep
+4. **Acties**: Verwijder taak (rood gemarkeerd)
+
+**Cleanup & Memory Management:**
+- Automatische cleanup bij menu sluiten (overlay click, ESC, menu actions)
+- DOM element removal van highlighted clones
+- Opacity reset van originele taken
+- Pointer events cleanup
+
 ## 🚀 Development Workflow
 
 ### Bij nieuwe feature:
@@ -298,6 +349,13 @@ email_import_code VARCHAR(20) UNIQUE
 - Position:fixed scroll indicators voor uitgesteld lijsten
 - ResizeObserver voor content detection
 
+### Context Menu & Highlighting Helpers
+- `addContextMenuToTaskItems()` - app.js:3687 - Attach right-click listeners
+- `handleTaskContextMenu()` - app.js:3707 - Process context menu events
+- `highlightTaskForContextMenu()` - app.js:3742 - DOM cloning en positioning
+- `removeContextMenuHighlight()` - app.js:3785 - Cleanup highlighted elements
+- **Feature Toggle**: `this.ENABLE_HIGHLIGHTED_CONTEXT_MENU` boolean flag
+
 ### API Helpers
 - Fetch wrappers - app.js:500-600
 - Error handling - throughout app.js
@@ -328,10 +386,53 @@ email_import_code VARCHAR(20) UNIQUE
 - **Oplossung**: Custom drag image in createDragImage() app.js:1800
 - **Visual**: Transparante taak + 📋 emoji cursor
 
+### Highlighted Context Menu Issues
+**KRITIEK ARCHITECTUUR PROBLEEM**: DOM Stacking Context Conflicts
+- **Symptoom**: Menu bedekt highlighted taak of taak wordt wazig tijdens menu display
+- **Root Cause**: Clone en menu in verschillende DOM containers creëren stacking context conflicts
+- **Foutieve Approach**: Clone toevoegen aan `document.body` terwijl menu in eigen overlay zit
+- **Correcte Oplossing**: Clone toevoegen aan `menuOverlay` container voor unified DOM hierarchy
+- **Code Fix**: `highlightTaskForContextMenu(taakItem, menuOverlay)` - menuOverlay parameter is kritiek
+- **DOM Structure**: menu overlay → highlighted clone (z-1) → menu content (z-2)
+
+**Z-INDEX CIRCULAR CONFLICTS**: Menu vs Clone Layering
+- **Probleem**: Verhogen clone z-index maakt menu onklikbaar, verlagen maakt clone wazig
+- **Diagnose**: User feedback "in cirkels lopen" - elke fix brak andere aspect
+- **Oplossing**: Fixed z-index hierarchy binnen single container i.p.v. cross-container stacking
+- **Lesson Learned**: DOM hierarchy belangrijker dan z-index values voor stacking
+
+**BUTTON CLICK INTEGRATION**: Source Element Detection
+- **Probleem**: Highlighted effect werkte alleen voor right-click, niet voor 3-puntjes buttons
+- **User Request**: "Kunnen we dit ook toepassen als ze op de knop met de 3 puntjes klikken?"
+- **Oplossing**: Extended `toonActiesMenu()` signature met `sourceElement` parameter
+- **Implementation**: `sourceElement.closest('.taak-item')` vindt parent taak element
+- **HTML Changes**: Alle button onclick calls: `onclick="app.toonActiesMenu(..., this)"`
+
+**CLEANUP & MEMORY MANAGEMENT**: DOM Leak Prevention  
+- **Probleem**: Highlighted clones blijven hangen na menu interactions
+- **Risk**: Memory leaks en visual artifacts bij herhaald gebruik
+- **Oplossing**: Comprehensive cleanup in `removeContextMenuHighlight()`
+- **Triggers**: Menu overlay click, ESC key, alle menu actions, navigation events
+- **Implementation**: DOM removal + opacity reset + pointer events cleanup
+
+**CSS STYLING CONFLICTS**: Menu Item Color Overrides
+- **Probleem**: Delete button niet rood ondanks correct CSS classes
+- **Root Cause**: CSS specificity - general `.menu-item:hover` overschrijft color classes
+- **Missing Variables**: `--macos-red-hover` en `--macos-purple-hover` niet gedefinieerd
+- **Oplossing**: `!important` declarations + complete hover color variable set
+- **Code**: `.menu-delete:hover { background: var(--macos-red-hover) !important; }`
+
+**DEVELOPMENT WORKFLOW**: Safe Feature Implementation
+- **User Concern**: "ik wil dat je heel eenvoudig kan terugspringen naar de huidige versie"
+- **Solution**: Git feature branches voor safe experimentation
+- **Process**: `feature/highlighted-context-menu` branch → test → merge to main
+- **Rollback Strategy**: Easy revert capability voor complexe visual features
+
 ---
 
-**LAATSTE UPDATE**: Juli 18, 2025 - Focus Mode fixes gedocumenteerd
+**LAATSTE UPDATE**: Juli 24, 2025 - Highlighted Context Menu System volledig gedocumenteerd
 **BELANGRIJKSTE UPDATES**:
+- Juli 24: Highlighted Context Menu - Complete implementation met DOM cloning en consistent UX
 - Juli 18: Focus Mode - Volledige CSS overrides voor perfect fullscreen gedrag
 - Juli 13: Scroll Indicators - Intelligente scroll feedback voor uitgesteld lijsten
 - Juli 13: Floating Drop Panel - Moderne drag & drop interface 

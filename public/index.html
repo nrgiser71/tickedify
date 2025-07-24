@@ -145,6 +145,21 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Feedback & Support -->
+                    <div class="lijst-sectie">
+                        <div class="sectie-header">
+                            <span><i class="fas fa-comment-dots"></i> Feedback & Support</span>
+                        </div>
+                        <div class="lijst-item feedback-item" data-feedback="bug">
+                            <div class="lijst-icon"><i class="fas fa-bug"></i></div>
+                            <span class="lijst-naam">Bug Melden</span>
+                        </div>
+                        <div class="lijst-item feedback-item" data-feedback="feature">
+                            <div class="lijst-icon"><i class="fas fa-lightbulb"></i></div>
+                            <span class="lijst-naam">Feature Request</span>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
@@ -670,6 +685,46 @@
                 <div class="popup-acties">
                     <button type="button" id="registerCancel">Annuleren</button>
                     <button type="submit" class="actie-btn" id="registerSubmit">Account Aanmaken</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content feedback-modal">
+            <h3 id="feedbackTitle">Bug Melden</h3>
+            <form id="feedbackForm">
+                <div class="form-groep">
+                    <label for="feedbackTitel">Titel *</label>
+                    <input type="text" id="feedbackTitel" required placeholder="Korte omschrijving van het probleem">
+                </div>
+                
+                <div class="form-groep">
+                    <label for="feedbackBeschrijving">Beschrijving *</label>
+                    <textarea id="feedbackBeschrijving" rows="6" required 
+                        placeholder="Beschrijf het probleem zo gedetailleerd mogelijk"></textarea>
+                </div>
+                
+                <div class="form-groep" id="bugDetails" style="display: none;">
+                    <label for="feedbackStappen">Stappen om te reproduceren</label>
+                    <textarea id="feedbackStappen" rows="4" 
+                        placeholder="1. Ga naar...&#10;2. Klik op...&#10;3. Het probleem is..."></textarea>
+                </div>
+                
+                <div class="form-groep">
+                    <label for="feedbackPrioriteit">Prioriteit</label>
+                    <select id="feedbackPrioriteit">
+                        <option value="normaal">Normaal</option>
+                        <option value="laag">Laag - Kleine irritatie</option>
+                        <option value="hoog">Hoog - Blokkeert mijn werk</option>
+                        <option value="kritiek">Kritiek - App werkt niet</option>
+                    </select>
+                </div>
+                
+                <div class="popup-acties">
+                    <button type="button" id="feedbackCancel">Annuleren</button>
+                    <button type="submit" id="feedbackSubmit" class="actie-btn">Verzenden</button>
                 </div>
             </form>
         </div>

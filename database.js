@@ -158,6 +158,23 @@ const initDatabase = async () => {
       )
     `);
 
+    // Create feedback table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(50) REFERENCES users(id),
+        type VARCHAR(20) NOT NULL CHECK (type IN ('bug', 'feature')),
+        titel VARCHAR(255) NOT NULL,
+        beschrijving TEXT NOT NULL,
+        stappen TEXT,
+        status VARCHAR(20) DEFAULT 'nieuw' CHECK (status IN ('nieuw', 'bekeken', 'in_behandeling', 'opgelost')),
+        prioriteit VARCHAR(20) DEFAULT 'normaal' CHECK (prioriteit IN ('laag', 'normaal', 'hoog', 'kritiek')),
+        context JSONB,
+        aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add position column to existing tables if it doesn't exist
     try {
       await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
@@ -198,6 +215,9 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum_uur ON dagelijkse_planning(datum, uur);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_user ON dagelijkse_planning(user_id);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_user_datum ON dagelijkse_planning(user_id, datum);
+      CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id);
+      CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(type);
+      CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -1358,6 +1378,93 @@ const db = {
     } catch (error) {
       console.error('Error getting email import code:', error);
       return null;
+    }
+  },
+
+  // Feedback functions
+  async createFeedback(feedbackData) {
+    try {
+      const { userId, type, titel, beschrijving, stappen, prioriteit, context } = feedbackData;
+      
+      // Generate unique ID
+      const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      
+      const result = await pool.query(
+        `INSERT INTO feedback (id, user_id, type, titel, beschrijving, stappen, prioriteit, context) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+         RETURNING *`,
+        [id, userId, type, titel, beschrijving, stappen || null, prioriteit || 'normaal', context || null]
+      );
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating feedback:', error);
+      throw error;
+    }
+  },
+
+  async getFeedback(userId, isAdmin = false) {
+    try {
+      let query;
+      let params;
+      
+      if (isAdmin) {
+        // Admin can see all feedback
+        query = `
+          SELECT f.*, u.naam as user_naam, u.email as user_email 
+          FROM feedback f
+          LEFT JOIN users u ON f.user_id = u.id
+          ORDER BY f.aangemaakt DESC
+        `;
+        params = [];
+      } else {
+        // Regular users can only see their own feedback
+        query = `
+          SELECT * FROM feedback 
+          WHERE user_id = $1 
+          ORDER BY aangemaakt DESC
+        `;
+        params = [userId];
+      }
+      
+      const result = await pool.query(query, params);
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting feedback:', error);
+      return [];
+    }
+  },
+
+  async updateFeedbackStatus(feedbackId, status, userId, isAdmin = false) {
+    try {
+      let query;
+      let params;
+      
+      if (isAdmin) {
+        // Admin can update any feedback
+        query = `
+          UPDATE feedback 
+          SET status = $1, bijgewerkt = CURRENT_TIMESTAMP 
+          WHERE id = $2 
+          RETURNING *
+        `;
+        params = [status, feedbackId];
+      } else {
+        // Regular users can only update their own feedback
+        query = `
+          UPDATE feedback 
+          SET status = $1, bijgewerkt = CURRENT_TIMESTAMP 
+          WHERE id = $2 AND user_id = $3 
+          RETURNING *
+        `;
+        params = [status, feedbackId, userId];
+      }
+      
+      const result = await pool.query(query, params);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating feedback status:', error);
+      throw error;
     }
   }
 };

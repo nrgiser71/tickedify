@@ -11170,6 +11170,162 @@ class KeyboardShortcutManager {
     }
 }
 
+// Feedback System Manager
+class FeedbackManager {
+    constructor() {
+        this.modal = document.getElementById('feedbackModal');
+        this.form = document.getElementById('feedbackForm');
+        this.currentType = 'bug';
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        // Feedback sidebar items
+        const feedbackItems = document.querySelectorAll('.feedback-item');
+        feedbackItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const type = item.dataset.feedback;
+                this.openFeedbackModal(type);
+            });
+        });
+        
+        // Form submission
+        if (this.form) {
+            this.form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitFeedback();
+            });
+        }
+        
+        // Cancel button
+        const cancelBtn = document.getElementById('feedbackCancel');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.closeModal();
+            });
+        }
+        
+        // Close on overlay click
+        if (this.modal) {
+            this.modal.addEventListener('click', (e) => {
+                if (e.target === this.modal) {
+                    this.closeModal();
+                }
+            });
+        }
+    }
+    
+    openFeedbackModal(type) {
+        this.currentType = type;
+        
+        // Update modal title
+        const title = document.getElementById('feedbackTitle');
+        if (title) {
+            title.textContent = type === 'bug' ? 'Bug Melden' : 'Feature Request';
+        }
+        
+        // Show/hide bug-specific fields
+        const bugDetails = document.getElementById('bugDetails');
+        if (bugDetails) {
+            bugDetails.style.display = type === 'bug' ? 'block' : 'none';
+        }
+        
+        // Reset form
+        this.form.reset();
+        
+        // Set modal type for styling
+        this.modal.setAttribute('data-type', type);
+        
+        // Show modal
+        this.modal.style.display = 'block';
+        
+        // Focus on first input
+        setTimeout(() => {
+            const firstInput = document.getElementById('feedbackTitel');
+            if (firstInput) firstInput.focus();
+        }, 100);
+    }
+    
+    closeModal() {
+        this.modal.style.display = 'none';
+        this.form.reset();
+    }
+    
+    collectContext() {
+        const currentList = document.querySelector('.lijst-item.actief');
+        const pageTitle = document.getElementById('page-title');
+        const versionNumber = document.getElementById('version-number');
+        
+        return {
+            currentPage: pageTitle ? pageTitle.textContent : 'Onbekend',
+            activeList: currentList ? currentList.dataset.lijst : 'geen',
+            appVersion: versionNumber ? versionNumber.textContent : 'Onbekend',
+            browser: navigator.userAgent,
+            screenResolution: `${window.screen.width}x${window.screen.height}`,
+            viewportSize: `${window.innerWidth}x${window.innerHeight}`,
+            timestamp: new Date().toISOString(),
+            url: window.location.pathname,
+            userId: auth.currentUser ? auth.currentUser.id : null
+        };
+    }
+    
+    async submitFeedback() {
+        const titel = document.getElementById('feedbackTitel').value.trim();
+        const beschrijving = document.getElementById('feedbackBeschrijving').value.trim();
+        const stappen = document.getElementById('feedbackStappen').value.trim();
+        const prioriteit = document.getElementById('feedbackPrioriteit').value;
+        
+        if (!titel || !beschrijving) {
+            toast.warning('Vul alstublieft alle verplichte velden in');
+            return;
+        }
+        
+        // Show loading
+        if (loading) {
+            loading.showGlobal('Feedback verzenden...');
+        }
+        
+        try {
+            const context = this.collectContext();
+            const feedbackData = {
+                type: this.currentType,
+                titel,
+                beschrijving,
+                stappen: this.currentType === 'bug' ? stappen : null,
+                prioriteit,
+                context
+            };
+            
+            const response = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(feedbackData)
+            });
+            
+            if (response.ok) {
+                toast.success('Bedankt voor je feedback! We gaan er mee aan de slag.');
+                this.closeModal();
+            } else {
+                const error = await response.text();
+                toast.error('Er ging iets mis: ' + error);
+            }
+        } catch (error) {
+            toast.error('Er ging iets mis bij het verzenden van je feedback');
+            console.error('Feedback error:', error);
+        } finally {
+            if (loading) {
+                loading.hideGlobal();
+            }
+        }
+    }
+}
+
+// Initialize feedback system
+let feedbackManager;
+document.addEventListener('DOMContentLoaded', () => {
+    feedbackManager = new FeedbackManager();
+});
+
 // Initialize keyboard shortcuts system
 let keyboardManager;
 document.addEventListener('DOMContentLoaded', () => {
