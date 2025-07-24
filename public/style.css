@@ -1426,6 +1426,31 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     background: var(--macos-gray-4);
 }
 
+/* Context Menu Highlighted Task */
+.context-menu-highlighted {
+    background: rgba(255, 255, 255, 0.98) !important;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 2px rgba(0, 122, 255, 0.4) !important;
+    border-radius: 8px !important;
+    backdrop-filter: none !important;
+    position: fixed !important;
+    z-index: 2001 !important;
+    pointer-events: none !important;
+    transition: none !important;
+}
+
+/* Subtle glow animation for highlighted task */
+@keyframes contextHighlightGlow {
+    0% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 122, 255, 0.4); }
+    50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(0, 122, 255, 0.6); }
+    100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 122, 255, 0.4); }
+}
+
+.context-menu-highlighted {
+    animation: contextHighlightGlow 2s ease-in-out infinite;
+}
+
 /* Zoek interface styling */
 .zoek-interface {
     padding: 20px;

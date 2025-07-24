@@ -517,6 +517,8 @@ class Taakbeheer {
         this.sortDirection = {}; // Bijhouden van sorteer richting per kolom
         this.toonToekomstigeTaken = this.restoreToekomstToggle(); // Toggle voor toekomstige taken
         this.autoRefreshInterval = null; // Voor inbox auto-refresh
+        // Feature flag voor highlighted context menu
+        this.ENABLE_HIGHLIGHTED_CONTEXT_MENU = true;
         this.activeCompletions = new Set(); // Track active task completions to prevent race conditions
         this.saveTimeout = null; // Debounce lijst opslaan
         this.isSaving = false; // Prevent parallel saves
@@ -3592,7 +3594,7 @@ class Taakbeheer {
                 
                 <h3>Acties</h3>
                 <div class="menu-section">
-                    <button onclick="app.verwijderTaak('${taakId}'); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
+                    <button onclick="app.verwijderTaak('${taakId}'); app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
             `;
         } else if (menuType === 'uitgesteld') {
@@ -3631,7 +3633,7 @@ class Taakbeheer {
                 
                 <h3>Acties</h3>
                 <div class="menu-section">
-                    <button onclick="app.verwijderTaak('${taakId}'); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
+                    <button onclick="app.verwijderTaak('${taakId}'); app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
             `;
         }
@@ -3641,6 +3643,7 @@ class Taakbeheer {
         menuOverlay.className = 'acties-menu-overlay';
         menuOverlay.onclick = (e) => {
             if (e.target === menuOverlay) {
+                this.removeContextMenuHighlight();
                 menuOverlay.remove();
             }
         };
@@ -3651,7 +3654,7 @@ class Taakbeheer {
             <div class="acties-menu">
                 ${menuContentHTML}
                 
-                <button onclick="document.querySelector('.acties-menu-overlay').remove()" class="menu-close">Sluiten</button>
+                <button onclick="app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove()" class="menu-close">Sluiten</button>
             </div>
         `;
 
@@ -3706,6 +3709,11 @@ class Taakbeheer {
         const taakId = taakItem.getAttribute('data-id');
         if (!taakId) return;
         
+        // Highlight de geklikte taak (indien feature enabled)
+        if (this.ENABLE_HIGHLIGHTED_CONTEXT_MENU) {
+            this.highlightTaskForContextMenu(taakItem);
+        }
+        
         // Bepaal menu type op basis van huidige lijst
         let menuType = 'acties';
         let huidigeLijst = null;
@@ -3722,6 +3730,61 @@ class Taakbeheer {
         };
         
         this.toonActiesMenu(taakId, menuType, huidigeLijst, position);
+    }
+
+    // Highlight de geklikte taak door een clone boven de blur overlay te plaatsen
+    highlightTaskForContextMenu(taakItem) {
+        // Cleanup eventuele vorige highlights
+        this.removeContextMenuHighlight();
+        
+        // Clone het taak element
+        const clone = taakItem.cloneNode(true);
+        clone.className += ' context-menu-highlighted';
+        clone.id = 'highlighted-task-clone';
+        
+        // Disable alle interactiviteit op de clone
+        clone.style.pointerEvents = 'none';
+        const buttons = clone.querySelectorAll('button');
+        buttons.forEach(btn => btn.style.pointerEvents = 'none');
+        const inputs = clone.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => input.style.pointerEvents = 'none');
+        
+        // Krijg exacte positie van originele element
+        const rect = taakItem.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
+        // Positioneer clone exact op originele locatie
+        clone.style.position = 'fixed';
+        clone.style.top = rect.top + 'px';
+        clone.style.left = rect.left + 'px';
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.margin = '0';
+        clone.style.zIndex = '2001'; // Boven menu overlay (2000)
+        
+        // Maak originele taak transparent
+        taakItem.style.opacity = '0.1';
+        taakItem.dataset.originallyHighlighted = 'true';
+        
+        // Voeg clone toe aan body
+        document.body.appendChild(clone);
+    }
+
+    // Verwijder context menu highlight
+    removeContextMenuHighlight() {
+        // Verwijder clone
+        const clone = document.getElementById('highlighted-task-clone');
+        if (clone) {
+            clone.remove();
+        }
+        
+        // Herstel originele taak opacity
+        const highlightedTask = document.querySelector('[data-originally-highlighted="true"]');
+        if (highlightedTask) {
+            highlightedTask.style.opacity = '';
+            highlightedTask.removeAttribute('data-originally-highlighted');
+        }
     }
 
     async verplaatsNaarInbox(taakId) {
@@ -3750,7 +3813,10 @@ class Taakbeheer {
             if (response.ok) {
                 // Sluit menu
                 const menuOverlay = document.querySelector('.acties-menu-overlay');
-                if (menuOverlay) menuOverlay.remove();
+                if (menuOverlay) {
+                    this.removeContextMenuHighlight();
+                    menuOverlay.remove();
+                }
                 
                 // Refresh huidige lijst en tellingen
                 await this.laadHuidigeLijst();
@@ -3829,6 +3895,7 @@ class Taakbeheer {
         });
 
         // Sluit menu
+        this.removeContextMenuHighlight();
         document.querySelector('.acties-menu-overlay').remove();
     }
 
@@ -3841,7 +3908,10 @@ class Taakbeheer {
             
             // Sluit menu
             const menuOverlay = document.querySelector('.acties-menu-overlay');
-            if (menuOverlay) menuOverlay.remove();
+            if (menuOverlay) {
+                this.removeContextMenuHighlight();
+                menuOverlay.remove();
+            }
             
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
@@ -3870,7 +3940,10 @@ class Taakbeheer {
             
             // Sluit menu
             const menuOverlay = document.querySelector('.acties-menu-overlay');
-            if (menuOverlay) menuOverlay.remove();
+            if (menuOverlay) {
+                this.removeContextMenuHighlight();
+                menuOverlay.remove();
+            }
             
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
