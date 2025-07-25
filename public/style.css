@@ -4496,6 +4496,13 @@ button:focus {
     visibility: visible;
 }
 
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
 .loading-spinner {
     width: 40px;
     height: 40px;
@@ -4503,6 +4510,19 @@ button:focus {
     border-top: 3px solid var(--macos-blue);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+.loading-progress-text {
+    font-size: 13px;
+    color: var(--macos-text-secondary);
+    text-align: center;
+    min-height: 18px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.loading-progress-text.active {
+    opacity: 1;
 }
 
 /* Inline loading spinner (smaller) */

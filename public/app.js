@@ -357,6 +357,7 @@ const projectModal = new ProjectModal();
 class LoadingManager {
     constructor() {
         this.overlay = document.getElementById('loadingOverlay');
+        this.progressText = document.getElementById('loadingProgressText');
         this.activeOperations = new Set();
         this.loadingStates = new Map(); // Track loading state per component
     }
@@ -364,10 +365,36 @@ class LoadingManager {
     // Global loading overlay
     show(message = 'Laden...') {
         this.overlay.classList.add('active');
+        // Hide progress text when showing regular loading
+        if (this.progressText) {
+            this.progressText.textContent = '';
+            this.progressText.classList.remove('active');
+        }
     }
 
     hide() {
         this.overlay.classList.remove('active');
+        // Clean up progress text
+        if (this.progressText) {
+            this.progressText.textContent = '';
+            this.progressText.classList.remove('active');
+        }
+    }
+
+    // Show loading with progress tracking
+    showWithProgress(baseMessage, current, total) {
+        this.overlay.classList.add('active');
+        if (this.progressText) {
+            this.progressText.textContent = `${baseMessage} ${current} van ${total}...`;
+            this.progressText.classList.add('active');
+        }
+    }
+
+    // Update only the progress
+    updateProgress(baseMessage, current, total) {
+        if (this.progressText && this.overlay.classList.contains('active')) {
+            this.progressText.textContent = `${baseMessage} ${current} van ${total}...`;
+        }
     }
 
     // Operation-based loading (multiple concurrent operations)
@@ -9985,8 +10012,11 @@ class Taakbeheer {
             return;
         }
 
-        // Show loading indicator
-        loading.show('Bulk actie uitvoeren...');
+        const selectedIds = Array.from(this.geselecteerdeTaken);
+        const totalTasks = selectedIds.length;
+
+        // Show loading indicator with progress
+        loading.showWithProgress('Datum aanpassen taak', 0, totalTasks);
 
         try {
             let newDate;
@@ -10017,10 +10047,14 @@ class Taakbeheer {
             }
 
             // Process selected tasks
-            const selectedIds = Array.from(this.geselecteerdeTaken);
             let successCount = 0;
+            let currentTask = 0;
             
             for (const taakId of selectedIds) {
+                currentTask++;
+                // Update progress before processing
+                loading.updateProgress('Datum aanpassen taak', currentTask, totalTasks);
+                
                 try {
                     const response = await fetch(`/api/taak/${taakId}`, {
                         method: 'PUT',
@@ -10035,6 +10069,9 @@ class Taakbeheer {
                     console.error('Fout bij bulk update:', error);
                 }
             }
+            
+            // Show finishing message
+            loading.show('Afronden...');
             
             toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
             
@@ -10108,14 +10145,21 @@ class Taakbeheer {
         const dropdown = document.getElementById('bulk-uitgesteld-dropdown');
         if (dropdown) dropdown.remove();
 
-        // Show loading indicator
-        loading.show('Taken uitstellen...');
+        const selectedIds = Array.from(this.geselecteerdeTaken);
+        const totalTasks = selectedIds.length;
+
+        // Show loading indicator with progress
+        loading.showWithProgress('Verplaatsen taak', 0, totalTasks);
 
         try {
-            const selectedIds = Array.from(this.geselecteerdeTaken);
             let successCount = 0;
+            let currentTask = 0;
             
             for (const taakId of selectedIds) {
+                currentTask++;
+                // Update progress before processing
+                loading.updateProgress('Verplaatsen taak', currentTask, totalTasks);
+                
                 try {
                     const response = await fetch(`/api/taak/${taakId}`, {
                         method: 'PUT',
@@ -10141,6 +10185,9 @@ class Taakbeheer {
                 'uitgesteld-6maandelijks': '6-maandelijks',
                 'uitgesteld-jaarlijks': 'Jaarlijks'
             };
+            
+            // Show finishing message
+            loading.show('Afronden...');
             
             toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
             
