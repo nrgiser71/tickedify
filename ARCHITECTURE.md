@@ -266,10 +266,11 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **CSS**: Panel styling met blur effects in style.css:6439-6542
 - **Positioning**: top: 80px rechts, smooth slide-in animaties
 
-### Beta Feedback Systeem
+### Beta Feedback Systeem (v0.11.93) ✅
 - **Frontend Manager**: `FeedbackManager` class in app.js:11247-11400
 - **Sidebar Buttons**: Bug Melden & Feature Request in index.html sidebar
-- **Modal Forms**: Feedback modals in index.html:767-834
+- **Modal Forms**: Feedback modals in index.html:697-724 (perfect gecentreerd, beide buttons zichtbaar)
+- **CSS Styling**: Feedback modal styling in style.css:7358-7478 (gekopieerd van confirmModal)
 - **API Endpoints**: 
   - `POST /api/feedback` - Nieuwe feedback
   - `GET /api/feedback` - Gebruiker feedback
@@ -280,6 +281,7 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   - Detail modal in admin.html:477-525
   - Management functies in admin.js:248-306, 468-562
 - **Database**: `feedback` tabel met JSONB context veld
+- **UI/UX Status**: Production-ready - Modal centrering en button layout volledig gefixed
 
 ### Scroll Indicators (Uitgesteld Lijsten)
 - **Setup**: `setupIntelligentScrollIndicators()` in app.js:~9000-9200
