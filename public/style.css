@@ -7358,10 +7358,6 @@ body.dagkalender-focus-active {
 .feedback-modal {
     max-width: 500px;
     width: 90%;
-    max-height: 85vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
 }
 
 .feedback-modal h3 {
@@ -7377,12 +7373,6 @@ body.dagkalender-focus-active {
     resize: vertical;
 }
 
-.feedback-modal form {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow-y: auto;
-}
 
 .feedback-modal #feedbackBeschrijving {
     min-height: 120px;
@@ -7438,14 +7428,12 @@ body.dagkalender-focus-active {
     color: var(--macos-red);
 }
 
-/* Feedback Modal button styling */
+/* Feedback Modal button styling - copy from confirmModal */
 .feedback-modal .popup-acties {
-    display: flex !important;
+    display: flex;
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
-    text-align: initial !important;
-    flex-shrink: 0;
 }
 
 .feedback-modal .popup-acties button {
@@ -7456,13 +7444,14 @@ body.dagkalender-focus-active {
     cursor: pointer;
     transition: all 0.2s ease;
     flex: 0 0 auto;
-    min-width: 120px;
 }
 
 .feedback-modal .popup-acties .actie-btn {
     background: var(--soft-blue);
     border: 1px solid var(--soft-blue);
     color: white;
+    width: auto;
+    margin-top: 0;
 }
 
 .feedback-modal .popup-acties .actie-btn:hover {
@@ -7471,13 +7460,16 @@ body.dagkalender-focus-active {
 }
 
 .feedback-modal .popup-acties button:not(.actie-btn) {
-    background: var(--macos-bg-primary);
-    border: 1px solid var(--macos-gray-4);
-    color: var(--macos-text-primary);
+    background: var(--macos-bg-primary) !important;
+    border: 1px solid var(--macos-gray-4) !important;
+    color: var(--macos-text-primary) !important;
+    box-shadow: none !important;
 }
 
 .feedback-modal .popup-acties button:not(.actie-btn):hover {
-    background: var(--macos-gray-6);
-    border-color: var(--macos-gray-3);
+    background: var(--macos-gray-6) !important;
+    border-color: var(--macos-gray-3) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
