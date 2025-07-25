@@ -7358,8 +7358,10 @@ body.dagkalender-focus-active {
 .feedback-modal {
     max-width: 500px;
     width: 90%;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .feedback-modal h3 {
@@ -7373,6 +7375,13 @@ body.dagkalender-focus-active {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
     line-height: 1.5;
     resize: vertical;
+}
+
+.feedback-modal form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .feedback-modal #feedbackBeschrijving {
@@ -7435,7 +7444,8 @@ body.dagkalender-focus-active {
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
-    text-align: left !important;
+    text-align: initial !important;
+    flex-shrink: 0;
 }
 
 .feedback-modal .popup-acties button {

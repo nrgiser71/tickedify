@@ -11284,7 +11284,7 @@ class FeedbackManager {
         this.modal.setAttribute('data-type', type);
         
         // Show modal
-        this.modal.style.display = 'block';
+        this.modal.style.display = 'flex';
         
         // Focus on first input
         setTimeout(() => {
