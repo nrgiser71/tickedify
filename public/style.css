@@ -7358,6 +7358,9 @@ body.dagkalender-focus-active {
 .feedback-modal {
     max-width: 500px;
     width: 90%;
+    /* Ensure modal is properly centered */
+    position: relative;
+    margin: auto;
 }
 
 .feedback-modal h3 {
@@ -7425,5 +7428,46 @@ body.dagkalender-focus-active {
 
 .feedback-modal select option[value="kritiek"] {
     color: var(--macos-red);
+}
+
+/* Feedback Modal button styling */
+.feedback-modal .popup-acties {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.feedback-modal .popup-acties button {
+    padding: 12px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.feedback-modal .popup-acties .actie-btn {
+    background: var(--soft-blue);
+    border: 1px solid var(--soft-blue);
+    color: white;
+}
+
+.feedback-modal .popup-acties .actie-btn:hover {
+    background: var(--soft-blue-hover);
+    border-color: var(--soft-blue-hover);
+}
+
+.feedback-modal .popup-acties button:not(.actie-btn) {
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    color: var(--macos-text-primary);
+}
+
+.feedback-modal .popup-acties button:not(.actie-btn):hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
 }
 
