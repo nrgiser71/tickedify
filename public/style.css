@@ -7358,9 +7358,8 @@ body.dagkalender-focus-active {
 .feedback-modal {
     max-width: 500px;
     width: 90%;
-    /* Ensure modal is properly centered */
-    position: relative;
-    margin: auto;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .feedback-modal h3 {
@@ -7432,10 +7431,11 @@ body.dagkalender-focus-active {
 
 /* Feedback Modal button styling */
 .feedback-modal .popup-acties {
-    display: flex;
+    display: flex !important;
     gap: 12px;
     justify-content: flex-end;
     margin-top: 24px;
+    text-align: left !important;
 }
 
 .feedback-modal .popup-acties button {
