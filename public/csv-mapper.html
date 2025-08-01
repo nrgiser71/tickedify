@@ -311,7 +311,7 @@
             <div class="mapping-container">
                 <div>
                     <h4>📋 CSV Kolommen</h4>
-                    <div class="column-list" id="notionColumns"></div>
+                    <div class="column-list" id="csvColumns"></div>
                 </div>
                 
                 <div>
@@ -373,7 +373,7 @@
             <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
                 <h4>💾 Mapping Opslaan & Laden</h4>
                 <div style="margin: 10px 0;">
-                    <input type="text" id="mappingName" placeholder="Naam voor mapping (bijv. Notion-standaard)" style="width: 200px; margin-right: 10px;">
+                    <input type="text" id="mappingName" placeholder="Naam voor mapping (bijv. Standaard-CSV)" style="width: 200px; margin-right: 10px;">
                     <button onclick="saveMapping()" class="secondary-btn">💾 Opslaan</button>
                     <button onclick="loadMapping()" class="secondary-btn">📂 Laden</button>
                     <button onclick="showSavedMappings()" class="secondary-btn">📋 Lijst</button>
@@ -443,7 +443,7 @@
             
             // Show preview
             showPreview();
-            showNotionColumns();
+            showCsvColumns();
             
             // Activate step 2
             document.getElementById('step1').classList.remove('active');
@@ -514,8 +514,8 @@
             document.getElementById('previewTable').appendChild(table);
         }
         
-        function showNotionColumns() {
-            const container = document.getElementById('notionColumns');
+        function showCsvColumns() {
+            const container = document.getElementById('csvColumns');
             container.innerHTML = '';
             
             headers.forEach((header, index) => {
