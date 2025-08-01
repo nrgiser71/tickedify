@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Notion → Tickedify Mapper</title>
+    <title>CSV → Tickedify Mapper</title>
     <style>
         * {
             margin: 0;
@@ -290,12 +290,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 CSV Notion → Tickedify Mapper</h1>
+        <h1>📊 CSV → Tickedify Mapper</h1>
         
         <!-- Stap 1: CSV Data Invoeren -->
         <div class="step active" id="step1">
-            <div class="step-title">🗂️ Stap 1: Plak je Notion CSV data</div>
-            <textarea id="csvInput" placeholder="Plak hier je volledige CSV export van Notion (inclusief headers)..."></textarea>
+            <div class="step-title">🗂️ Stap 1: Plak je CSV data</div>
+            <textarea id="csvInput" placeholder="Plak hier je volledige CSV data (inclusief kolomkoppen)..."></textarea>
             <button onclick="parseCsv()">Analyseer CSV</button>
         </div>
 
@@ -310,7 +310,7 @@
 
             <div class="mapping-container">
                 <div>
-                    <h4>📋 Notion Kolommen</h4>
+                    <h4>📋 CSV Kolommen</h4>
                     <div class="column-list" id="notionColumns"></div>
                 </div>
                 
@@ -894,7 +894,7 @@
         }
         
         function autoSuggestMapping() {
-            // Auto-suggest mapping based on common Notion column names
+            // Auto-suggest mapping based on common column names
             if (!headers || headers.length === 0) return;
             
             const suggestions = {
@@ -903,7 +903,7 @@
                 'context': ['Context', 'Contexts', 'Contexten'],
                 'deadline': ['Due Date', 'Deadline', 'Due', 'Verschijndatum'],
                 'duur': ['Duration in minutes', 'Duration', 'Duur', 'Time'],
-                'opmerkingen': ['Notes v3', 'Notes', 'Opmerkingen', 'Description', 'Body']
+                'opmerkingen': ['Notes', 'Opmerkingen', 'Description', 'Body', 'Comments']
             };
             
             let autoMapped = 0;
