@@ -2535,6 +2535,122 @@ app.delete('/api/taak/:id', async (req, res) => {
     }
 });
 
+// Subtaken API endpoints
+// Get all subtaken for a parent task
+app.get('/api/subtaken/:parentId', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { parentId } = req.params;
+        console.log(`📋 Getting subtaken for parent task ${parentId}`);
+        
+        const subtaken = await db.getSubtaken(parentId);
+        res.json(subtaken);
+    } catch (error) {
+        console.error(`Error getting subtaken for parent ${parentId}:`, error);
+        res.status(500).json({ error: 'Fout bij ophalen subtaken', details: error.message });
+    }
+});
+
+// Create new subtaak
+app.post('/api/subtaken', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { parentTaakId, titel, volgorde } = req.body;
+        console.log(`➕ Creating subtaak for parent ${parentTaakId}: ${titel}`);
+        
+        if (!parentTaakId || !titel) {
+            return res.status(400).json({ error: 'Parent taak ID en titel zijn verplicht' });
+        }
+        
+        const subtaak = await db.createSubtaak(parentTaakId, titel, volgorde);
+        res.json(subtaak);
+    } catch (error) {
+        console.error('Error creating subtaak:', error);
+        res.status(500).json({ error: 'Fout bij aanmaken subtaak', details: error.message });
+    }
+});
+
+// Update subtaak
+app.put('/api/subtaken/:id', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        console.log(`📝 Updating subtaak ${id}:`, JSON.stringify(req.body, null, 2));
+        
+        const subtaak = await db.updateSubtaak(id, req.body);
+        
+        if (subtaak) {
+            res.json(subtaak);
+        } else {
+            res.status(404).json({ error: 'Subtaak niet gevonden' });
+        }
+    } catch (error) {
+        console.error(`Error updating subtaak ${id}:`, error);
+        res.status(500).json({ error: 'Fout bij updaten subtaak', details: error.message });
+    }
+});
+
+// Delete subtaak
+app.delete('/api/subtaken/:id', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        console.log(`🗑️ Deleting subtaak ${id}`);
+        
+        const success = await db.deleteSubtaak(id);
+        
+        if (success) {
+            res.json({ success: true, deleted: id });
+        } else {
+            res.status(404).json({ error: 'Subtaak niet gevonden' });
+        }
+    } catch (error) {
+        console.error(`Error deleting subtaak ${id}:`, error);
+        res.status(500).json({ error: 'Fout bij verwijderen subtaak', details: error.message });
+    }
+});
+
+// Reorder subtaken for a parent task
+app.post('/api/subtaken/:parentId/reorder', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { parentId } = req.params;
+        const { subtaakIds } = req.body;
+        
+        console.log(`🔄 Reordering subtaken for parent ${parentId}:`, subtaakIds);
+        
+        if (!Array.isArray(subtaakIds)) {
+            return res.status(400).json({ error: 'subtaakIds moet een array zijn' });
+        }
+        
+        const success = await db.reorderSubtaken(parentId, subtaakIds);
+        
+        if (success) {
+            res.json({ success: true });
+        } else {
+            res.status(500).json({ error: 'Fout bij herordenen subtaken' });
+        }
+    } catch (error) {
+        console.error(`Error reordering subtaken for parent ${parentId}:`, error);
+        res.status(500).json({ error: 'Fout bij herordenen subtaken', details: error.message });
+    }
+});
+
 // Debug endpoint to search for any task by ID
 app.get('/api/debug/find-task/:id', async (req, res) => {
     try {

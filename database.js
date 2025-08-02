@@ -175,6 +175,18 @@ const initDatabase = async () => {
       )
     `);
 
+    // Create subtaken table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subtaken (
+        id SERIAL PRIMARY KEY,
+        parent_taak_id VARCHAR(50) NOT NULL REFERENCES taken(id) ON DELETE CASCADE,
+        titel VARCHAR(500) NOT NULL,
+        voltooid BOOLEAN DEFAULT FALSE,
+        volgorde INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add position column to existing tables if it doesn't exist
     try {
       await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
@@ -218,6 +230,8 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id);
       CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(type);
       CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
+      CREATE INDEX IF NOT EXISTS idx_subtaken_parent ON subtaken(parent_taak_id);
+      CREATE INDEX IF NOT EXISTS idx_subtaken_parent_volgorde ON subtaken(parent_taak_id, volgorde);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -1465,6 +1479,123 @@ const db = {
     } catch (error) {
       console.error('Error updating feedback status:', error);
       throw error;
+    }
+  },
+
+  // Subtaken functions
+  async getSubtaken(parentTaakId) {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM subtaken 
+        WHERE parent_taak_id = $1 
+        ORDER BY volgorde ASC, created_at ASC
+      `, [parentTaakId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting subtaken:', error);
+      return [];
+    }
+  },
+
+  async createSubtaak(parentTaakId, titel, volgorde = null) {
+    try {
+      // If no volgorde specified, append to end
+      if (volgorde === null || volgorde === undefined) {
+        const maxResult = await pool.query(`
+          SELECT COALESCE(MAX(volgorde), -1) + 1 as next_volgorde
+          FROM subtaken 
+          WHERE parent_taak_id = $1
+        `, [parentTaakId]);
+        volgorde = maxResult.rows[0].next_volgorde;
+      } else {
+        // Shift existing subtaken
+        await pool.query(`
+          UPDATE subtaken 
+          SET volgorde = volgorde + 1 
+          WHERE parent_taak_id = $1 AND volgorde >= $2
+        `, [parentTaakId, volgorde]);
+      }
+
+      const result = await pool.query(`
+        INSERT INTO subtaken (parent_taak_id, titel, volgorde) 
+        VALUES ($1, $2, $3) 
+        RETURNING *
+      `, [parentTaakId, titel, volgorde]);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating subtaak:', error);
+      throw error;
+    }
+  },
+
+  async updateSubtaak(subtaakId, updates) {
+    try {
+      const fields = [];
+      const values = [];
+      let paramIndex = 1;
+
+      Object.keys(updates).forEach(key => {
+        fields.push(`${key} = $${paramIndex}`);
+        values.push(updates[key]);
+        paramIndex++;
+      });
+
+      values.push(subtaakId);
+      const query = `UPDATE subtaken SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+      
+      const result = await pool.query(query, values);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating subtaak:', error);
+      throw error;
+    }
+  },
+
+  async deleteSubtaak(subtaakId) {
+    try {
+      // Get subtaak info before deletion for cleanup
+      const subtaakResult = await pool.query('SELECT parent_taak_id, volgorde FROM subtaken WHERE id = $1', [subtaakId]);
+      
+      if (subtaakResult.rows.length === 0) {
+        return false;
+      }
+
+      const { parent_taak_id, volgorde } = subtaakResult.rows[0];
+
+      // Delete the subtaak
+      const deleteResult = await pool.query('DELETE FROM subtaken WHERE id = $1', [subtaakId]);
+      
+      // Shift remaining subtaken down
+      await pool.query(`
+        UPDATE subtaken 
+        SET volgorde = volgorde - 1 
+        WHERE parent_taak_id = $1 AND volgorde > $2
+      `, [parent_taak_id, volgorde]);
+
+      return deleteResult.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting subtaak:', error);
+      return false;
+    }
+  },
+
+  async reorderSubtaken(parentTaakId, subtaakIds) {
+    try {
+      // Update volgorde for all subtaken in the new order
+      for (let i = 0; i < subtaakIds.length; i++) {
+        await pool.query(`
+          UPDATE subtaken 
+          SET volgorde = $1 
+          WHERE id = $2 AND parent_taak_id = $3
+        `, [i, subtaakIds[i], parentTaakId]);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error reordering subtaken:', error);
+      return false;
     }
   }
 };
