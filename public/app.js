@@ -11747,8 +11747,11 @@ class SubtakenManager {
     }
 
     renderSubtaakItem(subtaak) {
+        // Use ID if exists, otherwise use titel as identifier for local subtaken
+        const identifier = subtaak.id || subtaak.titel;
+        
         return `
-            <div class="subtaak-item" data-subtaak-id="${subtaak.id}">
+            <div class="subtaak-item" data-subtaak-id="${identifier}">
                 <div class="subtaak-drag-handle">
                     <i class="fas fa-grip-lines"></i>
                 </div>
@@ -11834,14 +11837,42 @@ class SubtakenManager {
         try {
             if (this.editingSubtaak) {
                 // Update existing subtaak
-                await this.updateSubtaak(this.editingSubtaak.id, { titel });
+                if (this.editingSubtaak.id) {
+                    // Existing subtaak in database
+                    await this.updateSubtaak(this.editingSubtaak.id, { titel });
+                } else {
+                    // Local subtaak being edited
+                    this.editingSubtaak.titel = titel;
+                }
             } else {
                 // Create new subtaak
-                await this.createSubtaak(parentTaakId, titel);
+                if (app.huidigeLijst === 'acties') {
+                    // For existing actions: save directly to database
+                    await this.createSubtaak(parentTaakId, titel);
+                } else {
+                    // For inbox tasks: save locally until task becomes action
+                    const newSubtaak = {
+                        id: null, // No ID yet - will be created when task becomes action
+                        titel: titel,
+                        voltooid: false,
+                        volgorde: this.currentSubtaken.length,
+                        parent_taak_id: parentTaakId
+                    };
+                    this.currentSubtaken.push(newSubtaak);
+                    console.log('Added local subtaak for inbox task:', newSubtaak);
+                }
             }
             
             this.hideAddInput();
-            await this.loadSubtaken(parentTaakId);
+            
+            if (app.huidigeLijst === 'acties') {
+                // Reload from database for actions
+                await this.loadSubtaken(parentTaakId);
+            } else {
+                // Re-render local subtaken for inbox tasks
+                this.renderSubtaken();
+            }
+            
             toast.success(this.editingSubtaak ? 'Subtaak bijgewerkt' : 'Subtaak toegevoegd');
         } catch (error) {
             console.error('Error saving subtaak:', error);
@@ -11879,14 +11910,23 @@ class SubtakenManager {
 
     async toggleSubtaakVoltooid(subtaakId, voltooid) {
         try {
-            await this.updateSubtaak(subtaakId, { voltooid });
-            
-            // Update local state
-            const subtaak = this.currentSubtaken.find(s => s.id === subtaakId);
-            if (subtaak) {
-                subtaak.voltooid = voltooid;
+            // Find the subtaak
+            const subtaak = this.currentSubtaken.find(s => s.id === subtaakId || s.id === null && s.titel === subtaakId);
+            if (!subtaak) {
+                console.error('Subtaak not found:', subtaakId);
+                return;
             }
             
+            if (subtaak.id && app.huidigeLijst === 'acties') {
+                // Existing subtaak in database - update via API
+                await this.updateSubtaak(subtaak.id, { voltooid });
+            } else {
+                // Local subtaak - just update locally
+                console.log('Toggling local subtaak:', subtaak.titel, 'to', voltooid);
+            }
+            
+            // Update local state
+            subtaak.voltooid = voltooid;
             this.renderSubtaken();
         } catch (error) {
             console.error('Error toggling subtaak:', error);
@@ -11940,7 +11980,7 @@ class SubtakenManager {
             return;
         }
 
-        console.log(`saveAllSubtaken: Saving ${this.currentSubtaken.length} subtaken for parent ${parentTaakId}`);
+        console.log(`saveAllSubtaken: Saving ${this.currentSubtaken.length} subtaken for parent ${parentTaakId}`, this.currentSubtaken);
 
         try {
             for (const subtaak of this.currentSubtaken) {
