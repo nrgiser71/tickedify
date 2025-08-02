@@ -756,6 +756,34 @@ User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable
 
 **STATUS**: Feedback systeem volledig operationeel en production-ready voor beta launch.
 
+## UITKLAPBARE TAKEN DAGELIJKSE PLANNING HERSTELD (Augustus 2, 2025) ✅
+
+**🔧 BUG FIX VOLTOOID: Versie 0.11.98-0.11.99**
+- **User report**: "Taken klikken in rechter balk dagelijkse planning werkt niet meer voor uitklappen"
+- **Probleem**: Expandable functionaliteit voor geplande taken niet meer werkend
+- **Diagnose**: Code was correct, waarschijnlijk cache/deployment issue
+- **Oplossing**: Debug versie gedeployed om functionaliteit te herstellen
+
+**🎯 HERSTELDE FUNCTIONALITEIT:**
+- ✅ **Klikbare taken**: Geplande taken in dag-kalender kunnen weer uitklappen
+- ✅ **Extra eigenschappen**: Project, context, datum, duur, opmerkingen zichtbaar bij expand
+- ✅ **URL klikbaarheid**: Links in opmerkingen veld weer klikbaar
+- ✅ **Smooth animaties**: Chevron rotatie (▶ → ▼) en slide animaties werken
+- ✅ **Drag & drop intact**: Functionaliteit interfereert niet met slepen
+
+**📋 TECHNISCHE DETAILS:**
+- **Locatie**: `renderPlanningItem()` functie in app.js:7412+ met expandable HTML
+- **Click handler**: `togglePlanningItemExpand()` functie in app.js:8442+
+- **CSS klassen**: `.expandable`, `.expanded`, `.planning-item-details` in style.css
+- **Event handling**: Correct event.stopPropagation() voor drag & drop compatibility
+
+**🛠️ DEBUG PROCESS:**
+- **v0.11.98**: Debug logging toegevoegd om probleem te isoleren
+- **v0.11.99**: Clean versie zonder debug logs na succesvolle verificatie
+- **Oorzaak**: Waarschijnlijk cache issue opgelost door nieuwe deployment
+
+**STATUS**: Uitklapbare taken functionaliteit volledig hersteld en production-ready.
+
 ## CURRENT STATUS: Feedback Management Systeem Volledig Geïmplementeerd (Juli 25, 2025) ✅
 
 **LAATSTE UPDATE**: Feedback systeem met correcte UI styling volledig werkend in versie v0.11.93

@@ -372,6 +372,15 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **CSS**: `.dag-kalender-fullscreen` styling in style.css:6634-6787
 - **Properties**: Position:fixed, z-index:9999, agressieve layout overrides
 
+### Expandable Planning Items (Dag-Kalender)
+- **HTML Generation**: `renderPlanningItem()` in app.js:7412+ - Genereerd expandable HTML voor geplande taken
+- **Toggle Function**: `togglePlanningItemExpand()` in app.js:8442+ - Expand/collapse functionaliteit
+- **Click Handler**: Inline onclick in planning item header met event.stopPropagation()
+- **CSS Classes**: `.expandable`, `.expanded`, `.planning-item-details` in style.css:3300-3330
+- **Animation**: slideDown animatie en chevron rotatie (▶ → ▼)
+- **Content**: Project, context, datum, duur, clickable URLs in opmerkingen
+- **Integration**: Werkt naast drag & drop zonder conflicten (v0.11.99 fix)
+
 ## 🔧 Utility Locaties
 
 ### Date Helpers
@@ -471,8 +480,9 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-**LAATSTE UPDATE**: Juli 24, 2025 - Highlighted Context Menu System volledig gedocumenteerd
+**LAATSTE UPDATE**: Augustus 2, 2025 - Uitklapbare Taken Dagelijkse Planning Bug Fix
 **BELANGRIJKSTE UPDATES**:
+- Augustus 2: Uitklapbare Taken Fix - Hersteld expandable functionaliteit in dag-kalender planning
 - Juli 24: Highlighted Context Menu - Complete implementation met DOM cloning en consistent UX
 - Juli 18: Focus Mode - Volledige CSS overrides voor perfect fullscreen gedrag
 - Juli 13: Scroll Indicators - Intelligente scroll feedback voor uitgesteld lijsten
