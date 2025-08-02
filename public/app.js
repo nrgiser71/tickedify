@@ -5614,6 +5614,41 @@ class Taakbeheer {
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
             
+            // Load subtaken for tasks - same logic as planTaak
+            console.log('DEBUG: bewerkActie - huidigeLijst:', this.huidigeLijst, 'subtakenManager exists:', !!subtakenManager);
+            
+            if (subtakenManager) {
+                if (this.huidigeLijst === 'acties') {
+                    console.log('DEBUG: bewerkActie - Loading existing subtaken for acties lijst');
+                    // Load existing subtaken for tasks from acties lijst
+                    await subtakenManager.loadSubtaken(id);
+                } else {
+                    console.log('DEBUG: bewerkActie - Showing empty subtaken sectie for inbox task');
+                    // Show empty subtaken sectie for new tasks from inbox
+                    subtakenManager.showSubtakenSectie();
+                    subtakenManager.currentSubtaken = [];
+                    subtakenManager.renderSubtaken();
+                }
+            } else {
+                console.log('DEBUG: bewerkActie - Fallback - subtakenManager not available, showing sectie directly');
+                // Fallback: directly show subtaken sectie if manager not ready
+                const subtakenSectie = document.getElementById('subtaken-sectie');
+                console.log('DEBUG: bewerkActie - subtaken-sectie element found:', !!subtakenSectie);
+                if (subtakenSectie) {
+                    subtakenSectie.style.display = 'block';
+                    console.log('DEBUG: bewerkActie - subtaken-sectie set to block');
+                    // Show empty state
+                    const emptyState = document.getElementById('subtaken-empty');
+                    const lijst = document.getElementById('subtaken-lijst');
+                    console.log('DEBUG: bewerkActie - empty state found:', !!emptyState, 'lijst found:', !!lijst);
+                    if (emptyState && lijst) {
+                        emptyState.style.display = 'block';
+                        lijst.innerHTML = '';
+                        console.log('DEBUG: bewerkActie - empty state shown');
+                    }
+                }
+            }
+            
             // Track usage for progressive F-key tips
             this.trackPlanningUsage();
         }
