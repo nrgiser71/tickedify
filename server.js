@@ -4659,6 +4659,85 @@ app.get('/api/debug/all-tasks', async (req, res) => {
     }
 });
 
+app.get('/api/debug/all-subtaken', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = getCurrentUserId(req);
+        
+        // Get all subtaken with their parent task info
+        const result = await pool.query(`
+            SELECT 
+                s.id as subtaak_id,
+                s.parent_taak_id,
+                s.titel as subtaak_titel,
+                s.voltooid,
+                s.volgorde,
+                s.created_at as subtaak_created,
+                t.tekst as parent_taak_tekst,
+                t.lijst as parent_lijst,
+                t.aangemaakt as parent_created,
+                t.user_id
+            FROM subtaken s
+            LEFT JOIN taken t ON s.parent_taak_id = t.id
+            WHERE t.user_id = $1 OR t.user_id IS NULL
+            ORDER BY s.created_at DESC
+        `, [userId]);
+        
+        res.json({
+            success: true,
+            totalSubtaken: result.rows.length,
+            subtaken: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching all subtaken:', error);
+        res.status(500).json({ error: 'Database query failed', details: error.message });
+    }
+});
+
+app.get('/api/debug/search-subtaken/:searchTerm', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { searchTerm } = req.params;
+        const userId = getCurrentUserId(req);
+        
+        // Search for subtaken by title
+        const result = await pool.query(`
+            SELECT 
+                s.id as subtaak_id,
+                s.parent_taak_id,
+                s.titel as subtaak_titel,
+                s.voltooid,
+                s.volgorde,
+                s.created_at as subtaak_created,
+                t.tekst as parent_taak_tekst,
+                t.lijst as parent_lijst,
+                t.aangemaakt as parent_created,
+                t.user_id
+            FROM subtaken s
+            LEFT JOIN taken t ON s.parent_taak_id = t.id
+            WHERE (t.user_id = $1 OR t.user_id IS NULL)
+              AND s.titel ILIKE $2
+            ORDER BY s.created_at DESC
+        `, [userId, `%${searchTerm}%`]);
+        
+        res.json({
+            success: true,
+            searchTerm: searchTerm,
+            totalFound: result.rows.length,
+            subtaken: result.rows
+        });
+    } catch (error) {
+        console.error('Error searching subtaken:', error);
+        res.status(500).json({ error: 'Database query failed', details: error.message });
+    }
+});
+
 // Debug endpoint to force refresh user data (clear any server-side caching)
 app.get('/api/debug/force-refresh/:userId', async (req, res) => {
     try {
