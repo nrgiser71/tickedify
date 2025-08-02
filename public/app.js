@@ -4198,7 +4198,7 @@ class Taakbeheer {
                     console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
                     
                     // Save subtaken if any were created
-                    if (subtakenManager && subtakenManager.currentSubtaken.length > 0) {
+                    if (subtakenManager) {
                         await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
                     }
                     
@@ -11925,6 +11925,43 @@ class SubtakenManager {
         } catch (error) {
             console.error('Error deleting subtaak:', error);
             toast.error('Fout bij verwijderen subtaak');
+        }
+    }
+
+    async saveAllSubtaken(parentTaakId) {
+        // Save all subtaken in currentSubtaken array to database
+        if (!parentTaakId) {
+            console.error('saveAllSubtaken: No parentTaakId provided');
+            return;
+        }
+
+        if (!this.currentSubtaken || this.currentSubtaken.length === 0) {
+            console.log('saveAllSubtaken: No subtaken to save');
+            return;
+        }
+
+        console.log(`saveAllSubtaken: Saving ${this.currentSubtaken.length} subtaken for parent ${parentTaakId}`);
+
+        try {
+            for (const subtaak of this.currentSubtaken) {
+                if (!subtaak.id) {
+                    // New subtaak - create it
+                    console.log('Creating new subtaak:', subtaak.titel);
+                    await this.createSubtaak(parentTaakId, subtaak.titel);
+                } else {
+                    // Existing subtaak - update it if needed
+                    console.log('Updating existing subtaak:', subtaak.titel);
+                    await this.updateSubtaak(subtaak.id, {
+                        titel: subtaak.titel,
+                        voltooid: subtaak.voltooid || false,
+                        volgorde: subtaak.volgorde || 0
+                    });
+                }
+            }
+            console.log('saveAllSubtaken: All subtaken saved successfully');
+        } catch (error) {
+            console.error('saveAllSubtaken: Error saving subtaken:', error);
+            throw error;
         }
     }
 
