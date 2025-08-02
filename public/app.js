@@ -3539,27 +3539,36 @@ class Taakbeheer {
             document.getElementById('taakNaamInput').focus();
             
             // Load subtaken for tasks
+            console.log('DEBUG: planTaak - huidigeLijst:', this.huidigeLijst, 'subtakenManager exists:', !!subtakenManager);
+            
             if (subtakenManager) {
                 if (this.huidigeLijst === 'acties') {
+                    console.log('DEBUG: Loading existing subtaken for acties lijst');
                     // Load existing subtaken for tasks from acties lijst
                     await subtakenManager.loadSubtaken(id);
                 } else {
+                    console.log('DEBUG: Showing empty subtaken sectie for inbox task');
                     // Show empty subtaken sectie for new tasks from inbox
                     subtakenManager.showSubtakenSectie();
                     subtakenManager.currentSubtaken = [];
                     subtakenManager.renderSubtaken();
                 }
             } else {
+                console.log('DEBUG: Fallback - subtakenManager not available, showing sectie directly');
                 // Fallback: directly show subtaken sectie if manager not ready
                 const subtakenSectie = document.getElementById('subtaken-sectie');
+                console.log('DEBUG: subtaken-sectie element found:', !!subtakenSectie);
                 if (subtakenSectie) {
                     subtakenSectie.style.display = 'block';
+                    console.log('DEBUG: subtaken-sectie set to block');
                     // Show empty state
                     const emptyState = document.getElementById('subtaken-empty');
                     const lijst = document.getElementById('subtaken-lijst');
+                    console.log('DEBUG: empty state found:', !!emptyState, 'lijst found:', !!lijst);
                     if (emptyState && lijst) {
                         emptyState.style.display = 'block';
                         lijst.innerHTML = '';
+                        console.log('DEBUG: empty state shown');
                     }
                 }
             }
@@ -11609,9 +11618,11 @@ async function deleteAllTasks() {
 
 class SubtakenManager {
     constructor() {
-        this.initializeEventListeners();
+        console.log('DEBUG: SubtakenManager constructor called');
         this.currentSubtaken = [];
         this.editingSubtaak = null;
+        this.initializeEventListeners();
+        console.log('DEBUG: SubtakenManager constructor completed');
     }
 
     initializeEventListeners() {
@@ -11892,7 +11903,13 @@ class SubtakenManager {
 // Initialize subtaken manager
 let subtakenManager;
 document.addEventListener('DOMContentLoaded', () => {
-    subtakenManager = new SubtakenManager();
+    console.log('DEBUG: Initializing SubtakenManager...');
+    try {
+        subtakenManager = new SubtakenManager();
+        console.log('DEBUG: SubtakenManager initialized successfully');
+    } catch (error) {
+        console.error('DEBUG: Error initializing SubtakenManager:', error);
+    }
 });
 
 
