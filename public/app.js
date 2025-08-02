@@ -3537,6 +3537,13 @@ class Taakbeheer {
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
             
+            // Load subtaken for existing task (only if not from inbox)
+            if (this.huidigeLijst === 'acties' && subtakenManager) {
+                await subtakenManager.loadSubtaken(id);
+            } else if (subtakenManager) {
+                subtakenManager.hideSubtakenSectie();
+            }
+            
             // Track usage for progressive F-key tips
             this.trackPlanningUsage();
         }
@@ -11445,5 +11452,286 @@ async function deleteAllTasks() {
 }
 
 // Delete all button is now hardcoded in renderActiesTable - no need for complex visibility management
+
+// ============================
+// SUBTAKEN MANAGEMENT
+// ============================
+
+class SubtakenManager {
+    constructor() {
+        this.initializeEventListeners();
+        this.currentSubtaken = [];
+        this.editingSubtaak = null;
+    }
+
+    initializeEventListeners() {
+        // Add button
+        document.getElementById('subtaak-add-btn').addEventListener('click', () => {
+            this.showAddInput();
+        });
+
+        // Save button
+        document.getElementById('subtaak-save-btn').addEventListener('click', () => {
+            this.saveSubtaak();
+        });
+
+        // Cancel button
+        document.getElementById('subtaak-cancel-btn').addEventListener('click', () => {
+            this.hideAddInput();
+        });
+
+        // Input field enter/escape
+        const input = document.getElementById('subtaak-input');
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.saveSubtaak();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                this.hideAddInput();
+            }
+        });
+    }
+
+    async loadSubtaken(parentTaakId) {
+        if (!parentTaakId) {
+            this.hideSubtakenSectie();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/subtaken/${parentTaakId}`);
+            if (response.ok) {
+                this.currentSubtaken = await response.json();
+                this.showSubtakenSectie();
+                this.renderSubtaken();
+            } else {
+                console.error('Error loading subtaken:', response.statusText);
+                this.hideSubtakenSectie();
+            }
+        } catch (error) {
+            console.error('Error loading subtaken:', error);
+            this.hideSubtakenSectie();
+        }
+    }
+
+    showSubtakenSectie() {
+        document.getElementById('subtaken-sectie').style.display = 'block';
+    }
+
+    hideSubtakenSectie() {
+        document.getElementById('subtaken-sectie').style.display = 'none';
+    }
+
+    renderSubtaken() {
+        const container = document.getElementById('subtaken-lijst');
+        const emptyState = document.getElementById('subtaken-empty');
+        
+        if (this.currentSubtaken.length === 0) {
+            container.innerHTML = '';
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+            container.innerHTML = this.currentSubtaken.map(subtaak => this.renderSubtaakItem(subtaak)).join('');
+        }
+
+        this.updateProgressIndicator();
+        this.attachSubtaakEventListeners();
+    }
+
+    renderSubtaakItem(subtaak) {
+        return `
+            <div class="subtaak-item" data-subtaak-id="${subtaak.id}">
+                <div class="subtaak-drag-handle">
+                    <i class="fas fa-grip-lines"></i>
+                </div>
+                <input type="checkbox" class="subtaak-checkbox" ${subtaak.voltooid ? 'checked' : ''}>
+                <div class="subtaak-text ${subtaak.voltooid ? 'completed' : ''}">${this.escapeHtml(subtaak.titel)}</div>
+                <div class="subtaak-actions">
+                    <button class="subtaak-edit-btn" title="Bewerken">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="subtaak-delete-btn" title="Verwijderen">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    attachSubtaakEventListeners() {
+        // Checkbox changes
+        document.querySelectorAll('.subtaak-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const subtaakId = parseInt(e.target.closest('.subtaak-item').dataset.subtaakId);
+                this.toggleSubtaakVoltooid(subtaakId, e.target.checked);
+            });
+        });
+
+        // Edit buttons
+        document.querySelectorAll('.subtaak-edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const subtaakId = parseInt(e.target.closest('.subtaak-item').dataset.subtaakId);
+                this.editSubtaak(subtaakId);
+            });
+        });
+
+        // Delete buttons
+        document.querySelectorAll('.subtaak-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const subtaakId = parseInt(e.target.closest('.subtaak-item').dataset.subtaakId);
+                this.deleteSubtaak(subtaakId);
+            });
+        });
+    }
+
+    updateProgressIndicator() {
+        const progressElement = document.getElementById('subtaken-progress');
+        
+        if (this.currentSubtaken.length === 0) {
+            progressElement.style.display = 'none';
+        } else {
+            const completed = this.currentSubtaken.filter(s => s.voltooid).length;
+            const total = this.currentSubtaken.length;
+            progressElement.textContent = `(${completed}/${total} voltooid)`;
+            progressElement.style.display = 'inline';
+        }
+    }
+
+    showAddInput() {
+        document.getElementById('subtaak-input-container').style.display = 'flex';
+        document.getElementById('subtaak-input').focus();
+    }
+
+    hideAddInput() {
+        document.getElementById('subtaak-input-container').style.display = 'none';
+        document.getElementById('subtaak-input').value = '';
+        this.editingSubtaak = null;
+    }
+
+    async saveSubtaak() {
+        const input = document.getElementById('subtaak-input');
+        const titel = input.value.trim();
+        
+        if (!titel) {
+            toast.warning('Voer een titel in voor de subtaak');
+            return;
+        }
+
+        const parentTaakId = app.huidigeTaakId;
+        if (!parentTaakId) {
+            toast.error('Geen hoofdtaak geselecteerd');
+            return;
+        }
+
+        try {
+            if (this.editingSubtaak) {
+                // Update existing subtaak
+                await this.updateSubtaak(this.editingSubtaak.id, { titel });
+            } else {
+                // Create new subtaak
+                await this.createSubtaak(parentTaakId, titel);
+            }
+            
+            this.hideAddInput();
+            await this.loadSubtaken(parentTaakId);
+            toast.success(this.editingSubtaak ? 'Subtaak bijgewerkt' : 'Subtaak toegevoegd');
+        } catch (error) {
+            console.error('Error saving subtaak:', error);
+            toast.error('Fout bij opslaan subtaak');
+        }
+    }
+
+    async createSubtaak(parentTaakId, titel) {
+        const response = await fetch('/api/subtaken', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parentTaakId, titel })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create subtaak');
+        }
+
+        return await response.json();
+    }
+
+    async updateSubtaak(subtaakId, updates) {
+        const response = await fetch(`/api/subtaken/${subtaakId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update subtaak');
+        }
+
+        return await response.json();
+    }
+
+    async toggleSubtaakVoltooid(subtaakId, voltooid) {
+        try {
+            await this.updateSubtaak(subtaakId, { voltooid });
+            
+            // Update local state
+            const subtaak = this.currentSubtaken.find(s => s.id === subtaakId);
+            if (subtaak) {
+                subtaak.voltooid = voltooid;
+            }
+            
+            this.renderSubtaken();
+        } catch (error) {
+            console.error('Error toggling subtaak:', error);
+            toast.error('Fout bij wijzigen subtaak status');
+        }
+    }
+
+    editSubtaak(subtaakId) {
+        const subtaak = this.currentSubtaken.find(s => s.id === subtaakId);
+        if (!subtaak) return;
+
+        this.editingSubtaak = subtaak;
+        document.getElementById('subtaak-input').value = subtaak.titel;
+        this.showAddInput();
+    }
+
+    async deleteSubtaak(subtaakId) {
+        const subtaak = this.currentSubtaken.find(s => s.id === subtaakId);
+        if (!subtaak) return;
+
+        if (!confirm(`Subtaak "${subtaak.titel}" verwijderen?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/subtaken/${subtaakId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete subtaak');
+            }
+
+            await this.loadSubtaken(app.huidigeTaakId);
+            toast.success('Subtaak verwijderd');
+        } catch (error) {
+            console.error('Error deleting subtaak:', error);
+            toast.error('Fout bij verwijderen subtaak');
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
+// Initialize subtaken manager
+let subtakenManager;
+document.addEventListener('DOMContentLoaded', () => {
+    subtakenManager = new SubtakenManager();
+});
 
 

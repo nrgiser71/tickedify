@@ -374,6 +374,39 @@
                         <textarea id="opmerkingen" rows="3" placeholder="Aanvullende informatie, notities of details..."></textarea>
                     </div>
                     
+                    <div class="form-groep" id="subtaken-sectie" style="display: none;">
+                        <div class="subtaken-header">
+                            <label>Subtaken:</label>
+                            <span class="subtaken-progress" id="subtaken-progress" style="display: none;"></span>
+                            <button type="button" class="subtaak-add-btn" id="subtaak-add-btn" title="Nieuwe subtaak toevoegen">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="subtaken-container" id="subtaken-container">
+                            <div class="subtaken-empty" id="subtaken-empty">
+                                <i class="fas fa-tasks"></i>
+                                <span>Geen subtaken - klik + om toe te voegen</span>
+                            </div>
+                            
+                            <div class="subtaken-lijst" id="subtaken-lijst">
+                                <!-- Subtaken worden hier via JavaScript toegevoegd -->
+                            </div>
+                            
+                            <div class="subtaak-input-container" id="subtaak-input-container" style="display: none;">
+                                <input type="text" id="subtaak-input" placeholder="Nieuwe subtaak..." maxlength="500">
+                                <div class="subtaak-input-acties">
+                                    <button type="button" class="subtaak-save-btn" id="subtaak-save-btn" title="Opslaan">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Annuleren">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="form-groep">
                         <label>Herhaling:</label>
                         <div class="herhaling-selectie">

@@ -2206,6 +2206,262 @@ button:focus {
     box-shadow: none !important;
 }
 
+/* Subtaken Styling */
+.subtaken-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.subtaken-header label {
+    margin: 0 !important;
+    flex: 1;
+}
+
+.subtaken-progress {
+    font-size: 12px;
+    color: var(--macos-text-secondary);
+    background: var(--macos-gray-6);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.subtaak-add-btn {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    background: var(--macos-blue) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    transition: all 0.2s ease !important;
+}
+
+.subtaak-add-btn:hover {
+    background: var(--macos-blue-dark) !important;
+    transform: scale(1.05) !important;
+}
+
+.subtaken-container {
+    min-height: 50px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: 8px;
+    background: var(--macos-gray-6);
+    padding: 8px;
+}
+
+.subtaken-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--macos-text-secondary);
+    font-size: 13px;
+    padding: 20px 10px;
+    text-align: center;
+}
+
+.subtaken-empty i {
+    font-size: 18px;
+    margin-bottom: 8px;
+    opacity: 0.6;
+}
+
+.subtaken-lijst {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.subtaak-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid var(--macos-gray-3);
+    border-radius: 6px;
+    padding: 8px;
+    transition: all 0.2s ease;
+    cursor: grab;
+}
+
+.subtaak-item:hover {
+    border-color: var(--macos-blue);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.subtaak-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.subtaak-drag-handle {
+    color: var(--macos-text-tertiary);
+    cursor: grab;
+    padding: 2px;
+    font-size: 12px;
+}
+
+.subtaak-drag-handle:hover {
+    color: var(--macos-text-secondary);
+}
+
+.subtaak-checkbox {
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    accent-color: var(--macos-blue) !important;
+}
+
+.subtaak-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--macos-text-primary);
+    word-wrap: break-word;
+}
+
+.subtaak-text.completed {
+    text-decoration: line-through;
+    color: var(--macos-text-secondary);
+    opacity: 0.7;
+}
+
+.subtaak-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.subtaak-item:hover .subtaak-actions {
+    opacity: 1;
+}
+
+.subtaak-edit-btn,
+.subtaak-delete-btn {
+    width: 20px !important;
+    height: 20px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 10px !important;
+    transition: all 0.2s ease !important;
+}
+
+.subtaak-edit-btn {
+    background: var(--macos-gray-5) !important;
+    color: var(--macos-text-secondary) !important;
+}
+
+.subtaak-edit-btn:hover {
+    background: var(--macos-blue) !important;
+    color: white !important;
+}
+
+.subtaak-delete-btn {
+    background: var(--macos-gray-5) !important;
+    color: var(--macos-text-secondary) !important;
+}
+
+.subtaak-delete-btn:hover {
+    background: #ff3b30 !important;
+    color: white !important;
+}
+
+.subtaak-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 2px solid var(--macos-blue);
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 6px;
+}
+
+.subtaak-input-container input {
+    flex: 1 !important;
+    border: none !important;
+    outline: none !important;
+    font-size: 13px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+}
+
+.subtaak-input-acties {
+    display: flex;
+    gap: 4px;
+}
+
+.subtaak-save-btn,
+.subtaak-cancel-btn {
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    transition: all 0.2s ease !important;
+}
+
+.subtaak-save-btn {
+    background: var(--macos-green) !important;
+    color: white !important;
+}
+
+.subtaak-save-btn:hover {
+    background: #28a745 !important;
+}
+
+.subtaak-cancel-btn {
+    background: var(--macos-gray-5) !important;
+    color: var(--macos-text-secondary) !important;
+}
+
+.subtaak-cancel-btn:hover {
+    background: #ff3b30 !important;
+    color: white !important;
+}
+
+/* Scrollbar styling voor subtaken lijst */
+.subtaken-lijst::-webkit-scrollbar {
+    width: 6px;
+}
+
+.subtaken-lijst::-webkit-scrollbar-track {
+    background: var(--macos-gray-6);
+    border-radius: 3px;
+}
+
+.subtaken-lijst::-webkit-scrollbar-thumb {
+    background: var(--macos-gray-4);
+    border-radius: 3px;
+}
+
+.subtaken-lijst::-webkit-scrollbar-thumb:hover {
+    background: var(--macos-gray-3);
+}
+
 .herhaling-categorieën {
     display: grid;
     grid-template-columns: 1fr 1fr;
