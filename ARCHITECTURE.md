@@ -34,6 +34,14 @@ naam VARCHAR(255) NOT NULL
 id SERIAL PRIMARY KEY
 naam VARCHAR(255) NOT NULL
 
+-- subtaken (Hierarchische taak structuur)
+id SERIAL PRIMARY KEY
+parent_taak_id VARCHAR(50) NOT NULL REFERENCES taken(id) ON DELETE CASCADE
+titel VARCHAR(500) NOT NULL
+voltooid BOOLEAN DEFAULT FALSE
+volgorde INTEGER DEFAULT 0
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
 -- users
 id SERIAL PRIMARY KEY
 username VARCHAR(255) UNIQUE NOT NULL
@@ -223,6 +231,13 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `POST /api/taak/recurring` - Maak herhalende taak
 - `PUT /api/taak/:id/prioriteit` - Set top prioriteit
 
+### Subtaken (Hierarchische Structuur)
+- `GET /api/subtaken/:parentId` - Haal alle subtaken van parent taak op
+- `POST /api/subtaken` - Nieuwe subtaak aanmaken
+- `PUT /api/subtaken/:id` - Update subtaak (titel, voltooid, volgorde)
+- `DELETE /api/subtaken/:id` - Verwijder subtaak
+- `POST /api/subtaken/:parentId/reorder` - Herorden subtaken binnen parent
+
 ### Planning
 - `GET /api/dagelijkse-planning/:datum` - Planning voor datum
 - `POST /api/dagelijkse-planning` - Voeg toe aan planning
@@ -247,6 +262,15 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Drag & Drop**: `handlePriorityDrop()` in app.js:6200
 - **Database**: `top_prioriteit` kolom in taken tabel
 - **API**: `/api/taak/:id/prioriteit` in server.js:2700
+
+### Subtaken Systeem (Hierarchische Taken)
+- **SubtakenManager Class**: Volledige CRUD management in app.js:~1000
+- **Planning Popup UI**: Subtaken sectie in `planTaak()` en `bewerkActie()` functies
+- **Dagelijkse Planning**: `renderPlanningSubtaken()` in app.js:7625
+- **Local Storage**: Intelligent systeem voor inbox taken in SubtakenManager
+- **Cache Management**: `subtakenCache` Map voor performance
+- **Database Functions**: Complete CRUD in database.js:~500
+- **API Endpoints**: 5 endpoints voor subtaken management in server.js:~1800
 
 ### Bulk Acties
 - **Toggle**: `toggleBulkMode()` in app.js:6600

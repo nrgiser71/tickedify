@@ -44,6 +44,61 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## SUBTAKEN SYSTEEM VOLLEDIG GEÏMPLEMENTEERD (Augustus 2, 2025) ✨🎯
+
+**🚀 MAJOR FEATURE VOLTOOID: Versie 0.11.110-0.11.112**
+- **User request**: "Website aanpassingen van een klant" workflow waarbij meerdere gerelateerde taken onder één hoofdtaak vallen
+- **Probleem**: Elke kleine aanpassing zou aparte taak worden, wat onoverzichtelijk is
+- **Oplossing**: Volledig subtaken systeem met hiërarchische taakstructuur
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Database schema**: Aparte `subtaken` tabel met foreign key constraints naar parent taken
+- **API endpoints**: Volledige CRUD operaties voor subtaken management
+- **UI integratie**: Subtaken sectie in planning popup met real-time updates
+- **Local storage**: Intelligent systeem voor inbox taken die nog geen database ID hebben
+- **Calendar view**: Subtaken zichtbaar in uitklapbare taken in dagelijkse planning
+
+**🎯 UX/UI ACHIEVEMENTS:**
+- **Planning popup**: Subtaken sectie tussen opmerkingen en herhaling velden
+- **Progress indicator**: Real-time voortgang weergave (bijv. "3/5 voltooid - 60%")
+- **Drag & drop compatible**: Event.stopPropagation() voorkomt conflicten
+- **macOS consistent styling**: Subtiele blauwe theming met hover states
+- **Keyboard shortcuts**: Tab navigatie en Enter voor nieuwe subtaken
+
+**🔧 COMPLEXE TECHNISCHE OPLOSSINGEN:**
+- **Foreign key constraints**: CASCADE DELETE voor data integriteit
+- **Inbox workflow**: Lokale opslag tot conversie naar acties, dan database sync
+- **Cache management**: Subtaken cache voor performance in planning views
+- **Event delegation**: Click handlers voor dynamisch gegenereerde subtaken
+- **Error handling**: Graceful fallbacks en comprehensive logging
+
+**💡 WORKFLOW VERBETERING:**
+- **Voor**: "Website aanpassingen Klant X" → 5 aparte taken maken
+- **Na**: 1 hoofdtaak "Website aanpassingen Klant X" + 5 subtaken
+- **Voordeel**: Overzichtelijk, logisch gegroepeerd, progress tracking per project
+
+**🎨 FEATURES IN DAGELIJKSE PLANNING:**
+- **Uitklapbare taken**: Subtaken zichtbaar bij uitklappen geplande taken
+- **Klikbare checkboxes**: Direct subtaken afvinken in planning view
+- **Progress weergave**: "2/4 (50%)" indicator in planning items
+- **Real-time sync**: Wijzigingen direct naar database en UI updates
+
+**📂 GEWIJZIGDE BESTANDEN:**
+- `database.js`: Subtaken tabel schema + CRUD functies
+- `server.js`: 5 nieuwe API endpoints voor subtaken management
+- `app.js`: SubtakenManager class + planning integratie
+- `index.html`: Subtaken sectie in planning popup
+- `style.css`: Comprehensive styling voor subtaken UI
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkend subtaken systeem** voor taak hiërarchie
+- **Inbox → acties workflow** volledig compatibel met subtaken
+- **Dagelijkse planning integratie** met uitklapbare subtaken weergave
+- **Production-ready** met error handling en comprehensive testing
+- **User-friendly interface** met intuïtieve controls en feedback
+
+**STATUS**: Subtaken systeem 100% voltooid en geoptimaliseerd voor productie gebruik.
+
 ## ARCHITECTUUR DOCUMENTATIE VERPLICHT GEBRUIK 📋
 
 **KRITIEK BELANGRIJK**: Er is nu een ARCHITECTURE.md bestand dat de volledige codebase structuur documenteert.
