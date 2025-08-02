@@ -2490,8 +2490,23 @@ class Taakbeheer {
                     const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
                     if (response.ok) {
                         let taken = await response.json();
+                        console.log(`🔍 DEBUG laadHuidigeLijst: Ontvangen ${taken.length} taken van API voor lijst "${this.huidigeLijst}"`);
+                        const teamBuildingInAPI = taken.find(t => t.tekst && t.tekst.toLowerCase().includes('team building'));
+                        console.log('🔍 DEBUG laadHuidigeLijst: Team building in API data:', teamBuildingInAPI ? teamBuildingInAPI.id : 'NIET GEVONDEN');
+                        
                         // Apply date filter only for actions list
                         this.taken = this.filterTakenOpDatum(taken);
+                        console.log(`🔍 DEBUG laadHuidigeLijst: Na filter: ${this.taken.length} taken behouden`);
+                        const teamBuildingNaFilter = this.taken.find(t => t.tekst && t.tekst.toLowerCase().includes('team building'));
+                        console.log('🔍 DEBUG laadHuidigeLijst: Team building na filter:', teamBuildingNaFilter ? teamBuildingNaFilter.id : 'WEGGEFILTER!');
+                        
+                        if (teamBuildingInAPI && !teamBuildingNaFilter) {
+                            console.log('🔍 DEBUG: Team building taak is weggefilter! Mogelijke oorzaken:');
+                            console.log('   - Verschijndatum:', teamBuildingInAPI.verschijndatum);
+                            console.log('   - Datum status:', this.getTaakDatumStatus(teamBuildingInAPI.verschijndatum));
+                            console.log('   - Toon toekomstige taken:', this.toonToekomstigeTaken);
+                            console.log('💡 TIP: Vink "Toon toekomstige taken" aan om taken van morgen en later te zien!');
+                        }
                     } else {
                         this.taken = [];
                     }
@@ -2869,6 +2884,13 @@ class Taakbeheer {
         if (!lijst) return;
 
         lijst.innerHTML = '';
+
+        console.log('🔍 DEBUG renderActiesLijst: Total taken in this.taken:', this.taken.length);
+        const teamBuildingTaak = this.taken.find(t => t.tekst && t.tekst.toLowerCase().includes('team building'));
+        console.log('🔍 DEBUG renderActiesLijst: Team building taak gevonden:', teamBuildingTaak ? teamBuildingTaak.id : 'NIET GEVONDEN');
+        if (teamBuildingTaak) {
+            console.log('🔍 DEBUG renderActiesLijst: Team building taak details:', teamBuildingTaak);
+        }
 
         // Sort actions by date (ascending) - tasks without date go to bottom
         const sortedTaken = [...this.taken].sort((a, b) => {
@@ -11701,17 +11723,25 @@ class SubtakenManager {
     }
 
     async loadSubtaken(parentTaakId) {
+        console.log('DEBUG loadSubtaken: called with parentTaakId:', parentTaakId);
+        
         if (!parentTaakId) {
+            console.log('DEBUG loadSubtaken: no parentTaakId, hiding sectie');
             this.hideSubtakenSectie();
             return;
         }
 
         try {
+            console.log('DEBUG loadSubtaken: fetching from API...');
             const response = await fetch(`/api/subtaken/${parentTaakId}`);
+            console.log('DEBUG loadSubtaken: API response status:', response.status);
+            
             if (response.ok) {
                 this.currentSubtaken = await response.json();
+                console.log('DEBUG loadSubtaken: loaded subtaken:', this.currentSubtaken);
                 this.showSubtakenSectie();
                 this.renderSubtaken();
+                console.log('DEBUG loadSubtaken: rendered subtaken, sectie should be visible');
             } else {
                 console.error('Error loading subtaken:', response.statusText);
                 this.hideSubtakenSectie();
