@@ -3549,6 +3549,19 @@ class Taakbeheer {
                     subtakenManager.currentSubtaken = [];
                     subtakenManager.renderSubtaken();
                 }
+            } else {
+                // Fallback: directly show subtaken sectie if manager not ready
+                const subtakenSectie = document.getElementById('subtaken-sectie');
+                if (subtakenSectie) {
+                    subtakenSectie.style.display = 'block';
+                    // Show empty state
+                    const emptyState = document.getElementById('subtaken-empty');
+                    const lijst = document.getElementById('subtaken-lijst');
+                    if (emptyState && lijst) {
+                        emptyState.style.display = 'block';
+                        lijst.innerHTML = '';
+                    }
+                }
             }
             
             // Track usage for progressive F-key tips
@@ -11602,32 +11615,43 @@ class SubtakenManager {
     }
 
     initializeEventListeners() {
-        // Add button
-        document.getElementById('subtaak-add-btn').addEventListener('click', () => {
-            this.showAddInput();
-        });
+        // Add button - safe initialization
+        const addBtn = document.getElementById('subtaak-add-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this.showAddInput();
+            });
+        }
 
         // Save button
-        document.getElementById('subtaak-save-btn').addEventListener('click', () => {
-            this.saveSubtaak();
-        });
+        const saveBtn = document.getElementById('subtaak-save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveSubtaak();
+            });
+        }
 
         // Cancel button
-        document.getElementById('subtaak-cancel-btn').addEventListener('click', () => {
-            this.hideAddInput();
-        });
+        const cancelBtn = document.getElementById('subtaak-cancel-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.hideAddInput();
+            });
+        }
 
         // Input field enter/escape
         const input = document.getElementById('subtaak-input');
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.saveSubtaak();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                this.hideAddInput();
-            }
-        });
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.saveSubtaak();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.hideAddInput();
+                }
+            });
+        }
     }
 
     async loadSubtaken(parentTaakId) {
