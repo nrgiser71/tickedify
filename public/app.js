@@ -3538,11 +3538,17 @@ class Taakbeheer {
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
             
-            // Load subtaken for existing task (only if not from inbox)
-            if (this.huidigeLijst === 'acties' && subtakenManager) {
-                await subtakenManager.loadSubtaken(id);
-            } else if (subtakenManager) {
-                subtakenManager.hideSubtakenSectie();
+            // Load subtaken for tasks
+            if (subtakenManager) {
+                if (this.huidigeLijst === 'acties') {
+                    // Load existing subtaken for tasks from acties lijst
+                    await subtakenManager.loadSubtaken(id);
+                } else {
+                    // Show empty subtaken sectie for new tasks from inbox
+                    subtakenManager.showSubtakenSectie();
+                    subtakenManager.currentSubtaken = [];
+                    subtakenManager.renderSubtaken();
+                }
             }
             
             // Track usage for progressive F-key tips
@@ -4128,6 +4134,11 @@ class Taakbeheer {
                     });
                     
                     if (response.ok) {
+                        // Save subtaken changes if any
+                        if (subtakenManager) {
+                            await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                        }
+                        
                         // Refresh list from server to ensure consistency
                         await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                         this.sluitPopup();
@@ -4163,6 +4174,12 @@ class Taakbeheer {
                 
                 if (response.ok) {
                     console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
+                    
+                    // Save subtaken if any were created
+                    if (subtakenManager && subtakenManager.currentSubtaken.length > 0) {
+                        await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                    }
+                    
                     // Only remove from inbox AFTER successful save
                     this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
                     // await this.laadTellingen(); // Disabled - tellers removed from sidebar
