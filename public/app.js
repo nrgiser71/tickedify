@@ -542,6 +542,7 @@ class Taakbeheer {
         this.isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         this.touchedFields = new Set(); // Bijhouden welke velden al geïnteracteerd zijn
         this.sortDirection = {}; // Bijhouden van sorteer richting per kolom
+        this.subtakenCache = new Map(); // Cache voor subtaken per parent task
         this.toonToekomstigeTaken = this.restoreToekomstToggle(); // Toggle voor toekomstige taken
         this.autoRefreshInterval = null; // Voor inbox auto-refresh
         // Feature flag voor highlighted context menu
@@ -7145,6 +7146,15 @@ class Taakbeheer {
         const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
         const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
         
+        // Load subtaken for all planned tasks
+        const plannedTaskIds = planning
+            .filter(p => p.type === 'taak' && p.actieId)
+            .map(p => p.actieId);
+        
+        if (plannedTaskIds.length > 0) {
+            await this.loadSubtakenForPlanning(plannedTaskIds);
+        }
+        
         // Get saved time range preference
         const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
         const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
@@ -7479,6 +7489,12 @@ class Taakbeheer {
                 detailsHtml += `<div class="planning-opmerkingen">${this.linkifyUrls(taskDetails.opmerkingen)}</div>`;
             }
             
+            // Line 3: Add subtaken if present
+            const subtakenHtml = this.renderPlanningSubtaken(planningItem.actieId);
+            if (subtakenHtml) {
+                detailsHtml += subtakenHtml;
+            }
+            
             detailsHtml += '</div>';
         }
         
@@ -7508,6 +7524,110 @@ class Taakbeheer {
                 ${detailsHtml}
             </div>
         `;
+    }
+
+    renderPlanningSubtaken(parentTaskId) {
+        // Get subtaken from cache or load them
+        const subtaken = this.subtakenCache?.get(parentTaskId) || [];
+        
+        if (subtaken.length === 0) {
+            return null;
+        }
+        
+        // Calculate progress
+        const voltooid = subtaken.filter(s => s.voltooid).length;
+        const totaal = subtaken.length;
+        const progressPercentage = Math.round((voltooid / totaal) * 100);
+        
+        // Create subtaken list
+        let subtakenHtml = '<div class="planning-subtaken">';
+        subtakenHtml += `<div class="planning-subtaken-header">`;
+        subtakenHtml += `<span class="subtaken-label">📋 Subtaken:</span>`;
+        subtakenHtml += `<span class="subtaken-progress-small">${voltooid}/${totaal} (${progressPercentage}%)</span>`;
+        subtakenHtml += `</div>`;
+        
+        subtakenHtml += '<div class="planning-subtaken-list">';
+        subtaken.forEach(subtaak => {
+            const checkedClass = subtaak.voltooid ? ' checked' : '';
+            const checkedIcon = subtaak.voltooid ? '✓' : '○';
+            subtakenHtml += `
+                <div class="planning-subtaak${checkedClass}">
+                    <span class="subtaak-checkbox" onclick="app.togglePlanningSubtaak('${subtaak.id}', '${parentTaskId}')">${checkedIcon}</span>
+                    <span class="subtaak-text">${subtaak.titel}</span>
+                </div>
+            `;
+        });
+        subtakenHtml += '</div>';
+        subtakenHtml += '</div>';
+        
+        return subtakenHtml;
+    }
+
+    async loadSubtakenForPlanning(parentTaskIds) {
+        // Load subtaken for multiple parent tasks efficiently
+        const loadPromises = parentTaskIds.map(async (parentId) => {
+            if (!this.subtakenCache.has(parentId)) {
+                try {
+                    const response = await fetch(`/api/subtaken/${parentId}`);
+                    if (response.ok) {
+                        const subtaken = await response.json();
+                        this.subtakenCache.set(parentId, subtaken);
+                    } else {
+                        this.subtakenCache.set(parentId, []);
+                    }
+                } catch (error) {
+                    console.error('Error loading subtaken for planning:', error);
+                    this.subtakenCache.set(parentId, []);
+                }
+            }
+        });
+        
+        await Promise.all(loadPromises);
+    }
+
+    async togglePlanningSubtaak(subtaakId, parentTaskId) {
+        try {
+            // Find the subtaak in cache
+            const subtaken = this.subtakenCache.get(parentTaskId) || [];
+            const subtaak = subtaken.find(s => s.id === subtaakId);
+            
+            if (!subtaak) {
+                console.error('Subtaak not found in cache');
+                return;
+            }
+            
+            // Toggle status
+            const newStatus = !subtaak.voltooid;
+            
+            // Update on server
+            const response = await fetch(`/api/subtaken/${subtaakId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    titel: subtaak.titel,
+                    voltooid: newStatus,
+                    volgorde: subtaak.volgorde
+                })
+            });
+            
+            if (response.ok) {
+                // Update cache
+                subtaak.voltooid = newStatus;
+                this.subtakenCache.set(parentTaskId, subtaken);
+                
+                // Refresh the current planning display
+                await this.renderDagelijksePlanning();
+                
+                toast.success(`Subtaak ${newStatus ? 'afgerond' : 'heropend'}`);
+            } else {
+                toast.error('Fout bij bijwerken subtaak');
+            }
+        } catch (error) {
+            console.error('Error toggling planning subtaak:', error);
+            toast.error('Fout bij bijwerken subtaak');
+        }
     }
 
     renderPlanningItemsWithDropZones(uurPlanning, uur) {
