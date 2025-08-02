@@ -8440,51 +8440,29 @@ class Taakbeheer {
     }
     
     togglePlanningItemExpand(planningId, event) {
-        console.log('🔄 togglePlanningItemExpand called for:', planningId);
-        
         // Prevent drag from starting when clicking expand/collapse
         if (event) {
             event.stopPropagation();
-            console.log('🛑 Event stopPropagation applied');
         }
         
         const planningItem = document.querySelector(`[data-planning-id="${planningId}"]`);
-        console.log('📋 Found planning item:', !!planningItem);
-        if (!planningItem) {
-            console.error('❌ Planning item not found for ID:', planningId);
-            return;
-        }
+        if (!planningItem) return;
         
         const detailsDiv = planningItem.querySelector('.planning-item-details');
         const chevronIcon = planningItem.querySelector('.expand-chevron');
         
-        console.log('🔍 Found elements:', {
-            detailsDiv: !!detailsDiv,
-            chevronIcon: !!chevronIcon
-        });
-        
-        if (!detailsDiv || !chevronIcon) {
-            console.error('❌ Missing required elements:', {
-                detailsDiv: !!detailsDiv,
-                chevronIcon: !!chevronIcon,
-                planningItemHTML: planningItem.outerHTML.substring(0, 200) + '...'
-            });
-            return;
-        }
+        if (!detailsDiv || !chevronIcon) return;
         
         const isExpanded = planningItem.classList.contains('expanded');
-        console.log('📊 Current state:', { isExpanded });
         
         if (isExpanded) {
             // Collapse
             planningItem.classList.remove('expanded');
             chevronIcon.textContent = '▶';
-            console.log('📉 Collapsed item');
         } else {
             // Expand
             planningItem.classList.add('expanded');
             chevronIcon.textContent = '▼';
-            console.log('📈 Expanded item');
         }
     }
     
