@@ -556,6 +556,7 @@ class Taakbeheer {
     }
 
     init() {
+        console.log('🚀 Taakbeheer.init() called');
         this.bindEvents();
         this.zetVandaagDatum();
         // Add document click listener to close dropdowns
@@ -697,8 +698,13 @@ class Taakbeheer {
     }
 
     bindEvents() {
+        console.log('🔗 bindEvents called - eventsAlreadyBound:', this.eventsAlreadyBound);
         // Prevent multiple event listeners
-        if (this.eventsAlreadyBound) return;
+        if (this.eventsAlreadyBound) {
+            console.log('❌ bindEvents: Already bound, returning early');
+            return;
+        }
+        console.log('✅ bindEvents: Setting up event listeners');
         this.eventsAlreadyBound = true;
 
         // Sidebar navigatie - use event delegation to avoid issues with dynamic content
