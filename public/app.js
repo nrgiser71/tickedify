@@ -731,11 +731,18 @@ class Taakbeheer {
         });
 
         // Taak toevoegen (alleen voor inbox)
-        document.getElementById('toevoegBtn').addEventListener('click', () => {
-            if (this.huidigeLijst === 'inbox') {
-                this.voegTaakToe();
-            }
-        });
+        const toevoegBtn = document.getElementById('toevoegBtn');
+        console.log('🔗 Setting up toevoegBtn listener, button exists:', !!toevoegBtn);
+        if (toevoegBtn) {
+            toevoegBtn.addEventListener('click', () => {
+                console.log('🖱️ ToevoegBtn clicked - huidigeLijst:', this.huidigeLijst);
+                if (this.huidigeLijst === 'inbox') {
+                    this.voegTaakToe();
+                } else {
+                    console.log('❌ Not in inbox, not calling voegTaakToe');
+                }
+            });
+        }
 
         // Test taken toevoegen
         document.getElementById('testTakenBtn').addEventListener('click', () => {
@@ -2550,16 +2557,23 @@ class Taakbeheer {
     }
 
     async voegTaakToe() {
-        if (this.huidigeLijst !== 'inbox') return;
+        console.log('🔍 voegTaakToe called - huidigeLijst:', this.huidigeLijst);
+        if (this.huidigeLijst !== 'inbox') {
+            console.log('❌ Not in inbox, returning');
+            return;
+        }
         
         // Check if user is logged in
-        if (!this.isLoggedIn()) {
+        const isLoggedIn = this.isLoggedIn();
+        console.log('🔐 Login check - isLoggedIn:', isLoggedIn, 'auth exists:', !!auth, 'auth.isAuthenticated:', auth?.isAuthenticated);
+        if (!isLoggedIn) {
             toast.warning('Log in om taken toe te voegen.');
             return;
         }
         
         const input = document.getElementById('taakInput');
         const tekst = input.value.trim();
+        console.log('📝 Input tekst:', tekst);
         
         if (tekst) {
             await loading.withLoading(async () => {
@@ -2571,20 +2585,29 @@ class Taakbeheer {
                 };
                 
                 // Create task on server
+                console.log('🚀 Sending task to server:', nieuweTaak);
                 const response = await fetch('/api/taak/add-to-inbox', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(nieuweTaak)
                 });
                 
+                console.log('📡 Server response status:', response.status, response.statusText);
+                
                 if (response.ok) {
+                    const responseData = await response.json();
+                    console.log('✅ Server response data:', responseData);
+                    
                     // Refresh list from server to ensure consistency
                     await this.laadHuidigeLijst();
                     
                     input.value = '';
                     input.focus();
+                    toast.success('Taak toegevoegd!');
                 } else {
-                    toast.error('Fout bij toevoegen van taak');
+                    const errorText = await response.text();
+                    console.error('❌ Server error:', response.status, errorText);
+                    toast.error(`Fout bij toevoegen van taak (${response.status}): ${errorText}`);
                 }
             }, {
                 operationId: 'add-task',
