@@ -553,28 +553,10 @@ class Taakbeheer {
         this.bulkModus = false; // Bulk edit mode voor overtijd taken
         this.geselecteerdeTaken = new Set(); // Geselecteerde taken in bulk modus
         
-        // EMERGENCY FIX: Force event listener setup
-        console.log('🚨 EMERGENCY: Setting up toevoegBtn listener in constructor');
-        this.eventsAlreadyBound = false; // Reset to ensure bindEvents runs
+        // Fix: Reset eventsAlreadyBound to ensure bindEvents runs
+        this.eventsAlreadyBound = false;
         
         this.init();
-        
-        // ADDITIONAL SAFETY: Setup toevoegBtn listener directly
-        setTimeout(() => {
-            console.log('⏰ DELAYED SETUP: Looking for toevoegBtn after DOM load');
-            const toevoegBtn = document.getElementById('toevoegBtn');
-            console.log('⏰ toevoegBtn found:', !!toevoegBtn);
-            if (toevoegBtn && !toevoegBtn.hasAttribute('data-listener-added')) {
-                console.log('⏰ Adding emergency event listener to toevoegBtn');
-                toevoegBtn.addEventListener('click', () => {
-                    console.log('🚨 EMERGENCY CLICK HANDLER triggered');
-                    if (this.huidigeLijst === 'inbox') {
-                        this.voegTaakToe();
-                    }
-                });
-                toevoegBtn.setAttribute('data-listener-added', 'true');
-            }
-        }, 1000);
     }
 
     init() {
