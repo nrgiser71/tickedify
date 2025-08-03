@@ -2219,6 +2219,7 @@ class Taakbeheer {
             // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
             if (e.shiftKey && e.key.match(/^F([1-4]|6|7)$/)) {
                 e.preventDefault();
+                e.stopPropagation(); // Stop verder event handling
                 const keyNum = parseInt(e.key.substring(1));
                 const lists = [
                     'opvolgen',                // SHIFT+F1
@@ -2241,7 +2242,7 @@ class Taakbeheer {
                 if (index !== undefined && lists[index]) {
                     app.quickMove(lists[index]);
                 }
-                return;
+                return; // Exit completely
             }
             
             // SECOND: Handle normal F-keys (only when SHIFT is NOT pressed)
