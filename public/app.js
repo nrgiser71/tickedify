@@ -2204,6 +2204,7 @@ class Taakbeheer {
             // SHIFT + F10 for subtaak toevoegen
             if (e.shiftKey && e.key === 'F10') {
                 e.preventDefault();
+                e.stopPropagation(); // Stop verder event handling
                 // Show/focus subtaak input if subtaken section is visible
                 if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
                     subtakenManager.showAddInput();
@@ -2212,7 +2213,7 @@ class Taakbeheer {
                         if (input) input.focus();
                     }, 50);
                 }
-                return;
+                return; // Exit completely
             }
             
             // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
@@ -2286,11 +2287,8 @@ class Taakbeheer {
                         break;
                         
                     case 'F10':
-                        // Only trigger herhaling if shift is NOT pressed
-                        if (!e.shiftKey) {
-                            e.preventDefault();
-                            app.openHerhalingPopup();
-                        }
+                        e.preventDefault();
+                        app.openHerhalingPopup();
                         break;
                 }
             }
