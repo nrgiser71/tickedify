@@ -820,6 +820,11 @@ class Taakbeheer {
             }
             
             if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+                // Check if subtaak input is active - let subtaak handler deal with it
+                const subtaakInput = document.getElementById('subtaak-input');
+                if (subtaakInput && document.activeElement === subtaakInput) {
+                    return; // Let subtaak handler process this Enter
+                }
                 e.preventDefault();
                 this.probeerOpslaan();
             }
@@ -2239,6 +2244,18 @@ class Taakbeheer {
                     case 'F10':
                         e.preventDefault();
                         app.openHerhalingPopup();
+                        break;
+                        
+                    case 'F11':
+                        e.preventDefault();
+                        // Show/focus subtaak input if subtaken section is visible
+                        if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
+                            subtakenManager.showAddInput();
+                            setTimeout(() => {
+                                const input = document.getElementById('subtaak-input');
+                                if (input) input.focus();
+                            }, 50);
+                        }
                         break;
                 }
             }
