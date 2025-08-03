@@ -2246,18 +2246,21 @@ class Taakbeheer {
                         app.openHerhalingPopup();
                         break;
                         
-                    case 'F11':
-                        e.preventDefault();
-                        // Show/focus subtaak input if subtaken section is visible
-                        if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
-                            subtakenManager.showAddInput();
-                            setTimeout(() => {
-                                const input = document.getElementById('subtaak-input');
-                                if (input) input.focus();
-                            }, 50);
-                        }
-                        break;
                 }
+            }
+            
+            // SHIFT + F10 for subtaak toevoegen
+            if (e.shiftKey && e.key === 'F10') {
+                e.preventDefault();
+                // Show/focus subtaak input if subtaken section is visible
+                if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
+                    subtakenManager.showAddInput();
+                    setTimeout(() => {
+                        const input = document.getElementById('subtaak-input');
+                        if (input) input.focus();
+                    }, 50);
+                }
+                return;
             }
             
             // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
