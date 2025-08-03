@@ -2249,8 +2249,8 @@ class Taakbeheer {
                 }
             }
             
-            // SHIFT + F5 for subtaak toevoegen
-            if (e.shiftKey && e.key === 'F5') {
+            // SHIFT + F10 for subtaak toevoegen
+            if (e.shiftKey && e.key === 'F10') {
                 e.preventDefault();
                 // Show/focus subtaak input if subtaken section is visible
                 if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
