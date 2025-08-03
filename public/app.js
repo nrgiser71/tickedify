@@ -8383,6 +8383,15 @@ class Taakbeheer {
             this.currentPlanningData.push(newItem);
         }
         
+        // Load subtaken for all planned tasks (including newly added ones)
+        const plannedTaskIds = this.currentPlanningData
+            .filter(p => p.type === 'taak' && p.actieId)
+            .map(p => p.actieId);
+        
+        if (plannedTaskIds.length > 0) {
+            await this.loadSubtakenForPlanning(plannedTaskIds);
+        }
+        
         // Update only the affected hour in the calendar
         this.updateSingleHourDisplay(planningItem.uur);
     }

@@ -134,10 +134,76 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.11.123 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.11.123</span>
+                <span class="version-date">3 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <span class="change-desc"><strong>INBOX BUG FIX:</strong> Taak toevoegen knop in inbox scherm werkt weer</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🔗</span>
+                    <span class="change-desc"><strong>Endpoint Fix:</strong> POST /api/taak → /api/taak/add-to-inbox (404 error opgelost)</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">✅</span>
+                    <span class="change-desc"><strong>Consistent API:</strong> Inbox toevoegen gebruikt nu zelfde endpoint als F9 Quick Add</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.11.122 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.11.122</span>
+                <span class="version-date">3 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <span class="change-desc"><strong>COMPLETENESS:</strong> Voeg stopPropagation toe aan alle SHIFT+F handlers</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⌨️</span>
+                    <span class="change-desc"><strong>Consistente Event Handling:</strong> Alle SHIFT+F combinaties nu volledig geïsoleerd</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">✅</span>
+                    <span class="change-desc"><strong>Zero Conflicts:</strong> Geen enkele SHIFT+F kan normale F-key handlers meer triggeren</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.11.121 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.11.121</span>
+                <span class="version-date">3 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <span class="change-desc"><strong>FINAL FIX:</strong> F10 vs SHIFT+F10 keyboard handling</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⌨️</span>
+                    <span class="change-desc"><strong>Stop Propagation:</strong> SHIFT+F10 stopt nu volledig event bubbling</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">✅</span>
+                    <span class="change-desc"><strong>Perfect Isolation:</strong> SHIFT+F10 = subtaak, F10 = herhaling (geen overlap)</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.11.120 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.11.120</span>
+                <span class="version-badge badge-fix">v0.11.120</span>
                 <span class="version-date">3 augustus 2025</span>
             </div>
             <div class="changes-list">
