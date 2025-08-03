@@ -2571,7 +2571,7 @@ class Taakbeheer {
                 };
                 
                 // Create task on server
-                const response = await fetch('/api/taak', {
+                const response = await fetch('/api/taak/add-to-inbox', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(nieuweTaak)
