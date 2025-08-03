@@ -99,6 +99,60 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **STATUS**: Subtaken systeem 100% voltooid en geoptimaliseerd voor productie gebruik.
 
+## CRITICAL BUG FIXES MARATHON VOLTOOID (Augustus 3, 2025) 🔧✅
+
+**🚨 DRIE KRITIEKE PROBLEMEN SUCCESSVOL OPGELOST: Versie 0.11.123-0.11.129**
+
+### 1. INBOX TAAK TOEVOEGEN 404 ERROR (v0.11.123)
+- **User report**: "Inbox scherm werkt de knop taak toevoegen niet meer"
+- **Probleem**: `POST /api/taak` endpoint bestond niet (meer) - 404 Not Found error
+- **Root Cause**: Frontend probeerde non-existente endpoint aan te roepen
+- **Oplossing**: `voegTaakToe()` functie gewijzigd naar bestaande `/api/taak/add-to-inbox` endpoint
+- **Resultaat**: Inbox taak toevoegen functionaliteit volledig hersteld
+
+### 2. SUBTAKEN NIET ZICHTBAAR NA DRAG & DROP (v0.11.124)
+- **User report**: "Subtaken niet meer zichtbaar bij uitklappen geplande taken"
+- **Probleem**: Nieuw toegevoegde taken via drag & drop laadden geen subtaken
+- **Root Cause**: `updatePlanningLocally` riep geen `loadSubtakenForPlanning` aan
+- **Oplossing**: Subtaken laden toegevoegd aan local planning update workflow
+- **Resultaat**: Alle planning items tonen correct subtaken bij uitklappen
+
+### 3. EVENT LISTENERS NIET OPGEZET - INBOX BUTTON DOOD (v0.11.125-0.11.129)
+- **User report**: "Er verschijnt helemaal niets in console bij button click"
+- **Probleem**: `eventsAlreadyBound = true` voorkomte dat `bindEvents()` event listeners opzette
+- **Root Cause**: Event listener setup werd overgeslagen door timing/state issue
+- **Debug Process**: 
+  - v0.11.125-0.11.127: Uitgebreide console debugging toegevoegd
+  - v0.11.128: Emergency dual listener setup (veroorzaakte dubbele taken)
+  - v0.11.129: Final fix - `eventsAlreadyBound = false` reset in constructor
+- **Resultaat**: Alle event listeners werken correct, geen dubbele taken
+
+**📊 DEBUG METHODOLOGIE:**
+- **Systematische logging**: Console output op elke stap van execution flow
+- **DOM element verificatie**: Controleren of HTML elements bestaan en toegankelijk zijn
+- **Event flow tracing**: Volgen van click events van DOM tot functie aanroep
+- **API endpoint testing**: Direct testen van server endpoints los van frontend
+- **State verification**: Controleren van JavaScript object state en variabelen
+
+**🔧 DEFINITIEVE OPLOSSINGEN:**
+1. **API Endpoint Fix**: Gebruik correcte `/api/taak/add-to-inbox` voor inbox taken
+2. **Subtaken Cache Management**: Automatisch subtaken laden bij planning updates
+3. **Event Listener Reliability**: Constructor reset van `eventsAlreadyBound` flag
+
+**🎯 LESSONS LEARNED:**
+- **Event listener timing**: Constructor setup is betrouwbaarder dan late binding
+- **API endpoint consistency**: Controleer altijd of endpoints daadwerkelijk bestaan
+- **Cache invalidation**: Planning updates moeten alle gerelateerde data refreshen
+- **Debug-first approach**: Uitgebreide logging bespaart tijd bij complexe bugs
+
+**✨ EINDRESULTAAT:**
+- **Inbox taak toevoegen**: 100% functioneel ✅
+- **Subtaken in planning**: Volledig zichtbaar na drag & drop ✅  
+- **Event listeners**: Betrouwbaar opgezet en werkend ✅
+- **User experience**: Geen broken functionaliteit meer ✅
+
+**STATUS**: Alle kritieke bugs opgelost - systeem volledig operationeel en production-ready.
+
 ## ARCHITECTUUR DOCUMENTATIE VERPLICHT GEBRUIK 📋
 
 **KRITIEK BELANGRIJK**: Er is nu een ARCHITECTURE.md bestand dat de volledige codebase structuur documenteert.
