@@ -730,18 +730,32 @@ class Taakbeheer {
             }
         });
 
-        // Taak toevoegen (alleen voor inbox)
+        // Taak toevoegen (alleen voor inbox) - ENHANCED DEBUG
+        console.log('🔍 DEBUG: Looking for toevoegBtn...');
         const toevoegBtn = document.getElementById('toevoegBtn');
-        console.log('🔗 Setting up toevoegBtn listener, button exists:', !!toevoegBtn);
+        console.log('🔗 toevoegBtn element:', toevoegBtn);
+        console.log('🔍 All buttons on page:', document.querySelectorAll('button'));
+        console.log('🔍 Element with toevoeg in ID:', document.querySelector('[id*="toevoeg"]'));
+        
         if (toevoegBtn) {
-            toevoegBtn.addEventListener('click', () => {
-                console.log('🖱️ ToevoegBtn clicked - huidigeLijst:', this.huidigeLijst);
+            console.log('✅ toevoegBtn found, adding event listener');
+            toevoegBtn.addEventListener('click', (e) => {
+                console.log('🖱️ ToevoegBtn CLICKED! Event:', e);
+                console.log('🖱️ Current huidigeLijst:', this.huidigeLijst);
                 if (this.huidigeLijst === 'inbox') {
                     this.voegTaakToe();
                 } else {
                     console.log('❌ Not in inbox, not calling voegTaakToe');
                 }
             });
+            
+            // Test direct click programmatically
+            console.log('🧪 Testing programmatic click...');
+            setTimeout(() => {
+                console.log('🧪 Triggering test click in 2 seconds...');
+            }, 2000);
+        } else {
+            console.error('❌ toevoegBtn NOT FOUND!');
         }
 
         // Test taken toevoegen
@@ -1346,7 +1360,9 @@ class Taakbeheer {
         }
 
         // Laad lijst data
+        console.log('📋 SETTING huidigeLijst to:', lijst);
         this.huidigeLijst = lijst;
+        console.log('📋 huidigeLijst is now:', this.huidigeLijst);
         this.saveCurrentList(); // Remember the selected list
         await this.laadHuidigeLijst();
     }
