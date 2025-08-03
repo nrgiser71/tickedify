@@ -2199,8 +2199,52 @@ class Taakbeheer {
             // Skip if in textarea (except F9 which should focus textarea, and allow other useful F-keys)
             if (e.target.tagName === 'TEXTAREA' && !e.key.match(/^F(2|3|4|6|7|8|9|10)$/)) return;
             
-            // F2-F9 shortcuts (F1 is reserved for global help)
-            if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+            // FIRST: Handle SHIFT + F combinations (to prevent normal F-key triggers)
+            
+            // SHIFT + F10 for subtaak toevoegen
+            if (e.shiftKey && e.key === 'F10') {
+                e.preventDefault();
+                // Show/focus subtaak input if subtaken section is visible
+                if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
+                    subtakenManager.showAddInput();
+                    setTimeout(() => {
+                        const input = document.getElementById('subtaak-input');
+                        if (input) input.focus();
+                    }, 50);
+                }
+                return;
+            }
+            
+            // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
+            if (e.shiftKey && e.key.match(/^F([1-4]|6|7)$/)) {
+                e.preventDefault();
+                const keyNum = parseInt(e.key.substring(1));
+                const lists = [
+                    'opvolgen',                // SHIFT+F1
+                    'uitgesteld-wekelijks',    // SHIFT+F2
+                    'uitgesteld-maandelijks',  // SHIFT+F3
+                    'uitgesteld-3maandelijks', // SHIFT+F4
+                    'uitgesteld-6maandelijks', // SHIFT+F6 (skip F5)
+                    'uitgesteld-jaarlijks'     // SHIFT+F7
+                ];
+                
+                let index;
+                if (keyNum <= 4) {
+                    index = keyNum - 1;  // F1-F4 map to indices 0-3
+                } else if (keyNum === 6) {
+                    index = 4;  // F6 maps to index 4 (6-maandelijks)
+                } else if (keyNum === 7) {
+                    index = 5;  // F7 maps to index 5 (jaarlijks)
+                }
+                
+                if (index !== undefined && lists[index]) {
+                    app.quickMove(lists[index]);
+                }
+                return;
+            }
+            
+            // SECOND: Handle normal F-keys (only when SHIFT is NOT pressed)
+            if (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
                 switch(e.key) {
                     case 'F2':
                         e.preventDefault();
@@ -2245,48 +2289,6 @@ class Taakbeheer {
                         e.preventDefault();
                         app.openHerhalingPopup();
                         break;
-                        
-                }
-            }
-            
-            // SHIFT + F10 for subtaak toevoegen
-            if (e.shiftKey && e.key === 'F10') {
-                e.preventDefault();
-                // Show/focus subtaak input if subtaken section is visible
-                if (subtakenManager && document.getElementById('subtaken-sectie').style.display !== 'none') {
-                    subtakenManager.showAddInput();
-                    setTimeout(() => {
-                        const input = document.getElementById('subtaak-input');
-                        if (input) input.focus();
-                    }, 50);
-                }
-                return;
-            }
-            
-            // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
-            if (e.shiftKey && e.key.match(/^F([1-4]|6|7)$/)) {
-                e.preventDefault();
-                const keyNum = parseInt(e.key.substring(1));
-                const lists = [
-                    'opvolgen',                // SHIFT+F1
-                    'uitgesteld-wekelijks',    // SHIFT+F2
-                    'uitgesteld-maandelijks',  // SHIFT+F3
-                    'uitgesteld-3maandelijks', // SHIFT+F4
-                    'uitgesteld-6maandelijks', // SHIFT+F6 (skip F5)
-                    'uitgesteld-jaarlijks'     // SHIFT+F7
-                ];
-                
-                let index;
-                if (keyNum <= 4) {
-                    index = keyNum - 1;  // F1-F4 map to indices 0-3
-                } else if (keyNum === 6) {
-                    index = 4;  // F6 maps to index 4 (6-maandelijks)
-                } else if (keyNum === 7) {
-                    index = 5;  // F7 maps to index 5 (jaarlijks)
-                }
-                
-                if (index !== undefined && lists[index]) {
-                    app.quickMove(lists[index]);
                 }
             }
         });
