@@ -370,44 +370,6 @@
                     </div>
                     
                     <div class="form-groep">
-                        <label>Opmerkingen:</label>
-                        <textarea id="opmerkingen" rows="3" placeholder="Aanvullende informatie, notities of details..."></textarea>
-                    </div>
-                    
-                    <div class="form-groep" id="subtaken-sectie" style="display: none;">
-                        <div class="subtaken-header">
-                            <label>Subtaken:</label>
-                            <span class="subtaken-progress" id="subtaken-progress" style="display: none;"></span>
-                            <button type="button" class="subtaak-add-btn" id="subtaak-add-btn" title="Nieuwe subtaak toevoegen">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="subtaken-container" id="subtaken-container">
-                            <div class="subtaken-empty" id="subtaken-empty">
-                                <i class="fas fa-tasks"></i>
-                                <span>Geen subtaken - klik + om toe te voegen</span>
-                            </div>
-                            
-                            <div class="subtaken-lijst" id="subtaken-lijst">
-                                <!-- Subtaken worden hier via JavaScript toegevoegd -->
-                            </div>
-                            
-                            <div class="subtaak-input-container" id="subtaak-input-container" style="display: none;">
-                                <input type="text" id="subtaak-input" placeholder="Nieuwe subtaak..." maxlength="500">
-                                <div class="subtaak-input-acties">
-                                    <button type="button" class="subtaak-save-btn" id="subtaak-save-btn" title="Opslaan">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Annuleren">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-groep">
                         <label>Herhaling:</label>
                         <div class="herhaling-selectie">
                             <input type="text" id="herhalingDisplay" readonly placeholder="Geen herhaling" onclick="app.openHerhalingPopup()">
@@ -426,6 +388,46 @@
                         <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">3-maandelijks</button>
                         <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">6-maandelijks</button>
                         <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Jaarlijks</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Volledige breedte velden -->
+            <div class="form-groep">
+                <label>Opmerkingen:</label>
+                <textarea id="opmerkingen" rows="3" placeholder="Aanvullende informatie, notities of details..."></textarea>
+            </div>
+            
+            <div class="form-groep" id="subtaken-sectie" style="display: none;">
+                <div class="subtaken-header">
+                    <label>Subtaken:</label>
+                    <span class="subtaken-progress" id="subtaken-progress" style="display: none;"></span>
+                    <div class="select-met-toevoeg">
+                        <div style="flex: 1;"></div>
+                        <button type="button" id="subtaak-add-btn" title="Nieuwe subtaak toevoegen">+</button>
+                    </div>
+                </div>
+                
+                <div class="subtaken-container" id="subtaken-container">
+                    <div class="subtaken-empty" id="subtaken-empty">
+                        <i class="fas fa-tasks"></i>
+                        <span>Geen subtaken - klik + om toe te voegen</span>
+                    </div>
+                    
+                    <div class="subtaken-lijst" id="subtaken-lijst">
+                        <!-- Subtaken worden hier via JavaScript toegevoegd -->
+                    </div>
+                    
+                    <div class="subtaak-input-container" id="subtaak-input-container" style="display: none;">
+                        <input type="text" id="subtaak-input" placeholder="Nieuwe subtaak..." maxlength="500">
+                        <div class="subtaak-input-acties">
+                            <button type="button" class="subtaak-save-btn" id="subtaak-save-btn" title="Opslaan">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Annuleren">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

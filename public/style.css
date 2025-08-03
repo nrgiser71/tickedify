@@ -2218,6 +2218,9 @@ button:focus {
     margin: 0 !important;
     flex: 1;
 }
+.subtaken-header .select-met-toevoeg {
+    flex: none;
+}
 
 .subtaken-progress {
     font-size: 12px;
