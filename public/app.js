@@ -2286,8 +2286,11 @@ class Taakbeheer {
                         break;
                         
                     case 'F10':
-                        e.preventDefault();
-                        app.openHerhalingPopup();
+                        // Only trigger herhaling if shift is NOT pressed
+                        if (!e.shiftKey) {
+                            e.preventDefault();
+                            app.openHerhalingPopup();
+                        }
                         break;
                 }
             }
