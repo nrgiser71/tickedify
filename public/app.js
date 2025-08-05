@@ -5238,11 +5238,15 @@ class Taakbeheer {
                 const duurMinuten = taskData?.duur || 60;
                 
                 // Send JSON data like other draggable items
-                e.dataTransfer.setData('text/plain', JSON.stringify({
+                const dragData = {
                     type: 'prioriteit',
                     actieId: taakId,
                     duurMinuten: duurMinuten
-                }));
+                };
+                
+                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+                // Store globally for access during dragover events
+                this.currentDragData = dragData;
                 e.dataTransfer.effectAllowed = 'move';
                 
                 // Setup hover listeners for time blocks to show drop zones
@@ -5250,6 +5254,8 @@ class Taakbeheer {
             });
             
             taak.addEventListener('dragend', (e) => {
+                // Clear global drag data
+                this.currentDragData = null;
                 // Clear any remaining hover states
                 this.clearTimeBlockHoverStates();
             });
@@ -7871,11 +7877,16 @@ class Taakbeheer {
         // Template drag start
         document.querySelectorAll('.template-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify({
+                const dragData = {
                     type: 'template',
                     planningType: item.dataset.type,
                     duurMinuten: parseInt(item.dataset.duur)
-                }));
+                };
+                
+                // Store globally for access during dragover events
+                this.currentDragData = dragData;
+                
+                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
                 
                 // Create semi-transparent drag image
                 const dragImage = document.createElement('div');
@@ -7905,6 +7916,8 @@ class Taakbeheer {
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                // Clear global drag data
+                this.currentDragData = null;
                 // Stop dynamic drag tracking
                 this.stopDynamicDragTracking();
             });
@@ -7913,11 +7926,15 @@ class Taakbeheer {
         // Action drag functionality (from actions list)
         document.querySelectorAll('.planning-actie-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify({
+                const dragData = {
                     type: 'actie',
                     actieId: item.dataset.actieId,
                     duurMinuten: parseInt(item.dataset.duur)
-                }));
+                };
+                
+                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+                // Store globally for access during dragover events
+                this.currentDragData = dragData;
                 
                 // Create semi-transparent drag image
                 const dragImage = document.createElement('div');
@@ -7947,6 +7964,8 @@ class Taakbeheer {
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                // Clear global drag data
+                this.currentDragData = null;
                 // Stop dynamic drag tracking
                 this.stopDynamicDragTracking();
             });
@@ -7991,6 +8010,8 @@ class Taakbeheer {
 
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
+                // Clear global drag data
+                this.currentDragData = null;
                 // Stop dynamic drag tracking
                 this.stopDynamicDragTracking();
             });
@@ -8104,7 +8125,13 @@ class Taakbeheer {
     }
     
     addGhostPreview(dropInfo, event) {
-        const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+        // Use global drag data instead of dataTransfer (which is empty during dragover)
+        const data = this.currentDragData;
+        
+        if (!data) {
+            console.warn('⚠️ No drag data available for ghost preview');
+            return;
+        }
         
         // Create ghost preview element
         const ghost = document.createElement('div');
@@ -8876,11 +8903,15 @@ class Taakbeheer {
         // Only bind drag events for action items in the planning actions list
         document.querySelectorAll('#planningActiesLijst [data-actie-id]').forEach(item => {
             item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify({
+                const dragData = {
                     type: 'actie',
                     actieId: item.dataset.actieId,
                     duurMinuten: parseInt(item.dataset.duur) || 30
-                }));
+                };
+                
+                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+                // Store globally for access during dragover events
+                this.currentDragData = dragData;
                 
                 // Make item transparent during drag
                 item.style.opacity = '0.02';
@@ -8912,6 +8943,8 @@ class Taakbeheer {
             item.addEventListener('dragend', (e) => {
                 // Restore opacity
                 item.style.opacity = '1';
+                // Clear global drag data
+                this.currentDragData = null;
                 // Clear any remaining hover states
                 this.clearTimeBlockHoverStates();
             });
