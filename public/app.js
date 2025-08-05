@@ -5367,15 +5367,15 @@ class Taakbeheer {
                 this.currentDragData = dragData;
                 e.dataTransfer.effectAllowed = 'move';
                 
-                // Setup hover listeners for time blocks to show drop zones
-                this.setupTimeBlockHoverListeners();
+                // Start dynamic drag tracking
+                this.startDynamicDragTracking();
             });
             
             taak.addEventListener('dragend', (e) => {
                 // Clear global drag data
                 this.currentDragData = null;
-                // Clear any remaining hover states
-                this.clearTimeBlockHoverStates();
+                // Stop dynamic drag tracking
+                this.stopDynamicDragTracking();
             });
         });
     }
@@ -9056,8 +9056,8 @@ class Taakbeheer {
                     }
                 }, 100);
                 
-                // Setup hover listeners for time blocks to show drop zones
-                this.setupTimeBlockHoverListeners();
+                // Start dynamic drag tracking
+                this.startDynamicDragTracking();
             });
             
             item.addEventListener('dragend', (e) => {
@@ -9065,8 +9065,8 @@ class Taakbeheer {
                 item.style.opacity = '1';
                 // Clear global drag data
                 this.currentDragData = null;
-                // Clear any remaining hover states
-                this.clearTimeBlockHoverStates();
+                // Stop dynamic drag tracking
+                this.stopDynamicDragTracking();
             });
         });
     }
