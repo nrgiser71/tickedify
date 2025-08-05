@@ -7423,6 +7423,8 @@ class Taakbeheer {
                 
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
+                    <!-- Insertion line for drag & drop -->
+                    <div class="insertion-line" id="insertion-line"></div>
                     <div class="kalender-header">
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="header-actions">
@@ -7561,7 +7563,7 @@ class Taakbeheer {
                     </div>
                     <div class="uur-content" data-uur="${uur}">
                         <div class="uur-planning" data-uur="${uur}">
-                            ${this.renderPlanningItemsWithDropZones(uurPlanning, uur)}
+                            ${this.renderPlanningItems(uurPlanning, uur)}
                         </div>
                     </div>
                 </div>
@@ -7799,20 +7801,12 @@ class Taakbeheer {
         }
     }
 
-    renderPlanningItemsWithDropZones(uurPlanning, uur) {
+    renderPlanningItems(uurPlanning, uur) {
         if (uurPlanning.length === 0) {
-            // Empty hour - just return a drop zone
-            return `<div class="drop-zone" data-uur="${uur}" data-position="0"></div>`;
+            return '';
         }
 
-        let html = `<div class="drop-zone" data-uur="${uur}" data-position="0"></div>`;
-        
-        uurPlanning.forEach((item, index) => {
-            html += this.renderPlanningItem(item);
-            html += `<div class="drop-zone" data-uur="${uur}" data-position="${index + 1}"></div>`;
-        });
-        
-        return html;
+        return uurPlanning.map(item => this.renderPlanningItem(item)).join('');
     }
 
     bindDagelijksePlanningEvents() {
@@ -7907,14 +7901,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Setup hover listeners for time blocks to show drop zones
-                this.setupTimeBlockHoverListeners();
+                // Start insertion line tracking
+                this.startInsertionLineTracking();
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Clear any remaining hover states
-                this.clearTimeBlockHoverStates();
+                // Stop insertion line tracking
+                this.stopInsertionLineTracking();
             });
         });
         
@@ -7949,14 +7943,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Setup hover listeners for time blocks to show drop zones
-                this.setupTimeBlockHoverListeners();
+                // Start insertion line tracking
+                this.startInsertionLineTracking();
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Clear any remaining hover states
-                this.clearTimeBlockHoverStates();
+                // Stop insertion line tracking
+                this.stopInsertionLineTracking();
             });
         });
 
@@ -7993,75 +7987,152 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Setup hover listeners for time blocks to show drop zones
-                this.setupTimeBlockHoverListeners();
+                // Start insertion line tracking
+                this.startInsertionLineTracking();
             });
 
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Clear any remaining hover states
-                this.clearTimeBlockHoverStates();
-            });
-        });
-        
-        // Drop zone handlers for hour content
-        document.querySelectorAll('.uur-content').forEach(dropZone => {
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('drag-over');
-            });
-            
-            dropZone.addEventListener('dragleave', (e) => {
-                if (!dropZone.contains(e.relatedTarget)) {
-                    dropZone.classList.remove('drag-over');
-                }
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-                
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                const uur = parseInt(dropZone.dataset.uur);
-                
-                if (data.type === 'planning-reorder') {
-                    this.handlePlanningReorder(data, uur, null); // null = append to end
-                } else {
-                    this.handleDrop(data, uur);
-                }
-            });
-        });
-
-        // Drop zone handlers for precise positioning
-        document.querySelectorAll('.drop-zone').forEach(dropZone => {
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('drop-zone-active');
-            });
-            
-            dropZone.addEventListener('dragleave', (e) => {
-                dropZone.classList.remove('drop-zone-active');
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation(); // Stop event bubbling to prevent double handling
-                dropZone.classList.remove('drop-zone-active');
-                
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                const uur = parseInt(dropZone.dataset.uur);
-                const position = parseInt(dropZone.dataset.position);
-                
-                if (data.type === 'planning-reorder') {
-                    this.handlePlanningReorder(data, uur, position);
-                } else {
-                    this.handleDropAtPosition(data, uur, position);
-                }
+                // Stop insertion line tracking
+                this.stopInsertionLineTracking();
             });
         });
         
         // Reset binding flag
         this.bindingInProgress = false;
+    }
+
+    // Insertion Line System Methods
+    startInsertionLineTracking() {
+        const dagKalender = document.querySelector('.dag-kalender');
+        const insertionLine = document.getElementById('insertion-line');
+        
+        if (!dagKalender || !insertionLine) return;
+        
+        // Track mouse movement over the calendar
+        this.insertionLineMouseHandler = (e) => {
+            this.updateInsertionLinePosition(e);
+        };
+        
+        // Setup drop zone handling with insertion line
+        this.insertionLineDropHandler = (e) => {
+            e.preventDefault();
+            const dropInfo = this.getDropInfoFromPosition(e.clientY);
+            if (dropInfo) {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                this.handleInsertionLineDrop(data, dropInfo);
+            }
+            this.stopInsertionLineTracking();
+        };
+        
+        this.insertionLineDragOverHandler = (e) => {
+            e.preventDefault();
+        };
+        
+        dagKalender.addEventListener('mousemove', this.insertionLineMouseHandler);
+        dagKalender.addEventListener('dragover', this.insertionLineDragOverHandler);
+        dagKalender.addEventListener('drop', this.insertionLineDropHandler);
+    }
+    
+    stopInsertionLineTracking() {
+        const dagKalender = document.querySelector('.dag-kalender');
+        const insertionLine = document.getElementById('insertion-line');
+        
+        if (insertionLine) {
+            insertionLine.classList.remove('active');
+        }
+        
+        if (dagKalender && this.insertionLineMouseHandler) {
+            dagKalender.removeEventListener('mousemove', this.insertionLineMouseHandler);
+            dagKalender.removeEventListener('dragover', this.insertionLineDragOverHandler);
+            dagKalender.removeEventListener('drop', this.insertionLineDropHandler);
+        }
+        
+        this.insertionLineMouseHandler = null;
+        this.insertionLineDropHandler = null;
+        this.insertionLineDragOverHandler = null;
+    }
+    
+    updateInsertionLinePosition(e) {
+        const insertionLine = document.getElementById('insertion-line');
+        if (!insertionLine) return;
+        
+        const dropInfo = this.getDropInfoFromPosition(e.clientY);
+        if (dropInfo) {
+            insertionLine.style.top = dropInfo.y + 'px';
+            insertionLine.classList.add('active');
+        } else {
+            insertionLine.classList.remove('active');
+        }
+    }
+    
+    getDropInfoFromPosition(clientY) {
+        const kalenderUren = document.querySelectorAll('.kalender-uur');
+        const dagKalender = document.querySelector('.dag-kalender');
+        
+        if (!dagKalender) return null;
+        
+        const kalenderRect = dagKalender.getBoundingClientRect();
+        const relativeY = clientY - kalenderRect.top;
+        
+        for (const uurElement of kalenderUren) {
+            const uurRect = uurElement.getBoundingClientRect();
+            const uurRelativeTop = uurRect.top - kalenderRect.top;
+            const uurRelativeBottom = uurRect.bottom - kalenderRect.top;
+            
+            if (relativeY >= uurRelativeTop && relativeY <= uurRelativeBottom) {
+                const uur = parseInt(uurElement.dataset.uur);
+                const uurPlanning = uurElement.querySelector('.uur-planning');
+                const planningItems = uurPlanning.querySelectorAll('.planning-item');
+                
+                if (planningItems.length === 0) {
+                    // Empty hour - drop at beginning
+                    return {
+                        uur: uur,
+                        position: 0,
+                        y: uurRelativeTop + 50 // Center of empty hour
+                    };
+                }
+                
+                // Find position between items
+                const uurPlanningRect = uurPlanning.getBoundingClientRect();
+                const planningRelativeY = clientY - uurPlanningRect.top;
+                
+                for (let i = 0; i < planningItems.length; i++) {
+                    const itemRect = planningItems[i].getBoundingClientRect();
+                    const itemRelativeTop = itemRect.top - uurPlanningRect.top;
+                    const itemRelativeBottom = itemRect.bottom - uurPlanningRect.top;
+                    
+                    if (planningRelativeY <= itemRelativeTop + (itemRect.height / 2)) {
+                        // Drop before this item
+                        return {
+                            uur: uur,
+                            position: i,
+                            y: uurRelativeTop + itemRelativeTop
+                        };
+                    }
+                }
+                
+                // Drop after last item
+                const lastItem = planningItems[planningItems.length - 1];
+                const lastItemRect = lastItem.getBoundingClientRect();
+                return {
+                    uur: uur,
+                    position: planningItems.length,
+                    y: uurRelativeTop + (lastItemRect.bottom - uurPlanningRect.top)
+                };
+            }
+        }
+        
+        return null;
+    }
+    
+    async handleInsertionLineDrop(data, dropInfo) {
+        if (data.type === 'planning-reorder') {
+            await this.handlePlanningReorder(data, dropInfo.uur, dropInfo.position);
+        } else {
+            await this.handleDropAtPosition(data, dropInfo.uur, dropInfo.position);
+        }
     }
 
     // Current hour indicator functions
@@ -8214,49 +8285,10 @@ class Taakbeheer {
             }
         });
         
-        // Clone drop zones to remove event listeners
-        document.querySelectorAll('.uur-content, .drop-zone').forEach(zone => {
-            const newZone = zone.cloneNode(true);
-            if (zone.parentNode) {
-                zone.parentNode.replaceChild(newZone, zone);
-            }
-        });
+        // Stop any existing insertion line tracking
+        this.stopInsertionLineTracking();
     }
 
-    setupTimeBlockHoverListeners() {
-        // Remove any existing hover listeners first
-        this.clearTimeBlockHoverStates();
-        
-        document.querySelectorAll('.kalender-uur').forEach(timeBlock => {
-            timeBlock.addEventListener('dragenter', this.handleTimeBlockDragEnter.bind(this));
-            timeBlock.addEventListener('dragleave', this.handleTimeBlockDragLeave.bind(this));
-        });
-    }
-
-    handleTimeBlockDragEnter(e) {
-        e.preventDefault();
-        const timeBlock = e.currentTarget;
-        
-        // Add hover-active class to show drop zones for this time block
-        timeBlock.classList.add('hover-active');
-    }
-
-    handleTimeBlockDragLeave(e) {
-        e.preventDefault();
-        const timeBlock = e.currentTarget;
-        
-        // Only remove hover-active if we're actually leaving the time block
-        // Check if the related target is still within this time block
-        if (!timeBlock.contains(e.relatedTarget)) {
-            timeBlock.classList.remove('hover-active');
-        }
-    }
-
-    clearTimeBlockHoverStates() {
-        document.querySelectorAll('.kalender-uur.hover-active').forEach(timeBlock => {
-            timeBlock.classList.remove('hover-active');
-        });
-    }
 
     async handleDrop(data, uur) {
         return this.handleDropInternal(data, uur, null);

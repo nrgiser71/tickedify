@@ -3708,51 +3708,24 @@ button:focus {
     word-break: break-word;
 }
 
-/* Drop zone styling */
-.drop-zone {
-    position: relative;
-    height: 2px;
-    margin: 0;
-    border-radius: 1px;
-    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 0;
-    background: transparent;
-}
-
-/* Invisible hit area to prevent flickering - only when hovering specific time block */
-.kalender-uur.hover-active .drop-zone::before {
-    content: '';
+/* Insertion Line System for Drag & Drop */
+.insertion-line {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 40px; /* Always 40px for stable hover detection */
-    background: transparent;
-    pointer-events: auto;
-    z-index: 1;
-}
-
-/* Only show drop zones when hovering over specific time block */
-.kalender-uur.hover-active .drop-zone {
-    height: 20px;
-    margin: 4px 0;
-    opacity: 0.3;
-    background: var(--macos-gray-3);
-}
-
-.kalender-uur.hover-active .drop-zone-active {
-    height: 80px;
+    left: 10px;
+    right: 10px;
+    height: 3px;
     background: var(--macos-blue);
-    opacity: 1 !important;
-    margin: 8px 0;
-    box-shadow: 0 0 8px rgba(0, 122, 255, 0.3);
-    transition-delay: 0.05s; /* Small delay to prevent flicker */
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(0, 122, 255, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+    transition: opacity 0.2s ease, transform 0.1s ease;
 }
 
-/* Ensure smooth transition back */
-.drop-zone:not(.drop-zone-active) {
-    transition-delay: 0.05s;
+.insertion-line.active {
+    opacity: 1;
+    transform: scaleY(1.2);
 }
 
 /* Dragging feedback */
