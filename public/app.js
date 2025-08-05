@@ -8007,58 +8007,80 @@ class Taakbeheer {
         const dagKalender = document.querySelector('.dag-kalender');
         const insertionLine = document.getElementById('insertion-line');
         
-        if (!dagKalender || !insertionLine) return;
+        if (!dagKalender || !insertionLine) {
+            console.warn('🚨 Insertion line tracking failed: missing elements', {
+                dagKalender: !!dagKalender,
+                insertionLine: !!insertionLine
+            });
+            return;
+        }
         
-        // Track mouse movement over the calendar
-        this.insertionLineMouseHandler = (e) => {
-            this.updateInsertionLinePosition(e);
-        };
+        console.log('✅ Starting insertion line tracking');
         
-        // Setup drop zone handling with insertion line
+        // Setup drop zone handling with insertion line  
         this.insertionLineDropHandler = (e) => {
             e.preventDefault();
+            console.log('🎯 Drop event triggered at Y:', e.clientY);
+            
             const dropInfo = this.getDropInfoFromPosition(e.clientY);
             if (dropInfo) {
+                console.log('✅ Drop info calculated:', dropInfo);
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
                 this.handleInsertionLineDrop(data, dropInfo);
+            } else {
+                console.warn('❌ No drop info found for Y position:', e.clientY);
             }
             this.stopInsertionLineTracking();
         };
         
+        // Use dragover for tracking insertion line position (mousemove doesn't work during drag)
         this.insertionLineDragOverHandler = (e) => {
             e.preventDefault();
+            // Update insertion line position on every dragover
+            this.updateInsertionLinePosition(e);
         };
         
-        dagKalender.addEventListener('mousemove', this.insertionLineMouseHandler);
         dagKalender.addEventListener('dragover', this.insertionLineDragOverHandler);
         dagKalender.addEventListener('drop', this.insertionLineDropHandler);
+        
+        console.log('✅ Insertion line event listeners attached');
     }
     
     stopInsertionLineTracking() {
         const dagKalender = document.querySelector('.dag-kalender');
         const insertionLine = document.getElementById('insertion-line');
         
+        console.log('🛑 Stopping insertion line tracking');
+        
         if (insertionLine) {
             insertionLine.classList.remove('active');
         }
         
-        if (dagKalender && this.insertionLineMouseHandler) {
-            dagKalender.removeEventListener('mousemove', this.insertionLineMouseHandler);
+        if (dagKalender && this.insertionLineDragOverHandler) {
             dagKalender.removeEventListener('dragover', this.insertionLineDragOverHandler);
             dagKalender.removeEventListener('drop', this.insertionLineDropHandler);
         }
         
-        this.insertionLineMouseHandler = null;
         this.insertionLineDropHandler = null;
         this.insertionLineDragOverHandler = null;
     }
     
     updateInsertionLinePosition(e) {
         const insertionLine = document.getElementById('insertion-line');
-        if (!insertionLine) return;
+        if (!insertionLine) {
+            console.warn('❌ Insertion line element not found');
+            return;
+        }
         
         const dropInfo = this.getDropInfoFromPosition(e.clientY);
         if (dropInfo) {
+            console.log('📍 Updating insertion line position:', {
+                clientY: e.clientY,
+                calculatedY: dropInfo.y,
+                uur: dropInfo.uur,
+                position: dropInfo.position
+            });
+            
             insertionLine.style.top = dropInfo.y + 'px';
             insertionLine.classList.add('active');
         } else {
@@ -8128,10 +8150,127 @@ class Taakbeheer {
     }
     
     async handleInsertionLineDrop(data, dropInfo) {
-        if (data.type === 'planning-reorder') {
-            await this.handlePlanningReorder(data, dropInfo.uur, dropInfo.position);
-        } else {
-            await this.handleDropAtPosition(data, dropInfo.uur, dropInfo.position);
+        console.log('🚀 Starting insertion line drop handling', { data, dropInfo });
+        
+        // Immediately update UI optimistically for better UX
+        const optimisticItem = this.createOptimisticPlanningItem(data, dropInfo);
+        this.addOptimisticPlanningItem(optimisticItem, dropInfo);
+        
+        try {
+            if (data.type === 'planning-reorder') {
+                await this.handlePlanningReorder(data, dropInfo.uur, dropInfo.position);
+            } else {
+                await this.handleDropAtPosition(data, dropInfo.uur, dropInfo.position);
+            }
+            console.log('✅ Drop operation completed successfully');
+        } catch (error) {
+            console.error('❌ Drop operation failed, reverting optimistic update:', error);
+            // Remove optimistic item and re-render
+            this.removeOptimisticPlanningItem(optimisticItem);
+            await this.renderTaken(); // Full re-render to ensure consistency
+        }
+    }
+    
+    createOptimisticPlanningItem(data, dropInfo) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const planningItem = {
+            id: 'optimistic-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            datum: today,
+            uur: dropInfo.uur,
+            positie: dropInfo.position,
+            duurMinuten: data.duurMinuten || 60,
+            type: data.type === 'template' ? data.planningType : 'taak',
+            isOptimistic: true // Flag to identify optimistic items
+        };
+        
+        if (data.type === 'template') {
+            planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
+        } else if (data.type === 'actie' || data.type === 'prioriteit') {
+            planningItem.actieId = data.actieId;
+            
+            // Use cached data for name display
+            const actie = this.planningActies?.find(t => t.id === data.actieId) || 
+                         this.taken?.find(t => t.id === data.actieId) ||
+                         this.topPrioriteiten?.find(t => t && t.id === data.actieId);
+            
+            if (actie) {
+                const projectId = actie.project_id || actie.projectId;
+                const projectNaam = this.getProjectNaam(projectId);
+                planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                planningItem.actieTekst = actie.tekst;
+            } else {
+                planningItem.naam = 'Taak wordt geladen...';
+                planningItem.actieTekst = 'Laden...';
+            }
+        }
+        
+        return planningItem;
+    }
+    
+    addOptimisticPlanningItem(planningItem, dropInfo) {
+        console.log('⚡ Adding optimistic planning item:', planningItem);
+        
+        // Add to local planning data
+        if (!this.currentPlanningData) {
+            this.currentPlanningData = [];
+        }
+        this.currentPlanningData.push(planningItem);
+        
+        // Find the hour container and add the item to DOM
+        const uurElement = document.querySelector(`[data-uur="${dropInfo.uur}"]`);
+        if (uurElement) {
+            const uurPlanning = uurElement.querySelector('.uur-planning');
+            if (uurPlanning) {
+                const itemHtml = this.renderPlanningItem(planningItem);
+                
+                // Insert at specific position
+                const existingItems = uurPlanning.children;
+                if (dropInfo.position >= existingItems.length) {
+                    uurPlanning.insertAdjacentHTML('beforeend', itemHtml);
+                } else {
+                    existingItems[dropInfo.position].insertAdjacentHTML('beforebegin', itemHtml);
+                }
+                
+                // Update hour totals
+                this.updateUurTotals(dropInfo.uur);
+            }
+        }
+    }
+    
+    removeOptimisticPlanningItem(planningItem) {
+        console.log('🔄 Removing optimistic planning item:', planningItem.id);
+        
+        // Remove from local planning data
+        if (this.currentPlanningData) {
+            this.currentPlanningData = this.currentPlanningData.filter(item => item.id !== planningItem.id);
+        }
+        
+        // Remove from DOM
+        const domElement = document.querySelector(`[data-planning-id="${planningItem.id}"]`);
+        if (domElement) {
+            domElement.remove();
+        }
+    }
+    
+    updateUurTotals(uur) {
+        // Update the hour total display
+        const uurElement = document.querySelector(`[data-uur="${uur}"]`);
+        if (uurElement) {
+            const uurPlanning = this.currentPlanningData?.filter(p => p.uur === uur) || [];
+            const totaalMinuten = uurPlanning.reduce((sum, p) => sum + p.duurMinuten, 0);
+            const isOverboekt = totaalMinuten > 60;
+            
+            const totaalElement = uurElement.querySelector('.uur-totaal-tijd');
+            if (totaalElement) {
+                if (totaalMinuten > 0) {
+                    totaalElement.innerHTML = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
+                    uurElement.classList.toggle('overboekt', isOverboekt);
+                } else {
+                    totaalElement.innerHTML = '';
+                    uurElement.classList.remove('overboekt');
+                }
+            }
         }
     }
 
