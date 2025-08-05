@@ -8051,9 +8051,19 @@ class Taakbeheer {
             this.stopDynamicDragTracking();
         };
         
-        // Use dragover for tracking dynamic positioning
+        // Use dragover for tracking dynamic positioning with throttling
+        let lastDragOverTime = 0;
+        const DRAGOVER_THROTTLE_MS = 50; // Limit to ~20fps to prevent flickering
+        
         this.dynamicDragOverHandler = (e) => {
             e.preventDefault();
+            
+            const now = Date.now();
+            if (now - lastDragOverTime < DRAGOVER_THROTTLE_MS) {
+                return; // Skip this event to prevent flickering
+            }
+            lastDragOverTime = now;
+            
             // Update dynamic spacing and ghost preview
             this.updateDynamicSpacing(e);
         };
@@ -8104,12 +8114,18 @@ class Taakbeheer {
     updateDynamicSpacing(e) {
         const dropInfo = this.getDropInfoFromPosition(e.clientY);
         
-        // Only update if position changed
+        // Only update if position changed significantly (add hysteresis to prevent flickering)
         if (!dropInfo || (this.currentDropInfo && 
             this.currentDropInfo.uur === dropInfo.uur && 
             this.currentDropInfo.position === dropInfo.position)) {
             return;
         }
+        
+        // Additional stability check - prevent rapid position switching
+        if (this.lastPositionChangeTime && (Date.now() - this.lastPositionChangeTime) < 100) {
+            return;
+        }
+        this.lastPositionChangeTime = Date.now();
         
         console.log('📍 Updating dynamic spacing:', dropInfo);
         
