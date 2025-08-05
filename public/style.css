@@ -4876,11 +4876,26 @@ button:focus {
     text-align: center;
     min-height: 18px;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: all 0.4s ease;
+    transform: translateY(5px);
+    margin-top: 15px;
+    font-weight: 500;
 }
 
 .loading-progress-text.active {
     opacity: 1;
+    transform: translateY(0);
+}
+
+/* Entertainment message animation */
+.loading-progress-text.entertainment {
+    animation: entertainmentPulse 0.8s ease-in-out;
+}
+
+@keyframes entertainmentPulse {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-2px) scale(1.02); opacity: 0.8; }
+    100% { transform: translateY(0) scale(1); }
 }
 
 /* Inline loading spinner (smaller) */

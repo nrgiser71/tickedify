@@ -360,6 +360,10 @@ class LoadingManager {
         this.progressText = document.getElementById('loadingProgressText');
         this.activeOperations = new Set();
         this.loadingStates = new Map(); // Track loading state per component
+        this.entertainmentInterval = null;
+        this.entertainmentMessages = [];
+        this.currentMessageIndex = 0;
+        this.minLoadingStartTime = null;
     }
 
     // Global loading overlay
@@ -379,6 +383,8 @@ class LoadingManager {
             this.progressText.textContent = '';
             this.progressText.classList.remove('active');
         }
+        // Stop entertainment rotation
+        this.stopEntertainmentRotation();
     }
 
     // Show loading with progress tracking
@@ -395,6 +401,76 @@ class LoadingManager {
         if (this.progressText && this.overlay.classList.contains('active')) {
             this.progressText.textContent = `${baseMessage} ${current} van ${total}...`;
         }
+    }
+
+    // Entertainment loading with rotating messages
+    showWithEntertainment(baseMessage, entertainmentMessages = [], minTime = 1500) {
+        this.minLoadingStartTime = Date.now();
+        this.entertainmentMessages = entertainmentMessages.length > 0 ? entertainmentMessages : [
+            '🎯 Je planning wordt voorbereid...',
+            '⚡ Productiviteit wordt geladen...',
+            '🧠 Slimme suggesties worden berekend...',
+            '🎨 Interface wordt geperfectioneerd...',
+            '🚀 Bijna klaar voor een geweldige dag!',
+            '✨ Magie gebeurt achter de schermen...',
+            '🔮 De perfecte dag wordt gecreëerd...'
+        ];
+        
+        this.overlay.classList.add('active');
+        this.currentMessageIndex = 0;
+        
+        // Start with base message
+        if (this.progressText) {
+            this.progressText.textContent = baseMessage;
+            this.progressText.classList.add('active');
+        }
+        
+        // Start entertainment rotation after short delay
+        setTimeout(() => this.startEntertainmentRotation(), 500);
+    }
+
+    startEntertainmentRotation() {
+        if (this.entertainmentInterval) {
+            clearInterval(this.entertainmentInterval);
+        }
+        
+        this.entertainmentInterval = setInterval(() => {
+            if (this.overlay.classList.contains('active') && this.progressText) {
+                // Add entertainment animation class
+                this.progressText.classList.add('entertainment');
+                this.progressText.textContent = this.entertainmentMessages[this.currentMessageIndex];
+                this.currentMessageIndex = (this.currentMessageIndex + 1) % this.entertainmentMessages.length;
+                
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    this.progressText.classList.remove('entertainment');
+                }, 800);
+            }
+        }, 800); // Change message every 800ms
+    }
+
+    async hideWithMinTime() {
+        // Ensure minimum loading time
+        if (this.minLoadingStartTime) {
+            const elapsed = Date.now() - this.minLoadingStartTime;
+            const minTime = 1500; // 1.5 seconds minimum
+            
+            if (elapsed < minTime) {
+                await new Promise(resolve => setTimeout(resolve, minTime - elapsed));
+            }
+        }
+        
+        this.hide();
+        this.stopEntertainmentRotation();
+        this.minLoadingStartTime = null;
+    }
+
+    stopEntertainmentRotation() {
+        if (this.entertainmentInterval) {
+            clearInterval(this.entertainmentInterval);
+            this.entertainmentInterval = null;
+        }
+        this.currentMessageIndex = 0;
     }
 
     // Operation-based loading (multiple concurrent operations)
@@ -2529,6 +2605,30 @@ class Taakbeheer {
             return;
         }
 
+        // Use entertainment loading for dagelijkse planning
+        if (this.huidigeLijst === 'dagelijkse-planning') {
+            const planningMessages = [
+                '🎯 Je dagplanning wordt voorbereid...',
+                '📅 Taken worden georganiseerd...',
+                '⏰ Tijdslots worden berekend...',
+                '🎨 De perfecte dag wordt ontworpen...',
+                '✨ Prioriteiten worden gerangschikt...',
+                '🚀 Productiviteitsmagie gebeurt...',
+                '🔮 Je ideale schema wordt gecreëerd...'
+            ];
+            
+            loading.showWithEntertainment('🎯 Dagelijkse planning laden...', planningMessages);
+            
+            try {
+                const result = await this.loadPlanningData();
+                await loading.hideWithMinTime();
+                return result;
+            } catch (error) {
+                loading.hide();
+                throw error;
+            }
+        }
+
         return await loading.withLoading(async () => {
             try {
                 if (this.huidigeLijst === 'projecten') {
@@ -2580,6 +2680,30 @@ class Taakbeheer {
         });
         
         // No need for button visibility updates - button is hardcoded in acties lijst
+    }
+
+    async loadPlanningData() {
+        // Specialized loading function for dagelijkse planning
+        // This replaces the normal list loading logic and renders dagelijkse planning
+        
+        try {
+            const response = await fetch(`/api/lijst/dagelijkse-planning`);
+            if (response.ok) {
+                let taken = await response.json();
+                // Apply date filter to planning data  
+                this.taken = this.filterTakenOpDatum(taken);
+            } else {
+                this.taken = [];
+            }
+            
+            // Render the dagelijkse planning interface
+            await this.renderTaken();
+            
+        } catch (error) {
+            console.error('Fout bij laden dagelijkse planning:', error);
+            this.taken = [];
+            await this.renderTaken();
+        }
     }
 
     async voegTaakToe() {
