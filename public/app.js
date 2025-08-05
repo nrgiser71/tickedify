@@ -7423,8 +7423,6 @@ class Taakbeheer {
                 
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
-                    <!-- Insertion line for drag & drop -->
-                    <div class="insertion-line" id="insertion-line"></div>
                     <div class="kalender-header">
                         <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="header-actions">
@@ -7901,14 +7899,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Start insertion line tracking
-                this.startInsertionLineTracking();
+                // Start dynamic drag tracking
+                this.startDynamicDragTracking();
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Stop insertion line tracking
-                this.stopInsertionLineTracking();
+                // Stop dynamic drag tracking
+                this.stopDynamicDragTracking();
             });
         });
         
@@ -7943,14 +7941,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Start insertion line tracking
-                this.startInsertionLineTracking();
+                // Start dynamic drag tracking
+                this.startDynamicDragTracking();
             });
             
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Stop insertion line tracking
-                this.stopInsertionLineTracking();
+                // Stop dynamic drag tracking
+                this.stopDynamicDragTracking();
             });
         });
 
@@ -7987,14 +7985,14 @@ class Taakbeheer {
                 
                 // Visual feedback
                 item.classList.add('dragging');
-                // Start insertion line tracking
-                this.startInsertionLineTracking();
+                // Start dynamic drag tracking
+                this.startDynamicDragTracking();
             });
 
             item.addEventListener('dragend', (e) => {
                 item.classList.remove('dragging');
-                // Stop insertion line tracking
-                this.stopInsertionLineTracking();
+                // Stop dynamic drag tracking
+                this.stopDynamicDragTracking();
             });
         });
         
@@ -8003,22 +8001,21 @@ class Taakbeheer {
     }
 
     // Insertion Line System Methods
-    startInsertionLineTracking() {
+    startDynamicDragTracking() {
         const dagKalender = document.querySelector('.dag-kalender');
-        const insertionLine = document.getElementById('insertion-line');
         
-        if (!dagKalender || !insertionLine) {
-            console.warn('🚨 Insertion line tracking failed: missing elements', {
-                dagKalender: !!dagKalender,
-                insertionLine: !!insertionLine
-            });
+        if (!dagKalender) {
+            console.warn('🚨 Dynamic drag tracking failed: missing dag-kalender');
             return;
         }
         
-        console.log('✅ Starting insertion line tracking');
+        console.log('✅ Starting dynamic drag tracking');
         
-        // Setup drop zone handling with insertion line  
-        this.insertionLineDropHandler = (e) => {
+        // Clear any existing ghost or spacers
+        this.clearDynamicElements();
+        
+        // Setup drop zone handling with dynamic spacing
+        this.dynamicDropHandler = (e) => {
             e.preventDefault();
             console.log('🎯 Drop event triggered at Y:', e.clientY);
             
@@ -8026,43 +8023,173 @@ class Taakbeheer {
             if (dropInfo) {
                 console.log('✅ Drop info calculated:', dropInfo);
                 const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                this.handleInsertionLineDrop(data, dropInfo);
+                this.handleDynamicDrop(data, dropInfo);
             } else {
                 console.warn('❌ No drop info found for Y position:', e.clientY);
             }
-            this.stopInsertionLineTracking();
+            this.stopDynamicDragTracking();
         };
         
-        // Use dragover for tracking insertion line position (mousemove doesn't work during drag)
-        this.insertionLineDragOverHandler = (e) => {
+        // Use dragover for tracking dynamic positioning
+        this.dynamicDragOverHandler = (e) => {
             e.preventDefault();
-            // Update insertion line position on every dragover
-            this.updateInsertionLinePosition(e);
+            // Update dynamic spacing and ghost preview
+            this.updateDynamicSpacing(e);
         };
         
-        dagKalender.addEventListener('dragover', this.insertionLineDragOverHandler);
-        dagKalender.addEventListener('drop', this.insertionLineDropHandler);
+        dagKalender.addEventListener('dragover', this.dynamicDragOverHandler);
+        dagKalender.addEventListener('drop', this.dynamicDropHandler);
         
-        console.log('✅ Insertion line event listeners attached');
+        console.log('✅ Dynamic drag event listeners attached');
     }
     
-    stopInsertionLineTracking() {
+    stopDynamicDragTracking() {
         const dagKalender = document.querySelector('.dag-kalender');
-        const insertionLine = document.getElementById('insertion-line');
         
-        console.log('🛑 Stopping insertion line tracking');
+        console.log('🛑 Stopping dynamic drag tracking');
         
-        if (insertionLine) {
-            insertionLine.classList.remove('active');
+        // Clear all dynamic elements
+        this.clearDynamicElements();
+        
+        if (dagKalender && this.dynamicDragOverHandler) {
+            dagKalender.removeEventListener('dragover', this.dynamicDragOverHandler);
+            dagKalender.removeEventListener('drop', this.dynamicDropHandler);
         }
         
-        if (dagKalender && this.insertionLineDragOverHandler) {
-            dagKalender.removeEventListener('dragover', this.insertionLineDragOverHandler);
-            dagKalender.removeEventListener('drop', this.insertionLineDropHandler);
+        this.dynamicDropHandler = null;
+        this.dynamicDragOverHandler = null;
+        this.currentDropInfo = null;
+    }
+    
+    clearDynamicElements() {
+        // Remove any existing ghost previews
+        const existingGhost = document.querySelector('.drag-ghost-preview');
+        if (existingGhost) {
+            existingGhost.remove();
         }
         
-        this.insertionLineDropHandler = null;
-        this.insertionLineDragOverHandler = null;
+        // Remove any dynamic spacers
+        const existingSpacers = document.querySelectorAll('.dynamic-spacer');
+        existingSpacers.forEach(spacer => spacer.remove());
+        
+        // Reset all task positions (remove any transforms)
+        const allPlanningItems = document.querySelectorAll('.planning-item');
+        allPlanningItems.forEach(item => {
+            item.style.transform = '';
+            item.classList.remove('push-up', 'push-down');
+        });
+    }
+    
+    updateDynamicSpacing(e) {
+        const dropInfo = this.getDropInfoFromPosition(e.clientY);
+        
+        // Only update if position changed
+        if (!dropInfo || (this.currentDropInfo && 
+            this.currentDropInfo.uur === dropInfo.uur && 
+            this.currentDropInfo.position === dropInfo.position)) {
+            return;
+        }
+        
+        console.log('📍 Updating dynamic spacing:', dropInfo);
+        
+        // Clear previous dynamic elements
+        this.clearDynamicElements();
+        
+        if (dropInfo) {
+            // Add ghost preview and spacing
+            this.addGhostPreview(dropInfo, e);
+            this.addDynamicSpacing(dropInfo);
+            this.currentDropInfo = dropInfo;
+        }
+    }
+    
+    addGhostPreview(dropInfo, event) {
+        const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+        
+        // Create ghost preview element
+        const ghost = document.createElement('div');
+        ghost.className = 'drag-ghost-preview planning-item';
+        ghost.setAttribute('data-uur', dropInfo.uur);
+        
+        // Style ghost based on drag data
+        if (data.type === 'template') {
+            ghost.setAttribute('data-type', data.planningType);
+            ghost.innerHTML = `
+                <div class="planning-icon">${data.planningType === 'geblokkeerd' ? '🔒' : '☕'}</div>
+                <div class="planning-tekst">${data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze'}</div>
+                <div class="planning-duur">${data.duurMinuten || 60}min</div>
+            `;
+        } else if (data.type === 'actie' || data.type === 'prioriteit') {
+            ghost.setAttribute('data-type', 'taak');
+            
+            // Get task info from cache
+            const actie = this.planningActies?.find(t => t.id === data.actieId) || 
+                         this.taken?.find(t => t.id === data.actieId) ||
+                         this.topPrioriteiten?.find(t => t && t.id === data.actieId);
+            
+            const taskName = actie ? actie.tekst : 'Taak wordt geladen...';
+            ghost.innerHTML = `
+                <div class="planning-icon"><i class="fas fa-ellipsis-v"></i></div>
+                <div class="planning-tekst">${taskName}</div>
+                <div class="planning-duur">${data.duurMinuten || 60}min</div>
+            `;
+        }
+        
+        // Find the hour container and insert ghost
+        const uurElement = document.querySelector(`[data-uur="${dropInfo.uur}"]`);
+        if (uurElement) {
+            const uurPlanning = uurElement.querySelector('.uur-planning');
+            if (uurPlanning) {
+                const existingItems = uurPlanning.children;
+                if (dropInfo.position >= existingItems.length) {
+                    uurPlanning.appendChild(ghost);
+                } else {
+                    uurPlanning.insertBefore(ghost, existingItems[dropInfo.position]);
+                }
+            }
+        }
+    }
+    
+    addDynamicSpacing(dropInfo) {
+        // Find all planning items in this hour
+        const uurElement = document.querySelector(`[data-uur="${dropInfo.uur}"]`);
+        if (!uurElement) return;
+        
+        const planningItems = uurElement.querySelectorAll('.planning-item:not(.drag-ghost-preview)');
+        
+        // Add push animations to items that need to move
+        planningItems.forEach((item, index) => {
+            if (index >= dropInfo.position) {
+                // Items at or after drop position: push down
+                item.classList.add('push-down');
+                item.style.transform = 'translateY(50px)';
+            }
+        });
+    }
+    
+    async handleDynamicDrop(data, dropInfo) {
+        console.log('🚀 Starting dynamic drop handling', { data, dropInfo });
+        
+        // Clear dynamic elements but keep optimistic update
+        this.clearDynamicElements();
+        
+        // Immediately update UI optimistically for better UX
+        const optimisticItem = this.createOptimisticPlanningItem(data, dropInfo);
+        this.addOptimisticPlanningItem(optimisticItem, dropInfo);
+        
+        try {
+            if (data.type === 'planning-reorder') {
+                await this.handlePlanningReorder(data, dropInfo.uur, dropInfo.position);
+            } else {
+                await this.handleDropAtPosition(data, dropInfo.uur, dropInfo.position);
+            }
+            console.log('✅ Dynamic drop operation completed successfully');
+        } catch (error) {
+            console.error('❌ Dynamic drop operation failed, reverting optimistic update:', error);
+            // Remove optimistic item and re-render
+            this.removeOptimisticPlanningItem(optimisticItem);
+            await this.renderTaken(); // Full re-render to ensure consistency
+        }
     }
     
     updateInsertionLinePosition(e) {
@@ -8424,8 +8551,8 @@ class Taakbeheer {
             }
         });
         
-        // Stop any existing insertion line tracking
-        this.stopInsertionLineTracking();
+        // Stop any existing dynamic drag tracking
+        this.stopDynamicDragTracking();
     }
 
 

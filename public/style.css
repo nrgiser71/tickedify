@@ -3708,37 +3708,83 @@ button:focus {
     word-break: break-word;
 }
 
-/* Ensure dag-kalender is positioned for insertion line containment */
+/* Ensure dag-kalender is positioned for dynamic drag containment */
 .dag-kalender {
     position: relative;
 }
 
-/* Insertion Line System for Drag & Drop - contained within dag-kalender */
-.insertion-line {
-    position: absolute;
-    left: 15px;
-    right: 15px;
-    height: 4px;
-    background: var(--macos-blue);
-    border-radius: 3px;
-    box-shadow: 0 0 16px rgba(0, 122, 255, 0.8), 0 0 4px rgba(0, 122, 255, 1);
-    opacity: 0;
+/* Dynamic Drag & Drop System - Modern Push-Apart Interface */
+
+/* Ghost Preview - Semi-transparent preview of dragged item */
+.drag-ghost-preview {
+    opacity: 0.6 !important;
+    background: rgba(0, 122, 255, 0.2) !important;
+    border: 2px dashed var(--macos-blue) !important;
+    transform: scale(0.98);
     pointer-events: none;
-    z-index: 1001; /* Higher than most other elements */
-    transition: opacity 0.2s ease, transform 0.1s ease;
-    top: 0; /* Default position */
+    animation: ghostPulse 1.5s ease-in-out infinite;
 }
 
-.insertion-line.active {
-    opacity: 1;
-    transform: scaleY(1.5);
+@keyframes ghostPulse {
+    0%, 100% { opacity: 0.6; transform: scale(0.98); }
+    50% { opacity: 0.8; transform: scale(1.0); }
 }
 
-/* Dragging feedback */
+/* Enhanced Planning Item Transitions for Smooth Push Animations */
+.planning-item {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.2s ease,
+                box-shadow 0.2s ease;
+}
+
+/* Push Animation Classes */
+.planning-item.push-down {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.planning-item.push-up {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Enhanced Dragging State */
 .planning-item.dragging {
-    opacity: 0.5;
-    transform: rotate(2deg);
+    opacity: 0.3;
+    transform: rotate(3deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
 }
+
+/* Dynamic Spacer for Smooth Height Transitions */
+.dynamic-spacer {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 122, 255, 0.1) 50%, 
+        transparent 100%);
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.dynamic-spacer.active {
+    height: 60px; /* Approximate height of a planning item */
+}
+
+/* Hover State During Drag Operations */
+.kalender-uur.drag-hover {
+    background: rgba(0, 122, 255, 0.05);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+/* Spring-like Animation for Natural Movement */
+@keyframes springIn {
+    0% { transform: scale(0.8) translateY(-20px); opacity: 0; }
+    50% { transform: scale(1.05) translateY(5px); opacity: 0.8; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
 
 .planning-icon {
     font-size: 14px;
