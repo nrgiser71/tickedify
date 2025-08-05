@@ -134,10 +134,144 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.11.141 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.11.141</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🚨</span>
+                    <span class="change-desc"><strong>HOTFIX:</strong> Missing drag functions - setupTimeBlockHoverListeners/clearTimeBlockHoverStates vervangen door startDynamicDragTracking/stopDynamicDragTracking</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🔄</span>
+                    <span class="change-desc"><strong>Multiple Drops Fix:</strong> Tweede en volgende drag & drop operaties werken nu foutloos</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version 0.11.140 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.11.140</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🚨</span>
+                    <span class="change-desc"><strong>HOTFIX:</strong> renderPlanningItemsWithDropZones → renderPlanningItems functie naam gecorrigeerd</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⚡</span>
+                    <span class="change-desc"><strong>Instant UI Update:</strong> Geen server fetch meer tijdens drop - lokale data update voor snellere response</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🎯</span>
+                    <span class="change-desc"><strong>Lege Scherm Opgelost:</strong> Drop operaties tonen direct resultaat zonder wachttijd</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version 0.11.139 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.11.139</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🚨</span>
+                    <span class="change-desc"><strong>CRITICAL HOTFIX:</strong> Dagelijkse planning loading errors - verkeerd API endpoint /api/lijst/dagelijkse-planning gefixed</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <span class="change-desc"><strong>499 Errors Opgelost:</strong> Alle API calls werken weer correct</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version 0.11.138 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.11.138</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎯</span>
+                    <span class="change-desc"><strong>Entertainment Loading voor Drag & Drop:</strong> Rotating berichten tijdens drop operaties - "🎯 Taak wordt toegevoegd...", "📅 Planning wordt bijgewerkt..." enz.</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⚡</span>
+                    <span class="change-desc"><strong>Drop Messages:</strong> Contextspecifieke berichten voor verschillende drop operaties</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version 0.11.137 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.11.137</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">✨</span>
+                    <span class="change-desc"><strong>MAJOR FEATURE: Entertainment Loading Systeem</strong> - Rotating messages met smooth animaties tijdens dagelijkse planning laden</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🎨</span>
+                    <span class="change-desc"><strong>Planning Messages:</strong> "🎯 Je dagplanning wordt voorbereid...", "📅 Taken worden georganiseerd..." enz. wisselen elke 800ms</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⏱️</span>
+                    <span class="change-desc"><strong>Minimum Loading Tijd:</strong> 1.5 seconden garantie voorkomt flikkerende korte loading</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version 0.11.136 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.11.136</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎯</span>
+                    <span class="change-desc"><strong>Anti-Flikkering Fix:</strong> Event throttling (50ms) voor dragover events voorkomt flikkering aan drop zone randen</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⚖️</span>
+                    <span class="change-desc"><strong>Position Hysteresis:</strong> 100ms stability check voorkomt snelle positie switching</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Version 0.11.135 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.11.135</span>
+                <span class="version-date">5 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <span class="change-desc"><strong>JSON.parse Error Fix:</strong> Global drag data storage oplost dataTransfer security restricties tijdens dragover events</span>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🎯</span>
+                    <span class="change-desc"><strong>Dynamic Drag & Drop:</strong> Ghost preview en push-apart animaties werken nu foutloos</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.11.129 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.11.129</span>
+                <span class="version-badge badge-fix">v0.11.129</span>
                 <span class="version-date">3 augustus 2025</span>
             </div>
             <div class="changes-list">
