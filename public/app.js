@@ -2684,19 +2684,13 @@ class Taakbeheer {
 
     async loadPlanningData() {
         // Specialized loading function for dagelijkse planning
-        // This replaces the normal list loading logic and renders dagelijkse planning
+        // This directly renders the dagelijkse planning interface without loading tasks
         
         try {
-            const response = await fetch(`/api/lijst/dagelijkse-planning`);
-            if (response.ok) {
-                let taken = await response.json();
-                // Apply date filter to planning data  
-                this.taken = this.filterTakenOpDatum(taken);
-            } else {
-                this.taken = [];
-            }
+            // Don't load tasks data - dagelijkse planning has its own data loading
+            this.taken = [];
             
-            // Render the dagelijkse planning interface
+            // Render the dagelijkse planning interface (which handles its own data loading)
             await this.renderTaken();
             
         } catch (error) {
