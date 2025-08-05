@@ -8861,48 +8861,21 @@ class Taakbeheer {
     async updatePlanningLocally(planningItem, serverResponse) {
         console.log('<i class="fas fa-redo"></i> updatePlanningLocally called with:', { planningItem, serverResponse });
         
-        // First, fetch the current planning data from server to ensure we have all items
-        const today = new Date().toISOString().split('T')[0];
-        try {
-            const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
-            if (planningResponse.ok) {
-                this.currentPlanningData = await planningResponse.json();
-                console.log('📊 Fetched current planning data:', this.currentPlanningData.length, 'items');
-                
-                // The server response already includes the new item, so we don't need to add it again
-                // Just update the display with the current data from server
-            } else {
-                // Fallback: if fetch fails, manually add the item
-                if (!this.currentPlanningData) {
-                    this.currentPlanningData = [];
-                }
-                
-                // Only add if server fetch failed
-                const newItem = {
-                    ...planningItem,
-                    id: serverResponse.id || Math.random().toString(36),
-                    ...serverResponse
-                };
-                
-                console.log('➕ Adding to currentPlanningData (fallback):', newItem);
-                this.currentPlanningData.push(newItem);
-            }
-        } catch (error) {
-            console.error('Error fetching planning data:', error);
-            // Fallback: if fetch fails, manually add the item
-            if (!this.currentPlanningData) {
-                this.currentPlanningData = [];
-            }
-            
-            const newItem = {
-                ...planningItem,
-                id: serverResponse.id || Math.random().toString(36),
-                ...serverResponse
-            };
-            
-            console.log('➕ Adding to currentPlanningData (error fallback):', newItem);
-            this.currentPlanningData.push(newItem);
+        // Instead of fetching from server (which causes the blank screen), 
+        // just update the local data directly for immediate UI update
+        if (!this.currentPlanningData) {
+            this.currentPlanningData = [];
         }
+        
+        // Add the new item to local planning data
+        const newItem = {
+            ...planningItem,
+            id: serverResponse.id || serverResponse.planningId || Math.random().toString(36),
+            ...serverResponse
+        };
+        
+        console.log('➕ Adding to currentPlanningData (instant):', newItem);
+        this.currentPlanningData.push(newItem);
         
         // Load subtaken for all planned tasks (including newly added ones)
         const plannedTaskIds = this.currentPlanningData
@@ -8925,7 +8898,7 @@ class Taakbeheer {
         const uurPlanning = this.currentPlanningData?.filter(p => p.uur === uur) || [];
         
         // Update the content
-        uurElement.innerHTML = this.renderPlanningItemsWithDropZones(uurPlanning, uur);
+        uurElement.innerHTML = this.renderPlanningItems(uurPlanning, uur);
         
         // Update hour label with new totals
         const totaalMinuten = uurPlanning.reduce((sum, p) => sum + p.duurMinuten, 0);
