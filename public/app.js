@@ -8276,7 +8276,7 @@ class Taakbeheer {
         return null;
     }
     
-    async handleInsertionLineDrop(data, dropInfo) {
+    async handleDynamicDropLegacy(data, dropInfo) {
         console.log('🚀 Starting insertion line drop handling', { data, dropInfo });
         
         // Immediately update UI optimistically for better UX
