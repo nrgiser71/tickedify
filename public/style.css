@@ -3708,7 +3708,12 @@ button:focus {
     word-break: break-word;
 }
 
-/* Insertion Line System for Drag & Drop */
+/* Ensure dag-kalender is positioned for insertion line containment */
+.dag-kalender {
+    position: relative;
+}
+
+/* Insertion Line System for Drag & Drop - contained within dag-kalender */
 .insertion-line {
     position: absolute;
     left: 15px;
