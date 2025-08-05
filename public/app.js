@@ -8752,13 +8752,41 @@ class Taakbeheer {
         }
         this.activeDropOperations.add(operationKey);
         
-        return await loading.withLoading(async () => {
-            const planningItem = {
-                datum: today,
-                uur: uur,
-                type: data.type === 'template' ? data.planningType : 'taak',
-                duurMinuten: data.duurMinuten
-            };
+        // Use entertainment loading for drop operations
+        const dropMessages = [
+            '🎯 Taak wordt toegevoegd...',
+            '📅 Planning wordt bijgewerkt...',
+            '⚡ Synchronisatie loopt...',
+            '✨ Interface wordt ververst...',
+            '🚀 Bijna klaar...'
+        ];
+        
+        loading.showWithEntertainment('🎯 Item toevoegen...', dropMessages, 1200);
+        
+        try {
+            const result = await this.executeDropOperation(data, uur, position, operationKey);
+            await loading.hideWithMinTime();
+            return result;
+        } catch (error) {
+            loading.hide();
+            throw error;
+        } finally {
+            // Always clean up the operation key
+            if (this.activeDropOperations) {
+                this.activeDropOperations.delete(operationKey);
+            }
+        }
+    }
+
+    async executeDropOperation(data, uur, position, operationKey) {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const planningItem = {
+            datum: today,
+            uur: uur,
+            type: data.type === 'template' ? data.planningType : 'taak',
+            duurMinuten: data.duurMinuten
+        };
             
             // Add position if specified
             if (position !== null) {
@@ -8830,21 +8858,6 @@ class Taakbeheer {
             } else {
                 toast.error('Fout bij toevoegen planning item');
             }
-            
-            // Always clean up the operation key
-            if (this.activeDropOperations) {
-                this.activeDropOperations.delete(operationKey);
-            }
-        }, {
-            operationId: position !== null ? 'add-planning-position' : 'add-planning',
-            showGlobal: true, // Show loading indicator
-            message: 'Item toevoegen...'
-        }).finally(() => {
-            // Ensure cleanup even if withLoading fails
-            if (this.activeDropOperations) {
-                this.activeDropOperations.delete(operationKey);
-            }
-        });
     }
 
     async handleDropAtPosition(data, uur, position) {
@@ -9099,7 +9112,18 @@ class Taakbeheer {
             return;
         }
         
-        return await loading.withLoading(async () => {
+        // Use entertainment loading for reorder operations
+        const moveMessages = [
+            '🎯 Item wordt verplaatst...',
+            '📅 Planning wordt herordend...',
+            '⚡ Synchronisatie actief...',
+            '✨ Interface wordt bijgewerkt...',
+            '🚀 Laatste details...'
+        ];
+        
+        loading.showWithEntertainment('🎯 Verplaatsen...', moveMessages, 1000);
+        
+        try {
             // Use the new reorder endpoint
             const reorderData = {
                 targetUur: targetUur,
@@ -9125,11 +9149,12 @@ class Taakbeheer {
             } else {
                 toast.error('Fout bij verplaatsen item');
             }
-        }, {
-            operationId: 'reorder-planning',
-            showGlobal: true, // Show loading indicator
-            message: 'Verplaatsen...'
-        });
+            
+            await loading.hideWithMinTime();
+        } catch (error) {
+            loading.hide();
+            throw error;
+        }
     }
     
     async updateReorderLocally(data, targetUur, targetPosition) {
