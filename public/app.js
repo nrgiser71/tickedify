@@ -8339,6 +8339,10 @@ class Taakbeheer {
         this.addOptimisticPlanningItem(optimisticItem, dropInfo);
         
         try {
+            // Remove optimistic item before server call to prevent duplicates
+            console.log('🧹 Removing optimistic item before server update to prevent duplicates');
+            this.removeOptimisticPlanningItem(optimisticItem);
+            
             if (data.type === 'planning-reorder') {
                 await this.handlePlanningReorder(data, dropInfo.uur, dropInfo.position);
             } else {
@@ -8346,10 +8350,9 @@ class Taakbeheer {
             }
             console.log('✅ Dynamic drop operation completed successfully');
         } catch (error) {
-            console.error('❌ Dynamic drop operation failed, reverting optimistic update:', error);
-            // Remove optimistic item and re-render
-            this.removeOptimisticPlanningItem(optimisticItem);
-            await this.renderTaken(); // Full re-render to ensure consistency
+            console.error('❌ Dynamic drop operation failed, reverting to clean state:', error);
+            // Full re-render to ensure consistency (optimistic item already removed above)
+            await this.renderTaken(); 
         }
     }
     
