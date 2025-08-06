@@ -8864,33 +8864,84 @@ class Taakbeheer {
     async updatePlanningLocally(planningItem, serverResponse) {
         console.log('<i class="fas fa-redo"></i> updatePlanningLocally called with:', { planningItem, serverResponse });
         
-        // Instead of fetching from server (which causes the blank screen), 
-        // just update the local data directly for immediate UI update
-        if (!this.currentPlanningData) {
-            this.currentPlanningData = [];
+        try {
+            // CRITICAL FIX: Refresh planning data from server to prevent missing existing items
+            const today = new Date().toISOString().split('T')[0];
+            const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+            
+            if (planningResponse.ok) {
+                const freshPlanningData = await planningResponse.json();
+                console.log('🔄 Refreshed planning data from server:', freshPlanningData.length, 'items');
+                
+                // Update our local cache with fresh server data
+                this.currentPlanningData = freshPlanningData || [];
+                
+                // Verify the new item is in the fresh data (it should be, since server just added it)
+                const newItemId = serverResponse.id || serverResponse.planningId;
+                const newItemExists = this.currentPlanningData.some(item => 
+                    item.id === newItemId || 
+                    (item.actieId === planningItem.actieId && item.uur === planningItem.uur)
+                );
+                
+                if (!newItemExists) {
+                    console.warn('⚠️ New item not found in fresh server data, adding manually as fallback');
+                    const newItem = {
+                        ...planningItem,
+                        id: newItemId || Math.random().toString(36),
+                        ...serverResponse
+                    };
+                    this.currentPlanningData.push(newItem);
+                }
+                
+                // Load subtaken for all planned tasks (including newly added ones)
+                const plannedTaskIds = this.currentPlanningData
+                    .filter(p => p.type === 'taak' && p.actieId)
+                    .map(p => p.actieId);
+                
+                if (plannedTaskIds.length > 0) {
+                    await this.loadSubtakenForPlanning(plannedTaskIds);
+                }
+                
+                // Update only the affected hour in the calendar
+                this.updateSingleHourDisplay(planningItem.uur);
+                
+                console.log('✅ Planning locally updated with server data');
+            } else {
+                throw new Error(`Server responded with ${planningResponse.status}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error refreshing planning data from server:', error);
+            
+            // FALLBACK: Use the old local-only approach if server fetch fails
+            console.log('🔄 Falling back to local-only update');
+            
+            if (!this.currentPlanningData) {
+                this.currentPlanningData = [];
+            }
+            
+            // Add the new item to local planning data
+            const newItem = {
+                ...planningItem,
+                id: serverResponse.id || serverResponse.planningId || Math.random().toString(36),
+                ...serverResponse
+            };
+            
+            console.log('➕ Adding to currentPlanningData (fallback):', newItem);
+            this.currentPlanningData.push(newItem);
+            
+            // Load subtaken for all planned tasks (including newly added ones)
+            const plannedTaskIds = this.currentPlanningData
+                .filter(p => p.type === 'taak' && p.actieId)
+                .map(p => p.actieId);
+            
+            if (plannedTaskIds.length > 0) {
+                await this.loadSubtakenForPlanning(plannedTaskIds);
+            }
+            
+            // Update only the affected hour in the calendar
+            this.updateSingleHourDisplay(planningItem.uur);
         }
-        
-        // Add the new item to local planning data
-        const newItem = {
-            ...planningItem,
-            id: serverResponse.id || serverResponse.planningId || Math.random().toString(36),
-            ...serverResponse
-        };
-        
-        console.log('➕ Adding to currentPlanningData (instant):', newItem);
-        this.currentPlanningData.push(newItem);
-        
-        // Load subtaken for all planned tasks (including newly added ones)
-        const plannedTaskIds = this.currentPlanningData
-            .filter(p => p.type === 'taak' && p.actieId)
-            .map(p => p.actieId);
-        
-        if (plannedTaskIds.length > 0) {
-            await this.loadSubtakenForPlanning(plannedTaskIds);
-        }
-        
-        // Update only the affected hour in the calendar
-        this.updateSingleHourDisplay(planningItem.uur);
     }
     
     updateSingleHourDisplay(uur) {
@@ -8899,6 +8950,20 @@ class Taakbeheer {
         
         // Get planning for this specific hour
         const uurPlanning = this.currentPlanningData?.filter(p => p.uur === uur) || [];
+        
+        // CONSISTENCY CHECK: Verify we have the expected number of items
+        const existingDomItems = uurElement.querySelectorAll('.planning-item').length;
+        if (existingDomItems > uurPlanning.length && uurPlanning.length === 1) {
+            console.warn(`⚠️ Consistency issue detected in hour ${uur}:`, {
+                domItems: existingDomItems,
+                dataItems: uurPlanning.length,
+                trigger: 'possible_missing_planning_data'
+            });
+            
+            // Auto-recovery: Refresh planning data from server
+            this.handlePlanningInconsistency(uur);
+            return; // Early return, let the recovery handle the update
+        }
         
         // Update the content
         uurElement.innerHTML = this.renderPlanningItems(uurPlanning, uur);
@@ -8930,6 +8995,78 @@ class Taakbeheer {
         }
         
         // Re-bind drag and drop events for new elements (with throttling)
+        this.scheduleEventRebind();
+    }
+    
+    async handlePlanningInconsistency(affectedUur) {
+        console.log(`🔄 Auto-recovery triggered for hour ${affectedUur} due to inconsistency`);
+        
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
+            
+            if (planningResponse.ok) {
+                const freshPlanningData = await planningResponse.json();
+                console.log('🔄 Recovered planning data from server:', freshPlanningData.length, 'items');
+                
+                // Update our local cache completely with fresh server data
+                this.currentPlanningData = freshPlanningData || [];
+                
+                // Re-render the affected hour with correct data
+                this.updateSingleHourDisplayForced(affectedUur);
+                
+                // Load subtaken for all tasks
+                const plannedTaskIds = this.currentPlanningData
+                    .filter(p => p.type === 'taak' && p.actieId)
+                    .map(p => p.actieId);
+                
+                if (plannedTaskIds.length > 0) {
+                    await this.loadSubtakenForPlanning(plannedTaskIds);
+                }
+                
+                console.log(`✅ Auto-recovery completed for hour ${affectedUur}`);
+            } else {
+                console.error('❌ Auto-recovery failed - server error:', planningResponse.status);
+            }
+        } catch (error) {
+            console.error('❌ Auto-recovery failed - network error:', error);
+        }
+    }
+    
+    updateSingleHourDisplayForced(uur) {
+        // Forced update without consistency checks (for recovery scenarios)
+        const uurElement = document.querySelector(`[data-uur="${uur}"] .uur-planning`);
+        if (!uurElement) return;
+        
+        const uurPlanning = this.currentPlanningData?.filter(p => p.uur === uur) || [];
+        uurElement.innerHTML = this.renderPlanningItems(uurPlanning, uur);
+        
+        // Update hour label with new totals
+        const totaalMinuten = uurPlanning.reduce((sum, p) => sum + p.duurMinuten, 0);
+        const isOverboekt = totaalMinuten > 60;
+        
+        const uurContainer = document.querySelector(`[data-uur="${uur}"]`);
+        if (uurContainer) {
+            uurContainer.className = `kalender-uur ${isOverboekt ? 'overboekt' : ''}`;
+            
+            const uurTotaalElement = uurContainer.querySelector('.uur-totaal-tijd');
+            const uurLabelElement = uurContainer.querySelector('.uur-label');
+            
+            if (totaalMinuten > 0) {
+                if (uurTotaalElement) {
+                    uurTotaalElement.innerHTML = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
+                } else {
+                    const newTotaalElement = document.createElement('div');
+                    newTotaalElement.className = 'uur-totaal-tijd';
+                    newTotaalElement.innerHTML = `(${totaalMinuten} min${isOverboekt ? ' <i class="ti ti-alert-circle"></i>' : ''})`;
+                    uurLabelElement.appendChild(newTotaalElement);
+                }
+            } else if (uurTotaalElement) {
+                uurTotaalElement.remove();
+            }
+        }
+        
+        // Re-bind drag and drop events for new elements
         this.scheduleEventRebind();
     }
     
