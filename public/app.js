@@ -1845,20 +1845,21 @@ class Taakbeheer {
             
             // Check if this is a recurring task and create next instance
             let nextRecurringTaskId = null;
+            let calculatedNextDate = null;
             if (actie.herhalingActief && actie.herhalingType) {
                 if (actie.herhalingType.startsWith('event-')) {
                     // Handle event-based recurrence - ask for next event date
                     const nextEventDate = await this.askForNextEventDate(actie);
                     if (nextEventDate) {
-                        const nextTaskDate = this.calculateEventBasedDate(nextEventDate, actie.herhalingType);
-                        if (nextTaskDate) {
-                            nextRecurringTaskId = await this.createNextRecurringTask(actie, nextTaskDate);
+                        calculatedNextDate = this.calculateEventBasedDate(nextEventDate, actie.herhalingType);
+                        if (calculatedNextDate) {
+                            nextRecurringTaskId = await this.createNextRecurringTask(actie, calculatedNextDate);
                         }
                     }
                 } else {
-                    const nextDate = this.calculateNextRecurringDate(actie.verschijndatum, actie.herhalingType);
-                    if (nextDate) {
-                        nextRecurringTaskId = await this.createNextRecurringTask(actie, nextDate);
+                    calculatedNextDate = this.calculateNextRecurringDate(actie.verschijndatum, actie.herhalingType);
+                    if (calculatedNextDate) {
+                        nextRecurringTaskId = await this.createNextRecurringTask(actie, calculatedNextDate);
                     }
                 }
             }
@@ -1892,7 +1893,7 @@ class Taakbeheer {
             
             // Show confirmation for recurring task and refresh lists
             if (nextRecurringTaskId) {
-                const nextDateFormatted = new Date(this.calculateNextRecurringDate(actie.verschijndatum, actie.herhalingType)).toLocaleDateString('nl-NL');
+                const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
                 
                 // Refresh all lists to show the new recurring task
                 console.log('<i class="fas fa-redo"></i> Refreshing lists after recurring task creation...');
@@ -3307,14 +3308,15 @@ class Taakbeheer {
             
             // Handle recurring tasks
             let nextRecurringTaskId = null;
+            let calculatedNextDate = null;
             if (isRecurring) {
                 if (taak.herhalingType.startsWith('event-')) {
                     // Handle event-based recurrence - ask for next event date
                     const nextEventDate = await this.askForNextEventDate(taak);
                     if (nextEventDate) {
-                        const nextTaskDate = this.calculateEventBasedDate(nextEventDate, taak.herhalingType);
-                        if (nextTaskDate) {
-                            nextRecurringTaskId = await this.createNextRecurringTask(taak, nextTaskDate);
+                        calculatedNextDate = this.calculateEventBasedDate(nextEventDate, taak.herhalingType);
+                        if (calculatedNextDate) {
+                            nextRecurringTaskId = await this.createNextRecurringTask(taak, calculatedNextDate);
                         }
                     }
                 } else {
@@ -3324,15 +3326,15 @@ class Taakbeheer {
                         taskObject: taak
                     });
                     
-                    const nextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
-                    console.log('<i class="ti ti-calendar"></i> Calculated next date:', nextDate);
+                    calculatedNextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
+                    console.log('<i class="ti ti-calendar"></i> Calculated next date:', calculatedNextDate);
                     
-                    if (nextDate) {
+                    if (calculatedNextDate) {
                         console.log('<i class="fas fa-check"></i> Next date exists, calling createNextRecurringTask...');
-                        nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
+                        nextRecurringTaskId = await this.createNextRecurringTask(taak, calculatedNextDate);
                         console.log('🎯 createNextRecurringTask result:', nextRecurringTaskId);
                     } else {
-                        console.error('<i class="ti ti-x"></i> nextDate is null/undefined - recurring task will not be created');
+                        console.error('<i class="ti ti-x"></i> calculatedNextDate is null/undefined - recurring task will not be created');
                     }
                 }
             }
@@ -3367,7 +3369,7 @@ class Taakbeheer {
                 
                 // Show success message and refresh UI with scroll preservation
                 if (isRecurring && nextRecurringTaskId) {
-                    const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
+                    const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
                     toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // For recurring tasks, add new task to local arrays immediately
@@ -5103,6 +5105,17 @@ class Taakbeheer {
         }
         
         return lastDate.toISOString().split('T')[0];
+    }
+
+    // Utility function to get the correct next date for toast messages
+    getCalculatedNextDate(task, calculatedEventDate = null) {
+        if (task.herhalingType && task.herhalingType.startsWith('event-')) {
+            // For event-based patterns, use the calculated event date
+            return calculatedEventDate;
+        } else {
+            // For normal patterns, use the standard calculation
+            return this.calculateNextRecurringDate(task.verschijndatum, task.herhalingType);
+        }
     }
 
     async createNextRecurringTask(originalTask, nextDate) {
@@ -9573,22 +9586,23 @@ class Taakbeheer {
             
             // Handle recurring tasks - create next instance BEFORE marking as completed
             let nextRecurringTaskId = null;
+            let calculatedNextDate = null;
             if (isRecurring) {
                 console.log('🔁 Creating next recurring task...');
                 if (taak.herhalingType.startsWith('event-')) {
                     // Handle event-based recurrence - ask for next event date
                     const nextEventDate = await this.askForNextEventDate(taak);
                     if (nextEventDate) {
-                        const nextTaskDate = this.calculateEventBasedDate(nextEventDate, taak.herhalingType);
-                        if (nextTaskDate) {
-                            nextRecurringTaskId = await this.createNextRecurringTask(taak, nextTaskDate);
+                        calculatedNextDate = this.calculateEventBasedDate(nextEventDate, taak.herhalingType);
+                        if (calculatedNextDate) {
+                            nextRecurringTaskId = await this.createNextRecurringTask(taak, calculatedNextDate);
                             console.log('✨ Event-based recurring task created:', nextRecurringTaskId);
                         }
                     }
                 } else {
-                    const nextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
-                    if (nextDate) {
-                        nextRecurringTaskId = await this.createNextRecurringTask(taak, nextDate);
+                    calculatedNextDate = this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType);
+                    if (calculatedNextDate) {
+                        nextRecurringTaskId = await this.createNextRecurringTask(taak, calculatedNextDate);
                         console.log('✨ Recurring task created:', nextRecurringTaskId);
                     }
                 }
@@ -9716,7 +9730,7 @@ class Taakbeheer {
                 
                 // Handle recurring tasks
                 if (isRecurring && nextRecurringTaskId) {
-                    const nextDateFormatted = new Date(this.calculateNextRecurringDate(taak.verschijndatum, taak.herhalingType)).toLocaleDateString('nl-NL');
+                    const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
                     toast.success(`${taskDisplay} afgerond! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // Refresh all data to show the new recurring task
