@@ -11473,13 +11473,19 @@ class AuthManager {
                         importEmailLink.onclick = (e) => {
                             // Don't prevent default - let the browser handle the mailto link
                             console.log('🔗 Import email link clicked:', importEmailLink.href);
-                            console.log('📍 Autorefresh interval status BEFORE email click:', !!this.autoRefreshInterval);
-                            console.log('📍 Current list:', this.huidigeLijst);
-                            console.log('📍 Logged in status:', this.isLoggedIn());
+                            console.log('📍 Autorefresh interval status BEFORE email click:', !!(app && app.autoRefreshInterval));
+                            console.log('📍 Current list:', app ? app.huidigeLijst : 'no app instance');
+                            console.log('📍 Logged in status:', app ? app.isLoggedIn() : 'no app instance');
                             
                             // Check interval status after a short delay
                             setTimeout(() => {
-                                console.log('📍 Autorefresh interval status AFTER email click (1s delay):', !!this.autoRefreshInterval);
+                                console.log('📍 Autorefresh interval status AFTER email click (1s delay):', !!(app && app.autoRefreshInterval));
+                                
+                                // If autorefresh was stopped and we're still on inbox, restart it
+                                if (app && app.huidigeLijst === 'inbox' && !app.autoRefreshInterval) {
+                                    console.log('🔄 FIXING: Restarting autorefresh after email click');
+                                    app.handleInboxAutoRefresh();
+                                }
                             }, 1000);
                         };
                         
@@ -11487,15 +11493,21 @@ class AuthManager {
                         if (btnCopyImport) {
                             btnCopyImport.onclick = () => {
                                 console.log('📋 Copy button clicked for import email');
-                                console.log('📍 Autorefresh interval status BEFORE copy:', !!this.autoRefreshInterval);
-                                console.log('📍 Current list:', this.huidigeLijst);
-                                console.log('📍 Logged in status:', this.isLoggedIn());
+                                console.log('📍 Autorefresh interval status BEFORE copy:', !!(app && app.autoRefreshInterval));
+                                console.log('📍 Current list:', app ? app.huidigeLijst : 'no app instance');
+                                console.log('📍 Logged in status:', app ? app.isLoggedIn() : 'no app instance');
                                 
                                 this.copyToClipboard(data.user.importEmail);
                                 
                                 // Check interval status after copy
                                 setTimeout(() => {
-                                    console.log('📍 Autorefresh interval status AFTER copy (1s delay):', !!this.autoRefreshInterval);
+                                    console.log('📍 Autorefresh interval status AFTER copy (1s delay):', !!(app && app.autoRefreshInterval));
+                                    
+                                    // If autorefresh was stopped and we're still on inbox, restart it
+                                    if (app && app.huidigeLijst === 'inbox' && !app.autoRefreshInterval) {
+                                        console.log('🔄 FIXING: Restarting autorefresh after copy click');
+                                        app.handleInboxAutoRefresh();
+                                    }
                                 }, 1000);
                             };
                         }
