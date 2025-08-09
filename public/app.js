@@ -11481,9 +11481,9 @@ class AuthManager {
                             setTimeout(() => {
                                 console.log('📍 Autorefresh interval status AFTER email click (1s delay):', !!(app && app.autoRefreshInterval));
                                 
-                                // If autorefresh was stopped and we're still on inbox, restart it
-                                if (app && app.huidigeLijst === 'inbox' && !app.autoRefreshInterval) {
-                                    console.log('🔄 FIXING: Restarting autorefresh after email click');
+                                // Force restart autorefresh for inbox after email click (browser focus loss can break intervals)
+                                if (app && app.huidigeLijst === 'inbox') {
+                                    console.log('🔄 FIXING: Force restarting autorefresh after email click to prevent focus loss issues');
                                     app.handleInboxAutoRefresh();
                                 }
                             }, 1000);
@@ -11503,9 +11503,9 @@ class AuthManager {
                                 setTimeout(() => {
                                     console.log('📍 Autorefresh interval status AFTER copy (1s delay):', !!(app && app.autoRefreshInterval));
                                     
-                                    // If autorefresh was stopped and we're still on inbox, restart it
-                                    if (app && app.huidigeLijst === 'inbox' && !app.autoRefreshInterval) {
-                                        console.log('🔄 FIXING: Restarting autorefresh after copy click');
+                                    // Force restart autorefresh for inbox after copy click (clipboard operations can affect focus)
+                                    if (app && app.huidigeLijst === 'inbox') {
+                                        console.log('🔄 FIXING: Force restarting autorefresh after copy click to ensure reliability');
                                         app.handleInboxAutoRefresh();
                                     }
                                 }, 1000);
