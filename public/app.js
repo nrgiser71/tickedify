@@ -2536,19 +2536,25 @@ class Taakbeheer {
     }
 
     handleInboxAutoRefresh() {
+        console.log('🔄 handleInboxAutoRefresh called - current list:', this.huidigeLijst);
+        
         // Clear existing interval
         if (this.autoRefreshInterval) {
+            console.log('🔄 Clearing existing autorefresh interval');
             clearInterval(this.autoRefreshInterval);
             this.autoRefreshInterval = null;
         }
 
         // Only set up auto-refresh for inbox
         if (this.huidigeLijst === 'inbox') {
+            console.log('🔄 Setting up autorefresh for inbox (15 second interval)');
             // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
             this.autoRefreshInterval = setInterval(() => {
                 console.log('<i class="fas fa-redo"></i> Auto-refreshing inbox...');
                 this.refreshInbox();
             }, 15000); // 15 seconds
+        } else {
+            console.log('🔄 Not setting up autorefresh - not on inbox list');
         }
     }
 
@@ -11466,12 +11472,32 @@ class AuthManager {
                         // Ensure mailto link works correctly
                         importEmailLink.onclick = (e) => {
                             // Don't prevent default - let the browser handle the mailto link
-                            console.log('Import email link clicked:', importEmailLink.href);
+                            console.log('🔗 Import email link clicked:', importEmailLink.href);
+                            console.log('📍 Autorefresh interval status BEFORE email click:', !!this.autoRefreshInterval);
+                            console.log('📍 Current list:', this.huidigeLijst);
+                            console.log('📍 Logged in status:', this.isLoggedIn());
+                            
+                            // Check interval status after a short delay
+                            setTimeout(() => {
+                                console.log('📍 Autorefresh interval status AFTER email click (1s delay):', !!this.autoRefreshInterval);
+                            }, 1000);
                         };
                         
                         // Add copy functionality
                         if (btnCopyImport) {
-                            btnCopyImport.onclick = () => this.copyToClipboard(data.user.importEmail);
+                            btnCopyImport.onclick = () => {
+                                console.log('📋 Copy button clicked for import email');
+                                console.log('📍 Autorefresh interval status BEFORE copy:', !!this.autoRefreshInterval);
+                                console.log('📍 Current list:', this.huidigeLijst);
+                                console.log('📍 Logged in status:', this.isLoggedIn());
+                                
+                                this.copyToClipboard(data.user.importEmail);
+                                
+                                // Check interval status after copy
+                                setTimeout(() => {
+                                    console.log('📍 Autorefresh interval status AFTER copy (1s delay):', !!this.autoRefreshInterval);
+                                }, 1000);
+                            };
                         }
                     }
                 }
