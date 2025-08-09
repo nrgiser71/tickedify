@@ -11467,7 +11467,7 @@ class AuthManager {
                     if (userImportEmail && importEmailLink && data.user.importEmail) {
                         userImportEmail.style.display = 'block';
                         importEmailLink.textContent = data.user.importEmail;
-                        importEmailLink.href = `mailto:${data.user.importEmail}?subject=Nieuwe taak`;
+                        importEmailLink.href = `mailto:${data.user.importEmail}`;
                         
                         // Ensure mailto link works correctly
                         importEmailLink.onclick = (e) => {
