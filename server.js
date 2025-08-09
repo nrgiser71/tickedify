@@ -382,7 +382,7 @@ app.get('/api/user/email-import-code', (req, res) => {
                 res.json({
                     success: true,
                     importCode: code,
-                    importEmail: `import+${code}@tickedify.com`,
+                    importEmail: `import+${code}@mg.tickedify.com`,
                     instructions: 'Send emails to this address from any email account'
                 });
             } else {
@@ -413,7 +413,7 @@ app.post('/api/user/regenerate-import-code', (req, res) => {
                 res.json({
                     success: true,
                     importCode: code,
-                    importEmail: `import+${code}@tickedify.com`,
+                    importEmail: `import+${code}@mg.tickedify.com`,
                     message: 'New import code generated'
                 });
             } else {
@@ -566,9 +566,9 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         // Get user ID based on import code in recipient address
         let userId = null;
         
-        // Try to extract import code from recipient (e.g., import+abc123@tickedify.com)
+        // Try to extract import code from recipient (e.g., import+abc123@mg.tickedify.com)
         if (recipient) {
-            const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@/);
+            const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@mg\.tickedify\.com/);
             if (importCodeMatch) {
                 const importCode = importCodeMatch[1];
                 console.log(`🔍 Found import code: ${importCode}`);
@@ -598,7 +598,7 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
                 return res.status(404).json({
                     success: false,
                     error: `No user account found for email address: ${sender}`,
-                    hint: 'Use your personal import email address: import+yourcode@tickedify.com (get code from settings)',
+                    hint: 'Use your personal import email address: import+yourcode@mg.tickedify.com (get code from settings)',
                     timestamp: new Date().toISOString()
                 });
             }
@@ -986,7 +986,7 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
                 oldImportCode: actualUser.email_import_code,
                 newImportCode: newCode
             },
-            importEmail: `import+${newCode}@tickedify.com`,
+            importEmail: `import+${newCode}@mg.tickedify.com`,
             message: 'Import code updated for actual user'
         });
         
@@ -1033,7 +1033,7 @@ app.get('/api/user/info', async (req, res) => {
                 naam: user.naam,
                 rol: user.rol,
                 importCode: importCode,
-                importEmail: `import+${importCode}@tickedify.com`
+                importEmail: `import+${importCode}@mg.tickedify.com`
             }
         });
         
@@ -1524,7 +1524,7 @@ app.post('/api/auth/register', async (req, res) => {
                 naam,
                 rol: 'user',
                 importCode: importCode,
-                importEmail: `import+${importCode}@tickedify.com`
+                importEmail: `import+${importCode}@mg.tickedify.com`
             }
         });
         

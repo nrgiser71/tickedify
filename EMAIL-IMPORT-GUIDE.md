@@ -71,7 +71,7 @@ Voeg deze properties toe aan je Notion database:
 
 **Email Template:**
 ```
-To: import@tickedify.com
+To: import@mg.tickedify.com
 Subject: [{{Project}}] {{Title}} @{{Context}}
 
 {{Description}}
@@ -169,13 +169,14 @@ Prepare materials for the client presentation tomorrow.
 
 ### 1. Mailgun Account
 - Sign up at mailgun.com
-- Verify domain: tickedify.com
+- Verify domain: mg.tickedify.com
 - Get API key en webhook signing key
 
 ### 2. DNS Configuration
 ```
-MX Record: 10 mxa.mailgun.org
-TXT Record: v=spf1 include:mailgun.org ~all
+MX Record: mg.tickedify.com → 10 mxa.mailgun.org
+TXT Record: mg.tickedify.com → v=spf1 include:mailgun.org ~all
+CNAME: email.mg.tickedify.com → mailgun.org (DKIM)
 ```
 
 ### 3. Webhook Configuration
@@ -187,7 +188,7 @@ TXT Record: v=spf1 include:mailgun.org ~all
 Setup route in Mailgun:
 ```
 Priority: 1
-Filter: match_recipient("import@tickedify.com")
+Filter: match_recipient("^import\\+(.*)@mg.tickedify.com$")
 Action: forward("https://tickedify.com/api/email/import")
 ```
 
