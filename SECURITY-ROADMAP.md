@@ -2,8 +2,8 @@
 
 ## STATUS: SINGLE-USER FASE VOLTOOID ✅
 
-**Huidige versie**: v0.11.42  
-**Datum**: Juli 18, 2025  
+**Huidige versie**: v0.12.0  
+**Datum**: Augustus 9, 2025  
 **Beveiligingsniveau**: Basis veilig voor single-user productie  
 **⚠️ PUBLIEKE LAUNCH**: Extra security vereist voor multi-user registratie
 

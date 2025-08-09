@@ -973,7 +973,15 @@ User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable
 
 **STATUS**: Uitklapbare taken functionaliteit volledig hersteld en production-ready.
 
-## CURRENT STATUS: Feedback Management Systeem Volledig Geïmplementeerd (Juli 25, 2025) ✅
+## CURRENT STATUS: Email Link Verbetering Voltooid (Augustus 9, 2025) ✅
+
+**🔧 EMAIL LINK FIX: Versie 0.12.0**
+- **User request**: Default onderwerp "Nieuwe taak" verwijderen uit mailto link
+- **Oplossing**: `mailto:${data.user.importEmail}?subject=Nieuwe taak` → `mailto:${data.user.importEmail}`
+- **Resultaat**: Gebruikers bepalen nu zelf het onderwerp bij email-to-task functionaliteit
+- **Status**: Production-ready en volledig getest
+
+## PREVIOUS STATUS: Feedback Management Systeem Volledig Geïmplementeerd (Juli 25, 2025) ✅
 
 **LAATSTE UPDATE**: Feedback systeem met correcte UI styling volledig werkend in versie v0.11.93
 - ✅ **Admin dashboard**: Volledig feedback management systeem
