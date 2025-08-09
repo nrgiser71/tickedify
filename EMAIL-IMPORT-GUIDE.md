@@ -4,6 +4,16 @@
 
 Het Email Import systeem maakt het mogelijk om taken van Notion (of andere bronnen) naar Tickedify te sturen via email. Het systeem parseert emails intelligent en creëert automatisch taken met de juiste projecten, contexten en metadata.
 
+## 🏗️ Subdomein Architectuur (Augustus 2025)
+
+**Belangrijke Update:** Email import gebruikt nu een **subdomein systeem** voor gescheiden email routing:
+
+- **Import emails:** `import+code@mg.tickedify.com` (via Mailgun)
+- **Normale emails:** `hello@tickedify.com`, `support@tickedify.com` (via Vimexx)
+- **Benefit:** Geen DNS conflicts tussen email systemen
+
+**Alle import emails moeten nu naar `@mg.tickedify.com` gestuurd worden.**
+
 ## 📨 Email Formaat
 
 ### Subject Line Format

@@ -917,6 +917,34 @@ User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable
 
 **STATUS**: Feedback systeem volledig operationeel en production-ready voor beta launch.
 
+## MAILGUN SUBDOMEIN MIGRATIE VOLTOOID (Augustus 9, 2025) 🔧✅
+
+**🚀 EMAIL ROUTING PROBLEEM DEFINITIEF OPGELOST: Versie 0.11.146**
+- **User probleem**: Vimexx mailboxes (hello@, support@) conflicteerden met Mailgun op tickedify.com
+- **Oplossing**: Mailgun volledig gemigreerd naar mg.tickedify.com subdomein
+- **Resultaat**: Gescheiden email systemen zonder DNS conflicts
+
+**📧 TECHNISCHE IMPLEMENTATIE:**
+- **Mailgun domein**: tickedify.com → mg.tickedify.com
+- **Import email format**: import+code@tickedify.com → import+code@mg.tickedify.com
+- **DNS records**: MX/TXT/CNAME op mg.tickedify.com subdomein
+- **Route filter**: match_recipient("^import\\+(.*)@mg.tickedify.com$")
+- **Code wijzigingen**: Alle server.js import email URLs geüpdatet
+
+**🎯 DNS TROUBLESHOOTING SUCCESVOL:**
+- **Vimexx FQDN issue**: DNS records vereisten punt aan einde voor volledige domeinnamen
+- **SPF record fix**: Line break probleem opgelost - alles op één regel
+- **Verificatie**: Alle Mailgun DNS records succesvol geverifieerd
+- **Testing**: End-to-end email import workflow 100% functioneel
+
+**✨ EINDRESULTAAT:**
+- ✅ **Email import**: import+code@mg.tickedify.com → Mailgun → Task creation
+- ✅ **Normale email**: hello@tickedify.com, support@tickedify.com → Vimexx (klaar voor setup)
+- ✅ **Geen conflicts**: Perfecte scheiding tussen task import en business email
+- ✅ **Backwards compatible**: Webhook endpoint onveranderd, graceful fallback
+
+**STATUS**: Email routing architectuur volledig geoptimaliseerd en production-ready.
+
 ## UITKLAPBARE TAKEN DAGELIJKSE PLANNING HERSTELD (Augustus 2, 2025) ✅
 
 **🔧 BUG FIX VOLTOOID: Versie 0.11.98-0.11.99**

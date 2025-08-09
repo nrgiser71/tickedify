@@ -245,7 +245,7 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `DELETE /api/planning/:id` - Verwijder uit planning
 
 ### Import
-- `POST /api/email/import` - Email webhook
+- `POST /api/email/import` - Email webhook (mg.tickedify.com subdomein)
 - `POST /api/email/import-real` - CSV import endpoint
 
 ## 🎯 Belangrijke Features & Locaties
@@ -277,10 +277,15 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Execute**: `executeBulkAction()` in app.js:7000
 - **UI**: `renderBulkToolbar()` in app.js:7300
 
-### Email Import
-- **Webhook**: `/api/email/import` in server.js:4600
+### Email Import (Mailgun Subdomein Architectuur)
+- **Domain Setup**: mg.tickedify.com subdomein voor Mailgun routing
+- **Webhook**: `/api/email/import` in server.js:4600 (unchanged endpoint)
+- **Email Format**: import+code@mg.tickedify.com (was @tickedify.com)
+- **Route Filter**: match_recipient("^import\\+(.*)@mg.tickedify.com$")
 - **Parsing**: Email body parsing in server.js:4700
-- **UI**: Import email in header, app.js:9500
+- **UI**: Import email in header shows @mg.tickedify.com, app.js:9500
+- **DNS**: MX/TXT/CNAME records op mg.tickedify.com subdomein
+- **Benefit**: Hoofddomein tickedify.com vrij voor normale email (hello@, support@)
 
 ### Floating Drop Panel (Uitgesteld Drag & Drop)
 - **Show/Hide**: `showFloatingDropPanel()`, `hideFloatingDropPanel()` in app.js:8878-8903
