@@ -5360,6 +5360,11 @@ button:focus {
     border-color: var(--macos-gray-3);
 }
 
+/* Event Date Popup z-index fix - moet boven loading indicator (9999) staan */
+#eventDatePopup {
+    z-index: 10001 !important;
+}
+
 /* Event Date Popup button styling */
 #eventDatePopup .popup-acties {
     display: flex;

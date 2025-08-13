@@ -2045,3 +2045,41 @@ herhaling_actief BOOLEAN DEFAULT FALSE  -- Of de herhaling actief is
 - ✅ Incremental debugging with minimal servers is highly effective
 - ✅ Diagnostic endpoints are essential for production troubleshooting
 - ✅ Always test database schema changes in production-like environment first
+
+## 🚀 GEPLANDE FEATURES VOOR TOEKOMSTIGE VERSIES
+
+### 👥 CLIENT MANAGEMENT SYSTEEM (Volgende Versie)
+**Voor VA/Consultant Workflows**
+
+**📋 Volledige Specificatie:** Zie [CLIENT-MANAGEMENT-SPEC.md](./CLIENT-MANAGEMENT-SPEC.md)
+
+**🎯 Kernprobleem:** 
+- VA werkt voor meerdere klanten met verschillende workflows
+- Klant-taken vervuilen persoonlijke productiviteit systeem  
+- Geen dedicated klant overzichten beschikbaar
+
+**💡 Oplossing: Two-Type Task System**
+- `type: 'non-klant'` = eigen werk (persoonlijk + zakelijk)
+- `type: 'klant'` = klant-specifiek werk
+- Volledige workflow segregatie tussen beide types
+
+**🎨 UI Changes:**
+- Nieuwe "👥 Klanten" sectie in sidebar
+- Klanten dashboard met dropdown selector
+- Inbox processing: keuze tussen eigen/klant taak
+- Non-klant taken blijven in normale workflow (acties, planning)
+- Klant taken in dedicated workspaces per klant
+
+**⚡ Benefits:**
+- Schaalbaar voor unlimited aantal klanten
+- Clean separation tussen workflows  
+- Perfect voor VA/consultant/freelancer scenarios
+- Future-proof architecture
+
+**🔧 Implementation Scope:** 8-12 dagen development
+- Database schema uitbreiding
+- Backend API endpoints
+- Frontend UI componenten  
+- Type management & filtering
+
+**Status:** Ontwerp voltooid, wachtend op implementatie planning
