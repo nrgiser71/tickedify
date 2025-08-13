@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickedify Staging Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f7;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: white;
+            background: #007AFF;
+        }
+        .warning {
+            background: #FF9500;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: white;
+        }
+        .success {
+            background: #34C759;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🧪 Tickedify Staging Environment</h1>
+        <p><span class="status">STAGING ACTIEF</span></p>
+        
+        <div class="warning">
+            ⚠️ <strong>Dit is de staging omgeving</strong><br>
+            Wijzigingen hier hebben geen invloed op de productie versie.
+        </div>
+
+        <div class="success">
+            ✅ <strong>Preview deployment succesvol!</strong><br>
+            De staging workflow werkt correct.
+        </div>
+
+        <h2>Branch Info</h2>
+        <ul>
+            <li><strong>Environment:</strong> Staging</li>
+            <li><strong>Branch:</strong> develop/staging</li>
+            <li><strong>Deployment:</strong> Vercel Preview</li>
+            <li><strong>Database:</strong> Staging Database</li>
+        </ul>
+
+        <h2>Safety Features</h2>
+        <ul>
+            <li>✅ Geen directe main branch deployments</li>
+            <li>✅ Staging testing verplicht</li>
+            <li>✅ Pull Request approval vereist</li>
+            <li>✅ Productie beschermd tegen accidental pushes</li>
+        </ul>
+
+        <p><a href="/app" style="color: #007AFF;">→ Test Tickedify App op Staging</a></p>
+        <p><a href="https://tickedify.com" style="color: #007AFF;">→ Live Productie Versie</a></p>
+    </div>
+
+    <script>
+        // Show current environment info
+        console.log('🧪 Staging Environment Active');
+        console.log('Branch workflow: develop → staging → PR → main');
+        console.log('Productie beschermd tegen accidental deployments');
+    </script>
+</body>
+</html>

@@ -37,6 +37,14 @@ Huidige Tickedify mengt beide workflows, waardoor:
 - `type: 'klant'` = klant-specifiek werk
 - Volledige workflow segregatie tussen beide types
 
+### Feature Toggle Requirement
+**Settings-based Activation:**
+- Feature moet **optioneel** zijn via instellingen toggle
+- Default: **uitgeschakeld** voor nieuwe en bestaande gebruikers
+- "Client Management Mode" checkbox in settings modal
+- Alleen wanneer ingeschakeld: sidebar krijgt "👥 Klanten" sectie
+- Toekomstbestendig settings systeem voor meer opties
+
 ### User Workflow
 **Inbox Processing:**
 1. Nieuwe taak komt binnen (email, handmatig, etc.)
@@ -65,6 +73,28 @@ CREATE INDEX idx_taken_type ON taken(type);
 CREATE INDEX idx_taken_client ON taken(client_naam) WHERE type = 'klant';
 ```
 
+### User Settings Schema
+```sql
+-- Nieuwe tabel voor gebruiker instellingen
+CREATE TABLE user_settings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    setting_key VARCHAR(50) NOT NULL,
+    setting_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE(user_id, setting_key)
+);
+
+-- Specifieke setting voor client management
+-- setting_key = 'client_management_enabled'
+-- setting_value = 'true' of 'false' (default: 'false')
+
+-- Index voor snelle settings lookup
+CREATE INDEX idx_user_settings_lookup ON user_settings(user_id, setting_key);
+```
+
 ### Migration Strategy
 ```sql
 -- Backward compatibility: alle bestaande taken krijgen non-klant type
@@ -79,22 +109,60 @@ UPDATE taken SET type = 'non-klant' WHERE type IS NULL;
 ## 🎨 UI/UX Specificatie
 
 ### Sidebar Wijzigingen
-**Huidige sidebar:**
+
+**Huidige sidebar (Client Mode UIT):**
 ```
 📧 Inbox
 🎯 Acties
 ⏰ Opvolgen  
 📅 Dagelijkse Planning
+───────────────
+⚙️ Instellingen
 ```
 
-**Nieuwe sidebar:**
+**Nieuwe sidebar (Client Mode AAN):**
 ```
 📧 Inbox (mixed types)
 🎯 Acties (ALLEEN non-klant)
 👥 Klanten (nieuw item)
 ⏰ Opvolgen (ALLEEN non-klant)
 📅 Dagelijkse Planning (ALLEEN non-klant)
+───────────────
+⚙️ Instellingen
 ```
+
+**Gedrag:**
+- Sidebar toont "👥 Klanten" alleen wanneer Client Management Mode ingeschakeld
+- Settings icone (⚙️) altijd zichtbaar voor toekomstige instellingen
+
+### Settings Modal UI
+
+#### Settings Modal (/settings of modal popup)
+```
+┌─────────────────────────────────────┐
+│ ⚙️ Instellingen                     │
+│                                   × │
+├─────────────────────────────────────┤
+│                                     │
+│ 👥 Workflow Instellingen             │
+│ ┌─────────────────────────────────┐ │
+│ │ ☑ Client Management Mode       │ │
+│ │   Schakel klant-specifieke      │ │
+│ │   taken in voor VA workflows    │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [Meer instellingen komen hier...]   │
+│                                     │
+│             [Opslaan] [Annuleren]   │
+└─────────────────────────────────────┘
+```
+
+**Functionaliteit:**
+- Modal opent via ⚙️ icoon in sidebar of header
+- Client Management checkbox toggle
+- Real-time preview van sidebar wijzigingen
+- "Opslaan" triggert page refresh voor UI update
+- Toekomstbestendig voor meer settings categorieën
 
 ### Klanten Dashboard UI
 
@@ -166,7 +234,31 @@ UPDATE taken SET type = 'non-klant' WHERE type IS NULL;
 
 ### Nieuwe Endpoints
 
-#### Klanten Management
+#### Settings Management
+```javascript
+// Haal gebruiker instellingen op
+GET /api/user/settings
+Response: {
+  "client_management_enabled": false,
+  "default_task_duration": 60,
+  // andere settings...
+}
+
+// Update specifieke setting
+PUT /api/user/settings/:key
+Body: { "value": "true" }
+Response: { "success": true, "updated_setting": "client_management_enabled" }
+
+// Update meerdere settings tegelijk
+PUT /api/user/settings
+Body: { 
+  "client_management_enabled": "true",
+  "default_task_duration": "30"
+}
+Response: { "success": true, "updated_count": 2 }
+```
+
+#### Klanten Management (alleen actief als client_management_enabled = true)
 ```javascript
 // Haal alle klanten op (unieke client_naam values)
 GET /api/klanten
@@ -233,24 +325,89 @@ Alle bestaande lijst endpoints krijgen automatische filtering:
 // Nieuwe functionaliteiten toevoegen:
 
 class Taakbeheer {
-  // Klanten dashboard
-  laadKlantenDashboard() { ... }
+  constructor() {
+    this.userSettings = {};
+    this.clientManagementEnabled = false;
+  }
+
+  // Settings management
+  async laadUserSettings() { ... }
+  async updateSetting(key, value) { ... }
+  async saveAllSettings() { ... }
+  toggleClientManagement(enabled) { 
+    // Update UI, sidebar, filtering
+    this.clientManagementEnabled = enabled;
+    this.renderSidebar();
+    this.filterAllLists();
+  }
+
+  // Klanten dashboard (alleen als client mode enabled)
+  laadKlantenDashboard() { 
+    if (!this.clientManagementEnabled) return;
+    ...
+  }
   laadKlantTaken(clientNaam) { ... }
   renderKlantenDropdown() { ... }
   
   // Type management  
   zetTaakType(taakId, type, clientNaam = null) { ... }
-  filterTakenOpType(taken, type) { ... }
+  filterTakenOpType(taken, type) { 
+    // Conditional filtering gebaseerd op settings
+    if (!this.clientManagementEnabled) {
+      return taken; // No filtering als feature uit staat
+    }
+    return taken.filter(t => t.type === type);
+  }
   
   // Inbox processing
-  toonTypeSelectie(taakId) { ... }
+  toonTypeSelectie(taakId) { 
+    // Toon alleen als client management enabled
+    if (!this.clientManagementEnabled) return;
+    ...
+  }
   verwerkInboxItem(taakId, type, clientNaam) { ... }
 }
 ```
 
 #### Nieuwe JavaScript Modules
 ```javascript
-// klanten-manager.js
+// settings-manager.js
+class SettingsManager {
+  constructor(app) { 
+    this.app = app;
+    this.settings = {};
+  }
+  
+  // Modal management
+  openSettingsModal() { ... }
+  closeSettingsModal() { ... }
+  renderSettingsModal() { ... }
+  
+  // Settings CRUD
+  async loadSettings() { 
+    const response = await fetch('/api/user/settings');
+    this.settings = await response.json();
+    return this.settings;
+  }
+  
+  async saveSetting(key, value) {
+    await fetch(`/api/user/settings/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify({ value })
+    });
+    this.settings[key] = value;
+    this.onSettingChange(key, value);
+  }
+  
+  // Event handlers
+  onSettingChange(key, value) {
+    if (key === 'client_management_enabled') {
+      this.app.toggleClientManagement(value === 'true');
+    }
+  }
+}
+
+// klanten-manager.js (alleen actief als client management enabled)
 class KlantenManager {
   constructor(app) { ... }
   
