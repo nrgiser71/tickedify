@@ -3,6 +3,18 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🚨 URGENT: STAGING SETUP AFWERKEN - VOLGENDE SESSIE (Augustus 2025)
+
+**🎯 DIRECT BIJ START VOLGENDE SESSIE - PRIORITEIT #1:**
+- ⚠️ **GitHub Branch Protection Setup** - KRITIEK voor bèta veiligheid
+- ⚠️ **Neon Staging Database Setup** - Voor complete environment isolation  
+- ⚠️ **End-to-end workflow testing** - Verificatie dat protection werkt
+- 📋 **Instructies**: `GITHUB-PROTECTION-SETUP.md` en `NEON-STAGING-SETUP.md`
+- 📊 **Status**: 50% geïmplementeerd (branches + docs), 50% nog te doen (protection + database)
+
+**⏰ CONTEXT:** Jan werkt vanaf 8:00, bijna middernacht nu (13 augustus 2025)
+**🎯 ACTIE:** Dit EERST afwerken voor Claude herinnering bij volgende start!
+
 ## 🚨 KRITIEKE DEPLOYMENT REGELS - BÈTA BESCHERMING (Augustus 2025)
 
 **ABSOLUTE VERBODEN ACTIES - GEEN UITZONDERINGEN:**
