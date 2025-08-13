@@ -44,6 +44,33 @@ Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen
 
 **Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
 
+## EVENT POPUP Z-INDEX FIX VOLTOOID (Augustus 13, 2025) 🔧✅
+
+**🎯 POPUP VISIBILITY BUG OPGELOST: Versie 0.12.1**
+- **User report**: "Als ik een taak met een event based herhaling afvink in het dagelijkse planning scherm, dan verschijnt de popup die komt vragen naar de volgende datum van het event, achter de loading indicator. Ik kan de popup dus niet invullen."
+- **Probleem**: Event datum popup (z-index: 1000) verdween achter loading indicator (z-index: 9999)
+- **Oplossing**: Z-index van #eventDatePopup verhoogd naar 10001 met !important
+
+**🔧 TECHNISCHE IMPLEMENTATIE:**
+- **Root Cause**: Z-index conflict tussen loading overlay (9999) en popup overlay (1000)
+- **Fix Locatie**: `public/style.css` regel 5364-5366
+- **CSS Regel**: `#eventDatePopup { z-index: 10001 !important; }`
+- **Impact**: Event popup nu zichtbaar boven alle andere UI elementen
+
+**📋 WORKFLOW PROBLEEM:**
+- **Trigger**: Event-based herhalende taken afvinken in dagelijkse planning
+- **Sequence**: `taakAfwerken()` → `loading.withLoading()` → `askForNextEventDate()` → popup verschijnt
+- **Bug**: Popup achter loading indicator door z-index prioriteit
+- **Fix**: Popup nu altijd bovenop met hoogste z-index waarde
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkende** event datum popup bij herhalende taken
+- **Geen verborgen popups** meer achter loading indicators
+- **Gebruiker kan popup normaal invullen** voor volgende event datum
+- **Snelle 1-minuut fix** zonder side effects
+
+**STATUS**: Event popup zichtbaarheid 100% opgelost en production-ready.
+
 ## ENTERTAINMENT LOADING SYSTEEM VOLLEDIG GEÏMPLEMENTEERD (Augustus 5, 2025) ✨🎯
 
 **🚀 MAJOR UX VERBETERING VOLTOOID: Versie 0.11.135-0.11.141**
@@ -973,13 +1000,13 @@ User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable
 
 **STATUS**: Uitklapbare taken functionaliteit volledig hersteld en production-ready.
 
-## CURRENT STATUS: Email Link Verbetering Voltooid (Augustus 9, 2025) ✅
+## CURRENT STATUS: Event Popup Z-Index Fix Voltooid (Augustus 13, 2025) ✅
 
-**🔧 EMAIL LINK FIX: Versie 0.12.0**
-- **User request**: Default onderwerp "Nieuwe taak" verwijderen uit mailto link
-- **Oplossing**: `mailto:${data.user.importEmail}?subject=Nieuwe taak` → `mailto:${data.user.importEmail}`
-- **Resultaat**: Gebruikers bepalen nu zelf het onderwerp bij email-to-task functionaliteit
-- **Status**: Production-ready en volledig getest
+**🔧 EVENT POPUP VISIBILITY FIX: Versie 0.12.1**
+- **User report**: Event datum popup verscheen achter loading indicator bij afvinken herhalende taken
+- **Oplossing**: Z-index van #eventDatePopup verhoogd van 1000 naar 10001
+- **Resultaat**: Event popup nu perfect zichtbaar boven loading indicator
+- **Status**: Production-ready en door gebruiker getest
 
 ## PREVIOUS STATUS: Feedback Management Systeem Volledig Geïmplementeerd (Juli 25, 2025) ✅
 
