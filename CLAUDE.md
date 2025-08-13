@@ -3,35 +3,76 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🚨 KRITIEKE DEPLOYMENT REGELS - BÈTA BESCHERMING (Augustus 2025)
+
+**ABSOLUTE VERBODEN ACTIES - GEEN UITZONDERINGEN:**
+- ❌ **NOOIT `git push origin main`** - Main branch is PRODUCTIE met BÈTA GEBRUIKERS
+- ❌ **NOOIT direct commits naar main branch** - Altijd via Pull Requests
+- ❌ **NOOIT merge naar main** zonder expliciete gebruiker approval "JA, DEPLOY NAAR PRODUCTIE"
+- ❌ **NOOIT productie deployment** zonder staging test eerst
+
+**VERPLICHTE WORKFLOW - ELKE ONTWIKKELING:**
+- ✅ **ALTIJD `git branch` controleren** voordat je commits
+- ✅ **ALTIJD werken op develop branch** voor alle features en bugfixes
+- ✅ **ALTIJD staging deployment testen** voordat je productie voorstelt
+- ✅ **ALTIJD expliciete toestemming vragen** voor productie deployment
+
+**BRANCH WORKFLOW:**
+```
+develop branch → staging test (dev.tickedify.com) → PR naar main → productie (tickedify.com)
+```
+
+**EMERGENCY HOTFIX PROTOCOL:**
+1. Meld kritieke bug: "🚨 Kritieke bug gevonden: [beschrijving]"
+2. Branch: `git checkout -b hotfix/bug-naam`
+3. Fix implementeren op hotfix branch
+4. Test op staging: Deploy naar dev.tickedify.com
+5. Vraag expliciet: "Hotfix getest op staging - klaar voor PRODUCTIE?"
+6. WACHT op expliciete bevestiging "JA, DEPLOY NAAR PRODUCTIE"
+7. Dan pas Pull Request naar main
+
+**VEILIGHEIDSCHECK BIJ ELKE GIT ACTIE:**
+```bash
+1. git branch  # Controleer huidige branch
+2. Als main → STOP! Switch naar develop
+3. Als develop → OK, ga door
+4. Bij twijfel → vraag user bevestiging
+```
+
+**WAAROM DIT KRITIEK IS:**
+- Tickedify heeft vanaf september 2025 **echte bèta gebruikers**
+- Productie bugs = verlies van gebruiker vertrouwen
+- Main branch = LIVE systeem met echte productiviteit workflows
+- Deze regels beschermen de bèta launch en gebruiker experience
+
 ## Claude Development & Testing Autonomie
 **KRITIEK BELANGRIJK**: Jan is momenteel de ENIGE gebruiker van Tickedify. Het systeem is NIET live voor publiek gebruik.
 
 **SYSTEEM ARCHITECTUUR**: Tickedify is technisch gezien een **multi-user systeem** met database schema en code ondersteuning voor meerdere gebruikers, maar wordt momenteel alleen door Jan gebruikt voor development en testing doeleinden.
 
-**VOLLEDIGE AUTONOMIE TOEGESTAAN:**
-- ✅ **Code aanpassingen**: Vrijelijk alle bestanden bewerken zonder toestemming
-- ✅ **Database manipulatie**: Test data aanmaken, wijzigen, verwijderen zoals nodig
-- ✅ **API testing**: Alle endpoints testen met echte data
-- ✅ **Live testing**: Tests uitvoeren op https://tickedify.com productie omgeving
-- ✅ **Data experimenten**: Taken aanmaken/bewerken/verplaatsen voor testing doeleinden
-- ✅ **Complete implementaties**: Van development tot testing zonder tussentijdse toestemming
-- ✅ **Automatic deployments**: Versie updates, git commits, en deployment verification zonder bevestiging vragen
+**AUTONOMIE TOEGESTAAN BINNEN STAGING ENVIRONMENT:**
+- ✅ **Code aanpassingen**: Vrijelijk alle bestanden bewerken op develop branch
+- ✅ **Staging testing**: Volledige autonomie op dev.tickedify.com staging environment
+- ✅ **API testing**: Alle endpoints testen op staging zonder beperking
+- ✅ **Data experimenten**: Taken aanmaken/bewerken/verplaatsen op staging database
+- ✅ **Feature implementaties**: Complete development workflow tot staging test
+- ✅ **Git commits**: Vrij committen en pushen naar develop/staging branches
 - ✅ **Changelog updates**: Automatisch changelog bijwerken bij elke wijziging
 
-**NIET NODIG OM TOESTEMMING TE VRAGEN VOOR:**
-- PUT/POST/DELETE requests op tickedify.com
-- Database schema wijzigingen
-- Test data manipulatie
-- Verificatie van implementaties
-- End-to-end workflow testing
-- Version bumps en git commits
-- Deployment wachttijden en verificaties
-- Changelog updates
+**STAGING AUTONOMIE - GEEN TOESTEMMING NODIG:**
+- PUT/POST/DELETE requests op dev.tickedify.com staging
+- Staging database schema wijzigingen en data manipulatie
+- Feature testing en verificatie op staging environment
+- Version bumps en git commits naar develop/staging branches
+- Staging deployment en testing cycles
+- Changelog updates voor development features
 
-**ALLEEN VRAGEN OM TOESTEMMING BIJ:**
-- Destructieve acties die het hele systeem kunnen breken
-- Externe service wijzigingen (DNS, Mailgun, GitHub settings)
-- Grote architecturale beslissingen
+**PRODUCTIE APPROVAL VEREIST:**
+- ❌ **Alle wijzigingen naar main branch** - Altijd PR met approval
+- ❌ **Productie deployments** - Expliciete "JA, DEPLOY NAAR PRODUCTIE" vereist
+- ❌ **Live database wijzigingen** - Eerst staging test, dan approval
+- ❌ **Externe service wijzigingen** (DNS, Mailgun, GitHub settings)
+- ❌ **Grote architecturale beslissingen** die productie beïnvloeden
 
 **CHANGELOG ONDERHOUD VERPLICHT:**
 - ✅ **Bij elke code wijziging**: Automatisch changelog entry toevoegen
@@ -39,10 +80,10 @@
 - ✅ **Feature beschrijving**: Duidelijk beschrijven wat er geïmplementeerd/gefixed is
 - ✅ **Gebruiker feedback**: Changelog als communicatie tool naar gebruiker
 
-**WERK ZO ZELFSTANDIG MOGELIJK:**
-Claude moet zo zelfstandig mogelijk werken zonder continue bevestiging te vragen. Alleen vragen om goedkeuring als het echt niet anders kan. Gebruiker heeft andere dingen te doen terwijl Claude werkt.
+**WERK ZO ZELFSTANDIG MOGELIJK BINNEN STAGING:**
+Claude moet zo zelfstandig mogelijk werken op develop branch en staging environment. Voor productie deployments altijd expliciete approval vragen. De bèta launch vereist absolute zekerheid over productie stabiliteit.
 
-**Deze autonomie geldt tot Jan expliciet het tegendeel zegt.**
+**Deze staging autonomie geldt permanent voor veilige development cycles.**
 
 ## EVENT POPUP Z-INDEX FIX VOLTOOID (Augustus 13, 2025) 🔧✅
 
