@@ -3332,8 +3332,20 @@ class Taakbeheer {
         // Instant toast voor directe feedback
         toast.info('Taak wordt afgewerkt...');
         
+        // Entertainment messages voor task completion in acties scherm
+        const completionMessages = [
+            '✅ Taak wordt afgewerkt...',
+            '🎯 Voortgang wordt opgeslagen...',
+            '📊 Productiviteit wordt bijgewerkt...',
+            '⚡ Database wordt gesynchroniseerd...',
+            '🔄 Herhalende taken worden verwerkt...',
+            '🚀 Bijna klaar...'
+        ];
+        
+        // Start entertainment loading
+        loading.showWithEntertainment('✅ Taak afwerken...', completionMessages, 1200);
+        
         try {
-            return await loading.withLoading(async () => {
             taak.afgewerkt = new Date().toISOString();
             
             // Handle recurring tasks
@@ -3443,11 +3455,6 @@ class Taakbeheer {
             
             // Always cleanup the completion tracking
             this.activeCompletions.delete(id);
-        }, {
-            operationId: `complete-task-${id}`,
-            showGlobal: false, // We use instant toast instead
-            message: 'Taak afwerken...'
-        });
         } catch (error) {
             console.error('Error in taakAfwerken:', error);
             // Rollback checkbox state on error
@@ -3457,6 +3464,9 @@ class Taakbeheer {
             }
             this.activeCompletions.delete(id);
             throw error;
+        } finally {
+            // Hide loading with minimum time for smooth UX
+            await loading.hideWithMinTime();
         }
     }
 
