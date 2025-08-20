@@ -1053,7 +1053,33 @@ User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable
 
 **STATUS**: Uitklapbare taken functionaliteit volledig hersteld en production-ready.
 
-## CURRENT STATUS: Event Popup Z-Index Fix Voltooid (Augustus 13, 2025) ✅
+## CURRENT STATUS: Dagelijkse Planning Kalender Project Namen Cleanup Voltooid (Augustus 20, 2025) ✅🎨
+
+**🎯 UI CLEANUP FIX VOLTOOID: Versie 0.12.5-0.12.6**
+- **User request**: "In het scherm voor de dagelijkse planning wordt in het kalender stuk het project van een taak tussen haakjes gezet. Dat is niet nodig."
+- **Probleem**: Taaknamen in dagelijkse planning kalender toonden project tussen haakjes (bijv. "Taak naam (Project naam)")
+- **Oplossing**: Project tussen haakjes verwijderd uit kalender weergave, project blijft zichtbaar bij uitklappen
+
+**🔧 TECHNISCHE IMPLEMENTATIE:**
+- **Frontend fixes**: 3 locaties in `public/app.js` aangepast waar `planningItem.naam` werd samengesteld
+- **Database cleanup**: `cleanPlanningProjectNames()` functie toegevoegd om bestaande items op te schonen
+- **API endpoint**: `/api/dagelijkse-planning/clean-project-names` voor batch cleanup van oude data
+- **Regex matching**: Database query met `~ '\\(.*\\)$'` pattern om items met project tussen haakjes te vinden
+
+**✨ EINDRESULTAAT:**
+- **Schonere kalender**: Alleen taaknamen zichtbaar in planning blokken zonder project clutter
+- **Project info behouden**: Project nog steeds zichtbaar in uitklapbare details sectie met folder icoon
+- **Automatische fix**: Nieuwe planning items krijgen automatisch schone naam
+- **Bestaande items**: Kunnen worden opgeschoond via cleanup endpoint of door herplaatsing
+
+**📋 GEWIJZIGDE BESTANDEN:**
+- `public/app.js`: Frontend logic voor planningItem naam samenstelling (3 locaties)
+- `database.js`: Nieuwe `cleanPlanningProjectNames()` functie voor batch cleanup
+- `server.js`: API endpoint `/api/dagelijkse-planning/clean-project-names`
+
+**STATUS**: Dagelijkse planning kalender nu visueel schoner, project info blijft toegankelijk via uitklappen.
+
+## PREVIOUS STATUS: Event Popup Z-Index Fix Voltooid (Augustus 13, 2025) ✅
 
 **🔧 EVENT POPUP VISIBILITY FIX: Versie 0.12.1**
 - **User report**: Event datum popup verscheen achter loading indicator bij afvinken herhalende taken
