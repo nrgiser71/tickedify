@@ -8579,7 +8579,7 @@ class Taakbeheer {
             if (actie) {
                 const projectId = actie.project_id || actie.projectId;
                 const projectNaam = this.getProjectNaam(projectId);
-                planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                planningItem.naam = actie.tekst;
                 planningItem.actieTekst = actie.tekst;
             } else {
                 planningItem.naam = 'Taak wordt geladen...';
@@ -8895,7 +8895,7 @@ class Taakbeheer {
                     // Handle both database format (project_id) and frontend format (projectId)
                     const projectId = actie.project_id || actie.projectId;
                     const projectNaam = this.getProjectNaam(projectId);
-                    planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                    planningItem.naam = actie.tekst;
                 } else {
                     // Only fetch from API if not found in cache
                     console.log('<i class="ti ti-search"></i> Task not in cache, fetching from API...');
@@ -8907,7 +8907,7 @@ class Taakbeheer {
                             // Handle both database format (project_id) and frontend format (projectId)
                             const projectId = actie.project_id || actie.projectId;
                             const projectNaam = this.getProjectNaam(projectId);
-                            planningItem.naam = projectNaam !== 'Geen project' ? `${actie.tekst} (${projectNaam})` : actie.tekst;
+                            planningItem.naam = actie.tekst;
                         } else {
                             planningItem.naam = 'Onbekende actie';
                         }
