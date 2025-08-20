@@ -7459,6 +7459,162 @@ button:focus {
     color: var(--macos-text-tertiary);
 }
 
+/* Inbox Empty State Styling */
+.inbox-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    min-height: 300px;
+}
+
+.inbox-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.inbox-empty-title {
+    color: var(--macos-text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+}
+
+.inbox-empty-subtitle {
+    color: var(--macos-text-secondary);
+    font-size: 1rem;
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Inbox Celebration Animation */
+.inbox-celebration-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(2px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: none;
+}
+
+.inbox-celebration-container.celebration-active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.inbox-celebration-container.celebration-exit {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.5s ease-out;
+}
+
+.inbox-celebration {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px 50px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 400px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease-out;
+}
+
+.inbox-celebration-container.celebration-active .inbox-celebration {
+    transform: translateY(0);
+}
+
+.celebration-animation {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    animation: celebration-bounce 0.6s ease-out, celebration-rotate 2s ease-in-out 0.6s;
+}
+
+.celebration-text h2 {
+    color: var(--macos-text-primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+}
+
+.celebration-text p {
+    color: var(--macos-text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* Celebration Keyframes */
+@keyframes gentle-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes celebration-bounce {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-20px) scale(1.2);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes celebration-rotate {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(-10deg) scale(1.1);
+    }
+    75% {
+        transform: rotate(10deg) scale(1.1);
+    }
+}
+
+/* Mobile Responsive Celebration */
+@media (max-width: 768px) {
+    .inbox-celebration {
+        padding: 30px 35px;
+        margin: 20px;
+    }
+    
+    .celebration-animation {
+        font-size: 4rem;
+    }
+    
+    .celebration-text h2 {
+        font-size: 1.5rem;
+    }
+    
+    .celebration-text p {
+        font-size: 1rem;
+    }
+}
+
 /* Floating Drop Panel */
 .floating-drop-panel {
     position: fixed;

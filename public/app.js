@@ -628,6 +628,7 @@ class Taakbeheer {
         this.isSaving = false; // Prevent parallel saves
         this.bulkModus = false; // Bulk edit mode voor overtijd taken
         this.geselecteerdeTaken = new Set(); // Geselecteerde taken in bulk modus
+        this.prevInboxCount = -1; // Track previous inbox count for celebration detection
         
         // Fix: Reset eventsAlreadyBound to ensure bindEvents runs
         this.eventsAlreadyBound = false;
@@ -3233,8 +3234,31 @@ class Taakbeheer {
             console.error('renderStandaardLijst: container is null');
             return;
         }
+        
+        // Check for empty inbox and show motivational message
+        if (this.huidigeLijst === 'inbox' && this.taken.length === 0) {
+            // Check if inbox just got cleared (from >0 to 0) for celebration
+            if (this.prevInboxCount > 0) {
+                this.triggerInboxCelebration();
+            }
+            
+            container.innerHTML = `
+                <div class="inbox-empty-state">
+                    <div class="inbox-empty-icon">✨</div>
+                    <h3 class="inbox-empty-title">Perfect! Je inbox is leeg.</h3>
+                    <p class="inbox-empty-subtitle">Tijd voor echte focus. Geweldig werk! 🎯</p>
+                </div>
+            `;
+            this.prevInboxCount = 0;
+            return;
+        }
+        
+        // Track inbox count for celebration detection
+        if (this.huidigeLijst === 'inbox') {
+            this.prevInboxCount = this.taken.length;
+        }
+        
         container.innerHTML = '';
-
 
         this.taken.forEach(taak => {
             const li = document.createElement('li');
@@ -3495,6 +3519,44 @@ class Taakbeheer {
             showGlobal: true,
             message: 'Taak terugzetten naar inbox...'
         });
+    }
+
+    triggerInboxCelebration() {
+        // Create celebration container
+        const celebrationContainer = document.createElement('div');
+        celebrationContainer.className = 'inbox-celebration-container';
+        celebrationContainer.innerHTML = `
+            <div class="inbox-celebration">
+                <div class="celebration-animation">🎉</div>
+                <div class="celebration-text">
+                    <h2>🏆 Inbox Zero bereikt!</h2>
+                    <p>Fantastisch! Je hebt het voor elkaar! ⭐</p>
+                </div>
+            </div>
+        `;
+        
+        // Add to body
+        document.body.appendChild(celebrationContainer);
+        
+        // Trigger animation
+        requestAnimationFrame(() => {
+            celebrationContainer.classList.add('celebration-active');
+        });
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            celebrationContainer.classList.add('celebration-exit');
+            setTimeout(() => {
+                if (celebrationContainer.parentNode) {
+                    celebrationContainer.parentNode.removeChild(celebrationContainer);
+                }
+            }, 500);
+        }, 4000);
+        
+        // Also show a toast for extra satisfaction
+        setTimeout(() => {
+            toast.success('🎊 Geweldig! Je inbox is nu volledig leeg!', 5000);
+        }, 1000);
     }
 
     async verwijderTaak(id, categoryKey = null) {
