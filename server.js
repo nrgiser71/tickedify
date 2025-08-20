@@ -2799,6 +2799,27 @@ app.get('/api/test/run-business', async (req, res) => {
     }
 });
 
+// Clean project names from planning items
+app.post('/api/dagelijkse-planning/clean-project-names', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = getCurrentUserId(req);
+        const cleanedCount = await db.cleanPlanningProjectNames(userId);
+        
+        res.json({ 
+            success: true, 
+            message: `Successfully cleaned ${cleanedCount} planning items`,
+            cleanedCount: cleanedCount
+        });
+    } catch (error) {
+        console.error('Error cleaning planning project names:', error);
+        res.status(500).json({ error: 'Fout bij opschonen planning project namen' });
+    }
+});
+
 // Dagelijkse Planning API endpoints
 app.get('/api/dagelijkse-planning/:datum', async (req, res) => {
     try {

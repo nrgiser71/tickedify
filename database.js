@@ -706,6 +706,29 @@ const db = {
     }
   },
 
+  // Clean project names from planning items (remove "(ProjectName)" from naam field)
+  async cleanPlanningProjectNames(userId) {
+    try {
+      // Update planning items where naam contains project in parentheses
+      // Extract the tekst from taken table and use that as the clean naam
+      const result = await pool.query(`
+        UPDATE dagelijkse_planning dp
+        SET naam = t.tekst
+        FROM taken t
+        WHERE dp.actie_id = t.id 
+        AND dp.user_id = $1
+        AND dp.naam ~ '\\(.*\\)$'
+        AND dp.naam != t.tekst
+      `, [userId]);
+      
+      console.log(`✅ Cleaned ${result.rowCount} planning items - removed project names from naam field`);
+      return result.rowCount;
+    } catch (error) {
+      console.error('❌ Error cleaning planning project names:', error);
+      throw error;
+    }
+  },
+
   // Dagelijkse Planning functions
   async getDagelijksePlanning(datum, userId) {
     try {
