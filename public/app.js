@@ -9614,11 +9614,23 @@ class Taakbeheer {
         checkboxElement.checked = true;
         checkboxElement.disabled = true; // Voorkom dubbele clicks
         
-        return await loading.withLoading(async () => {
-            try {
-                // Find the task in planning actions array first, then fall back to main tasks
-                let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
-                console.log('<i class="fas fa-clipboard"></i> Local task found:', taak ? 'Yes' : 'No');
+        // Entertainment messages voor task completion
+        const completionMessages = [
+            '✅ Taak wordt afgewerkt...',
+            '🎯 Voortgang wordt opgeslagen...',
+            '📊 Productiviteit wordt bijgewerkt...',
+            '⚡ Database wordt gesynchroniseerd...',
+            '🔄 Herhalende taken worden verwerkt...',
+            '🚀 Bijna klaar...'
+        ];
+        
+        // Start entertainment loading
+        loading.showWithEntertainment('✅ Taak afwerken...', completionMessages, 1200);
+        
+        try {
+            // Find the task in planning actions array first, then fall back to main tasks
+            let taak = this.planningActies?.find(t => t.id === actieId) || this.taken.find(t => t.id === actieId);
+            console.log('<i class="fas fa-clipboard"></i> Local task found:', taak ? 'Yes' : 'No');
             
             if (!taak) {
                 console.log('<i class="ti ti-search"></i> Task not found locally, fetching from API...');
@@ -9837,23 +9849,20 @@ class Taakbeheer {
                 checkboxElement.disabled = false;
                 toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
-            } catch (error) {
-                console.error('Error completing planning task:', error);
-                checkboxElement.checked = false;
+        } catch (error) {
+            console.error('Error completing planning task:', error);
+            checkboxElement.checked = false;
+            checkboxElement.disabled = false;
+            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+        } finally {
+            // Hide loading with minimum time for smooth UX
+            await loading.hideWithMinTime();
+            
+            // Re-enable checkbox after completion
+            if (checkboxElement.disabled) {
                 checkboxElement.disabled = false;
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
-            } finally {
-                // Re-enable checkbox after completion
-                if (checkboxElement.disabled) {
-                    checkboxElement.disabled = false;
-                }
             }
-        }, {
-            operationId: 'complete-planning-task',
-            showGlobal: true,
-            button: checkboxElement?.closest('.task-checkbox'),
-            message: 'Taak afwerken...'
-        });
+        }
     }
 
     addNewTaskToDOM(newTask) {
