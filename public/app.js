@@ -764,8 +764,15 @@ class Taakbeheer {
     }
     
     async loadBasicMobileUI() {
-        // Only for mobile/tablet devices
-        if (window.innerWidth >= 1400) return;
+        // Check if this is a mobile/tablet device
+        const isMobile = this.isMobileDevice();
+        console.log('📱 loadBasicMobileUI check:', {
+            innerWidth: window.innerWidth,
+            isMobile,
+            userAgent: navigator.userAgent.substring(0, 100)
+        });
+        
+        if (!isMobile) return;
         
         console.log('📱 Loading basic mobile UI for unauthenticated user');
         
@@ -847,6 +854,38 @@ class Taakbeheer {
             
             console.log('✅ Main content structure created for mobile');
         }
+    }
+    
+    isMobileDevice() {
+        // Multiple detection methods for better mobile/tablet detection
+        const width = window.innerWidth;
+        const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const userAgent = navigator.userAgent.toLowerCase();
+        
+        // Check for mobile/tablet user agents
+        const isMobileUA = /iphone|ipad|ipod|android|blackberry|mini|windows\sce|palm/i.test(userAgent);
+        const isTabletUA = /ipad|android(?!.*mobile)|tablet|kindle|silk|playbook/i.test(userAgent);
+        
+        // iOS specific detection
+        const isIOS = /ipad|iphone|ipod/i.test(userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0);
+        
+        // Width-based detection (with lower threshold for safety)
+        const isNarrowScreen = width <= 1400;
+        
+        const result = hasTouch && (isMobileUA || isTabletUA || isIOS || isNarrowScreen);
+        
+        console.log('🔍 Mobile device detection:', {
+            width,
+            hasTouch,
+            isMobileUA,
+            isTabletUA, 
+            isIOS,
+            isNarrowScreen,
+            result
+        });
+        
+        return result;
     }
     
     updateSidebarState(lijst) {
@@ -2322,6 +2361,10 @@ class Taakbeheer {
 
     // Mobile sidebar toggle functionality
     initializeMobileSidebar() {
+        console.log('📱 initializeMobileSidebar called:', {
+            isMobile: this.isMobileDevice(),
+            innerWidth: window.innerWidth
+        });
         const hamburgerMenu = document.getElementById('hamburger-menu');
         const sidebar = document.querySelector('.sidebar');
         const mainContent = document.querySelector('.main-content');
@@ -11565,7 +11608,7 @@ class AuthManager {
                     app.renderTaken();
                     
                     // Load basic UI for mobile devices without authentication
-                    if (window.innerWidth < 1400) {
+                    if (app.isMobileDevice()) {
                         app.loadBasicMobileUI();
                     }
                 }
@@ -11629,7 +11672,7 @@ class AuthManager {
             if (userImportEmail) userImportEmail.style.display = 'none';
             
             // For mobile devices, keep main content visible for basic UI
-            if (window.innerWidth < 1400) {
+            if (app && app.isMobileDevice()) {
                 // Mobile: Show sidebar and main content for basic UI
                 if (sidebarContent) sidebarContent.style.display = 'block';
                 if (mainContent) mainContent.style.display = 'block';
@@ -12049,7 +12092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.initializeMobileSidebar();
     
     // Fallback for mobile devices without authentication
-    if (window.innerWidth < 1400) {
+    if (app && app.isMobileDevice()) {
         setTimeout(() => {
             const mainHeader = document.querySelector('.main-header');
             const mainContent = document.querySelector('.main-content');
