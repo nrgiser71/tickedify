@@ -3842,7 +3842,7 @@ button:focus {
 }
 
 /* Tablet and iPad responsive */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .hamburger-menu {
         display: flex;
     }

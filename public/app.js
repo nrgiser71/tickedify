@@ -765,7 +765,7 @@ class Taakbeheer {
     
     async loadBasicMobileUI() {
         // Only for mobile/tablet devices
-        if (window.innerWidth >= 1200) return;
+        if (window.innerWidth >= 1400) return;
         
         console.log('📱 Loading basic mobile UI for unauthenticated user');
         
@@ -11543,7 +11543,7 @@ class AuthManager {
                     app.renderTaken();
                     
                     // Load basic UI for mobile devices without authentication
-                    if (window.innerWidth < 1200) {
+                    if (window.innerWidth < 1400) {
                         app.loadBasicMobileUI();
                     }
                 }
@@ -12018,7 +12018,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.initializeMobileSidebar();
     
     // Fallback for mobile devices without authentication
-    if (window.innerWidth < 1200) {
+    if (window.innerWidth < 1400) {
         setTimeout(() => {
             const mainHeader = document.querySelector('.main-header');
             const mainContent = document.querySelector('.main-content');
