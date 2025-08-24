@@ -995,15 +995,26 @@ class Taakbeheer {
             }
         };
         
-        // Add multiple event types for maximum compatibility
-        ['click', 'touchstart', 'touchend', 'mousedown'].forEach(eventType => {
-            newHamburgerMenu.addEventListener(eventType, (e) => {
+        // Use only touchend for iOS, with fallback to click for other devices
+        let hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if (hasTouch) {
+            // iOS/Touch devices: use touchend only
+            newHamburgerMenu.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log(`📱 Event fired: ${eventType}`);
+                console.log(`📱 Touch event fired: touchend`);
                 toggleSidebar();
             });
-        });
+        } else {
+            // Desktop/Non-touch devices: use click
+            newHamburgerMenu.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`📱 Click event fired: click`);
+                toggleSidebar();
+            });
+        }
         
         // Also add overlay close handler
         const overlay = document.querySelector('.sidebar-overlay');
