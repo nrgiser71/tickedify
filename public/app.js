@@ -885,19 +885,16 @@ class Taakbeheer {
             result
         });
         
-        // Show debug info on screen for mobile testing
-        this.showDebugInfo({
-            width,
-            hasTouch,
-            isMobileUA,
-            isTabletUA,
-            isIOS,
-            isNarrowScreen,
-            result,
-            userAgent: userAgent.substring(0, 50) + '...'
-        });
-        
         return result;
+    }
+    
+    forceHamburgerMenuVisible() {
+        // Force hamburger menu visible via JavaScript for mobile devices
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        if (hamburgerMenu) {
+            hamburgerMenu.style.display = 'flex';
+            console.log('📱 Forced hamburger menu visible via JavaScript');
+        }
     }
     
     showDebugInfo(info) {
@@ -2476,8 +2473,12 @@ class Taakbeheer {
             }
         };
 
-        // Hamburger menu click
+        // Hamburger menu click (both click and touch events for iOS)
         hamburgerMenu.addEventListener('click', toggleSidebar);
+        hamburgerMenu.addEventListener('touchend', (e) => {
+            e.preventDefault(); // Prevent double-firing with click
+            toggleSidebar();
+        });
 
         // Overlay click to close
         overlay.addEventListener('click', () => {
