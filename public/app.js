@@ -11606,11 +11606,20 @@ class AuthManager {
             if (userInfo) userInfo.style.display = 'none';
             if (userImportEmail) userImportEmail.style.display = 'none';
             
-            // Hide app content, show welcome
-            if (sidebarContent) sidebarContent.style.display = 'none';
-            if (mainContent) mainContent.style.display = 'none';
-            if (sidebarSearch) sidebarSearch.style.display = 'none';
-            if (welcomeMessage) welcomeMessage.style.display = 'block';
+            // For mobile devices, keep main content visible for basic UI
+            if (window.innerWidth < 1400) {
+                // Mobile: Show sidebar and main content for basic UI
+                if (sidebarContent) sidebarContent.style.display = 'block';
+                if (mainContent) mainContent.style.display = 'block';
+                if (sidebarSearch) sidebarSearch.style.display = 'none';
+                if (welcomeMessage) welcomeMessage.style.display = 'none';
+            } else {
+                // Desktop: Hide app content, show welcome
+                if (sidebarContent) sidebarContent.style.display = 'none';
+                if (mainContent) mainContent.style.display = 'none';
+                if (sidebarSearch) sidebarSearch.style.display = 'none';
+                if (welcomeMessage) welcomeMessage.style.display = 'block';
+            }
         }
     }
 
