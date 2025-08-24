@@ -97,6 +97,39 @@ Claude moet zo zelfstandig mogelijk werken op develop branch en staging environm
 
 **Deze staging autonomie geldt permanent voor veilige development cycles.**
 
+## TABLET RESIZE FUNCTIONALITEIT VOLTOOID (Augustus 24, 2025) 📱✅
+
+**🎯 TABLET UX PROBLEEM OPGELOST: Versie 0.12.21-0.12.22**
+- **User request**: "Op mobiel (tablet) is er geen mogelijkheid om in het Dagelijkse Planning scherm de acties en de planner blok te resizen. Op de desktop kan dat wel. Op een tablet moet dat ook kunnen."
+- **Probleem**: Resize splitter werkte niet op touch devices en was te klein/onduidelijk
+- **Oplossing**: Complete touch-friendly resize implementatie met visuele feedback
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Touch Event Verbetering**: Gefixte coordinate extractie `e.touches[0].clientX` voor touchstart/touchmove
+- **Touch-Friendly Splitter**: Uitgebreid van 8px naar 20px breedte op tablets
+- **Visuele Grip Indicator**: 3-dots pattern met CSS radial-gradient voor duidelijke feedback
+- **Media Query Targeting**: `@media (min-width: 769px) and (max-width: 1400px) and (pointer: coarse)`
+- **Haptic Feedback**: iOS vibrate support voor tactile feedback bij touch start
+
+**🎨 UX ACHIEVEMENTS:**
+- **Perfect Positionering**: Splitter staat correct tussen acties en kalender blok (v0.12.22 fix)
+- **Visual Feedback**: Hover/active states met macOS blue theming
+- **Consistent Experience**: Desktop functionaliteit behouden, tablet geoptimaliseerd
+- **Touch Optimized**: 20px touch target met duidelijke grip pattern indicator
+
+**🔧 VERSIE PROGRESSIE:**
+- **v0.12.21**: Touch event handling, CSS grip indicator, tablet-friendly splitter
+- **v0.12.22**: Positionering fix - splitter correct tussen acties en kalender
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkende** tablet resize functionaliteit voor dagelijkse planning
+- **Touch-friendly interface** met 20px splitter en grip indicator
+- **Haptic feedback** op iOS devices voor tactile experience
+- **Consistent UX** tussen desktop mouse en tablet touch interactions
+- **Production-ready** met cross-device compatibility
+
+**STATUS**: Tablet resize functionaliteit 100% operationeel - gebruikers kunnen nu probleemloos resizen op alle apparaten.
+
 ## EVENT POPUP Z-INDEX FIX VOLTOOID (Augustus 13, 2025) 🔧✅
 
 **🎯 POPUP VISIBILITY BUG OPGELOST: Versie 0.12.1**

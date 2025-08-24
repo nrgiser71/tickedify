@@ -87,6 +87,7 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `handlePlanningDrop()` - regel ~3,200
 - `verwijderUitPlanning()` - regel ~3,500
 - `herorderPlanning()` - regel ~3,800
+- `initPlanningResizer()` - regel ~5,944 - Touch/mouse resize functionaliteit
 
 **Herhalende Taken (regels 4,000-5,500)**
 - `toonHerhalingPopup()` - regel ~4,100 - UI voor recurring setup
@@ -410,6 +411,21 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Content**: Project, context, datum, duur, clickable URLs in opmerkingen
 - **Integration**: Werkt naast drag & drop zonder conflicten (v0.11.99 fix)
 
+### Tablet Resize Functionaliteit (Dagelijkse Planning)
+- **Main Function**: `initPlanningResizer()` in app.js:5944-6056 - Complete touch/mouse resize setup
+- **HTML Structure**: `.planning-splitter` + `.splitter-handle` in dagelijkse planning layout
+- **Event Handlers**: Touch (touchstart/touchmove/touchend) + Mouse (mousedown/mousemove/mouseup)
+- **Touch Improvements**: Verbeterde coordinate extractie `e.touches[0].clientX` voor tablets
+- **CSS Styling**: `.planning-splitter` basic styling (8px width desktop) in style.css:2792-2828
+- **Tablet CSS**: Touch-friendly media query styling in style.css:2830-2884
+  - **Width**: 20px breed op tablets voor betere touch targets
+  - **Grip Pattern**: 3-dots radial-gradient indicator met CSS pseudo-elements
+  - **Media Query**: `@media (min-width: 769px) and (max-width: 1400px) and (pointer: coarse)`
+  - **Hover States**: macOS blue theming voor active/hover feedback
+- **LocalStorage**: Planning sidebar width persistence met validatie (20%-80%)
+- **Haptic Feedback**: iOS vibrate support bij touch start (navigator.vibrate)
+- **Flex Order Fix**: Correcte volgorde sidebar(1) → splitter(2) → calendar(3) op tablets
+
 ## 🔧 Utility Locaties
 
 ### Date Helpers
@@ -509,8 +525,9 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-**LAATSTE UPDATE**: Augustus 2, 2025 - Uitklapbare Taken Dagelijkse Planning Bug Fix
+**LAATSTE UPDATE**: Augustus 24, 2025 - Tablet Resize Functionaliteit Voltooid
 **BELANGRIJKSTE UPDATES**:
+- Augustus 24: Tablet Resize Functionaliteit - Complete touch-friendly resize implementatie voor dagelijkse planning (v0.12.21-0.12.22)
 - Augustus 2: Uitklapbare Taken Fix - Hersteld expandable functionaliteit in dag-kalender planning
 - Juli 24: Highlighted Context Menu - Complete implementation met DOM cloning en consistent UX
 - Juli 18: Focus Mode - Volledige CSS overrides voor perfect fullscreen gedrag
