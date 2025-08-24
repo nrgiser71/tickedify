@@ -3122,7 +3122,7 @@ class Taakbeheer {
 
     async renderTaken() {
         // Skip rendering for unauthenticated users
-        if (window.authManager && !window.authManager.isAuthenticated) {
+        if (!auth || !auth.isAuthenticated) {
             const container = document.getElementById('takenLijst');
             if (container) {
                 container.innerHTML = '';
