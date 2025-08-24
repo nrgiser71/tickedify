@@ -790,8 +790,10 @@ class Taakbeheer {
             this.taken = [];
             await this.renderTaken();
             
-            // Initialize mobile sidebar
-            this.initializeMobileSidebar();
+            // Initialize mobile sidebar (after HTML structure is created)
+            setTimeout(() => {
+                this.initializeMobileSidebar();
+            }, 100);
             
             console.log('✅ Basic mobile UI loaded successfully');
         } catch (error) {
@@ -833,7 +835,12 @@ class Taakbeheer {
                     </div>
                     
                     <div class="taken-container">
-                        <ul id="takenLijst"></ul>
+                        <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
+                            <h3>📱 Welkom bij Tickedify</h3>
+                            <p>Gebruik het hamburger menu (☰) om te navigeren en in te loggen.</p>
+                            <p style="margin-top: 20px; font-size: 14px;">Je kunt inloggen of een account aanmaken via de sidebar.</p>
+                        </div>
+                        <ul id="takenLijst" style="display: none;"></ul>
                     </div>
                 </div>
             `;
@@ -2318,12 +2325,27 @@ class Taakbeheer {
         const hamburgerMenu = document.getElementById('hamburger-menu');
         const sidebar = document.querySelector('.sidebar');
         const mainContent = document.querySelector('.main-content');
-        const overlay = document.getElementById('sidebar-overlay');
+        let overlay = document.getElementById('sidebar-overlay');
 
-        if (!hamburgerMenu || !sidebar || !mainContent || !overlay) {
-            console.log('Mobile sidebar elements not found, skipping initialization');
+        // Create overlay if it doesn't exist
+        if (!overlay && sidebar && mainContent) {
+            overlay = document.createElement('div');
+            overlay.id = 'sidebar-overlay';
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+            console.log('📱 Created sidebar-overlay element for mobile');
+        }
+
+        if (!hamburgerMenu || !sidebar || !mainContent) {
+            console.log('❌ Mobile sidebar: Missing required elements', {
+                hamburgerMenu: !!hamburgerMenu,
+                sidebar: !!sidebar,
+                mainContent: !!mainContent
+            });
             return;
         }
+        
+        console.log('✅ Mobile sidebar: All elements found, initializing...');
 
         const toggleSidebar = () => {
             const isOpen = sidebar.classList.contains('sidebar-open');
