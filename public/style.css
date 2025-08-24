@@ -4027,7 +4027,7 @@ button:focus {
     .dagelijkse-planning-layout {
         flex-direction: row !important;
         height: calc(100vh - 140px) !important;
-        gap: 20px !important;
+        gap: 0 !important;
     }
     
     .planning-sidebar {
@@ -4038,9 +4038,13 @@ button:focus {
         flex: none !important;
     }
     
+    .planning-splitter {
+        order: 2 !important;
+    }
+    
     .dag-kalender {
         flex: 1 !important;
-        order: 2 !important;
+        order: 3 !important;
         height: 100% !important;
     }
 }
