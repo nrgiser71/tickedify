@@ -11893,7 +11893,7 @@ class AuthManager {
                 if (sidebarContent) sidebarContent.style.display = 'block';
                 if (mainContent) mainContent.style.display = 'block';
                 if (sidebarSearch) sidebarSearch.style.display = 'none';
-                if (welcomeMessage) welcomeMessage.style.display = 'none';
+                if (welcomeMessage) welcomeMessage.style.display = 'block';
                 
                 // Hide menu items for unauthenticated mobile users
                 const lijstSecties = document.querySelectorAll('.lijst-sectie');
