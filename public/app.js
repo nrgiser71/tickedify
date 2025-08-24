@@ -11913,6 +11913,21 @@ class AuthManager {
                 // Disable task controls for unauthenticated users
                 this.updateTaskControls(false);
                 
+                // Automatically open sidebar for unauthenticated mobile users
+                setTimeout(() => {
+                    const sidebar = document.querySelector('.sidebar');
+                    const overlay = document.querySelector('.sidebar-overlay');
+                    const hamburgerMenu = document.getElementById('hamburger-menu');
+                    
+                    if (sidebar && !sidebar.classList.contains('sidebar-open')) {
+                        sidebar.classList.add('sidebar-open');
+                        if (overlay) overlay.classList.add('active');
+                        if (hamburgerMenu) hamburgerMenu.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                        console.log('📱 Sidebar automatically opened for unauthenticated user');
+                    }
+                }, 100); // Small delay to ensure DOM is ready
+                
             } else {
                 // Desktop: Hide app content, show welcome
                 if (sidebarContent) sidebarContent.style.display = 'none';
