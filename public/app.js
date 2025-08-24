@@ -774,37 +774,20 @@ class Taakbeheer {
         
         if (!isMobile) return;
         
-        console.log('📱 Loading basic mobile UI for unauthenticated user');
+        console.log('📱 Ensuring basic mobile structure exists');
         
         try {
-            // Ensure main content structure exists
+            // Only ensure main content structure exists - no content shown
             this.ensureMainContentStructure();
             
-            // Set current list to inbox
-            this.huidigeLijst = 'inbox';
-            this.saveCurrentList();
-            
-            // Update sidebar state
-            this.updateSidebarState('inbox');
-            
-            // Update page title
-            const pageTitle = document.getElementById('page-title');
-            if (pageTitle) {
-                pageTitle.textContent = 'Inbox';
-            }
-            
-            // Clear tasks and render empty state
-            this.taken = [];
-            await this.renderTaken();
-            
-            // Initialize mobile sidebar (after HTML structure is created)
+            // Initialize mobile sidebar functionality
             setTimeout(() => {
                 this.setupMobileInterface();
             }, 100);
             
-            console.log('✅ Basic mobile UI loaded successfully');
+            console.log('✅ Basic mobile structure ensured');
         } catch (error) {
-            console.error('❌ Error loading basic mobile UI:', error);
+            console.error('❌ Error ensuring mobile structure:', error);
         }
     }
     
@@ -836,18 +819,13 @@ class Taakbeheer {
                 </header>
                 
                 <div class="content-area">
-                    <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="Log in om taken toe te voegen..." disabled>
-                        <button id="toevoegBtn" disabled>Toevoegen</button>
+                    <div class="taak-input-container" id="taak-input-container" style="display: none;">
+                        <input type="text" id="taakInput" placeholder="Nieuwe taak...">
+                        <button id="toevoegBtn">Toevoegen</button>
                     </div>
                     
                     <div class="taken-container">
-                        <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
-                            <h3>📱 Welkom bij Tickedify</h3>
-                            <p>Gebruik het hamburger menu (☰) om te navigeren en in te loggen.</p>
-                            <p style="margin-top: 20px; font-size: 14px;">Je kunt inloggen of een account aanmaken via de sidebar.</p>
-                        </div>
-                        <ul id="takenLijst" style="display: none;"></ul>
+                        <ul id="takenLijst"></ul>
                     </div>
                 </div>
             `;
@@ -11872,19 +11850,27 @@ class AuthManager {
             if (sidebarSearch) sidebarSearch.style.display = 'block';
             if (welcomeMessage) welcomeMessage.style.display = 'none';
             
+            // For mobile devices, also show all app content
+            if (app && app.isMobileDevice()) {
+                this.showMobileAppContent();
+            }
+            
         } else {
             // Unauthenticated state - show welcome message and login/register
             if (authButtons) authButtons.style.display = 'flex';
             if (userInfo) userInfo.style.display = 'none';
             if (userImportEmail) userImportEmail.style.display = 'none';
             
-            // For mobile devices, keep main content visible for basic UI
+            // For mobile devices, show sidebar but hide menu content and main content
             if (app && app.isMobileDevice()) {
-                // Mobile: Show sidebar and main content for basic UI
-                if (sidebarContent) sidebarContent.style.display = 'block';
-                if (mainContent) mainContent.style.display = 'block';
+                // Mobile: Show sidebar but hide all functional content
+                if (sidebarContent) sidebarContent.style.display = 'none';
+                if (mainContent) mainContent.style.display = 'none';
                 if (sidebarSearch) sidebarSearch.style.display = 'none';
-                if (welcomeMessage) welcomeMessage.style.display = 'none';
+                if (welcomeMessage) welcomeMessage.style.display = 'block';
+                
+                // Hide menu items and task input controls for unauthenticated users
+                this.hideMobileAppContent();
             } else {
                 // Desktop: Hide app content, show welcome
                 if (sidebarContent) sidebarContent.style.display = 'none';
@@ -12007,6 +11993,46 @@ class AuthManager {
 
     isLoggedIn() {
         return this.isAuthenticated;
+    }
+
+    hideMobileAppContent() {
+        // Hide menu items in sidebar
+        const menuItems = document.querySelectorAll('.lijst-item');
+        menuItems.forEach(item => {
+            item.style.display = 'none';
+        });
+
+        // Hide task input container
+        const taakInputContainer = document.getElementById('taak-input-container');
+        if (taakInputContainer) {
+            taakInputContainer.style.display = 'none';
+        }
+
+        // Hide any other app-specific content
+        const sidebarSearch = document.querySelector('.sidebar-search');
+        if (sidebarSearch) {
+            sidebarSearch.style.display = 'none';
+        }
+    }
+
+    showMobileAppContent() {
+        // Show menu items in sidebar
+        const menuItems = document.querySelectorAll('.lijst-item');
+        menuItems.forEach(item => {
+            item.style.display = 'flex';
+        });
+
+        // Show task input container
+        const taakInputContainer = document.getElementById('taak-input-container');
+        if (taakInputContainer) {
+            taakInputContainer.style.display = 'block';
+        }
+
+        // Show sidebar search
+        const sidebarSearch = document.querySelector('.sidebar-search');
+        if (sidebarSearch) {
+            sidebarSearch.style.display = 'block';
+        }
     }
 
 }

@@ -8011,3 +8011,33 @@ body.dagkalender-focus-active {
     box-shadow: none !important;
 }
 
+/* Authentication-based visibility controls for mobile/tablet */
+@media (max-width: 1024px) {
+    /* Hide app functionality by default on mobile/tablet - shown via JavaScript after authentication */
+    .taak-input-container {
+        display: none;
+    }
+    
+    .lijst-item {
+        display: none;
+    }
+    
+    .sidebar-search {
+        display: none;
+    }
+    
+    /* Welcome message visible by default for unauthenticated users */
+    #welcome-message {
+        display: block;
+    }
+    
+    /* Main content hidden by default on mobile until authenticated */
+    .main-content {
+        display: none;
+    }
+    
+    .sidebar-content {
+        display: none;
+    }
+}
+
