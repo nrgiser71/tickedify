@@ -11917,19 +11917,32 @@ class AuthManager {
     updateTaskControls(isAuthenticated) {
         const taakInput = document.getElementById('taakInput');
         const toevoegBtn = document.getElementById('toevoegBtn');
+        const taakInputContainer = document.getElementById('taak-input-container');
         
-        if (taakInput) {
-            if (isAuthenticated) {
+        if (isAuthenticated) {
+            // Show task input container for authenticated users
+            if (taakInputContainer) taakInputContainer.style.display = 'flex';
+            
+            if (taakInput) {
                 taakInput.disabled = false;
                 taakInput.placeholder = 'Nieuwe taak...';
-            } else {
+            }
+            
+            if (toevoegBtn) {
+                toevoegBtn.disabled = false;
+            }
+        } else {
+            // Hide task input container for unauthenticated users
+            if (taakInputContainer) taakInputContainer.style.display = 'none';
+            
+            if (taakInput) {
                 taakInput.disabled = true;
                 taakInput.placeholder = 'Log in om taken toe te voegen...';
             }
-        }
-        
-        if (toevoegBtn) {
-            toevoegBtn.disabled = !isAuthenticated;
+            
+            if (toevoegBtn) {
+                toevoegBtn.disabled = true;
+            }
         }
     }
 
