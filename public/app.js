@@ -5975,15 +5975,25 @@ class Taakbeheer {
         }
 
         const startResize = (e) => {
-            console.log('🔍 Start resize triggered');
+            console.log('🔍 Start resize triggered', e.type);
             e.preventDefault();
             e.stopPropagation();
             
             isResizing = true;
-            startX = e.clientX || (e.touches && e.touches[0].clientX);
+            
+            // Better touch/mouse coordinate handling
+            if (e.type === 'touchstart' && e.touches && e.touches.length > 0) {
+                startX = e.touches[0].clientX;
+            } else if (e.type === 'mousedown') {
+                startX = e.clientX;
+            } else {
+                console.warn('🚨 Could not determine start coordinates');
+                return;
+            }
+            
             startSidebarWidth = (sidebar.offsetWidth / container.offsetWidth) * 100;
             
-            console.log('🔍 Resize started:', { startX, startSidebarWidth });
+            console.log('🔍 Resize started:', { startX, startSidebarWidth, eventType: e.type });
             
             document.body.style.cursor = 'ew-resize';
             document.body.style.userSelect = 'none';
@@ -5992,6 +6002,11 @@ class Taakbeheer {
             
             // Add visual feedback
             splitter.classList.add('resizing');
+            
+            // Add haptic feedback on iOS
+            if (e.type === 'touchstart' && 'vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
         };
 
         const doResize = (e) => {
@@ -6000,7 +6015,17 @@ class Taakbeheer {
             e.preventDefault();
             e.stopPropagation();
             
-            const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+            // Better touch/mouse coordinate handling
+            let currentX;
+            if (e.type === 'touchmove' && e.touches && e.touches.length > 0) {
+                currentX = e.touches[0].clientX;
+            } else if (e.type === 'mousemove') {
+                currentX = e.clientX;
+            } else {
+                console.warn('🚨 Could not determine current coordinates');
+                return;
+            }
+            
             const deltaX = currentX - startX;
             const containerWidth = container.offsetWidth;
             const deltaPercent = (deltaX / containerWidth) * 100;
@@ -6012,7 +6037,7 @@ class Taakbeheer {
             
             const newCalendarWidth = 100 - newSidebarWidth;
             
-            console.log('🔍 Resizing:', { currentX, deltaX, newSidebarWidth });
+            console.log('🔍 Resizing:', { currentX, deltaX, newSidebarWidth, eventType: e.type });
             
             sidebar.style.setProperty('width', newSidebarWidth + '%', 'important');
             calendar.style.setProperty('width', newCalendarWidth + '%', 'important');

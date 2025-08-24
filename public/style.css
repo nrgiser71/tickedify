@@ -2827,6 +2827,62 @@ button:focus {
     width: 3px;
 }
 
+/* Touch-friendly splitter voor tablets */
+@media (min-width: 769px) and (max-width: 1400px) and (pointer: coarse) {
+    .planning-splitter {
+        width: 20px !important;
+        background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.05);
+        border-radius: 4px;
+    }
+    
+    .planning-splitter:hover,
+    .planning-splitter:active {
+        background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.15);
+    }
+    
+    .planning-splitter.resizing {
+        background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.25);
+    }
+    
+    .splitter-handle {
+        display: none; /* Vervangen door grip pattern */
+    }
+    
+    /* Grip pattern voor touch feedback */
+    .planning-splitter::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 6px;
+        height: 60px;
+        background-image: 
+            radial-gradient(circle at 50% 20%, var(--macos-gray-4) 2px, transparent 2px),
+            radial-gradient(circle at 50% 50%, var(--macos-gray-4) 2px, transparent 2px),
+            radial-gradient(circle at 50% 80%, var(--macos-gray-4) 2px, transparent 2px);
+        background-size: 6px 20px;
+        background-repeat: no-repeat;
+    }
+    
+    .planning-splitter:hover::before,
+    .planning-splitter:active::before,
+    .planning-splitter.resizing::before {
+        background-image: 
+            radial-gradient(circle at 50% 20%, var(--macos-blue) 2px, transparent 2px),
+            radial-gradient(circle at 50% 50%, var(--macos-blue) 2px, transparent 2px),
+            radial-gradient(circle at 50% 80%, var(--macos-blue) 2px, transparent 2px);
+    }
+}
+
+/* Voor tablets - zorg dat sidebar resizable blijft */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .planning-sidebar {
+        width: 40% !important; /* Default maar can be resized */
+        flex: none !important;
+    }
+}
+
 /* Collapsible sections styling */
 .collapsible {
     transition: all 0.3s ease;
