@@ -3121,6 +3121,15 @@ class Taakbeheer {
     }
 
     async renderTaken() {
+        // Skip rendering for unauthenticated users
+        if (window.authManager && !window.authManager.isAuthenticated) {
+            const container = document.getElementById('takenLijst');
+            if (container) {
+                container.innerHTML = '';
+            }
+            return;
+        }
+        
         let container = document.getElementById('takenLijst');
         
         if (!container) {
