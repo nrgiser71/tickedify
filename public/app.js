@@ -777,29 +777,18 @@ class Taakbeheer {
         console.log('📱 Loading basic mobile UI for unauthenticated user');
         
         try {
-            // Ensure main content structure exists
+            // Ensure main content structure exists with login prompt
             this.ensureMainContentStructure();
-            
-            // Set current list to inbox
-            this.huidigeLijst = 'inbox';
-            this.saveCurrentList();
-            
-            // Update sidebar state
-            this.updateSidebarState('inbox');
             
             // Update page title
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) {
-                pageTitle.textContent = 'Inbox';
+                pageTitle.textContent = 'Welkom bij Tickedify';
             }
             
-            // Clear tasks and render empty state
-            this.taken = [];
-            await this.renderTaken();
-            
-            // Initialize mobile sidebar (after HTML structure is created)
+            // Initialize mobile sidebar for hamburger menu access
             setTimeout(() => {
-                this.setupMobileInterface();
+                this.initializeMobileSidebar();
             }, 100);
             
             console.log('✅ Basic mobile UI loaded successfully');
@@ -819,11 +808,10 @@ class Taakbeheer {
         const mainHeader = document.querySelector('.main-header');
         const contentArea = document.querySelector('.content-area');
         const takenContainer = document.querySelector('.taken-container');
-        const takenLijst = document.getElementById('takenLijst');
         
-        // If structure is missing, create it
-        if (!mainHeader || !contentArea || !takenContainer || !takenLijst) {
-            console.log('📱 Creating missing main content structure for mobile');
+        // If structure is missing, create it for unauthenticated mobile users
+        if (!mainHeader || !contentArea || !takenContainer) {
+            console.log('📱 Creating main content structure for unauthenticated mobile user');
             
             mainContent.innerHTML = `
                 <header class="main-header">
@@ -832,27 +820,22 @@ class Taakbeheer {
                         <span></span>
                         <span></span>
                     </button>
-                    <h1 id="page-title">Inbox</h1>
+                    <h1 id="page-title">Welkom bij Tickedify</h1>
                 </header>
                 
                 <div class="content-area">
-                    <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="Log in om taken toe te voegen..." disabled>
-                        <button id="toevoegBtn" disabled>Toevoegen</button>
-                    </div>
-                    
                     <div class="taken-container">
                         <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
                             <h3>📱 Welkom bij Tickedify</h3>
-                            <p>Gebruik het hamburger menu (☰) om te navigeren en in te loggen.</p>
-                            <p style="margin-top: 20px; font-size: 14px;">Je kunt inloggen of een account aanmaken via de sidebar.</p>
+                            <p>Smart task management volgens de "Baas Over Je Tijd" methodologie.</p>
+                            <p style="margin-top: 20px;">Gebruik het hamburger menu (☰) om in te loggen of een account aan te maken.</p>
+                            <p style="margin-top: 10px; font-size: 14px; opacity: 0.7;">Na het inloggen krijg je toegang tot al je productiviteitstools.</p>
                         </div>
-                        <ul id="takenLijst" style="display: none;"></ul>
                     </div>
                 </div>
             `;
             
-            console.log('✅ Main content structure created for mobile');
+            console.log('✅ Main content structure created for unauthenticated mobile user');
         }
     }
     
@@ -11878,19 +11861,18 @@ class AuthManager {
             if (userInfo) userInfo.style.display = 'none';
             if (userImportEmail) userImportEmail.style.display = 'none';
             
-            // For mobile devices, keep main content visible for basic UI
+            // For both mobile and desktop: hide sidebar content and show welcome
+            if (sidebarContent) sidebarContent.style.display = 'none';
+            if (sidebarSearch) sidebarSearch.style.display = 'none';
+            if (welcomeMessage) welcomeMessage.style.display = 'block';
+            
+            // For mobile devices, still show main content but with limited functionality
             if (app && app.isMobileDevice()) {
-                // Mobile: Show sidebar and main content for basic UI
-                if (sidebarContent) sidebarContent.style.display = 'block';
+                // Mobile: Show main content for hamburger menu access, but limited UI
                 if (mainContent) mainContent.style.display = 'block';
-                if (sidebarSearch) sidebarSearch.style.display = 'none';
-                if (welcomeMessage) welcomeMessage.style.display = 'none';
             } else {
-                // Desktop: Hide app content, show welcome
-                if (sidebarContent) sidebarContent.style.display = 'none';
+                // Desktop: Hide main content completely
                 if (mainContent) mainContent.style.display = 'none';
-                if (sidebarSearch) sidebarSearch.style.display = 'none';
-                if (welcomeMessage) welcomeMessage.style.display = 'block';
             }
         }
     }

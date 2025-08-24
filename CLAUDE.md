@@ -3,6 +3,20 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🔄 VERSIE EN CHANGELOG UPDATE REGELS (Augustus 2025)
+**KRITIEK BELANGRIJK**: Versienummers en changelog alleen updaten na bevestiging van Jan.
+
+**VERPLICHTE WORKFLOW:**
+- ✅ **ALLEEN update versie + changelog** wanneer:
+  - Een nieuwe feature werkt (door Jan bevestigd)
+  - Een bug opgelost is (door Jan bevestigd)
+- ❌ **NOOIT update versie + changelog** bij:
+  - Experimentele fixes die nog niet getest zijn
+  - Work-in-progress implementaties
+  - Tussentijdse development iteraties
+
+**WAAROM**: Voorkomt onnodige version bumps en houdt changelog accuraat met alleen werkende features/fixes.
+
 ## 🚨 URGENT: STAGING SETUP AFWERKEN - VOLGENDE SESSIE (Augustus 2025)
 
 **🎯 DIRECT BIJ START VOLGENDE SESSIE - PRIORITEIT #1:**
