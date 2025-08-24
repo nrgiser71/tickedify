@@ -799,7 +799,7 @@ class Taakbeheer {
             
             // Initialize mobile sidebar (after HTML structure is created)
             setTimeout(() => {
-                this.initializeMobileSidebar();
+                this.setupMobileInterface();
             }, 100);
             
             console.log('✅ Basic mobile UI loaded successfully');
@@ -886,6 +886,135 @@ class Taakbeheer {
         });
         
         return result;
+    }
+    
+    setupMobileInterface() {
+        console.log('📱 Setting up mobile interface...');
+        
+        // Inject CSS to force hamburger menu visibility
+        this.injectMobileCSS();
+        
+        // Force hamburger menu visible
+        this.forceHamburgerMenuVisible();
+        
+        // Initialize mobile sidebar with aggressive setup
+        this.initializeMobileSidebar();
+        
+        // Add direct event listeners with multiple event types
+        this.bindMobileEvents();
+        
+        console.log('✅ Mobile interface setup completed');
+    }
+    
+    injectMobileCSS() {
+        const style = document.createElement('style');
+        style.id = 'mobile-force-css';
+        style.textContent = `
+            .hamburger-menu {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                z-index: 1001 !important;
+            }
+            
+            @media (max-width: 1400px) {
+                .sidebar {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 350px !important;
+                    height: 100vh !important;
+                    z-index: 1000 !important;
+                    transform: translateX(-100%) !important;
+                    transition: transform 0.3s ease !important;
+                }
+                
+                .sidebar.sidebar-open {
+                    transform: translateX(0) !important;
+                }
+                
+                .sidebar-overlay {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: rgba(0, 0, 0, 0.5) !important;
+                    z-index: 999 !important;
+                    display: none !important;
+                }
+                
+                .sidebar-overlay.active {
+                    display: block !important;
+                }
+            }
+        `;
+        
+        // Remove existing mobile CSS if present
+        const existing = document.getElementById('mobile-force-css');
+        if (existing) existing.remove();
+        
+        document.head.appendChild(style);
+        console.log('📱 Mobile CSS injected');
+    }
+    
+    bindMobileEvents() {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        if (!hamburgerMenu) {
+            console.log('❌ No hamburger menu found for event binding');
+            return;
+        }
+        
+        // Remove existing listeners first
+        hamburgerMenu.replaceWith(hamburgerMenu.cloneNode(true));
+        const newHamburgerMenu = document.getElementById('hamburger-menu');
+        
+        const toggleSidebar = () => {
+            console.log('📱 Hamburger menu clicked!');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            if (!sidebar || !overlay) {
+                console.log('❌ Sidebar or overlay not found');
+                return;
+            }
+            
+            const isOpen = sidebar.classList.contains('sidebar-open');
+            
+            if (isOpen) {
+                sidebar.classList.remove('sidebar-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                console.log('📱 Sidebar closed');
+            } else {
+                sidebar.classList.add('sidebar-open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                console.log('📱 Sidebar opened');
+            }
+        };
+        
+        // Add multiple event types for maximum compatibility
+        ['click', 'touchstart', 'touchend', 'mousedown'].forEach(eventType => {
+            newHamburgerMenu.addEventListener(eventType, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`📱 Event fired: ${eventType}`);
+                toggleSidebar();
+            });
+        });
+        
+        // Also add overlay close handler
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleSidebar();
+            });
+        }
+        
+        console.log('📱 Mobile events bound to hamburger menu');
     }
     
     forceHamburgerMenuVisible() {
