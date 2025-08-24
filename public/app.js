@@ -11872,6 +11872,15 @@ class AuthManager {
             if (sidebarSearch) sidebarSearch.style.display = 'block';
             if (welcomeMessage) welcomeMessage.style.display = 'none';
             
+            // Show menu items for authenticated users
+            const lijstSecties = document.querySelectorAll('.lijst-sectie');
+            lijstSecties.forEach(sectie => {
+                sectie.style.display = 'block';
+            });
+            
+            // Enable task controls for authenticated users
+            this.updateTaskControls(true);
+            
         } else {
             // Unauthenticated state - show welcome message and login/register
             if (authButtons) authButtons.style.display = 'flex';
@@ -11885,6 +11894,16 @@ class AuthManager {
                 if (mainContent) mainContent.style.display = 'block';
                 if (sidebarSearch) sidebarSearch.style.display = 'none';
                 if (welcomeMessage) welcomeMessage.style.display = 'none';
+                
+                // Hide menu items for unauthenticated mobile users
+                const lijstSecties = document.querySelectorAll('.lijst-sectie');
+                lijstSecties.forEach(sectie => {
+                    sectie.style.display = 'none';
+                });
+                
+                // Disable task controls for unauthenticated users
+                this.updateTaskControls(false);
+                
             } else {
                 // Desktop: Hide app content, show welcome
                 if (sidebarContent) sidebarContent.style.display = 'none';
@@ -11892,6 +11911,25 @@ class AuthManager {
                 if (sidebarSearch) sidebarSearch.style.display = 'none';
                 if (welcomeMessage) welcomeMessage.style.display = 'block';
             }
+        }
+    }
+
+    updateTaskControls(isAuthenticated) {
+        const taakInput = document.getElementById('taakInput');
+        const toevoegBtn = document.getElementById('toevoegBtn');
+        
+        if (taakInput) {
+            if (isAuthenticated) {
+                taakInput.disabled = false;
+                taakInput.placeholder = 'Nieuwe taak...';
+            } else {
+                taakInput.disabled = true;
+                taakInput.placeholder = 'Log in om taken toe te voegen...';
+            }
+        }
+        
+        if (toevoegBtn) {
+            toevoegBtn.disabled = !isAuthenticated;
         }
     }
 
