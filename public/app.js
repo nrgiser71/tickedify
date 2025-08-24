@@ -767,15 +767,28 @@ class Taakbeheer {
         // Only for mobile/tablet devices
         if (window.innerWidth >= 1200) return;
         
-        // Only load if main content is empty
-        const mainContent = document.querySelector('.main-content');
-        if (!mainContent || mainContent.innerHTML.trim() !== '') return;
-        
         console.log('📱 Loading basic mobile UI for unauthenticated user');
         
         try {
-            // Load basic structure for mobile
-            await this.navigeerNaarLijst('inbox');
+            // Ensure main content structure exists
+            this.ensureMainContentStructure();
+            
+            // Set current list to inbox
+            this.huidigeLijst = 'inbox';
+            this.saveCurrentList();
+            
+            // Update sidebar state
+            this.updateSidebarState('inbox');
+            
+            // Update page title
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) {
+                pageTitle.textContent = 'Inbox';
+            }
+            
+            // Clear tasks and render empty state
+            this.taken = [];
+            await this.renderTaken();
             
             // Initialize mobile sidebar
             this.initializeMobileSidebar();
@@ -783,6 +796,49 @@ class Taakbeheer {
             console.log('✅ Basic mobile UI loaded successfully');
         } catch (error) {
             console.error('❌ Error loading basic mobile UI:', error);
+        }
+    }
+    
+    ensureMainContentStructure() {
+        const mainContent = document.querySelector('.main-content');
+        if (!mainContent) {
+            console.log('❌ Main content element not found - cannot create mobile UI');
+            return;
+        }
+        
+        // Check if basic structure exists
+        const mainHeader = document.querySelector('.main-header');
+        const contentArea = document.querySelector('.content-area');
+        const takenContainer = document.querySelector('.taken-container');
+        const takenLijst = document.getElementById('takenLijst');
+        
+        // If structure is missing, create it
+        if (!mainHeader || !contentArea || !takenContainer || !takenLijst) {
+            console.log('📱 Creating missing main content structure for mobile');
+            
+            mainContent.innerHTML = `
+                <header class="main-header">
+                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <h1 id="page-title">Inbox</h1>
+                </header>
+                
+                <div class="content-area">
+                    <div class="taak-input-container" id="taak-input-container">
+                        <input type="text" id="taakInput" placeholder="Log in om taken toe te voegen..." disabled>
+                        <button id="toevoegBtn" disabled>Toevoegen</button>
+                    </div>
+                    
+                    <div class="taken-container">
+                        <ul id="takenLijst"></ul>
+                    </div>
+                </div>
+            `;
+            
+            console.log('✅ Main content structure created for mobile');
         }
     }
     
