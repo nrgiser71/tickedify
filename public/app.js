@@ -885,7 +885,73 @@ class Taakbeheer {
             result
         });
         
+        // Show debug info on screen for mobile testing
+        this.showDebugInfo({
+            width,
+            hasTouch,
+            isMobileUA,
+            isTabletUA,
+            isIOS,
+            isNarrowScreen,
+            result,
+            userAgent: userAgent.substring(0, 50) + '...'
+        });
+        
         return result;
+    }
+    
+    showDebugInfo(info) {
+        // Remove existing debug info
+        const existing = document.getElementById('debug-info');
+        if (existing) existing.remove();
+        
+        // Create debug overlay
+        const debugDiv = document.createElement('div');
+        debugDiv.id = 'debug-info';
+        debugDiv.style.cssText = `
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 10000;
+            max-width: 300px;
+            word-break: break-word;
+        `;
+        
+        debugDiv.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 8px;">📱 Mobile Detection Debug</div>
+            <div>Width: ${info.width}px</div>
+            <div>Has Touch: ${info.hasTouch}</div>
+            <div>Mobile UA: ${info.isMobileUA}</div>
+            <div>Tablet UA: ${info.isTabletUA}</div>
+            <div>Is iOS: ${info.isIOS}</div>
+            <div>Narrow Screen: ${info.isNarrowScreen}</div>
+            <div style="margin-top: 8px; font-weight: bold; color: ${info.result ? '#00ff00' : '#ff0000'};">
+                Result: ${info.result}
+            </div>
+            <div style="margin-top: 8px; font-size: 10px; opacity: 0.7;">
+                UA: ${info.userAgent}
+            </div>
+            <div style="margin-top: 8px; text-align: center;">
+                <button onclick="this.parentElement.parentElement.remove()" style="background: #333; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(debugDiv);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (debugDiv.parentNode) {
+                debugDiv.remove();
+            }
+        }, 10000);
     }
     
     updateSidebarState(lijst) {
