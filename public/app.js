@@ -787,10 +787,10 @@ class Taakbeheer {
             // Update sidebar state
             this.updateSidebarState('inbox');
             
-            // Update page title
+            // Update page title (empty for unauthenticated users)
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) {
-                pageTitle.textContent = 'Inbox';
+                pageTitle.textContent = '';
             }
             
             // Clear tasks and render empty state
@@ -832,7 +832,7 @@ class Taakbeheer {
                         <span></span>
                         <span></span>
                     </button>
-                    <h1 id="page-title">Inbox</h1>
+                    <h1 id="page-title"></h1>
                 </header>
                 
                 <div class="content-area">
@@ -11927,10 +11927,20 @@ class AuthManager {
         const taakInput = document.getElementById('taakInput');
         const toevoegBtn = document.getElementById('toevoegBtn');
         const taakInputContainer = document.getElementById('taak-input-container');
+        const pageTitle = document.getElementById('page-title');
         
         if (isAuthenticated) {
             // Show task input container for authenticated users
             if (taakInputContainer) taakInputContainer.style.display = 'flex';
+            
+            // Show page title for authenticated users
+            if (pageTitle) {
+                pageTitle.style.display = 'block';
+                // Set appropriate title based on current list
+                if (!pageTitle.textContent || pageTitle.textContent === '') {
+                    pageTitle.textContent = this.huidigeLijst || 'Inbox';
+                }
+            }
             
             if (taakInput) {
                 taakInput.disabled = false;
@@ -11943,6 +11953,11 @@ class AuthManager {
         } else {
             // Hide task input container for unauthenticated users
             if (taakInputContainer) taakInputContainer.style.display = 'none';
+            
+            // Hide page title for unauthenticated users
+            if (pageTitle) {
+                pageTitle.style.display = 'none';
+            }
             
             if (taakInput) {
                 taakInput.disabled = true;
