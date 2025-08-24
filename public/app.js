@@ -763,6 +763,29 @@ class Taakbeheer {
         }
     }
     
+    async loadBasicMobileUI() {
+        // Only for mobile/tablet devices
+        if (window.innerWidth >= 1200) return;
+        
+        // Only load if main content is empty
+        const mainContent = document.querySelector('.main-content');
+        if (!mainContent || mainContent.innerHTML.trim() !== '') return;
+        
+        console.log('📱 Loading basic mobile UI for unauthenticated user');
+        
+        try {
+            // Load basic structure for mobile
+            await this.navigeerNaarLijst('inbox');
+            
+            // Initialize mobile sidebar
+            this.initializeMobileSidebar();
+            
+            console.log('✅ Basic mobile UI loaded successfully');
+        } catch (error) {
+            console.error('❌ Error loading basic mobile UI:', error);
+        }
+    }
+    
     updateSidebarState(lijst) {
         // Update actieve lijst in sidebar immediately
         document.querySelectorAll('.lijst-item').forEach(item => {
@@ -11462,6 +11485,11 @@ class AuthManager {
                 if (app) {
                     app.taken = [];
                     app.renderTaken();
+                    
+                    // Load basic UI for mobile devices without authentication
+                    if (window.innerWidth < 1200) {
+                        app.loadBasicMobileUI();
+                    }
                 }
                 
                 // Hide loading indicator for unauthenticated users
@@ -11932,6 +11960,20 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
 // Initialize mobile sidebar after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     app.initializeMobileSidebar();
+    
+    // Fallback for mobile devices without authentication
+    if (window.innerWidth < 1200) {
+        setTimeout(() => {
+            const mainHeader = document.querySelector('.main-header');
+            const mainContent = document.querySelector('.main-content');
+            
+            // If no main header exists and main content is empty, load basic mobile UI
+            if (!mainHeader && (!mainContent || mainContent.innerHTML.trim() === '')) {
+                console.log('📱 Fallback: Loading basic mobile UI after timeout');
+                app.loadBasicMobileUI();
+            }
+        }, 1000); // Wait 1 second for authentication to complete
+    }
 });
 
 // Clean up intervals when page unloads
