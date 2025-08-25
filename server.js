@@ -263,8 +263,8 @@ app.get('/api/debug/storage-status', async (req, res) => {
         // Test storage manager initialization with detailed bucket testing
         if (storageManager) {
             try {
-                // Force fresh initialization with updated credentials
-                await storageManager.initialize(true);
+                // Initialize storage manager (no force reinit to avoid resetting)
+                await storageManager.initialize();
                 status.storage_manager.initialized = storageManager.initialized;
                 status.storage_manager.b2_available = storageManager.isB2Available();
                 status.storage_manager.b2_client_exists = !!storageManager.b2Client;
