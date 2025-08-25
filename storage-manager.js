@@ -40,8 +40,17 @@ class StorageManager {
     this.initialized = false;
   }
 
-  async initialize() {
-    if (this.initialized) return true;
+  async initialize(forceReinit = false) {
+    if (this.initialized && !forceReinit) return true;
+    
+    // Reset state for fresh initialization
+    if (forceReinit) {
+      this.b2Client = null;
+      this.bucketId = null;
+      this.authToken = null;
+      this.initialized = false;
+      console.log('🔄 Forcing storage manager reinitialization');
+    }
 
     try {
       // Only initialize B2 if credentials are provided
