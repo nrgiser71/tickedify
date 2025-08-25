@@ -2,7 +2,6 @@ const B2 = require('backblaze-b2');
 
 // Storage configuration
 const STORAGE_CONFIG = {
-  DATABASE_THRESHOLD: 5 * 1024 * 1024, // 5MB - files smaller than this go to database
   FREE_TIER_LIMIT: 100 * 1024 * 1024, // 100MB total for free users
   MAX_FILE_SIZE_FREE: 5 * 1024 * 1024, // 5MB max file size for free users
   MAX_ATTACHMENTS_PER_TASK_FREE: 1, // 1 attachment per task for free users
@@ -63,14 +62,14 @@ class StorageManager {
         this.initialized = true;
         console.log('✅ Storage Manager initialized with B2 support');
       } else {
-        console.log('⚠️ B2 credentials not found - using database-only storage');
+        console.log('⚠️ B2 credentials not found - bijlagen system will not work');
         this.initialized = true;
       }
       
       return true;
     } catch (error) {
       console.error('❌ Failed to initialize Storage Manager:', error.message);
-      // Fall back to database-only mode
+      // B2 initialization failed - bijlagen system will not work
       this.initialized = true;
       return false;
     }
@@ -98,13 +97,9 @@ class StorageManager {
     }
   }
 
-  // Determine storage type based on file size and availability
-  determineStorageType(fileSize) {
-    if (!this.b2Client || !this.bucketId) {
-      return 'database'; // Fall back to database if B2 not available
-    }
-    
-    return fileSize >= STORAGE_CONFIG.DATABASE_THRESHOLD ? 'backblaze' : 'database';
+  // Pure B2 storage - no storage type determination needed
+  isB2Available() {
+    return this.b2Client && this.bucketId;
   }
 
   // Validate file before upload
@@ -136,19 +131,18 @@ class StorageManager {
     };
   }
 
-  // Upload file to appropriate storage
+  // Upload file to Backblaze B2 storage (pure B2 approach)
   async uploadFile(file, taakId, userId) {
     await this.initialize();
     
-    const storageType = this.determineStorageType(file.size);
+    if (!this.isB2Available()) {
+      throw new Error('Bestandsopslag niet beschikbaar. Contacteer support.');
+    }
+    
     const bijlageId = this.generateId();
 
     try {
-      if (storageType === 'backblaze') {
-        return await this.uploadToB2(file, bijlageId, taakId, userId);
-      } else {
-        return await this.uploadToDatabase(file, bijlageId, taakId, userId);
-      }
+      return await this.uploadToB2(file, bijlageId, taakId, userId);
     } catch (error) {
       console.error('❌ Upload failed:', error);
       throw error;
@@ -179,7 +173,6 @@ class StorageManager {
         mimetype: file.mimetype,
         storage_type: 'backblaze',
         storage_path: fileName,
-        bestand_data: null,
         user_id: userId
       };
     } catch (error) {
@@ -188,29 +181,16 @@ class StorageManager {
     }
   }
 
-  async uploadToDatabase(file, bijlageId, taakId, userId) {
-    return {
-      id: bijlageId,
-      taak_id: taakId,
-      bestandsnaam: file.originalname,
-      bestandsgrootte: file.size,
-      mimetype: file.mimetype,
-      storage_type: 'database',
-      storage_path: null,
-      bestand_data: file.buffer,
-      user_id: userId
-    };
-  }
 
-  // Download file from appropriate storage
+  // Download file from Backblaze B2 storage
   async downloadFile(bijlage) {
     await this.initialize();
     
-    if (bijlage.storage_type === 'backblaze') {
-      return await this.downloadFromB2(bijlage.storage_path);
-    } else {
-      return bijlage.bestand_data;
+    if (!this.isB2Available()) {
+      throw new Error('Bestandsopslag niet beschikbaar. Contacteer support.');
     }
+    
+    return await this.downloadFromB2(bijlage.storage_path);
   }
 
   async downloadFromB2(storagePath) {
@@ -227,31 +207,33 @@ class StorageManager {
     }
   }
 
-  // Delete file from appropriate storage
+  // Delete file from Backblaze B2 storage
   async deleteFile(bijlage) {
     await this.initialize();
     
-    if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
-      try {
-        // Get file info first
-        const fileInfo = await this.b2Client.getFileInfo({
-          bucketName: process.env.B2_BUCKET_NAME || 'tickedify-attachments',
-          fileName: bijlage.storage_path
-        });
-
-        // Delete the file
-        await this.b2Client.deleteFileVersion({
-          fileId: fileInfo.data.fileId,
-          fileName: bijlage.storage_path
-        });
-
-        console.log('✅ File deleted from B2:', bijlage.storage_path);
-      } catch (error) {
-        console.error('❌ B2 delete failed:', error);
-        // Don't throw - database record will be deleted anyway
-      }
+    if (!this.isB2Available()) {
+      console.warn('⚠️ B2 not available for file deletion:', bijlage.storage_path);
+      return;
     }
-    // Database files are automatically deleted when the database record is removed
+
+    try {
+      // Get file info first
+      const fileInfo = await this.b2Client.getFileInfo({
+        bucketName: process.env.B2_BUCKET_NAME || 'tickedify-attachments',
+        fileName: bijlage.storage_path
+      });
+
+      // Delete the file
+      await this.b2Client.deleteFileVersion({
+        fileId: fileInfo.data.fileId,
+        fileName: bijlage.storage_path
+      });
+
+      console.log('✅ File deleted from B2:', bijlage.storage_path);
+    } catch (error) {
+      console.error('❌ B2 delete failed:', error);
+      // Don't throw - database record will be deleted anyway
+    }
   }
 
   // Utility functions

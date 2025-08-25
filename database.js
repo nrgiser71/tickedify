@@ -187,7 +187,7 @@ const initDatabase = async () => {
       )
     `);
 
-    // Create bijlagen table for task attachments
+    // Create bijlagen table for task attachments (pure B2 storage)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bijlagen (
         id VARCHAR(50) PRIMARY KEY,
@@ -195,13 +195,23 @@ const initDatabase = async () => {
         bestandsnaam VARCHAR(255) NOT NULL,
         bestandsgrootte INTEGER NOT NULL,
         mimetype VARCHAR(100) NOT NULL,
-        storage_type VARCHAR(20) NOT NULL CHECK (storage_type IN ('database', 'backblaze')),
-        storage_path VARCHAR(500), -- B2 object key (null for database storage)
-        bestand_data BYTEA, -- Binary data (null for B2 storage)
+        storage_type VARCHAR(20) NOT NULL DEFAULT 'backblaze' CHECK (storage_type = 'backblaze'),
+        storage_path VARCHAR(500) NOT NULL, -- B2 object key (required for all files)
         geupload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         user_id VARCHAR(50) REFERENCES users(id)
       )
     `);
+
+    // Migration: Drop bestand_data column if it exists (for pure B2 storage)
+    try {
+      await pool.query(`
+        ALTER TABLE bijlagen DROP COLUMN IF EXISTS bestand_data
+      `);
+      console.log('✅ Migrated bijlagen table to pure B2 storage');
+    } catch (error) {
+      // Ignore error if column doesn't exist
+      console.log('📝 bestand_data column removal: already done or not needed');
+    }
 
     // Create user storage usage tracking table
     await pool.query(`
@@ -1664,8 +1674,8 @@ const db = {
   async createBijlage(bijlageData) {
     try {
       const result = await pool.query(`
-        INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, bestand_data, user_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `, [
         bijlageData.id,
@@ -1673,9 +1683,8 @@ const db = {
         bijlageData.bestandsnaam,
         bijlageData.bestandsgrootte,
         bijlageData.mimetype,
-        bijlageData.storage_type,
-        bijlageData.storage_path || null,
-        bijlageData.bestand_data || null,
+        bijlageData.storage_type, // Always 'backblaze'
+        bijlageData.storage_path, // Required B2 path
         bijlageData.user_id
       ]);
 

@@ -7027,4 +7027,26 @@ app.put('/api/debug/fix-user/:id', async (req, res) => {
     }
 });
 
+// Migration endpoint for pure B2 storage
+app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
+    try {
+        const { migrateDatabaseFilesToB2 } = require('./migrate-to-pure-b2.js');
+        
+        console.log('🚀 Starting migration to pure B2 storage via API...');
+        await migrateDatabaseFilesToB2();
+        
+        res.json({
+            success: true,
+            message: 'Migration to pure B2 storage completed successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Migration API failed:', error);
+        res.status(500).json({
+            error: 'Migration failed',
+            details: error.message
+        });
+    }
+});
+
 // Force deploy Thu Jun 26 11:21:42 CEST 2025
