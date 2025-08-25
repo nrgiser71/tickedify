@@ -2153,8 +2153,21 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
             }
         } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
-            // File stored in Backblaze B2
-            console.log('☁️ Downloading file from Backblaze B2, path:', bijlage.storage_path);
+            // TEMPORARY BYPASS: Try database first, then B2
+            console.log('🔄 TEMPORARY BYPASS: Trying database first for Backblaze file');
+            
+            // Try to get file from database first (fallback)
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 BYPASS: Serving Backblaze file from database backup, size:', bijlageWithData.bestand_data.length);
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.send(bijlageWithData.bestand_data);
+                return;
+            }
+            
+            // File stored in Backblaze B2 (original logic)
+            console.log('☁️ Database backup not found, trying Backblaze B2, path:', bijlage.storage_path);
             console.log('🔍 Storage manager available:', !!storageManager);
             console.log('🔍 Storage manager initialized:', storageManager?.initialized);
             
