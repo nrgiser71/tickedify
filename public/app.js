@@ -13546,7 +13546,7 @@ class BijlagenManager {
     async loadStorageStats() {
         try {
             const response = await fetch('/api/user/storage-stats', {
-                credentials: 'same-origin'
+                credentials: 'include'
             });
             const data = await response.json();
             
@@ -13564,7 +13564,7 @@ class BijlagenManager {
 
         try {
             const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`, {
-                credentials: 'same-origin'
+                credentials: 'include'
             });
             const data = await response.json();
             
@@ -13715,7 +13715,7 @@ class BijlagenManager {
     async downloadBijlage(bijlageId) {
         try {
             const response = await fetch(`/api/bijlage/${bijlageId}/download`, {
-                credentials: 'same-origin'
+                credentials: 'include'
             });
             
             if (!response.ok) {
@@ -13760,7 +13760,7 @@ class BijlagenManager {
         try {
             const response = await fetch(`/api/bijlage/${bijlageId}`, {
                 method: 'DELETE',
-                credentials: 'same-origin'
+                credentials: 'include'
             });
 
             const data = await response.json();
