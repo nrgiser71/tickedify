@@ -2139,11 +2139,6 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             console.log('❌ User does not own bijlage');
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
-
-        // Set response headers for file download
-        res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
-        res.setHeader('Content-Length', bijlage.bestandsgrootte);
         
         if (bijlage.storage_type === 'database') {
             // File stored in database - fetch binary data separately
@@ -2151,6 +2146,13 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             if (bijlageWithData && bijlageWithData.bestand_data) {
                 console.log('📦 Serving file from database, size:', bijlageWithData.bestand_data.length);
                 const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers with actual buffer size
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🔧 [BACKEND] Headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
+                
                 res.end(buffer, 'binary');
             } else {
                 console.log('❌ Binary data not found in database');
@@ -2164,12 +2166,16 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             const bijlageWithData = await db.getBijlage(bijlageId, true);
             if (bijlageWithData && bijlageWithData.bestand_data) {
                 console.log('📦 BYPASS: Serving Backblaze file from database backup, size:', bijlageWithData.bestand_data.length);
-                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
-                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
-                res.setHeader('Content-Length', bijlageWithData.bestand_data.length);
                 
                 // Ensure we have a Buffer for binary data
                 const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers with actual buffer size
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🔧 [BACKEND] DB Backup headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
+                
                 res.end(buffer, 'binary');
                 return;
             }
@@ -2196,7 +2202,14 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 
                 // Ensure we have a Buffer for binary data
                 const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                
+                // Set headers with actual buffer size from B2
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🔧 [BACKEND] B2 headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
                 console.log('🔴 [BACKEND] Total request time:', Date.now() - startTime, 'ms');
+                
                 res.end(buffer, 'binary');
                 
             } catch (b2Error) {
