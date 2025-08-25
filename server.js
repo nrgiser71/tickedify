@@ -2087,8 +2087,14 @@ app.get('/api/bijlage/:id/test', (req, res) => {
     });
 });
 
-// Download attachment
-app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
+// Download attachment (temporarily without auth for debugging)
+app.get('/api/bijlage/:id/download', async (req, res) => {
+    console.log('🎯 DOWNLOAD ROUTE HIT!', { id: req.params.id });
+    res.json({ message: 'Download route reached!', id: req.params.id });
+    return; // Early return for debugging
+    
+    // Original code (commented for debugging):
+    /*
     try {
         if (!db) {
             return res.status(503).json({ error: 'Database niet beschikbaar' });
@@ -2142,6 +2148,7 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         console.error('❌ Error downloading bijlage:', error);
         res.status(500).json({ error: 'Fout bij downloaden bijlage' });
     }
+    */
 });
 
 // Delete attachment
