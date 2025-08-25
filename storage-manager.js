@@ -192,68 +192,118 @@ class StorageManager {
         bufferLength: file.buffer?.length
       });
       
-      // Ensure we have a proper Buffer for PNG files
-      let uploadBuffer = file.buffer;
-      if (file.mimetype === 'image/png') {
-        if (!Buffer.isBuffer(file.buffer)) {
-          console.log('⚠️ [UPLOAD DEBUG] Converting non-Buffer to Buffer for PNG');
-          uploadBuffer = Buffer.from(file.buffer);
-        }
-        
-        // Check PNG signature before upload
-        if (uploadBuffer.length > 8) {
-          const firstBytes = uploadBuffer.slice(0, 8);
-          const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-          console.log('🔍 [UPLOAD DEBUG] PNG signature before B2 upload:', hexBytes);
-          
-          const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-          const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
-          console.log('🔍 [UPLOAD DEBUG] Valid PNG signature before upload:', isValidPNG);
-        }
-      }
-      
       const uploadUrl = await this.b2Client.getUploadUrl({
         bucketId: this.bucketId
       });
 
-      // ALTERNATIVE FIX: Try different B2 upload approach for PNG files
-      let uploadParams = {
-        uploadUrl: uploadUrl.data.uploadUrl,
-        uploadAuthToken: uploadUrl.data.authorizationToken,
-        fileName: fileName,
-        mime: file.mimetype
-      };
-
+      // RAW HTTP UPLOAD for PNG files to bypass B2 library corruption
       if (file.mimetype === 'image/png') {
-        // For PNG files, try uploading as Uint8Array instead of Buffer
-        const uint8Array = new Uint8Array(uploadBuffer);
-        console.log('🔍 [B2 UPLOAD] Converting PNG to Uint8Array, size:', uint8Array.length);
-        console.log('🔍 [B2 UPLOAD] First 8 bytes as Uint8Array:', Array.from(uint8Array.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' '));
-        
-        uploadParams.data = uint8Array;
-        uploadParams.contentLength = uint8Array.length;
+        console.log('🔥 [RAW UPLOAD] Using raw HTTP upload for PNG to bypass B2 library');
+        return await this.rawHttpUpload(file, bijlageId, taakId, userId, fileName, uploadUrl.data);
       } else {
-        // For other files, use Buffer as before
-        uploadParams.data = uploadBuffer;
-        uploadParams.contentLength = uploadBuffer.length;
+        // Use B2 library for non-PNG files (works fine)
+        console.log('📦 [B2 LIBRARY] Using B2 library for non-PNG file');
+        const response = await this.b2Client.uploadFile({
+          uploadUrl: uploadUrl.data.uploadUrl,
+          uploadAuthToken: uploadUrl.data.authorizationToken,
+          fileName: fileName,
+          data: file.buffer,
+          mime: file.mimetype,
+          contentLength: file.buffer.length
+        });
+        
+        return {
+          id: bijlageId,
+          taak_id: taakId,
+          bestandsnaam: file.originalname,
+          bestandsgrootte: file.size,
+          mimetype: file.mimetype,
+          storage_type: 'backblaze',
+          storage_path: fileName,
+          user_id: userId
+        };
       }
 
-      const response = await this.b2Client.uploadFile(uploadParams);
-
-      return {
-        id: bijlageId,
-        taak_id: taakId,
-        bestandsnaam: file.originalname,
-        bestandsgrootte: file.size,
-        mimetype: file.mimetype,
-        storage_type: 'backblaze',
-        storage_path: fileName,
-        user_id: userId
-      };
     } catch (error) {
       console.error('❌ B2 upload failed:', error);
       throw new Error('Upload naar cloud storage gefaald');
     }
+  }
+
+  // Raw HTTP upload to bypass B2 library corruption for PNG files
+  async rawHttpUpload(file, bijlageId, taakId, userId, fileName, uploadUrlData) {
+    const https = require('https');
+    const { URL } = require('url');
+    
+    return new Promise((resolve, reject) => {
+      try {
+        const url = new URL(uploadUrlData.uploadUrl);
+        
+        // Verify PNG signature before raw upload
+        const buffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
+        const firstBytes = buffer.slice(0, 8);
+        const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log('🔥 [RAW UPLOAD] PNG signature before raw upload:', hexBytes);
+        
+        const options = {
+          hostname: url.hostname,
+          port: url.port || 443,
+          path: url.pathname + url.search,
+          method: 'POST',
+          headers: {
+            'Authorization': uploadUrlData.authorizationToken,
+            'Content-Type': file.mimetype,
+            'Content-Length': buffer.length,
+            'X-Bz-File-Name': fileName,
+            'X-Bz-Content-Sha1': 'unverified'
+          }
+        };
+
+        console.log('🔥 [RAW UPLOAD] Headers:', options.headers);
+
+        const req = https.request(options, (res) => {
+          let data = '';
+          
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+
+          res.on('end', () => {
+            console.log('🔥 [RAW UPLOAD] Response status:', res.statusCode);
+            console.log('🔥 [RAW UPLOAD] Response data:', data);
+            
+            if (res.statusCode === 200) {
+              resolve({
+                id: bijlageId,
+                taak_id: taakId,
+                bestandsnaam: file.originalname,
+                bestandsgrootte: file.size,
+                mimetype: file.mimetype,
+                storage_type: 'backblaze',
+                storage_path: fileName,
+                user_id: userId
+              });
+            } else {
+              reject(new Error(`Raw upload failed with status ${res.statusCode}: ${data}`));
+            }
+          });
+        });
+
+        req.on('error', (error) => {
+          console.error('❌ [RAW UPLOAD] Request error:', error);
+          reject(error);
+        });
+
+        // Write the raw buffer data
+        console.log('🔥 [RAW UPLOAD] Writing buffer data, size:', buffer.length);
+        req.write(buffer);
+        req.end();
+
+      } catch (error) {
+        console.error('❌ [RAW UPLOAD] Setup error:', error);
+        reject(error);
+      }
+    });
   }
 
 
