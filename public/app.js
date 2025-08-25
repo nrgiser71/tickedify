@@ -13545,7 +13545,9 @@ class BijlagenManager {
 
     async loadStorageStats() {
         try {
-            const response = await fetch('/api/user/storage-stats');
+            const response = await fetch('/api/user/storage-stats', {
+                credentials: 'same-origin'
+            });
             const data = await response.json();
             
             if (data.success) {
@@ -13561,7 +13563,9 @@ class BijlagenManager {
         if (!this.currentTaakId) return;
 
         try {
-            const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`);
+            const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`, {
+                credentials: 'same-origin'
+            });
             const data = await response.json();
             
             if (data.success) {
@@ -13710,7 +13714,9 @@ class BijlagenManager {
 
     async downloadBijlage(bijlageId) {
         try {
-            const response = await fetch(`/api/bijlage/${bijlageId}/download`);
+            const response = await fetch(`/api/bijlage/${bijlageId}/download`, {
+                credentials: 'same-origin'
+            });
             
             if (!response.ok) {
                 throw new Error('Download gefaald');
@@ -13753,7 +13759,8 @@ class BijlagenManager {
 
         try {
             const response = await fetch(`/api/bijlage/${bijlageId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'same-origin'
             });
 
             const data = await response.json();
