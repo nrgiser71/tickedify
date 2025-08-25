@@ -2027,6 +2027,25 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             bufferType: Buffer.isBuffer(file.buffer) ? 'Buffer' : typeof file.buffer
         });
 
+        // CRITICAL: Check PNG signature IMMEDIATELY after multer processing
+        if (file.mimetype === 'image/png' && file.buffer && file.buffer.length > 8) {
+            const multerBuffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
+            const multerFirstBytes = multerBuffer.slice(0, 8);
+            const multerHex = Array.from(multerFirstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+            const multerValidPNG = expectedPNG.every((byte, index) => multerFirstBytes[index] === byte);
+            
+            console.log('🚨 [MULTER CHECK] PNG signature after multer:', multerHex);
+            console.log('🚨 [MULTER CHECK] Expected PNG signature:  ', '89 50 4e 47 0d 0a 1a 0a');
+            console.log('🚨 [MULTER CHECK] Valid PNG from multer:    ', multerValidPNG);
+            
+            if (!multerValidPNG) {
+                console.log('🚨 [CRITICAL] PNG ALREADY CORRUPT FROM MULTER! Problem is NOT in B2 upload!');
+            } else {
+                console.log('✅ [MULTER CHECK] PNG signature correct from multer - corruption happens in B2 upload');
+            }
+        }
+
         // Upload file using storage manager
         const bijlageData = await storageManager.uploadFile(file, taakId, userId);
 
@@ -2069,7 +2088,13 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
                 mimetype: savedBijlage.mimetype,
                 geupload: savedBijlage.geupload
             },
-            upload_verification: uploadVerification
+            upload_verification: uploadVerification,
+            // Include debug info in response so we can see it in frontend
+            debug_info: file.mimetype === 'image/png' ? {
+                multer_signature: file.buffer ? Array.from(file.buffer.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ') : 'no buffer',
+                multer_valid: file.buffer && file.buffer.length > 8 ? 
+                    [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A].every((byte, index) => file.buffer[index] === byte) : false
+            } : null
         });
 
     } catch (error) {
