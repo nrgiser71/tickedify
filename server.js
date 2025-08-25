@@ -260,14 +260,38 @@ app.get('/api/debug/storage-status', async (req, res) => {
             }
         };
         
-        // Test storage manager initialization
+        // Test storage manager initialization with detailed bucket testing
         if (storageManager) {
             try {
+                // Force fresh initialization
+                storageManager.initialized = false;
+                storageManager.b2Client = null;
+                storageManager.bucketId = null;
+                
                 await storageManager.initialize();
                 status.storage_manager.initialized = storageManager.initialized;
                 status.storage_manager.b2_available = storageManager.isB2Available();
                 status.storage_manager.b2_client_exists = !!storageManager.b2Client;
                 status.storage_manager.bucket_id = storageManager.bucketId || 'not_set';
+                
+                // Test B2 operations directly if client exists
+                if (storageManager.b2Client) {
+                    try {
+                        console.log('🔍 Testing B2 listBuckets operation...');
+                        const bucketsResponse = await storageManager.b2Client.listBuckets();
+                        status.storage_manager.bucket_test = {
+                            list_buckets_success: true,
+                            buckets_found: bucketsResponse.data.buckets.length,
+                            bucket_names: bucketsResponse.data.buckets.map(b => b.bucketName),
+                            target_bucket_exists: bucketsResponse.data.buckets.some(b => b.bucketName === 'tickedify-attachments')
+                        };
+                    } catch (bucketError) {
+                        status.storage_manager.bucket_test = {
+                            list_buckets_success: false,
+                            error: bucketError.message
+                        };
+                    }
+                }
                 
                 // Additional B2 info if available
                 if (storageManager.b2Client && storageManager.bucketId) {
@@ -280,6 +304,7 @@ app.get('/api/debug/storage-status', async (req, res) => {
             } catch (initError) {
                 status.storage_manager.initialization_error = initError.message;
                 status.storage_manager.b2_status = 'initialization_failed';
+                console.error('🔍 Initialization error details:', initError);
             }
         }
         
