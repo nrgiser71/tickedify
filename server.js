@@ -2087,16 +2087,13 @@ app.get('/api/bijlage/:id/test', (req, res) => {
     });
 });
 
-// Download attachment (temporarily without auth for debugging)
-app.get('/api/bijlage/:id/download', async (req, res) => {
+// Download attachment - step by step restoration
+app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     console.log('🎯 DOWNLOAD ROUTE HIT!', { id: req.params.id });
-    res.json({ message: 'Download route reached!', id: req.params.id });
-    return; // Early return for debugging
     
-    // Original code (commented for debugging):
-    /*
     try {
         if (!db) {
+            console.log('❌ No database available');
             return res.status(503).json({ error: 'Database niet beschikbaar' });
         }
 
@@ -2120,35 +2117,26 @@ app.get('/api/bijlage/:id/download', async (req, res) => {
 
         // Check if user owns this attachment
         if (bijlage.user_id !== userId) {
+            console.log('❌ User does not own bijlage');
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
 
-        // Get file data from appropriate storage
-        let fileData;
-        if (bijlage.storage_type === 'database') {
-            fileData = bijlage.bestand_data;
-        } else {
-            fileData = await storageManager.downloadFile(bijlage);
-        }
-
-        if (!fileData) {
-            return res.status(500).json({ error: 'Bestand data niet beschikbaar' });
-        }
-
-        // Set appropriate headers for file download
-        res.set({
-            'Content-Type': bijlage.mimetype,
-            'Content-Disposition': `attachment; filename="${bijlage.bestandsnaam}"`,
-            'Content-Length': bijlage.bestandsgrootte
+        // FOR NOW: Just return info to verify everything works up to this point
+        res.json({ 
+            message: 'Auth and DB check passed!', 
+            bijlage: {
+                id: bijlage.id,
+                bestandsnaam: bijlage.bestandsnaam,
+                storage_type: bijlage.storage_type,
+                storage_path: bijlage.storage_path
+            }
         });
-
-        res.send(fileData);
-
+        return;
+        
     } catch (error) {
         console.error('❌ Error downloading bijlage:', error);
         res.status(500).json({ error: 'Fout bij downloaden bijlage' });
     }
-    */
 });
 
 // Delete attachment
