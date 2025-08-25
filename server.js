@@ -2078,6 +2078,15 @@ app.get('/api/taak/:id/bijlagen', requireAuth, async (req, res) => {
     }
 });
 
+// Test endpoint to verify route works
+app.get('/api/bijlage/:id/test', (req, res) => {
+    res.json({ 
+        message: 'Test route works!',
+        id: req.params.id,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Download attachment
 app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     try {
