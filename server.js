@@ -2114,8 +2114,8 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         
         console.log('🔍 Download attempt:', { bijlageId, userId });
 
-        // Get attachment info (with data if database storage)
-        const bijlage = await db.getBijlage(bijlageId, true);
+        // Get attachment info first to determine storage type
+        const bijlage = await db.getBijlage(bijlageId, false);
         
         console.log('🔍 Bijlage found:', !!bijlage);
         if (bijlage) {
@@ -2137,10 +2137,16 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
         res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
         
-        if (bijlage.storage_type === 'database' && bijlage.bestand_data) {
-            // File stored in database as binary data
-            console.log('📦 Serving file from database, size:', bijlage.bestand_data.length);
-            res.send(bijlage.bestand_data);
+        if (bijlage.storage_type === 'database') {
+            // File stored in database - fetch binary data separately
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 Serving file from database, size:', bijlageWithData.bestand_data.length);
+                res.send(bijlageWithData.bestand_data);
+            } else {
+                console.log('❌ Binary data not found in database');
+                return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
+            }
         } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
             // File stored in Backblaze B2
             console.log('☁️ Downloading file from Backblaze B2, path:', bijlage.storage_path);
