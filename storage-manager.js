@@ -216,12 +216,25 @@ class StorageManager {
         bucketId: this.bucketId
       });
 
+      // Ensure proper binary data handling for B2 upload
+      let b2Data = uploadBuffer;
+      if (file.mimetype === 'image/png') {
+        // For PNG files, ensure we send as binary Buffer, not string
+        b2Data = Buffer.isBuffer(uploadBuffer) ? uploadBuffer : Buffer.from(uploadBuffer, 'binary');
+        console.log('🔍 [B2 UPLOAD] Using binary Buffer for PNG, size:', b2Data.length);
+      }
+
       const response = await this.b2Client.uploadFile({
         uploadUrl: uploadUrl.data.uploadUrl,
         uploadAuthToken: uploadUrl.data.authorizationToken,
         fileName: fileName,
-        data: uploadBuffer,
-        mime: file.mimetype
+        data: b2Data,
+        mime: file.mimetype,
+        contentLength: b2Data.length,
+        // Explicitly set content encoding for binary files
+        ...(file.mimetype.startsWith('image/') && { 
+          headers: { 'Content-Transfer-Encoding': 'binary' }
+        })
       });
 
       return {
