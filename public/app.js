@@ -13865,6 +13865,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DEBUG: Initializing BijlagenManager...');
     try {
         bijlagenManager = new BijlagenManager();
+        // Make bijlagenManager globally accessible for onclick handlers
+        window.bijlagenManager = bijlagenManager;
         console.log('DEBUG: BijlagenManager initialized successfully');
     } catch (error) {
         console.error('DEBUG: Error initializing BijlagenManager:', error);

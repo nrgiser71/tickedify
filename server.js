@@ -2164,7 +2164,11 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 console.log('📦 BYPASS: Serving Backblaze file from database backup, size:', bijlageWithData.bestand_data.length);
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
-                res.send(bijlageWithData.bestand_data);
+                res.setHeader('Content-Length', bijlageWithData.bestand_data.length);
+                
+                // Ensure we have a Buffer for binary data
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                res.end(buffer, 'binary');
                 return;
             }
             
