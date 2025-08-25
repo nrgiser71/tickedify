@@ -2103,15 +2103,6 @@ app.get('/api/bijlage/:id/download-auth', requireAuth, (req, res) => {
 app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     console.log('🎯 DOWNLOAD ROUTE HIT!', { id: req.params.id });
     
-    // TEMPORARY TEST: Return simple response to verify route works
-    console.log('🧪 TEMPORARY: Testing route accessibility');
-    return res.json({ 
-        message: 'Route werkt! Test response van download endpoint', 
-        bijlageId: req.params.id,
-        userId: req.session.userId,
-        timestamp: new Date().toISOString()
-    });
-    
     try {
         if (!db) {
             console.log('❌ No database available');
@@ -2164,10 +2155,14 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
             // File stored in Backblaze B2
             console.log('☁️ Downloading file from Backblaze B2, path:', bijlage.storage_path);
+            console.log('🔍 Storage manager available:', !!storageManager);
+            console.log('🔍 Storage manager initialized:', storageManager?.initialized);
             
             try {
+                console.log('🔍 About to call storageManager.downloadFile...');
                 // Download file from B2 using storage manager
                 const fileBuffer = await storageManager.downloadFile(bijlage.storage_path);
+                console.log('🔍 storageManager.downloadFile completed, result:', !!fileBuffer);
                 
                 if (!fileBuffer) {
                     console.log('❌ File not found in B2 storage');
@@ -2179,7 +2174,13 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 
             } catch (b2Error) {
                 console.error('❌ Error downloading from B2:', b2Error);
-                return res.status(500).json({ error: 'Fout bij downloaden uit cloud storage' });
+                console.error('❌ B2 Error stack:', b2Error.stack);
+                console.error('❌ B2 Error message:', b2Error.message);
+                console.error('❌ B2 Error name:', b2Error.name);
+                return res.status(500).json({ 
+                    error: 'Fout bij downloaden uit cloud storage',
+                    debug: `${b2Error.name}: ${b2Error.message}`
+                });
             }
         } else if (bijlage.storage_type === 'filesystem' && bijlage.storage_path) {
             // File stored in filesystem (future implementation)
