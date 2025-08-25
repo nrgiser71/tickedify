@@ -2076,11 +2076,19 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
 
         const { id: bijlageId } = req.params;
         const userId = req.session.userId;
+        
+        console.log('🔍 Download attempt:', { bijlageId, userId });
 
         // Get attachment info (with data if database storage)
         const bijlage = await db.getBijlage(bijlageId, true);
         
+        console.log('🔍 Bijlage found:', !!bijlage);
+        if (bijlage) {
+            console.log('🔍 Bijlage user_id:', bijlage.user_id, 'Request user_id:', userId);
+        }
+        
         if (!bijlage) {
+            console.log('❌ Bijlage not found in database');
             return res.status(404).json({ error: 'Bijlage niet gevonden' });
         }
 
