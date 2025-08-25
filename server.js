@@ -241,6 +241,48 @@ app.get('/api/db-test', async (req, res) => {
     }
 });
 
+// Debug endpoint for B2 storage status
+app.get('/api/debug/storage-status', async (req, res) => {
+    try {
+        console.log('🔍 DEBUG: Testing storage manager initialization...');
+        
+        const status = {
+            timestamp: new Date().toISOString(),
+            environment_vars: {
+                B2_APPLICATION_KEY_ID: !!process.env.B2_APPLICATION_KEY_ID,
+                B2_APPLICATION_KEY: !!process.env.B2_APPLICATION_KEY,
+                B2_BUCKET_NAME: process.env.B2_BUCKET_NAME || 'not_set'
+            },
+            storage_manager: {
+                exists: !!storageManager,
+                initialized: storageManager?.initialized || false,
+                b2_available: false
+            }
+        };
+        
+        // Test storage manager initialization
+        if (storageManager) {
+            await storageManager.initialize();
+            status.storage_manager.initialized = storageManager.initialized;
+            status.storage_manager.b2_available = storageManager.isB2Available();
+            
+            if (storageManager.b2Client) {
+                status.storage_manager.bucket_id = storageManager.bucketId || 'not_set';
+            }
+        }
+        
+        console.log('🔍 DEBUG: Storage status:', status);
+        res.json(status);
+        
+    } catch (error) {
+        console.error('❌ Storage status test failed:', error);
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Create default user if not exists
 app.post('/api/admin/create-default-user', async (req, res) => {
     try {
