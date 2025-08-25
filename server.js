@@ -2141,13 +2141,33 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             // File stored in database as binary data
             console.log('📦 Serving file from database, size:', bijlage.bestand_data.length);
             res.send(bijlage.bestand_data);
+        } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
+            // File stored in Backblaze B2
+            console.log('☁️ Downloading file from Backblaze B2, path:', bijlage.storage_path);
+            
+            try {
+                // Download file from B2 using storage manager
+                const fileBuffer = await storageManager.downloadFile(bijlage.storage_path);
+                
+                if (!fileBuffer) {
+                    console.log('❌ File not found in B2 storage');
+                    return res.status(404).json({ error: 'Bestand niet gevonden in cloud storage' });
+                }
+                
+                console.log('📦 Serving file from B2, size:', fileBuffer.length);
+                res.send(fileBuffer);
+                
+            } catch (b2Error) {
+                console.error('❌ Error downloading from B2:', b2Error);
+                return res.status(500).json({ error: 'Fout bij downloaden uit cloud storage' });
+            }
         } else if (bijlage.storage_type === 'filesystem' && bijlage.storage_path) {
             // File stored in filesystem (future implementation)
             console.log('📁 File system storage not implemented yet, path:', bijlage.storage_path);
             return res.status(501).json({ error: 'File system storage niet geïmplementeerd' });
         } else {
             // No valid storage found
-            console.log('❌ No valid storage found for bijlage');
+            console.log('❌ No valid storage found for bijlage, type:', bijlage.storage_type);
             return res.status(404).json({ error: 'Bijlage data niet gevonden' });
         }
         
