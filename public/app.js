@@ -13461,9 +13461,22 @@ class BijlagenManager {
 
             // File input change
             fileInput.addEventListener('change', (e) => {
+                console.log('🔍 DEBUG: File input changed', {
+                    file: e.target.files[0]?.name,
+                    currentTaakId: this.currentTaakId,
+                    hasFile: !!e.target.files[0],
+                    hasCurrentTaakId: !!this.currentTaakId
+                });
+                
                 const file = e.target.files[0];
                 if (file && this.currentTaakId) {
+                    console.log('✅ DEBUG: Calling uploadFile from file input');
                     this.uploadFile(file);
+                } else {
+                    console.log('❌ DEBUG: Not calling uploadFile:', {
+                        hasFile: !!file,
+                        hasCurrentTaakId: !!this.currentTaakId
+                    });
                 }
             });
 
@@ -13482,9 +13495,22 @@ class BijlagenManager {
                 e.preventDefault();
                 dropzone.classList.remove('dragover');
                 
+                console.log('🔍 DEBUG: File dropped', {
+                    filesCount: e.dataTransfer.files.length,
+                    firstFileName: e.dataTransfer.files[0]?.name,
+                    currentTaakId: this.currentTaakId,
+                    hasCurrentTaakId: !!this.currentTaakId
+                });
+                
                 const files = e.dataTransfer.files;
                 if (files.length > 0 && this.currentTaakId) {
+                    console.log('✅ DEBUG: Calling uploadFile from drag & drop');
                     this.uploadFile(files[0]);
+                } else {
+                    console.log('❌ DEBUG: Not calling uploadFile from drop:', {
+                        hasFiles: files.length > 0,
+                        hasCurrentTaakId: !!this.currentTaakId
+                    });
                 }
             });
         }
@@ -13499,10 +13525,15 @@ class BijlagenManager {
     }
 
     async initializeForTask(taakId) {
+        console.log('🔍 DEBUG: initializeForTask called with taakId:', taakId);
         this.currentTaakId = taakId;
+        console.log('✅ DEBUG: Set currentTaakId to:', this.currentTaakId);
+        
         await this.loadStorageStats();
         await this.loadBijlagen();
         this.updateUI();
+        
+        console.log('🏁 DEBUG: initializeForTask completed');
     }
 
     async loadStorageStats() {
@@ -13595,26 +13626,47 @@ class BijlagenManager {
     }
 
     async uploadFile(file) {
+        console.log('🔍 DEBUG: uploadFile called with:', {
+            fileName: file?.name,
+            fileSize: file?.size,
+            fileType: file?.type,
+            currentTaakId: this.currentTaakId
+        });
+
         if (!this.currentTaakId) {
+            console.log('❌ DEBUG: No currentTaakId, showing error');
             toast.error('Geen taak geselecteerd voor bijlage upload');
             return;
         }
 
         // Show progress
+        console.log('⏳ DEBUG: Showing progress indicator');
         const progress = this.showProgress('Uploaden...');
 
         try {
+            console.log('📤 DEBUG: Creating FormData and making API request');
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`, {
+            const apiUrl = `/api/taak/${this.currentTaakId}/bijlagen`;
+            console.log('🌐 DEBUG: Making POST request to:', apiUrl);
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 body: formData
             });
 
+            console.log('📡 DEBUG: Response received:', {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            });
+
             const data = await response.json();
+            console.log('📋 DEBUG: Response data:', data);
 
             if (data.success) {
+                console.log('✅ DEBUG: Upload successful, updating UI');
                 toast.success(`Bijlage "${file.name}" succesvol geüpload`);
                 await this.loadStorageStats();
                 await this.loadBijlagen();
@@ -13624,11 +13676,18 @@ class BijlagenManager {
                 const fileInput = document.getElementById('file-input');
                 if (fileInput) fileInput.value = '';
             } else {
+                console.log('❌ DEBUG: Upload failed with data.error:', data.error);
                 throw new Error(data.error || 'Upload gefaald');
             }
 
         } catch (error) {
-            console.error('Upload error:', error);
+            console.error('❌ DEBUG: Upload error caught:', {
+                error: error,
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+            
             if (error.message.includes('Maximum') || error.message.includes('Onvoldoende')) {
                 toast.error(error.message);
             } else if (error.message.includes('niet toegestaan')) {
@@ -13637,6 +13696,7 @@ class BijlagenManager {
                 toast.error('Upload gefaald. Probeer opnieuw.');
             }
         } finally {
+            console.log('🏁 DEBUG: Upload process finished, hiding progress');
             this.hideProgress(progress);
         }
     }
