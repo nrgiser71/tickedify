@@ -6324,9 +6324,17 @@ class Taakbeheer {
                     subtakenManager.currentSubtaken = [];
                     subtakenManager.renderSubtaken();
                 }
-            } else {
-                console.log('DEBUG: bewerkActie - Fallback - subtakenManager not available, showing sectie directly');
-                // Fallback: directly show subtaken sectie if manager not ready
+            }
+
+            // Initialize bijlagen manager for this task
+            console.log('DEBUG: bewerkActie - bijlagenManager exists:', !!bijlagenManager);
+            if (bijlagenManager) {
+                console.log('DEBUG: bewerkActie - Initializing bijlagen for task:', id);
+                await bijlagenManager.initializeForTask(id);
+            }
+        } else {
+            console.log('DEBUG: bewerkActie - Fallback - subtakenManager not available, showing sectie directly');
+            // Fallback: directly show subtaken sectie if manager not ready
                 const subtakenSectie = document.getElementById('subtaken-sectie');
                 console.log('DEBUG: bewerkActie - subtaken-sectie element found:', !!subtakenSectie);
                 if (subtakenSectie) {
