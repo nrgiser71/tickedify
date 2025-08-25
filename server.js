@@ -2087,6 +2087,62 @@ app.get('/api/bijlage/:id/test', (req, res) => {
     });
 });
 
+// DEBUG: PNG binary analysis endpoint
+app.get('/api/bijlage/:id/png-debug', requireAuth, async (req, res) => {
+    try {
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+        
+        // Get bijlage metadata
+        const bijlage = await db.getBijlage(bijlageId);
+        if (!bijlage || bijlage.user_id !== userId) {
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Only analyze PNG files
+        if (!bijlage.mimetype || bijlage.mimetype !== 'image/png') {
+            return res.json({ 
+                error: 'Not a PNG file',
+                mimetype: bijlage.mimetype,
+                filename: bijlage.bestandsnaam 
+            });
+        }
+
+        // Download from B2 and analyze
+        const fileBuffer = await storageManager.downloadFile(bijlage);
+        const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+        
+        // Analyze first 32 bytes
+        const firstBytes = buffer.slice(0, 32);
+        const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        
+        // Check PNG signature
+        const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        const actualSignature = Array.from(buffer.slice(0, 8));
+        const isValidPNG = expectedPNG.every((byte, index) => actualSignature[index] === byte);
+        
+        res.json({
+            filename: bijlage.bestandsnaam,
+            mimetype: bijlage.mimetype,
+            size: buffer.length,
+            storage_type: bijlage.storage_type,
+            first_32_bytes_hex: hexBytes,
+            png_signature_expected: expectedPNG.map(b => b.toString(16).padStart(2, '0')).join(' '),
+            png_signature_actual: actualSignature.map(b => b.toString(16).padStart(2, '0')).join(' '),
+            is_valid_png: isValidPNG,
+            analysis: {
+                has_png_header: isValidPNG,
+                file_size_match: buffer.length === bijlage.bestandsgrootte,
+                buffer_type: Buffer.isBuffer(fileBuffer) ? 'Buffer' : typeof fileBuffer
+            }
+        });
+        
+    } catch (error) {
+        console.error('PNG debug error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // DEBUG: Test route zonder authentication
 app.get('/api/bijlage/:id/download-debug', (req, res) => {
     console.log('🐛 DEBUG ROUTE HIT!', { id: req.params.id });
