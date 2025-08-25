@@ -216,26 +216,29 @@ class StorageManager {
         bucketId: this.bucketId
       });
 
-      // Ensure proper binary data handling for B2 upload
-      let b2Data = uploadBuffer;
-      if (file.mimetype === 'image/png') {
-        // For PNG files, ensure we send as binary Buffer, not string
-        b2Data = Buffer.isBuffer(uploadBuffer) ? uploadBuffer : Buffer.from(uploadBuffer, 'binary');
-        console.log('🔍 [B2 UPLOAD] Using binary Buffer for PNG, size:', b2Data.length);
-      }
-
-      const response = await this.b2Client.uploadFile({
+      // ALTERNATIVE FIX: Try different B2 upload approach for PNG files
+      let uploadParams = {
         uploadUrl: uploadUrl.data.uploadUrl,
         uploadAuthToken: uploadUrl.data.authorizationToken,
         fileName: fileName,
-        data: b2Data,
-        mime: file.mimetype,
-        contentLength: b2Data.length,
-        // Explicitly set content encoding for binary files
-        ...(file.mimetype.startsWith('image/') && { 
-          headers: { 'Content-Transfer-Encoding': 'binary' }
-        })
-      });
+        mime: file.mimetype
+      };
+
+      if (file.mimetype === 'image/png') {
+        // For PNG files, try uploading as Uint8Array instead of Buffer
+        const uint8Array = new Uint8Array(uploadBuffer);
+        console.log('🔍 [B2 UPLOAD] Converting PNG to Uint8Array, size:', uint8Array.length);
+        console.log('🔍 [B2 UPLOAD] First 8 bytes as Uint8Array:', Array.from(uint8Array.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' '));
+        
+        uploadParams.data = uint8Array;
+        uploadParams.contentLength = uint8Array.length;
+      } else {
+        // For other files, use Buffer as before
+        uploadParams.data = uploadBuffer;
+        uploadParams.contentLength = uploadBuffer.length;
+      }
+
+      const response = await this.b2Client.uploadFile(uploadParams);
 
       return {
         id: bijlageId,
