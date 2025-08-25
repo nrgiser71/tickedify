@@ -2113,11 +2113,16 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         const userId = req.session.userId;
         
         console.log('🔍 Download attempt:', { bijlageId, userId });
+        console.log('🔍 Database available:', !!db);
+        console.log('🔍 getBijlage function available:', typeof db.getBijlage);
 
         // Get attachment info first to determine storage type
+        console.log('🔍 About to call db.getBijlage...');
         const bijlage = await db.getBijlage(bijlageId, false);
+        console.log('🔍 db.getBijlage completed');
         
         console.log('🔍 Bijlage found:', !!bijlage);
+        console.log('🔍 Bijlage details:', bijlage ? { id: bijlage.id, storage_type: bijlage.storage_type, user_id: bijlage.user_id } : 'null');
         if (bijlage) {
             console.log('🔍 Bijlage user_id:', bijlage.user_id, 'Request user_id:', userId);
         }
