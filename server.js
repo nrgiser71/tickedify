@@ -2101,7 +2101,8 @@ app.get('/api/bijlage/:id/download-auth', requireAuth, (req, res) => {
 
 // Download attachment - step by step restoration
 app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
-    console.log('🎯 DOWNLOAD ROUTE HIT!', { id: req.params.id });
+    const startTime = Date.now();
+    console.log('🔴 [BACKEND] Download request start:', new Date().toISOString(), { id: req.params.id });
     
     try {
         if (!db) {
@@ -2117,9 +2118,10 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         console.log('🔍 getBijlage function available:', typeof db.getBijlage);
 
         // Get attachment info first to determine storage type
-        console.log('🔍 About to call db.getBijlage...');
+        const dbStart = Date.now();
+        console.log('🔴 [BACKEND] About to call db.getBijlage...');
         const bijlage = await db.getBijlage(bijlageId, false);
-        console.log('🔍 db.getBijlage completed');
+        console.log('🔴 [BACKEND] Database lookup completed in:', Date.now() - dbStart, 'ms');
         
         console.log('🔍 Bijlage found:', !!bijlage);
         console.log('🔍 Bijlage details:', bijlage ? { id: bijlage.id, storage_type: bijlage.storage_type, user_id: bijlage.user_id } : 'null');
@@ -2178,10 +2180,11 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             console.log('🔍 Storage manager initialized:', storageManager?.initialized);
             
             try {
-                console.log('🔍 About to call storageManager.downloadFile...');
+                const b2Start = Date.now();
+                console.log('🔴 [BACKEND] About to call storageManager.downloadFile...');
                 // Download file from B2 using storage manager
                 const fileBuffer = await storageManager.downloadFile(bijlage);
-                console.log('🔍 storageManager.downloadFile completed, result:', !!fileBuffer);
+                console.log('🔴 [BACKEND] B2 download completed in:', Date.now() - b2Start, 'ms, result:', !!fileBuffer);
                 
                 if (!fileBuffer) {
                     console.log('❌ File not found in B2 storage');
@@ -2193,6 +2196,7 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 
                 // Ensure we have a Buffer for binary data
                 const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                console.log('🔴 [BACKEND] Total request time:', Date.now() - startTime, 'ms');
                 res.end(buffer, 'binary');
                 
             } catch (b2Error) {

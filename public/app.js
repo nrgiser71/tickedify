@@ -13714,9 +13714,15 @@ class BijlagenManager {
 
     async downloadBijlage(bijlageId) {
         try {
+            console.log('🟢 [FRONTEND] Download clicked at:', new Date().toISOString());
+            
+            const startTime = performance.now();
             const response = await fetch(`/api/bijlage/${bijlageId}/download`, {
                 credentials: 'include'
             });
+            const fetchTime = performance.now();
+            
+            console.log('🟢 [FRONTEND] Fetch completed in:', (fetchTime - startTime).toFixed(2), 'ms');
             
             if (!response.ok) {
                 throw new Error('Download gefaald');
@@ -13735,6 +13741,10 @@ class BijlagenManager {
 
             // Create blob and download
             const blob = await response.blob();
+            const blobTime = performance.now();
+            
+            console.log('🟢 [FRONTEND] Blob created in:', (blobTime - fetchTime).toFixed(2), 'ms');
+            console.log('🟢 [FRONTEND] Total time:', (blobTime - startTime).toFixed(2), 'ms');
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

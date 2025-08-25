@@ -214,18 +214,27 @@ class StorageManager {
 
   // Download file from Backblaze B2 storage
   async downloadFile(bijlage) {
+    console.log('🟡 [STORAGE] downloadFile start:', new Date().toISOString());
+    
+    const initStart = Date.now();
     await this.initialize();
+    console.log('🟡 [STORAGE] Initialize time:', Date.now() - initStart, 'ms');
     
     if (!this.isB2Available()) {
       throw new Error('Bestandsopslag niet beschikbaar. Contacteer support.');
     }
     
-    return await this.downloadFromB2(bijlage.storage_path);
+    const b2Start = Date.now();
+    const result = await this.downloadFromB2(bijlage.storage_path);
+    console.log('🟡 [STORAGE] B2 API time:', Date.now() - b2Start, 'ms');
+    
+    return result;
   }
 
   async downloadFromB2(storagePath) {
     try {
       const bucketName = process.env.B2_BUCKET_NAME || 'tickedify-attachments';
+      console.log('🔵 [B2] downloadFileByName start:', new Date().toISOString());
       console.log('🔍 B2 Download attempt:', {
         bucketName: bucketName,
         fileName: storagePath,
@@ -233,10 +242,12 @@ class StorageManager {
         bucketId: this.bucketId
       });
 
+      const apiStart = Date.now();
       const response = await this.b2Client.downloadFileByName({
         bucketName: bucketName,
         fileName: storagePath
       });
+      console.log('🔵 [B2] API response time:', Date.now() - apiStart, 'ms');
 
       console.log('✅ B2 download successful, size:', response.data?.length || 'unknown');
       console.log('✅ B2 response data type:', typeof response.data, 'isBuffer:', Buffer.isBuffer(response.data));
