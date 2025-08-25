@@ -2121,17 +2121,23 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
 
-        // FOR NOW: Just return info to verify everything works up to this point
-        res.json({ 
-            message: 'Auth and DB check passed!', 
-            bijlage: {
-                id: bijlage.id,
-                bestandsnaam: bijlage.bestandsnaam,
-                storage_type: bijlage.storage_type,
-                storage_path: bijlage.storage_path
-            }
-        });
-        return;
+        // Set response headers for file download
+        res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+        
+        if (bijlage.storage_type === 'database' && bijlage.bestand_data) {
+            // File stored in database as binary data
+            console.log('📦 Serving file from database, size:', bijlage.bestand_data.length);
+            res.send(bijlage.bestand_data);
+        } else if (bijlage.storage_type === 'filesystem' && bijlage.storage_path) {
+            // File stored in filesystem (future implementation)
+            console.log('📁 File system storage not implemented yet, path:', bijlage.storage_path);
+            return res.status(501).json({ error: 'File system storage niet geïmplementeerd' });
+        } else {
+            // No valid storage found
+            console.log('❌ No valid storage found for bijlage');
+            return res.status(404).json({ error: 'Bijlage data niet gevonden' });
+        }
         
     } catch (error) {
         console.error('❌ Error downloading bijlage:', error);
