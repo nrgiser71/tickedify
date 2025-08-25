@@ -2103,6 +2103,15 @@ app.get('/api/bijlage/:id/download-auth', requireAuth, (req, res) => {
 app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     console.log('🎯 DOWNLOAD ROUTE HIT!', { id: req.params.id });
     
+    // TEMPORARY TEST: Return simple response to verify route works
+    console.log('🧪 TEMPORARY: Testing route accessibility');
+    return res.json({ 
+        message: 'Route werkt! Test response van download endpoint', 
+        bijlageId: req.params.id,
+        userId: req.session.userId,
+        timestamp: new Date().toISOString()
+    });
+    
     try {
         if (!db) {
             console.log('❌ No database available');
