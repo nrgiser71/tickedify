@@ -183,6 +183,35 @@ class StorageManager {
     try {
       const fileName = `${userId}/${taakId}/${bijlageId}_${file.originalname}`;
       
+      // DEBUG: Check file buffer before upload
+      console.log('🔍 [UPLOAD DEBUG] File info:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferType: Buffer.isBuffer(file.buffer) ? 'Buffer' : typeof file.buffer,
+        bufferLength: file.buffer?.length
+      });
+      
+      // Ensure we have a proper Buffer for PNG files
+      let uploadBuffer = file.buffer;
+      if (file.mimetype === 'image/png') {
+        if (!Buffer.isBuffer(file.buffer)) {
+          console.log('⚠️ [UPLOAD DEBUG] Converting non-Buffer to Buffer for PNG');
+          uploadBuffer = Buffer.from(file.buffer);
+        }
+        
+        // Check PNG signature before upload
+        if (uploadBuffer.length > 8) {
+          const firstBytes = uploadBuffer.slice(0, 8);
+          const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+          console.log('🔍 [UPLOAD DEBUG] PNG signature before B2 upload:', hexBytes);
+          
+          const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+          const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
+          console.log('🔍 [UPLOAD DEBUG] Valid PNG signature before upload:', isValidPNG);
+        }
+      }
+      
       const uploadUrl = await this.b2Client.getUploadUrl({
         bucketId: this.bucketId
       });
@@ -191,7 +220,7 @@ class StorageManager {
         uploadUrl: uploadUrl.data.uploadUrl,
         uploadAuthToken: uploadUrl.data.authorizationToken,
         fileName: fileName,
-        data: file.buffer,
+        data: uploadBuffer,
         mime: file.mimetype
       });
 

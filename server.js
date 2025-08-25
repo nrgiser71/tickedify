@@ -2019,6 +2019,14 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             }
         }
 
+        // DEBUG: Log file info before upload
+        console.log('🔍 [SERVER UPLOAD] File received:', {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            bufferType: Buffer.isBuffer(file.buffer) ? 'Buffer' : typeof file.buffer
+        });
+
         // Upload file using storage manager
         const bijlageData = await storageManager.uploadFile(file, taakId, userId);
 
@@ -2026,6 +2034,30 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
         const savedBijlage = await db.createBijlage(bijlageData);
 
         console.log('✅ Bijlage uploaded successfully:', savedBijlage.id);
+        
+        // If it's a PNG, immediately verify the upload worked correctly
+        let uploadVerification = null;
+        if (file.mimetype === 'image/png') {
+            try {
+                const fileBuffer = await storageManager.downloadFile(savedBijlage);
+                const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                const firstBytes = buffer.slice(0, 8);
+                const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+                const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
+                
+                uploadVerification = {
+                    png_signature_valid: isValidPNG,
+                    first_8_bytes: hexBytes,
+                    expected: '89 50 4e 47 0d 0a 1a 0a'
+                };
+                
+                console.log('🔍 [UPLOAD VERIFICATION] PNG signature after upload:', hexBytes, 'Valid:', isValidPNG);
+            } catch (verifyError) {
+                console.error('❌ [UPLOAD VERIFICATION] Failed to verify PNG after upload:', verifyError);
+                uploadVerification = { error: 'Verification failed' };
+            }
+        }
         
         res.json({
             success: true,
@@ -2036,7 +2068,8 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
                 bestandsgrootte: savedBijlage.bestandsgrootte,
                 mimetype: savedBijlage.mimetype,
                 geupload: savedBijlage.geupload
-            }
+            },
+            upload_verification: uploadVerification
         });
 
     } catch (error) {
