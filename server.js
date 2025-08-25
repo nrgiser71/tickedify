@@ -381,6 +381,43 @@ app.get('/api/debug/b2-direct-test', async (req, res) => {
     }
 });
 
+// Debug endpoint to check bijlage exists
+app.get('/api/debug/bijlage/:id', async (req, res) => {
+    try {
+        const { id: bijlageId } = req.params;
+        
+        console.log('🔍 DEBUG: Looking for bijlage:', bijlageId);
+        
+        if (!db) {
+            return res.json({ error: 'Database not available', bijlageId });
+        }
+        
+        const bijlage = await db.getBijlage(bijlageId, false);
+        
+        const result = {
+            bijlageId: bijlageId,
+            found: !!bijlage,
+            bijlage: bijlage,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Also check if there are ANY bijlagen in the database
+        const allBijlagenQuery = await pool.query('SELECT id, bestandsnaam FROM bijlagen LIMIT 5');
+        result.sample_bijlagen = allBijlagenQuery.rows;
+        result.total_bijlagen = allBijlagenQuery.rows.length;
+        
+        console.log('🔍 DEBUG bijlage result:', result);
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Debug bijlage error:', error);
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // Create default user if not exists
 app.post('/api/admin/create-default-user', async (req, res) => {
     try {
