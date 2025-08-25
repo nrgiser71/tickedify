@@ -2087,6 +2087,12 @@ app.get('/api/bijlage/:id/test', (req, res) => {
     });
 });
 
+// DEBUG: Test route zonder authentication
+app.get('/api/bijlage/:id/download-debug', (req, res) => {
+    console.log('🐛 DEBUG ROUTE HIT!', { id: req.params.id });
+    res.json({ message: 'Debug route werkt!', id: req.params.id });
+});
+
 // Download attachment - step by step restoration
 app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     console.log('🎯 DOWNLOAD ROUTE HIT!', { id: req.params.id });
