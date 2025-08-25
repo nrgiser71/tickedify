@@ -252,8 +252,25 @@ class StorageManager {
       console.log('✅ B2 download successful, size:', response.data?.length || 'unknown');
       console.log('✅ B2 response data type:', typeof response.data, 'isBuffer:', Buffer.isBuffer(response.data));
 
-      // Ensure we return a Buffer for binary data integrity
+      // DEBUG: Check raw B2 data if it's a PNG
       const data = response.data;
+      if (storagePath.toLowerCase().includes('.png') && data && data.length > 8) {
+        let firstBytes;
+        if (Buffer.isBuffer(data)) {
+          firstBytes = data.slice(0, 8);
+        } else if (data instanceof Uint8Array) {
+          firstBytes = data.slice(0, 8);
+        } else if (typeof data === 'string') {
+          firstBytes = Buffer.from(data, 'binary').slice(0, 8);
+        }
+        
+        if (firstBytes) {
+          const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+          console.log('🔍 [B2 PNG DEBUG] Raw B2 data first 8 bytes:', hexBytes);
+        }
+      }
+
+      // Ensure we return a Buffer for binary data integrity
       if (Buffer.isBuffer(data)) {
         return data;
       } else if (data instanceof Uint8Array) {

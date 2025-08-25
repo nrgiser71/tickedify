@@ -2203,6 +2203,19 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 // Ensure we have a Buffer for binary data
                 const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
                 
+                // DEBUG: Check PNG file signature (first 8 bytes should be: 89 50 4E 47 0D 0A 1A 0A)
+                if (bijlage.mimetype === 'image/png' && buffer.length > 8) {
+                    const firstBytes = buffer.slice(0, 8);
+                    const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                    console.log('🔍 [PNG DEBUG] First 8 bytes:', hexBytes);
+                    console.log('🔍 [PNG DEBUG] Expected PNG signature: 89 50 4e 47 0d 0a 1a 0a');
+                    
+                    // Check if PNG signature is correct
+                    const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+                    const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
+                    console.log('🔍 [PNG DEBUG] Valid PNG signature:', isValidPNG);
+                }
+                
                 // Set headers with actual buffer size from B2
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
