@@ -262,12 +262,24 @@ app.get('/api/debug/storage-status', async (req, res) => {
         
         // Test storage manager initialization
         if (storageManager) {
-            await storageManager.initialize();
-            status.storage_manager.initialized = storageManager.initialized;
-            status.storage_manager.b2_available = storageManager.isB2Available();
-            
-            if (storageManager.b2Client) {
+            try {
+                await storageManager.initialize();
+                status.storage_manager.initialized = storageManager.initialized;
+                status.storage_manager.b2_available = storageManager.isB2Available();
+                status.storage_manager.b2_client_exists = !!storageManager.b2Client;
                 status.storage_manager.bucket_id = storageManager.bucketId || 'not_set';
+                
+                // Additional B2 info if available
+                if (storageManager.b2Client && storageManager.bucketId) {
+                    status.storage_manager.b2_status = 'fully_initialized';
+                } else if (storageManager.b2Client) {
+                    status.storage_manager.b2_status = 'client_only_no_bucket';
+                } else {
+                    status.storage_manager.b2_status = 'not_initialized';
+                }
+            } catch (initError) {
+                status.storage_manager.initialization_error = initError.message;
+                status.storage_manager.b2_status = 'initialization_failed';
             }
         }
         
