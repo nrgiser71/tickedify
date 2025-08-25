@@ -316,6 +316,71 @@ app.get('/api/debug/storage-status', async (req, res) => {
     }
 });
 
+// Simple direct B2 test endpoint
+app.get('/api/debug/b2-direct-test', async (req, res) => {
+    try {
+        console.log('🔍 Testing B2 directly with current environment vars');
+        
+        const B2 = require('backblaze-b2');
+        
+        const result = {
+            timestamp: new Date().toISOString(),
+            env_check: {
+                key_id: !!process.env.B2_APPLICATION_KEY_ID,
+                key: !!process.env.B2_APPLICATION_KEY,
+                bucket_name: process.env.B2_BUCKET_NAME
+            },
+            steps: []
+        };
+        
+        // Step 1: Create B2 client
+        const b2Client = new B2({
+            applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
+            applicationKey: process.env.B2_APPLICATION_KEY
+        });
+        result.steps.push('✅ B2 client created');
+        
+        // Step 2: Authorize
+        await b2Client.authorize();
+        result.steps.push('✅ B2 authorization successful');
+        
+        // Step 3: List buckets
+        const bucketsResponse = await b2Client.listBuckets();
+        result.steps.push(`✅ Listed ${bucketsResponse.data.buckets.length} buckets`);
+        
+        result.buckets = bucketsResponse.data.buckets.map(b => ({
+            name: b.bucketName,
+            id: b.bucketId,
+            type: b.bucketType
+        }));
+        
+        // Check if target bucket exists
+        const targetBucket = bucketsResponse.data.buckets.find(b => b.bucketName === 'tickedify-attachments');
+        if (targetBucket) {
+            result.target_bucket = {
+                found: true,
+                id: targetBucket.bucketId,
+                type: targetBucket.bucketType
+            };
+            result.steps.push('✅ Target bucket "tickedify-attachments" found');
+        } else {
+            result.target_bucket = { found: false };
+            result.steps.push('⚠️ Target bucket "tickedify-attachments" not found - will need to create');
+        }
+        
+        result.success = true;
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Direct B2 test failed:', error);
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString(),
+            success: false
+        });
+    }
+});
+
 // Create default user if not exists
 app.post('/api/admin/create-default-user', async (req, res) => {
     try {
