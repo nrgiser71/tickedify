@@ -1652,9 +1652,20 @@ function convertNotionPatternServer(notionText) {
 
 // Authentication middleware
 function requireAuth(req, res, next) {
+    console.log('🔍 requireAuth check:', {
+        url: req.url,
+        method: req.method,
+        hasSession: !!req.session,
+        userId: req.session?.userId,
+        sessionId: req.sessionID
+    });
+    
     if (!req.session.userId) {
+        console.log('❌ Authentication failed - no userId in session');
         return res.status(401).json({ error: 'Authentication required' });
     }
+    
+    console.log('✅ Authentication passed for user:', req.session.userId);
     next();
 }
 
