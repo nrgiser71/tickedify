@@ -239,7 +239,22 @@ class StorageManager {
       });
 
       console.log('✅ B2 download successful, size:', response.data?.length || 'unknown');
-      return response.data;
+      console.log('✅ B2 response data type:', typeof response.data, 'isBuffer:', Buffer.isBuffer(response.data));
+
+      // Ensure we return a Buffer for binary data integrity
+      const data = response.data;
+      if (Buffer.isBuffer(data)) {
+        return data;
+      } else if (data instanceof Uint8Array) {
+        return Buffer.from(data);
+      } else if (typeof data === 'string') {
+        // If data is a string, it might be base64 or binary string
+        console.log('⚠️ B2 returned string data, converting to buffer');
+        return Buffer.from(data, 'binary');
+      } else {
+        console.log('⚠️ B2 returned unknown data type, attempting buffer conversion');
+        return Buffer.from(data);
+      }
     } catch (error) {
       console.error('❌ B2 download failed for file:', storagePath);
       console.error('❌ B2 error details:', {

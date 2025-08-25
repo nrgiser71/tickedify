@@ -2141,13 +2141,15 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
         // Set response headers for file download
         res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
         res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+        res.setHeader('Content-Length', bijlage.bestandsgrootte);
         
         if (bijlage.storage_type === 'database') {
             // File stored in database - fetch binary data separately
             const bijlageWithData = await db.getBijlage(bijlageId, true);
             if (bijlageWithData && bijlageWithData.bestand_data) {
                 console.log('📦 Serving file from database, size:', bijlageWithData.bestand_data.length);
-                res.send(bijlageWithData.bestand_data);
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                res.end(buffer, 'binary');
             } else {
                 console.log('❌ Binary data not found in database');
                 return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
@@ -2183,7 +2185,11 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 }
                 
                 console.log('📦 Serving file from B2, size:', fileBuffer.length);
-                res.send(fileBuffer);
+                console.log('📦 FileBuffer type:', typeof fileBuffer, 'isBuffer:', Buffer.isBuffer(fileBuffer));
+                
+                // Ensure we have a Buffer for binary data
+                const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                res.end(buffer, 'binary');
                 
             } catch (b2Error) {
                 console.error('❌ Error downloading from B2:', b2Error);
