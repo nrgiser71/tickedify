@@ -187,6 +187,33 @@ const initDatabase = async () => {
       )
     `);
 
+    // Create bijlagen table for task attachments
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bijlagen (
+        id VARCHAR(50) PRIMARY KEY,
+        taak_id VARCHAR(50) NOT NULL REFERENCES taken(id) ON DELETE CASCADE,
+        bestandsnaam VARCHAR(255) NOT NULL,
+        bestandsgrootte INTEGER NOT NULL,
+        mimetype VARCHAR(100) NOT NULL,
+        storage_type VARCHAR(20) NOT NULL CHECK (storage_type IN ('database', 'backblaze')),
+        storage_path VARCHAR(500), -- B2 object key (null for database storage)
+        bestand_data BYTEA, -- Binary data (null for B2 storage)
+        geupload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_id VARCHAR(50) REFERENCES users(id)
+      )
+    `);
+
+    // Create user storage usage tracking table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_storage_usage (
+        user_id VARCHAR(50) PRIMARY KEY REFERENCES users(id),
+        used_bytes BIGINT DEFAULT 0,
+        bijlagen_count INTEGER DEFAULT 0,
+        premium_expires DATE, -- NULL = free user
+        updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add position column to existing tables if it doesn't exist
     try {
       await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
@@ -213,6 +240,14 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add projecten columns (might already exist):', error.message);
     }
 
+    // Add premium_expires column to users table if it doesn't exist
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_expires DATE');
+      console.log('✅ Premium expires column added to users table');
+    } catch (error) {
+      console.log('⚠️ Could not add premium_expires column (might already exist):', error.message);
+    }
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
@@ -232,6 +267,9 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
       CREATE INDEX IF NOT EXISTS idx_subtaken_parent ON subtaken(parent_taak_id);
       CREATE INDEX IF NOT EXISTS idx_subtaken_parent_volgorde ON subtaken(parent_taak_id, volgorde);
+      CREATE INDEX IF NOT EXISTS idx_bijlagen_taak ON bijlagen(taak_id);
+      CREATE INDEX IF NOT EXISTS idx_bijlagen_user ON bijlagen(user_id);
+      CREATE INDEX IF NOT EXISTS idx_user_storage_usage_premium ON user_storage_usage(premium_expires);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -1618,6 +1656,192 @@ const db = {
       return true;
     } catch (error) {
       console.error('Error reordering subtaken:', error);
+      return false;
+    }
+  },
+
+  // Bijlagen (Attachments) functions
+  async createBijlage(bijlageData) {
+    try {
+      const result = await pool.query(`
+        INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, bestand_data, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `, [
+        bijlageData.id,
+        bijlageData.taak_id,
+        bijlageData.bestandsnaam,
+        bijlageData.bestandsgrootte,
+        bijlageData.mimetype,
+        bijlageData.storage_type,
+        bijlageData.storage_path || null,
+        bijlageData.bestand_data || null,
+        bijlageData.user_id
+      ]);
+
+      // Update user storage usage
+      await this.updateUserStorageUsage(bijlageData.user_id);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating bijlage:', error);
+      throw error;
+    }
+  },
+
+  async getBijlagenForTaak(taakId) {
+    try {
+      const result = await pool.query(`
+        SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, geupload, user_id
+        FROM bijlagen 
+        WHERE taak_id = $1 
+        ORDER BY geupload DESC
+      `, [taakId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting bijlagen for taak:', error);
+      return [];
+    }
+  },
+
+  async getBijlage(bijlageId, includeData = false) {
+    try {
+      let query = `
+        SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, geupload, user_id
+        ${includeData ? ', bestand_data' : ''}
+        FROM bijlagen 
+        WHERE id = $1
+      `;
+      
+      const result = await pool.query(query, [bijlageId]);
+      
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error getting bijlage:', error);
+      return null;
+    }
+  },
+
+  async deleteBijlage(bijlageId, userId) {
+    try {
+      const result = await pool.query(`
+        DELETE FROM bijlagen 
+        WHERE id = $1 AND user_id = $2
+        RETURNING *
+      `, [bijlageId, userId]);
+
+      if (result.rows.length > 0) {
+        // Update user storage usage after deletion
+        await this.updateUserStorageUsage(userId);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error deleting bijlage:', error);
+      return false;
+    }
+  },
+
+  async updateUserStorageUsage(userId) {
+    try {
+      // Calculate total usage for this user
+      const result = await pool.query(`
+        SELECT 
+          COALESCE(SUM(bestandsgrootte), 0) as used_bytes,
+          COUNT(*) as bijlagen_count
+        FROM bijlagen 
+        WHERE user_id = $1
+      `, [userId]);
+
+      const { used_bytes, bijlagen_count } = result.rows[0];
+
+      // Upsert the usage record
+      await pool.query(`
+        INSERT INTO user_storage_usage (user_id, used_bytes, bijlagen_count, updated)
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id)
+        DO UPDATE SET 
+          used_bytes = $2,
+          bijlagen_count = $3,
+          updated = CURRENT_TIMESTAMP
+      `, [userId, used_bytes, bijlagen_count]);
+
+      return { used_bytes: parseInt(used_bytes), bijlagen_count: parseInt(bijlagen_count) };
+    } catch (error) {
+      console.error('Error updating user storage usage:', error);
+      return { used_bytes: 0, bijlagen_count: 0 };
+    }
+  },
+
+  async getUserStorageStats(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT used_bytes, bijlagen_count, premium_expires, updated
+        FROM user_storage_usage 
+        WHERE user_id = $1
+      `, [userId]);
+
+      if (result.rows.length === 0) {
+        // Initialize usage record if it doesn't exist
+        return await this.updateUserStorageUsage(userId);
+      }
+
+      const stats = result.rows[0];
+      return {
+        used_bytes: parseInt(stats.used_bytes),
+        bijlagen_count: parseInt(stats.bijlagen_count),
+        premium_expires: stats.premium_expires,
+        updated: stats.updated
+      };
+    } catch (error) {
+      console.error('Error getting user storage stats:', error);
+      return { used_bytes: 0, bijlagen_count: 0, premium_expires: null };
+    }
+  },
+
+  async checkUserPremiumStatus(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT premium_expires 
+        FROM user_storage_usage 
+        WHERE user_id = $1
+      `, [userId]);
+
+      if (result.rows.length === 0) {
+        return false; // No record = free user
+      }
+
+      const premiumExpires = result.rows[0].premium_expires;
+      if (!premiumExpires) {
+        return false; // NULL = free user
+      }
+
+      // Check if premium is still valid
+      const now = new Date();
+      const expires = new Date(premiumExpires);
+      return expires > now;
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      return false;
+    }
+  },
+
+  async setPremiumStatus(userId, expiresDate) {
+    try {
+      await pool.query(`
+        INSERT INTO user_storage_usage (user_id, premium_expires, updated)
+        VALUES ($1, $2, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id)
+        DO UPDATE SET 
+          premium_expires = $2,
+          updated = CURRENT_TIMESTAMP
+      `, [userId, expiresDate]);
+
+      return true;
+    } catch (error) {
+      console.error('Error setting premium status:', error);
       return false;
     }
   }

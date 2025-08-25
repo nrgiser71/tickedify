@@ -402,6 +402,37 @@
                 <textarea id="opmerkingen" rows="3" placeholder="Aanvullende informatie, notities of details..."></textarea>
             </div>
             
+            <div class="form-groep" id="bijlagen-sectie">
+                <div class="bijlagen-header">
+                    <label>Bijlagen:</label>
+                    <span class="storage-usage" id="storage-usage" style="display: none;"></span>
+                </div>
+                
+                <div class="bijlagen-upload" id="bijlagen-upload">
+                    <div class="upload-dropzone" id="upload-dropzone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Sleep bestand hier of <span class="upload-link">klik om te selecteren</span></p>
+                        <small class="upload-limits" id="upload-limits">Max 5MB, 1 bijlage per taak (gratis)</small>
+                    </div>
+                    <input type="file" id="file-input" style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp,.svg,.zip,.rar,.7z,.json,.xml">
+                </div>
+                
+                <div class="bijlagen-lijst" id="bijlagen-lijst" style="display: none;">
+                    <!-- Bijlagen worden hier dynamisch toegevoegd -->
+                </div>
+                
+                <div class="upgrade-prompt" id="upgrade-prompt" style="display: none;">
+                    <div class="upgrade-content">
+                        <i class="fas fa-star"></i>
+                        <div class="upgrade-text">
+                            <strong>Upgrade naar Premium</strong>
+                            <p>Onbeperkte bijlagen, grotere bestanden, meer opslag</p>
+                        </div>
+                        <button class="upgrade-btn" id="upgrade-btn">€10/jaar</button>
+                    </div>
+                </div>
+            </div>
+            
             <div class="form-groep" id="subtaken-sectie" style="display: none;">
                 <div class="subtaken-header">
                     <label>Subtaken:</label>

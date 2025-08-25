@@ -8071,3 +8071,288 @@ body.dagkalender-focus-active {
     box-shadow: none !important;
 }
 
+/* Bijlagen (Attachments) Styling */
+.bijlagen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.storage-usage {
+    font-size: 12px;
+    color: var(--macos-gray-1);
+    padding: 4px 8px;
+    background: var(--macos-gray-6);
+    border-radius: 8px;
+    border: 1px solid var(--macos-gray-4);
+}
+
+.bijlagen-upload {
+    margin-bottom: 15px;
+}
+
+.upload-dropzone {
+    border: 2px dashed var(--macos-gray-3);
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    background: var(--macos-bg-secondary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.upload-dropzone:hover {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.05);
+}
+
+.upload-dropzone.dragover {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-dropzone i {
+    font-size: 24px;
+    color: var(--macos-gray-1);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.upload-dropzone p {
+    margin: 0 0 5px 0;
+    color: var(--macos-text-primary);
+    font-weight: 500;
+}
+
+.upload-link {
+    color: var(--macos-blue);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.upload-link:hover {
+    color: var(--macos-blue-hover);
+}
+
+.upload-limits {
+    color: var(--macos-gray-1);
+    font-size: 12px;
+    margin: 0;
+}
+
+.bijlagen-lijst {
+    margin-top: 15px;
+}
+
+.bijlage-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.bijlage-item:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.bijlage-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    color: var(--macos-blue);
+    flex-shrink: 0;
+}
+
+.bijlage-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bijlage-naam {
+    font-weight: 500;
+    color: var(--macos-text-primary);
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bijlage-details {
+    font-size: 12px;
+    color: var(--macos-gray-1);
+    margin: 0;
+}
+
+.bijlage-acties {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.bijlage-btn {
+    background: none;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bijlage-btn.download {
+    color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.1);
+}
+
+.bijlage-btn.download:hover {
+    background: rgba(0, 122, 255, 0.2);
+}
+
+.bijlage-btn.delete {
+    color: var(--macos-red);
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.bijlage-btn.delete:hover {
+    background: rgba(255, 59, 48, 0.2);
+}
+
+.upload-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.progress-bar {
+    width: 200px;
+    height: 4px;
+    background: var(--macos-gray-5);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--macos-blue);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--macos-text-primary);
+    font-weight: 500;
+}
+
+/* Premium Upgrade Prompt */
+.upgrade-prompt {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(175, 82, 222, 0.1), rgba(255, 149, 0, 0.1));
+    border: 1px solid rgba(175, 82, 222, 0.2);
+    border-radius: 12px;
+}
+
+.upgrade-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.upgrade-content i {
+    font-size: 24px;
+    color: var(--macos-purple);
+    flex-shrink: 0;
+}
+
+.upgrade-text {
+    flex: 1;
+}
+
+.upgrade-text strong {
+    display: block;
+    color: var(--macos-text-primary);
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.upgrade-text p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--macos-gray-1);
+}
+
+.upgrade-btn {
+    background: linear-gradient(135deg, var(--macos-purple), var(--macos-orange));
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.upgrade-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(175, 82, 222, 0.3);
+}
+
+/* File type icons */
+.bijlage-icon.pdf { color: #E53E3E; }
+.bijlage-icon.doc, .bijlage-icon.docx { color: #2B6CB0; }
+.bijlage-icon.xls, .bijlage-icon.xlsx { color: #38A169; }
+.bijlage-icon.ppt, .bijlage-icon.pptx { color: #D69E2E; }
+.bijlage-icon.jpg, .bijlage-icon.jpeg, .bijlage-icon.png, .bijlage-icon.gif { color: #8B5CF6; }
+.bijlage-icon.zip, .bijlage-icon.rar { color: #F56565; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .bijlage-item {
+        padding: 10px 12px;
+    }
+    
+    .bijlage-acties {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .bijlage-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .upload-dropzone {
+        padding: 20px 15px;
+    }
+    
+    .upgrade-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}
+

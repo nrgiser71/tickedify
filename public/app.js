@@ -7878,6 +7878,87 @@ class Taakbeheer {
         }
     }
 
+    // Planning popup functions
+    openPlanningPopup(taakId = '', mode = 'new') {
+        console.log('🔍 Opening planning popup for task:', taakId, 'mode:', mode);
+        
+        // Reset form
+        document.getElementById('taakNaamInput').value = '';
+        document.getElementById('projectSelect').value = '';
+        document.getElementById('verschijndatum').value = new Date().toISOString().split('T')[0];
+        document.getElementById('contextSelect').value = '';
+        document.getElementById('duur').value = '';
+        document.getElementById('herhalingDisplay').value = 'Geen herhaling';
+        document.getElementById('herhalingSelect').value = '';
+        document.getElementById('opmerkingen').value = '';
+
+        // Load existing task if editing
+        if (taakId && mode === 'edit') {
+            this.loadTaskIntoPopup(taakId);
+        }
+
+        // Initialize bijlagen manager for this task
+        if (bijlagenManager) {
+            bijlagenManager.initializeForTask(taakId || 'new');
+        }
+
+        // Load subtaken if task exists
+        if (subtakenManager && taakId) {
+            subtakenManager.loadSubtaken(taakId);
+        }
+
+        // Show popup
+        document.getElementById('planningPopup').style.display = 'flex';
+        document.getElementById('taakNaamInput').focus();
+    }
+
+    async loadTaskIntoPopup(taakId) {
+        try {
+            // Find task in current tasks array
+            const taak = this.taken.find(t => t.id === taakId);
+            if (!taak) {
+                console.warn('Task not found in current list:', taakId);
+                return;
+            }
+
+            // Populate form fields
+            document.getElementById('taakNaamInput').value = taak.tekst || '';
+            document.getElementById('projectSelect').value = taak.projectId || '';
+            document.getElementById('verschijndatum').value = taak.verschijndatum || new Date().toISOString().split('T')[0];
+            document.getElementById('contextSelect').value = taak.contextId || '';
+            document.getElementById('duur').value = taak.duur || '';
+            document.getElementById('opmerkingen').value = taak.opmerkingen || '';
+
+            // Handle recurring task fields
+            if (taak.herhalingType) {
+                document.getElementById('herhalingSelect').value = taak.herhalingType;
+                // Generate display text for recurring task
+                const displayText = this.generateHerhalingDisplayTextFromType(taak.herhalingType);
+                document.getElementById('herhalingDisplay').value = displayText;
+            }
+
+        } catch (error) {
+            console.error('Error loading task into popup:', error);
+        }
+    }
+
+    generateHerhalingDisplayTextFromType(herhalingType) {
+        // Simplified version for existing tasks - you can expand this
+        if (!herhalingType) return 'Geen herhaling';
+        
+        if (herhalingType === 'dagelijks') return 'Elke dag';
+        if (herhalingType === 'werkdagen') return 'Elke werkdag';
+        if (herhalingType.includes('weekly')) return 'Wekelijks';
+        if (herhalingType.includes('monthly')) return 'Maandelijks';
+        if (herhalingType.includes('yearly')) return 'Jaarlijks';
+        
+        return herhalingType; // fallback
+    }
+
+    sluitPlanningPopup() {
+        document.getElementById('planningPopup').style.display = 'none';
+    }
+
     isValidDate(dateString) {
         const date = new Date(dateString);
         return date instanceof Date && !isNaN(date) && dateString.match(/^\d{4}-\d{2}-\d{2}$/);
@@ -13354,8 +13435,350 @@ class SubtakenManager {
     }
 }
 
+// Bijlagen (Attachments) Manager
+class BijlagenManager {
+    constructor() {
+        this.currentTaakId = null;
+        this.storageStats = null;
+        this.initializeEventListeners();
+    }
+
+    initializeEventListeners() {
+        const dropzone = document.getElementById('upload-dropzone');
+        const fileInput = document.getElementById('file-input');
+        const uploadLink = dropzone?.querySelector('.upload-link');
+
+        if (dropzone && fileInput) {
+            // Click to select file
+            dropzone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            uploadLink?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fileInput.click();
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && this.currentTaakId) {
+                    this.uploadFile(file);
+                }
+            });
+
+            // Drag and drop
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && this.currentTaakId) {
+                    this.uploadFile(files[0]);
+                }
+            });
+        }
+
+        // Upgrade button
+        const upgradeBtn = document.getElementById('upgrade-btn');
+        if (upgradeBtn) {
+            upgradeBtn.addEventListener('click', () => {
+                this.showUpgradeModal();
+            });
+        }
+    }
+
+    async initializeForTask(taakId) {
+        this.currentTaakId = taakId;
+        await this.loadStorageStats();
+        await this.loadBijlagen();
+        this.updateUI();
+    }
+
+    async loadStorageStats() {
+        try {
+            const response = await fetch('/api/user/storage-stats');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.storageStats = data.stats;
+                console.log('Storage stats loaded:', this.storageStats);
+            }
+        } catch (error) {
+            console.error('Error loading storage stats:', error);
+        }
+    }
+
+    async loadBijlagen() {
+        if (!this.currentTaakId) return;
+
+        try {
+            const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.renderBijlagen(data.bijlagen);
+            }
+        } catch (error) {
+            console.error('Error loading bijlagen:', error);
+        }
+    }
+
+    renderBijlagen(bijlagen) {
+        const lijst = document.getElementById('bijlagen-lijst');
+        if (!lijst) return;
+
+        if (bijlagen.length === 0) {
+            lijst.style.display = 'none';
+            return;
+        }
+
+        lijst.style.display = 'block';
+        lijst.innerHTML = bijlagen.map(bijlage => `
+            <div class="bijlage-item" data-id="${bijlage.id}">
+                <i class="bijlage-icon ${this.getFileIcon(bijlage.mimetype)} ${this.getFileClass(bijlage.bestandsnaam)}"></i>
+                <div class="bijlage-info">
+                    <div class="bijlage-naam">${this.escapeHtml(bijlage.bestandsnaam)}</div>
+                    <div class="bijlage-details">
+                        ${this.formatBytes(bijlage.bestandsgrootte)} • ${this.formatDate(bijlage.geupload)}
+                    </div>
+                </div>
+                <div class="bijlage-acties">
+                    <button class="bijlage-btn download" onclick="bijlagenManager.downloadBijlage('${bijlage.id}')">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button class="bijlage-btn delete" onclick="bijlagenManager.deleteBijlage('${bijlage.id}')">
+                        <i class="fas fa-trash"></i> Verwijder
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    updateUI() {
+        if (!this.storageStats) return;
+
+        const storageUsage = document.getElementById('storage-usage');
+        const uploadLimits = document.getElementById('upload-limits');
+        const upgradePrompt = document.getElementById('upgrade-prompt');
+
+        // Update storage usage display
+        if (storageUsage) {
+            storageUsage.textContent = `${this.storageStats.used_formatted} / ${this.storageStats.limits.total_formatted}`;
+            storageUsage.style.display = 'block';
+        }
+
+        // Update upload limits text
+        if (uploadLimits) {
+            if (this.storageStats.is_premium) {
+                uploadLimits.textContent = 'Premium: onbeperkte bijlagen en grootte';
+            } else {
+                uploadLimits.textContent = `Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} bijlage per taak (gratis)`;
+            }
+        }
+
+        // Show/hide upgrade prompt
+        if (upgradePrompt && !this.storageStats.is_premium) {
+            const usagePercentage = this.storageStats.used_bytes / this.storageStats.limits.total_bytes;
+            upgradePrompt.style.display = usagePercentage > 0.8 ? 'block' : 'none';
+        }
+    }
+
+    async uploadFile(file) {
+        if (!this.currentTaakId) {
+            toast.error('Geen taak geselecteerd voor bijlage upload');
+            return;
+        }
+
+        // Show progress
+        const progress = this.showProgress('Uploaden...');
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(`Bijlage "${file.name}" succesvol geüpload`);
+                await this.loadStorageStats();
+                await this.loadBijlagen();
+                this.updateUI();
+                
+                // Clear file input
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) fileInput.value = '';
+            } else {
+                throw new Error(data.error || 'Upload gefaald');
+            }
+
+        } catch (error) {
+            console.error('Upload error:', error);
+            if (error.message.includes('Maximum') || error.message.includes('Onvoldoende')) {
+                toast.error(error.message);
+            } else if (error.message.includes('niet toegestaan')) {
+                toast.error('Bestandstype niet toegestaan');
+            } else {
+                toast.error('Upload gefaald. Probeer opnieuw.');
+            }
+        } finally {
+            this.hideProgress(progress);
+        }
+    }
+
+    async downloadBijlage(bijlageId) {
+        try {
+            const response = await fetch(`/api/bijlage/${bijlageId}/download`);
+            
+            if (!response.ok) {
+                throw new Error('Download gefaald');
+            }
+
+            // Get filename from response headers or use default
+            const contentDisposition = response.headers.get('content-disposition');
+            let filename = 'bijlage';
+            
+            if (contentDisposition) {
+                const matches = /filename="([^"]+)"/.exec(contentDisposition);
+                if (matches) {
+                    filename = matches[1];
+                }
+            }
+
+            // Create blob and download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            toast.success('Download gestart');
+
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error('Download gefaald. Probeer opnieuw.');
+        }
+    }
+
+    async deleteBijlage(bijlageId) {
+        if (!confirm('Weet je zeker dat je deze bijlage wilt verwijderen?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/bijlage/${bijlageId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Bijlage verwijderd');
+                await this.loadStorageStats();
+                await this.loadBijlagen();
+                this.updateUI();
+            } else {
+                throw new Error(data.error || 'Verwijderen gefaald');
+            }
+
+        } catch (error) {
+            console.error('Delete error:', error);
+            toast.error('Verwijderen gefaald. Probeer opnieuw.');
+        }
+    }
+
+    showUpgradeModal() {
+        toast.info('Premium upgrade functionaliteit komt binnenkort beschikbaar!');
+    }
+
+    showProgress(text) {
+        const dropzone = document.getElementById('upload-dropzone');
+        if (!dropzone) return;
+
+        const progress = document.createElement('div');
+        progress.className = 'upload-progress';
+        progress.innerHTML = `
+            <div class="progress-text">${text}</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        `;
+
+        dropzone.appendChild(progress);
+        return progress;
+    }
+
+    hideProgress(progress) {
+        if (progress && progress.parentNode) {
+            progress.parentNode.removeChild(progress);
+        }
+    }
+
+    getFileIcon(mimetype) {
+        if (mimetype.includes('pdf')) return 'fas fa-file-pdf';
+        if (mimetype.includes('word') || mimetype.includes('document')) return 'fas fa-file-word';
+        if (mimetype.includes('excel') || mimetype.includes('sheet')) return 'fas fa-file-excel';
+        if (mimetype.includes('powerpoint') || mimetype.includes('presentation')) return 'fas fa-file-powerpoint';
+        if (mimetype.includes('image')) return 'fas fa-file-image';
+        if (mimetype.includes('zip') || mimetype.includes('rar') || mimetype.includes('compressed')) return 'fas fa-file-archive';
+        if (mimetype.includes('text')) return 'fas fa-file-alt';
+        return 'fas fa-file';
+    }
+
+    getFileClass(filename) {
+        const ext = filename.split('.').pop()?.toLowerCase();
+        return ext || 'default';
+    }
+
+    formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('nl-NL', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
+
 // Initialize subtaken manager
 let subtakenManager;
+let bijlagenManager;
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DEBUG: Initializing SubtakenManager...');
     try {
@@ -13363,6 +13786,14 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('DEBUG: SubtakenManager initialized successfully');
     } catch (error) {
         console.error('DEBUG: Error initializing SubtakenManager:', error);
+    }
+
+    console.log('DEBUG: Initializing BijlagenManager...');
+    try {
+        bijlagenManager = new BijlagenManager();
+        console.log('DEBUG: BijlagenManager initialized successfully');
+    } catch (error) {
+        console.error('DEBUG: Error initializing BijlagenManager:', error);
     }
 });
 

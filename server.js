@@ -26,6 +26,22 @@ app.use(express.static('public'));
 // Multer for form-data parsing (Mailgun webhooks)
 const upload = multer();
 
+// Multer configuration for file uploads (in-memory storage)
+const uploadAttachment = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max file size (will be checked by business logic)
+    files: 5 // Max 5 files per request
+  },
+  fileFilter: (req, file, cb) => {
+    // Basic file type check (more detailed validation in storage manager)
+    if (!file.mimetype) {
+      return cb(new Error('Geen bestandstype gedetecteerd'));
+    }
+    cb(null, true);
+  }
+});
+
 // Enhanced request logging with API tracking
 const apiStats = new Map();
 const errorLogs = [];
@@ -33,6 +49,9 @@ const MAX_ERROR_LOGS = 100;
 
 // Import forensic logger
 const forensicLogger = require('./forensic-logger');
+
+// Import storage manager for attachments
+const { storageManager, STORAGE_CONFIG } = require('./storage-manager');
 
 // Debug: Check forensic logger status at startup
 console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
@@ -1764,6 +1783,235 @@ app.get('/api/waitlist/stats', async (req, res) => {
     } catch (error) {
         console.error('Waitlist stats error:', error);
         res.status(500).json({ error: 'Fout bij ophalen statistieken' });
+    }
+});
+
+// Bijlagen (Attachments) API endpoints
+// Upload attachment for a task
+app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'), async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: taakId } = req.params;
+        const userId = req.session.userId;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: 'Geen bestand geüpload' });
+        }
+
+        // Get user premium status and storage stats
+        const isPremium = await db.checkUserPremiumStatus(userId);
+        const userStats = await db.getUserStorageStats(userId);
+
+        // Validate file upload
+        const validation = storageManager.validateFile(file, isPremium, userStats);
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                error: 'Bestand niet toegestaan',
+                details: validation.errors 
+            });
+        }
+
+        // Check if task exists and belongs to user
+        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2', [taakId, userId]);
+        if (existingTaak.rows.length === 0) {
+            return res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+
+        // Check attachment limit for free users
+        if (!isPremium) {
+            const existingBijlagen = await db.getBijlagenForTaak(taakId);
+            if (existingBijlagen.length >= STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE) {
+                return res.status(400).json({ 
+                    error: `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.` 
+                });
+            }
+        }
+
+        // Upload file using storage manager
+        const bijlageData = await storageManager.uploadFile(file, taakId, userId);
+
+        // Save to database
+        const savedBijlage = await db.createBijlage(bijlageData);
+
+        console.log('✅ Bijlage uploaded successfully:', savedBijlage.id);
+        
+        res.json({
+            success: true,
+            bijlage: {
+                id: savedBijlage.id,
+                taak_id: savedBijlage.taak_id,
+                bestandsnaam: savedBijlage.bestandsnaam,
+                bestandsgrootte: savedBijlage.bestandsgrootte,
+                mimetype: savedBijlage.mimetype,
+                geupload: savedBijlage.geupload
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error uploading bijlage:', error);
+        if (error.message && error.message.includes('Upload naar cloud storage gefaald')) {
+            res.status(500).json({ error: 'Upload naar cloud storage gefaald. Probeer opnieuw.' });
+        } else {
+            res.status(500).json({ error: 'Fout bij uploaden bijlage' });
+        }
+    }
+});
+
+// Get all attachments for a task
+app.get('/api/taak/:id/bijlagen', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: taakId } = req.params;
+        const userId = req.session.userId;
+
+        // Check if task exists and belongs to user
+        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2', [taakId, userId]);
+        if (existingTaak.rows.length === 0) {
+            return res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+
+        const bijlagen = await db.getBijlagenForTaak(taakId);
+        
+        res.json({
+            success: true,
+            bijlagen: bijlagen
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting bijlagen:', error);
+        res.status(500).json({ error: 'Fout bij ophalen bijlagen' });
+    }
+});
+
+// Download attachment
+app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+
+        // Get attachment info (with data if database storage)
+        const bijlage = await db.getBijlage(bijlageId, true);
+        
+        if (!bijlage) {
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Check if user owns this attachment
+        if (bijlage.user_id !== userId) {
+            return res.status(403).json({ error: 'Geen toegang tot bijlage' });
+        }
+
+        // Get file data from appropriate storage
+        let fileData;
+        if (bijlage.storage_type === 'database') {
+            fileData = bijlage.bestand_data;
+        } else {
+            fileData = await storageManager.downloadFile(bijlage);
+        }
+
+        if (!fileData) {
+            return res.status(500).json({ error: 'Bestand data niet beschikbaar' });
+        }
+
+        // Set appropriate headers for file download
+        res.set({
+            'Content-Type': bijlage.mimetype,
+            'Content-Disposition': `attachment; filename="${bijlage.bestandsnaam}"`,
+            'Content-Length': bijlage.bestandsgrootte
+        });
+
+        res.send(fileData);
+
+    } catch (error) {
+        console.error('❌ Error downloading bijlage:', error);
+        res.status(500).json({ error: 'Fout bij downloaden bijlage' });
+    }
+});
+
+// Delete attachment
+app.delete('/api/bijlage/:id', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+
+        // Get attachment info first
+        const bijlage = await db.getBijlage(bijlageId);
+        
+        if (!bijlage) {
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Check if user owns this attachment
+        if (bijlage.user_id !== userId) {
+            return res.status(403).json({ error: 'Geen toegang tot bijlage' });
+        }
+
+        // Delete from storage (B2 or database)
+        await storageManager.deleteFile(bijlage);
+
+        // Delete from database
+        const success = await db.deleteBijlage(bijlageId, userId);
+
+        if (success) {
+            console.log('✅ Bijlage deleted successfully:', bijlageId);
+            res.json({ success: true });
+        } else {
+            res.status(500).json({ error: 'Fout bij verwijderen bijlage' });
+        }
+
+    } catch (error) {
+        console.error('❌ Error deleting bijlage:', error);
+        res.status(500).json({ error: 'Fout bij verwijderen bijlage' });
+    }
+});
+
+// Get user storage statistics
+app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const userId = req.session.userId;
+        
+        const stats = await db.getUserStorageStats(userId);
+        const isPremium = await db.checkUserPremiumStatus(userId);
+
+        res.json({
+            success: true,
+            stats: {
+                used_bytes: stats.used_bytes,
+                used_formatted: storageManager.formatBytes(stats.used_bytes),
+                bijlagen_count: stats.bijlagen_count,
+                is_premium: isPremium,
+                limits: {
+                    total_bytes: isPremium ? null : STORAGE_CONFIG.FREE_TIER_LIMIT,
+                    total_formatted: isPremium ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT),
+                    max_file_size: isPremium ? null : STORAGE_CONFIG.MAX_FILE_SIZE_FREE,
+                    max_file_formatted: isPremium ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE),
+                    max_attachments_per_task: isPremium ? null : STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting storage stats:', error);
+        res.status(500).json({ error: 'Fout bij ophalen opslag statistieken' });
     }
 });
 
