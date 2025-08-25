@@ -2174,7 +2174,7 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             try {
                 console.log('🔍 About to call storageManager.downloadFile...');
                 // Download file from B2 using storage manager
-                const fileBuffer = await storageManager.downloadFile(bijlage.storage_path);
+                const fileBuffer = await storageManager.downloadFile(bijlage);
                 console.log('🔍 storageManager.downloadFile completed, result:', !!fileBuffer);
                 
                 if (!fileBuffer) {

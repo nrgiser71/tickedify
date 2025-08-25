@@ -55,12 +55,18 @@ class StorageManager {
     try {
       // Only initialize B2 if credentials are provided
       if (process.env.B2_APPLICATION_KEY_ID && process.env.B2_APPLICATION_KEY) {
+        console.log('🔍 B2 credentials found, initializing...');
+        console.log('🔍 B2_APPLICATION_KEY_ID:', process.env.B2_APPLICATION_KEY_ID ? '[SET]' : '[NOT SET]');
+        console.log('🔍 B2_APPLICATION_KEY:', process.env.B2_APPLICATION_KEY ? '[SET]' : '[NOT SET]');
+        console.log('🔍 B2_BUCKET_NAME:', process.env.B2_BUCKET_NAME || 'tickedify-attachments (default)');
+
         this.b2Client = new B2({
           applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
           applicationKey: process.env.B2_APPLICATION_KEY
         });
 
         // Authorize with B2
+        console.log('🔍 Authorizing with B2...');
         await this.b2Client.authorize();
         console.log('✅ Backblaze B2 authorized successfully');
 
@@ -71,13 +77,21 @@ class StorageManager {
         this.initialized = true;
         console.log('✅ Storage Manager initialized with B2 support');
       } else {
-        console.log('⚠️ B2 credentials not found - bijlagen system will not work');
+        console.log('⚠️ B2 credentials not found in environment variables:');
+        console.log('   - B2_APPLICATION_KEY_ID:', process.env.B2_APPLICATION_KEY_ID ? '[SET]' : '[NOT SET]');
+        console.log('   - B2_APPLICATION_KEY:', process.env.B2_APPLICATION_KEY ? '[SET]' : '[NOT SET]');
+        console.log('   - Bijlagen system will not work without B2 credentials');
         this.initialized = true;
       }
       
       return true;
     } catch (error) {
-      console.error('❌ Failed to initialize Storage Manager:', error.message);
+      console.error('❌ Failed to initialize Storage Manager:', error);
+      console.error('❌ Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       // B2 initialization failed - bijlagen system will not work
       this.initialized = true;
       return false;
@@ -108,7 +122,14 @@ class StorageManager {
 
   // Pure B2 storage - no storage type determination needed
   isB2Available() {
-    return this.b2Client && this.bucketId;
+    const available = this.b2Client && this.bucketId;
+    console.log('🔍 B2 availability check:', {
+      initialized: this.initialized,
+      b2ClientExists: !!this.b2Client,
+      bucketId: this.bucketId,
+      available: available
+    });
+    return available;
   }
 
   // Validate file before upload
@@ -204,15 +225,31 @@ class StorageManager {
 
   async downloadFromB2(storagePath) {
     try {
+      const bucketName = process.env.B2_BUCKET_NAME || 'tickedify-attachments';
+      console.log('🔍 B2 Download attempt:', {
+        bucketName: bucketName,
+        fileName: storagePath,
+        b2ClientExists: !!this.b2Client,
+        bucketId: this.bucketId
+      });
+
       const response = await this.b2Client.downloadFileByName({
-        bucketName: process.env.B2_BUCKET_NAME || 'tickedify-attachments',
+        bucketName: bucketName,
         fileName: storagePath
       });
 
+      console.log('✅ B2 download successful, size:', response.data?.length || 'unknown');
       return response.data;
     } catch (error) {
-      console.error('❌ B2 download failed:', error);
-      throw new Error('Download van cloud storage gefaald');
+      console.error('❌ B2 download failed for file:', storagePath);
+      console.error('❌ B2 error details:', {
+        name: error.name,
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        stack: error.stack
+      });
+      throw new Error(`Download van cloud storage gefaald: ${error.message}`);
     }
   }
 
