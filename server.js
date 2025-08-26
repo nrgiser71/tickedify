@@ -2099,11 +2099,28 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
 
     } catch (error) {
         console.error('❌ Error uploading bijlage:', error);
-        if (error.message && error.message.includes('Upload naar cloud storage gefaald')) {
-            res.status(500).json({ error: 'Upload naar cloud storage gefaald. Probeer opnieuw.' });
-        } else {
-            res.status(500).json({ error: 'Fout bij uploaden bijlage' });
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // Return more specific error information for debugging
+        let errorMessage = 'Fout bij uploaden bijlage';
+        if (error.message && error.message.includes('B2 upload failed')) {
+            errorMessage = `B2 storage error: ${error.message}`;
+        } else if (error.message && error.message.includes('HTTP request failed')) {
+            errorMessage = `Network error: ${error.message}`;
+        } else if (error.message && error.message.includes('Raw upload setup failed')) {
+            errorMessage = `Upload setup error: ${error.message}`;
+        } else if (error.message) {
+            errorMessage = `Upload error: ${error.message}`;
         }
+        
+        res.status(500).json({ 
+            error: errorMessage,
+            debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

@@ -196,10 +196,10 @@ class StorageManager {
         bucketId: this.bucketId
       });
 
-      // RAW HTTP UPLOAD for PNG files to bypass B2 library corruption
+      // RAW HTTP UPLOAD for PNG files to bypass B2 library corruption (FIXED IMPLEMENTATION)
       if (file.mimetype === 'image/png') {
-        console.log('🔥 [RAW UPLOAD] Using raw HTTP upload for PNG to bypass B2 library');
-        return await this.rawHttpUpload(file, bijlageId, taakId, userId, fileName, uploadUrl.data);
+        console.log('🔥 [RAW UPLOAD] Using corrected raw HTTP upload for PNG');
+        return await this.rawHttpUploadFixed(file, bijlageId, taakId, userId, fileName, uploadUrl.data);
       } else {
         // Use B2 library for non-PNG files (works fine)
         console.log('📦 [B2 LIBRARY] Using B2 library for non-PNG file');
@@ -230,94 +230,105 @@ class StorageManager {
     }
   }
 
-  // Raw HTTP upload to bypass B2 library corruption for PNG files
-  async rawHttpUpload(file, bijlageId, taakId, userId, fileName, uploadUrlData) {
+  // CORRECTED Raw HTTP upload to bypass B2 library corruption
+  async rawHttpUploadFixed(file, bijlageId, taakId, userId, fileName, uploadUrlData) {
+    const https = require('https');
+    const crypto = require('crypto');
+    
     try {
-      console.log('🔥 [RAW UPLOAD] Starting raw HTTP upload');
-      console.log('🔥 [RAW UPLOAD] Upload URL data:', {
-        uploadUrl: uploadUrlData.uploadUrl,
-        authToken: uploadUrlData.authorizationToken ? '[PRESENT]' : '[MISSING]'
-      });
-
-      const https = require('https');
-      const { URL } = require('url');
+      console.log('🔧 [FIXED UPLOAD] Starting corrected raw HTTP upload');
       
-      // Verify PNG signature before raw upload
-      const buffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
-      const firstBytes = buffer.slice(0, 8);
-      const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-      console.log('🔥 [RAW UPLOAD] PNG signature before raw upload:', hexBytes);
+      // Ensure we have a pure Buffer with no transformations
+      const buffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer, 'binary');
       
-      const url = new URL(uploadUrlData.uploadUrl);
-      console.log('🔥 [RAW UPLOAD] Parsed URL:', {
-        hostname: url.hostname,
-        pathname: url.pathname,
-        search: url.search
-      });
+      // Log PNG signature to verify it's correct before upload
+      if (buffer.length > 8) {
+        const signature = Array.from(buffer.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log('🔧 [FIXED UPLOAD] PNG signature before upload:', signature);
+      }
       
-      const options = {
-        hostname: url.hostname,
-        port: url.port || 443,
-        path: url.pathname + url.search,
+      // Calculate SHA1 hash for B2 (required for integrity)
+      const sha1Hash = crypto.createHash('sha1').update(buffer).digest('hex');
+      console.log('🔧 [FIXED UPLOAD] Calculated SHA1:', sha1Hash);
+      
+      // Parse upload URL
+      const uploadUrl = new URL(uploadUrlData.uploadUrl);
+      
+      // Prepare request options with exact B2 API requirements
+      const requestOptions = {
+        hostname: uploadUrl.hostname,
+        port: uploadUrl.port || 443,
+        path: uploadUrl.pathname + uploadUrl.search,
         method: 'POST',
         headers: {
           'Authorization': uploadUrlData.authorizationToken,
           'Content-Type': file.mimetype,
-          'Content-Length': buffer.length,
-          'X-Bz-File-Name': encodeURIComponent(fileName),
-          'X-Bz-Content-Sha1': 'unverified'
+          'Content-Length': buffer.length.toString(),
+          'X-Bz-File-Name': encodeURIComponent(fileName).replace(/%2F/g, '/'),
+          'X-Bz-Content-Sha1': sha1Hash
         }
       };
-
-      console.log('🔥 [RAW UPLOAD] Request options:', options);
+      
+      console.log('🔧 [FIXED UPLOAD] Request options:', {
+        hostname: requestOptions.hostname,
+        path: requestOptions.path,
+        headers: requestOptions.headers
+      });
 
       return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-          let data = '';
+        const req = https.request(requestOptions, (res) => {
+          let responseData = '';
           
-          console.log('🔥 [RAW UPLOAD] Response started, status:', res.statusCode);
-          console.log('🔥 [RAW UPLOAD] Response headers:', res.headers);
+          // Set encoding to handle binary response properly
+          res.setEncoding('utf8');
           
           res.on('data', (chunk) => {
-            data += chunk;
+            responseData += chunk;
           });
 
           res.on('end', () => {
-            console.log('🔥 [RAW UPLOAD] Response completed');
-            console.log('🔥 [RAW UPLOAD] Response status:', res.statusCode);
-            console.log('🔥 [RAW UPLOAD] Response data:', data);
+            console.log('🔧 [FIXED UPLOAD] Upload completed');
+            console.log('🔧 [FIXED UPLOAD] Status:', res.statusCode);
+            console.log('🔧 [FIXED UPLOAD] Response:', responseData);
             
             if (res.statusCode === 200) {
-              resolve({
-                id: bijlageId,
-                taak_id: taakId,
-                bestandsnaam: file.originalname,
-                bestandsgrootte: file.size,
-                mimetype: file.mimetype,
-                storage_type: 'backblaze',
-                storage_path: fileName,
-                user_id: userId
-              });
+              try {
+                const result = JSON.parse(responseData);
+                console.log('🔧 [FIXED UPLOAD] B2 response parsed:', result);
+                
+                resolve({
+                  id: bijlageId,
+                  taak_id: taakId,
+                  bestandsnaam: file.originalname,
+                  bestandsgrootte: file.size,
+                  mimetype: file.mimetype,
+                  storage_type: 'backblaze',
+                  storage_path: fileName,
+                  user_id: userId
+                });
+              } catch (parseError) {
+                reject(new Error(`Invalid JSON response: ${responseData}`));
+              }
             } else {
-              reject(new Error(`Raw upload failed with status ${res.statusCode}: ${data}`));
+              reject(new Error(`B2 upload failed: HTTP ${res.statusCode} - ${responseData}`));
             }
           });
         });
 
         req.on('error', (error) => {
-          console.error('❌ [RAW UPLOAD] Request error:', error);
-          reject(error);
+          console.error('❌ [FIXED UPLOAD] Request error:', error);
+          reject(new Error(`HTTP request failed: ${error.message}`));
         });
 
-        // Write the raw buffer data
-        console.log('🔥 [RAW UPLOAD] Writing buffer data, size:', buffer.length);
+        // Write buffer data as pure binary - no encoding transformations
+        console.log('🔧 [FIXED UPLOAD] Writing binary buffer, size:', buffer.length);
         req.write(buffer);
         req.end();
       });
 
     } catch (error) {
-      console.error('❌ [RAW UPLOAD] Setup error:', error);
-      throw error;
+      console.error('❌ [FIXED UPLOAD] Error:', error);
+      throw new Error(`Raw upload setup failed: ${error.message}`);
     }
   }
 
