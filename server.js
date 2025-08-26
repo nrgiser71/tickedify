@@ -3161,7 +3161,7 @@ app.get('/api/debug/b2-status', async (req, res) => {
         const status = {
             b2Available: storageManager.isB2Available(),
             bucketName: process.env.B2_BUCKET_NAME || 'not-configured',
-            hasKeyId: !!process.env.B2_KEY_ID,
+            hasKeyId: !!process.env.B2_APPLICATION_KEY_ID,
             hasAppKey: !!process.env.B2_APPLICATION_KEY,
             timestamp: new Date().toISOString()
         };

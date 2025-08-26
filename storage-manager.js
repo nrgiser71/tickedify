@@ -54,14 +54,14 @@ class StorageManager {
 
     try {
       // Only initialize B2 if credentials are provided
-      if (process.env.B2_KEY_ID && process.env.B2_APPLICATION_KEY) {
+      if (process.env.B2_APPLICATION_KEY_ID && process.env.B2_APPLICATION_KEY) {
         console.log('🔍 B2 credentials found, initializing...');
-        console.log('🔍 B2_KEY_ID:', process.env.B2_KEY_ID ? '[SET]' : '[NOT SET]');
+        console.log('🔍 B2_APPLICATION_KEY_ID:', process.env.B2_APPLICATION_KEY_ID ? '[SET]' : '[NOT SET]');
         console.log('🔍 B2_APPLICATION_KEY:', process.env.B2_APPLICATION_KEY ? '[SET]' : '[NOT SET]');
         console.log('🔍 B2_BUCKET_NAME:', process.env.B2_BUCKET_NAME || 'tickedify-attachments (default)');
 
         this.b2Client = new B2({
-          applicationKeyId: process.env.B2_KEY_ID,
+          applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
           applicationKey: process.env.B2_APPLICATION_KEY
         });
 
@@ -78,7 +78,7 @@ class StorageManager {
         console.log('✅ Storage Manager initialized with B2 support');
       } else {
         console.log('⚠️ B2 credentials not found in environment variables:');
-        console.log('   - B2_KEY_ID:', process.env.B2_KEY_ID ? '[SET]' : '[NOT SET]');
+        console.log('   - B2_APPLICATION_KEY_ID:', process.env.B2_APPLICATION_KEY_ID ? '[SET]' : '[NOT SET]');
         console.log('   - B2_APPLICATION_KEY:', process.env.B2_APPLICATION_KEY ? '[SET]' : '[NOT SET]');
         console.log('   - Bijlagen system will not work without B2 credentials');
         this.initialized = true;
@@ -123,12 +123,12 @@ class StorageManager {
   // Pure B2 storage - no storage type determination needed
   isB2Available() {
     // Check for required environment variables
-    const hasRequiredEnvVars = !!(process.env.B2_KEY_ID && process.env.B2_APPLICATION_KEY);
+    const hasRequiredEnvVars = !!(process.env.B2_APPLICATION_KEY_ID && process.env.B2_APPLICATION_KEY);
     
     const available = hasRequiredEnvVars && this.b2Client && this.bucketId;
     console.log('🔍 B2 availability check:', {
       initialized: this.initialized,
-      hasKeyId: !!process.env.B2_KEY_ID,
+      hasKeyId: !!process.env.B2_APPLICATION_KEY_ID,
       hasAppKey: !!process.env.B2_APPLICATION_KEY,
       b2ClientExists: !!this.b2Client,
       bucketId: this.bucketId,
@@ -136,7 +136,7 @@ class StorageManager {
     });
     
     if (!hasRequiredEnvVars) {
-      console.warn('⚠️ B2 credentials missing - KEY_ID or APPLICATION_KEY not configured');
+      console.warn('⚠️ B2 credentials missing - APPLICATION_KEY_ID or APPLICATION_KEY not configured');
     }
     
     return available;
