@@ -202,9 +202,22 @@ class StorageManager {
         bufferLength: file.buffer?.length
       });
       
+      // Ensure B2 client is still authorized before uploading
+      if (!this.b2Client) {
+        throw new Error('B2 client not initialized');
+      }
+      
+      if (!this.bucketId) {
+        throw new Error('B2 bucket not found');
+      }
+      
+      console.log('🔍 [B2 DEBUG] Getting upload URL for bucket:', this.bucketId);
+      
       const uploadUrl = await this.b2Client.getUploadUrl({
         bucketId: this.bucketId
       });
+      
+      console.log('✅ [B2 DEBUG] Upload URL obtained successfully');
 
       // Detect PNG by signature, not MIME type, to test MIME-type corruption theory
       const isPNG = file.buffer && file.buffer.length > 8 && 
