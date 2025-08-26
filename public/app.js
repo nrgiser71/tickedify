@@ -13903,8 +13903,16 @@ class BijlagenManager {
                 return;
             }
 
-            // Show modal with bijlage
-            this.showPreviewModal(bijlage, allBijlagen, currentIndex);
+            // Voor PDFs: open in nieuwe tab
+            if (bijlage.mimetype === 'application/pdf') {
+                window.open(`/api/bijlage/${bijlage.id}/preview`, '_blank');
+                return;
+            }
+
+            // Voor afbeeldingen: show modal
+            if (bijlage.mimetype.startsWith('image/')) {
+                this.showPreviewModal(bijlage, allBijlagen, currentIndex);
+            }
             
         } catch (error) {
             console.error('Preview error:', error);
@@ -13946,6 +13954,7 @@ class BijlagenManager {
         // Create preview content
         container.innerHTML = '';
         
+        // Alleen afbeeldingen worden in modal getoond (PDFs openen in nieuwe tab)
         if (bijlage.mimetype.startsWith('image/')) {
             const img = document.createElement('img');
             img.src = `/api/bijlage/${bijlage.id}/preview`;
@@ -13953,14 +13962,6 @@ class BijlagenManager {
             img.style.maxWidth = '100%';
             img.style.maxHeight = '100%';
             container.appendChild(img);
-        } else if (bijlage.mimetype === 'application/pdf') {
-            const iframe = document.createElement('iframe');
-            iframe.src = `/api/bijlage/${bijlage.id}/preview`;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.style.borderRadius = 'var(--macos-radius-medium)';
-            container.appendChild(iframe);
         }
 
         // Setup navigation if multiple bijlagen
