@@ -2514,7 +2514,7 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
                 console.log('🔽 Falling back to B2 download for preview:', bijlage.storage_path);
                 
                 const storageStart = Date.now();
-                const fileBuffer = await storageManager.downloadFile(bijlage.storage_path);
+                const fileBuffer = await storageManager.downloadFile(bijlage);
                 console.log('🎯 [BACKEND] B2 download completed in:', Date.now() - storageStart, 'ms');
                 
                 if (!fileBuffer) {
