@@ -3,6 +3,39 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🎉 PNG DOWNLOAD CORRUPTIE DEFINITIEF OPGELOST (Augustus 26, 2025) ✅
+
+**🔧 MAJOR SUCCESS: Versie 0.13.25-0.13.26**
+- **User probleem**: "PNG bestanden downloaden werkt, maar Mac herkent ze niet meer als PNG"
+- **Root cause gevonden**: `backblaze-b2` npm package gebruikte standaard UTF-8 encoding voor downloads
+- **Oplossing geïmplementeerd**: `responseType: 'arraybuffer'` toegevoegd aan downloadFileByName call
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Fix locatie**: `storage-manager.js` regel 373-377 - downloadFileByName call uitgebreid
+- **Buffer handling**: ArrayBuffer → Buffer conversie geoptimaliseerd zonder UTF-8 corruptie
+- **String conversie**: Overbodige string-to-buffer logica verwijderd die binary data corrupt maakte
+- **Binary integriteit**: PNG signature (89 50 4E 47...) blijft nu volledig intact
+
+**🎯 PROBLEEM ANALYSE:**
+- **Upload werkte perfect**: Raw HTTP upload behield binary data integriteit
+- **Backblaze storage OK**: Direct downloaden van B2 werkte zonder problemen  
+- **Download corruptie**: Axios behandelde binary data als UTF-8 string zonder arraybuffer
+- **macOS herkenning**: PNG signature werd corrupt door UTF-8 encoding/decoding cyclus
+
+**✅ EINDRESULTAAT:**
+- **Perfect werkende PNG downloads** - gebruiker heeft bevestigd dat het probleem opgelost is
+- **macOS herkenning hersteld** - gedownloade PNG's openen nu correct
+- **Schone code**: Gebaseerd op backblaze-b2 best practices, geen workarounds meer
+- **Production ready**: Stabiele fix die het probleem aan de root cause oplost
+
+**📊 DEVELOPMENT LESSONS:**
+- **Online research kritiek**: Stack Overflow en GitHub issues gaven de juiste oplossing
+- **Simple fixes**: Soms is een missing parameter alles wat nodig is na complexe debugging
+- **Binary data handling**: responseType configuratie is essentieel voor file downloads
+- **Library documentation**: Official best practices zijn vaak de beste oplossing
+
+**STATUS**: PNG download functionaliteit 100% operationeel - probleem volledig opgelost.
+
 ## 🚨 URGENT: STAGING SETUP AFWERKEN - VOLGENDE SESSIE (Augustus 2025)
 
 **🎯 DIRECT BIJ START VOLGENDE SESSIE - PRIORITEIT #1:**
