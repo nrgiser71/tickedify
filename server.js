@@ -3135,6 +3135,77 @@ app.put('/api/feedback/:id/status', async (req, res) => {
     }
 });
 
+// B2 Storage debug endpoint - test B2 connectivity and credentials
+app.get('/api/debug/b2-status', async (req, res) => {
+    try {
+        const { storageManager } = require('./storage-manager');
+        
+        // Test B2 initialization
+        await storageManager.initialize();
+        
+        const status = {
+            b2Available: storageManager.isB2Available(),
+            bucketName: process.env.B2_BUCKET_NAME || 'not-configured',
+            hasKeyId: !!process.env.B2_KEY_ID,
+            hasAppKey: !!process.env.B2_APPLICATION_KEY,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('🔍 B2 Status check:', status);
+        res.json(status);
+    } catch (error) {
+        console.error('❌ B2 status check failed:', error);
+        res.status(500).json({ 
+            error: 'B2 status check failed', 
+            message: error.message,
+            b2Available: false 
+        });
+    }
+});
+
+// Test B2 cleanup voor specifieke taak (zonder daadwerkelijk verwijderen)
+app.get('/api/debug/b2-cleanup-test/:taskId', async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        const userId = getCurrentUserId(req);
+        
+        // Haal bijlagen op voor deze taak
+        const bijlagen = await db.getBijlagenForTaak(taskId);
+        
+        if (!bijlagen || bijlagen.length === 0) {
+            return res.json({
+                message: 'Geen bijlagen gevonden voor deze taak',
+                taskId,
+                bijlagenCount: 0
+            });
+        }
+        
+        console.log(`🧪 Testing B2 cleanup for task ${taskId} with ${bijlagen.length} bijlagen`);
+        
+        // Test B2 cleanup zonder echte verwijdering (dry run)
+        const testResult = {
+            taskId,
+            bijlagenCount: bijlagen.length,
+            bijlagen: bijlagen.map(b => ({
+                id: b.id,
+                bestandsnaam: b.bestandsnaam,
+                storage_path: b.storage_path,
+                mimetype: b.mimetype
+            })),
+            wouldAttemptDelete: bijlagen.length,
+            timestamp: new Date().toISOString()
+        };
+        
+        res.json(testResult);
+    } catch (error) {
+        console.error(`❌ B2 cleanup test failed for task ${req.params.taskId}:`, error);
+        res.status(500).json({ 
+            error: 'B2 cleanup test failed', 
+            message: error.message 
+        });
+    }
+});
+
 // Database cleanup endpoint - removes all task data but keeps users
 app.post('/api/debug/clean-database', async (req, res) => {
     try {
