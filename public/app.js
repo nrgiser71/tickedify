@@ -3493,6 +3493,9 @@ class Taakbeheer {
             if (contextNaam) extraInfo.push(`🏷️ ${contextNaam}`);
             if (datum) extraInfo.push(`${datumIndicator} ${datum}`);
             if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
+            if (taak.bijlagenCount && taak.bijlagenCount > 0) {
+                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} bijlage${taak.bijlagenCount > 1 ? 'n' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
+            }
             
             const extraInfoHtml = extraInfo.length > 0 ? 
                 `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';

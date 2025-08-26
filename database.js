@@ -1788,6 +1788,32 @@ const db = {
     }
   },
 
+  async getBijlagenCountsForTaken(taakIds) {
+    try {
+      if (!taakIds || taakIds.length === 0) {
+        return {};
+      }
+      
+      const result = await pool.query(`
+        SELECT taak_id, COUNT(*) as bijlagen_count
+        FROM bijlagen 
+        WHERE taak_id = ANY($1)
+        GROUP BY taak_id
+      `, [taakIds]);
+      
+      // Convert to object with taak_id as key
+      const counts = {};
+      result.rows.forEach(row => {
+        counts[row.taak_id] = parseInt(row.bijlagen_count);
+      });
+      
+      return counts;
+    } catch (error) {
+      console.error('Error getting bijlagen counts for taken:', error);
+      return {};
+    }
+  },
+
   async getBijlage(bijlageId, includeData = false) {
     try {
       let query = `

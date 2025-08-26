@@ -3165,6 +3165,23 @@ app.get('/api/lijst/:naam', async (req, res) => {
         const { naam } = req.params;
         const userId = getCurrentUserId(req);
         const data = await db.getList(naam, userId);
+        
+        // Add bijlagen counts for task lists (not for projecten-lijst or contexten)
+        if (naam !== 'projecten-lijst' && naam !== 'contexten') {
+            const taakIds = data.map(item => item.id).filter(id => id);
+            if (taakIds.length > 0) {
+                const bijlagenCounts = await db.getBijlagenCountsForTaken(taakIds);
+                data.forEach(item => {
+                    item.bijlagenCount = bijlagenCounts[item.id] || 0;
+                });
+            } else {
+                // Ensure all items have bijlagenCount property
+                data.forEach(item => {
+                    item.bijlagenCount = 0;
+                });
+            }
+        }
+        
         res.json(data);
     } catch (error) {
         console.error(`Error getting list ${req.params.naam}:`, error);
