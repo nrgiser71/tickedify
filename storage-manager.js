@@ -196,9 +196,15 @@ class StorageManager {
         bucketId: this.bucketId
       });
 
-      // RAW HTTP UPLOAD for PNG files to bypass B2 library corruption (FIXED IMPLEMENTATION)
-      if (file.mimetype === 'image/png') {
-        console.log('🔥 [RAW UPLOAD] Using corrected raw HTTP upload for PNG');
+      // Detect PNG by signature, not MIME type, to test MIME-type corruption theory
+      const isPNG = file.buffer && file.buffer.length > 8 && 
+                    file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && 
+                    file.buffer[2] === 0x4E && file.buffer[3] === 0x47;
+      
+      // Use raw HTTP upload for PNG files (detected by signature, not MIME type)
+      if (isPNG) {
+        console.log('🔥 [RAW UPLOAD] PNG detected by signature - using raw HTTP upload');
+        console.log('🔍 [MIME TEST] MIME type is:', file.mimetype);
         return await this.rawHttpUploadFixed(file, bijlageId, taakId, userId, fileName, uploadUrl.data);
       } else {
         // Use B2 library for non-PNG files (works fine)

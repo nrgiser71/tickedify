@@ -2028,21 +2028,26 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
         });
 
         // CRITICAL: Check PNG signature IMMEDIATELY after multer processing
-        if (file.mimetype === 'image/png' && file.buffer && file.buffer.length > 8) {
+        if (file.buffer && file.buffer.length > 8) {
             const multerBuffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
             const multerFirstBytes = multerBuffer.slice(0, 8);
             const multerHex = Array.from(multerFirstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            
+            // Check if it's a PNG based on signature, regardless of MIME type
             const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-            const multerValidPNG = expectedPNG.every((byte, index) => multerFirstBytes[index] === byte);
+            const isPNGSignature = expectedPNG.every((byte, index) => multerFirstBytes[index] === byte);
             
-            console.log('🚨 [MULTER CHECK] PNG signature after multer:', multerHex);
-            console.log('🚨 [MULTER CHECK] Expected PNG signature:  ', '89 50 4e 47 0d 0a 1a 0a');
-            console.log('🚨 [MULTER CHECK] Valid PNG from multer:    ', multerValidPNG);
+            console.log('🚨 [MULTER CHECK] File signature after multer:', multerHex);
+            console.log('🚨 [MULTER CHECK] MIME type from browser:   ', file.mimetype);
+            console.log('🚨 [MULTER CHECK] Original filename:       ', file.originalname);
+            console.log('🚨 [MULTER CHECK] Has PNG signature:       ', isPNGSignature);
             
-            if (!multerValidPNG) {
-                console.log('🚨 [CRITICAL] PNG ALREADY CORRUPT FROM MULTER! Problem is NOT in B2 upload!');
-            } else {
-                console.log('✅ [MULTER CHECK] PNG signature correct from multer - corruption happens in B2 upload');
+            if (isPNGSignature && file.mimetype === 'image/png') {
+                console.log('✅ [MULTER CHECK] PNG with correct MIME type - normal path');
+            } else if (isPNGSignature && file.mimetype !== 'image/png') {
+                console.log('🔍 [MIME TEST] PNG with different MIME type - testing if this fixes corruption');
+            } else if (!isPNGSignature && file.mimetype === 'image/png') {
+                console.log('🚨 [CRITICAL] PNG MIME type but no PNG signature - already corrupt!');
             }
         }
 
@@ -2054,9 +2059,13 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
 
         console.log('✅ Bijlage uploaded successfully:', savedBijlage.id);
         
-        // If it's a PNG, immediately verify the upload worked correctly
+        // If it's a PNG (detect by signature), immediately verify the upload worked correctly
         let uploadVerification = null;
-        if (file.mimetype === 'image/png') {
+        const isPNGFile = file.buffer && file.buffer.length > 8 && 
+                          file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && 
+                          file.buffer[2] === 0x4E && file.buffer[3] === 0x47;
+                          
+        if (isPNGFile) {
             try {
                 const fileBuffer = await storageManager.downloadFile(savedBijlage);
                 const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
@@ -2090,7 +2099,7 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             },
             upload_verification: uploadVerification,
             // Include debug info in response so we can see it in frontend
-            debug_info: file.mimetype === 'image/png' ? {
+            debug_info: isPNGFile ? {
                 multer_signature: file.buffer ? Array.from(file.buffer.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ') : 'no buffer',
                 multer_valid: file.buffer && file.buffer.length > 8 ? 
                     [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A].every((byte, index) => file.buffer[index] === byte) : false
@@ -2160,6 +2169,45 @@ app.get('/api/bijlage/:id/test', (req, res) => {
         id: req.params.id,
         timestamp: new Date().toISOString()
     });
+});
+
+// DEBUG: MIME type test endpoint - allows uploading PNG with different MIME types
+app.post('/api/debug/mime-test-upload', requireAuth, uploadAttachment.single('file'), async (req, res) => {
+    try {
+        const { forceMimeType } = req.body;
+        const file = req.file;
+        
+        if (!file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        
+        // Override MIME type for testing if provided
+        if (forceMimeType) {
+            console.log('🔍 [MIME TEST] Original MIME type:', file.mimetype);
+            console.log('🔍 [MIME TEST] Forced MIME type:', forceMimeType);
+            file.mimetype = forceMimeType;
+        }
+        
+        const isPNG = file.buffer && file.buffer.length > 8 && 
+                      file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && 
+                      file.buffer[2] === 0x4E && file.buffer[3] === 0x47;
+        
+        res.json({
+            success: true,
+            analysis: {
+                original_filename: file.originalname,
+                detected_mime_type: file.mimetype,
+                is_png_signature: isPNG,
+                first_8_bytes: Array.from(file.buffer.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' '),
+                file_size: file.size,
+                test_purpose: forceMimeType ? 'MIME type override test' : 'Normal upload analysis'
+            }
+        });
+        
+    } catch (error) {
+        console.error('MIME test error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // DEBUG: PNG binary analysis endpoint
