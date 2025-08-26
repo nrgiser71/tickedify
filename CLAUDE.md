@@ -3,6 +3,45 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 📎 BIJLAGEN MEENEMEN BIJ HERHALENDE TAKEN VOLTOOID (Augustus 26, 2025) ✅
+
+**🎯 MAJOR FEATURE SUCCESS: Versie 0.13.27-0.13.30**
+- **User request**: "Wat gebeurt er als ik een bijlage aan een herhalende taak toevoeg en die taak afvink? Gaat de bijlage dan mee naar de volgende occurrence?"
+- **Probleem**: Bijlagen gingen NIET mee - ze bleven bij de originele (afgewerkte) taak
+- **Oplossing geïmplementeerd**: Slimme referentie kopiëring zonder B2 duplicaten
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **copyBijlagenReferences functie**: database.js regel 718-752 - kopieert alleen database referenties
+- **Integratie in createRecurringTask**: Beide scenarios (normal + fallback) ondersteunen bijlagen kopiëring
+- **Slimme ID handling**: Fallback naar verschillende property namen (id, taakId, task_id)
+- **PostgreSQL concat fix**: CONCAT() vervangen door || operator voor betere compatibiliteit
+
+**🎯 SLIMME IMPLEMENTATIE VOLGENS USER WENS:**
+- **Geen B2 duplicaten**: Zelfde `storage_path` wordt hergebruikt - geen extra storage kosten
+- **Database referenties**: Alleen nieuwe bijlagen entries met unieke IDs (`newTaskId_bij_1`, etc.)
+- **Onafhankelijk beheer**: Elke taak heeft eigen bijlagen entries voor flexibel verwijderen
+- **Automatisch proces**: Werkt transparant binnen de recurring task workflow
+
+**🔧 DEBUG & FIXES MARATHON:**
+- **v0.13.27**: Basis implementatie bijlagen kopiëren
+- **v0.13.28**: Null check voor originalTask.id - voorkom transaction rollback
+- **v0.13.29**: Uitgebreide debug logging voor property identification
+- **v0.13.30**: Production ready - gebruiker bevestigt "Zeer goed" resultaat
+
+**✅ EINDRESULTAAT:**
+- **Perfect werkende bijlagen inheritance** - gebruikt heeft bevestigd dat het werkt
+- **Geen extra storage kosten** - precies zoals gevraagd door gebruiker
+- **Robuuste error handling** - geen 404 errors meer bij recurring task creation
+- **Production ready**: Volledig getest en gevalideerd door gebruiker
+
+**📊 DEVELOPMENT LESSONS:**
+- **User requirements eerst begrijpen**: "Geen duplicaten" was cruciale requirement
+- **Database referenties > File duplicatie**: Elegante oplossing die storage bespaart
+- **Debugging approach**: Systematische fix van transaction rollback via property debugging
+- **User feedback loop**: "Zeer goed" bevestigt dat feature precies werkt zoals bedoeld
+
+**STATUS**: Bijlagen meenemen bij herhalende taken 100% operationeel - feature volledig gevalideerd.
+
 ## 🎉 PNG DOWNLOAD CORRUPTIE DEFINITIEF OPGELOST (Augustus 26, 2025) ✅
 
 **🔧 MAJOR SUCCESS: Versie 0.13.25-0.13.26**
