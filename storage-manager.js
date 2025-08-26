@@ -122,13 +122,23 @@ class StorageManager {
 
   // Pure B2 storage - no storage type determination needed
   isB2Available() {
-    const available = this.b2Client && this.bucketId;
+    // Check for required environment variables
+    const hasRequiredEnvVars = !!(process.env.B2_KEY_ID && process.env.B2_APPLICATION_KEY);
+    
+    const available = hasRequiredEnvVars && this.b2Client && this.bucketId;
     console.log('🔍 B2 availability check:', {
       initialized: this.initialized,
+      hasKeyId: !!process.env.B2_KEY_ID,
+      hasAppKey: !!process.env.B2_APPLICATION_KEY,
       b2ClientExists: !!this.b2Client,
       bucketId: this.bucketId,
       available: available
     });
+    
+    if (!hasRequiredEnvVars) {
+      console.warn('⚠️ B2 credentials missing - KEY_ID or APPLICATION_KEY not configured');
+    }
+    
     return available;
   }
 

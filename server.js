@@ -1690,6 +1690,21 @@ async function cleanupB2Files(bijlagen, taskId = 'unknown') {
         return { success: true, deleted: 0, failed: 0, errors: [] };
     }
     
+    // Check B2 availability before attempting cleanup
+    if (!storageManager.isB2Available()) {
+        console.warn(`⚠️ B2 not available for cleanup task ${taskId} - skipping ${bijlagen.length} files`);
+        return {
+            success: false,
+            deleted: 0,
+            failed: bijlagen.length,
+            errors: [{
+                error: 'B2 storage not available - missing credentials or configuration',
+                category: 'CONFIG_ERROR'
+            }],
+            configError: true
+        };
+    }
+    
     const deletedFiles = [];
     const failedFiles = [];
     const errors = [];

@@ -3976,7 +3976,10 @@ class Taakbeheer {
                         
                         if (cleanup.failed > 0) {
                             hasB2Warning = true;
-                            if (cleanup.timeout) {
+                            if (cleanup.configError) {
+                                console.warn(`⚠️ B2 configuratie probleem voor taak ${id}`);
+                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering is niet geconfigureerd. Cloud storage cleanup overgeslagen.`);
+                            } else if (cleanup.timeout) {
                                 console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${id}`);
                                 toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
                             } else if (cleanup.deleted > 0) {
