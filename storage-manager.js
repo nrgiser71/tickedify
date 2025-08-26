@@ -232,43 +232,58 @@ class StorageManager {
 
   // Raw HTTP upload to bypass B2 library corruption for PNG files
   async rawHttpUpload(file, bijlageId, taakId, userId, fileName, uploadUrlData) {
-    const https = require('https');
-    const { URL } = require('url');
-    
-    return new Promise((resolve, reject) => {
-      try {
-        const url = new URL(uploadUrlData.uploadUrl);
-        
-        // Verify PNG signature before raw upload
-        const buffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
-        const firstBytes = buffer.slice(0, 8);
-        const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log('🔥 [RAW UPLOAD] PNG signature before raw upload:', hexBytes);
-        
-        const options = {
-          hostname: url.hostname,
-          port: url.port || 443,
-          path: url.pathname + url.search,
-          method: 'POST',
-          headers: {
-            'Authorization': uploadUrlData.authorizationToken,
-            'Content-Type': file.mimetype,
-            'Content-Length': buffer.length,
-            'X-Bz-File-Name': fileName,
-            'X-Bz-Content-Sha1': 'unverified'
-          }
-        };
+    try {
+      console.log('🔥 [RAW UPLOAD] Starting raw HTTP upload');
+      console.log('🔥 [RAW UPLOAD] Upload URL data:', {
+        uploadUrl: uploadUrlData.uploadUrl,
+        authToken: uploadUrlData.authorizationToken ? '[PRESENT]' : '[MISSING]'
+      });
 
-        console.log('🔥 [RAW UPLOAD] Headers:', options.headers);
+      const https = require('https');
+      const { URL } = require('url');
+      
+      // Verify PNG signature before raw upload
+      const buffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
+      const firstBytes = buffer.slice(0, 8);
+      const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+      console.log('🔥 [RAW UPLOAD] PNG signature before raw upload:', hexBytes);
+      
+      const url = new URL(uploadUrlData.uploadUrl);
+      console.log('🔥 [RAW UPLOAD] Parsed URL:', {
+        hostname: url.hostname,
+        pathname: url.pathname,
+        search: url.search
+      });
+      
+      const options = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname + url.search,
+        method: 'POST',
+        headers: {
+          'Authorization': uploadUrlData.authorizationToken,
+          'Content-Type': file.mimetype,
+          'Content-Length': buffer.length,
+          'X-Bz-File-Name': encodeURIComponent(fileName),
+          'X-Bz-Content-Sha1': 'unverified'
+        }
+      };
 
+      console.log('🔥 [RAW UPLOAD] Request options:', options);
+
+      return new Promise((resolve, reject) => {
         const req = https.request(options, (res) => {
           let data = '';
+          
+          console.log('🔥 [RAW UPLOAD] Response started, status:', res.statusCode);
+          console.log('🔥 [RAW UPLOAD] Response headers:', res.headers);
           
           res.on('data', (chunk) => {
             data += chunk;
           });
 
           res.on('end', () => {
+            console.log('🔥 [RAW UPLOAD] Response completed');
             console.log('🔥 [RAW UPLOAD] Response status:', res.statusCode);
             console.log('🔥 [RAW UPLOAD] Response data:', data);
             
@@ -298,12 +313,12 @@ class StorageManager {
         console.log('🔥 [RAW UPLOAD] Writing buffer data, size:', buffer.length);
         req.write(buffer);
         req.end();
+      });
 
-      } catch (error) {
-        console.error('❌ [RAW UPLOAD] Setup error:', error);
-        reject(error);
-      }
-    });
+    } catch (error) {
+      console.error('❌ [RAW UPLOAD] Setup error:', error);
+      throw error;
+    }
   }
 
 
