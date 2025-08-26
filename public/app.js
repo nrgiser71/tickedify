@@ -13954,12 +13954,13 @@ class BijlagenManager {
             img.style.maxHeight = '100%';
             container.appendChild(img);
         } else if (bijlage.mimetype === 'application/pdf') {
-            const embed = document.createElement('embed');
-            embed.src = `/api/bijlage/${bijlage.id}/preview`;
-            embed.type = 'application/pdf';
-            embed.style.width = '100%';
-            embed.style.height = '100%';
-            container.appendChild(embed);
+            const iframe = document.createElement('iframe');
+            iframe.src = `/api/bijlage/${bijlage.id}/preview`;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.borderRadius = 'var(--macos-radius-medium)';
+            container.appendChild(iframe);
         }
 
         // Setup navigation if multiple bijlagen
