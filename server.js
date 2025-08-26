@@ -1681,6 +1681,30 @@ function getCurrentUserId(req) {
     return req.session.userId || 'user_1750513625687_5458i79dj';
 }
 
+// Asynchrone B2 cleanup functie - fire and forget
+async function cleanupB2Files(bijlagen, taskId = 'unknown') {
+    console.log(`🧹 Starting B2 cleanup for ${bijlagen.length} files (task: ${taskId})`);
+    
+    // Parallel alle B2 bestanden verwijderen
+    const deletePromises = bijlagen.map(async (bijlage) => {
+        try {
+            await storageManager.deleteFile(bijlage);
+            console.log(`✅ B2 file deleted: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
+            return { success: true, file: bijlage.bestandsnaam };
+        } catch (error) {
+            console.error(`❌ Failed to delete B2 file ${bijlage.storage_path} (${bijlage.bestandsnaam}):`, error.message);
+            return { success: false, file: bijlage.bestandsnaam, error: error.message };
+        }
+    });
+    
+    // Wacht tot alle deletes klaar zijn (maar block niet de response)
+    const results = await Promise.allSettled(deletePromises);
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const failed = results.length - successful;
+    
+    console.log(`🧹 B2 cleanup completed for task ${taskId}: ${successful} success, ${failed} failed`);
+}
+
 // Authentication API endpoints
 app.post('/api/auth/register', async (req, res) => {
     try {
@@ -3379,6 +3403,12 @@ app.delete('/api/taak/:id', async (req, res) => {
         const userId = getCurrentUserId(req);
         console.log(`🗑️ Deleting task ${id} for user ${userId}`);
         
+        // Eerst bijlagen ophalen voor B2 cleanup (voor CASCADE ze verwijdert)
+        const bijlagen = await db.getBijlagenForTaak(id);
+        if (bijlagen && bijlagen.length > 0) {
+            console.log(`📎 Found ${bijlagen.length} bijlagen for task ${id}`);
+        }
+        
         const result = await pool.query(
             'DELETE FROM taken WHERE id = $1 AND user_id = $2 RETURNING id',
             [id, userId]
@@ -3386,6 +3416,16 @@ app.delete('/api/taak/:id', async (req, res) => {
         
         if (result.rows.length > 0) {
             console.log(`✅ Task ${id} deleted successfully`);
+            
+            // Asynchroon B2 cleanup starten (NIET wachten)
+            if (bijlagen && bijlagen.length > 0) {
+                // Fire-and-forget B2 cleanup
+                cleanupB2Files(bijlagen, id).catch(error => {
+                    console.error(`⚠️ B2 cleanup failed for task ${id}:`, error.message);
+                    // Geen impact op user - alleen logging
+                });
+            }
+            
             res.json({ success: true, deleted: id });
         } else {
             console.log(`❌ Task ${id} not found or not owned by user`);
