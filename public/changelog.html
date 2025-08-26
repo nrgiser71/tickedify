@@ -134,10 +134,36 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.13.25 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.13.25</span>
+                <span class="version-date">26 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <strong>MAJOR PNG CORRUPTIE FIX:</strong> Probleem volledig opgelost door responseType: 'arraybuffer' toe te voegen aan backblaze-b2 downloadFileByName call.
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">📦</span>
+                    <strong>Binary Data Integriteit:</strong> PNG bestanden blijven nu binary intact tijdens download en worden correct herkend door macOS.
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">✅</span>
+                    <strong>String-to-Buffer Fix:</strong> Onnodige UTF-8 conversie logica verwijderd die binary data corrumpeerde bij string behandeling.
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🎯</span>
+                    <strong>Root Cause Opgelost:</strong> Axios gebruikte standaard UTF-8 encoding voor B2 downloads, nu geforceerd op arraybuffer voor binary files.
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.13.14 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.13.14</span>
+                <span class="version-badge badge-fix">v0.13.14</span>
                 <span class="version-date">25 augustus 2025</span>
             </div>
             <div class="changes-list">
