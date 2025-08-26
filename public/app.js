@@ -13447,7 +13447,9 @@ class BijlagenManager {
     constructor() {
         this.currentTaakId = null;
         this.storageStats = null;
+        this.currentPreview = null;
         this.initializeEventListeners();
+        this.initPreviewModal();
     }
 
     initializeEventListeners() {
@@ -13586,25 +13588,44 @@ class BijlagenManager {
         }
 
         lijst.style.display = 'block';
-        lijst.innerHTML = bijlagen.map(bijlage => `
-            <div class="bijlage-item" data-id="${bijlage.id}">
-                <i class="bijlage-icon ${this.getFileIcon(bijlage.mimetype)} ${this.getFileClass(bijlage.bestandsnaam)}"></i>
-                <div class="bijlage-info">
-                    <div class="bijlage-naam">${this.escapeHtml(bijlage.bestandsnaam)}</div>
-                    <div class="bijlage-details">
-                        ${this.formatBytes(bijlage.bestandsgrootte)} • ${this.formatDate(bijlage.geupload)}
+        lijst.innerHTML = bijlagen.map(bijlage => {
+            const canPreview = this.canPreview(bijlage.mimetype);
+            const previewClass = canPreview ? 'preview-supported' : '';
+            
+            return `
+                <div class="bijlage-item ${previewClass}" data-id="${bijlage.id}">
+                    <i class="bijlage-icon ${this.getFileIcon(bijlage.mimetype)} ${this.getFileClass(bijlage.bestandsnaam)}"></i>
+                    <div class="bijlage-info">
+                        <div class="bijlage-naam">${this.escapeHtml(bijlage.bestandsnaam)}</div>
+                        <div class="bijlage-details">
+                            ${this.formatBytes(bijlage.bestandsgrootte)} • ${this.formatDate(bijlage.geupload)}
+                        </div>
+                    </div>
+                    <div class="bijlage-acties">
+                        <button class="bijlage-btn download" onclick="event.stopPropagation(); bijlagenManager.downloadBijlage('${bijlage.id}')">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button class="bijlage-btn delete" onclick="event.stopPropagation(); bijlagenManager.deleteBijlage('${bijlage.id}')">
+                            <i class="fas fa-trash"></i> Verwijder
+                        </button>
                     </div>
                 </div>
-                <div class="bijlage-acties">
-                    <button class="bijlage-btn download" onclick="bijlagenManager.downloadBijlage('${bijlage.id}')">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                    <button class="bijlage-btn delete" onclick="bijlagenManager.deleteBijlage('${bijlage.id}')">
-                        <i class="fas fa-trash"></i> Verwijder
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+        
+        // Add click event listeners for preview functionality
+        const bijlageItems = lijst.querySelectorAll('.bijlage-item.preview-supported');
+        bijlageItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Don't trigger on button clicks
+                if (e.target.closest('.bijlage-acties')) return;
+                
+                const bijlageId = item.dataset.id;
+                if (bijlageId) {
+                    this.previewBijlage(bijlageId, bijlagen);
+                }
+            });
+        });
     }
 
     updateUI() {
@@ -13856,6 +13877,175 @@ class BijlagenManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Preview functionality
+    canPreview(mimetype) {
+        if (!mimetype) return false;
+        return mimetype.startsWith('image/') || mimetype === 'application/pdf';
+    }
+
+    async previewBijlage(bijlageId, bijlagen = null) {
+        try {
+            // Find the current bijlage
+            const allBijlagen = bijlagen || await this.getAllBijlagen();
+            const currentIndex = allBijlagen.findIndex(b => b.id === bijlageId);
+            
+            if (currentIndex === -1) {
+                toast.error('Bijlage niet gevonden');
+                return;
+            }
+
+            const bijlage = allBijlagen[currentIndex];
+            
+            if (!this.canPreview(bijlage.mimetype)) {
+                toast.error('Preview niet ondersteund voor dit bestandstype');
+                return;
+            }
+
+            // Show modal with bijlage
+            this.showPreviewModal(bijlage, allBijlagen, currentIndex);
+            
+        } catch (error) {
+            console.error('Preview error:', error);
+            toast.error('Fout bij laden preview');
+        }
+    }
+
+    async getAllBijlagen() {
+        if (!this.currentTaakId) return [];
+
+        try {
+            const response = await fetch(`/api/taak/${this.currentTaakId}/bijlagen`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                return data.bijlagen.filter(b => this.canPreview(b.mimetype));
+            }
+            return [];
+        } catch (error) {
+            console.error('Error getting all bijlagen:', error);
+            return [];
+        }
+    }
+
+    showPreviewModal(bijlage, allBijlagen, currentIndex) {
+        const modal = document.getElementById('previewModal');
+        const filename = document.getElementById('previewFilename');
+        const container = document.getElementById('previewContainer');
+        const navigation = document.getElementById('previewNavigation');
+        const counter = document.getElementById('previewCounter');
+        
+        if (!modal || !filename || !container) return;
+
+        // Set filename
+        filename.textContent = bijlage.bestandsnaam;
+
+        // Create preview content
+        container.innerHTML = '';
+        
+        if (bijlage.mimetype.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = `/api/bijlage/${bijlage.id}/preview`;
+            img.alt = bijlage.bestandsnaam;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            container.appendChild(img);
+        } else if (bijlage.mimetype === 'application/pdf') {
+            const embed = document.createElement('embed');
+            embed.src = `/api/bijlage/${bijlage.id}/preview`;
+            embed.type = 'application/pdf';
+            embed.style.width = '100%';
+            embed.style.height = '100%';
+            container.appendChild(embed);
+        }
+
+        // Setup navigation if multiple bijlagen
+        const previewableBijlagen = allBijlagen.filter(b => this.canPreview(b.mimetype));
+        if (previewableBijlagen.length > 1 && navigation && counter) {
+            navigation.style.display = 'flex';
+            counter.textContent = `${currentIndex + 1} van ${previewableBijlagen.length}`;
+            
+            const prevBtn = document.getElementById('previewPrevious');
+            const nextBtn = document.getElementById('previewNext');
+            
+            if (prevBtn) {
+                prevBtn.disabled = currentIndex === 0;
+                prevBtn.onclick = () => {
+                    if (currentIndex > 0) {
+                        const prevBijlage = previewableBijlagen[currentIndex - 1];
+                        this.showPreviewModal(prevBijlage, allBijlagen, currentIndex - 1);
+                    }
+                };
+            }
+            
+            if (nextBtn) {
+                nextBtn.disabled = currentIndex === previewableBijlagen.length - 1;
+                nextBtn.onclick = () => {
+                    if (currentIndex < previewableBijlagen.length - 1) {
+                        const nextBijlage = previewableBijlagen[currentIndex + 1];
+                        this.showPreviewModal(nextBijlage, allBijlagen, currentIndex + 1);
+                    }
+                };
+            }
+        } else if (navigation) {
+            navigation.style.display = 'none';
+        }
+
+        // Show modal
+        modal.style.display = 'flex';
+        
+        // Store current preview data for keyboard navigation
+        this.currentPreview = {
+            bijlagen: previewableBijlagen,
+            currentIndex: currentIndex
+        };
+    }
+
+    hidePreviewModal() {
+        const modal = document.getElementById('previewModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.currentPreview = null;
+    }
+
+    initPreviewModal() {
+        const modal = document.getElementById('previewModal');
+        const closeBtn = document.getElementById('previewClose');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hidePreviewModal());
+        }
+        
+        if (modal) {
+            // Close on overlay click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hidePreviewModal();
+                }
+            });
+            
+            // ESC key to close
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.style.display === 'flex') {
+                    this.hidePreviewModal();
+                }
+                
+                // Arrow keys for navigation
+                if (modal.style.display === 'flex' && this.currentPreview) {
+                    if (e.key === 'ArrowLeft' && this.currentPreview.currentIndex > 0) {
+                        const prevBijlage = this.currentPreview.bijlagen[this.currentPreview.currentIndex - 1];
+                        this.showPreviewModal(prevBijlage, this.currentPreview.bijlagen, this.currentPreview.currentIndex - 1);
+                    } else if (e.key === 'ArrowRight' && this.currentPreview.currentIndex < this.currentPreview.bijlagen.length - 1) {
+                        const nextBijlage = this.currentPreview.bijlagen[this.currentPreview.currentIndex + 1];
+                        this.showPreviewModal(nextBijlage, this.currentPreview.bijlagen, this.currentPreview.currentIndex + 1);
+                    }
+                }
+            });
+        }
     }
 }
 

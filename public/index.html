@@ -819,6 +819,32 @@
         </div>
     </div>
 
+    <!-- Preview Modal voor bijlagen -->
+    <div id="previewModal" class="popup-overlay preview-modal" style="display: none;">
+        <div class="preview-modal-content">
+            <div class="preview-header">
+                <span class="preview-filename" id="previewFilename"></span>
+                <button class="preview-close" id="previewClose" title="Sluiten">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="preview-body">
+                <div class="preview-container" id="previewContainer">
+                    <!-- Preview content will be loaded here -->
+                </div>
+                <div class="preview-navigation" id="previewNavigation" style="display: none;">
+                    <button class="preview-nav-btn" id="previewPrevious" title="Vorige bijlage">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="preview-counter" id="previewCounter"></span>
+                    <button class="preview-nav-btn" id="previewNext" title="Volgende bijlage">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Drop Panel voor uitgesteld drag & drop -->
     <div class="floating-drop-panel" id="floatingDropPanel" style="display: none;">
         <div class="drop-panel-content">

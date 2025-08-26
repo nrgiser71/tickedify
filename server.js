@@ -2430,6 +2430,129 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     }
 });
 
+// Preview attachment - same as download but with inline content-disposition
+app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
+    const startTime = Date.now();
+    console.log('🎯 [BACKEND] Preview request start:', new Date().toISOString(), { id: req.params.id });
+    
+    try {
+        if (!db) {
+            console.log('❌ No database available');
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+        
+        console.log('🎯 Preview attempt:', { bijlageId, userId });
+
+        // Get attachment info first to determine storage type
+        const dbStart = Date.now();
+        const bijlage = await db.getBijlage(bijlageId, false);
+        console.log('🎯 [BACKEND] Database lookup completed in:', Date.now() - dbStart, 'ms');
+        
+        if (!bijlage) {
+            console.log('❌ Bijlage not found in database');
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Check if user owns this attachment
+        if (bijlage.user_id !== userId) {
+            console.log('❌ User does not own bijlage');
+            return res.status(403).json({ error: 'Geen toegang tot bijlage' });
+        }
+
+        // Check if file type supports preview
+        const isImage = bijlage.mimetype && bijlage.mimetype.startsWith('image/');
+        const isPdf = bijlage.mimetype === 'application/pdf';
+        
+        if (!isImage && !isPdf) {
+            console.log('❌ File type not supported for preview:', bijlage.mimetype);
+            return res.status(400).json({ error: 'Bestandstype ondersteunt geen preview' });
+        }
+        
+        if (bijlage.storage_type === 'database') {
+            // File stored in database - fetch binary data separately
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 Serving preview from database, size:', bijlageWithData.bestand_data.length);
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers for inline viewing
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🎯 [BACKEND] Preview headers set - Content-Length:', buffer.length);
+                
+                res.end(buffer, 'binary');
+            } else {
+                console.log('❌ Binary data not found in database');
+                return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
+            }
+        } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
+            // Try database first as fallback, then B2
+            console.log('🔄 Trying database first for Backblaze file preview');
+            
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 Serving Backblaze preview from database backup, size:', bijlageWithData.bestand_data.length);
+                
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers for inline viewing
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🎯 [BACKEND] DB Backup preview headers set - Content-Length:', buffer.length);
+                
+                res.end(buffer, 'binary');
+                return;
+            }
+
+            // Fallback to B2 download
+            try {
+                console.log('🔽 Falling back to B2 download for preview:', bijlage.storage_path);
+                
+                const storageStart = Date.now();
+                const fileBuffer = await storageManager.downloadFile(bijlage.storage_path);
+                console.log('🎯 [BACKEND] B2 download completed in:', Date.now() - storageStart, 'ms');
+                
+                if (!fileBuffer) {
+                    console.log('❌ No file buffer returned from B2');
+                    return res.status(404).json({ error: 'Bijlage niet gevonden in cloud storage' });
+                }
+                
+                console.log('📦 FileBuffer type:', typeof fileBuffer, 'isBuffer:', Buffer.isBuffer(fileBuffer));
+                
+                const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                
+                // Set headers for inline viewing
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🎯 [BACKEND] B2 preview headers set - Content-Length:', buffer.length);
+                console.log('🎯 [BACKEND] Total preview request time:', Date.now() - startTime, 'ms');
+                
+                res.end(buffer, 'binary');
+                
+            } catch (b2Error) {
+                console.error('❌ Error downloading from B2 for preview:', b2Error);
+                return res.status(500).json({ 
+                    error: 'Fout bij laden preview uit cloud storage',
+                    debug: `${b2Error.name}: ${b2Error.message}`
+                });
+            }
+        } else {
+            console.log('❌ No valid storage found for bijlage preview, type:', bijlage.storage_type);
+            return res.status(404).json({ error: 'Bijlage data niet gevonden' });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error previewing bijlage:', error);
+        res.status(500).json({ error: 'Fout bij laden preview' });
+    }
+});
+
 // Delete attachment
 app.delete('/api/bijlage/:id', requireAuth, async (req, res) => {
     try {
