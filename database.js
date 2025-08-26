@@ -663,12 +663,22 @@ const db = {
         }
         
         // Copy bijlagen references from original task to new recurring task
-        // originalTask might not have id property, so use originalTask as a whole object
-        const originalTaskId = originalTask.id || originalTask.taakId || null;
+        // Debug: log all available properties
+        console.log('🔍 DEBUG: originalTask properties:', Object.keys(originalTask));
+        console.log('🔍 DEBUG: originalTask sample values:', {
+          id: originalTask.id,
+          taakId: originalTask.taakId,
+          task_id: originalTask.task_id,
+          originalId: originalTask.originalId
+        });
+        
+        const originalTaskId = originalTask.id || originalTask.taakId || originalTask.task_id || null;
         if (originalTaskId) {
+          console.log('✅ Found original task ID for bijlagen:', originalTaskId);
           await this.copyBijlagenReferences(originalTaskId, newId, userId, client);
         } else {
           console.log('⚠️ No original task ID found for bijlagen copying - skipping');
+          console.log('⚠️ Available properties:', Object.keys(originalTask));
         }
         
         await client.query('COMMIT');
@@ -708,12 +718,22 @@ const db = {
         }
         
         // Copy bijlagen references from original task to new recurring task
-        // originalTask might not have id property, so use originalTask as a whole object
-        const originalTaskId = originalTask.id || originalTask.taakId || null;
+        // Debug: log all available properties
+        console.log('🔍 DEBUG: originalTask properties:', Object.keys(originalTask));
+        console.log('🔍 DEBUG: originalTask sample values:', {
+          id: originalTask.id,
+          taakId: originalTask.taakId,
+          task_id: originalTask.task_id,
+          originalId: originalTask.originalId
+        });
+        
+        const originalTaskId = originalTask.id || originalTask.taakId || originalTask.task_id || null;
         if (originalTaskId) {
+          console.log('✅ Found original task ID for bijlagen:', originalTaskId);
           await this.copyBijlagenReferences(originalTaskId, newId, userId, client);
         } else {
           console.log('⚠️ No original task ID found for bijlagen copying - skipping');
+          console.log('⚠️ Available properties:', Object.keys(originalTask));
         }
         
         await client.query('COMMIT');
@@ -742,7 +762,7 @@ const db = {
         INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, 
                              mimetype, storage_type, storage_path, user_id)
         SELECT 
-          CONCAT($2, '_bij_', ROW_NUMBER() OVER()) as id, -- nieuwe unieke bijlage ID
+          $2 || '_bij_' || ROW_NUMBER() OVER() as id, -- nieuwe unieke bijlage ID
           $2, -- nieuwe taak_id  
           bestandsnaam, 
           bestandsgrootte, 
