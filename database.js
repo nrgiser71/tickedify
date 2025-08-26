@@ -663,7 +663,13 @@ const db = {
         }
         
         // Copy bijlagen references from original task to new recurring task
-        await this.copyBijlagenReferences(originalTask.id, newId, userId, client);
+        // originalTask might not have id property, so use originalTask as a whole object
+        const originalTaskId = originalTask.id || originalTask.taakId || null;
+        if (originalTaskId) {
+          await this.copyBijlagenReferences(originalTaskId, newId, userId, client);
+        } else {
+          console.log('⚠️ No original task ID found for bijlagen copying - skipping');
+        }
         
         await client.query('COMMIT');
         console.log('✅ Recurring task created successfully:', newId);
@@ -702,7 +708,13 @@ const db = {
         }
         
         // Copy bijlagen references from original task to new recurring task
-        await this.copyBijlagenReferences(originalTask.id, newId, userId, client);
+        // originalTask might not have id property, so use originalTask as a whole object
+        const originalTaskId = originalTask.id || originalTask.taakId || null;
+        if (originalTaskId) {
+          await this.copyBijlagenReferences(originalTaskId, newId, userId, client);
+        } else {
+          console.log('⚠️ No original task ID found for bijlagen copying - skipping');
+        }
         
         await client.query('COMMIT');
         console.log('✅ Recurring task created with basic insert:', newId);
