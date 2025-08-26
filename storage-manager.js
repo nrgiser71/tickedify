@@ -372,7 +372,8 @@ class StorageManager {
       const apiStart = Date.now();
       const response = await this.b2Client.downloadFileByName({
         bucketName: bucketName,
-        fileName: storagePath
+        fileName: storagePath,
+        responseType: 'arraybuffer'  // Critical for binary file integrity
       });
       console.log('🔵 [B2] API response time:', Date.now() - apiStart, 'ms');
 
@@ -397,17 +398,17 @@ class StorageManager {
         }
       }
 
-      // Ensure we return a Buffer for binary data integrity
+      // With responseType: 'arraybuffer', data will always be binary
+      // Convert ArrayBuffer to Buffer if needed (most likely scenario)
       if (Buffer.isBuffer(data)) {
         return data;
+      } else if (data instanceof ArrayBuffer) {
+        return Buffer.from(data);
       } else if (data instanceof Uint8Array) {
         return Buffer.from(data);
-      } else if (typeof data === 'string') {
-        // If data is a string, it might be base64 or binary string
-        console.log('⚠️ B2 returned string data, converting to buffer');
-        return Buffer.from(data, 'binary');
       } else {
-        console.log('⚠️ B2 returned unknown data type, attempting buffer conversion');
+        // This should never happen with responseType: 'arraybuffer'
+        console.error('⚠️ Unexpected data type from B2 with arraybuffer response:', typeof data);
         return Buffer.from(data);
       }
     } catch (error) {
