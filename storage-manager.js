@@ -54,14 +54,14 @@ class StorageManager {
 
     try {
       // Only initialize B2 if credentials are provided
-      if (process.env.B2_APPLICATION_KEY_ID && process.env.B2_APPLICATION_KEY) {
+      if (process.env.B2_KEY_ID && process.env.B2_APPLICATION_KEY) {
         console.log('🔍 B2 credentials found, initializing...');
-        console.log('🔍 B2_APPLICATION_KEY_ID:', process.env.B2_APPLICATION_KEY_ID ? '[SET]' : '[NOT SET]');
+        console.log('🔍 B2_KEY_ID:', process.env.B2_KEY_ID ? '[SET]' : '[NOT SET]');
         console.log('🔍 B2_APPLICATION_KEY:', process.env.B2_APPLICATION_KEY ? '[SET]' : '[NOT SET]');
         console.log('🔍 B2_BUCKET_NAME:', process.env.B2_BUCKET_NAME || 'tickedify-attachments (default)');
 
         this.b2Client = new B2({
-          applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
+          applicationKeyId: process.env.B2_KEY_ID,
           applicationKey: process.env.B2_APPLICATION_KEY
         });
 
@@ -78,7 +78,7 @@ class StorageManager {
         console.log('✅ Storage Manager initialized with B2 support');
       } else {
         console.log('⚠️ B2 credentials not found in environment variables:');
-        console.log('   - B2_APPLICATION_KEY_ID:', process.env.B2_APPLICATION_KEY_ID ? '[SET]' : '[NOT SET]');
+        console.log('   - B2_KEY_ID:', process.env.B2_KEY_ID ? '[SET]' : '[NOT SET]');
         console.log('   - B2_APPLICATION_KEY:', process.env.B2_APPLICATION_KEY ? '[SET]' : '[NOT SET]');
         console.log('   - Bijlagen system will not work without B2 credentials');
         this.initialized = true;
