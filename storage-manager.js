@@ -454,29 +454,64 @@ class StorageManager {
         fileName: bijlage.storage_path
       });
 
+      if (!fileInfo || !fileInfo.data || !fileInfo.data.fileId) {
+        throw new Error(`Geen file info gevonden voor ${bijlage.storage_path}`);
+      }
+
       console.log('📋 B2 file info retrieved:', {
         fileId: fileInfo.data.fileId,
         fileName: fileInfo.data.fileName,
-        fileSize: fileInfo.data.contentLength
+        fileSize: fileInfo.data.contentLength || 'unknown'
       });
 
       // Delete the file
-      await this.b2Client.deleteFileVersion({
+      const deleteResult = await this.b2Client.deleteFileVersion({
         fileId: fileInfo.data.fileId,
         fileName: bijlage.storage_path
       });
 
       console.log('✅ File successfully deleted from B2:', bijlage.storage_path);
-    } catch (error) {
-      console.error('❌ B2 delete failed for:', bijlage.storage_path);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.status,
-        response: error.response?.data
+      console.log('🔍 Delete result:', {
+        fileId: deleteResult?.data?.fileId || 'unknown',
+        fileName: deleteResult?.data?.fileName || bijlage.storage_path
       });
       
-      // Throw error so caller knows delete failed
-      throw new Error(`B2 delete failed voor ${bijlage.bestandsnaam}: ${error.message}`);
+    } catch (error) {
+      console.error('❌ B2 delete failed for:', bijlage.storage_path);
+      
+      // Gedetailleerde error logging
+      const errorInfo = {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        response: error.response?.data,
+        stack: error.stack?.split('\n')[0] // Alleen eerste regel van stack trace
+      };
+      
+      console.error('❌ Detailed error info:', errorInfo);
+      
+      // Categorize errors voor betere debugging
+      let errorCategory = 'UNKNOWN';
+      if (error.message?.includes('not found') || error.status === 404) {
+        errorCategory = 'FILE_NOT_FOUND';
+        console.log('ℹ️ File may have been already deleted or moved');
+      } else if (error.message?.includes('timeout') || error.code === 'ETIMEOUT') {
+        errorCategory = 'TIMEOUT';
+        console.log('⏰ B2 API timeout - network or server issue');
+      } else if (error.message?.includes('auth') || error.status === 401) {
+        errorCategory = 'AUTH_ERROR';
+        console.log('🔐 B2 authentication issue');
+      } else if (error.message?.includes('bucket') || error.status === 400) {
+        errorCategory = 'BUCKET_ERROR';
+        console.log('🪣 B2 bucket configuration issue');
+      }
+      
+      // Throw error met category voor caller
+      const enhancedError = new Error(`B2 delete failed voor ${bijlage.bestandsnaam}: ${error.message} (${errorCategory})`);
+      enhancedError.category = errorCategory;
+      enhancedError.originalError = error;
+      
+      throw enhancedError;
     }
   }
 

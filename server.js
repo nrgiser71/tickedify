@@ -1681,28 +1681,78 @@ function getCurrentUserId(req) {
     return req.session.userId || 'user_1750513625687_5458i79dj';
 }
 
-// Asynchrone B2 cleanup functie - fire and forget
+// Synchrone B2 cleanup functie met retry logic en gedetailleerde logging
 async function cleanupB2Files(bijlagen, taskId = 'unknown') {
     console.log(`🧹 Starting B2 cleanup for ${bijlagen.length} files (task: ${taskId})`);
     
-    // Parallel alle B2 bestanden verwijderen
-    const deletePromises = bijlagen.map(async (bijlage) => {
-        try {
-            await storageManager.deleteFile(bijlage);
-            console.log(`✅ B2 file deleted: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
-            return { success: true, file: bijlage.bestandsnaam };
-        } catch (error) {
-            console.error(`❌ Failed to delete B2 file ${bijlage.storage_path} (${bijlage.bestandsnaam}):`, error.message);
-            return { success: false, file: bijlage.bestandsnaam, error: error.message };
+    if (!bijlagen || bijlagen.length === 0) {
+        console.log(`ℹ️ No bijlagen to cleanup for task ${taskId}`);
+        return { success: true, deleted: 0, failed: 0, errors: [] };
+    }
+    
+    const deletedFiles = [];
+    const failedFiles = [];
+    const errors = [];
+    
+    // Sequential delete with retry logic voor betere betrouwbaarheid
+    for (const bijlage of bijlagen) {
+        console.log(`🔄 Attempting to delete B2 file: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
+        
+        let deleteSuccess = false;
+        let lastError = null;
+        
+        // Retry logic - max 2 pogingen
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                console.log(`🔄 Delete attempt ${attempt}/2 for ${bijlage.bestandsnaam}`);
+                await storageManager.deleteFile(bijlage);
+                console.log(`✅ B2 file deleted successfully: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
+                deletedFiles.push(bijlage.bestandsnaam);
+                deleteSuccess = true;
+                break;
+            } catch (error) {
+                lastError = error;
+                console.error(`❌ Delete attempt ${attempt}/2 failed for ${bijlage.bestandsnaam}:`, error.message);
+                
+                // Wait 1 second before retry
+                if (attempt < 2) {
+                    console.log(`⏳ Waiting 1 second before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
         }
+        
+        if (!deleteSuccess) {
+            console.error(`❌ All delete attempts failed for ${bijlage.bestandsnaam}. Final error:`, lastError?.message || 'Unknown error');
+            failedFiles.push(bijlage.bestandsnaam);
+            errors.push({
+                file: bijlage.bestandsnaam,
+                storage_path: bijlage.storage_path,
+                error: lastError?.message || 'Unknown error'
+            });
+        }
+    }
+    
+    const result = {
+        success: failedFiles.length === 0,
+        deleted: deletedFiles.length,
+        failed: failedFiles.length,
+        deletedFiles,
+        failedFiles,
+        errors
+    };
+    
+    console.log(`🧹 B2 cleanup completed for task ${taskId}:`, {
+        deleted: deletedFiles.length,
+        failed: failedFiles.length,
+        success: result.success
     });
     
-    // Wacht tot alle deletes klaar zijn (maar block niet de response)
-    const results = await Promise.allSettled(deletePromises);
-    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-    const failed = results.length - successful;
+    if (failedFiles.length > 0) {
+        console.error(`⚠️ B2 cleanup had failures for task ${taskId}:`, failedFiles);
+    }
     
-    console.log(`🧹 B2 cleanup completed for task ${taskId}: ${successful} success, ${failed} failed`);
+    return result;
 }
 
 // Authentication API endpoints
@@ -3450,16 +3500,41 @@ app.delete('/api/taak/:id', async (req, res) => {
         if (result.rows.length > 0) {
             console.log(`✅ Task ${id} deleted successfully`);
             
-            // Asynchroon B2 cleanup starten (NIET wachten)
+            let cleanupResult = { success: true, deleted: 0, failed: 0 };
+            
+            // Synchrone B2 cleanup met timeout
             if (bijlagen && bijlagen.length > 0) {
-                // Fire-and-forget B2 cleanup
-                cleanupB2Files(bijlagen, id).catch(error => {
+                console.log(`🧹 Starting synchronous B2 cleanup for task ${id}`);
+                try {
+                    // Timeout van 8 seconden voor B2 cleanup
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('B2 cleanup timeout after 8 seconds')), 8000);
+                    });
+                    
+                    cleanupResult = await Promise.race([
+                        cleanupB2Files(bijlagen, id),
+                        timeoutPromise
+                    ]);
+                    
+                    console.log(`🧹 B2 cleanup completed for task ${id}:`, cleanupResult);
+                } catch (error) {
                     console.error(`⚠️ B2 cleanup failed for task ${id}:`, error.message);
-                    // Geen impact op user - alleen logging
-                });
+                    cleanupResult = {
+                        success: false,
+                        deleted: 0,
+                        failed: bijlagen.length,
+                        error: error.message,
+                        timeout: error.message.includes('timeout')
+                    };
+                }
             }
             
-            res.json({ success: true, deleted: id });
+            // Response met B2 cleanup status
+            res.json({ 
+                success: true, 
+                deleted: id,
+                b2Cleanup: cleanupResult
+            });
         } else {
             console.log(`❌ Task ${id} not found or not owned by user`);
             res.status(404).json({ error: 'Taak niet gevonden' });

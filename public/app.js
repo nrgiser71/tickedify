@@ -3965,6 +3965,33 @@ class Taakbeheer {
                 });
                 
                 if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Check B2 cleanup status and provide user feedback
+                    let successMessage = 'Taak verwijderd';
+                    let hasB2Warning = false;
+                    
+                    if (result.b2Cleanup) {
+                        const cleanup = result.b2Cleanup;
+                        
+                        if (cleanup.failed > 0) {
+                            hasB2Warning = true;
+                            if (cleanup.timeout) {
+                                console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${id}`);
+                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
+                            } else if (cleanup.deleted > 0) {
+                                console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${id}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
+                                toast.warning(`Taak verwijderd. ${cleanup.deleted} van de ${cleanup.deleted + cleanup.failed} bijlagen verwijderd uit cloud storage.`);
+                            } else {
+                                console.error(`❌ Volledige B2 cleanup failure voor taak ${id}`);
+                                toast.error(`Taak verwijderd, maar bijlagen konden niet verwijderd worden uit cloud storage. Controleer je internetverbinding.`);
+                            }
+                        } else if (cleanup.deleted > 0) {
+                            console.log(`✅ B2 cleanup succesvol voor taak ${id}: ${cleanup.deleted} bestanden verwijderd`);
+                            successMessage = `Taak en ${cleanup.deleted} bijlagen verwijderd`;
+                        }
+                    }
+                    
                     if (categoryKey) {
                         // For uitgesteld interface: remove from DOM and update count
                         const taakElement = document.querySelector(`[data-id="${id}"]`);
@@ -3979,7 +4006,9 @@ class Taakbeheer {
                             header.textContent = `(${currentCount - 1})`;
                         }
                         
-                        toast.success('Taak verwijderd');
+                        if (!hasB2Warning) {
+                            toast.success(successMessage);
+                        }
                     } else {
                         // Normal list interface
                         this.taken = this.taken.filter(taak => taak.id !== id);
@@ -3991,7 +4020,10 @@ class Taakbeheer {
                             this.renderTaken();
                         }
                         
-                        console.log(`<i class="fas fa-check"></i> Task ${id} deleted successfully`);
+                        if (!hasB2Warning) {
+                            toast.success(successMessage);
+                        }
+                        console.log(`✅ Task ${id} deleted successfully with B2 cleanup:`, result.b2Cleanup);
                     }
                 } else {
                     const error = await response.json();
