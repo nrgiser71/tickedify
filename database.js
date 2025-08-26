@@ -662,6 +662,9 @@ const db = {
           throw new Error('Insert returned no rows');
         }
         
+        // Copy bijlagen references from original task to new recurring task
+        await this.copyBijlagenReferences(originalTask.id, newId, userId, client);
+        
         await client.query('COMMIT');
         console.log('✅ Recurring task created successfully:', newId);
         return newId;
@@ -698,6 +701,9 @@ const db = {
           throw new Error('Basic insert returned no rows');
         }
         
+        // Copy bijlagen references from original task to new recurring task
+        await this.copyBijlagenReferences(originalTask.id, newId, userId, client);
+        
         await client.query('COMMIT');
         console.log('✅ Recurring task created with basic insert:', newId);
         return newId;
@@ -712,6 +718,42 @@ const db = {
       return null;
     } finally {
       client.release();
+    }
+  },
+
+  // Copy bijlagen references from original task to new recurring task
+  async copyBijlagenReferences(originalTaskId, newTaskId, userId, client) {
+    try {
+      console.log('📎 Copying bijlagen references from', originalTaskId, 'to', newTaskId);
+      
+      const result = await client.query(`
+        INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, 
+                             mimetype, storage_type, storage_path, user_id)
+        SELECT 
+          CONCAT($2, '_bij_', ROW_NUMBER() OVER()) as id, -- nieuwe unieke bijlage ID
+          $2, -- nieuwe taak_id  
+          bestandsnaam, 
+          bestandsgrootte, 
+          mimetype, 
+          storage_type, 
+          storage_path,  -- ZELFDE B2 bestand - geen duplicaat!
+          user_id
+        FROM bijlagen 
+        WHERE taak_id = $1 AND user_id = $3
+        RETURNING id
+      `, [originalTaskId, newTaskId, userId]);
+      
+      if (result.rowCount > 0) {
+        console.log('✅ Copied', result.rowCount, 'bijlagen references to new recurring task');
+      } else {
+        console.log('📎 No bijlagen to copy - task had no attachments');
+      }
+      
+      return result.rowCount;
+    } catch (error) {
+      console.error('❌ Error copying bijlagen references:', error);
+      // Don't throw - bijlagen copying should not fail the recurring task creation
+      return 0;
     }
   },
 
