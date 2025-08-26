@@ -2590,25 +2590,41 @@ app.delete('/api/bijlage/:id', requireAuth, async (req, res) => {
         // Get attachment info first
         const bijlage = await db.getBijlage(bijlageId);
         
+        console.log(`🗑️ Deleting bijlage ${bijlageId}:`, {
+            bestandsnaam: bijlage?.bestandsnaam,
+            storage_path: bijlage?.storage_path,
+            user_id: bijlage?.user_id
+        });
+        
         if (!bijlage) {
+            console.log(`❌ Bijlage ${bijlageId} not found`);
             return res.status(404).json({ error: 'Bijlage niet gevonden' });
         }
 
         // Check if user owns this attachment
         if (bijlage.user_id !== userId) {
+            console.log(`❌ User ${userId} does not own bijlage ${bijlageId} (owned by ${bijlage.user_id})`);
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
 
-        // Delete from storage (B2 or database)
-        await storageManager.deleteFile(bijlage);
+        // Delete from B2 storage first
+        try {
+            console.log(`🧹 Attempting B2 delete for: ${bijlage.bestandsnaam}`);
+            await storageManager.deleteFile(bijlage);
+            console.log(`✅ B2 delete successful for: ${bijlage.bestandsnaam}`);
+        } catch (error) {
+            console.error(`⚠️ B2 delete failed for ${bijlage.bestandsnaam}:`, error.message);
+            // Continue with database deletion even if B2 fails
+        }
 
         // Delete from database
         const success = await db.deleteBijlage(bijlageId, userId);
 
         if (success) {
-            console.log('✅ Bijlage deleted successfully:', bijlageId);
+            console.log(`✅ Bijlage deleted successfully: ${bijlageId} (${bijlage.bestandsnaam})`);
             res.json({ success: true });
         } else {
+            console.log(`❌ Database delete failed for bijlage ${bijlageId}`);
             res.status(500).json({ error: 'Fout bij verwijderen bijlage' });
         }
 

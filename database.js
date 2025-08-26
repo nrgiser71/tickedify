@@ -1775,7 +1775,7 @@ const db = {
   async getBijlagenForTaak(taakId) {
     try {
       const result = await pool.query(`
-        SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, geupload, user_id
+        SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, geupload, user_id
         FROM bijlagen 
         WHERE taak_id = $1 
         ORDER BY geupload DESC

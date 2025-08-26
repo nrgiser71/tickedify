@@ -428,16 +428,36 @@ class StorageManager {
   async deleteFile(bijlage) {
     await this.initialize();
     
+    // Enhanced logging for debugging
+    console.log('🧹 B2 delete attempt:', {
+      bestandsnaam: bijlage.bestandsnaam,
+      storage_path: bijlage.storage_path,
+      bijlageId: bijlage.id
+    });
+    
     if (!this.isB2Available()) {
       console.warn('⚠️ B2 not available for file deletion:', bijlage.storage_path);
-      return;
+      throw new Error(`B2 niet beschikbaar voor file deletion: ${bijlage.storage_path}`);
+    }
+
+    if (!bijlage.storage_path) {
+      console.error('❌ Geen storage_path in bijlage object:', bijlage);
+      throw new Error(`Ontbrekende storage_path voor bijlage: ${bijlage.bestandsnaam}`);
     }
 
     try {
+      console.log('🔍 Getting B2 file info for:', bijlage.storage_path);
+      
       // Get file info first
       const fileInfo = await this.b2Client.getFileInfo({
         bucketName: process.env.B2_BUCKET_NAME || 'tickedify-attachments',
         fileName: bijlage.storage_path
+      });
+
+      console.log('📋 B2 file info retrieved:', {
+        fileId: fileInfo.data.fileId,
+        fileName: fileInfo.data.fileName,
+        fileSize: fileInfo.data.contentLength
       });
 
       // Delete the file
@@ -446,10 +466,17 @@ class StorageManager {
         fileName: bijlage.storage_path
       });
 
-      console.log('✅ File deleted from B2:', bijlage.storage_path);
+      console.log('✅ File successfully deleted from B2:', bijlage.storage_path);
     } catch (error) {
-      console.error('❌ B2 delete failed:', error);
-      // Don't throw - database record will be deleted anyway
+      console.error('❌ B2 delete failed for:', bijlage.storage_path);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.status,
+        response: error.response?.data
+      });
+      
+      // Throw error so caller knows delete failed
+      throw new Error(`B2 delete failed voor ${bijlage.bestandsnaam}: ${error.message}`);
     }
   }
 
