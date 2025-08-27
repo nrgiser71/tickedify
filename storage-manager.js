@@ -471,25 +471,32 @@ class StorageManager {
     try {
       console.log('🔍 Getting B2 file info for:', bijlage.storage_path);
       
-      // Get file info first
-      const fileInfo = await this.b2Client.getFileInfo({
-        bucketName: process.env.B2_BUCKET_NAME || 'tickedify-attachments',
-        fileName: bijlage.storage_path
+      // Get file info by listing files to find fileId
+      const listResult = await this.b2Client.listFileNames({
+        bucketId: this.bucketId,
+        startFileName: bijlage.storage_path,
+        maxFileCount: 1,
+        prefix: bijlage.storage_path
       });
 
-      if (!fileInfo || !fileInfo.data || !fileInfo.data.fileId) {
-        throw new Error(`Geen file info gevonden voor ${bijlage.storage_path}`);
+      if (!listResult || !listResult.data || !listResult.data.files || listResult.data.files.length === 0) {
+        throw new Error(`Bestand niet gevonden in B2: ${bijlage.storage_path}`);
+      }
+
+      const fileInfo = listResult.data.files[0];
+      if (fileInfo.fileName !== bijlage.storage_path) {
+        throw new Error(`Verkeerd bestand gevonden: expected ${bijlage.storage_path}, got ${fileInfo.fileName}`);
       }
 
       console.log('📋 B2 file info retrieved:', {
-        fileId: fileInfo.data.fileId,
-        fileName: fileInfo.data.fileName,
-        fileSize: fileInfo.data.contentLength || 'unknown'
+        fileId: fileInfo.fileId,
+        fileName: fileInfo.fileName,
+        fileSize: fileInfo.size || 'unknown'
       });
 
       // Delete the file
       const deleteResult = await this.b2Client.deleteFileVersion({
-        fileId: fileInfo.data.fileId,
+        fileId: fileInfo.fileId,
         fileName: bijlage.storage_path
       });
 
