@@ -134,10 +134,36 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.13.46 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.13.46</span>
+                <span class="version-date">27 augustus 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <strong>KRITIEKE B2 UPLOAD FIX:</strong> Environment variable mismatch opgelost (B2_KEY_ID → B2_APPLICATION_KEY_ID) - bijlagen upload nu volledig functioneel.
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⚡</span>
+                    <strong>B2 CONFIGURATIE PROBLEEM OPGELOST:</strong> StorageManager initialisatie toegevoegd aan server startup sequence voor stabiele B2 connectivity.
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🔄</span>
+                    <strong>B2 CLEANUP FAILURE GEFIXED:</strong> Incorrect API gebruik gecorrigeerd - gebruikt nu correcte B2 listFileNames in plaats van non-existente getFileInfo.
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">✅</span>
+                    <strong>VOLLEDIGE BIJLAGEN WORKFLOW HERSTELD:</strong> Upload, preview, download én B2 storage cleanup nu 100% operationeel zonder errors.
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.13.39 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.13.39</span>
+                <span class="version-badge badge-fix">v0.13.39</span>
                 <span class="version-date">26 augustus 2025</span>
             </div>
             <div class="changes-list">
