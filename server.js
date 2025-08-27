@@ -7802,7 +7802,7 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
     
-    // Initialize database after server starts
+    // Initialize database and storage manager after server starts
     setTimeout(async () => {
         try {
             if (db) {
@@ -7815,6 +7815,19 @@ app.listen(PORT, () => {
             }
         } catch (error) {
             console.error('⚠️ Database initialization failed:', error.message);
+        }
+        
+        // Initialize storage manager for B2 functionality
+        try {
+            if (storageManager) {
+                await storageManager.initialize();
+                console.log('✅ Storage manager initialized successfully');
+                console.log('🔧 B2 available:', storageManager.isB2Available());
+            } else {
+                console.log('⚠️ Storage manager not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Storage manager initialization failed:', error.message);
         }
     }, 1000);
 });
