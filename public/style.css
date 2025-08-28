@@ -8546,9 +8546,7 @@ body.dagkalender-focus-active {
 /* =================================================================== */
 
 .prioriteit-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
+    font-size: 12px;
     margin-right: 8px;
     display: inline-block;
     flex-shrink: 0;
@@ -8556,18 +8554,17 @@ body.dagkalender-focus-active {
 }
 
 .prioriteit-hoog {
-    background: #FF4444;
-    box-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
+    color: #FF4444 !important;
+    text-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
 }
 
 .prioriteit-gemiddeld {
-    background: #FF9500;
-    box-shadow: 0 0 2px rgba(255, 149, 0, 0.3);
+    color: #FF9500 !important;
+    text-shadow: 0 0 2px rgba(255, 149, 0, 0.3);
 }
 
 .prioriteit-laag {
-    background: #8E8E93;
-    opacity: 0.6;
+    color: #8E8E93 !important;
 }
 
 /* Prioriteit in tabel rijen */

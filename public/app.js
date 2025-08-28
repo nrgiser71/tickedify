@@ -3406,6 +3406,15 @@ class Taakbeheer {
                     <label>Datum:</label>
                     <input type="date" id="datumFilter">
                 </div>
+                <div class="filter-groep">
+                    <label>Prioriteit:</label>
+                    <select id="prioriteitFilter" class="prioriteit-filter">
+                        <option value="">Alle prioriteiten</option>
+                        <option value="hoog">🔺 Hoge prioriteit</option>
+                        <option value="gemiddeld">🔶 Gemiddelde prioriteit</option>
+                        <option value="laag">🔸 Lage prioriteit</option>
+                    </select>
+                </div>
                 <label class="simple-checkbox">
                     <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
                     Toon toekomstige taken
@@ -5705,13 +5714,14 @@ class Taakbeheer {
     getPrioriteitIndicator(prioriteit) {
         if (!prioriteit) prioriteit = 'gemiddeld';
         
-        const prioriteitLabels = {
-            'hoog': 'Hoge prioriteit',
-            'gemiddeld': 'Gemiddelde prioriteit', 
-            'laag': 'Lage prioriteit'
+        const prioriteitConfig = {
+            'hoog': { label: 'Hoge prioriteit', color: '#FF4444', icon: 'fas fa-circle' },
+            'gemiddeld': { label: 'Gemiddelde prioriteit', color: '#FF9500', icon: 'fas fa-circle' },
+            'laag': { label: 'Lage prioriteit', color: '#8E8E93', icon: 'fas fa-circle' }
         };
         
-        return `<span class="prioriteit-indicator prioriteit-${prioriteit}" title="${prioriteitLabels[prioriteit]}"></span>`;
+        const config = prioriteitConfig[prioriteit];
+        return `<i class="${config.icon} prioriteit-indicator prioriteit-${prioriteit}" style="color: ${config.color};" title="${config.label}"></i>`;
     }
 
     async removePrioriteit(position) {
@@ -6279,6 +6289,14 @@ class Taakbeheer {
             newDatumFilter.addEventListener('change', () => this.filterActies());
         }
         
+        // Prioriteit filter
+        const prioriteitFilter = document.getElementById('prioriteitFilter');
+        if (prioriteitFilter && prioriteitFilter.parentNode) {
+            const newPrioriteitFilter = prioriteitFilter.cloneNode(true);
+            prioriteitFilter.parentNode.replaceChild(newPrioriteitFilter, prioriteitFilter);
+            newPrioriteitFilter.addEventListener('change', () => this.filterActies());
+        }
+        
         if (toekomstToggle && toekomstToggle.parentNode) {
             const newToekomstToggle = toekomstToggle.cloneNode(true);
             toekomstToggle.parentNode.replaceChild(newToekomstToggle, toekomstToggle);
@@ -6481,6 +6499,7 @@ class Taakbeheer {
         const projectFilter = document.getElementById('projectFilter')?.value || '';
         const contextFilter = document.getElementById('contextFilter')?.value || '';
         const datumFilter = document.getElementById('datumFilter')?.value || '';
+        const prioriteitFilter = document.getElementById('prioriteitFilter')?.value || '';
 
         // Support both .actie-row (table layout) and .taak-item (list layout)
         const elementsToFilter = document.querySelectorAll('.actie-row, .taak-item');
@@ -6524,6 +6543,11 @@ class Taakbeheer {
                 }
                 
                 if (taakDatum !== datumFilter) tonen = false;
+            }
+            
+            // Prioriteit filter
+            if (prioriteitFilter && actie.prioriteit !== prioriteitFilter) {
+                tonen = false;
             }
             
             // Toekomstige taken filter - check of taak in de toekomst is
@@ -8291,13 +8315,15 @@ class Taakbeheer {
                 itemClass += ' taak-toekomst';
             }
             
+            const prioriteitIndicator = this.getPrioriteitIndicator(actie.prioriteit);
+            
             return `
                 <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-row">
                         <div class="actie-checkbox">
                             <input type="checkbox" onclick="app.completePlanningTask('${actie.id}', this)" title="Taak afwerken">
                         </div>
-                        <div class="actie-tekst">${datumIndicator}${actie.tekst}</div>
+                        <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
                             ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
                             ${contextNaam ? `<span class="meta-context">${contextNaam}</span>` : ''}
