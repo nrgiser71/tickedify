@@ -3410,9 +3410,9 @@ class Taakbeheer {
                     <label>Prioriteit:</label>
                     <select id="prioriteitFilter" class="prioriteit-filter">
                         <option value="">Alle prioriteiten</option>
-                        <option value="hoog"><i class="fas fa-circle" style="color: #FF4444"></i> Hoog</option>
-                        <option value="gemiddeld"><i class="fas fa-circle" style="color: #FF9500"></i> Gemiddeld</option>
-                        <option value="laag"><i class="fas fa-circle" style="color: #8E8E93"></i> Laag</option>
+                        <option value="hoog">🔴 Hoog</option>
+                        <option value="gemiddeld">🟠 Gemiddeld</option>
+                        <option value="laag">⚪ Laag</option>
                     </select>
                 </div>
                 <label class="simple-checkbox">
@@ -8189,9 +8189,9 @@ class Taakbeheer {
                             </select>
                             <select id="planningPrioriteitFilter" class="filter-select prioriteit-filter">
                                 <option value="">Alle prioriteiten</option>
-                                <option value="hoog"><i class="fas fa-circle" style="color: #FF4444"></i> Hoog</option>
-                                <option value="gemiddeld"><i class="fas fa-circle" style="color: #FF9500"></i> Gemiddeld</option>
-                                <option value="laag"><i class="fas fa-circle" style="color: #8E8E93"></i> Laag</option>
+                                <option value="hoog">🔴 Hoog</option>
+                                <option value="gemiddeld">🟠 Gemiddeld</option>
+                                <option value="laag">⚪ Laag</option>
                             </select>
                             <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
                             <div class="checkbox-wrapper">
