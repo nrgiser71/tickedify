@@ -8541,3 +8541,146 @@ body.dagkalender-focus-active {
     }
 }
 
+/* =================================================================== */
+/* PRIORITEIT INDICATOREN                                             */
+/* =================================================================== */
+
+.prioriteit-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.prioriteit-hoog {
+    background: #FF4444;
+    box-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
+}
+
+.prioriteit-gemiddeld {
+    background: #FF9500;
+    box-shadow: 0 0 2px rgba(255, 149, 0, 0.3);
+}
+
+.prioriteit-laag {
+    background: #8E8E93;
+    opacity: 0.6;
+}
+
+/* Prioriteit in tabel rijen */
+.actie-row .prioriteit-indicator {
+    margin-left: 4px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* Prioriteit in lijst items */
+.taak-item .prioriteit-indicator {
+    margin-right: 6px;
+    align-self: center;
+}
+
+/* Prioriteit tooltips */
+.prioriteit-indicator[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Prioriteit dropdown in planning popup */
+.prioriteit-selectie {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.prioriteit-selectie label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--macos-text-secondary);
+    min-width: 65px;
+}
+
+.prioriteit-dropdown {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    background: var(--macos-bg-primary);
+    font-size: 12px;
+    color: var(--macos-text-primary);
+}
+
+.prioriteit-dropdown option {
+    padding: 4px 8px;
+}
+
+/* Prioriteit filter in toolbar */
+.prioriteit-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prioriteit-filter label {
+    font-size: 11px;
+    color: var(--macos-text-secondary);
+    font-weight: 500;
+}
+
+.prioriteit-filter select {
+    padding: 4px 6px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    background: var(--macos-bg-primary);
+    font-size: 11px;
+    min-width: 80px;
+}
+
+/* Planning kalender prioriteit badges */
+.planning-item-prioriteit {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+}
+
+.planning-item-prioriteit .prioriteit-indicator {
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+}
+
+/* Responsive aanpassingen voor prioriteit */
+@media (max-width: 768px) {
+    .prioriteit-indicator {
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+    }
+    
+    .prioriteit-selectie {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    
+    .prioriteit-selectie label {
+        min-width: auto;
+        font-size: 11px;
+    }
+}
+

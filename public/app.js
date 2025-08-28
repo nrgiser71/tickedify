@@ -2498,6 +2498,7 @@ class Taakbeheer {
             taakFilter: document.getElementById('planningTaakFilter')?.value || '',
             projectFilter: document.getElementById('planningProjectFilter')?.value || '',
             contextFilter: document.getElementById('planningContextFilter')?.value || '',
+            prioriteitFilter: document.getElementById('planningPrioriteitFilter')?.value || '',
             datumFilter: document.getElementById('planningDatumFilter')?.value || '',
             duurFilter: document.getElementById('planningDuurFilter')?.value || '',
             toekomstToggle: document.getElementById('planningToekomstToggle')?.checked || false
@@ -2510,6 +2511,7 @@ class Taakbeheer {
             const taakFilter = document.getElementById('planningTaakFilter');
             const projectFilter = document.getElementById('planningProjectFilter');
             const contextFilter = document.getElementById('planningContextFilter');
+            const prioriteitFilter = document.getElementById('planningPrioriteitFilter');
             const datumFilter = document.getElementById('planningDatumFilter');
             const duurFilter = document.getElementById('planningDuurFilter');
             const toekomstToggle = document.getElementById('planningToekomstToggle');
@@ -2517,6 +2519,7 @@ class Taakbeheer {
             if (taakFilter) taakFilter.value = savedFilters.taakFilter;
             if (projectFilter) projectFilter.value = savedFilters.projectFilter;
             if (contextFilter) contextFilter.value = savedFilters.contextFilter;
+            if (prioriteitFilter) prioriteitFilter.value = savedFilters.prioriteitFilter;
             if (datumFilter) datumFilter.value = savedFilters.datumFilter;
             if (duurFilter) duurFilter.value = savedFilters.duurFilter;
             if (toekomstToggle) toekomstToggle.checked = savedFilters.toekomstToggle;
@@ -3510,7 +3513,7 @@ class Taakbeheer {
                     ${checkboxHtml}
                 </div>
                 <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
-                    <div class="taak-titel">${taak.tekst}${recurringIndicator}</div>
+                    <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
                     ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
@@ -3566,7 +3569,7 @@ class Taakbeheer {
                 <td title="Taak afwerken">
                     <input type="checkbox" onchange="app.taakAfwerken('${taak.id}')">
                 </td>
-                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}${taak.opmerkingen ? '\n\nOpmerkingen:\n' + this.escapeHtml(taak.opmerkingen) : ''}">${datumIndicator}${taak.tekst}${recurringIndicator}</td>
+                <td class="taak-naam-cell" onclick="app.bewerkActieWrapper('${taak.id}')" title="${this.escapeHtml(taak.tekst)}${taak.opmerkingen ? '\n\nOpmerkingen:\n' + this.escapeHtml(taak.opmerkingen) : ''}">${this.getPrioriteitIndicator(taak.prioriteit)}${datumIndicator}${taak.tekst}${recurringIndicator}</td>
                 <td title="${this.escapeHtml(projectNaam)}">${projectNaam}</td>
                 <td title="${this.escapeHtml(contextNaam)}">${contextNaam}</td>
                 <td title="${datum}">${datum}</td>
@@ -4809,9 +4812,14 @@ class Taakbeheer {
         const duur = parseInt(document.getElementById('duur').value) || 0;
         const opmerkingen = document.getElementById('opmerkingen').value.trim();
         const herhalingType = document.getElementById('herhalingSelect').value;
+        
+        // Prioriteit alleen ophalen voor niet-inbox taken
+        const isInboxTaak = this.huidigeLijst !== 'acties';
+        const prioriteit = isInboxTaak ? 'gemiddeld' : (document.getElementById('prioriteitSelect').value || 'gemiddeld');
 
         console.log('maakActie - herhalingType:', herhalingType);
         console.log('maakActie - herhalingActief:', !!herhalingType);
+        console.log('maakActie - prioriteit:', prioriteit, 'isInboxTaak:', isInboxTaak);
 
         if (!taakNaam || !verschijndatum || !contextId || !duur) {
             toast.warning('Alle velden behalve project zijn verplicht!');
@@ -4837,7 +4845,8 @@ class Taakbeheer {
                         duur: duur,
                         opmerkingen: opmerkingen,
                         herhalingType: herhalingType,
-                        herhalingActief: !!herhalingType
+                        herhalingActief: !!herhalingType,
+                        prioriteit: prioriteit
                     };
                     
                     const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
@@ -4875,7 +4884,8 @@ class Taakbeheer {
                     opmerkingen: opmerkingen,
                     type: 'actie',
                     herhalingType: herhalingType,
-                    herhalingActief: !!herhalingType
+                    herhalingActief: !!herhalingType,
+                    prioriteit: prioriteit
                 };
 
                 // Save the new action via direct single action API (bypasses list corruption issues)
@@ -5692,6 +5702,18 @@ class Taakbeheer {
         return context ? context.naam : 'Onbekende context';
     }
 
+    getPrioriteitIndicator(prioriteit) {
+        if (!prioriteit) prioriteit = 'gemiddeld';
+        
+        const prioriteitLabels = {
+            'hoog': 'Hoge prioriteit',
+            'gemiddeld': 'Gemiddelde prioriteit', 
+            'laag': 'Lage prioriteit'
+        };
+        
+        return `<span class="prioriteit-indicator prioriteit-${prioriteit}" title="${prioriteitLabels[prioriteit]}"></span>`;
+    }
+
     async removePrioriteit(position) {
         const index = position - 1;
         const taak = this.topPrioriteiten[index];
@@ -6329,6 +6351,17 @@ class Taakbeheer {
             
             document.getElementById('contextSelect').value = actie.contextId;
             document.getElementById('duur').value = actie.duur;
+            
+            // Prioriteit instellen (alleen zichtbaar voor niet-inbox taken)
+            const isInboxAction = this.huidigeLijst === 'inbox';
+            const prioriteitFormGroep = document.getElementById('prioriteitFormGroep');
+            if (prioriteitFormGroep) {
+                prioriteitFormGroep.style.display = isInboxAction ? 'none' : 'block';
+                if (!isInboxAction) {
+                    document.getElementById('prioriteitSelect').value = actie.prioriteit || 'gemiddeld';
+                }
+            }
+            
             const herhalingType = actie.herhalingType || '';
             document.getElementById('herhalingSelect').value = herhalingType;
             console.log('bewerkActie - loaded herhalingType:', herhalingType, 'herhalingActief:', actie.herhalingActief);
@@ -7326,7 +7359,7 @@ class Taakbeheer {
 
                 html += `
                     <div class="zoek-resultaat-item" onclick="app.navigateToTask('${taak.id}', '${lijstNaam}')">
-                        <div class="resultaat-hoofdtekst">${highlightedText}${recurringIndicator}</div>
+                        <div class="resultaat-hoofdtekst">${this.getPrioriteitIndicator(taak.prioriteit)}${highlightedText}${recurringIndicator}</div>
                         <div class="resultaat-details">
                             ${projectNaam ? `<i class="ti ti-folder"></i> ${projectNaam}` : ''}
                             ${contextNaam ? `🏷️ ${contextNaam}` : ''}
@@ -8130,6 +8163,12 @@ class Taakbeheer {
                             <select id="planningContextFilter" class="filter-select">
                                 <option value="">Alle contexten</option>
                             </select>
+                            <select id="planningPrioriteitFilter" class="filter-select prioriteit-filter">
+                                <option value="">Alle prioriteiten</option>
+                                <option value="hoog">🔺 Hoge prioriteit</option>
+                                <option value="gemiddeld">🔶 Gemiddelde prioriteit</option>
+                                <option value="laag">🔸 Lage prioriteit</option>
+                            </select>
                             <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" id="planningToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
@@ -8314,6 +8353,10 @@ class Taakbeheer {
         const priorityClass = isPriority ? ' priority-task' : '';
         const priorityIcon = isPriority ? '<span class="priority-indicator">⭐</span>' : '';
         
+        // Add normal priority indicator for tasks
+        const normalPriorityIcon = taskPrioriteit ? 
+            `<span class="planning-item-prioriteit">${this.getPrioriteitIndicator(taskPrioriteit)}</span>` : '';
+        
         // Add checkbox for tasks (but not for blocked time or breaks)
         const checkbox = planningItem.type === 'taak' && planningItem.actieId ? 
             `<input type="checkbox" class="task-checkbox" data-actie-id="${planningItem.actieId}" onclick="app.completePlanningTask('${planningItem.actieId}', this)">` : '';
@@ -8327,6 +8370,7 @@ class Taakbeheer {
         
         // Get task details if it's a task
         let taskDetails = null;
+        let taskPrioriteit = null;
         if (isExpandable) {
             const actie = this.planningActies?.find(t => t.id === planningItem.actieId) || 
                          this.taken?.find(t => t.id === planningItem.actieId) ||
@@ -8339,6 +8383,7 @@ class Taakbeheer {
                     duur: actie.duur,
                     opmerkingen: actie.opmerkingen
                 };
+                taskPrioriteit = actie.prioriteit || 'gemiddeld';
             }
         }
         
@@ -8412,6 +8457,7 @@ class Taakbeheer {
                     ${checkbox}
                     <span class="planning-icon">${typeIcon}</span>
                     ${priorityIcon}
+                    ${normalPriorityIcon}
                     ${naamElement}
                     <span class="planning-duur">${planningItem.duurMinuten}min</span>
                     <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}', event)">×</button>
@@ -8559,6 +8605,7 @@ class Taakbeheer {
         const taakFilter = document.getElementById('planningTaakFilter');
         const projectFilter = document.getElementById('planningProjectFilter');
         const contextFilter = document.getElementById('planningContextFilter');
+        const prioriteitFilter = document.getElementById('planningPrioriteitFilter');
         const datumFilter = document.getElementById('planningDatumFilter');
         const duurFilter = document.getElementById('planningDuurFilter');
         const toekomstToggle = document.getElementById('planningToekomstToggle');
@@ -8566,6 +8613,7 @@ class Taakbeheer {
         if (taakFilter) taakFilter.addEventListener('input', () => this.filterPlanningActies());
         if (projectFilter) projectFilter.addEventListener('change', () => this.filterPlanningActies());
         if (contextFilter) contextFilter.addEventListener('change', () => this.filterPlanningActies());
+        if (prioriteitFilter) prioriteitFilter.addEventListener('change', () => this.filterPlanningActies());
         if (datumFilter) datumFilter.addEventListener('change', () => this.filterPlanningActies());
         if (duurFilter) duurFilter.addEventListener('input', () => this.filterPlanningActies());
         if (toekomstToggle) toekomstToggle.addEventListener('change', () => this.togglePlanningToekomstigeTaken());
@@ -11058,6 +11106,7 @@ class Taakbeheer {
         const taakFilter = document.getElementById('planningTaakFilter')?.value.toLowerCase() || '';
         const projectFilter = document.getElementById('planningProjectFilter')?.value || '';
         const contextFilter = document.getElementById('planningContextFilter')?.value || '';
+        const prioriteitFilter = document.getElementById('planningPrioriteitFilter')?.value || '';
         const datumFilter = document.getElementById('planningDatumFilter')?.value || '';
         const duurFilter = document.getElementById('planningDuurFilter')?.value || '';
 
@@ -11073,6 +11122,7 @@ class Taakbeheer {
             if (taakFilter && !actie.tekst.toLowerCase().includes(taakFilter)) tonen = false;
             if (projectFilter && actie.projectId !== projectFilter) tonen = false;
             if (contextFilter && actie.contextId !== contextFilter) tonen = false;
+            if (prioriteitFilter && (actie.prioriteit || 'gemiddeld') !== prioriteitFilter) tonen = false;
             
             // Duration filter - show only tasks with duration <= filter value
             if (duurFilter) {

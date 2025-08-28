@@ -59,7 +59,8 @@ const initDatabase = async () => {
         ADD COLUMN IF NOT EXISTS opmerkingen TEXT,
         ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id),
         ADD COLUMN IF NOT EXISTS top_prioriteit INTEGER CHECK (top_prioriteit IN (1, 2, 3)),
-        ADD COLUMN IF NOT EXISTS prioriteit_datum DATE
+        ADD COLUMN IF NOT EXISTS prioriteit_datum DATE,
+        ADD COLUMN IF NOT EXISTS prioriteit VARCHAR(10) DEFAULT 'gemiddeld' CHECK (prioriteit IN ('laag', 'gemiddeld', 'hoog'))
       `);
       console.log('✅ Recurring task columns and opmerkingen added/verified');
     } catch (alterError) {
@@ -72,7 +73,8 @@ const initDatabase = async () => {
         { name: 'opmerkingen', type: 'TEXT' },
         { name: 'user_id', type: 'VARCHAR(50) REFERENCES users(id)' },
         { name: 'top_prioriteit', type: 'INTEGER CHECK (top_prioriteit IN (1, 2, 3))' },
-        { name: 'prioriteit_datum', type: 'DATE' }
+        { name: 'prioriteit_datum', type: 'DATE' },
+        { name: 'prioriteit', type: 'VARCHAR(10) DEFAULT \'gemiddeld\' CHECK (prioriteit IN (\'laag\', \'gemiddeld\', \'hoog\'))' }
       ];
       
       for (const col of recurringColumns) {
@@ -258,6 +260,19 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add premium_expires column (might already exist):', error.message);
     }
 
+    // Update bestaande taken die nog geen prioriteit hebben naar 'gemiddeld'
+    try {
+      const updateResult = await pool.query(`
+        UPDATE taken SET prioriteit = 'gemiddeld' 
+        WHERE prioriteit IS NULL OR prioriteit = ''
+      `);
+      if (updateResult.rowCount > 0) {
+        console.log(`✅ Updated ${updateResult.rowCount} existing tasks to 'gemiddeld' priority`);
+      }
+    } catch (error) {
+      console.log('⚠️ Could not update existing tasks priority (might not have prioriteit column yet):', error.message);
+    }
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
@@ -265,6 +280,7 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_taken_context ON taken(context_id);
       CREATE INDEX IF NOT EXISTS idx_taken_user ON taken(user_id);
       CREATE INDEX IF NOT EXISTS idx_taken_user_lijst ON taken(user_id, lijst);
+      CREATE INDEX IF NOT EXISTS idx_taken_prioriteit ON taken(prioriteit);
       CREATE INDEX IF NOT EXISTS idx_projecten_user ON projecten(user_id);
       CREATE INDEX IF NOT EXISTS idx_contexten_user ON contexten(user_id);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum ON dagelijkse_planning(datum);
@@ -380,12 +396,12 @@ const db = {
         await pool.query('DELETE FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL', [userId]);
         for (const item of items) {
           await pool.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, prioriteit, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
           `, [
             item.id, item.tekst, item.aangemaakt, item.lijst || 'afgewerkt',
             item.projectId, item.verschijndatum, item.contextId, item.duur, item.type, item.afgewerkt,
-            item.herhalingType, item.herhalingWaarde, item.herhalingActief, item.opmerkingen, userId
+            item.herhalingType, item.herhalingWaarde, item.herhalingActief, item.opmerkingen, item.prioriteit || 'gemiddeld', userId
           ]);
         }
       } else {
@@ -407,8 +423,8 @@ const db = {
           // Check if herhaling columns exist and fall back gracefully
           try {
             await pool.query(`
-              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, prioriteit, afgewerkt, user_id)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             `, [
               item.id, 
               item.tekst, 
@@ -423,6 +439,7 @@ const db = {
               item.herhalingWaarde || null, 
               item.herhalingActief === true || item.herhalingActief === 'true',
               item.opmerkingen || null,
+              item.prioriteit || 'gemiddeld',
               null,  // afgewerkt
               userId
             ]);
@@ -434,8 +451,8 @@ const db = {
               
               console.log(`⚠️ DB: Falling back to basic insert for item ${item.id}`);
               await pool.query(`
-                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, prioriteit, afgewerkt, user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
               `, [
                 item.id, 
                 item.tekst, 
@@ -447,6 +464,7 @@ const db = {
                 item.duur || null, 
                 item.type || null,
                 item.opmerkingen || null,
+                item.prioriteit || 'gemiddeld',
                 null,  // afgewerkt
                 userId
               ]);
@@ -648,13 +666,14 @@ const db = {
           originalTask.herhalingWaarde || null, 
           originalTask.herhalingType ? true : false, // herhalingActief = true als er een herhalingType is 
           originalTask.opmerkingen || null, 
+          originalTask.prioriteit || 'gemiddeld',
           null, 
           userId
         ];
         
         const insertResult = await client.query(`
-          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, prioriteit, afgewerkt, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
           RETURNING id
         `, insertValues);
         
@@ -703,13 +722,14 @@ const db = {
           originalTask.duur || 0, 
           originalTask.type || 'actie', 
           originalTask.opmerkingen || null, 
+          originalTask.prioriteit || 'gemiddeld',
           null, 
           userId
         ];
         
         const basicInsertResult = await client.query(`
-          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, prioriteit, afgewerkt, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING id
         `, basicInsertValues);
         
