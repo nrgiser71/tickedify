@@ -4829,7 +4829,7 @@ class Taakbeheer {
         const maakActieBtn = document.getElementById('maakActieBtn');
         
         // Voor inbox taken: hou loading actief tot volgende taak geladen is
-        const isInboxTaak = this.huidigeLijst !== 'acties';
+        // isInboxTaak al gedeclareerd op regel 4817
         
         return await loading.withLoading(async () => {
             if (this.huidigeLijst === 'acties') {
