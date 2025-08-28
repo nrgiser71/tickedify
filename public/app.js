@@ -8363,6 +8363,10 @@ class Taakbeheer {
     }
 
     renderPlanningItem(planningItem) {
+        // Initialize variables at the top to avoid scoping issues - explicit defaults
+        let taskDetails = null;
+        let taskPrioriteit = null;
+        
         const typeIcon = {
             'taak': '<i class="fas fa-ellipsis-v"></i>',
             'geblokkeerd': '🔒',
@@ -8370,6 +8374,43 @@ class Taakbeheer {
         }[planningItem.type] || '<i class="fas fa-ellipsis-v"></i>';
         
         const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
+        
+        // Get task details and priority for all tasks (expandable or not)
+        const isExpandable = planningItem.type === 'taak' && planningItem.actieId;
+        
+        // PRIORITY HANDLING: Set priority for ALL task items
+        if (planningItem.type === 'taak' && planningItem.actieId) {
+            // For optimistic items, use default priority to avoid scoping errors
+            if (planningItem.isOptimistic) {
+                taskPrioriteit = 'gemiddeld';
+            } else {
+                const actie = this.planningActies?.find(t => t.id === planningItem.actieId) || 
+                             this.taken?.find(t => t.id === planningItem.actieId) ||
+                             this.topPrioriteiten?.find(t => t && t.id === planningItem.actieId);
+                if (actie) {
+                    taskPrioriteit = actie.prioriteit || 'gemiddeld';
+                    
+                    // Only get detailed info for expandable tasks
+                    if (isExpandable) {
+                        taskDetails = {
+                            project: this.getProjectNaam(actie.project_id || actie.projectId),
+                            context: this.getContextNaam(actie.context_id || actie.contextId),
+                            deadline: actie.verschijndatum ? new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : null,
+                            duur: actie.duur,
+                            opmerkingen: actie.opmerkingen
+                        };
+                    }
+                } else {
+                    // Fallback if actie not found
+                    taskPrioriteit = 'gemiddeld';
+                }
+            }
+        }
+        
+        // Ensure taskPrioriteit is never undefined at this point
+        if (planningItem.type === 'taak' && taskPrioriteit === null) {
+            taskPrioriteit = 'gemiddeld';
+        }
         
         // Check if this task is in top priorities
         const isPriority = planningItem.type === 'taak' && planningItem.actieId && 
@@ -8390,28 +8431,7 @@ class Taakbeheer {
         // Make template items (geblokkeerd, pauze) editable
         const isTemplateItem = planningItem.type === 'geblokkeerd' || planningItem.type === 'pauze';
         
-        // Only tasks are expandable
-        const isExpandable = planningItem.type === 'taak' && planningItem.actieId;
         const expandableClass = isExpandable ? ' expandable' : '';
-        
-        // Get task details if it's a task
-        let taskDetails = null;
-        let taskPrioriteit = null;
-        if (isExpandable) {
-            const actie = this.planningActies?.find(t => t.id === planningItem.actieId) || 
-                         this.taken?.find(t => t.id === planningItem.actieId) ||
-                         this.topPrioriteiten?.find(t => t && t.id === planningItem.actieId);
-            if (actie) {
-                taskDetails = {
-                    project: this.getProjectNaam(actie.project_id || actie.projectId),
-                    context: this.getContextNaam(actie.context_id || actie.contextId),
-                    deadline: actie.verschijndatum ? new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : null,
-                    duur: actie.duur,
-                    opmerkingen: actie.opmerkingen
-                };
-                taskPrioriteit = actie.prioriteit || 'gemiddeld';
-            }
-        }
         
         const expandChevron = isExpandable ? '<span class="expand-chevron">▶</span>' : '';
         
