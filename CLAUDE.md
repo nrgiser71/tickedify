@@ -3,6 +3,45 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🎨 DROPDOWN ICONEN ZICHTBAARHEID PROBLEEM OPGELOST (Augustus 28, 2025) ✅
+
+**🚀 UI FIX VOLTOOID: Versie 0.14.6-0.14.7**
+- **User vraag**: "Is het de bedoeling dat er in de dropdowns geen iconen meer staan?"
+- **Probleem ontdekt**: Font Awesome `<i>` tags werken NIET in HTML `<option>` elementen - browsers renderen alleen platte tekst
+- **Oplossing geïmplementeerd**: Terugzetten naar Unicode emoji's voor dropdowns + behouden Font Awesome voor lijstweergave
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **Root cause**: HTML (zoals `<i class="fas fa-circle">`) wordt genegeerd in dropdown `<option>` elementen
+- **Fix locaties**: 3 dropdowns bijgewerkt met Unicode emoji's
+  - Acties filter dropdown (app.js:3413-3415)
+  - Dagelijkse planning filter dropdown (app.js:8192-8194)  
+  - Planning popup dropdown (index.html:374-376)
+- **Unicode emoji's gebruikt**: 🔴 (Hoog), 🟠 (Gemiddeld), ⚪ (Laag)
+
+**🎯 BESTE VAN BEIDE WERELDEN OPLOSSING:**
+- ✅ **Dropdowns**: Unicode emoji's (🔴🟠⚪) - zichtbaar in alle browsers
+- ✅ **Lijstweergave**: Font Awesome cirkels behouden - professionele uitstraling
+- ✅ **Labels verkort**: "Hoog", "Gemiddeld", "Laag" (zonder "prioriteit" woord)
+- ✅ **Consistente kleuren**: Rood, oranje, grijs in beide contexten
+
+**🔧 VERSIE PROGRESSIE:**
+- **v0.14.5**: Font Awesome iconen in dropdowns (niet zichtbaar)
+- **v0.14.6**: Unicode emoji's in dropdowns geïmplementeerd  
+- **v0.14.7**: Changelog en documentatie bijgewerkt
+
+**✨ EINDRESULTAAT:**
+- **Perfect werkende iconen** in alle priority dropdowns
+- **Geen browser compatibiliteit issues** meer
+- **Professionele UI** met consistente prioriteit weergave
+- **Production-ready** met volledige gebruiker satisfactie
+
+**📊 DEVELOPMENT LESSON:**
+- HTML binnen `<option>` elementen wordt niet gerenderd - alleen platte tekst werkt
+- Unicode emoji's zijn betrouwbare cross-browser oplossing voor dropdown iconen
+- Verschillende UI contexten kunnen verschillende icon strategieën vereisen
+
+**STATUS**: Dropdown iconen zichtbaarheid 100% opgelost - alle priority dropdowns tonen nu correct emoji iconen.
+
 ## 🔧 KRITIEKE B2 BIJLAGEN SYSTEEM VOLLEDIG HERSTELD (Augustus 27, 2025) ✅
 
 **🚨 MAJOR CRISIS RESOLUTION: Versie 0.13.43-0.13.46**
