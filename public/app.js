@@ -3410,9 +3410,9 @@ class Taakbeheer {
                     <label>Prioriteit:</label>
                     <select id="prioriteitFilter" class="prioriteit-filter">
                         <option value="">Alle prioriteiten</option>
-                        <option value="hoog">🔺 Hoge prioriteit</option>
-                        <option value="gemiddeld">🔶 Gemiddelde prioriteit</option>
-                        <option value="laag">🔸 Lage prioriteit</option>
+                        <option value="hoog"><i class="fas fa-circle" style="color: #FF4444"></i> Hoog</option>
+                        <option value="gemiddeld"><i class="fas fa-circle" style="color: #FF9500"></i> Gemiddeld</option>
+                        <option value="laag"><i class="fas fa-circle" style="color: #8E8E93"></i> Laag</option>
                     </select>
                 </div>
                 <label class="simple-checkbox">
@@ -5715,9 +5715,9 @@ class Taakbeheer {
         if (!prioriteit) prioriteit = 'gemiddeld';
         
         const prioriteitConfig = {
-            'hoog': { label: 'Hoge prioriteit', color: '#FF4444', icon: 'fas fa-circle' },
-            'gemiddeld': { label: 'Gemiddelde prioriteit', color: '#FF9500', icon: 'fas fa-circle' },
-            'laag': { label: 'Lage prioriteit', color: '#8E8E93', icon: 'fas fa-circle' }
+            'hoog': { label: 'Hoog', color: '#FF4444', icon: 'fas fa-circle' },
+            'gemiddeld': { label: 'Gemiddeld', color: '#FF9500', icon: 'fas fa-circle' },
+            'laag': { label: 'Laag', color: '#8E8E93', icon: 'fas fa-circle' }
         };
         
         const config = prioriteitConfig[prioriteit];
@@ -8189,9 +8189,9 @@ class Taakbeheer {
                             </select>
                             <select id="planningPrioriteitFilter" class="filter-select prioriteit-filter">
                                 <option value="">Alle prioriteiten</option>
-                                <option value="hoog">🔺 Hoge prioriteit</option>
-                                <option value="gemiddeld">🔶 Gemiddelde prioriteit</option>
-                                <option value="laag">🔸 Lage prioriteit</option>
+                                <option value="hoog"><i class="fas fa-circle" style="color: #FF4444"></i> Hoog</option>
+                                <option value="gemiddeld"><i class="fas fa-circle" style="color: #FF9500"></i> Gemiddeld</option>
+                                <option value="laag"><i class="fas fa-circle" style="color: #8E8E93"></i> Laag</option>
                             </select>
                             <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
                             <div class="checkbox-wrapper">
