@@ -4957,7 +4957,11 @@ class Taakbeheer {
         // Update counts in background (non-blocking)
         this.laadTellingen();
         
-        this.sluitPopup();
+        // Probeer automatisch volgende inbox taak te openen (net als bij opslaan)
+        const volgendeGeopend = await this.openVolgendeInboxTaak();
+        if (!volgendeGeopend) {
+            this.sluitPopup();
+        }
     }
 
     async verplaatsTaakNaarLijst(taak, lijstNaam) {
