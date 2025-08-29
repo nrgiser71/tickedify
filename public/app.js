@@ -1106,6 +1106,29 @@ class Taakbeheer {
         }
     }
 
+    bindInboxEvents() {
+        const toevoegBtn = document.getElementById('toevoegBtn');
+        const taakInput = document.getElementById('taakInput');
+        
+        if (toevoegBtn && !toevoegBtn.hasAttribute('data-listener-bound')) {
+            toevoegBtn.addEventListener('click', () => {
+                if (this.huidigeLijst === 'inbox') {
+                    this.voegTaakToe();
+                }
+            });
+            toevoegBtn.setAttribute('data-listener-bound', 'true');
+        }
+        
+        if (taakInput && !taakInput.hasAttribute('data-listener-bound')) {
+            taakInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && this.huidigeLijst === 'inbox') {
+                    this.voegTaakToe();
+                }
+            });
+            taakInput.setAttribute('data-listener-bound', 'true');
+        }
+    }
+
     bindEvents() {
         console.log('🔗 bindEvents called - eventsAlreadyBound:', this.eventsAlreadyBound);
         // Prevent multiple event listeners
@@ -1145,44 +1168,16 @@ class Taakbeheer {
             }
         });
 
-        // Taak toevoegen (alleen voor inbox) - ENHANCED DEBUG
-        console.log('🔍 DEBUG: Looking for toevoegBtn...');
-        const toevoegBtn = document.getElementById('toevoegBtn');
-        console.log('🔗 toevoegBtn element:', toevoegBtn);
-        console.log('🔍 All buttons on page:', document.querySelectorAll('button'));
-        console.log('🔍 Element with toevoeg in ID:', document.querySelector('[id*="toevoeg"]'));
-        
-        if (toevoegBtn) {
-            console.log('✅ toevoegBtn found, adding event listener');
-            toevoegBtn.addEventListener('click', (e) => {
-                console.log('🖱️ ToevoegBtn CLICKED! Event:', e);
-                console.log('🖱️ Current huidigeLijst:', this.huidigeLijst);
-                if (this.huidigeLijst === 'inbox') {
-                    this.voegTaakToe();
-                } else {
-                    console.log('❌ Not in inbox, not calling voegTaakToe');
-                }
-            });
-            
-            // Test direct click programmatically
-            console.log('🧪 Testing programmatic click...');
-            setTimeout(() => {
-                console.log('🧪 Triggering test click in 2 seconds...');
-            }, 2000);
-        } else {
-            console.error('❌ toevoegBtn NOT FOUND!');
-        }
+        // Taak toevoegen (alleen voor inbox) - Use dedicated function
+        this.bindInboxEvents();
 
         // Test taken toevoegen
-        document.getElementById('testTakenBtn').addEventListener('click', () => {
-            this.voegTestTakenToe();
-        });
-
-        document.getElementById('taakInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && this.huidigeLijst === 'inbox') {
-                this.voegTaakToe();
-            }
-        });
+        const testTakenBtn = document.getElementById('testTakenBtn');
+        if (testTakenBtn) {
+            testTakenBtn.addEventListener('click', () => {
+                this.voegTestTakenToe();
+            });
+        }
 
         // Planning popup events
         document.getElementById('sluitPopupBtn').addEventListener('click', () => {
@@ -1769,6 +1764,8 @@ class Taakbeheer {
         if (inputContainer) {
             if (lijst === 'inbox') {
                 inputContainer.style.display = 'flex';
+                // Ensure inbox event listeners are bound after navigation
+                this.bindInboxEvents();
             } else {
                 inputContainer.style.display = 'none';
             }
@@ -6804,6 +6801,8 @@ class Taakbeheer {
                             <ul id="takenLijst"></ul>
                         </div>
                     `;
+                    // Bind event listeners for the newly created inbox elements
+                    this.bindInboxEvents();
                 } else {
                     contentArea.innerHTML = `
                         <div class="taken-container">
@@ -6865,6 +6864,11 @@ class Taakbeheer {
                         </div>
                     </div>
                 `;
+                
+                // Bind event listeners for the newly created inbox elements if this is inbox
+                if ((targetLijst || this.huidigeLijst) === 'inbox') {
+                    this.bindInboxEvents();
+                }
                 
                 return;
             }
@@ -8373,7 +8377,8 @@ class Taakbeheer {
             'pauze': '☕'
         }[planningItem.type] || '<i class="fas fa-ellipsis-v"></i>';
         
-        const naam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
+        const basisNaam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
+        const naam = `${basisNaam} (${planningItem.duurMinuten} min)`;
         
         // Get task details and priority for all tasks (expandable or not)
         const isExpandable = planningItem.type === 'taak' && planningItem.actieId;
@@ -8505,7 +8510,6 @@ class Taakbeheer {
                     ${priorityIcon}
                     ${normalPriorityIcon}
                     ${naamElement}
-                    <span class="planning-duur">${planningItem.duurMinuten}min</span>
                     <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}', event)">×</button>
                 </div>
                 ${detailsHtml}
