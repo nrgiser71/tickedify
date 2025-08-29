@@ -2951,6 +2951,14 @@ class Taakbeheer {
             this.stopCurrentHourTracking();
         }
         
+        // Clean up any leftover scroll indicators from previous views
+        const scrollIndicators = document.querySelectorAll('.scroll-indicator-fixed');
+        scrollIndicators.forEach(indicator => {
+            if (indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        });
+        
         // Ensure sidebar is always visible when loading any list
         this.ensureSidebarVisible();
         
@@ -6767,6 +6775,14 @@ class Taakbeheer {
         // First check if we're coming from uitgesteld consolidated view
         const uitgesteldContainer = document.querySelector('.uitgesteld-accordion');
         if (uitgesteldContainer) {
+            // Clean up any scroll indicators before removing container
+            const scrollIndicators = document.querySelectorAll('.scroll-indicator-fixed');
+            scrollIndicators.forEach(indicator => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            });
+            
             // Remove the uitgesteld accordion container completely
             const contentArea = document.querySelector('.content-area');
             if (contentArea) {
