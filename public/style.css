@@ -2770,7 +2770,7 @@ button:focus {
     display: flex;
     gap: 0; /* Remove gap - splitter will handle spacing */
     height: calc(100vh - 140px); /* Full viewport height minus header and offset */
-    margin: 0 -32px -24px -32px; /* No top margin to make space for header */
+    margin: 0 -32px -24px 0; /* No top margin to make space for header, no left margin */
     padding: 16px 16px 0 16px; /* Remove bottom padding to eliminate gap */
     position: relative; /* For absolute positioned splitter */
 }
