@@ -10,6 +10,64 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🤖 VERPLICHTE SUB AGENT GEBRUIK - 3 GESPECIALISEERDE AGENTS
+
+**KRITIEK BELANGRIJK**: Gebruik ALTIJD de juiste gespecialiseerde Tickedify sub agent om token verbruik drastisch te verlagen.
+
+### 🧪 **tickedify-testing** - Voor Testing & QA
+**Gebruik voor:**
+- ✅ **Alle testing workflows** - Drag & drop testing, filter testing, UI testing
+- ✅ **End-to-end testing** - Complete feature workflows testen
+- ✅ **Browser automation** - Complexe Playwright operaties
+- ✅ **Regressie testing** - Bestaande functionaliteit verifiëren
+- ✅ **Performance testing** - Load testing en response monitoring
+
+**Voorbeeld:**
+```javascript
+Task(subagent_type: "tickedify-testing", 
+     description: "Filter testing", 
+     prompt: "Test de filter functionaliteit in dagelijkse planning - pas filter toe op project 'Verbouwing', sleep taak naar kalender, controleer of filter actief blijft")
+```
+
+### 🐛 **tickedify-bug-hunter** - Voor Bug Fixes & Debugging  
+**Gebruik voor:**
+- ✅ **Bug debugging** - Systematisch troubleshooting van issues
+- ✅ **Console errors** - JavaScript errors en API failures analyseren
+- ✅ **UI problemen** - Modals, drag & drop, responsive issues
+- ✅ **Database issues** - Query failures, constraint violations
+- ✅ **Cross-browser bugs** - Compatibility problemen oplossen
+
+**Voorbeeld:**
+```javascript
+Task(subagent_type: "tickedify-bug-hunter",
+     description: "Modal z-index bug",
+     prompt: "Debug waarom de planning popup achter de loading indicator verdwijnt - bekijk z-index conflicts en CSS styling")
+```
+
+### ✨ **tickedify-feature-builder** - Voor Nieuwe Features
+**Gebruik voor:**
+- ✅ **Nieuwe functionaliteit** - Features implementeren volgens Tickedify patterns
+- ✅ **Database uitbreiding** - Schema wijzigingen en migraties
+- ✅ **API development** - Nieuwe endpoints volgens REST conventions
+- ✅ **UI componenten** - Modals, popups, drag & drop interfaces
+- ✅ **Feature integratie** - Naadloos integreren in bestaande workflow
+
+**Voorbeeld:**
+```javascript
+Task(subagent_type: "tickedify-feature-builder",
+     description: "Time tracking feature",
+     prompt: "Implementeer een timer functionaliteit voor taken - database schema, API endpoints, UI components en integratie met dagelijkse planning")
+```
+
+**VOORDELEN VAN SUB AGENTS:**
+- 🎯 **Token efficiency**: Hoofdgesprek blijft compact en overzichtelijk  
+- 🧠 **Gespecialiseerde expertise**: Elke agent kent specifieke patterns
+- 🚀 **Parallel processing**: Agents kunnen parallel werken
+- 📋 **Gestructureerde output**: Agents leveren gerichte resultaten
+- 🔄 **Herbruikbaarheid**: Workflows en patterns worden herbruikt
+
+**STATUS**: Alle 3 gespecialiseerde Tickedify agents beschikbaar - gebruik altijd de juiste voor de taak.
+
 ## 🎨 DROPDOWN ICONEN ZICHTBAARHEID PROBLEEM OPGELOST (Augustus 28, 2025) ✅
 
 **🚀 UI FIX VOLTOOID: Versie 0.14.6-0.14.7**

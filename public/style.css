@@ -2776,7 +2776,7 @@ button:focus {
 }
 
 .planning-sidebar {
-    width: 50%; /* Default 50% - can be adjusted by splitter */
+    width: 35%; /* Default 35% - better balance for sidebar content */
     flex-shrink: 0; /* Don't shrink */
     background: #f0f0f0; /* Simple gray background */
     border-radius: 8px;
@@ -2878,7 +2878,7 @@ button:focus {
 /* Voor tablets - zorg dat sidebar resizable blijft */
 @media (min-width: 769px) and (max-width: 1200px) {
     .planning-sidebar {
-        width: 40% !important; /* Default maar can be resized */
+        width: 35% !important; /* Consistent 35% for tablets */
         flex: none !important;
     }
 }
@@ -3376,7 +3376,7 @@ button:focus {
 }
 
 .dag-kalender {
-    width: 50%; /* Default 50% - can be adjusted by splitter */
+    width: 65%; /* Default 65% - more room for calendar content */
     flex-shrink: 0; /* Don't shrink */
     background: var(--macos-bg-primary);
     border-radius: var(--macos-radius-large);
@@ -4031,7 +4031,7 @@ button:focus {
     }
     
     .planning-sidebar {
-        width: 40% !important;
+        width: 35% !important;
         height: 100% !important;
         max-height: none !important;
         order: 1 !important;
@@ -4043,7 +4043,8 @@ button:focus {
     }
     
     .dag-kalender {
-        flex: 1 !important;
+        width: 65% !important;
+        flex: none !important;
         order: 3 !important;
         height: 100% !important;
     }
@@ -4164,7 +4165,7 @@ button:focus {
     }
     
     .planning-sidebar {
-        width: 50% !important;
+        width: 35% !important;
         flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
@@ -4175,7 +4176,7 @@ button:focus {
     }
     
     .dag-kalender {
-        width: 50% !important;
+        width: 65% !important;
         flex-shrink: 0 !important;
         order: 3 !important;
         height: 100% !important;
@@ -4261,7 +4262,7 @@ button:focus {
     }
     
     .planning-sidebar {
-        width: 50% !important;
+        width: 35% !important;
         flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
@@ -4272,7 +4273,7 @@ button:focus {
     }
     
     .dag-kalender {
-        width: 50% !important;
+        width: 65% !important;
         flex-shrink: 0 !important;
         order: 3 !important;
         height: 100% !important;
