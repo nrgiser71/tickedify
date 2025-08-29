@@ -9822,6 +9822,8 @@ class Taakbeheer {
                     actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
                     // Bind events only for the new actions in the list
                     this.bindActionsListEvents();
+                    // Re-apply filters to maintain filter state after drag & drop
+                    this.filterPlanningActies();
                 })
                 .catch(error => {
                     console.error('Error updating actions list:', error);
@@ -9829,6 +9831,8 @@ class Taakbeheer {
                     actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, []);
                     // Bind events only for the new actions in the list
                     this.bindActionsListEvents();
+                    // Re-apply filters to maintain filter state after drag & drop
+                    this.filterPlanningActies();
                 });
         }
     }

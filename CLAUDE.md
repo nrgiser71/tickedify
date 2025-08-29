@@ -1,5 +1,12 @@
 # Tickedify Development Notes
 
+## BELANGRIJKE URL VOOR TESTING: tickedify.com/app ⚠️
+
+**KRITIEK**: Voor alle testing en development moet je naar **tickedify.com/app** navigeren, NIET naar:
+- ❌ tickedify.com (landing page)  
+- ❌ tickedify.com/admin.html (admin dashboard)
+- ✅ **tickedify.com/app** (hoofdapplicatie)
+
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
