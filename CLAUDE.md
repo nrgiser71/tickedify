@@ -68,6 +68,52 @@ Task(subagent_type: "tickedify-feature-builder",
 
 **STATUS**: Alle 3 gespecialiseerde Tickedify agents beschikbaar - gebruik altijd de juiste voor de taak.
 
+## 🔧 ONBEKEND PROJECT/CONTEXT PROBLEEM DEFINITIEF OPGELOST (September 1, 2025) ✅
+
+**🎯 UI BUG FIX VOLTOOID: Versie 0.14.15**
+- **User probleem**: "Ik merk ineens dat in het dagelijkse planning scherm, in het overzicht van de taken, overal onbekend project en onbekende context staat"
+- **Root cause ontdekt**: Projecten en contexten werden niet geladen in `renderDagelijksePlanning()` functie
+- **Secundair probleem**: Lege strings (`""`) als project/context ID werden niet correct afgehandeld
+
+**📋 TECHNISCHE OORZAKEN:**
+- **Hoofdprobleem**: `renderDagelijksePlanning()` riep `laadProjecten()` en `laadContexten()` niet aan
+- **Gevolg**: `this.projecten` en `this.contexten` arrays waren leeg
+- **Resultaat**: `getProjectNaam()` en `getContextNaam()` gaven "Onbekend project/context" terug
+- **Extra probleem**: `!projectId` check onderschepte geen lege strings (`""`)
+
+**🔧 GEÏMPLEMENTEERDE FIXES:**
+- **Fix 1**: Toegevoegd aan `renderDagelijksePlanning()` (regel ~8112-8113):
+  ```javascript
+  await this.laadProjecten();
+  await this.laadContexten();
+  ```
+- **Fix 2**: Verbeterde checks in `getProjectNaam()` en `getContextNaam()`:
+  ```javascript
+  if (!projectId || projectId === '') return 'Geen project';
+  if (!contextId || contextId === '') return 'Geen context';
+  ```
+
+**🧪 TESTING & VALIDATIE:**
+- ✅ **Playwright testing**: Volledig end-to-end getest via tickedify-testing agent
+- ✅ **Planning kalender**: Project/context info correct weergegeven in uitklapbare items
+- ✅ **Lege strings**: Tonen nu "Geen project/context" in plaats van "Onbekend"
+- ✅ **Database debugging**: tickedify-bug-hunter agent identificeerde orphaned references
+- ✅ **Actielijst**: Meeste taken tonen nu correcte project/context informatie
+
+**✨ EINDRESULTAAT:**
+- **100% opgelost** voor dagelijkse planning scherm
+- **Verbeterde error handling** voor edge cases (lege strings)
+- **Stabiele weergave** van project en context informatie
+- **Geen "Onbekend" meer** in planning interface voor geldige data
+
+**📊 DEVELOPMENT LESSONS:**
+- Data loading moet consistent zijn tussen verschillende UI componenten
+- Edge case handling (lege strings) even belangrijk als NULL checks
+- Systematische debugging met gespecialiseerde agents zeer effectief
+- End-to-end testing essentieel voor complexe UI fixes
+
+**STATUS**: Onbekend project/context probleem 100% opgelost - dagelijkse planning toont correcte informatie.
+
 ## 🎨 DROPDOWN ICONEN ZICHTBAARHEID PROBLEEM OPGELOST (Augustus 28, 2025) ✅
 
 **🚀 UI FIX VOLTOOID: Versie 0.14.6-0.14.7**
