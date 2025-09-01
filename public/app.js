@@ -5709,13 +5709,13 @@ class Taakbeheer {
     }
 
     getProjectNaam(projectId) {
-        if (!projectId) return 'Geen project';
+        if (!projectId || projectId === '') return 'Geen project';
         const project = this.projecten.find(p => p.id === projectId);
         return project ? project.naam : 'Onbekend project';
     }
 
     getContextNaam(contextId) {
-        if (!contextId) return 'Geen context';
+        if (!contextId || contextId === '') return 'Geen context';
         const context = this.contexten.find(c => c.id === contextId);
         return context ? context.naam : 'Onbekende context';
     }
@@ -8107,6 +8107,10 @@ class Taakbeheer {
         
         // Store actions for filtering (make available to filter functions)
         this.planningActies = acties;
+        
+        // Load projecten and contexten for correct display in planning
+        await this.laadProjecten();
+        await this.laadContexten();
         
         // Load top priorities for today
         await this.loadTopPrioriteiten();
