@@ -8921,9 +8921,9 @@ body.dagkalender-focus-active {
 /* Acties floating panel styling */
 .acties-floating-panel {
     position: fixed;
-    top: 50%;
+    top: -400px; /* Hidden above screen - exact zoals werkend uitgesteld systeem */
     left: 50%;
-    transform: translate(-50%, -50%); /* Volledig gecentreerd */
+    transform: translateX(-50%); /* Alleen horizontal centering */
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 12px;
