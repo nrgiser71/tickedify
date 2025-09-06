@@ -11214,19 +11214,72 @@ class Taakbeheer {
     }
 
     updateActiesFloatingPanelDates() {
-        // Bereken vandaag en morgen
+        // Genereer week dagen voor beide week containers
+        this.generateActiesWeekDays();
+    }
+
+    generateActiesWeekDays() {
+        const huidigeWeekContainer = document.getElementById('actiesHuidigeWeek');
+        const volgendeWeekContainer = document.getElementById('actiesVolgendeWeek');
+        
+        if (!huidigeWeekContainer || !volgendeWeekContainer) return;
+        
+        // Nederlandse weekdag afkortingen
+        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+        
+        // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
-        const morgen = new Date(vandaag);
-        morgen.setDate(vandaag.getDate() + 1);
+        const huidigeWeekStart = new Date(vandaag);
+        huidigeWeekStart.setDate(vandaag.getDate() - vandaag.getDay() + 1); // Maandag van deze week
         
-        const vandaagISO = vandaag.toISOString().split('T')[0];
-        const morgenISO = morgen.toISOString().split('T')[0];
+        // Bereken volgende week
+        const volgendeWeekStart = new Date(huidigeWeekStart);
+        volgendeWeekStart.setDate(huidigeWeekStart.getDate() + 7);
         
-        // Update drop zones met juiste datums
-        const dropZones = document.querySelectorAll('#actiesFloatingPanel .drop-zone-item');
-        if (dropZones.length >= 2) {
-            dropZones[0].dataset.target = vandaagISO;
-            dropZones[1].dataset.target = morgenISO;
+        // Genereer huidige week zones
+        huidigeWeekContainer.innerHTML = '';
+        for (let i = 0; i < 7; i++) {
+            const datum = new Date(huidigeWeekStart);
+            datum.setDate(huidigeWeekStart.getDate() + i);
+            
+            const weekdagIndex = datum.getDay();
+            const weekdagAfkorting = weekdagen[weekdagIndex];
+            const dagNummer = datum.getDate();
+            const isoString = datum.toISOString().split('T')[0];
+            
+            const dayZone = document.createElement('div');
+            dayZone.className = 'week-day-zone drop-zone-item';
+            dayZone.dataset.target = isoString;
+            dayZone.dataset.type = 'planning';
+            dayZone.innerHTML = `
+                <div class="day-abbr">${weekdagAfkorting}</div>
+                <div class="day-number">${dagNummer}</div>
+            `;
+            
+            huidigeWeekContainer.appendChild(dayZone);
+        }
+        
+        // Genereer volgende week zones
+        volgendeWeekContainer.innerHTML = '';
+        for (let i = 0; i < 7; i++) {
+            const datum = new Date(volgendeWeekStart);
+            datum.setDate(volgendeWeekStart.getDate() + i);
+            
+            const weekdagIndex = datum.getDay();
+            const weekdagAfkorting = weekdagen[weekdagIndex];
+            const dagNummer = datum.getDate();
+            const isoString = datum.toISOString().split('T')[0];
+            
+            const dayZone = document.createElement('div');
+            dayZone.className = 'week-day-zone drop-zone-item';
+            dayZone.dataset.target = isoString;
+            dayZone.dataset.type = 'planning';
+            dayZone.innerHTML = `
+                <div class="day-abbr">${weekdagAfkorting}</div>
+                <div class="day-number">${dagNummer}</div>
+            `;
+            
+            volgendeWeekContainer.appendChild(dayZone);
         }
     }
 
@@ -11266,14 +11319,60 @@ class Taakbeheer {
                     const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
                     
                     if (dragData.type === 'actie-taak') {
-                        const targetDate = zone.dataset.target;
-                        await this.handleActiesFloatingDrop(dragData, targetDate);
+                        const dropType = zone.dataset.type;
+                        const target = zone.dataset.target;
+                        
+                        if (dropType === 'planning') {
+                            // Week dag - plan voor dagelijkse planning
+                            await this.handleActiesFloatingDrop(dragData, target);
+                        } else if (dropType === 'list') {
+                            // Lijst - verplaats naar lijst
+                            await this.handleActiesFloatingListDrop(dragData, target);
+                        }
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
                     toast.error('Fout bij verplaatsen van taak');
                 }
             });
+        });
+    }
+
+    async handleActiesFloatingListDrop(dragData, targetList) {
+        const { taakId } = dragData;
+        
+        await loading.withLoading(async () => {
+            try {
+                // Verplaats de taak naar de gespecificeerde lijst
+                const response = await fetch(`/api/taak/${taakId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        lijst: targetList
+                    })
+                });
+
+                if (response.ok) {
+                    // Remove from acties list DOM
+                    const sourceItem = document.querySelector(`[data-id="${taakId}"]`);
+                    if (sourceItem) {
+                        sourceItem.remove();
+                    }
+                    
+                    // Update local taken array
+                    this.taken = this.taken.filter(t => t.id !== taakId);
+                    
+                    const targetName = this.getListDisplayName(targetList);
+                    toast.success(`Taak verplaatst naar ${targetName}`);
+                } else {
+                    toast.error('Fout bij verplaatsen naar lijst');
+                }
+            } catch (error) {
+                console.error('Error moving task to list:', error);
+                toast.error('Fout bij verplaatsen naar lijst');
+            }
         });
     }
 
