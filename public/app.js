@@ -11299,6 +11299,15 @@ class Taakbeheer {
         }
     }
 
+    hideActiesFloatingPanelImmediately() {
+        const panel = document.getElementById('actiesFloatingPanel');
+        if (panel) {
+            // Onmiddellijk verbergen zonder animatie (voor drop events)
+            panel.classList.remove('active');
+            panel.style.display = 'none';
+        }
+    }
+
     setupActiesFloatingDropZones() {
         const dropZones = document.querySelectorAll('#actiesFloatingPanel .drop-zone-item');
         
@@ -11368,12 +11377,19 @@ class Taakbeheer {
                     
                     const targetName = this.getListDisplayName(targetList);
                     toast.success(`Taak verplaatst naar ${targetName}`);
+                    
+                    // Verberg overlay onmiddellijk zonder animatie
+                    this.hideActiesFloatingPanelImmediately();
                 } else {
                     toast.error('Fout bij verplaatsen naar lijst');
+                    // Ook bij fout: verberg overlay onmiddellijk
+                    this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error moving task to list:', error);
                 toast.error('Fout bij verplaatsen naar lijst');
+                // Ook bij exception: verberg overlay onmiddellijk
+                this.hideActiesFloatingPanelImmediately();
             }
         });
     }
@@ -11444,16 +11460,23 @@ class Taakbeheer {
                     
                     toast.success(`Taak gepland voor ${dagNaam}`);
                     
+                    // Verberg overlay onmiddellijk zonder animatie
+                    this.hideActiesFloatingPanelImmediately();
+                    
                     // Als we in dagelijkse planning zijn, refresh de view
                     if (this.huidigeLijst === 'dagelijkse-planning') {
                         await this.laadDagelijksePlanning();
                     }
                 } else {
                     toast.error('Fout bij updaten van datum');
+                    // Ook bij fout: verberg overlay onmiddellijk
+                    this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error updating task date:', error);
                 toast.error('Fout bij updaten van datum');
+                // Ook bij exception: verberg overlay onmiddellijk
+                this.hideActiesFloatingPanelImmediately();
             }
         }, {
             operationId: 'update-datum',
