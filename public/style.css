@@ -8871,3 +8871,15 @@ body.dagkalender-focus-active {
     }
 }
 
+/* ===== DRAG & DROP CURSORS ===== */
+
+/* Drag cursor voor draggable taken */
+.taak-item[draggable="true"] {
+    cursor: grab;
+    user-select: none;
+}
+
+.taak-item[draggable="true"]:active {
+    cursor: grabbing;
+}
+

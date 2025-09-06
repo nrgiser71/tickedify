@@ -11488,8 +11488,12 @@ class Taakbeheer {
     }
 
     setupActiesDragFunctionality() {
+        console.log('🔧 DEBUG: setupActiesDragFunctionality aangeroepen');
         const actiesLijst = document.getElementById('acties-lijst');
-        if (!actiesLijst) return;
+        if (!actiesLijst) {
+            console.error('❌ DEBUG: acties-lijst element niet gevonden');
+            return;
+        }
 
         // Initialize drag state tracking
         this.isDragging = false;
@@ -11497,12 +11501,21 @@ class Taakbeheer {
 
         // Voeg draggable toe aan alle taak items in acties lijst
         const taakItems = actiesLijst.querySelectorAll('.taak-item');
-        taakItems.forEach(item => {
+        console.log(`🔧 DEBUG: ${taakItems.length} taak items gevonden voor drag setup`);
+        
+        taakItems.forEach((item, index) => {
             // Maak item draggable
             item.draggable = true;
             item.setAttribute('draggable', 'true');
+            console.log(`🔧 DEBUG: Taak item ${index + 1} draggable gemaakt:`, item.dataset.id);
+            console.log(`🔧 DEBUG: Item HTML structuur:`, item.innerHTML.substring(0, 200) + '...');
+            console.log(`🔧 DEBUG: Item draggable attribute:`, item.getAttribute('draggable'));
+            console.log(`🔧 DEBUG: Item draggable property:`, item.draggable);
             
             item.addEventListener('dragstart', (e) => {
+                console.log('🚀 DEBUG: DRAGSTART event getriggerd voor taak:', item.dataset.id);
+                console.log('🚀 DEBUG: Event target:', e.target);
+                console.log('🚀 DEBUG: Event currentTarget:', e.currentTarget);
                 const taakId = item.dataset.id;
                 const taakTekst = item.querySelector('.taak-titel').textContent;
                 
@@ -11562,6 +11575,8 @@ class Taakbeheer {
             });
             
             item.addEventListener('dragend', (e) => {
+                console.log('🏁 DEBUG: DRAGEND event getriggerd voor taak:', item.dataset.id);
+                
                 // Reset visual feedback
                 item.style.opacity = '1';
                 
