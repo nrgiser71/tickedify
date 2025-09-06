@@ -11110,7 +11110,7 @@ class Taakbeheer {
     }
 
     setupFloatingDropZones() {
-        const dropZones = document.querySelectorAll('.drop-zone-item');
+        const dropZones = document.querySelectorAll('#floatingDropPanel .drop-zone-item');
         
         dropZones.forEach(zone => {
             zone.addEventListener('dragover', (e) => {
