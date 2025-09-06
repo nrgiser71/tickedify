@@ -7965,6 +7965,195 @@ button:focus {
     }
 }
 
+/* ===== ACTIES DRAG & DROP OVERLAY ===== */
+.acties-drag-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.acties-drag-overlay.active {
+    opacity: 1;
+}
+
+.acties-drop-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 2px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    min-width: 650px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.acties-drag-overlay.active .acties-drop-panel {
+    transform: scale(1) translateY(0);
+}
+
+.acties-drop-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.drop-section {
+    background: var(--macos-bg-secondary);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--macos-gray-5);
+}
+
+.drop-section h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drop-zones-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.drop-zones-row.week-days {
+    justify-content: space-between;
+}
+
+/* Week day drop zones styling */
+.week-day-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: var(--macos-bg-primary);
+    border: 2px dashed var(--macos-gray-4);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 70px;
+    text-align: center;
+}
+
+.week-day-zone:hover {
+    background: rgba(0, 122, 255, 0.05);
+    border-color: var(--macos-blue);
+    transform: translateY(-1px);
+}
+
+.week-day-zone.drag-over {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: var(--macos-blue);
+    border-style: solid;
+    transform: scale(1.05) translateY(-2px);
+}
+
+.week-day-zone .day-abbr {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--macos-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.week-day-zone .day-number {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    line-height: 1;
+}
+
+.week-day-zone.drag-over .day-abbr,
+.week-day-zone.drag-over .day-number {
+    color: var(--macos-blue);
+}
+
+/* Uitgesteld section styling */
+.uitgesteld-section .drop-zones-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+    .acties-drop-panel {
+        min-width: 90vw;
+        max-width: 90vw;
+        margin: 20px;
+        padding: 20px;
+    }
+    
+    .acties-drop-grid {
+        gap: 20px;
+    }
+    
+    .drop-section {
+        padding: 15px;
+    }
+    
+    .week-day-zone {
+        min-width: 60px;
+        padding: 10px;
+    }
+    
+    .week-day-zone .day-number {
+        font-size: 18px;
+    }
+    
+    .uitgesteld-section .drop-zones-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .acties-drop-panel {
+        min-width: 95vw;
+        max-width: 95vw;
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .drop-zones-row.week-days {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    
+    .week-day-zone {
+        min-width: auto;
+        padding: 8px 4px;
+    }
+    
+    .week-day-zone .day-number {
+        font-size: 16px;
+    }
+    
+    .week-day-zone .day-abbr {
+        font-size: 10px;
+    }
+}
+
 /* ===== DAGKALENDER FOCUS MODUS ===== */
 
 /* Fullscreen dagkalender styling */

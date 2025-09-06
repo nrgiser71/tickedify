@@ -873,6 +873,72 @@
         </div>
     </div>
 
+    <!-- Acties Drag & Drop Overlay -->
+    <div class="acties-drag-overlay" id="actiesDragOverlay" style="display: none;">
+        <div class="acties-drop-panel">
+            <div class="drop-panel-header">
+                <span>Sleep hier naartoe:</span>
+            </div>
+            
+            <!-- Grid layout voor alle drop zones -->
+            <div class="acties-drop-grid">
+                <!-- Uitgesteld lijsten sectie -->
+                <div class="drop-section uitgesteld-section">
+                    <h4>Uitgesteld</h4>
+                    <div class="drop-zones-row">
+                        <div class="drop-zone-item" data-target="uitgesteld-wekelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Wekelijks</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-maandelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Maandelijks</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-3maandelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>3-maandelijks</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-6maandelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>6-maandelijks</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-jaarlijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Jaarlijks</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Opvolgen sectie -->
+                <div class="drop-section opvolgen-section">
+                    <h4>Lijst</h4>
+                    <div class="drop-zones-row">
+                        <div class="drop-zone-item" data-target="opvolgen">
+                            <i class="fas fa-clock"></i>
+                            <span>Opvolgen</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Huidige week sectie -->
+                <div class="drop-section week-section">
+                    <h4>Deze week</h4>
+                    <div class="drop-zones-row week-days" id="huidigeWeekZones">
+                        <!-- Week dagen worden dynamisch gegenereerd -->
+                    </div>
+                </div>
+                
+                <!-- Volgende week sectie -->
+                <div class="drop-section week-section">
+                    <h4>Volgende week</h4>
+                    <div class="drop-zones-row week-days" id="volgendeWeekZones">
+                        <!-- Week dagen worden dynamisch gegenereerd -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
