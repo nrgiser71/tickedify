@@ -11396,44 +11396,69 @@ class Taakbeheer {
 
     async handleActiesFloatingDrop(dragData, targetDate) {
         const { taakId } = dragData;
+        const taak = this.taken.find(t => t.id === taakId);
+        if (!taak) return;
         
         await loading.withLoading(async () => {
             try {
-                // Plan de taak voor de specifieke datum (dagelijkse planning)
-                const response = await fetch('/api/dagelijkse-planning', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        datum: targetDate,
-                        uur: 9, // Default 9:00 AM
-                        type: 'taak',
-                        duurMinuten: 60, // Default 1 uur
-                        actieId: taakId
-                    })
+                // Update de taak met nieuwe verschijndatum (zoals stelDatumIn functie)
+                const updateData = {
+                    lijst: this.huidigeLijst,
+                    tekst: taak.tekst,
+                    projectId: taak.projectId,
+                    contextId: taak.contextId,
+                    verschijndatum: targetDate,
+                    duur: taak.duur,
+                    opmerkingen: taak.opmerkingen,
+                    type: taak.type
+                };
+
+                // Voeg herhaling velden toe als ze bestaan
+                if (taak.herhalingType !== undefined) {
+                    updateData.herhalingType = taak.herhalingType;
+                }
+                if (taak.herhalingActief !== undefined) {
+                    updateData.herhalingActief = taak.herhalingActief;
+                }
+
+                const response = await fetch(`/api/taak/${taakId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
                 });
 
                 if (response.ok) {
-                    // Remove from acties list DOM
-                    const sourceItem = document.querySelector(`[data-id="${taakId}"]`);
-                    if (sourceItem) {
-                        sourceItem.remove();
-                    }
+                    // Update lokale taak
+                    taak.verschijndatum = targetDate;
                     
-                    toast.success(`Taak gepland voor ${targetDate}`);
+                    // Herlaad de lijst met preserved scroll position
+                    await this.preserveActionsFilters(() => this.laadHuidigeLijst());
+                    
+                    // Format datum voor weergave
+                    const datumObj = new Date(targetDate);
+                    const dagNaam = datumObj.toLocaleDateString('nl-NL', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long' 
+                    });
+                    
+                    toast.success(`Taak gepland voor ${dagNaam}`);
                     
                     // Als we in dagelijkse planning zijn, refresh de view
                     if (this.huidigeLijst === 'dagelijkse-planning') {
                         await this.laadDagelijksePlanning();
                     }
                 } else {
-                    toast.error('Fout bij plannen van taak');
+                    toast.error('Fout bij updaten van datum');
                 }
             } catch (error) {
-                console.error('Error planning task:', error);
-                toast.error('Fout bij plannen van taak');
+                console.error('Error updating task date:', error);
+                toast.error('Fout bij updaten van datum');
             }
+        }, {
+            operationId: 'update-datum',
+            showGlobal: true,
+            message: 'Datum wordt bijgewerkt...'
         });
     }
 
