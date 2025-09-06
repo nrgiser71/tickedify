@@ -7908,7 +7908,7 @@ button:focus {
 }
 
 .floating-drop-panel.active {
-    top: 80px;
+    top: 30px;
 }
 
 .drop-panel-content {
@@ -8939,7 +8939,7 @@ body.dagkalender-focus-active {
 }
 
 .acties-floating-panel.active {
-    top: 120px; /* Simple slide into view */
+    max-height: calc(100vh - 80px);
 }
 
 .acties-floating-panel .drop-panel-content h4 {
