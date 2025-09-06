@@ -882,7 +882,23 @@
             
             <!-- Grid layout voor alle drop zones -->
             <div class="acties-drop-grid">
-                <!-- Uitgesteld lijsten sectie -->
+                <!-- Huidige week sectie - bovenaan -->
+                <div class="drop-section week-section">
+                    <h4>Deze week</h4>
+                    <div class="drop-zones-row week-days" id="huidigeWeekZones">
+                        <!-- Week dagen worden dynamisch gegenereerd -->
+                    </div>
+                </div>
+                
+                <!-- Volgende week sectie - tweede -->
+                <div class="drop-section week-section">
+                    <h4>Volgende week</h4>
+                    <div class="drop-zones-row week-days" id="volgendeWeekZones">
+                        <!-- Week dagen worden dynamisch gegenereerd -->
+                    </div>
+                </div>
+                
+                <!-- Uitgesteld lijsten sectie - derde -->
                 <div class="drop-section uitgesteld-section">
                     <h4>Uitgesteld</h4>
                     <div class="drop-zones-row">
@@ -909,7 +925,7 @@
                     </div>
                 </div>
                 
-                <!-- Opvolgen sectie -->
+                <!-- Opvolgen sectie - onderaan -->
                 <div class="drop-section opvolgen-section">
                     <h4>Lijst</h4>
                     <div class="drop-zones-row">
@@ -917,22 +933,6 @@
                             <i class="fas fa-clock"></i>
                             <span>Opvolgen</span>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Huidige week sectie -->
-                <div class="drop-section week-section">
-                    <h4>Deze week</h4>
-                    <div class="drop-zones-row week-days" id="huidigeWeekZones">
-                        <!-- Week dagen worden dynamisch gegenereerd -->
-                    </div>
-                </div>
-                
-                <!-- Volgende week sectie -->
-                <div class="drop-section week-section">
-                    <h4>Volgende week</h4>
-                    <div class="drop-zones-row week-days" id="volgendeWeekZones">
-                        <!-- Week dagen worden dynamisch gegenereerd -->
                     </div>
                 </div>
             </div>

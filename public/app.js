@@ -11500,6 +11500,7 @@ class Taakbeheer {
         taakItems.forEach(item => {
             // Maak item draggable
             item.draggable = true;
+            item.setAttribute('draggable', 'true');
             
             item.addEventListener('dragstart', (e) => {
                 const taakId = item.dataset.id;
