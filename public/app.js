@@ -11521,11 +11521,44 @@ class Taakbeheer {
                 e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
                 e.dataTransfer.effectAllowed = 'move';
                 
+                // Create custom drag image
+                const dragImage = document.createElement('div');
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.left = '0px';
+                dragImage.style.width = '200px';
+                dragImage.style.height = '40px';
+                dragImage.style.background = 'rgba(0, 122, 255, 0.8)';
+                dragImage.style.color = 'white';
+                dragImage.style.padding = '8px 12px';
+                dragImage.style.borderRadius = '8px';
+                dragImage.style.fontSize = '14px';
+                dragImage.style.fontWeight = '500';
+                dragImage.style.boxShadow = '0 4px 12px rgba(0, 122, 255, 0.3)';
+                dragImage.style.backdropFilter = 'blur(8px)';
+                dragImage.style.display = 'flex';
+                dragImage.style.alignItems = 'center';
+                dragImage.style.gap = '8px';
+                
+                // Truncate long task names
+                const truncatedText = taakTekst.length > 20 ? taakTekst.substring(0, 20) + '...' : taakTekst;
+                dragImage.textContent = `📋 ${truncatedText}`;
+                
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 50, 20);
+                
                 // Visual feedback
                 item.style.opacity = '0.5';
                 
                 // Toon acties drag overlay
                 this.showActiesDragOverlay();
+                
+                // Cleanup drag image after drag starts
+                setTimeout(() => {
+                    if (dragImage.parentNode) {
+                        document.body.removeChild(dragImage);
+                    }
+                }, 0);
             });
             
             item.addEventListener('dragend', (e) => {
