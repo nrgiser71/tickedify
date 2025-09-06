@@ -3492,7 +3492,7 @@ class Taakbeheer {
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
-                <div class="taak-content" data-taak-id="${taak.id}" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
+                <div class="taak-content" data-taak-id="${taak.id}" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
                     <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
                     ${extraInfoHtml}
                 </div>
@@ -6294,6 +6294,46 @@ class Taakbeheer {
                     menu.style.display = 'none';
                 });
             }
+        });
+
+        // Setup drag & drop voor acties
+        this.setupActiesDragAndDrop();
+    }
+
+    setupActiesDragAndDrop() {
+        // Setup drag events voor alle drag-handles in acties lijst
+        document.querySelectorAll('#acties-lijst .drag-handle').forEach(handle => {
+            handle.addEventListener('dragstart', (e) => {
+                const taakItem = handle.closest('.taak-item');
+                const taakId = taakItem.dataset.id;
+                const taak = this.taken.find(t => t.id === taakId);
+                
+                if (taak) {
+                    const dragData = {
+                        type: 'actie',
+                        actieId: taakId,
+                        duurMinuten: parseInt(taak.duur) || 30,
+                        taakTekst: taak.tekst
+                    };
+                    
+                    e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+                    e.dataTransfer.effectAllowed = 'move';
+                    
+                    // Store globally for access during dragover events
+                    this.currentDragData = dragData;
+                    
+                    // Visual feedback
+                    taakItem.style.opacity = '0.5';
+                }
+            });
+            
+            handle.addEventListener('dragend', (e) => {
+                const taakItem = handle.closest('.taak-item');
+                taakItem.style.opacity = '1';
+                
+                // Clear global drag data
+                this.currentDragData = null;
+            });
         });
     }
 
