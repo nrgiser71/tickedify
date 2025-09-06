@@ -14538,14 +14538,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('DEBUG: Showing acties floating panel');
             if (window.app && window.app.showActiesFloatingPanel) {
                 window.app.showActiesFloatingPanel();
-                
-                // Auto-hide na 5 seconden
-                setTimeout(() => {
-                    console.log('DEBUG: Hiding acties floating panel');
-                    if (window.app && window.app.hideActiesFloatingPanel) {
-                        window.app.hideActiesFloatingPanel();
-                    }
-                }, 5000);
             } else {
                 console.error('DEBUG: app.showActiesFloatingPanel not available');
             }
