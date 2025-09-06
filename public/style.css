@@ -7939,6 +7939,7 @@ button:focus {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
+    pointer-events: auto; /* Zorg dat drop zones interactief blijven */
 }
 
 .drop-zone-item:hover {
@@ -8010,6 +8011,7 @@ button:focus {
     justify-content: center;
     opacity: 0;
     transition: all 0.3s ease;
+    pointer-events: none; /* KRITIEK: laat mouse events doorvallen naar drag handles */
 }
 
 .acties-drag-overlay.active {
@@ -8030,6 +8032,7 @@ button:focus {
     overflow-y: auto;
     transform: scale(0.9) translateY(20px);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto; /* Drop panel zelf blijft interactief */
 }
 
 .acties-drag-overlay.active .acties-drop-panel {
@@ -8082,6 +8085,7 @@ button:focus {
     transition: all 0.2s ease;
     min-width: 55px;
     text-align: center;
+    pointer-events: auto; /* Week dag zones blijven klikbaar voor drops */
 }
 
 .week-day-zone:hover {
