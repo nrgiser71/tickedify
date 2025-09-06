@@ -3486,7 +3486,7 @@ class Taakbeheer {
                 `<input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">`;
 
             li.innerHTML = `
-                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen" style="background: red; border: 2px solid blue;">⋮⋮</div>
+                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">⋮⋮</div>
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
@@ -11150,7 +11150,9 @@ class Taakbeheer {
     // ===== ACTIES DRAG & DROP SYSTEEM ===== 
     
     showActiesDragOverlay() {
+        console.log('🎯 DEBUG: showActiesDragOverlay() gestart');
         const overlay = document.getElementById('actiesDragOverlay');
+        console.log('🎯 DEBUG: actiesDragOverlay element:', overlay);
         if (overlay) {
             // Genereer week dagen voor overlay
             this.generateWeekDaysForOverlay();
@@ -11529,11 +11531,13 @@ class Taakbeheer {
                 document.body.appendChild(dragImage);
                 e.dataTransfer.setDragImage(dragImage, 50, 20);
                 
-                // Visual feedback
-                item.style.opacity = '0.5';
-                
                 // Toon acties drag overlay
+                console.log('🎯 DEBUG: Gaat showActiesDragOverlay() aanroepen...');
                 this.showActiesDragOverlay();
+                console.log('🎯 DEBUG: showActiesDragOverlay() voltooid');
+                
+                // Visual feedback
+                taakItem.style.opacity = '0.5';
                 
                 // Cleanup drag image after drag starts
                 setTimeout(() => {
