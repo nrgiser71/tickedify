@@ -11252,8 +11252,8 @@ class Taakbeheer {
             dayZone.dataset.target = isoString;
             dayZone.dataset.type = 'planning';
             dayZone.innerHTML = `
-                <div class="day-abbr">${weekdagAfkorting}</div>
-                <div class="day-number">${dagNummer}</div>
+                <div class="day-name">${weekdagAfkorting}</div>
+                <div class="day-date">${dagNummer}</div>
             `;
             
             huidigeWeekContainer.appendChild(dayZone);
@@ -11275,8 +11275,8 @@ class Taakbeheer {
             dayZone.dataset.target = isoString;
             dayZone.dataset.type = 'planning';
             dayZone.innerHTML = `
-                <div class="day-abbr">${weekdagAfkorting}</div>
-                <div class="day-number">${dagNummer}</div>
+                <div class="day-name">${weekdagAfkorting}</div>
+                <div class="day-date">${dagNummer}</div>
             `;
             
             volgendeWeekContainer.appendChild(dayZone);
