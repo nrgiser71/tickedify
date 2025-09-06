@@ -1230,6 +1230,35 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     box-shadow: var(--macos-shadow-medium);
 }
 
+.drag-handle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: var(--macos-gray-3);
+    font-size: 14px;
+    border-radius: var(--macos-radius-small);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.drag-handle:hover {
+    background: var(--macos-gray-5);
+    color: var(--macos-blue);
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-dots {
+    line-height: 1;
+    user-select: none;
+}
+
 .taak-checkbox {
     display: flex;
     align-items: center;

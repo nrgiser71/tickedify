@@ -3486,6 +3486,9 @@ class Taakbeheer {
                 `<input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">`;
 
             li.innerHTML = `
+                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">
+                    <div class="drag-dots">⋮⋮</div>
+                </div>
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
@@ -11155,17 +11158,21 @@ class Taakbeheer {
         const actiesLijst = document.getElementById('acties-lijst');
         if (!actiesLijst) return;
 
-        const taakItems = actiesLijst.querySelectorAll('.taak-item');
+        // Zoek naar drag handles in plaats van hele li elementen
+        const dragHandles = actiesLijst.querySelectorAll('.drag-handle');
         
-        taakItems.forEach((li) => {
-            // Maak hele li element draggable (exact zoals uitgesteld systeem)
-            li.draggable = true;
+        dragHandles.forEach((handle) => {
+            // Drag handle is al draggable via HTML
             
-            li.addEventListener('dragstart', (e) => {
+            handle.addEventListener('dragstart', (e) => {
+                // Vind parent li element voor taak data
+                const li = handle.closest('.taak-item');
+                if (!li) return;
+                
                 const taakId = li.dataset.id;
                 const taakTekst = li.querySelector('.taak-titel').textContent;
                 
-                // Stel drag data in (exact zoals uitgesteld)
+                // Stel drag data in
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     type: 'actie-taak',
                     taakId: taakId,
@@ -11173,16 +11180,22 @@ class Taakbeheer {
                     bronLijst: 'acties'
                 }));
                 e.dataTransfer.effectAllowed = 'move';
+                
+                // Visual feedback op parent li
                 li.style.opacity = '0.5';
                 
-                // Toon floating drop panel (exact zoals uitgesteld)
+                // Toon overlay
                 this.showActiesDragOverlay();
             });
             
-            li.addEventListener('dragend', (e) => {
-                li.style.opacity = '1';
+            handle.addEventListener('dragend', (e) => {
+                // Vind parent li element
+                const li = handle.closest('.taak-item');
+                if (li) {
+                    li.style.opacity = '1';
+                }
                 
-                // Verberg floating drop panel (exact zoals uitgesteld)
+                // Verberg overlay
                 this.hideActiesDragOverlay();
             });
         });
