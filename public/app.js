@@ -11516,6 +11516,10 @@ class Taakbeheer {
                 console.log('🚀 DEBUG: DRAGSTART event getriggerd voor taak:', item.dataset.id);
                 console.log('🚀 DEBUG: Event target:', e.target);
                 console.log('🚀 DEBUG: Event currentTarget:', e.currentTarget);
+                
+                // KRITIEK: Voeg dragging class toe om child elements te disablen
+                item.classList.add('dragging');
+                
                 const taakId = item.dataset.id;
                 const taakTekst = item.querySelector('.taak-titel').textContent;
                 
@@ -11576,6 +11580,9 @@ class Taakbeheer {
             
             item.addEventListener('dragend', (e) => {
                 console.log('🏁 DEBUG: DRAGEND event getriggerd voor taak:', item.dataset.id);
+                
+                // KRITIEK: Verwijder dragging class om child elements weer in te schakelen
+                item.classList.remove('dragging');
                 
                 // Reset visual feedback
                 item.style.opacity = '1';

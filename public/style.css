@@ -8883,3 +8883,22 @@ body.dagkalender-focus-active {
     cursor: grabbing;
 }
 
+/* KRITIEK: Child elements mogen geen mouse events onderscheppen tijdens drag */
+.taak-item[draggable="true"] * {
+    pointer-events: none !important;
+}
+
+/* Alleen tijdens drag operatie zijn child elements disabled */
+/* Normaal kunnen buttons en checkboxes gewoon gebruikt worden */
+.taak-item:not(.dragging) .taak-acties button,
+.taak-item:not(.dragging) .taak-checkbox input,
+.taak-item:not(.dragging) .taak-titel {
+    pointer-events: auto !important;
+}
+
+/* Extra: zorg dat de titel niet interfereert met slepen */
+.taak-item[draggable="true"] .taak-titel {
+    cursor: inherit;
+    pointer-events: none !important;
+}
+
