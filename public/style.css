@@ -8921,16 +8921,17 @@ body.dagkalender-focus-active {
 /* Acties floating panel styling */
 .acties-floating-panel {
     position: fixed;
-    top: 80px;
-    right: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+    padding: 25px;
     z-index: 10000;
-    min-width: 350px;
-    max-width: 400px;
+    min-width: 500px;
+    max-width: 600px;
     border: 1px solid rgba(0, 0, 0, 0.1);
     max-height: calc(100vh - 120px);
     overflow-y: auto;
@@ -8959,12 +8960,12 @@ body.dagkalender-focus-active {
 .acties-floating-panel .week-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 6px;
     margin-bottom: 10px;
 }
 
 .acties-floating-panel .week-day-zone {
-    padding: 8px 4px;
+    padding: 10px 6px;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     background: #f8f9fa;
@@ -8972,8 +8973,8 @@ body.dagkalender-focus-active {
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 11px;
-    min-height: 40px;
+    font-size: 12px;
+    min-height: 45px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -9028,5 +9029,11 @@ body.dagkalender-focus-active {
     border-color: var(--macos-blue);
     background: rgba(0, 122, 255, 0.1);
     transform: translateY(-1px);
+}
+
+/* List separator voor extra ruimte tussen Opvolgen en Uitgesteld */
+.acties-floating-panel .list-separator {
+    height: 15px;
+    margin: 10px 0;
 }
 
