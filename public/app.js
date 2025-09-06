@@ -3228,7 +3228,9 @@ class Taakbeheer {
 
         lijst.innerHTML = '';
 
-        this.taken.forEach(taak => {
+        console.log('🚨 DEBUG: Gaat HTML genereren voor', this.taken.length, 'taken');
+        this.taken.forEach((taak, index) => {
+            console.log(`🚨 DEBUG: Genereer HTML voor taak ${index + 1}:`, taak.tekst);
             const li = document.createElement('li');
             li.className = 'taak-item actie-item';
             li.dataset.id = taak.id;
@@ -3457,8 +3459,13 @@ class Taakbeheer {
     }
 
     renderActiesLijst() {
+        console.log('🚨 DEBUG: renderActiesLijst() wordt aangeroepen!');
         const lijst = document.getElementById('acties-lijst');
-        if (!lijst) return;
+        if (!lijst) {
+            console.error('🚨 DEBUG: acties-lijst element NIET GEVONDEN!');
+            return;
+        }
+        console.log('🚨 DEBUG: acties-lijst element gevonden, gaat HTML genereren...');
 
         lijst.innerHTML = '';
 
