@@ -11400,17 +11400,17 @@ class Taakbeheer {
         await loading.withLoading(async () => {
             try {
                 // Plan de taak voor de specifieke datum (dagelijkse planning)
-                const response = await fetch('/api/dagelijkse-planning/add', {
+                const response = await fetch('/api/dagelijkse-planning', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        type: 'actie',
-                        actie_id: taakId,
                         datum: targetDate,
                         uur: 9, // Default 9:00 AM
-                        duur: 60 // Default 1 uur
+                        type: 'taak',
+                        duurMinuten: 60, // Default 1 uur
+                        actieId: taakId
                     })
                 });
 
