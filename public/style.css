@@ -8871,34 +8871,14 @@ body.dagkalender-focus-active {
     }
 }
 
-/* ===== DRAG & DROP HANDLES ===== */
+/* ===== SIMPLE DRAG & DROP ===== */
 
-/* Drag handle styling - kleine zone voor slepen */
-.drag-handle {
-    width: 20px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Draggable taak items - zoals uitgesteld systeem */
+.taak-item[draggable="true"] {
     cursor: grab;
-    color: #8E8E93;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    user-select: none;
-    flex-shrink: 0;
-    margin-right: 8px;
 }
 
-.drag-handle:hover {
-    color: #007AFF;
-    background: rgba(0, 122, 255, 0.1);
-    border-radius: 4px;
-}
-
-.drag-handle:active,
-.drag-handle.dragging {
+.taak-item[draggable="true"]:active {
     cursor: grabbing;
-    color: #007AFF;
-    background: rgba(0, 122, 255, 0.2);
 }
 

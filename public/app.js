@@ -3486,7 +3486,6 @@ class Taakbeheer {
                 `<input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">`;
 
             li.innerHTML = `
-                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">⋮⋮</div>
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
@@ -11149,28 +11148,57 @@ class Taakbeheer {
 
     // ===== ACTIES DRAG & DROP SYSTEEM ===== 
     
-    showActiesDragOverlay() {
-        console.log('🎯 DEBUG: showActiesDragOverlay() gestart');
-        const overlay = document.getElementById('actiesDragOverlay');
-        console.log('🎯 DEBUG: actiesDragOverlay element:', overlay);
-        if (overlay) {
-            // Genereer week dagen voor overlay
-            this.generateWeekDaysForOverlay();
+    // Clean slate: alle complexe acties drag functies verwijderd
+    // Nu implementeren we exact dezelfde eenvoudige patterns als het werkende uitgesteld systeem
+
+    setupActiesDragFunctionality() {
+        const actiesLijst = document.getElementById('acties-lijst');
+        if (!actiesLijst) return;
+
+        const taakItems = actiesLijst.querySelectorAll('.taak-item');
+        
+        taakItems.forEach((li) => {
+            // Maak hele li element draggable (exact zoals uitgesteld systeem)
+            li.draggable = true;
             
-            // Toon overlay met animatie
-            overlay.style.display = 'flex';
-            requestAnimationFrame(() => {
-                overlay.classList.add('active');
+            li.addEventListener('dragstart', (e) => {
+                const taakId = li.dataset.id;
+                const taakTekst = li.querySelector('.taak-titel').textContent;
+                
+                // Stel drag data in (exact zoals uitgesteld)
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    type: 'actie-taak',
+                    taakId: taakId,
+                    taakTekst: taakTekst,
+                    bronLijst: 'acties'
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+                li.style.opacity = '0.5';
+                
+                // Toon floating drop panel (exact zoals uitgesteld)
+                this.showActiesDragOverlay();
             });
             
-            // Setup drop zones als nog niet gedaan
+            li.addEventListener('dragend', (e) => {
+                li.style.opacity = '1';
+                
+                // Verberg floating drop panel (exact zoals uitgesteld)
+                this.hideActiesDragOverlay();
+            });
+        });
+    }
+
+    showActiesDragOverlay() {
+        const overlay = document.getElementById('actiesDragOverlay');
+        if (overlay) {
+            overlay.classList.add('active');
+            overlay.style.display = 'block';
+            
+            // Setup drop zones if not already done (exact zoals uitgesteld)
             if (!this.actiesDropZonesSetup) {
                 this.setupActiesDropZones();
                 this.actiesDropZonesSetup = true;
             }
-            
-            // Setup ESC key handler en click outside handler
-            this.setupOverlayCloseHandlers();
         }
     }
 
@@ -11178,266 +11206,61 @@ class Taakbeheer {
         const overlay = document.getElementById('actiesDragOverlay');
         if (overlay) {
             overlay.classList.remove('active');
-            // Verberg na animatie
+            // Delay hiding to allow for smooth animation (exact zoals uitgesteld)
             setTimeout(() => {
                 if (!overlay.classList.contains('active')) {
                     overlay.style.display = 'none';
                 }
             }, 300);
-            
-            // Remove event listeners
-            this.removeOverlayCloseHandlers();
-        }
-    }
-
-    setupOverlayCloseHandlers() {
-        // ESC key handler
-        this.escKeyHandler = (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                this.hideActiesDragOverlay();
-                // Reset drag state
-                this.isDragging = false;
-                this.dragStartTime = null;
-            }
-        };
-
-        // Click outside handler
-        this.overlayClickHandler = (e) => {
-            const overlay = document.getElementById('actiesDragOverlay');
-            const dropPanel = overlay?.querySelector('.acties-drop-panel');
-            
-            // Close if clicking outside the drop panel
-            if (overlay && dropPanel && !dropPanel.contains(e.target)) {
-                this.hideActiesDragOverlay();
-                // Reset drag state
-                this.isDragging = false;
-                this.dragStartTime = null;
-            }
-        };
-
-        // Add event listeners
-        document.addEventListener('keydown', this.escKeyHandler);
-        
-        const overlay = document.getElementById('actiesDragOverlay');
-        if (overlay) {
-            overlay.addEventListener('click', this.overlayClickHandler);
-        }
-    }
-
-    removeOverlayCloseHandlers() {
-        // Remove event listeners
-        if (this.escKeyHandler) {
-            document.removeEventListener('keydown', this.escKeyHandler);
-            this.escKeyHandler = null;
-        }
-        
-        if (this.overlayClickHandler) {
-            const overlay = document.getElementById('actiesDragOverlay');
-            if (overlay) {
-                overlay.removeEventListener('click', this.overlayClickHandler);
-            }
-            this.overlayClickHandler = null;
-        }
-    }
-
-    generateWeekDaysForOverlay() {
-        const huidigeWeekContainer = document.getElementById('huidigeWeekZones');
-        const volgendeWeekContainer = document.getElementById('volgendeWeekZones');
-        
-        if (!huidigeWeekContainer || !volgendeWeekContainer) return;
-        
-        // Nederlandse weekdag afkortingen
-        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
-        
-        // Bereken huidige week (maandag tot zondag)
-        const vandaag = new Date();
-        const huidigeWeekStart = new Date(vandaag);
-        huidigeWeekStart.setDate(vandaag.getDate() - vandaag.getDay() + 1); // Maandag van deze week
-        
-        // Bereken volgende week
-        const volgendeWeekStart = new Date(huidigeWeekStart);
-        volgendeWeekStart.setDate(huidigeWeekStart.getDate() + 7);
-        
-        // Genereer huidige week zones
-        huidigeWeekContainer.innerHTML = '';
-        for (let i = 0; i < 7; i++) {
-            const datum = new Date(huidigeWeekStart);
-            datum.setDate(huidigeWeekStart.getDate() + i);
-            
-            const weekdagIndex = datum.getDay();
-            const weekdagAfkorting = weekdagen[weekdagIndex];
-            const dagNummer = datum.getDate();
-            const isoString = datum.toISOString().split('T')[0];
-            
-            const dayZone = document.createElement('div');
-            dayZone.className = 'week-day-zone';
-            dayZone.dataset.datum = isoString;
-            dayZone.innerHTML = `
-                <div class="day-abbr">${weekdagAfkorting}</div>
-                <div class="day-number">${dagNummer}</div>
-            `;
-            
-            huidigeWeekContainer.appendChild(dayZone);
-        }
-        
-        // Genereer volgende week zones
-        volgendeWeekContainer.innerHTML = '';
-        for (let i = 0; i < 7; i++) {
-            const datum = new Date(volgendeWeekStart);
-            datum.setDate(volgendeWeekStart.getDate() + i);
-            
-            const weekdagIndex = datum.getDay();
-            const weekdagAfkorting = weekdagen[weekdagIndex];
-            const dagNummer = datum.getDate();
-            const isoString = datum.toISOString().split('T')[0];
-            
-            const dayZone = document.createElement('div');
-            dayZone.className = 'week-day-zone';
-            dayZone.dataset.datum = isoString;
-            dayZone.innerHTML = `
-                <div class="day-abbr">${weekdagAfkorting}</div>
-                <div class="day-number">${dagNummer}</div>
-            `;
-            
-            volgendeWeekContainer.appendChild(dayZone);
         }
     }
 
     setupActiesDropZones() {
-        const overlay = document.getElementById('actiesDragOverlay');
-        if (!overlay) return;
+        const dropZones = document.querySelectorAll('#actiesDragOverlay .drop-zone-item');
         
-        // Setup drop zones voor uitgesteld lijsten en opvolgen
-        const dropZones = overlay.querySelectorAll('.drop-zone-item');
         dropZones.forEach(zone => {
-            this.setupDropZoneEvents(zone);
-        });
-        
-        // Setup drop zones voor week dagen
-        const weekDayZones = overlay.querySelectorAll('.week-day-zone');
-        weekDayZones.forEach(zone => {
-            this.setupDropZoneEvents(zone, true);
-        });
-    }
-
-    setupDropZoneEvents(zone, isWeekDay = false) {
-        zone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            zone.classList.add('drag-over');
-        });
-        
-        zone.addEventListener('dragleave', (e) => {
-            // Alleen verwijderen als we echt de zone verlaten (niet naar child element)
-            if (!zone.contains(e.relatedTarget)) {
-                zone.classList.remove('drag-over');
-            }
-        });
-        
-        zone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            zone.classList.remove('drag-over');
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                zone.classList.add('drag-over');
+            });
             
-            try {
-                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+            zone.addEventListener('dragleave', (e) => {
+                if (!zone.contains(e.relatedTarget)) {
+                    zone.classList.remove('drag-over');
+                }
+            });
+            
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
                 
-                if (isWeekDay) {
-                    // Plan taak voor specifieke datum
-                    const datum = zone.dataset.datum;
-                    await this.handleActiesPlanningDrop(dragData, datum);
-                } else {
-                    // Verplaats naar lijst
+                try {
+                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
                     const targetList = zone.dataset.target;
-                    await this.handleActiesListDrop(dragData, targetList);
+                    
+                    // Verplaats taak naar doellijst (exact zoals uitgesteld)
+                    const response = await fetch(`/api/taak/${dragData.taakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lijst: targetList })
+                    });
+
+                    if (response.ok) {
+                        // Update UI
+                        this.taken = this.taken.filter(t => t.id !== dragData.taakId);
+                        this.renderActiesLijst();
+                        
+                        const targetName = this.getListDisplayName(targetList);
+                        toast.success(`Taak verplaatst naar ${targetName}`);
+                    }
+                } catch (error) {
+                    console.error('Drop error:', error);
+                    toast.error('Fout bij verplaatsen');
                 }
                 
-                // Verberg overlay
                 this.hideActiesDragOverlay();
-                
-            } catch (error) {
-                console.error('Error handling drop:', error);
-                toast.error('Fout bij verplaatsen van taak');
-            }
-        });
-    }
-
-    async handleActiesListDrop(dragData, targetList) {
-        const { taakId } = dragData;
-        
-        await loading.withLoading(async () => {
-            try {
-                const response = await fetch(`/api/taak/${taakId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        lijst: targetList
-                    })
-                });
-
-                if (response.ok) {
-                    // Verwijder uit acties lijst
-                    this.taken = this.taken.filter(t => t.id !== taakId);
-                    this.renderActiesLijst();
-                    
-                    const targetName = this.getListDisplayName(targetList);
-                    toast.success(`Taak verplaatst naar ${targetName}`);
-                } else {
-                    const error = await response.json();
-                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
-                }
-            } catch (error) {
-                console.error('Error moving task to list:', error);
-                toast.error('Fout bij verplaatsen van taak');
-            }
-        }, {
-            operationId: 'acties-list-drop',
-            showGlobal: true,
-            message: 'Taak verplaatsen...'
-        });
-    }
-
-    async handleActiesPlanningDrop(dragData, datum) {
-        const { taakId } = dragData;
-        
-        await loading.withLoading(async () => {
-            try {
-                // Voeg taak toe aan dagplanning
-                const response = await fetch('/api/dagelijkse-planning', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        taakId: taakId,
-                        datum: datum,
-                        tijd: '09:00',
-                        duur: 30,
-                        type: 'taak'
-                    })
-                });
-
-                if (response.ok) {
-                    // Verwijder uit acties lijst
-                    this.taken = this.taken.filter(t => t.id !== taakId);
-                    this.renderActiesLijst();
-                    
-                    const datumFormatted = new Date(datum).toLocaleDateString('nl-NL');
-                    toast.success(`Taak gepland voor ${datumFormatted}`);
-                } else {
-                    const error = await response.json();
-                    toast.error(`Fout bij plannen: ${error.error || 'Onbekende fout'}`);
-                }
-            } catch (error) {
-                console.error('Error planning task:', error);
-                toast.error('Fout bij plannen van taak');
-            }
-        }, {
-            operationId: 'acties-planning-drop',
-            showGlobal: true,
-            message: 'Taak plannen...'
+            });
         });
     }
 
@@ -11451,121 +11274,6 @@ class Taakbeheer {
             'uitgesteld-jaarlijks': 'Uitgesteld - Jaarlijks'
         };
         return names[lijst] || lijst;
-    }
-
-    setupActiesDragFunctionality() {
-        console.log('🔧 DEBUG: setupActiesDragFunctionality aangeroepen');
-        const actiesLijst = document.getElementById('acties-lijst');
-        if (!actiesLijst) {
-            console.error('❌ DEBUG: acties-lijst element niet gevonden');
-            return;
-        }
-
-        // Initialize drag state tracking
-        this.isDragging = false;
-        this.dragStartTime = null;
-
-        // Zoek alle drag handles in plaats van taak items
-        const dragHandles = actiesLijst.querySelectorAll('.drag-handle');
-        console.log(`🔧 DEBUG: ${dragHandles.length} drag handles gevonden voor drag setup`);
-        
-        dragHandles.forEach((handle, index) => {
-            const taakItem = handle.closest('.taak-item');
-            if (!taakItem) {
-                console.error(`❌ DEBUG: Drag handle ${index + 1} heeft geen parent taak-item`);
-                return;
-            }
-            
-            console.log(`🔧 DEBUG: Drag handle ${index + 1} setup voor taak:`, taakItem.dataset.id);
-            
-            handle.addEventListener('dragstart', (e) => {
-                console.log('🚀 DEBUG: DRAGSTART event getriggerd voor taak:', taakItem.dataset.id);
-                console.log('🚀 DEBUG: Event target:', e.target);
-                console.log('🚀 DEBUG: Event currentTarget:', e.currentTarget);
-                
-                // Voeg dragging class toe voor visual feedback
-                handle.classList.add('dragging');
-                taakItem.style.opacity = '0.5';
-                
-                const taakId = taakItem.dataset.id;
-                const taakTekst = taakItem.querySelector('.taak-titel').textContent;
-                
-                // Set drag state
-                this.isDragging = true;
-                this.dragStartTime = Date.now();
-                
-                // Stel drag data in
-                const dragData = {
-                    type: 'actie-taak',
-                    taakId: taakId,
-                    taakTekst: taakTekst,
-                    bronLijst: 'acties'
-                };
-                
-                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-                e.dataTransfer.effectAllowed = 'move';
-                
-                // Create custom drag image
-                const dragImage = document.createElement('div');
-                dragImage.style.position = 'absolute';
-                dragImage.style.top = '-1000px';
-                dragImage.style.left = '0px';
-                dragImage.style.width = '200px';
-                dragImage.style.height = '40px';
-                dragImage.style.background = 'rgba(0, 122, 255, 0.8)';
-                dragImage.style.color = 'white';
-                dragImage.style.padding = '8px 12px';
-                dragImage.style.borderRadius = '8px';
-                dragImage.style.fontSize = '14px';
-                dragImage.style.fontWeight = '500';
-                dragImage.style.boxShadow = '0 4px 12px rgba(0, 122, 255, 0.3)';
-                dragImage.style.backdropFilter = 'blur(8px)';
-                dragImage.style.display = 'flex';
-                dragImage.style.alignItems = 'center';
-                dragImage.style.gap = '8px';
-                
-                // Truncate long task names
-                const truncatedText = taakTekst.length > 20 ? taakTekst.substring(0, 20) + '...' : taakTekst;
-                dragImage.textContent = `📋 ${truncatedText}`;
-                
-                document.body.appendChild(dragImage);
-                e.dataTransfer.setDragImage(dragImage, 50, 20);
-                
-                // Toon acties drag overlay
-                console.log('🎯 DEBUG: Gaat showActiesDragOverlay() aanroepen...');
-                this.showActiesDragOverlay();
-                console.log('🎯 DEBUG: showActiesDragOverlay() voltooid');
-                
-                // Visual feedback
-                taakItem.style.opacity = '0.5';
-                
-                // Cleanup drag image after drag starts
-                setTimeout(() => {
-                    if (dragImage.parentNode) {
-                        document.body.removeChild(dragImage);
-                    }
-                }, 0);
-            });
-            
-            handle.addEventListener('dragend', (e) => {
-                console.log('🏁 DEBUG: DRAGEND event getriggerd voor taak:', taakItem.dataset.id);
-                
-                // Verwijder dragging class en reset visual feedback
-                handle.classList.remove('dragging');
-                taakItem.style.opacity = '1';
-                
-                // Reset drag state after short delay (to prevent immediate click)
-                setTimeout(() => {
-                    this.isDragging = false;
-                    this.dragStartTime = null;
-                }, 50);
-                
-                // NO automatic overlay hide - handled by drop events or ESC key
-            });
-        });
-        
-        // GEEN click handlers meer nodig - die zijn niet gewijzigd en functioneren normaal
-        // Taak content blijft gewoon klikbaar zonder conflicts
     }
 
     filterPlanningActies() {
