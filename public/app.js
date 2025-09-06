@@ -11199,17 +11199,15 @@ class Taakbeheer {
     showActiesFloatingPanel() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
-            // Update datums dynamisch
+            // Update datums dynamisch - dit moet EERST gebeuren om day zones te creëren
             this.updateActiesFloatingPanelDates();
             
             panel.classList.add('active');
             panel.style.display = 'block';
             
-            // Setup drop zones if not already done (exact zoals uitgesteld)
-            if (!this.actiesFloatingDropZonesSetup) {
-                this.setupActiesFloatingDropZones();
-                this.actiesFloatingDropZonesSetup = true;
-            }
+            // Setup drop zones NADAT day zones zijn gecreëerd - altijd opnieuw uitvoeren
+            this.setupActiesFloatingDropZones();
+            this.actiesFloatingDropZonesSetup = true;
         }
     }
 
@@ -11223,6 +11221,9 @@ class Taakbeheer {
         const volgendeWeekContainer = document.getElementById('actiesVolgendeWeek');
         
         if (!huidigeWeekContainer || !volgendeWeekContainer) return;
+        
+        // Reset setup flag zodat event listeners opnieuw worden toegevoegd na DOM wijzigingen
+        this.actiesFloatingDropZonesSetup = false;
         
         // Nederlandse weekdag afkortingen
         const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
