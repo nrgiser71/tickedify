@@ -3526,7 +3526,7 @@ class Taakbeheer {
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
-                <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
+                <div class="taak-content" data-taak-id="${taak.id}" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
                     <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
                     ${extraInfoHtml}
                 </div>
@@ -11202,6 +11202,9 @@ class Taakbeheer {
                 this.setupActiesDropZones();
                 this.actiesDropZonesSetup = true;
             }
+            
+            // Setup ESC key handler en click outside handler
+            this.setupOverlayCloseHandlers();
         }
     }
 
@@ -11215,6 +11218,60 @@ class Taakbeheer {
                     overlay.style.display = 'none';
                 }
             }, 300);
+            
+            // Remove event listeners
+            this.removeOverlayCloseHandlers();
+        }
+    }
+
+    setupOverlayCloseHandlers() {
+        // ESC key handler
+        this.escKeyHandler = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this.hideActiesDragOverlay();
+                // Reset drag state
+                this.isDragging = false;
+                this.dragStartTime = null;
+            }
+        };
+
+        // Click outside handler
+        this.overlayClickHandler = (e) => {
+            const overlay = document.getElementById('actiesDragOverlay');
+            const dropPanel = overlay?.querySelector('.acties-drop-panel');
+            
+            // Close if clicking outside the drop panel
+            if (overlay && dropPanel && !dropPanel.contains(e.target)) {
+                this.hideActiesDragOverlay();
+                // Reset drag state
+                this.isDragging = false;
+                this.dragStartTime = null;
+            }
+        };
+
+        // Add event listeners
+        document.addEventListener('keydown', this.escKeyHandler);
+        
+        const overlay = document.getElementById('actiesDragOverlay');
+        if (overlay) {
+            overlay.addEventListener('click', this.overlayClickHandler);
+        }
+    }
+
+    removeOverlayCloseHandlers() {
+        // Remove event listeners
+        if (this.escKeyHandler) {
+            document.removeEventListener('keydown', this.escKeyHandler);
+            this.escKeyHandler = null;
+        }
+        
+        if (this.overlayClickHandler) {
+            const overlay = document.getElementById('actiesDragOverlay');
+            if (overlay) {
+                overlay.removeEventListener('click', this.overlayClickHandler);
+            }
+            this.overlayClickHandler = null;
         }
     }
 
@@ -11434,6 +11491,10 @@ class Taakbeheer {
         const actiesLijst = document.getElementById('acties-lijst');
         if (!actiesLijst) return;
 
+        // Initialize drag state tracking
+        this.isDragging = false;
+        this.dragStartTime = null;
+
         // Voeg draggable toe aan alle taak items in acties lijst
         const taakItems = actiesLijst.querySelectorAll('.taak-item');
         taakItems.forEach(item => {
@@ -11443,6 +11504,10 @@ class Taakbeheer {
             item.addEventListener('dragstart', (e) => {
                 const taakId = item.dataset.id;
                 const taakTekst = item.querySelector('.taak-titel').textContent;
+                
+                // Set drag state
+                this.isDragging = true;
+                this.dragStartTime = Date.now();
                 
                 // Stel drag data in
                 const dragData = {
@@ -11466,11 +11531,32 @@ class Taakbeheer {
                 // Reset visual feedback
                 item.style.opacity = '1';
                 
-                // Verberg overlay (met delay voor drop event)
+                // Reset drag state after short delay (to prevent immediate click)
                 setTimeout(() => {
-                    this.hideActiesDragOverlay();
-                }, 100);
+                    this.isDragging = false;
+                    this.dragStartTime = null;
+                }, 50);
+                
+                // NO automatic overlay hide - handled by drop events or ESC key
             });
+            
+            // Setup click handler for task content (with drag conflict prevention)
+            const taakContent = item.querySelector('.taak-content');
+            if (taakContent) {
+                taakContent.addEventListener('click', (e) => {
+                    // Prevent click if we just dragged (within 200ms of drag end)
+                    if (this.isDragging || (this.dragStartTime && Date.now() - this.dragStartTime < 200)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                    
+                    const taakId = taakContent.dataset.taakId;
+                    if (taakId) {
+                        app.bewerkActieWrapper(taakId);
+                    }
+                });
+            }
         });
     }
 
