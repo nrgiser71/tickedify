@@ -3253,7 +3253,7 @@ class Taakbeheer {
             const checkboxChecked = isCompleted ? 'checked' : '';
             
             li.innerHTML = `
-                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">⋮⋮</div>
+                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen" style="background: red; border: 2px solid blue;">⋮⋮</div>
                 <div class="taak-checkbox">
                     <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
                 </div>
