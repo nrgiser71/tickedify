@@ -11287,13 +11287,9 @@ class Taakbeheer {
     hideActiesFloatingPanel() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
+            // Direct verbergen zonder slide-up animatie
             panel.classList.remove('active');
-            // Delay hiding to allow for smooth animation (exact zoals uitgesteld)
-            setTimeout(() => {
-                if (!panel.classList.contains('active')) {
-                    panel.style.display = 'none';
-                }
-            }, 300);
+            panel.style.display = 'none';
         }
     }
 
@@ -14530,19 +14526,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Tijdelijke debug knop event handler
-document.addEventListener('DOMContentLoaded', () => {
-    const debugButton = document.getElementById('debugShowOverlay');
-    if (debugButton) {
-        debugButton.addEventListener('click', () => {
-            console.log('DEBUG: Showing acties floating panel');
-            if (window.app && window.app.showActiesFloatingPanel) {
-                window.app.showActiesFloatingPanel();
-            } else {
-                console.error('DEBUG: app.showActiesFloatingPanel not available');
-            }
-        });
-    }
-});
 
 
