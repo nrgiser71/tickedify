@@ -3228,52 +3228,7 @@ class Taakbeheer {
 
         lijst.innerHTML = '';
 
-        console.log('🚨 DEBUG: Gaat HTML genereren voor', this.taken.length, 'taken');
-        this.taken.forEach((taak, index) => {
-            console.log(`🚨 DEBUG: Genereer HTML voor taak ${index + 1}:`, taak.tekst);
-            const li = document.createElement('li');
-            li.className = 'taak-item actie-item';
-            li.dataset.id = taak.id;
-            
-            const projectNaam = this.getProjectNaam(taak.projectId);
-            const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
-            
-            // Build extra info line
-            let extraInfo = [];
-            if (projectNaam) extraInfo.push(`<i class="ti ti-folder"></i> ${projectNaam}`);
-            if (contextNaam) extraInfo.push(`🏷️ ${contextNaam}`);
-            if (datum) extraInfo.push(`<i class="ti ti-calendar"></i> ${datum}`);
-            if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
-            
-            const extraInfoHtml = extraInfo.length > 0 ? 
-                `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';
-            
-            // Determine if checkbox should be checked (for completed tasks)
-            const isCompleted = taak.afgewerkt;
-            const checkboxChecked = isCompleted ? 'checked' : '';
-            
-            li.innerHTML = `
-                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen" style="background: red; border: 2px solid blue;">⋮⋮</div>
-                <div class="taak-checkbox">
-                    <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
-                </div>
-                <div class="taak-content">
-                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
-                    ${extraInfoHtml}
-                </div>
-                <div class="taak-acties">
-                    <button onclick="app.toonActiesMenu('${taak.id}', 'uitgesteld', '${this.huidigeLijst}', null, this)" class="acties-btn" title="Acties"><i class="fas fa-ellipsis-v"></i></button>
-                    <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
-                </div>
-            `;
-            
-            lijst.appendChild(li);
-        });
-
-        // Voeg context menu functionaliteit toe aan alle taak items
-        this.addContextMenuToTaskItems();
+        // Oude forEach loop verwijderd - de echte forEach staat verderop met sortedTaken
     }
     
     renderUitgesteldRows() {
@@ -3531,6 +3486,7 @@ class Taakbeheer {
                 `<input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">`;
 
             li.innerHTML = `
+                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen" style="background: red; border: 2px solid blue;">⋮⋮</div>
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
