@@ -11164,12 +11164,11 @@ class Taakbeheer {
         dragHandles.forEach((handle) => {
             // Drag handle is al draggable via HTML
             
-            // Toon overlay op mousedown (voor dragstart!)
+            // Log mousedown maar toon geen overlay (overlay wordt getoond bij dragstart)
             handle.addEventListener('mousedown', (e) => {
                 const timestamp = Date.now();
                 console.log('🖱️ MOUSEDOWN:', timestamp, 'handle:', handle);
-                console.log('⏰ MOUSEDOWN: showing overlay BEFORE drag starts...');
-                this.showActiesDragOverlay();
+                console.log('⏰ MOUSEDOWN: ready for potential drag (overlay shows on dragstart)');
             });
             
             handle.addEventListener('dragstart', (e) => {
@@ -11202,8 +11201,9 @@ class Taakbeheer {
                 li.style.opacity = '0.5';
                 console.log('🎨 DRAGSTART: opacity set to 0.5');
                 
-                // Overlay is al zichtbaar via mousedown!
-                console.log('✅ DRAGSTART: overlay already visible from mousedown');
+                // Toon overlay nu drag werkelijk start (zoals uitgesteld scherm)
+                console.log('✅ DRAGSTART: showing overlay now that drag starts...');
+                this.showActiesDragOverlay();
             });
             
             handle.addEventListener('dragend', (e) => {
