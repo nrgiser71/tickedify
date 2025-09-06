@@ -14530,4 +14530,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Tijdelijke debug knop event handler
+document.addEventListener('DOMContentLoaded', () => {
+    const debugButton = document.getElementById('debugShowOverlay');
+    if (debugButton) {
+        debugButton.addEventListener('click', () => {
+            console.log('DEBUG: Showing acties floating panel');
+            if (window.app && window.app.showActiesFloatingPanel) {
+                window.app.showActiesFloatingPanel();
+                
+                // Auto-hide na 5 seconden
+                setTimeout(() => {
+                    console.log('DEBUG: Hiding acties floating panel');
+                    if (window.app && window.app.hideActiesFloatingPanel) {
+                        window.app.hideActiesFloatingPanel();
+                    }
+                }, 5000);
+            } else {
+                console.error('DEBUG: app.showActiesFloatingPanel not available');
+            }
+        });
+    }
+});
+
 
