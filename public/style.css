@@ -8921,9 +8921,9 @@ body.dagkalender-focus-active {
 /* Acties floating panel styling */
 .acties-floating-panel {
     position: fixed;
-    top: 50%;
+    top: -400px; /* Hidden above screen - exact zoals werkend uitgesteld systeem */
     left: 50%;
-    transform: translate(-50%, -50%) scale(0); /* Volledig gecentreerd + verborgen met scale */
+    transform: translateX(-50%); /* Alleen horizontal centering */
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 12px;
@@ -8935,13 +8935,11 @@ body.dagkalender-focus-active {
     border: 1px solid rgba(0, 0, 0, 0.1);
     max-height: calc(100vh - 160px);
     overflow-y: auto;
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth scale + opacity animatie */
+    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Simple slide animatie */
 }
 
 .acties-floating-panel.active {
-    transform: translate(-50%, -50%) scale(1); /* Volledig gecentreerd + zichtbaar */
-    opacity: 1;
+    top: 120px; /* Simple slide into view */
 }
 
 .acties-floating-panel .drop-panel-content h4 {
