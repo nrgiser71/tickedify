@@ -11207,11 +11207,77 @@ class Taakbeheer {
             overlay.classList.add('active');
             overlay.style.display = 'block';
             
+            // Genereer week dagen voor overlay (KRITIEK - was weggegooid!)
+            this.generateWeekDaysForOverlay();
+            
             // Setup drop zones if not already done (exact zoals uitgesteld)
             if (!this.actiesDropZonesSetup) {
                 this.setupActiesDropZones();
                 this.actiesDropZonesSetup = true;
             }
+        }
+    }
+
+    generateWeekDaysForOverlay() {
+        const huidigeWeekContainer = document.getElementById('huidigeWeekZones');
+        const volgendeWeekContainer = document.getElementById('volgendeWeekZones');
+        
+        if (!huidigeWeekContainer || !volgendeWeekContainer) return;
+        
+        // Nederlandse weekdag afkortingen
+        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+        
+        // Bereken huidige week (maandag tot zondag)
+        const vandaag = new Date();
+        const huidigeWeekStart = new Date(vandaag);
+        huidigeWeekStart.setDate(vandaag.getDate() - vandaag.getDay() + 1); // Maandag van deze week
+        
+        // Bereken volgende week
+        const volgendeWeekStart = new Date(huidigeWeekStart);
+        volgendeWeekStart.setDate(huidigeWeekStart.getDate() + 7);
+        
+        // Genereer huidige week zones
+        huidigeWeekContainer.innerHTML = '';
+        for (let i = 0; i < 7; i++) {
+            const datum = new Date(huidigeWeekStart);
+            datum.setDate(huidigeWeekStart.getDate() + i);
+            
+            const weekdagIndex = datum.getDay();
+            const weekdagAfkorting = weekdagen[weekdagIndex];
+            const dagNummer = datum.getDate();
+            const isoString = datum.toISOString().split('T')[0];
+            
+            const dayZone = document.createElement('div');
+            dayZone.className = 'week-day-zone';
+            dayZone.dataset.datum = isoString;
+            dayZone.innerHTML = `
+                <div class="day-abbr">${weekdagAfkorting}</div>
+                <div class="day-number">${dagNummer}</div>
+            `;
+            
+            huidigeWeekContainer.appendChild(dayZone);
+        }
+        
+        // Genereer volgende week zones
+        volgendeWeekContainer.innerHTML = '';
+        for (let i = 0; i < 7; i++) {
+            const datum = new Date(volgendeWeekStart);
+            datum.setDate(volgendeWeekStart.getDate() + i);
+            
+            const weekdagIndex = datum.getDay();
+            const weekdagAfkorting = weekdagen[weekdagIndex];
+            const dagNummer = datum.getDate();
+            const isoString = datum.toISOString().split('T')[0];
+            
+            const dayZone = document.createElement('div');
+            dayZone.className = 'week-day-zone';
+            dayZone.dataset.datum = isoString;
+            dayZone.innerHTML = `
+                <div class="day-abbr">${weekdagAfkorting}</div>
+                <div class="day-number">${dagNummer}</div>
+            `;
+            
+            volgendeWeekContainer.appendChild(dayZone);
         }
     }
 
@@ -11229,52 +11295,94 @@ class Taakbeheer {
     }
 
     setupActiesDropZones() {
+        // Setup drop zones voor uitgesteld lijsten en opvolgen
         const dropZones = document.querySelectorAll('#actiesDragOverlay .drop-zone-item');
-        
         dropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                zone.classList.add('drag-over');
-            });
-            
-            zone.addEventListener('dragleave', (e) => {
-                if (!zone.contains(e.relatedTarget)) {
-                    zone.classList.remove('drag-over');
-                }
-            });
-            
-            zone.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-                
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    const targetList = zone.dataset.target;
-                    
-                    // Verplaats taak naar doellijst (exact zoals uitgesteld)
-                    const response = await fetch(`/api/taak/${dragData.taakId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ lijst: targetList })
-                    });
-
-                    if (response.ok) {
-                        // Update UI
-                        this.taken = this.taken.filter(t => t.id !== dragData.taakId);
-                        this.renderActiesLijst();
-                        
-                        const targetName = this.getListDisplayName(targetList);
-                        toast.success(`Taak verplaatst naar ${targetName}`);
-                    }
-                } catch (error) {
-                    console.error('Drop error:', error);
-                    toast.error('Fout bij verplaatsen');
-                }
-                
-                this.hideActiesDragOverlay();
-            });
+            this.setupDropZoneEvents(zone);
         });
+        
+        // Setup drop zones voor week dagen (nu ze bestaan!)
+        const weekDayZones = document.querySelectorAll('#actiesDragOverlay .week-day-zone');
+        weekDayZones.forEach(zone => {
+            this.setupDropZoneEvents(zone, true);
+        });
+    }
+
+    setupDropZoneEvents(zone, isWeekDay = false) {
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            zone.classList.add('drag-over');
+        });
+        
+        zone.addEventListener('dragleave', (e) => {
+            if (!zone.contains(e.relatedTarget)) {
+                zone.classList.remove('drag-over');
+            }
+        });
+        
+        zone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            
+            try {
+                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                
+                if (isWeekDay) {
+                    // Plan taak voor specifieke datum
+                    const datum = zone.dataset.datum;
+                    await this.handleActiesPlanningDrop(dragData, datum);
+                } else {
+                    // Verplaats naar lijst
+                    const targetList = zone.dataset.target;
+                    await this.handleActiesListDrop(dragData, targetList);
+                }
+                
+            } catch (error) {
+                console.error('Drop error:', error);
+                toast.error('Fout bij verplaatsen');
+            }
+            
+            this.hideActiesDragOverlay();
+        });
+    }
+
+    async handleActiesListDrop(dragData, targetList) {
+        const response = await fetch(`/api/taak/${dragData.taakId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lijst: targetList })
+        });
+
+        if (response.ok) {
+            this.taken = this.taken.filter(t => t.id !== dragData.taakId);
+            this.renderActiesLijst();
+            
+            const targetName = this.getListDisplayName(targetList);
+            toast.success(`Taak verplaatst naar ${targetName}`);
+        }
+    }
+
+    async handleActiesPlanningDrop(dragData, datum) {
+        const response = await fetch('/api/dagelijkse-planning', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                taakId: dragData.taakId,
+                datum: datum,
+                tijd: '09:00',
+                duur: 30,
+                type: 'taak'
+            })
+        });
+
+        if (response.ok) {
+            this.taken = this.taken.filter(t => t.id !== dragData.taakId);
+            this.renderActiesLijst();
+            
+            const datumFormatted = new Date(datum).toLocaleDateString('nl-NL');
+            toast.success(`Taak gepland voor ${datumFormatted}`);
+        }
     }
 
     getListDisplayName(lijst) {
