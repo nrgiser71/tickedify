@@ -8871,34 +8871,34 @@ body.dagkalender-focus-active {
     }
 }
 
-/* ===== DRAG & DROP CURSORS ===== */
+/* ===== DRAG & DROP HANDLES ===== */
 
-/* Drag cursor voor draggable taken */
-.taak-item[draggable="true"] {
+/* Drag handle styling - kleine zone voor slepen */
+.drag-handle {
+    width: 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: grab;
+    color: #8E8E93;
+    font-size: 14px;
+    transition: all 0.2s ease;
     user-select: none;
+    flex-shrink: 0;
+    margin-right: 8px;
 }
 
-.taak-item[draggable="true"]:active {
+.drag-handle:hover {
+    color: #007AFF;
+    background: rgba(0, 122, 255, 0.1);
+    border-radius: 4px;
+}
+
+.drag-handle:active,
+.drag-handle.dragging {
     cursor: grabbing;
-}
-
-/* KRITIEK: Child elements mogen geen mouse events onderscheppen tijdens drag */
-.taak-item[draggable="true"] * {
-    pointer-events: none !important;
-}
-
-/* Alleen tijdens drag operatie zijn child elements disabled */
-/* Normaal kunnen buttons en checkboxes gewoon gebruikt worden */
-.taak-item:not(.dragging) .taak-acties button,
-.taak-item:not(.dragging) .taak-checkbox input,
-.taak-item:not(.dragging) .taak-titel {
-    pointer-events: auto !important;
-}
-
-/* Extra: zorg dat de titel niet interfereert met slepen */
-.taak-item[draggable="true"] .taak-titel {
-    cursor: inherit;
-    pointer-events: none !important;
+    color: #007AFF;
+    background: rgba(0, 122, 255, 0.2);
 }
 

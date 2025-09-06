@@ -3253,6 +3253,7 @@ class Taakbeheer {
             const checkboxChecked = isCompleted ? 'checked' : '';
             
             li.innerHTML = `
+                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">⋮⋮</div>
                 <div class="taak-checkbox">
                     <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
                 </div>
@@ -11499,29 +11500,30 @@ class Taakbeheer {
         this.isDragging = false;
         this.dragStartTime = null;
 
-        // Voeg draggable toe aan alle taak items in acties lijst
-        const taakItems = actiesLijst.querySelectorAll('.taak-item');
-        console.log(`🔧 DEBUG: ${taakItems.length} taak items gevonden voor drag setup`);
+        // Zoek alle drag handles in plaats van taak items
+        const dragHandles = actiesLijst.querySelectorAll('.drag-handle');
+        console.log(`🔧 DEBUG: ${dragHandles.length} drag handles gevonden voor drag setup`);
         
-        taakItems.forEach((item, index) => {
-            // Maak item draggable
-            item.draggable = true;
-            item.setAttribute('draggable', 'true');
-            console.log(`🔧 DEBUG: Taak item ${index + 1} draggable gemaakt:`, item.dataset.id);
-            console.log(`🔧 DEBUG: Item HTML structuur:`, item.innerHTML.substring(0, 200) + '...');
-            console.log(`🔧 DEBUG: Item draggable attribute:`, item.getAttribute('draggable'));
-            console.log(`🔧 DEBUG: Item draggable property:`, item.draggable);
+        dragHandles.forEach((handle, index) => {
+            const taakItem = handle.closest('.taak-item');
+            if (!taakItem) {
+                console.error(`❌ DEBUG: Drag handle ${index + 1} heeft geen parent taak-item`);
+                return;
+            }
             
-            item.addEventListener('dragstart', (e) => {
-                console.log('🚀 DEBUG: DRAGSTART event getriggerd voor taak:', item.dataset.id);
+            console.log(`🔧 DEBUG: Drag handle ${index + 1} setup voor taak:`, taakItem.dataset.id);
+            
+            handle.addEventListener('dragstart', (e) => {
+                console.log('🚀 DEBUG: DRAGSTART event getriggerd voor taak:', taakItem.dataset.id);
                 console.log('🚀 DEBUG: Event target:', e.target);
                 console.log('🚀 DEBUG: Event currentTarget:', e.currentTarget);
                 
-                // KRITIEK: Voeg dragging class toe om child elements te disablen
-                item.classList.add('dragging');
+                // Voeg dragging class toe voor visual feedback
+                handle.classList.add('dragging');
+                taakItem.style.opacity = '0.5';
                 
-                const taakId = item.dataset.id;
-                const taakTekst = item.querySelector('.taak-titel').textContent;
+                const taakId = taakItem.dataset.id;
+                const taakTekst = taakItem.querySelector('.taak-titel').textContent;
                 
                 // Set drag state
                 this.isDragging = true;
@@ -11578,14 +11580,12 @@ class Taakbeheer {
                 }, 0);
             });
             
-            item.addEventListener('dragend', (e) => {
-                console.log('🏁 DEBUG: DRAGEND event getriggerd voor taak:', item.dataset.id);
+            handle.addEventListener('dragend', (e) => {
+                console.log('🏁 DEBUG: DRAGEND event getriggerd voor taak:', taakItem.dataset.id);
                 
-                // KRITIEK: Verwijder dragging class om child elements weer in te schakelen
-                item.classList.remove('dragging');
-                
-                // Reset visual feedback
-                item.style.opacity = '1';
+                // Verwijder dragging class en reset visual feedback
+                handle.classList.remove('dragging');
+                taakItem.style.opacity = '1';
                 
                 // Reset drag state after short delay (to prevent immediate click)
                 setTimeout(() => {
@@ -11595,25 +11595,10 @@ class Taakbeheer {
                 
                 // NO automatic overlay hide - handled by drop events or ESC key
             });
-            
-            // Setup click handler for task content (with drag conflict prevention)
-            const taakContent = item.querySelector('.taak-content');
-            if (taakContent) {
-                taakContent.addEventListener('click', (e) => {
-                    // Prevent click if we just dragged (within 200ms of drag end)
-                    if (this.isDragging || (this.dragStartTime && Date.now() - this.dragStartTime < 200)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                    }
-                    
-                    const taakId = taakContent.dataset.taakId;
-                    if (taakId) {
-                        app.bewerkActieWrapper(taakId);
-                    }
-                });
-            }
         });
+        
+        // GEEN click handlers meer nodig - die zijn niet gewijzigd en functioneren normaal
+        // Taak content blijft gewoon klikbaar zonder conflicts
     }
 
     filterPlanningActies() {
