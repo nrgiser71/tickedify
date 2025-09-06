@@ -11270,6 +11270,7 @@ class Taakbeheer {
         
         // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
+        const vandaagISO = vandaag.toISOString().split('T')[0]; // Voor vergelijking
         const huidigeWeekStart = new Date(vandaag);
         huidigeWeekStart.setDate(vandaag.getDate() - vandaag.getDay() + 1); // Maandag van deze week
         
@@ -11289,7 +11290,9 @@ class Taakbeheer {
             const isoString = datum.toISOString().split('T')[0];
             
             const dayZone = document.createElement('div');
-            dayZone.className = 'week-day-zone drop-zone-item';
+            // Voeg current-day klasse toe als dit vandaag is
+            const isVandaag = isoString === vandaagISO;
+            dayZone.className = isVandaag ? 'week-day-zone drop-zone-item current-day' : 'week-day-zone drop-zone-item';
             dayZone.dataset.target = isoString;
             dayZone.dataset.type = 'planning';
             dayZone.innerHTML = `
@@ -11312,7 +11315,9 @@ class Taakbeheer {
             const isoString = datum.toISOString().split('T')[0];
             
             const dayZone = document.createElement('div');
-            dayZone.className = 'week-day-zone drop-zone-item';
+            // Voeg current-day klasse toe als dit vandaag is
+            const isVandaag = isoString === vandaagISO;
+            dayZone.className = isVandaag ? 'week-day-zone drop-zone-item current-day' : 'week-day-zone drop-zone-item';
             dayZone.dataset.target = isoString;
             dayZone.dataset.type = 'planning';
             dayZone.innerHTML = `

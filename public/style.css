@@ -8122,6 +8122,23 @@ button:focus {
     color: var(--macos-blue);
 }
 
+/* Current day styling */
+.week-day-zone.current-day {
+    background: rgba(0, 122, 255, 0.08);
+    border-color: rgba(0, 122, 255, 0.4);
+    border-style: solid;
+}
+
+.week-day-zone.current-day .day-name {
+    color: var(--macos-blue);
+    font-weight: 700;
+}
+
+.week-day-zone.current-day .day-date {
+    color: var(--macos-blue);
+    font-weight: 600;
+}
+
 /* Uitgesteld section styling */
 .uitgesteld-section .drop-zones-row {
     display: grid;
@@ -8993,6 +9010,22 @@ body.dagkalender-focus-active {
     border-color: var(--macos-blue);
     background: rgba(0, 122, 255, 0.1);
     transform: translateY(-1px);
+}
+
+.acties-floating-panel .week-day-zone.current-day {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.08);
+    border-width: 2px;
+}
+
+.acties-floating-panel .week-day-zone.current-day .day-name {
+    color: var(--macos-blue);
+    font-weight: 700;
+}
+
+.acties-floating-panel .week-day-zone.current-day .day-date {
+    color: var(--macos-blue);
+    font-weight: 600;
 }
 
 .acties-floating-panel .week-day-zone .day-name {
