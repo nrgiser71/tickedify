@@ -11287,9 +11287,14 @@ class Taakbeheer {
     hideActiesFloatingPanel() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
-            // Direct verbergen zonder slide-up animatie
+            // Fade-out animatie
             panel.classList.remove('active');
-            panel.style.display = 'none';
+            // Wacht op fade-out voordat display: none
+            setTimeout(() => {
+                if (!panel.classList.contains('active')) {
+                    panel.style.display = 'none';
+                }
+            }, 300); // Zelfde als CSS transition duration
         }
     }
 
