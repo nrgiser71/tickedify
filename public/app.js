@@ -11161,58 +11161,19 @@ class Taakbeheer {
         // Zoek naar drag handles in plaats van hele li elementen
         const dragHandles = actiesLijst.querySelectorAll('.drag-handle');
         
-        // 🐛 DEBUG: Track drag state to detect race conditions
-        let isDragging = false;
-        let dragStartTime = 0;
-        
         dragHandles.forEach((handle) => {
-            // Drag handle is al draggable via HTML
-            
-            // 🐛 DEBUG: Enhanced mousedown logging
-            handle.addEventListener('mousedown', (e) => {
-                const timestamp = Date.now();
-                const overlay = document.getElementById('actiesDragOverlay');
-                window.lastMousedownTime = timestamp; // Track globally for timing analysis
-                
-                console.log('🖱️ MOUSEDOWN:', timestamp, 'handle:', handle);
-                console.log('🐛 DEBUG MOUSEDOWN:', {
-                    isDragging: isDragging,
-                    overlayDisplay: overlay?.style.display || 'undefined',
-                    overlayActive: overlay?.classList.contains('active') || false,
-                    timestamp: timestamp,
-                    target: e.target,
-                    currentTarget: e.currentTarget
-                });
-                console.log('⏰ MOUSEDOWN: ready for potential drag (overlay shows on dragstart)');
-            });
+            // Drag handle is al draggable via HTML - geen extra mousedown handlers nodig
             
             handle.addEventListener('dragstart', (e) => {
-                const timestamp = Date.now();
-                const overlay = document.getElementById('actiesDragOverlay');
-                dragStartTime = timestamp;
-                isDragging = true;
-                
-                console.log('🚀 DRAGSTART:', timestamp, 'handle:', handle);
-                console.log('🐛 DEBUG DRAGSTART - START STATE:', {
-                    isDragging: isDragging,
-                    dragStartTime: dragStartTime,
-                    timeSinceMousedown: dragStartTime - (window.lastMousedownTime || 0),
-                    overlayDisplay: overlay?.style.display || 'undefined',
-                    overlayActive: overlay?.classList.contains('active') || false,
-                    timestamp: timestamp
-                });
-                
                 // Vind parent li element voor taak data
                 const li = handle.closest('.taak-item');
                 if (!li) {
                     console.error('❌ DRAGSTART: geen parent li gevonden');
-                    isDragging = false;
                     return;
                 }
                 
                 const taakId = li.dataset.id;
                 const taakTekst = li.querySelector('.taak-titel').textContent;
-                console.log('🎯 DRAGSTART: taakId:', taakId, 'tekst:', taakTekst);
                 
                 // Stel drag data in
                 const dragData = {
@@ -11223,184 +11184,41 @@ class Taakbeheer {
                 };
                 e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
                 e.dataTransfer.effectAllowed = 'move';
-                console.log('📦 DRAGSTART: drag data set:', dragData);
                 
                 // Visual feedback op parent li
                 li.style.opacity = '0.5';
-                console.log('🎨 DRAGSTART: opacity set to 0.5');
                 
-                // 🐛 DEBUG: State before showing overlay
-                const overlayBefore = document.getElementById('actiesDragOverlay');
-                console.log('🐛 DEBUG BEFORE SHOW OVERLAY:', {
-                    overlayExists: !!overlayBefore,
-                    overlayDisplay: overlayBefore?.style.display || 'undefined',
-                    overlayActive: overlayBefore?.classList.contains('active') || false
-                });
-                
-                // Toon overlay nu drag werkelijk start (zoals uitgesteld scherm)
-                console.log('✅ DRAGSTART: showing overlay now that drag starts...');
+                // Toon overlay (exact zoals uitgesteld scherm - direct en simpel)
                 this.showActiesDragOverlay();
-                
-                // 🐛 DEBUG: State after showing overlay
-                const overlayAfter = document.getElementById('actiesDragOverlay');
-                console.log('🐛 DEBUG AFTER SHOW OVERLAY:', {
-                    overlayExists: !!overlayAfter,
-                    overlayDisplay: overlayAfter?.style.display || 'undefined',
-                    overlayActive: overlayAfter?.classList.contains('active') || false,
-                    isDragging: isDragging
-                });
             });
             
             handle.addEventListener('dragend', (e) => {
-                const timestamp = Date.now();
-                const overlay = document.getElementById('actiesDragOverlay');
-                const dragDuration = timestamp - dragStartTime;
-                
-                console.log('🏁 DRAGEND:', timestamp, 'handle:', handle, 'event:', e);
-                console.log('🐛 DEBUG DRAGEND - START STATE:', {
-                    isDragging: isDragging,
-                    dragStartTime: dragStartTime,
-                    dragDuration: dragDuration,
-                    overlayDisplay: overlay?.style.display || 'undefined',
-                    overlayActive: overlay?.classList.contains('active') || false,
-                    timestamp: timestamp
-                });
-                
-                // Reset drag state
-                isDragging = false;
-                dragStartTime = 0;
-                
-                // Vind parent li element
+                // Vind parent li element en reset opacity
                 const li = handle.closest('.taak-item');
                 if (li) {
                     li.style.opacity = '1';
-                    console.log('🎨 DRAGEND: opacity reset to 1');
-                } else {
-                    console.error('❌ DRAGEND: geen parent li gevonden');
                 }
                 
-                // 🐛 DEBUG: State before hiding overlay
-                const overlayBefore = document.getElementById('actiesDragOverlay');
-                console.log('🐛 DEBUG BEFORE HIDE OVERLAY:', {
-                    overlayExists: !!overlayBefore,
-                    overlayDisplay: overlayBefore?.style.display || 'undefined',
-                    overlayActive: overlayBefore?.classList.contains('active') || false,
-                    isDragging: isDragging
-                });
-                
-                // Verberg overlay
-                console.log('👁️ DRAGEND: calling hideActiesDragOverlay...');
+                // Verberg overlay (exact zoals uitgesteld scherm - direct en simpel)
                 this.hideActiesDragOverlay();
-                
-                // 🐛 DEBUG: State after hiding overlay
-                const overlayAfter = document.getElementById('actiesDragOverlay');
-                console.log('🐛 DEBUG AFTER HIDE OVERLAY:', {
-                    overlayExists: !!overlayAfter,
-                    overlayDisplay: overlayAfter?.style.display || 'undefined',
-                    overlayActive: overlayAfter?.classList.contains('active') || false,
-                    isDragging: isDragging
-                });
-            });
-            
-            // Verberg overlay ook als gebruiker mouseup doet zonder te slepen
-            handle.addEventListener('mouseup', (e) => {
-                const timestamp = Date.now();
-                const overlay = document.getElementById('actiesDragOverlay');
-                
-                console.log('🖱️ MOUSEUP:', timestamp, 'handle:', handle);
-                console.log('🐛 DEBUG MOUSEUP - IMMEDIATE STATE:', {
-                    isDragging: isDragging,
-                    dragStartTime: dragStartTime,
-                    timeSinceDragStart: dragStartTime ? timestamp - dragStartTime : 'no drag',
-                    overlayDisplay: overlay?.style.display || 'undefined',
-                    overlayActive: overlay?.classList.contains('active') || false,
-                    timestamp: timestamp
-                });
-                
-                console.log('🐛 RACE CONDITION CHECK: Setting 50ms timeout for overlay hiding...');
-                
-                // 🚨 POTENTIAL RACE CONDITION: 50ms timeout vs dragend event
-                setTimeout(() => {
-                    const overlayDelayed = document.getElementById('actiesDragOverlay');
-                    const timeAfterDelay = Date.now();
-                    
-                    console.log('🐛 DEBUG MOUSEUP TIMEOUT FIRED:', {
-                        timeAfterTimeout: timeAfterDelay,
-                        delayMs: timeAfterDelay - timestamp,
-                        isDragging: isDragging,
-                        dragStartTime: dragStartTime,
-                        overlayDisplay: overlayDelayed?.style.display || 'undefined',
-                        overlayActive: overlayDelayed?.classList.contains('active') || false,
-                        overlayExists: !!overlayDelayed
-                    });
-                    
-                    // Check of overlay nog zichtbaar is (mogelijk al verborgen door dragend)
-                    if (overlayDelayed && overlayDelayed.style.display !== 'none') {
-                        if (isDragging) {
-                            console.log('🚨 RACE CONDITION DETECTED: Mouseup timeout fired during active drag! Skipping hide.');
-                        } else {
-                            console.log('🖱️ MOUSEUP TIMEOUT: hiding overlay (no drag occurred)');
-                            this.hideActiesDragOverlay();
-                        }
-                    } else {
-                        console.log('🖱️ MOUSEUP TIMEOUT: overlay already hidden or doesn\'t exist');
-                    }
-                }, 50);
             });
         });
     }
 
     showActiesDragOverlay() {
-        const timestamp = Date.now();
-        console.log('🔧 SHOW OVERLAY FUNCTION CALLED:', timestamp);
-        
         const overlay = document.getElementById('actiesDragOverlay');
-        console.log('🔍 SHOW OVERLAY: overlay element:', overlay);
-        console.log('🐛 DEBUG SHOW OVERLAY - ENTRY STATE:', {
-            overlayExists: !!overlay,
-            overlayDisplay: overlay?.style.display || 'undefined',
-            overlayActive: overlay?.classList.contains('active') || false,
-            timestamp: timestamp,
-            stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
-        });
-        
         if (overlay) {
-            console.log('✅ SHOW OVERLAY: adding active class and display block');
             overlay.classList.add('active');
             overlay.style.display = 'block';
             
-            console.log('🐛 DEBUG SHOW OVERLAY - AFTER STYLING:', {
-                overlayDisplay: overlay.style.display,
-                overlayActive: overlay.classList.contains('active'),
-                computedDisplay: window.getComputedStyle(overlay).display,
-                computedVisibility: window.getComputedStyle(overlay).visibility
-            });
-            
-            // Genereer week dagen voor overlay (KRITIEK - was weggegooid!)
-            console.log('📅 SHOW OVERLAY: generating week days...');
+            // Genereer week dagen voor overlay
             this.generateWeekDaysForOverlay();
             
             // Setup drop zones if not already done (exact zoals uitgesteld)
             if (!this.actiesDropZonesSetup) {
-                console.log('🎯 SHOW OVERLAY: setting up drop zones...');
                 this.setupActiesDropZones();
                 this.actiesDropZonesSetup = true;
-            } else {
-                console.log('✅ SHOW OVERLAY: drop zones already setup');
             }
-            
-            // 🐛 DEBUG: Final state check
-            console.log('🐛 DEBUG SHOW OVERLAY - EXIT STATE:', {
-                overlayExists: !!overlay,
-                overlayDisplay: overlay.style.display,
-                overlayActive: overlay.classList.contains('active'),
-                computedDisplay: window.getComputedStyle(overlay).display,
-                isDOMVisible: overlay.offsetParent !== null
-            });
-            
-            console.log('🎉 SHOW OVERLAY COMPLETE: overlay should now be visible');
-        } else {
-            console.error('❌ SHOW OVERLAY: overlay element not found!');
         }
     }
 
@@ -11468,59 +11286,16 @@ class Taakbeheer {
     }
 
     hideActiesDragOverlay() {
-        const timestamp = Date.now();
-        console.log('🔧 HIDE OVERLAY FUNCTION CALLED:', timestamp);
-        
         const overlay = document.getElementById('actiesDragOverlay');
-        console.log('🔍 HIDE OVERLAY: overlay element:', overlay);
-        console.log('🐛 DEBUG HIDE OVERLAY - ENTRY STATE:', {
-            overlayExists: !!overlay,
-            overlayDisplay: overlay?.style.display || 'undefined',
-            overlayActive: overlay?.classList.contains('active') || false,
-            timestamp: timestamp,
-            stackTrace: new Error().stack.split('\n').slice(1, 4).join('\n')
-        });
-        
         if (overlay) {
-            console.log('✅ HIDE OVERLAY: removing active class');
             overlay.classList.remove('active');
             
-            console.log('🐛 DEBUG HIDE OVERLAY - AFTER REMOVING ACTIVE:', {
-                overlayDisplay: overlay.style.display,
-                overlayActive: overlay.classList.contains('active'),
-                computedDisplay: window.getComputedStyle(overlay).display
-            });
-            
             // Delay hiding to allow for smooth animation (exact zoals uitgesteld)
-            console.log('⏱️ HIDE OVERLAY: setting 300ms timeout to hide...');
             setTimeout(() => {
-                const overlayDelayed = document.getElementById('actiesDragOverlay');
-                console.log('🐛 DEBUG HIDE OVERLAY TIMEOUT - 300ms LATER:', {
-                    timeAfter300ms: Date.now(),
-                    delay: Date.now() - timestamp,
-                    overlayExists: !!overlayDelayed,
-                    overlayActive: overlayDelayed?.classList.contains('active') || false,
-                    overlayDisplay: overlayDelayed?.style.display || 'undefined'
-                });
-                
-                if (overlayDelayed && !overlayDelayed.classList.contains('active')) {
-                    console.log('✅ HIDE OVERLAY TIMEOUT: hiding overlay (display = none)');
-                    overlayDelayed.style.display = 'none';
-                    
-                    console.log('🐛 DEBUG HIDE OVERLAY - FINAL STATE:', {
-                        overlayDisplay: overlayDelayed.style.display,
-                        overlayActive: overlayDelayed.classList.contains('active'),
-                        computedDisplay: window.getComputedStyle(overlayDelayed).display,
-                        isDOMVisible: overlayDelayed.offsetParent !== null
-                    });
-                } else if (overlayDelayed?.classList.contains('active')) {
-                    console.log('⚠️ HIDE OVERLAY TIMEOUT: overlay still active, not hiding');
-                } else {
-                    console.log('⚠️ HIDE OVERLAY TIMEOUT: overlay element no longer exists');
+                if (!overlay.classList.contains('active')) {
+                    overlay.style.display = 'none';
                 }
             }, 300);
-        } else {
-            console.error('❌ HIDE OVERLAY: overlay element not found!');
         }
     }
 

@@ -8005,17 +8005,18 @@ button:focus {
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 9998;
+    z-index: 10001; /* HOGERE Z-INDEX dan floating panel */
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     transition: all 0.3s ease;
-    pointer-events: none; /* KRITIEK: laat mouse events doorvallen naar drag handles */
+    /* POINTER-EVENTS NONE WEGGEHAALD - was de root cause van onzichtbaarheid! */
 }
 
 .acties-drag-overlay.active {
     opacity: 1;
+    pointer-events: auto; /* Expliciet auto bij active state voor zekerheid */
 }
 
 .acties-drop-panel {
