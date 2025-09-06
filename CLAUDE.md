@@ -68,6 +68,38 @@ Task(subagent_type: "tickedify-feature-builder",
 
 **STATUS**: Alle 3 gespecialiseerde Tickedify agents beschikbaar - gebruik altijd de juiste voor de taak.
 
+## 🎯 ACTIES OVERLAY DRAG & DROP VOLLEDIG GEFIXED (September 6, 2025) ✅
+
+**🚀 COMPLETE FIX VOLTOOID: Versie 0.15.0**
+- **User probleem serie**: "Week dagen zijn geen drop zones meer" → "Taken komen terug na refresh" → "Overlay flitst naar boven"
+- **Drie onderliggende bugs**: Event listener timing, API endpoint mismatch, CSS animatie probleem
+- **Oplossing**: Systematische fix van timing, persistence en visuele issues
+
+**📋 TECHNISCHE FIXES:**
+- **Timing probleem**: Event listeners werden opgezet voor DOM elementen bestonden - volgorde gecorrigeerd
+- **Persistence probleem**: Drag & drop creëerde planning items i.p.v. task dates updaten - omgezet naar PUT /api/taak/:id
+- **Visual flash probleem**: CSS animaties veroorzaakten "flits naar boven" - onmiddellijke verberging geïmplementeerd
+
+**🔧 GEÏMPLEMENTEERDE OPLOSSINGEN:**
+- **showActiesFloatingPanel()**: Volgorde gecorrigeerd - eerst generateActiesWeekDays(), dan event listeners
+- **handleActiesFloatingDrop()**: Complete rewrite naar task date update workflow (zoals context menu)
+- **hideActiesFloatingPanelImmediately()**: Nieuwe functie voor directe overlay verberging zonder animatie
+- **Error handling**: Overlay verdwijnt ook bij fouten en exceptions
+
+**✨ EINDRESULTAAT:**
+- **Week dagen drop zones**: 100% functioneel - taken kunnen weer naar dagen gesleept worden
+- **Persistence**: Tasks blijven correct op nieuwe datum staan na refresh
+- **Visuele UX**: Overlay verdwijnt onmiddellijk zonder storende "flits naar boven" effect
+- **Consistente API**: Drag & drop gebruikt nu zelfde workflow als context menu
+
+**📊 DEVELOPMENT LESSONS:**
+- DOM element timing cruciaal bij dynamisch gegenereerde drop zones
+- API consistency tussen verschillende UI workflows voorkomt persistence bugs
+- CSS animaties kunnen storende effecten veroorzaken die onmiddellijke verberging vereisen
+- Systematische debugging van cascade bugs één voor één effectiever dan alles tegelijk
+
+**STATUS**: Acties overlay drag & drop functionaliteit 100% operationeel - alle gerapporteerde problemen opgelost.
+
 ## 🔧 ONBEKEND PROJECT/CONTEXT PROBLEEM DEFINITIEF OPGELOST (September 1, 2025) ✅
 
 **🎯 UI BUG FIX VOLTOOID: Versie 0.14.15**
