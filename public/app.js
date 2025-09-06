@@ -11165,56 +11165,88 @@ class Taakbeheer {
             // Drag handle is al draggable via HTML
             
             handle.addEventListener('dragstart', (e) => {
+                const timestamp = Date.now();
+                console.log('🚀 DRAGSTART:', timestamp, 'handle:', handle);
+                
                 // Vind parent li element voor taak data
                 const li = handle.closest('.taak-item');
-                if (!li) return;
+                if (!li) {
+                    console.error('❌ DRAGSTART: geen parent li gevonden');
+                    return;
+                }
                 
                 const taakId = li.dataset.id;
                 const taakTekst = li.querySelector('.taak-titel').textContent;
+                console.log('🎯 DRAGSTART: taakId:', taakId, 'tekst:', taakTekst);
                 
                 // Stel drag data in
-                e.dataTransfer.setData('text/plain', JSON.stringify({
+                const dragData = {
                     type: 'actie-taak',
                     taakId: taakId,
                     taakTekst: taakTekst,
                     bronLijst: 'acties'
-                }));
+                };
+                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
                 e.dataTransfer.effectAllowed = 'move';
+                console.log('📦 DRAGSTART: drag data set:', dragData);
                 
                 // Visual feedback op parent li
                 li.style.opacity = '0.5';
+                console.log('🎨 DRAGSTART: opacity set to 0.5');
                 
                 // Toon overlay
+                console.log('👁️ DRAGSTART: calling showActiesDragOverlay...');
                 this.showActiesDragOverlay();
             });
             
             handle.addEventListener('dragend', (e) => {
+                const timestamp = Date.now();
+                console.log('🏁 DRAGEND:', timestamp, 'handle:', handle, 'event:', e);
+                
                 // Vind parent li element
                 const li = handle.closest('.taak-item');
                 if (li) {
                     li.style.opacity = '1';
+                    console.log('🎨 DRAGEND: opacity reset to 1');
+                } else {
+                    console.error('❌ DRAGEND: geen parent li gevonden');
                 }
                 
                 // Verberg overlay
+                console.log('👁️ DRAGEND: calling hideActiesDragOverlay...');
                 this.hideActiesDragOverlay();
             });
         });
     }
 
     showActiesDragOverlay() {
+        const timestamp = Date.now();
+        console.log('🔧 SHOW OVERLAY:', timestamp);
+        
         const overlay = document.getElementById('actiesDragOverlay');
+        console.log('🔍 SHOW OVERLAY: overlay element:', overlay);
+        
         if (overlay) {
+            console.log('✅ SHOW OVERLAY: adding active class and display block');
             overlay.classList.add('active');
             overlay.style.display = 'block';
             
             // Genereer week dagen voor overlay (KRITIEK - was weggegooid!)
+            console.log('📅 SHOW OVERLAY: generating week days...');
             this.generateWeekDaysForOverlay();
             
             // Setup drop zones if not already done (exact zoals uitgesteld)
             if (!this.actiesDropZonesSetup) {
+                console.log('🎯 SHOW OVERLAY: setting up drop zones...');
                 this.setupActiesDropZones();
                 this.actiesDropZonesSetup = true;
+            } else {
+                console.log('✅ SHOW OVERLAY: drop zones already setup');
             }
+            
+            console.log('🎉 SHOW OVERLAY: overlay should now be visible');
+        } else {
+            console.error('❌ SHOW OVERLAY: overlay element not found!');
         }
     }
 
@@ -11282,15 +11314,28 @@ class Taakbeheer {
     }
 
     hideActiesDragOverlay() {
+        const timestamp = Date.now();
+        console.log('🔧 HIDE OVERLAY:', timestamp);
+        
         const overlay = document.getElementById('actiesDragOverlay');
+        console.log('🔍 HIDE OVERLAY: overlay element:', overlay);
+        
         if (overlay) {
+            console.log('✅ HIDE OVERLAY: removing active class');
             overlay.classList.remove('active');
+            
             // Delay hiding to allow for smooth animation (exact zoals uitgesteld)
+            console.log('⏱️ HIDE OVERLAY: setting 300ms timeout to hide...');
             setTimeout(() => {
                 if (!overlay.classList.contains('active')) {
+                    console.log('✅ HIDE OVERLAY: hiding overlay (display = none)');
                     overlay.style.display = 'none';
+                } else {
+                    console.log('⚠️ HIDE OVERLAY: overlay still active, not hiding');
                 }
             }, 300);
+        } else {
+            console.error('❌ HIDE OVERLAY: overlay element not found!');
         }
     }
 
