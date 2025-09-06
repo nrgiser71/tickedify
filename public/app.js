@@ -11164,6 +11164,14 @@ class Taakbeheer {
         dragHandles.forEach((handle) => {
             // Drag handle is al draggable via HTML
             
+            // Toon overlay op mousedown (voor dragstart!)
+            handle.addEventListener('mousedown', (e) => {
+                const timestamp = Date.now();
+                console.log('🖱️ MOUSEDOWN:', timestamp, 'handle:', handle);
+                console.log('⏰ MOUSEDOWN: showing overlay BEFORE drag starts...');
+                this.showActiesDragOverlay();
+            });
+            
             handle.addEventListener('dragstart', (e) => {
                 const timestamp = Date.now();
                 console.log('🚀 DRAGSTART:', timestamp, 'handle:', handle);
@@ -11194,9 +11202,8 @@ class Taakbeheer {
                 li.style.opacity = '0.5';
                 console.log('🎨 DRAGSTART: opacity set to 0.5');
                 
-                // Toon overlay
-                console.log('👁️ DRAGSTART: calling showActiesDragOverlay...');
-                this.showActiesDragOverlay();
+                // Overlay is al zichtbaar via mousedown!
+                console.log('✅ DRAGSTART: overlay already visible from mousedown');
             });
             
             handle.addEventListener('dragend', (e) => {
@@ -11215,6 +11222,19 @@ class Taakbeheer {
                 // Verberg overlay
                 console.log('👁️ DRAGEND: calling hideActiesDragOverlay...');
                 this.hideActiesDragOverlay();
+            });
+            
+            // Verberg overlay ook als gebruiker mouseup doet zonder te slepen
+            handle.addEventListener('mouseup', (e) => {
+                // Alleen verbergen als er geen drag operatie bezig is
+                setTimeout(() => {
+                    // Check of overlay nog zichtbaar is (mogelijk al verborgen door dragend)
+                    const overlay = document.getElementById('actiesDragOverlay');
+                    if (overlay && overlay.style.display !== 'none') {
+                        console.log('🖱️ MOUSEUP: hiding overlay (no drag occurred)');
+                        this.hideActiesDragOverlay();
+                    }
+                }, 50);
             });
         });
     }
