@@ -192,6 +192,40 @@ Task(subagent_type: "tickedify-feature-builder",
 
 **STATUS**: Dropdown iconen zichtbaarheid 100% opgelost - alle priority dropdowns tonen nu correct emoji iconen.
 
+## 🎯 PRIORITEIT VELD PLANNING POPUP VOLLEDIG WERKEND (September 8, 2025) ✅
+
+**🚀 UI CONSISTENTIE FIX VOLTOOID: Versie 0.15.5**
+- **User probleem**: "Ik merk ineens dat in het dagelijkse planning scherm, in het overzicht van de taken, in de box een taak opent, dat het Prioriteit veld niet zichtbaar is. Als je een taak opent in het acties scherm wel."
+- **Root cause**: Planning popup verborg bewust het prioriteit veld voor inbox taken
+- **Oplossing**: Complete prioriteit functionaliteit geïmplementeerd voor inbox workflow
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **planTaak() functie**: Prioriteit veld wordt nu ingesteld met huidige waarde of default 'gemiddeld'
+- **bewerkActie() functie**: Prioriteit veld altijd zichtbaar (`display: 'block'`) voor alle taken 
+- **maakActie() functie**: Prioriteit waarde uit dropdown gebruiken i.p.v. hardcoded 'gemiddeld'
+- **JavaScript error fix**: `isInboxAction` variabele correct gedeclareerd
+
+**🎨 UX IMPROVEMENTS:**
+- **Consistente ervaring**: Prioriteit dropdown nu in beide schermen (inbox + acties)
+- **Alle opties beschikbaar**: 🔴 Hoog, 🟠 Gemiddeld, ⚪ Laag met emoji indicators
+- **Correct opslaan**: Prioriteit wordt correct naar database weggeschreven
+- **Default gedrag**: 'Gemiddeld' als fallback voor bestaande taken zonder prioriteit
+
+**🧪 VOLLEDIGE TESTING UITGEVOERD:**
+- ✅ **Login credentials**: Toegevoegd aan CLAUDE.md voor toekomstige sessies
+- ✅ **Planning popup**: Prioriteit dropdown zichtbaar en werkend vanuit inbox
+- ✅ **Prioriteit wijziging**: Van Gemiddeld naar Hoog succesvol getest
+- ✅ **Geen JavaScript errors**: Alle functionaliteit werkt zonder console errors
+- ✅ **Browser testing**: End-to-end getest in Playwright op tickedify.com/app
+
+**✨ EINDRESULTAAT:**
+- **100% consistente UI** - prioriteit beschikbaar in alle taak bewerkingsschermen
+- **Gebruiker tevredenheid** - gemelde probleem volledig opgelost
+- **Production-ready** - versie 0.15.5 succesvol gedeployed en getest
+- **Toekomstbestendig** - prioriteit functionaliteit werkt voor alle workflows
+
+**STATUS**: Prioriteit veld volledig geïntegreerd in planning popup workflow - gebruikers kunnen nu prioriteiten instellen vanuit alle schermen.
+
 ## 🔧 KRITIEKE B2 BIJLAGEN SYSTEEM VOLLEDIG HERSTELD (Augustus 27, 2025) ✅
 
 **🚨 MAJOR CRISIS RESOLUTION: Versie 0.13.43-0.13.46**
