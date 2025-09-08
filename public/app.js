@@ -6409,7 +6409,7 @@ class Taakbeheer {
             console.log('bewerkActie - generated display text:', herhalingDisplay);
             
             // Set button text - if in inbox, this is making a new action, otherwise editing existing
-            // isInboxAction al gedeclareerd op regel 6356
+            const isInboxAction = this.huidigeLijst === 'inbox';
             this.setActionButtonText(isInboxAction);
             
             this.updateButtonState();

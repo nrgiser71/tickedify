@@ -7,6 +7,13 @@
 - ❌ tickedify.com/admin.html (admin dashboard)
 - ✅ **tickedify.com/app** (hoofdapplicatie)
 
+## LOGIN CREDENTIALS VOOR TESTING 🔑
+
+**Email:** jan@buskens.be  
+**Wachtwoord:** qyqhut-muDvop-fadki9
+
+**BELANGRIJK**: Gebruik ALTIJD deze credentials voor testing, NIET jan@tickedify.com
+
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
