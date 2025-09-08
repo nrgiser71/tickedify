@@ -4183,6 +4183,9 @@ class Taakbeheer {
             document.getElementById('duur').value = taak.duur || '';
             document.getElementById('opmerkingen').value = taak.opmerkingen || '';
             
+            // Set prioriteit veld (default to 'gemiddeld' if not set)
+            document.getElementById('prioriteitSelect').value = taak.prioriteit || 'gemiddeld';
+            
             // Format date correctly for date input (YYYY-MM-DD)
             let dateValue = '';
             if (taak.verschijndatum) {
@@ -4796,9 +4799,9 @@ class Taakbeheer {
         const opmerkingen = document.getElementById('opmerkingen').value.trim();
         const herhalingType = document.getElementById('herhalingSelect').value;
         
-        // Prioriteit alleen ophalen voor niet-inbox taken
+        // Prioriteit ophalen uit dropdown (altijd beschikbaar)
         const isInboxTaak = this.huidigeLijst !== 'acties';
-        const prioriteit = isInboxTaak ? 'gemiddeld' : (document.getElementById('prioriteitSelect').value || 'gemiddeld');
+        const prioriteit = document.getElementById('prioriteitSelect').value || 'gemiddeld';
 
         console.log('maakActie - herhalingType:', herhalingType);
         console.log('maakActie - herhalingActief:', !!herhalingType);
@@ -6388,14 +6391,11 @@ class Taakbeheer {
             document.getElementById('contextSelect').value = actie.contextId;
             document.getElementById('duur').value = actie.duur;
             
-            // Prioriteit instellen (alleen zichtbaar voor niet-inbox taken)
-            const isInboxAction = this.huidigeLijst === 'inbox';
+            // Prioriteit instellen (altijd zichtbaar)
             const prioriteitFormGroep = document.getElementById('prioriteitFormGroep');
             if (prioriteitFormGroep) {
-                prioriteitFormGroep.style.display = isInboxAction ? 'none' : 'block';
-                if (!isInboxAction) {
-                    document.getElementById('prioriteitSelect').value = actie.prioriteit || 'gemiddeld';
-                }
+                prioriteitFormGroep.style.display = 'block';
+                document.getElementById('prioriteitSelect').value = actie.prioriteit || 'gemiddeld';
             }
             
             const herhalingType = actie.herhalingType || '';
