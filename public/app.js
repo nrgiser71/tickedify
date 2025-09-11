@@ -12473,6 +12473,26 @@ class AuthManager {
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 
+                // Check beta period access
+                if (!data.hasAccess) {
+                    this.showUpgradeMessage(data.accessMessage);
+                    this.isAuthenticated = false; // Treat as not authenticated for UI purposes
+                    
+                    // Clear data
+                    if (app) {
+                        app.taken = [];
+                        app.renderTaken();
+                    }
+                    
+                    // Hide loading indicator
+                    if (window.loading) {
+                        loading.hideGlobal();
+                    }
+                    
+                    this.updateUI();
+                    return;
+                }
+                
                 // Load user-specific data
                 if (app) {
                     await app.loadUserData();
@@ -12511,6 +12531,18 @@ class AuthManager {
             
             this.updateUI();
         }
+    }
+
+    showUpgradeMessage(message) {
+        // Show upgrade message in a prominent way
+        if (window.toast) {
+            toast.error(message);
+        } else {
+            alert(message);
+        }
+        
+        // Could also redirect to upgrade page
+        // window.location.href = '/upgrade';
     }
 
     async updateUI() {

@@ -110,7 +110,9 @@ class AdminDashboard {
             '/api/admin/api-usage',
             '/api/admin/email-stats',
             '/api/admin/feedback/stats',
-            '/api/admin/feedback'
+            '/api/admin/feedback',
+            '/api/admin/beta/status',
+            '/api/admin/beta/users'
         ];
 
         const results = await Promise.allSettled(
@@ -129,7 +131,9 @@ class AdminDashboard {
             apiUsage: results[8].status === 'fulfilled' ? results[8].value : {},
             emailStats: results[9].status === 'fulfilled' ? results[9].value : {},
             feedbackStats: results[10].status === 'fulfilled' ? results[10].value : {},
-            feedback: results[11].status === 'fulfilled' ? results[11].value : {}
+            feedback: results[11].status === 'fulfilled' ? results[11].value : {},
+            betaStatus: results[12].status === 'fulfilled' ? results[12].value : {},
+            betaUsers: results[13].status === 'fulfilled' ? results[13].value : {}
         };
     }
 
@@ -176,6 +180,26 @@ class AdminDashboard {
             document.getElementById('feedbackNieuw').textContent = stats.nieuw || 0;
             document.getElementById('feedbackBugs').textContent = stats.bugs || 0;
             document.getElementById('feedbackFeatures').textContent = stats.features || 0;
+        }
+
+        // Beta statistics
+        if (this.data.betaStatus && this.data.betaStatus.betaConfig) {
+            const config = this.data.betaStatus.betaConfig;
+            const stats = this.data.betaStatus.statistics;
+            
+            document.getElementById('betaStatus').textContent = config.beta_period_active ? 'Actief' : 'Beëindigd';
+            document.getElementById('betaUsers').textContent = stats?.totalBetaUsers || 0;
+            document.getElementById('betaNewThisWeek').textContent = stats?.newThisWeek || 0;
+            
+            // Update toggle button
+            const toggleBtn = document.getElementById('betaToggleBtn');
+            if (config.beta_period_active) {
+                toggleBtn.textContent = '🧪 Beta Beëindigen';
+                toggleBtn.className = 'admin-btn danger';
+            } else {
+                toggleBtn.textContent = '🧪 Beta Activeren';
+                toggleBtn.className = 'admin-btn success';
+            }
         }
     }
 
@@ -241,8 +265,37 @@ class AdminDashboard {
             api.last_called ? this.formatDateTime(api.last_called) : '-'
         ]);
 
+        // Beta users tabel
+        this.renderBetaUsersTable();
+
         // Feedback tabel
         this.renderFeedbackTable();
+    }
+
+    renderBetaUsersTable() {
+        const container = document.getElementById('betaUsersTable');
+        const betaUsers = this.data.betaUsers && this.data.betaUsers.users || [];
+        
+        if (!betaUsers || betaUsers.length === 0) {
+            container.innerHTML = '<div class="loading">Geen beta gebruikers beschikbaar</div>';
+            return;
+        }
+
+        let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
+        html += '<div>Email</div><div>Naam</div><div>Status</div><div>GHL</div><div>Registratie</div>';
+        html += '</div>';
+
+        betaUsers.forEach(user => {
+            html += '<div class="table-row">';
+            html += `<div>${this.escapeHtml(user.email)}</div>`;
+            html += `<div>${this.escapeHtml(user.naam || 'Geen naam')}</div>`;
+            html += `<div><span class="status-badge ${user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw'}">${user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen'}</span></div>`;
+            html += `<div>${user.ghl_contact_id ? '✅ Gesynchroniseerd' : '❌ Niet gesynd'}</div>`;
+            html += `<div>${this.formatRelativeTime(user.created_at)}</div>`;
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
     }
 
     renderFeedbackTable() {
@@ -450,6 +503,54 @@ function runMaintenance() {
 
 function logout() {
     adminDashboard.logout();
+}
+
+async function toggleBetaPeriod() {
+    const config = adminDashboard.data.betaStatus?.betaConfig;
+    if (!config) {
+        alert('Beta configuratie niet beschikbaar');
+        return;
+    }
+
+    const currentStatus = config.beta_period_active;
+    const action = currentStatus ? 'beëindigen' : 'activeren';
+    
+    if (!confirm(`Weet je zeker dat je de beta periode wilt ${action}?`)) {
+        return;
+    }
+
+    const toggleBtn = document.getElementById('betaToggleBtn');
+    const originalText = toggleBtn.textContent;
+    toggleBtn.textContent = '🔄 Bezig...';
+    toggleBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/admin/beta/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                active: !currentStatus
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            // Refresh dashboard data
+            await adminDashboard.refreshData();
+        } else {
+            alert('Fout bij wijzigen beta periode: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error toggling beta period:', error);
+        alert('Fout bij wijzigen beta periode: ' + error.message);
+    } finally {
+        toggleBtn.disabled = false;
+        toggleBtn.textContent = originalText;
+    }
 }
 
 // Initialize dashboard when page loads

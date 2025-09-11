@@ -103,6 +103,34 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add email_import_code column:', migrateError.message);
     }
 
+    // Add beta testing columns to users table
+    try {
+      await pool.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) DEFAULT 'beta',
+        ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'beta_active',
+        ADD COLUMN IF NOT EXISTS ghl_contact_id VARCHAR(255)
+      `);
+      console.log('✅ Added beta testing columns to users table');
+    } catch (betaMigrateError) {
+      console.log('⚠️ Could not add beta columns, trying individually:', betaMigrateError.message);
+      // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
+      const betaColumns = [
+        { name: 'account_type', type: 'VARCHAR(20) DEFAULT \'beta\'' },
+        { name: 'subscription_status', type: 'VARCHAR(20) DEFAULT \'beta_active\'' },
+        { name: 'ghl_contact_id', type: 'VARCHAR(255)' }
+      ];
+      
+      for (const col of betaColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added beta column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Beta column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projecten (
         id VARCHAR(50) PRIMARY KEY,
@@ -258,6 +286,29 @@ const initDatabase = async () => {
       console.log('✅ Premium expires column added to users table');
     } catch (error) {
       console.log('⚠️ Could not add premium_expires column (might already exist):', error.message);
+    }
+
+    // Create beta configuration table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS beta_config (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        beta_period_active BOOLEAN DEFAULT TRUE,
+        beta_ended_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Insert default beta config if it doesn't exist
+    try {
+      await pool.query(`
+        INSERT INTO beta_config (id, beta_period_active) 
+        VALUES (1, TRUE) 
+        ON CONFLICT (id) DO NOTHING
+      `);
+      console.log('✅ Beta configuration table created with default settings');
+    } catch (error) {
+      console.log('⚠️ Could not insert default beta config:', error.message);
     }
 
     // Update bestaande taken die nog geen prioriteit hebben naar 'gemiddeld'
@@ -1954,6 +2005,35 @@ const db = {
     } catch (error) {
       console.error('Error checking premium status:', error);
       return false;
+    }
+  },
+
+  // Beta configuration functions
+  async getBetaConfig() {
+    try {
+      const result = await pool.query('SELECT * FROM beta_config WHERE id = 1');
+      return result.rows[0] || { beta_period_active: true };
+    } catch (error) {
+      console.error('Error getting beta config:', error);
+      return { beta_period_active: true }; // Default to beta active if error
+    }
+  },
+
+  async updateBetaConfig(active) {
+    try {
+      const result = await pool.query(`
+        UPDATE beta_config 
+        SET beta_period_active = $1,
+            beta_ended_at = CASE WHEN $1 = FALSE THEN NOW() ELSE NULL END,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+        RETURNING *
+      `, [active]);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating beta config:', error);
+      throw error;
     }
   },
 

@@ -459,6 +459,9 @@
             <button class="admin-btn warning" onclick="runMaintenance()">
                 🛠️ Database Onderhoud
             </button>
+            <button class="admin-btn" id="betaToggleBtn" onclick="toggleBetaPeriod()">
+                🧪 Beta Beëindigen
+            </button>
             <button class="admin-btn danger" onclick="logout()">
                 🚪 Uitloggen
             </button>
@@ -528,6 +531,15 @@
                 <div class="stat-value" id="feedbackTotal">-</div>
                 <div class="stat-description">Nieuw: <span id="feedbackNieuw">-</span> | Bugs: <span id="feedbackBugs">-</span> | Features: <span id="feedbackFeatures">-</span></div>
             </div>
+
+            <div class="stat-card tools">
+                <div class="stat-header">
+                    <span class="stat-icon">🧪</span>
+                    <span class="stat-title">Beta Periode</span>
+                </div>
+                <div class="stat-value" id="betaStatus">-</div>
+                <div class="stat-description">Beta gebruikers: <span id="betaUsers">-</span> | Nieuw deze week: <span id="betaNewThisWeek">-</span></div>
+            </div>
         </div>
 
         <!-- Gebruikers Overzicht -->
@@ -592,6 +604,17 @@
                 <span>API Endpoint Usage</span>
             </div>
             <div class="table-content" id="apiTable">
+                <div class="loading">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Beta Gebruikers -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">🧪</span>
+                <span>Beta Gebruikers</span>
+            </div>
+            <div class="table-content" id="betaUsersTable">
                 <div class="loading">Laden...</div>
             </div>
         </div>

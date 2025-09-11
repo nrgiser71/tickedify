@@ -53,6 +53,90 @@ const forensicLogger = require('./forensic-logger');
 // Import storage manager for attachments
 const { storageManager, STORAGE_CONFIG } = require('./storage-manager');
 
+// GHL Helper Function
+async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
+    if (!process.env.GHL_API_KEY) {
+        console.log('⚠️ GHL not configured, skipping contact sync');
+        return null;
+    }
+    
+    try {
+        const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
+        
+        // Search for existing contact
+        const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                'Content-Type': 'application/json',
+                'Version': '2021-07-28'
+            }
+        });
+        
+        let contactId = null;
+        
+        if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            if (searchData.contact && searchData.contact.id) {
+                contactId = searchData.contact.id;
+                
+                // Update existing contact with new tags
+                const tagResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Version': '2021-07-28'
+                    },
+                    body: JSON.stringify({ tags })
+                });
+                
+                if (tagResponse.ok) {
+                    console.log(`✅ GHL: Updated existing contact ${contactId} with tags: ${tags.join(', ')}`);
+                } else {
+                    console.error(`⚠️ GHL: Failed to add tags to existing contact ${contactId}`);
+                }
+            }
+        }
+        
+        if (!contactId) {
+            // Create new contact
+            const createResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Version': '2021-07-28'
+                },
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    firstName: name ? name.split(' ')[0] : '',
+                    lastName: name ? name.split(' ').slice(1).join(' ') : '',
+                    name: name || email,
+                    locationId: locationId,
+                    tags: tags,
+                    source: 'tickedify-registration'
+                })
+            });
+            
+            if (createResponse.ok) {
+                const createData = await createResponse.json();
+                contactId = createData.contact?.id;
+                console.log(`✅ GHL: Created new contact ${contactId} with tags: ${tags.join(', ')}`);
+            } else {
+                const errorText = await createResponse.text();
+                console.error(`⚠️ GHL: Failed to create contact: ${createResponse.status} - ${errorText}`);
+            }
+        }
+        
+        return contactId;
+        
+    } catch (error) {
+        console.error('⚠️ GHL integration error:', error.message);
+        return null;
+    }
+}
+
 // Debug: Check forensic logger status at startup
 console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
 console.log('🔍 DEBUG: Forensic logger enabled status:', forensicLogger.enabled);
@@ -1681,6 +1765,40 @@ function getCurrentUserId(req) {
     return req.session.userId || 'user_1750513625687_5458i79dj';
 }
 
+// Beta subscription middleware - checks if user has access during/after beta period
+async function requireActiveSubscription(req, res, next) {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+    
+    try {
+        // Get beta config
+        const betaConfig = await db.getBetaConfig();
+        
+        // During beta period - everyone has access
+        if (betaConfig.beta_period_active) {
+            return next();
+        }
+        
+        // After beta period - check user subscription
+        const userResult = await pool.query('SELECT subscription_status FROM users WHERE id = $1', [req.session.userId]);
+        const user = userResult.rows[0];
+        
+        if (user && (user.subscription_status === 'active' || user.subscription_status === 'trialing')) {
+            return next();
+        }
+        
+        // Redirect to upgrade page
+        console.log(`❌ Access denied for user ${req.session.userId} - subscription required`);
+        res.redirect('/upgrade');
+        
+    } catch (error) {
+        console.error('❌ Error checking subscription status:', error);
+        // On error, allow access (fail open)
+        next();
+    }
+}
+
 // Synchrone B2 cleanup functie met retry logic en gedetailleerde logging
 async function cleanupB2Files(bijlagen, taskId = 'unknown') {
     console.log(`🧹 Starting B2 cleanup for ${bijlagen.length} files (task: ${taskId})`);
@@ -1789,36 +1907,79 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(409).json({ error: 'Email adres al in gebruik' });
         }
         
+        // Check beta status
+        const betaConfig = await db.getBetaConfig();
+        
+        // Determine account type and status
+        const accountType = betaConfig.beta_period_active ? 'beta' : 'regular';
+        const subscriptionStatus = betaConfig.beta_period_active ? 'beta_active' : 'pending_payment';
+        
         // Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(wachtwoord, saltRounds);
         
-        // Create user
+        // Create user with beta fields
         const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         await pool.query(`
-            INSERT INTO users (id, email, naam, wachtwoord_hash, rol, aangemaakt, actief)
-            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
-        `, [userId, email, naam, hashedPassword, 'user', true]);
+            INSERT INTO users (id, email, naam, wachtwoord_hash, rol, aangemaakt, actief, account_type, subscription_status)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6, $7, $8)
+        `, [userId, email, naam, hashedPassword, 'user', true, accountType, subscriptionStatus]);
         
         // Generate email import code for new user
         const importCode = await db.generateEmailImportCode(userId);
         console.log(`📧 Generated import code for new user: ${importCode}`);
         
-        // Start session
+        // Sync to GHL with appropriate tag
+        let ghlContactId = null;
+        try {
+            const tag = betaConfig.beta_period_active ? 'tickedify-beta-tester' : 'tickedify-user-needs-payment';
+            ghlContactId = await addContactToGHL(email, naam, [tag]);
+            
+            if (ghlContactId) {
+                await pool.query('UPDATE users SET ghl_contact_id = $1 WHERE id = $2', [ghlContactId, userId]);
+                console.log(`✅ GHL: User synced with contact ID: ${ghlContactId}`);
+            }
+        } catch (ghlError) {
+            console.error('⚠️ GHL sync failed during registration:', ghlError.message);
+            // Don't fail registration if GHL sync fails
+        }
+        
+        // If NOT in beta period, redirect to payment
+        if (!betaConfig.beta_period_active) {
+            console.log(`📦 User registered during non-beta period: ${email} - requires payment`);
+            return res.json({
+                success: true,
+                requiresPayment: true,
+                message: 'Account aangemaakt. Betaling vereist voor toegang.',
+                redirect: '/upgrade',
+                user: {
+                    id: userId,
+                    email,
+                    naam,
+                    account_type: accountType,
+                    subscription_status: subscriptionStatus
+                }
+            });
+        }
+        
+        // Beta period - start session and give access
         req.session.userId = userId;
         req.session.userEmail = email;
         req.session.userNaam = naam;
         
-        console.log(`✅ New user registered: ${email} (${userId}) with import code: ${importCode}`);
+        console.log(`✅ Beta user registered: ${email} (${userId}) with import code: ${importCode}`);
         
         res.json({
             success: true,
-            message: 'Account succesvol aangemaakt',
+            message: 'Welkom als beta tester! Account succesvol aangemaakt.',
+            redirect: '/app',
             user: {
                 id: userId,
                 email,
                 naam,
                 rol: 'user',
+                account_type: accountType,
+                subscription_status: subscriptionStatus,
                 importCode: importCode,
                 importEmail: `import+${importCode}@mg.tickedify.com`
             }
@@ -2897,19 +3058,73 @@ app.post('/api/test/ghl-tag', async (req, res) => {
     }
 });
 
-app.get('/api/auth/me', (req, res) => {
+app.get('/api/auth/me', async (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
     
-    res.json({
-        authenticated: true,
-        user: {
-            id: req.session.userId,
-            email: req.session.userEmail,
-            naam: req.session.userNaam
+    try {
+        // Get user information including beta status
+        const userResult = await pool.query(`
+            SELECT 
+                id, email, naam, 
+                account_type, subscription_status,
+                created_at
+            FROM users 
+            WHERE id = $1
+        `, [req.session.userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({ error: 'User not found' });
         }
-    });
+        
+        const user = userResult.rows[0];
+        
+        // Get beta configuration
+        const betaConfig = await db.getBetaConfig();
+        
+        // Check if user has access
+        let hasAccess = true;
+        let accessMessage = null;
+        
+        // If beta period is not active and user is beta type
+        if (!betaConfig.beta_period_active && user.account_type === 'beta') {
+            if (user.subscription_status !== 'paid' && user.subscription_status !== 'active') {
+                hasAccess = false;
+                accessMessage = 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
+            }
+        }
+        
+        res.json({
+            authenticated: true,
+            hasAccess: hasAccess,
+            accessMessage: accessMessage,
+            user: {
+                id: req.session.userId,
+                email: req.session.userEmail,
+                naam: req.session.userNaam,
+                account_type: user.account_type,
+                subscription_status: user.subscription_status
+            },
+            betaConfig: {
+                beta_period_active: betaConfig.beta_period_active,
+                beta_ended_at: betaConfig.beta_ended_at
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error in /api/auth/me:', error);
+        // Fallback to basic auth response on error
+        res.json({
+            authenticated: true,
+            hasAccess: true, // Fail open for safety
+            user: {
+                id: req.session.userId,
+                email: req.session.userEmail,
+                naam: req.session.userNaam
+            }
+        });
+    }
 });
 
 // Old admin users endpoint removed - using consolidated version later in file
@@ -6838,6 +7053,99 @@ app.get('/api/debug/feedback-test', async (req, res) => {
             error: error.message,
             stack: error.stack 
         });
+    }
+});
+
+// ===== BETA MANAGEMENT ADMIN ENDPOINTS =====
+
+app.get('/api/admin/beta/status', async (req, res) => {
+    try {
+        const betaConfig = await db.getBetaConfig();
+        
+        // Get beta user statistics
+        const result = await pool.query(`
+            SELECT 
+                COUNT(*) as total_beta_users,
+                COUNT(CASE WHEN subscription_status = 'beta_active' THEN 1 END) as active_beta_users,
+                COUNT(CASE WHEN subscription_status = 'expired' THEN 1 END) as expired_beta_users,
+                COUNT(CASE WHEN created_at > NOW() - INTERVAL '7 days' THEN 1 END) as new_this_week
+            FROM users 
+            WHERE account_type = 'beta'
+        `);
+        
+        const stats = result.rows[0];
+        
+        res.json({
+            success: true,
+            betaConfig,
+            statistics: {
+                totalBetaUsers: parseInt(stats.total_beta_users),
+                activeBetaUsers: parseInt(stats.active_beta_users),
+                expiredBetaUsers: parseInt(stats.expired_beta_users),
+                newThisWeek: parseInt(stats.new_this_week)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting beta status:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/admin/beta/toggle', async (req, res) => {
+    try {
+        const { active } = req.body;
+        
+        // Update beta config
+        const updatedConfig = await db.updateBetaConfig({
+            beta_period_active: active,
+            beta_ended_at: active ? null : new Date().toISOString()
+        });
+        
+        // If ending beta period, update all active beta users to expired
+        if (!active) {
+            await pool.query(`
+                UPDATE users 
+                SET subscription_status = 'expired' 
+                WHERE account_type = 'beta' AND subscription_status = 'beta_active'
+            `);
+        }
+        
+        res.json({
+            success: true,
+            message: active ? 'Beta periode geactiveerd' : 'Beta periode beëindigd',
+            config: updatedConfig
+        });
+    } catch (error) {
+        console.error('Error toggling beta status:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/admin/beta/users', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_status,
+                ghl_contact_id,
+                created_at,
+                last_activity
+            FROM users 
+            WHERE account_type = 'beta'
+            ORDER BY created_at DESC
+            LIMIT 50
+        `);
+        
+        res.json({
+            success: true,
+            users: result.rows
+        });
+    } catch (error) {
+        console.error('Error getting beta users:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
