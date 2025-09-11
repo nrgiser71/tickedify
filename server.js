@@ -7096,10 +7096,7 @@ app.post('/api/admin/beta/toggle', async (req, res) => {
         const { active } = req.body;
         
         // Update beta config
-        const updatedConfig = await db.updateBetaConfig({
-            beta_period_active: active,
-            beta_ended_at: active ? null : new Date().toISOString()
-        });
+        const updatedConfig = await db.updateBetaConfig(active);
         
         // If ending beta period, update all active beta users to expired
         if (!active) {
