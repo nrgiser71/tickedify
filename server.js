@@ -7149,6 +7149,66 @@ app.get('/api/admin/beta/users', async (req, res) => {
     }
 });
 
+// Force beta database migration endpoint
+app.get('/api/admin/force-beta-migration', async (req, res) => {
+    try {
+        console.log('🔄 Starting forced beta migration...');
+        
+        // Add beta columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) DEFAULT 'regular',
+            ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'active',
+            ADD COLUMN IF NOT EXISTS ghl_contact_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        `);
+        console.log('✅ Users table beta columns added');
+        
+        // Create beta_config table if it doesn't exist
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS beta_config (
+                id INTEGER PRIMARY KEY DEFAULT 1,
+                beta_period_active BOOLEAN DEFAULT TRUE,
+                beta_ended_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Beta_config table created');
+        
+        // Insert default beta config if not exists
+        await pool.query(`
+            INSERT INTO beta_config (id, beta_period_active, created_at, updated_at)
+            VALUES (1, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO NOTHING
+        `);
+        console.log('✅ Default beta config inserted');
+        
+        // Set existing users to beta type if they were created recently (assuming they are beta testers)
+        await pool.query(`
+            UPDATE users 
+            SET account_type = 'beta', 
+                subscription_status = 'beta_active'
+            WHERE account_type IS NULL OR account_type = 'regular'
+        `);
+        console.log('✅ Existing users converted to beta type');
+        
+        res.json({
+            success: true,
+            message: 'Beta migration completed successfully',
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Beta migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 
