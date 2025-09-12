@@ -2025,29 +2025,40 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Ongeldige email of wachtwoord' });
         }
         
-        // Check beta access before creating session
-        const betaConfig = await db.getBetaConfig();
-        
-        // Get user's account details for beta check
-        const userDetailsResult = await pool.query(`
-            SELECT account_type, subscription_status 
-            FROM users 
-            WHERE id = $1
-        `, [user.id]);
-        
-        const userDetails = userDetailsResult.rows[0];
-        
-        // If beta period is not active and user is beta type without paid subscription
-        if (!betaConfig.beta_period_active && 
-            userDetails.account_type === 'beta' && 
-            userDetails.subscription_status !== 'paid' && 
-            userDetails.subscription_status !== 'active') {
+        // Check beta access before creating session (with fallback for backward compatibility)
+        try {
+            const betaConfig = await db.getBetaConfig();
             
-            console.log(`❌ Login denied for user ${email} - beta period ended, upgrade required`);
-            return res.status(401).json({ 
-                error: 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.',
-                requiresUpgrade: true 
-            });
+            // Get user's account details for beta check (check if columns exist first)
+            let userDetailsResult;
+            try {
+                userDetailsResult = await pool.query(`
+                    SELECT account_type, subscription_status 
+                    FROM users 
+                    WHERE id = $1
+                `, [user.id]);
+            } catch (columnError) {
+                console.log('⚠️ Subscription columns not available - assuming basic user');
+                userDetailsResult = { rows: [{ account_type: null, subscription_status: null }] };
+            }
+            
+            const userDetails = userDetailsResult.rows[0];
+            
+            // If beta period is not active and user is beta type without paid subscription
+            if (!betaConfig.beta_period_active && 
+                userDetails && userDetails.account_type === 'beta' && 
+                userDetails.subscription_status !== 'paid' && 
+                userDetails.subscription_status !== 'active') {
+                
+                console.log(`❌ Login denied for user ${email} - beta period ended, upgrade required`);
+                return res.status(401).json({ 
+                    error: 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.',
+                    requiresUpgrade: true 
+                });
+            }
+        } catch (betaCheckError) {
+            console.log(`⚠️ Beta config check failed - allowing login for backward compatibility: ${betaCheckError.message}`);
+            // Continue with login if beta check fails (for databases without subscription system)
         }
         
         // Update last login
