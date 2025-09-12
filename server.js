@@ -6831,6 +6831,7 @@ app.post('/api/admin/auth', async (req, res) => {
         if (password === adminPassword) {
             // Set admin session flag
             req.session.isAdmin = true;
+            req.session.adminAuthenticated = true; // Also set this for consistency
             req.session.adminLoginTime = new Date().toISOString();
             
             res.json({ 
@@ -7212,7 +7213,7 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
 app.get('/api/admin/test-users', async (req, res) => {
     try {
         // Check for admin authentication via session or basic check
-        if (!req.session.adminAuthenticated) {
+        if (!req.session.isAdmin) {
             return res.status(401).json({ error: 'Admin authentication required' });
         }
         
@@ -7264,7 +7265,7 @@ app.get('/api/admin/test-users', async (req, res) => {
 app.post('/api/admin/delete-test-users', async (req, res) => {
     try {
         // Check for admin authentication
-        if (!req.session.adminAuthenticated) {
+        if (!req.session.isAdmin) {
             return res.status(401).json({ error: 'Admin authentication required' });
         }
         
@@ -7358,7 +7359,7 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
 app.get('/api/admin/user-data/:userId', async (req, res) => {
     try {
         // Check for admin authentication
-        if (!req.session.adminAuthenticated) {
+        if (!req.session.isAdmin) {
             return res.status(401).json({ error: 'Admin authentication required' });
         }
         
@@ -7410,7 +7411,7 @@ app.get('/api/admin/user-data/:userId', async (req, res) => {
 app.get('/api/admin/migrate-cascade-delete', async (req, res) => {
     try {
         // Check for admin authentication
-        if (!req.session.adminAuthenticated) {
+        if (!req.session.isAdmin) {
             return res.status(401).json({ error: 'Admin authentication required' });
         }
         
