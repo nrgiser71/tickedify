@@ -12238,6 +12238,7 @@ class AuthManager {
     constructor() {
         this.currentUser = null;
         this.isAuthenticated = false;
+        this.betaCheckInterval = null;
         this.setupEventListeners();
         this.checkAuthStatus();
     }
@@ -12366,12 +12367,22 @@ class AuthManager {
                 
                 toast.success(`Welkom terug, ${data.user.naam}!`);
                 
-                // Load user-specific data
-                if (app) {
+                // Check auth status immediately after login (includes beta access check)
+                await this.checkAuthStatus();
+                
+                // Load user-specific data (only if still authenticated after checkAuthStatus)
+                if (this.isAuthenticated && app) {
                     await app.loadUserData();
                 }
             } else {
-                toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+                // Handle beta upgrade requirement
+                if (data.requiresUpgrade) {
+                    toast.error(data.error);
+                    // Could redirect to upgrade page here if available
+                    // window.location.href = '/upgrade';
+                } else {
+                    toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+                }
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -12443,6 +12454,10 @@ class AuthManager {
             if (response.ok) {
                 this.currentUser = null;
                 this.isAuthenticated = false;
+                
+                // Stop beta check interval to prevent memory leaks
+                this.stopBetaCheckInterval();
+                
                 this.updateUI();
                 
                 toast.info('Je bent uitgelogd.');
@@ -12545,6 +12560,29 @@ class AuthManager {
         // window.location.href = '/upgrade';
     }
 
+    startBetaCheckInterval() {
+        // Clear any existing interval first
+        this.stopBetaCheckInterval();
+        
+        // Check elke 60 minuten (3600000 ms)
+        this.betaCheckInterval = setInterval(() => {
+            if (this.isAuthenticated) {
+                console.log('🕐 Periodieke beta controle uitgevoerd');
+                this.checkAuthStatus();
+            }
+        }, 3600000); // 1 hour
+        
+        console.log('✅ Beta controle interval gestart (elk uur)');
+    }
+
+    stopBetaCheckInterval() {
+        if (this.betaCheckInterval) {
+            clearInterval(this.betaCheckInterval);
+            this.betaCheckInterval = null;
+            console.log('⏹️ Beta controle interval gestopt');
+        }
+    }
+
     async updateUI() {
         const authButtons = document.getElementById('auth-buttons');
         const userInfo = document.getElementById('user-info');
@@ -12562,6 +12600,8 @@ class AuthManager {
 
         if (this.isAuthenticated && this.currentUser) {
             // Authenticated state - show full app
+            this.startBetaCheckInterval();
+            
             if (authButtons) authButtons.style.display = 'none';
             if (userInfo) userInfo.style.display = 'flex';
             if (userName) userName.textContent = this.currentUser.naam;
@@ -12587,6 +12627,8 @@ class AuthManager {
             
         } else {
             // Unauthenticated state - show welcome message and login/register
+            this.stopBetaCheckInterval();
+            
             if (authButtons) authButtons.style.display = 'flex';
             if (userInfo) userInfo.style.display = 'none';
             if (userImportEmail) userImportEmail.style.display = 'none';
