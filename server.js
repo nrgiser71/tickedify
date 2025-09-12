@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -107,7 +108,13 @@ app.post('/api/auth/login', async (req, res) => {
         }
         
         const user = await db.getUserByEmail(email);
-        if (!user || !await db.verifyPassword(password, user.wachtwoord)) {
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        // Check password with bcrypt
+        const validPassword = await bcrypt.compare(password, user.wachtwoord);
+        if (!validPassword) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
@@ -262,6 +269,43 @@ app.put('/api/taak/:id', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('⚠️ Task update error:', error);
         res.status(500).json({ error: 'Task update failed' });
+    }
+});
+
+// Daily planning endpoint
+app.get('/api/dagelijkse-planning/:datum', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const datum = req.params.datum;
+        
+        if (!db || typeof db.getDagelijksePlanning !== 'function') {
+            return res.json([]);
+        }
+        
+        const planning = await db.getDagelijksePlanning(userId, datum);
+        res.json(planning || []);
+    } catch (error) {
+        console.error('⚠️ Daily planning error:', error);
+        res.json([]);
+    }
+});
+
+// Save list endpoint
+app.post('/api/lijst/:lijstNaam', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const lijstNaam = req.params.lijstNaam;
+        const taken = req.body;
+        
+        if (!db || typeof db.saveTakenToLijst !== 'function') {
+            return res.status(501).json({ error: 'Save list not available' });
+        }
+        
+        await db.saveTakenToLijst(userId, lijstNaam, taken);
+        res.json({ success: true, message: 'List saved' });
+    } catch (error) {
+        console.error('⚠️ Save list error:', error);
+        res.status(500).json({ error: 'Save list failed' });
     }
 });
 
