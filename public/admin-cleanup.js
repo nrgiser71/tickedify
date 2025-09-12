@@ -27,21 +27,36 @@ class AdminCleanup {
 
     async checkAuthentication() {
         try {
+            console.log('🔍 Checking authentication...');
+            
             const response = await fetch('/api/admin/test-users', {
                 credentials: 'include'
             });
+            
+            console.log('📡 Auth response status:', response.status);
+            
             if (response.status === 401) {
+                console.log('❌ Not authenticated - showing login');
                 this.showLoginSection();
             } else if (response.ok) {
+                console.log('✅ Authenticated - showing cleanup');
                 this.authenticated = true;
                 this.showCleanupSection();
                 this.loadTestUsers();
             } else {
-                throw new Error('Onbekende authenticatie fout');
+                console.log('⚠️ Unexpected status:', response.status, response.statusText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
         } catch (error) {
-            console.error('Auth check error:', error);
-            this.showError('Fout bij controle authenticatie: ' + error.message);
+            console.error('❌ Auth check error:', error);
+            
+            // Fallback: show login section if anything goes wrong
+            this.showLoginSection();
+            
+            // Show error in UI too
+            setTimeout(() => {
+                this.showError('Authenticatie controle gefaald. Probeer opnieuw in te loggen.');
+            }, 100);
         }
     }
 
