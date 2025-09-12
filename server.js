@@ -228,6 +228,58 @@ app.get('/api/subscription/status', requireAuth, async (req, res) => {
     }
 });
 
+// Basic task endpoints
+app.get('/api/lijst/:lijstNaam', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const lijstNaam = req.params.lijstNaam;
+        
+        if (!db || typeof db.getTakenByLijst !== 'function') {
+            return res.json([]);
+        }
+        
+        const taken = await db.getTakenByLijst(userId, lijstNaam);
+        res.json(taken || []);
+    } catch (error) {
+        console.error('⚠️ List endpoint error:', error);
+        res.json([]);
+    }
+});
+
+// Basic task update
+app.put('/api/taak/:id', requireAuth, async (req, res) => {
+    try {
+        const taakId = req.params.id;
+        const userId = req.session.userId;
+        const updates = req.body;
+        
+        if (!db || typeof db.updateTask !== 'function') {
+            return res.status(501).json({ error: 'Task update not available' });
+        }
+        
+        await db.updateTask(taakId, updates, userId);
+        res.json({ success: true, message: 'Task updated' });
+    } catch (error) {
+        console.error('⚠️ Task update error:', error);
+        res.status(500).json({ error: 'Task update failed' });
+    }
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Logout error:', err);
+                return res.status(500).json({ error: 'Logout failed' });
+            }
+            res.json({ message: 'Logout successful' });
+        });
+    } else {
+        res.json({ message: 'No session to logout' });
+    }
+});
+
 // Catch all
 app.use((req, res) => {
     res.status(404).json({ 
