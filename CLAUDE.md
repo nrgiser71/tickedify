@@ -1486,7 +1486,47 @@ User vroeg: "Zouden we in de mobile version van de app de side bar niet hideable
 
 **STATUS**: Uitklapbare taken functionaliteit volledig hersteld en production-ready.
 
-## CURRENT STATUS: Dagelijkse Planning Kalender Project Namen Cleanup Voltooid (Augustus 20, 2025) ✅🎨
+## CURRENT STATUS: User Account Type Management & Bèta Controle Systeem Voltooid (September 12, 2025) ✅👥
+
+**🎯 DUBBELE FEATURE IMPLEMENTATIE: Versie 0.15.12-0.15.14**
+- **User probleem 1**: "Alle users zijn automatisch beta geworden - ik wil specifieke users regular maken"
+- **User probleem 2**: "Bèta controle gebeurt pas bij browser refresh, niet bij inloggen"
+- **Oplossing**: Complete user management systeem + verbeterde bèta periode controle
+
+**🔐 BÈTA CONTROLE VERBETERINGEN:**
+- **Login endpoint controle**: Backend controleert bèta toegang direct bij `/api/auth/login` - geen sessie als verlopen
+- **Frontend dubbele check**: `handleLogin()` roept extra `checkAuthStatus()` aan na succesvolle login
+- **Periodieke controle**: Elk uur automatische bèta controle voor ingelogde gebruikers (3600s interval)
+- **Memory leak preventie**: Interval cleanup bij logout via `stopBetaCheckInterval()`
+
+**👥 USER ACCOUNT TYPE MANAGEMENT:**
+- **Backend API**: 
+  - `GET /api/admin/all-users` - Alle users ophalen (beta + regular)
+  - `PUT /api/admin/user/:id/account-type` - Account type wijzigen met automatische subscription status update
+- **Admin Dashboard**: Nieuwe "Alle Gebruikers" sectie met volledige management interface
+- **Interactive UI**: Dropdown selectie + wijzig buttons per user met confirmatie popups
+- **Real-time feedback**: Success/error messages + automatic data refresh
+
+**✅ UITGEVOERDE WIJZIGINGEN:**
+- **jan@buskens.be** (278 taken): `beta` → `regular` + `subscription_status: 'active'`
+- **info@BaasOverJeTijd.be** (1334 taken): `beta` → `regular` + `subscription_status: 'active'`  
+- **Test account**: `beta` → `regular` + `subscription_status: 'active'`
+
+**📋 TECHNISCHE IMPLEMENTATIE:**
+- **3 scenario's bèta controle**: Bij login, bij browser refresh, elk uur tijdens gebruik
+- **Database queries**: Atomische updates van account_type en subscription_status
+- **Admin interface**: Visual status badges, loading states, error handling
+- **Audit logging**: Console logging van alle account type wijzigingen
+
+**💡 RESULTAAT:**
+- **Regular users**: Niet beïnvloed door bèta periode wijzigingen - permanente toegang
+- **Beta users**: Krijgen direct upgrade melding bij inloggen of tijdens gebruik
+- **Admin controle**: Complete user management via vertrouwde dashboard interface
+- **Future proof**: Systeem klaar voor toekomstig gebruikersbeheer en subscription management
+
+**STATUS**: Beide systemen volledig operationeel - bèta controle werkt in real-time en user management is intuïtief beschikbaar.
+
+## PREVIOUS STATUS: Dagelijkse Planning Kalender Project Namen Cleanup Voltooid (Augustus 20, 2025) ✅🎨
 
 **🎯 UI CLEANUP FIX VOLTOOID: Versie 0.12.5-0.12.6**
 - **User request**: "In het scherm voor de dagelijkse planning wordt in het kalender stuk het project van een taak tussen haakjes gezet. Dat is niet nodig."
