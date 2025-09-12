@@ -2265,15 +2265,20 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             return res.status(400).json({ error: 'Geen bestand geüpload' });
         }
 
-        // Check storage limits based on subscription
-        const storageCheck = await db.checkStorageLimit(userId, file.size);
-        if (!storageCheck.allowed) {
-            return res.status(400).json({ 
-                error: storageCheck.message,
-                reason: storageCheck.reason,
-                limits: storageCheck.limits,
-                usage: storageCheck.usage
-            });
+        // Check storage limits based on subscription (with fallback for backward compatibility)
+        try {
+            const storageCheck = await db.checkStorageLimit(userId, file.size);
+            if (!storageCheck.allowed) {
+                return res.status(400).json({ 
+                    error: storageCheck.message,
+                    reason: storageCheck.reason,
+                    limits: storageCheck.limits,
+                    usage: storageCheck.usage
+                });
+            }
+        } catch (storageError) {
+            console.log('⚠️ Storage limit check failed - allowing upload for backward compatibility:', storageError.message);
+            // Continue with upload if storage check fails
         }
 
         // Check if task exists and belongs to user
@@ -2884,29 +2889,61 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
 
         const userId = req.session.userId;
         
-        const [usage, limits] = await Promise.all([
-            db.getUserStorageUsage(userId),
-            db.getUserStorageLimits(userId)
-        ]);
+        try {
+            const [usage, limits] = await Promise.all([
+                db.getUserStorageUsage(userId),
+                db.getUserStorageLimits(userId)
+            ]);
 
-        res.json({
-            success: true,
-            stats: {
-                used_bytes: parseInt(usage.total_size),
-                used_formatted: storageManager.formatBytes(parseInt(usage.total_size)),
-                bijlagen_count: parseInt(usage.file_count),
-                largest_file: parseInt(usage.largest_file),
-                addon: limits.addon,
-                subscription_status: limits.status,
-                limits: {
-                    total_bytes: limits.maxTotalSize,
-                    total_formatted: limits.maxTotalSize ? storageManager.formatBytes(limits.maxTotalSize) : 'Onbeperkt',
-                    max_file_size: limits.maxFileSize,
-                    max_file_formatted: storageManager.formatBytes(limits.maxFileSize),
-                    usage_percentage: limits.maxTotalSize ? (parseInt(usage.total_size) / limits.maxTotalSize) * 100 : 0
+            res.json({
+                success: true,
+                stats: {
+                    used_bytes: parseInt(usage.total_size),
+                    used_formatted: storageManager.formatBytes(parseInt(usage.total_size)),
+                    bijlagen_count: parseInt(usage.file_count),
+                    largest_file: parseInt(usage.largest_file),
+                    addon: limits.addon,
+                    subscription_status: limits.status,
+                    limits: {
+                        total_bytes: limits.maxTotalSize,
+                        total_formatted: limits.maxTotalSize ? storageManager.formatBytes(limits.maxTotalSize) : 'Onbeperkt',
+                        max_file_size: limits.maxFileSize,
+                        max_file_formatted: storageManager.formatBytes(limits.maxFileSize),
+                        usage_percentage: limits.maxTotalSize ? (parseInt(usage.total_size) / limits.maxTotalSize) * 100 : 0
+                    }
                 }
-            }
-        });
+            });
+        } catch (subscriptionError) {
+            console.log('⚠️ Subscription-based storage stats failed, falling back to basic stats:', subscriptionError.message);
+            
+            // Fallback to basic stats without subscription system
+            const basicUsage = await pool.query(`
+                SELECT 
+                    COUNT(*) as file_count,
+                    COALESCE(SUM(bestandsgrootte), 0) as total_size
+                FROM bijlagen 
+                WHERE user_id = $1
+            `, [userId]);
+            
+            const stats = basicUsage.rows[0];
+            
+            res.json({
+                success: true,
+                stats: {
+                    used_bytes: parseInt(stats.total_size || 0),
+                    used_formatted: storageManager.formatBytes(parseInt(stats.total_size || 0)),
+                    bijlagen_count: parseInt(stats.file_count || 0),
+                    addon: 'basic',
+                    limits: {
+                        total_bytes: 100 * 1024 * 1024, // 100MB
+                        total_formatted: '100MB',
+                        max_file_size: 5 * 1024 * 1024, // 5MB
+                        max_file_formatted: '5MB',
+                        usage_percentage: (parseInt(stats.total_size || 0) / (100 * 1024 * 1024)) * 100
+                    }
+                }
+            });
+        }
 
     } catch (error) {
         console.error('❌ Error getting storage stats:', error);
@@ -9140,37 +9177,51 @@ app.get('/api/subscription/storage-usage', requireAuth, async (req, res) => {
         const userId = req.session.userId;
         const additionalBytes = parseInt(req.query.additionalBytes) || 0;
         
-        const storageCheck = await db.checkStorageLimit(userId, additionalBytes);
-        
-        if (storageCheck.allowed) {
+        try {
+            const storageCheck = await db.checkStorageLimit(userId, additionalBytes);
+            
+            if (storageCheck.allowed) {
+                res.json({
+                    allowed: true,
+                    usage: storageCheck.usage,
+                    limits: storageCheck.limits
+                });
+            } else {
+                // Format the error response for the frontend
+                const usageInfo = {
+                    allowed: false,
+                    reason: storageCheck.reason,
+                    message: storageCheck.message,
+                    addon: storageCheck.limits?.addon || 'basic'
+                };
+                
+                if (storageCheck.reason === 'file_size') {
+                    const fileSizeMB = (additionalBytes / (1024 * 1024)).toFixed(1);
+                    const maxSizeMB = (storageCheck.limits?.maxFileSize / (1024 * 1024)).toFixed(0);
+                    usageInfo.current = parseFloat(fileSizeMB);
+                    usageInfo.limit = maxSizeMB;
+                    usageInfo.reason = 'file_too_large';
+                } else if (storageCheck.reason === 'total_size') {
+                    const currentMB = (storageCheck.usage?.total_size / (1024 * 1024)).toFixed(1);
+                    const limitMB = (storageCheck.limits?.maxTotalSize / (1024 * 1024)).toFixed(0);
+                    usageInfo.current = parseFloat(currentMB);
+                    usageInfo.limit = limitMB;
+                }
+                
+                res.json(usageInfo);
+            }
+        } catch (subscriptionError) {
+            console.log('⚠️ Subscription storage check failed - allowing upload for backward compatibility:', subscriptionError.message);
+            
+            // Fallback - allow upload with basic limits info
             res.json({
                 allowed: true,
-                usage: storageCheck.usage,
-                limits: storageCheck.limits
+                addon: 'basic',
+                limits: {
+                    maxFileSize: 5 * 1024 * 1024, // 5MB
+                    maxTotalSize: 100 * 1024 * 1024 // 100MB
+                }
             });
-        } else {
-            // Format the error response for the frontend
-            const usageInfo = {
-                allowed: false,
-                reason: storageCheck.reason,
-                message: storageCheck.message,
-                addon: storageCheck.limits?.addon || 'basic'
-            };
-            
-            if (storageCheck.reason === 'file_size') {
-                const fileSizeMB = (additionalBytes / (1024 * 1024)).toFixed(1);
-                const maxSizeMB = (storageCheck.limits?.maxFileSize / (1024 * 1024)).toFixed(0);
-                usageInfo.current = parseFloat(fileSizeMB);
-                usageInfo.limit = maxSizeMB;
-                usageInfo.reason = 'file_too_large';
-            } else if (storageCheck.reason === 'total_size') {
-                const currentMB = (storageCheck.usage?.total_size / (1024 * 1024)).toFixed(1);
-                const limitMB = (storageCheck.limits?.maxTotalSize / (1024 * 1024)).toFixed(0);
-                usageInfo.current = parseFloat(currentMB);
-                usageInfo.limit = limitMB;
-            }
-            
-            res.json(usageInfo);
         }
         
     } catch (error) {
