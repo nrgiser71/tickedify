@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickedify - Kies je Plan</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Pricing specific styling */
+        body {
+            background: linear-gradient(135deg, var(--macos-bg-primary) 0%, var(--macos-bg-secondary) 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .pricing-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .pricing-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--macos-blue);
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--macos-blue), #0066CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pricing-subtitle {
+            font-size: 20px;
+            color: var(--macos-text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .trial-notice {
+            background: var(--macos-yellow);
+            color: var(--macos-text-primary);
+            padding: 12px 24px;
+            border-radius: var(--macos-radius-large);
+            display: inline-block;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .plan-card {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 30px;
+            box-shadow: var(--macos-shadow-large);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: var(--macos-blue);
+        }
+
+        .plan-popular {
+            border-color: var(--macos-blue);
+            position: relative;
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--macos-blue), #0066CC);
+            color: white;
+            padding: 8px 20px;
+            border-radius: var(--macos-radius-large);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .plan-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--macos-text-primary);
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--macos-blue);
+            margin-bottom: 5px;
+        }
+
+        .plan-price-period {
+            font-size: 16px;
+            color: var(--macos-text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .plan-savings {
+            background: var(--macos-green);
+            color: white;
+            padding: 4px 12px;
+            border-radius: var(--macos-radius-medium);
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 30px;
+        }
+
+        .plan-features li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--macos-separator);
+            color: var(--macos-text-primary);
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .plan-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--macos-green);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+
+        .plan-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--macos-blue), #0066CC);
+            color: white;
+            border: none;
+            border-radius: var(--macos-radius-large);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .plan-button.secondary {
+            background: transparent;
+            color: var(--macos-blue);
+            border: 2px solid var(--macos-blue);
+        }
+
+        .plan-button.secondary:hover {
+            background: var(--macos-blue);
+            color: white;
+        }
+
+        .addons-section {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--macos-shadow-medium);
+        }
+
+        .addons-title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--macos-text-primary);
+        }
+
+        .addons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .addon-card {
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-medium);
+            padding: 25px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .addon-card:hover {
+            border-color: var(--macos-orange);
+            transform: translateY(-4px);
+        }
+
+        .addon-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .addon-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--macos-text-primary);
+        }
+
+        .addon-price {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--macos-orange);
+            margin-bottom: 15px;
+        }
+
+        .addon-description {
+            color: var(--macos-text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .comparison-section {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--macos-shadow-medium);
+        }
+
+        .comparison-title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--macos-text-primary);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-medium);
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--macos-separator);
+        }
+
+        .comparison-table th {
+            background: var(--macos-blue);
+            color: white;
+            font-weight: 700;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--macos-text-primary);
+        }
+
+        .feature-check {
+            color: var(--macos-green);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .feature-cross {
+            color: var(--macos-red);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .faq-section {
+            background: var(--macos-bg-primary);
+            border-radius: var(--macos-radius-large);
+            padding: 40px;
+            box-shadow: var(--macos-shadow-medium);
+        }
+
+        .faq-title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--macos-text-primary);
+        }
+
+        .faq-item {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--macos-separator);
+            padding-bottom: 25px;
+        }
+
+        .faq-question {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--macos-text-primary);
+            margin-bottom: 10px;
+        }
+
+        .faq-answer {
+            color: var(--macos-text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .pricing-title {
+                font-size: 36px;
+            }
+            
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan-card {
+                padding: 25px;
+            }
+            
+            .pricing-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pricing-container">
+        <!-- Header -->
+        <div class="pricing-header">
+            <h1 class="pricing-title">Kies je Perfect Plan</h1>
+            <p class="pricing-subtitle">Word de baas over je tijd met Tickedify's unieke Nederlandse productiviteitsmethodologie</p>
+            <div class="trial-notice">
+                🎉 14 dagen gratis uitproberen - geen creditcard vereist!
+            </div>
+        </div>
+
+        <!-- Pricing Plans -->
+        <div class="plans-grid">
+            <!-- Monthly Plan -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <h3 class="plan-name">Maandelijks</h3>
+                    <div class="plan-price">€6</div>
+                    <div class="plan-price-period">per maand</div>
+                </div>
+                <ul class="plan-features">
+                    <li><strong>Alle Tickedify features</strong></li>
+                    <li>Event-based herhalingen (uniek!)</li>
+                    <li>"Baas Over Je Tijd" methodologie</li>
+                    <li>Top 3 prioriteiten systeem</li>
+                    <li>Subtaken hiërarchie</li>
+                    <li>Bulk actie modus</li>
+                    <li>Email import (persoonlijke code)</li>
+                    <li>Focus mode & Entertainment loading</li>
+                    <li>5MB per bijlage, 100MB totaal</li>
+                    <li>Onbeperkt projecten & contexten</li>
+                </ul>
+                <button class="plan-button secondary" onclick="selectPlan('monthly', 'basic')">
+                    Kies Maandelijks
+                </button>
+            </div>
+
+            <!-- Yearly Plan (Popular) -->
+            <div class="plan-card plan-popular">
+                <div class="popular-badge">Meest Populair</div>
+                <div class="plan-header">
+                    <h3 class="plan-name">Jaarlijks</h3>
+                    <div class="plan-price">€60</div>
+                    <div class="plan-price-period">per jaar (€5/maand)</div>
+                    <div class="plan-savings">🎯 €12 bespaard!</div>
+                </div>
+                <ul class="plan-features">
+                    <li><strong>Alle Tickedify features</strong></li>
+                    <li>Event-based herhalingen (uniek!)</li>
+                    <li>"Baas Over Je Tijd" methodologie</li>
+                    <li>Top 3 prioriteiten systeem</li>
+                    <li>Subtaken hiërarchie</li>
+                    <li>Bulk actie modus</li>
+                    <li>Email import (persoonlijke code)</li>
+                    <li>Focus mode & Entertainment loading</li>
+                    <li>5MB per bijlage, 100MB totaal</li>
+                    <li>Onbeperkt projecten & contexten</li>
+                    <li><strong>16% korting vs maandelijks!</strong></li>
+                </ul>
+                <button class="plan-button" onclick="selectPlan('yearly', 'basic')">
+                    Kies Jaarlijks
+                </button>
+            </div>
+
+            <!-- Trial Plan -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <h3 class="plan-name">Gratis Trial</h3>
+                    <div class="plan-price">€0</div>
+                    <div class="plan-price-period">14 dagen gratis</div>
+                </div>
+                <ul class="plan-features">
+                    <li><strong>Alle Tickedify features</strong></li>
+                    <li>Event-based herhalingen (uniek!)</li>
+                    <li>"Baas Over Je Tijd" methodologie</li>
+                    <li>Top 3 prioriteiten systeem</li>
+                    <li>Subtaken hiërarchie</li>
+                    <li>Bulk actie modus</li>
+                    <li>Email import (persoonlijke code)</li>
+                    <li>Focus mode & Entertainment loading</li>
+                    <li>5MB per bijlage, 100MB totaal</li>
+                    <li>Geen creditcard vereist</li>
+                </ul>
+                <button class="plan-button secondary" onclick="startTrial()">
+                    Start Gratis Trial
+                </button>
+            </div>
+        </div>
+
+        <!-- Add-ons Section -->
+        <div class="addons-section">
+            <h2 class="addons-title">📎 Bijlagen Upgrades</h2>
+            <div class="addons-grid">
+                <div class="addon-card">
+                    <div class="addon-icon">📄</div>
+                    <h3 class="addon-name">Basis</h3>
+                    <div class="addon-price">Inbegrepen</div>
+                    <p class="addon-description">5MB per bestand<br>100MB totaal opslag</p>
+                </div>
+                <div class="addon-card">
+                    <div class="addon-icon">📊</div>
+                    <h3 class="addon-name">Medium</h3>
+                    <div class="addon-price">+€1/maand</div>
+                    <p class="addon-description">20MB per bestand<br>500MB totaal opslag</p>
+                </div>
+                <div class="addon-card">
+                    <div class="addon-icon">☁️</div>
+                    <h3 class="addon-name">Unlimited</h3>
+                    <div class="addon-price">+€2,50/maand</div>
+                    <p class="addon-description">Onbeperkte bestandsgrootte<br>Onbeperkte totaal opslag</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Comparison -->
+        <div class="comparison-section">
+            <h2 class="comparison-title">📋 Waarom Tickedify Anders Is</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Todoist Pro (€4/maand)</th>
+                        <th>Things 3 (€80 eenmalig)</th>
+                        <th>Tickedify (€6/maand)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Event-based herhalingen</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-check">✓ Uniek!</td>
+                    </tr>
+                    <tr>
+                        <td>"Baas Over Je Tijd" methodologie</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-check">✓ Uniek!</td>
+                    </tr>
+                    <tr>
+                        <td>Nederlandse taal & support</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Subtaken hiërarchie</td>
+                        <td class="feature-check">✓</td>
+                        <td class="feature-check">✓</td>
+                        <td class="feature-check">✓</td>
+                    </tr>
+                    <tr>
+                        <td>Bijlagen met preview</td>
+                        <td class="feature-cross">✗ (basis)</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-check">✓ Advanced</td>
+                    </tr>
+                    <tr>
+                        <td>Entertainment loading</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-cross">✗</td>
+                        <td class="feature-check">✓ Unieke UX</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2 class="faq-title">❓ Veelgestelde Vragen</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">Kan ik altijd opzeggen?</div>
+                <div class="faq-answer">Ja, je kunt altijd opzeggen. Er zijn geen verborgen kosten of lange contracten. Je betaalt alleen voor de tijd die je daadwerkelijk gebruikt.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Wat gebeurt er na de gratis trial?</div>
+                <div class="faq-answer">Na 14 dagen krijg je een melding om je plan te kiezen. Je data blijft veilig bewaard en je kunt kiezen tussen maandelijks, jaarlijks of het account afsluiten.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Kan ik later upgraden van maandelijks naar jaarlijks?</div>
+                <div class="faq-answer">Ja, je kunt altijd je plan wijzigen in je account instellingen. Bij een upgrade naar jaarlijks krijg je direct de korting.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Wat zijn event-based herhalingen precies?</div>
+                <div class="faq-answer">Unieke Tickedify feature! Je kunt taken koppelen aan gebeurtenissen zoals "10 dagen voor webinar" of "1 week na klant meeting". Geen andere app heeft dit!</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">Is mijn data veilig?</div>
+                <div class="faq-answer">Absoluut! We gebruiken SSL-encryptie, beveiligde servers in Europa, en regelmatige backups. Je data blijft altijd eigendom van jou.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/subscription/status');
+                const data = await response.json();
+                
+                if (data.status === 'beta') {
+                    // Still in beta, show notice
+                    document.querySelector('.trial-notice').innerHTML = '🎯 Je bent nog in de beta! Geniet van alle features gratis.';
+                }
+            } catch (error) {
+                console.log('Not logged in or error getting status');
+            }
+        });
+
+        async function selectPlan(planType, addonStorage) {
+            try {
+                // Check if user is logged in
+                const statusResponse = await fetch('/api/subscription/status');
+                if (statusResponse.status === 401) {
+                    // Not logged in, redirect to login
+                    alert('Je moet eerst inloggen om een plan te kiezen.');
+                    window.location.href = '/';
+                    return;
+                }
+
+                // Redirect to Plug&Pay checkout
+                const checkoutUrl = buildPlugAndPayUrl(planType, addonStorage);
+                window.location.href = checkoutUrl;
+                
+            } catch (error) {
+                console.error('Error selecting plan:', error);
+                alert('Er ging iets mis. Probeer het opnieuw.');
+            }
+        }
+
+        async function startTrial() {
+            try {
+                const response = await fetch('/api/subscription/start-trial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('🎉 Je trial is gestart! Je hebt 14 dagen om alle features uit te proberen.');
+                    window.location.href = '/';
+                } else {
+                    throw new Error(data.error || 'Trial start failed');
+                }
+                
+            } catch (error) {
+                console.error('Error starting trial:', error);
+                
+                if (error.message.includes('401')) {
+                    alert('Je moet eerst inloggen om een trial te starten.');
+                    window.location.href = '/';
+                } else {
+                    alert('Er ging iets mis bij het starten van je trial. Probeer het opnieuw.');
+                }
+            }
+        }
+
+        function buildPlugAndPayUrl(planType, addonStorage) {
+            // TODO: Replace with actual Plug&Pay URLs when you have them configured
+            const baseUrl = 'https://pay.baasoverjetijd.be/checkout/';
+            
+            // Calculate total price
+            let price = planType === 'monthly' ? 6 : 60;
+            if (addonStorage === 'medium') {
+                price += planType === 'monthly' ? 1 : 12;
+            } else if (addonStorage === 'unlimited') {
+                price += planType === 'monthly' ? 2.5 : 30;
+            }
+
+            // Plan names for Plug&Pay
+            const planName = `tickedify-${planType}-${addonStorage}`;
+            
+            // Return checkout URL - you'll need to configure these in Plug&Pay
+            return `${baseUrl}${planName}`;
+        }
+
+        // Handle upgrade addon selection
+        function selectAddon(addonLevel) {
+            const currentPlan = localStorage.getItem('selectedPlan') || 'monthly';
+            selectPlan(currentPlan, addonLevel);
+        }
+    </script>
+</body>
+</html>

@@ -14267,17 +14267,20 @@ class BijlagenManager {
 
         // Update upload limits text
         if (uploadLimits) {
-            if (this.storageStats.is_premium) {
-                uploadLimits.textContent = 'Premium: onbeperkte bijlagen en grootte';
+            const addon = this.storageStats.addon || 'basic';
+            if (addon === 'unlimited') {
+                uploadLimits.textContent = 'Unlimited: onbeperkte bijlagen en grootte';
+            } else if (addon === 'medium') {
+                uploadLimits.textContent = `Medium: max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.total_formatted} totaal`;
             } else {
-                uploadLimits.textContent = `Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} bijlage per taak (gratis)`;
+                uploadLimits.textContent = `Basic: max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.total_formatted} totaal`;
             }
         }
 
         // Show/hide upgrade prompt
-        if (upgradePrompt && !this.storageStats.is_premium) {
-            const usagePercentage = this.storageStats.used_bytes / this.storageStats.limits.total_bytes;
-            upgradePrompt.style.display = usagePercentage > 0.8 ? 'block' : 'none';
+        if (upgradePrompt && this.storageStats.addon !== 'unlimited') {
+            const usagePercentage = this.storageStats.limits.usage_percentage || 0;
+            upgradePrompt.style.display = usagePercentage > 80 ? 'block' : 'none';
         }
     }
 
@@ -14293,6 +14296,21 @@ class BijlagenManager {
             console.log('❌ DEBUG: No currentTaakId, showing error');
             toast.error('Geen taak geselecteerd voor bijlage upload');
             return;
+        }
+
+        // Check storage limits before upload
+        if (window.subscriptionManager) {
+            try {
+                const canUpload = await window.subscriptionManager.checkStorageLimit(file.size);
+                if (!canUpload) {
+                    console.log('❌ DEBUG: Storage limit exceeded, aborting upload');
+                    return; // Error message is shown by checkStorageLimit
+                }
+            } catch (error) {
+                console.error('❌ DEBUG: Storage limit check failed:', error);
+                toast.error('Fout bij controleren storage limiet');
+                return;
+            }
         }
 
         // Show progress
@@ -14675,11 +14693,507 @@ class BijlagenManager {
     }
 }
 
+// Subscription Management System
+class SubscriptionManager {
+    constructor() {
+        this.currentStatus = null;
+        this.checkInterval = null;
+    }
+
+    async checkSubscriptionStatus() {
+        try {
+            const response = await fetch('/api/subscription/status');
+            const data = await response.json();
+            
+            this.currentStatus = data;
+            
+            // Check if beta has ended and user needs to choose subscription
+            if (data.status === 'needs_subscription') {
+                this.showSubscriptionChoiceModal();
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error checking subscription status:', error);
+            return null;
+        }
+    }
+
+    showSubscriptionChoiceModal() {
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('subscriptionChoiceModal');
+        if (!modal) {
+            modal = this.createSubscriptionChoiceModal();
+            document.body.appendChild(modal);
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    createSubscriptionChoiceModal() {
+        const modal = document.createElement('div');
+        modal.id = 'subscriptionChoiceModal';
+        modal.className = 'modal-overlay';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        `;
+        
+        modal.innerHTML = `
+            <div class="subscription-choice-content" style="
+                background: var(--macos-bg-primary);
+                border-radius: var(--macos-radius-large);
+                padding: 40px;
+                max-width: 600px;
+                width: 90%;
+                text-align: center;
+                box-shadow: var(--macos-shadow-large);
+                position: relative;
+            ">
+                <div style="font-size: 48px; margin-bottom: 20px;">🎉</div>
+                <h2 style="
+                    font-size: 32px;
+                    font-weight: 700;
+                    color: var(--macos-blue);
+                    margin-bottom: 15px;
+                ">Bedankt voor het testen!</h2>
+                <p style="
+                    font-size: 18px;
+                    color: var(--macos-text-secondary);
+                    margin-bottom: 30px;
+                    line-height: 1.5;
+                ">
+                    De beta periode is afgelopen. Kies nu je ideale plan om door te gaan met 
+                    je productiviteitsreis met Tickedify's unieke "Baas Over Je Tijd" methodologie.
+                </p>
+                
+                <div class="subscription-options" style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 20px;
+                    margin-bottom: 30px;
+                ">
+                    <div class="subscription-option" data-plan="trial" style="
+                        border: 2px solid var(--macos-separator);
+                        border-radius: var(--macos-radius-medium);
+                        padding: 25px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="font-size: 32px; margin-bottom: 10px;">🆓</div>
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">14 Dagen Gratis</h3>
+                        <p style="font-size: 14px; color: var(--macos-text-secondary); margin-bottom: 15px;">
+                            Probeer alle features<br>Geen creditcard vereist
+                        </p>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--macos-blue);">€0</div>
+                    </div>
+                    
+                    <div class="subscription-option popular" data-plan="yearly" style="
+                        border: 3px solid var(--macos-blue);
+                        border-radius: var(--macos-radius-medium);
+                        padding: 25px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        position: relative;
+                        background: linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(0, 122, 255, 0.1));
+                    ">
+                        <div style="
+                            position: absolute;
+                            top: -10px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: var(--macos-blue);
+                            color: white;
+                            padding: 4px 12px;
+                            border-radius: var(--macos-radius-medium);
+                            font-size: 12px;
+                            font-weight: 700;
+                        ">POPULAIR</div>
+                        <div style="font-size: 32px; margin-bottom: 10px;">💎</div>
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">Jaarlijks</h3>
+                        <p style="font-size: 14px; color: var(--macos-text-secondary); margin-bottom: 15px;">
+                            €5/maand<br>16% korting!
+                        </p>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--macos-blue);">€60/jaar</div>
+                    </div>
+                    
+                    <div class="subscription-option" data-plan="monthly" style="
+                        border: 2px solid var(--macos-separator);
+                        border-radius: var(--macos-radius-medium);
+                        padding: 25px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="font-size: 32px; margin-bottom: 10px;">📅</div>
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">Maandelijks</h3>
+                        <p style="font-size: 14px; color: var(--macos-text-secondary); margin-bottom: 15px;">
+                            Flexibele betaling<br>Altijd opzegbaar
+                        </p>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--macos-blue);">€6/maand</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="font-size: 14px; color: var(--macos-text-secondary);">
+                        🎯 Alle plans inclusief: Event-based herhalingen, Subtaken, Top 3 prioriteiten, 
+                        Email import, Focus mode, en veel meer!
+                    </p>
+                </div>
+                
+                <button id="continueWithSelection" style="
+                    background: var(--macos-blue);
+                    color: white;
+                    border: none;
+                    border-radius: var(--macos-radius-large);
+                    padding: 16px 32px;
+                    font-size: 18px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    opacity: 0.5;
+                    transition: all 0.3s ease;
+                " disabled>
+                    Ga Verder →
+                </button>
+            </div>
+        `;
+        
+        // Add click handlers
+        const options = modal.querySelectorAll('.subscription-option');
+        const continueBtn = modal.querySelector('#continueWithSelection');
+        let selectedPlan = null;
+        
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove previous selection
+                options.forEach(opt => {
+                    opt.style.transform = 'scale(1)';
+                    opt.style.boxShadow = 'none';
+                });
+                
+                // Highlight selected option
+                option.style.transform = 'scale(1.05)';
+                option.style.boxShadow = '0 8px 25px rgba(0, 122, 255, 0.3)';
+                
+                selectedPlan = option.dataset.plan;
+                continueBtn.disabled = false;
+                continueBtn.style.opacity = '1';
+                continueBtn.style.transform = 'scale(1.02)';
+            });
+        });
+        
+        continueBtn.addEventListener('click', () => {
+            if (selectedPlan) {
+                this.handlePlanSelection(selectedPlan);
+            }
+        });
+        
+        // Prevent closing modal (user must choose)
+        modal.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        return modal;
+    }
+
+    async handlePlanSelection(planType) {
+        try {
+            loading.showGlobal('Plan wordt geactiveerd...');
+            
+            if (planType === 'trial') {
+                // Start trial
+                const response = await fetch('/api/subscription/start-trial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.hideSubscriptionChoiceModal();
+                    toast.success('🎉 Je 14-daagse trial is gestart! Geniet van alle Tickedify features.');
+                } else {
+                    throw new Error(data.error);
+                }
+            } else {
+                // Redirect to pricing page for paid plans
+                this.hideSubscriptionChoiceModal();
+                window.location.href = `/pricing.html?selected=${planType}`;
+            }
+            
+        } catch (error) {
+            console.error('Error handling plan selection:', error);
+            toast.error('Er ging iets mis. Probeer het opnieuw.');
+        } finally {
+            loading.hide();
+        }
+    }
+
+    hideSubscriptionChoiceModal() {
+        const modal = document.getElementById('subscriptionChoiceModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    async checkStorageLimit(fileSize) {
+        try {
+            const response = await fetch(`/api/subscription/storage-usage?additionalBytes=${fileSize}`);
+            const data = await response.json();
+            
+            if (!data.allowed) {
+                this.showStorageUpgradeModal(data);
+                return false;
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Error checking storage limit:', error);
+            return true; // Allow on error to not block user
+        }
+    }
+
+    showStorageUpgradeModal(storageInfo) {
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('storageUpgradeModal');
+        if (!modal) {
+            modal = this.createStorageUpgradeModal();
+            document.body.appendChild(modal);
+        }
+        
+        // Update modal content with current usage info
+        const currentUsage = modal.querySelector('#currentUsage');
+        const limitInfo = modal.querySelector('#limitInfo');
+        
+        if (storageInfo.reason === 'file_too_large') {
+            currentUsage.textContent = `Dit bestand is ${Math.round(storageInfo.current || 0)}MB, maar je huidige plan staat maximaal ${storageInfo.limit}MB per bestand toe.`;
+            limitInfo.textContent = `Je hebt een ${storageInfo.addon} plan met ${storageInfo.limit}MB per bestand limiet.`;
+        } else {
+            currentUsage.textContent = `Je gebruikt ${Math.round(storageInfo.current)}MB van ${storageInfo.limit}MB opslag.`;
+            limitInfo.textContent = `Je ${storageInfo.addon} plan heeft een limiet van ${storageInfo.limit}MB totaal opslag.`;
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    createStorageUpgradeModal() {
+        const modal = document.createElement('div');
+        modal.id = 'storageUpgradeModal';
+        modal.className = 'modal-overlay';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        `;
+        
+        modal.innerHTML = `
+            <div class="storage-upgrade-content" style="
+                background: var(--macos-bg-primary);
+                border-radius: var(--macos-radius-large);
+                padding: 40px;
+                max-width: 500px;
+                width: 90%;
+                text-align: center;
+                box-shadow: var(--macos-shadow-large);
+            ">
+                <div style="font-size: 48px; margin-bottom: 20px;">💾</div>
+                <h2 style="
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: var(--macos-orange);
+                    margin-bottom: 15px;
+                ">Opslag Limiet Bereikt</h2>
+                
+                <p id="currentUsage" style="
+                    font-size: 16px;
+                    color: var(--macos-text-secondary);
+                    margin-bottom: 10px;
+                "></p>
+                
+                <p id="limitInfo" style="
+                    font-size: 14px;
+                    color: var(--macos-text-secondary);
+                    margin-bottom: 30px;
+                "></p>
+                
+                <div class="upgrade-options" style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                    margin-bottom: 30px;
+                ">
+                    <div class="upgrade-option" data-addon="medium" style="
+                        border: 2px solid var(--macos-separator);
+                        border-radius: var(--macos-radius-medium);
+                        padding: 20px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 5px;">Medium</h3>
+                        <p style="font-size: 12px; color: var(--macos-text-secondary); margin-bottom: 10px;">
+                            20MB per bestand<br>500MB totaal
+                        </p>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--macos-orange);">+€1/maand</div>
+                    </div>
+                    
+                    <div class="upgrade-option" data-addon="unlimited" style="
+                        border: 2px solid var(--macos-separator);
+                        border-radius: var(--macos-radius-medium);
+                        padding: 20px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="font-size: 24px; margin-bottom: 8px;">☁️</div>
+                        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 5px;">Unlimited</h3>
+                        <p style="font-size: 12px; color: var(--macos-text-secondary); margin-bottom: 10px;">
+                            Onbeperkte grootte<br>Onbeperkte opslag
+                        </p>
+                        <div style="font-size: 18px; font-weight: 700; color: var(--macos-orange);">+€2,50/maand</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="cancelUpgrade" style="
+                        background: transparent;
+                        color: var(--macos-text-secondary);
+                        border: 2px solid var(--macos-separator);
+                        border-radius: var(--macos-radius-large);
+                        padding: 12px 24px;
+                        font-size: 16px;
+                        cursor: pointer;
+                    ">Annuleren</button>
+                    <button id="upgradeStorage" style="
+                        background: var(--macos-orange);
+                        color: white;
+                        border: none;
+                        border-radius: var(--macos-radius-large);
+                        padding: 12px 24px;
+                        font-size: 16px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        opacity: 0.5;
+                    " disabled>Upgrade</button>
+                </div>
+            </div>
+        `;
+        
+        // Add click handlers
+        const options = modal.querySelectorAll('.upgrade-option');
+        const upgradeBtn = modal.querySelector('#upgradeStorage');
+        const cancelBtn = modal.querySelector('#cancelUpgrade');
+        let selectedAddon = null;
+        
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove previous selection
+                options.forEach(opt => {
+                    opt.style.borderColor = 'var(--macos-separator)';
+                    opt.style.transform = 'scale(1)';
+                });
+                
+                // Highlight selected option
+                option.style.borderColor = 'var(--macos-orange)';
+                option.style.transform = 'scale(1.05)';
+                
+                selectedAddon = option.dataset.addon;
+                upgradeBtn.disabled = false;
+                upgradeBtn.style.opacity = '1';
+            });
+        });
+        
+        upgradeBtn.addEventListener('click', () => {
+            if (selectedAddon) {
+                this.handleStorageUpgrade(selectedAddon);
+            }
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            this.hideStorageUpgradeModal();
+        });
+        
+        // Close on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.hideStorageUpgradeModal();
+            }
+        });
+        
+        return modal;
+    }
+
+    async handleStorageUpgrade(addonLevel) {
+        try {
+            // Redirect to pricing page with addon selection
+            window.location.href = `/pricing.html?addon=${addonLevel}`;
+            
+        } catch (error) {
+            console.error('Error handling storage upgrade:', error);
+            toast.error('Er ging iets mis. Probeer het opnieuw.');
+        }
+    }
+
+    hideStorageUpgradeModal() {
+        const modal = document.getElementById('storageUpgradeModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Initialize subscription checking
+    init() {
+        // Check status on page load
+        this.checkSubscriptionStatus();
+        
+        // Check every 5 minutes for status changes
+        this.checkInterval = setInterval(() => {
+            this.checkSubscriptionStatus();
+        }, 5 * 60 * 1000);
+    }
+
+    // Cleanup
+    destroy() {
+        if (this.checkInterval) {
+            clearInterval(this.checkInterval);
+        }
+    }
+}
+
+// Initialize subscription manager
+let subscriptionManager;
+
 // Initialize subtaken manager
 let subtakenManager;
 let bijlagenManager;
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DEBUG: Initializing SubscriptionManager...');
+    try {
+        subscriptionManager = new SubscriptionManager();
+        subscriptionManager.init();
+        // Make subscriptionManager globally accessible
+        window.subscriptionManager = subscriptionManager;
+        console.log('DEBUG: SubscriptionManager initialized successfully');
+    } catch (error) {
+        console.error('DEBUG: Error initializing SubscriptionManager:', error);
+    }
+
     console.log('DEBUG: Initializing SubtakenManager...');
     try {
         subtakenManager = new SubtakenManager();

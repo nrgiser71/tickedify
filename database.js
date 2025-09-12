@@ -324,6 +324,89 @@ const initDatabase = async () => {
       console.log('⚠️ Could not update existing tasks priority (might not have prioriteit column yet):', error.message);
     }
 
+    // Create subscriptions table for subscription management
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(50) DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'grace_period', 'read_only', 'suspended', 'cancelled')),
+        plan_type VARCHAR(20) DEFAULT 'monthly' CHECK (plan_type IN ('monthly', 'yearly')),
+        addon_storage VARCHAR(20) DEFAULT 'basic' CHECK (addon_storage IN ('basic', 'medium', 'unlimited')),
+        trial_ends_at TIMESTAMP,
+        current_period_start TIMESTAMP,
+        current_period_end TIMESTAMP,
+        grace_period_ends_at TIMESTAMP,
+        read_only_starts_at TIMESTAMP,
+        suspended_at TIMESTAMP,
+        cancelled_at TIMESTAMP,
+        plugandpay_subscription_id VARCHAR(255) UNIQUE,
+        plugandpay_customer_id VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create subscription history table for audit trail
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subscription_history (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        action VARCHAR(50) NOT NULL CHECK (action IN ('started_trial', 'upgraded', 'downgraded', 'cancelled', 'reactivated', 'suspended', 'payment_failed', 'payment_recovered')),
+        from_plan VARCHAR(50),
+        to_plan VARCHAR(50),
+        from_addon VARCHAR(50),
+        to_addon VARCHAR(50),
+        reason TEXT,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create revenue metrics table for admin dashboard
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS revenue_metrics (
+        id SERIAL PRIMARY KEY,
+        date DATE UNIQUE NOT NULL,
+        mrr DECIMAL(10,2) DEFAULT 0, -- Monthly Recurring Revenue
+        arr DECIMAL(10,2) DEFAULT 0, -- Annual Recurring Revenue
+        active_subscriptions INTEGER DEFAULT 0,
+        trial_users INTEGER DEFAULT 0,
+        churned_users INTEGER DEFAULT 0,
+        new_subscriptions INTEGER DEFAULT 0,
+        upgraded_subscriptions INTEGER DEFAULT 0,
+        downgraded_subscriptions INTEGER DEFAULT 0,
+        total_revenue DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add subscription-related columns to users table
+    try {
+      await pool.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS storage_used_mb DECIMAL(10,2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS beta_ended_at TIMESTAMP
+      `);
+      console.log('✅ Added subscription columns to users table');
+    } catch (subscriptionMigrateError) {
+      console.log('⚠️ Could not add subscription columns, trying individually:', subscriptionMigrateError.message);
+      const subscriptionColumns = [
+        { name: 'storage_used_mb', type: 'DECIMAL(10,2) DEFAULT 0' },
+        { name: 'beta_ended_at', type: 'TIMESTAMP' }
+      ];
+      
+      for (const col of subscriptionColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added subscription column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Subscription column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    console.log('✅ Subscription tables created successfully');
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
@@ -347,6 +430,12 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_bijlagen_taak ON bijlagen(taak_id);
       CREATE INDEX IF NOT EXISTS idx_bijlagen_user ON bijlagen(user_id);
       CREATE INDEX IF NOT EXISTS idx_user_storage_usage_premium ON user_storage_usage(premium_expires);
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_plugandpay ON subscriptions(plugandpay_subscription_id);
+      CREATE INDEX IF NOT EXISTS idx_subscription_history_user ON subscription_history(user_id);
+      CREATE INDEX IF NOT EXISTS idx_subscription_history_action ON subscription_history(action);
+      CREATE INDEX IF NOT EXISTS idx_revenue_metrics_date ON revenue_metrics(date);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -2052,6 +2141,398 @@ const db = {
     } catch (error) {
       console.error('Error setting premium status:', error);
       return false;
+    }
+  },
+
+  // Subscription Management Functions
+  async createUserSubscription(userId, trialDays = 14) {
+    try {
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + trialDays);
+
+      const result = await pool.query(`
+        INSERT INTO subscriptions (
+          user_id, status, trial_ends_at, created_at, updated_at
+        ) VALUES ($1, 'trial', $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id) DO NOTHING
+        RETURNING *
+      `, [userId, trialEndsAt]);
+
+      if (result.rows.length > 0) {
+        // Log subscription history
+        await this.logSubscriptionHistory(userId, 'started_trial', null, 'trial', null, null, 'User started trial period');
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating user subscription:', error);
+      throw error;
+    }
+  },
+
+  async getUserSubscription(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM subscriptions WHERE user_id = $1
+      `, [userId]);
+      
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error getting user subscription:', error);
+      return null;
+    }
+  },
+
+  async updateSubscription(userId, updates) {
+    try {
+      const setClause = Object.keys(updates).map((key, index) => `${key} = $${index + 2}`).join(', ');
+      const values = [userId, ...Object.values(updates)];
+      
+      const result = await pool.query(`
+        UPDATE subscriptions 
+        SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $1
+        RETURNING *
+      `, values);
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      throw error;
+    }
+  },
+
+  async logSubscriptionHistory(userId, action, fromPlan, toPlan, fromAddon, toAddon, reason, metadata = {}) {
+    try {
+      await pool.query(`
+        INSERT INTO subscription_history (
+          user_id, action, from_plan, to_plan, from_addon, to_addon, reason, metadata
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [userId, action, fromPlan, toPlan, fromAddon, toAddon, reason, JSON.stringify(metadata)]);
+    } catch (error) {
+      console.error('Error logging subscription history:', error);
+    }
+  },
+
+  async getSubscriptionHistory(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM subscription_history 
+        WHERE user_id = $1 
+        ORDER BY created_at DESC
+      `, [userId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting subscription history:', error);
+      return [];
+    }
+  },
+
+  async getAllActiveSubscriptions() {
+    try {
+      const result = await pool.query(`
+        SELECT s.*, u.email, u.naam 
+        FROM subscriptions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.status IN ('active', 'trial', 'grace_period', 'read_only')
+        ORDER BY s.created_at DESC
+      `);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting active subscriptions:', error);
+      return [];
+    }
+  },
+
+  async updateUserStorageUsed(userId, bytesUsed) {
+    try {
+      const mbUsed = Math.round((bytesUsed / (1024 * 1024)) * 100) / 100; // Round to 2 decimal places
+      
+      await pool.query(`
+        UPDATE users 
+        SET storage_used_mb = $2
+        WHERE id = $1
+      `, [userId, mbUsed]);
+
+      return true;
+    } catch (error) {
+      console.error('Error updating user storage usage:', error);
+      return false;
+    }
+  },
+
+  async checkStorageLimit(userId, additionalBytes = 0) {
+    try {
+      const subscription = await this.getUserSubscription(userId);
+      const user = await pool.query('SELECT storage_used_mb FROM users WHERE id = $1', [userId]);
+      
+      if (!user.rows[0]) return { allowed: false, reason: 'user_not_found' };
+      
+      const currentMb = user.rows[0].storage_used_mb || 0;
+      const additionalMb = additionalBytes / (1024 * 1024);
+      const totalMb = currentMb + additionalMb;
+      
+      // Define storage limits based on addon
+      const storageLimits = {
+        basic: { total: 100, perFile: 5 },
+        medium: { total: 500, perFile: 20 },
+        unlimited: { total: Infinity, perFile: Infinity }
+      };
+      
+      const addonLevel = subscription?.addon_storage || 'basic';
+      const limits = storageLimits[addonLevel];
+      
+      // Check per file limit
+      if (additionalMb > limits.perFile) {
+        return {
+          allowed: false,
+          reason: 'file_too_large',
+          limit: limits.perFile,
+          current: 0,
+          addon: addonLevel
+        };
+      }
+      
+      // Check total storage limit
+      if (totalMb > limits.total) {
+        return {
+          allowed: false,
+          reason: 'storage_full',
+          limit: limits.total,
+          current: currentMb,
+          addon: addonLevel
+        };
+      }
+      
+      return {
+        allowed: true,
+        current: currentMb,
+        limit: limits.total,
+        addon: addonLevel
+      };
+    } catch (error) {
+      console.error('Error checking storage limit:', error);
+      return { allowed: false, reason: 'error', error: error.message };
+    }
+  },
+
+  // Revenue Metrics Functions
+  async updateDailyMetrics(date = new Date()) {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Calculate metrics for the specific date
+      const metricsResult = await pool.query(`
+        WITH subscription_stats AS (
+          SELECT 
+            COUNT(CASE WHEN status = 'active' THEN 1 END) as active_count,
+            COUNT(CASE WHEN status = 'trial' THEN 1 END) as trial_count,
+            COUNT(CASE WHEN DATE(created_at) = $1 AND status != 'trial' THEN 1 END) as new_count,
+            COUNT(CASE WHEN DATE(cancelled_at) = $1 THEN 1 END) as churned_count
+          FROM subscriptions
+        ),
+        revenue_calc AS (
+          SELECT 
+            -- Calculate MRR based on active subscriptions
+            SUM(CASE 
+              WHEN status = 'active' AND plan_type = 'monthly' THEN 
+                CASE addon_storage 
+                  WHEN 'basic' THEN 6.00
+                  WHEN 'medium' THEN 7.00  
+                  WHEN 'unlimited' THEN 8.50
+                  ELSE 6.00 
+                END
+              WHEN status = 'active' AND plan_type = 'yearly' THEN 
+                CASE addon_storage 
+                  WHEN 'basic' THEN 5.00  -- 60/12
+                  WHEN 'medium' THEN 5.83 -- 70/12
+                  WHEN 'unlimited' THEN 7.08 -- 85/12
+                  ELSE 5.00 
+                END
+              ELSE 0
+            END) as mrr
+          FROM subscriptions 
+          WHERE status = 'active'
+        )
+        SELECT 
+          ss.active_count,
+          ss.trial_count,
+          ss.new_count,
+          ss.churned_count,
+          rc.mrr,
+          (rc.mrr * 12) as arr
+        FROM subscription_stats ss, revenue_calc rc
+      `, [dateStr]);
+      
+      const metrics = metricsResult.rows[0];
+      
+      // Insert or update metrics for this date
+      await pool.query(`
+        INSERT INTO revenue_metrics (
+          date, mrr, arr, active_subscriptions, trial_users, 
+          new_subscriptions, churned_users, total_revenue
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $2)
+        ON CONFLICT (date) 
+        DO UPDATE SET 
+          mrr = $2,
+          arr = $3,
+          active_subscriptions = $4,
+          trial_users = $5,
+          new_subscriptions = $6,
+          churned_users = $7,
+          total_revenue = $2
+      `, [
+        dateStr, 
+        metrics.mrr || 0, 
+        metrics.arr || 0,
+        metrics.active_count || 0,
+        metrics.trial_count || 0,
+        metrics.new_count || 0,
+        metrics.churned_count || 0
+      ]);
+      
+      return metrics;
+    } catch (error) {
+      console.error('Error updating daily metrics:', error);
+      throw error;
+    }
+  },
+
+  async getRevenueMetrics(days = 30) {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM revenue_metrics 
+        WHERE date >= CURRENT_DATE - INTERVAL '${days} days'
+        ORDER BY date DESC
+      `);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting revenue metrics:', error);
+      return [];
+    }
+  },
+
+  async getUserStorageLimits(userId) {
+    try {
+      const subscription = await this.getUserSubscription(userId);
+      
+      if (!subscription) {
+        // No subscription - use basic limits (trial or beta user)
+        return {
+          maxFileSize: 5 * 1024 * 1024, // 5MB per file
+          maxTotalSize: 100 * 1024 * 1024, // 100MB total
+          addon: 'basic'
+        };
+      }
+      
+      // Define limits based on subscription addon
+      const limits = {
+        basic: {
+          maxFileSize: 5 * 1024 * 1024, // 5MB per file
+          maxTotalSize: 100 * 1024 * 1024, // 100MB total
+        },
+        medium: {
+          maxFileSize: 20 * 1024 * 1024, // 20MB per file  
+          maxTotalSize: 500 * 1024 * 1024, // 500MB total
+        },
+        unlimited: {
+          maxFileSize: 100 * 1024 * 1024, // 100MB per file (reasonable limit)
+          maxTotalSize: null, // No limit
+        }
+      };
+      
+      const addonLimits = limits[subscription.addon_storage] || limits.basic;
+      
+      return {
+        ...addonLimits,
+        addon: subscription.addon_storage,
+        status: subscription.status
+      };
+    } catch (error) {
+      console.error('Error getting user storage limits:', error);
+      // Fallback to basic limits
+      return {
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        maxTotalSize: 100 * 1024 * 1024, // 100MB
+        addon: 'basic'
+      };
+    }
+  },
+
+  async getUserStorageUsage(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT 
+          COUNT(*) as file_count,
+          COALESCE(SUM(bestandsgrootte), 0) as total_size,
+          COALESCE(MAX(bestandsgrootte), 0) as largest_file
+        FROM bijlagen 
+        WHERE user_id = $1
+      `, [userId]);
+      
+      return result.rows[0] || {
+        file_count: 0,
+        total_size: 0,
+        largest_file: 0
+      };
+    } catch (error) {
+      console.error('Error getting user storage usage:', error);
+      return {
+        file_count: 0,
+        total_size: 0,
+        largest_file: 0
+      };
+    }
+  },
+
+  async checkStorageLimit(userId, fileSize) {
+    try {
+      const [limits, usage] = await Promise.all([
+        this.getUserStorageLimits(userId),
+        this.getUserStorageUsage(userId)
+      ]);
+      
+      // Check file size limit
+      if (fileSize > limits.maxFileSize) {
+        const maxSizeMB = (limits.maxFileSize / (1024 * 1024)).toFixed(0);
+        return {
+          allowed: false,
+          reason: 'file_size',
+          message: `Bestand te groot. Maximum ${maxSizeMB}MB per bestand voor uw abonnement.`,
+          limits,
+          usage
+        };
+      }
+      
+      // Check total storage limit (if not unlimited)
+      if (limits.maxTotalSize && (usage.total_size + fileSize) > limits.maxTotalSize) {
+        const maxTotalMB = (limits.maxTotalSize / (1024 * 1024)).toFixed(0);
+        const currentUsageMB = (usage.total_size / (1024 * 1024)).toFixed(0);
+        return {
+          allowed: false,
+          reason: 'total_size', 
+          message: `Onvoldoende storage. ${currentUsageMB}MB/${maxTotalMB}MB gebruikt. Upgrade uw abonnement voor meer storage.`,
+          limits,
+          usage
+        };
+      }
+      
+      return {
+        allowed: true,
+        limits,
+        usage
+      };
+    } catch (error) {
+      console.error('Error checking storage limit:', error);
+      // Be conservative - deny upload on error
+      return {
+        allowed: false,
+        reason: 'error',
+        message: 'Fout bij controleren storage limiet. Probeer opnieuw.'
+      };
     }
   }
 };

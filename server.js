@@ -2265,16 +2265,14 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             return res.status(400).json({ error: 'Geen bestand geüpload' });
         }
 
-        // Get user premium status and storage stats
-        const isPremium = await db.checkUserPremiumStatus(userId);
-        const userStats = await db.getUserStorageStats(userId);
-
-        // Validate file upload
-        const validation = storageManager.validateFile(file, isPremium, userStats);
-        if (!validation.valid) {
+        // Check storage limits based on subscription
+        const storageCheck = await db.checkStorageLimit(userId, file.size);
+        if (!storageCheck.allowed) {
             return res.status(400).json({ 
-                error: 'Bestand niet toegestaan',
-                details: validation.errors 
+                error: storageCheck.message,
+                reason: storageCheck.reason,
+                limits: storageCheck.limits,
+                usage: storageCheck.usage
             });
         }
 
@@ -2284,15 +2282,7 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             return res.status(404).json({ error: 'Taak niet gevonden' });
         }
 
-        // Check attachment limit for free users
-        if (!isPremium) {
-            const existingBijlagen = await db.getBijlagenForTaak(taakId);
-            if (existingBijlagen.length >= STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE) {
-                return res.status(400).json({ 
-                    error: `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.` 
-                });
-            }
-        }
+        // Storage limits are now handled by subscription-based checkStorageLimit above
 
         // DEBUG: Log file info before upload
         console.log('🔍 [SERVER UPLOAD] File received:', {
@@ -2894,22 +2884,26 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
 
         const userId = req.session.userId;
         
-        const stats = await db.getUserStorageStats(userId);
-        const isPremium = await db.checkUserPremiumStatus(userId);
+        const [usage, limits] = await Promise.all([
+            db.getUserStorageUsage(userId),
+            db.getUserStorageLimits(userId)
+        ]);
 
         res.json({
             success: true,
             stats: {
-                used_bytes: stats.used_bytes,
-                used_formatted: storageManager.formatBytes(stats.used_bytes),
-                bijlagen_count: stats.bijlagen_count,
-                is_premium: isPremium,
+                used_bytes: parseInt(usage.total_size),
+                used_formatted: storageManager.formatBytes(parseInt(usage.total_size)),
+                bijlagen_count: parseInt(usage.file_count),
+                largest_file: parseInt(usage.largest_file),
+                addon: limits.addon,
+                subscription_status: limits.status,
                 limits: {
-                    total_bytes: isPremium ? null : STORAGE_CONFIG.FREE_TIER_LIMIT,
-                    total_formatted: isPremium ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT),
-                    max_file_size: isPremium ? null : STORAGE_CONFIG.MAX_FILE_SIZE_FREE,
-                    max_file_formatted: isPremium ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE),
-                    max_attachments_per_task: isPremium ? null : STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE
+                    total_bytes: limits.maxTotalSize,
+                    total_formatted: limits.maxTotalSize ? storageManager.formatBytes(limits.maxTotalSize) : 'Onbeperkt',
+                    max_file_size: limits.maxFileSize,
+                    max_file_formatted: storageManager.formatBytes(limits.maxFileSize),
+                    usage_percentage: limits.maxTotalSize ? (parseInt(usage.total_size) / limits.maxTotalSize) * 100 : 0
                 }
             }
         });
@@ -8608,6 +8602,580 @@ app.get('/api/debug/database-columns', async (req, res) => {
     } catch (error) {
         console.error('Failed to get database columns:', error);
         res.status(500).json({ error: 'Failed to retrieve database columns' });
+    }
+});
+
+// ======================
+// SUBSCRIPTION MANAGEMENT ENDPOINTS
+// ======================
+
+// Get user's current subscription status
+app.get('/api/subscription/status', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const subscription = await db.getUserSubscription(userId);
+        const user = await db.getUserById(userId);
+        
+        if (!subscription) {
+            // No subscription yet - check if beta ended
+            const betaConfig = await db.getBetaConfig();
+            
+            if (!betaConfig.beta_period_active && !user.beta_ended_at) {
+                // Beta just ended for this user
+                await pool.query('UPDATE users SET beta_ended_at = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
+            }
+            
+            res.json({
+                status: betaConfig.beta_period_active ? 'beta' : 'needs_subscription',
+                beta_ended: !betaConfig.beta_period_active,
+                storage_used_mb: user.storage_used_mb || 0,
+                subscription: null
+            });
+        } else {
+            res.json({
+                status: subscription.status,
+                subscription: subscription,
+                storage_used_mb: user.storage_used_mb || 0,
+                beta_ended: true
+            });
+        }
+    } catch (error) {
+        console.error('Error getting subscription status:', error);
+        res.status(500).json({ error: 'Failed to get subscription status' });
+    }
+});
+
+// Choose subscription plan (after beta or trial)
+app.post('/api/subscription/choose-plan', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { planType, addonStorage, plugandpayCustomerId, plugandpaySubscriptionId } = req.body;
+        
+        if (!['monthly', 'yearly'].includes(planType)) {
+            return res.status(400).json({ error: 'Invalid plan type' });
+        }
+        
+        if (!['basic', 'medium', 'unlimited'].includes(addonStorage)) {
+            return res.status(400).json({ error: 'Invalid addon storage level' });
+        }
+        
+        // Check if user already has a subscription
+        let subscription = await db.getUserSubscription(userId);
+        
+        if (subscription && subscription.status === 'active') {
+            return res.status(400).json({ error: 'User already has an active subscription' });
+        }
+        
+        // Calculate period dates
+        const now = new Date();
+        const periodEnd = new Date();
+        if (planType === 'monthly') {
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+        } else {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        }
+        
+        const subscriptionData = {
+            status: 'active',
+            plan_type: planType,
+            addon_storage: addonStorage,
+            current_period_start: now,
+            current_period_end: periodEnd,
+            plugandpay_customer_id: plugandpayCustomerId,
+            plugandpay_subscription_id: plugandpaySubscriptionId
+        };
+        
+        if (subscription) {
+            // Update existing subscription
+            await db.updateSubscription(userId, subscriptionData);
+            await db.logSubscriptionHistory(userId, 'upgraded', subscription.status, 'active', subscription.addon_storage, addonStorage, 'User chose paid plan');
+        } else {
+            // Create new subscription
+            await db.createUserSubscription(userId, 0); // 0 days trial since they're paying
+            await db.updateSubscription(userId, subscriptionData);
+            await db.logSubscriptionHistory(userId, 'upgraded', 'trial', 'active', 'basic', addonStorage, 'User chose paid plan');
+        }
+        
+        // Update GHL tags
+        await updateGHLSubscriptionTags(userId, subscriptionData);
+        
+        // Update daily metrics
+        await db.updateDailyMetrics();
+        
+        res.json({ success: true, message: 'Subscription activated successfully' });
+        
+    } catch (error) {
+        console.error('Error choosing subscription plan:', error);
+        res.status(500).json({ error: 'Failed to activate subscription' });
+    }
+});
+
+// Start trial period (for new users after beta)
+app.post('/api/subscription/start-trial', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        // Check if user already has a subscription
+        const existing = await db.getUserSubscription(userId);
+        if (existing) {
+            return res.status(400).json({ error: 'User already has a subscription' });
+        }
+        
+        // Create trial subscription
+        const subscription = await db.createUserSubscription(userId, 14);
+        
+        // Update GHL tags
+        await updateGHLSubscriptionTags(userId, subscription);
+        
+        res.json({ 
+            success: true, 
+            message: 'Trial started successfully',
+            trial_ends_at: subscription.trial_ends_at 
+        });
+        
+    } catch (error) {
+        console.error('Error starting trial:', error);
+        res.status(500).json({ error: 'Failed to start trial' });
+    }
+});
+
+// Upgrade/downgrade subscription
+app.post('/api/subscription/change-plan', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { planType, addonStorage } = req.body;
+        
+        const subscription = await db.getUserSubscription(userId);
+        if (!subscription) {
+            return res.status(400).json({ error: 'No active subscription found' });
+        }
+        
+        // Check if this is a downgrade of storage addon
+        if (addonStorage && addonStorage !== subscription.addon_storage) {
+            // Check if user can downgrade (not exceeding new limits)
+            const storageCheck = await db.checkStorageLimit(userId, 0);
+            const limits = {
+                basic: 100,
+                medium: 500,
+                unlimited: Infinity
+            };
+            
+            const newLimit = limits[addonStorage];
+            if (storageCheck.current > newLimit) {
+                return res.status(400).json({ 
+                    error: 'Cannot downgrade storage', 
+                    reason: 'You are currently using ' + Math.round(storageCheck.current) + 'MB, but the new plan only allows ' + newLimit + 'MB. Please delete some attachments first.',
+                    current_usage: storageCheck.current,
+                    new_limit: newLimit
+                });
+            }
+        }
+        
+        const oldPlan = subscription.plan_type;
+        const oldAddon = subscription.addon_storage;
+        
+        // Update subscription
+        const updates = {};
+        if (planType && planType !== subscription.plan_type) {
+            updates.plan_type = planType;
+        }
+        if (addonStorage && addonStorage !== subscription.addon_storage) {
+            updates.addon_storage = addonStorage;
+        }
+        
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ error: 'No changes requested' });
+        }
+        
+        await db.updateSubscription(userId, updates);
+        
+        // Log the change
+        const action = (planType === 'yearly' && oldPlan === 'monthly') ? 'upgraded' : 
+                      (planType === 'monthly' && oldPlan === 'yearly') ? 'downgraded' :
+                      (addonStorage === 'unlimited' || addonStorage === 'medium') ? 'upgraded' : 'downgraded';
+        
+        await db.logSubscriptionHistory(userId, action, oldPlan, planType || oldPlan, oldAddon, addonStorage || oldAddon, 'User changed plan');
+        
+        // Update GHL tags
+        const updatedSubscription = await db.getUserSubscription(userId);
+        await updateGHLSubscriptionTags(userId, updatedSubscription);
+        
+        // Update daily metrics
+        await db.updateDailyMetrics();
+        
+        res.json({ success: true, message: 'Subscription updated successfully' });
+        
+    } catch (error) {
+        console.error('Error changing subscription plan:', error);
+        res.status(500).json({ error: 'Failed to update subscription' });
+    }
+});
+
+// Cancel subscription
+app.post('/api/subscription/cancel', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { reason } = req.body;
+        
+        const subscription = await db.getUserSubscription(userId);
+        if (!subscription || subscription.status === 'cancelled') {
+            return res.status(400).json({ error: 'No active subscription to cancel' });
+        }
+        
+        // Update subscription to cancelled
+        await db.updateSubscription(userId, {
+            status: 'cancelled',
+            cancelled_at: new Date()
+        });
+        
+        // Log cancellation
+        await db.logSubscriptionHistory(userId, 'cancelled', subscription.plan_type, 'cancelled', subscription.addon_storage, null, reason || 'User cancelled subscription');
+        
+        // Update GHL tags
+        await updateGHLSubscriptionTags(userId, { ...subscription, status: 'cancelled' });
+        
+        // Update daily metrics
+        await db.updateDailyMetrics();
+        
+        res.json({ success: true, message: 'Subscription cancelled successfully' });
+        
+    } catch (error) {
+        console.error('Error cancelling subscription:', error);
+        res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+});
+
+// Check storage usage and limits
+app.get('/api/subscription/storage-usage', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const storageInfo = await db.checkStorageLimit(userId);
+        
+        res.json(storageInfo);
+    } catch (error) {
+        console.error('Error getting storage usage:', error);
+        res.status(500).json({ error: 'Failed to get storage usage' });
+    }
+});
+
+// Helper function to update GHL subscription tags
+async function updateGHLSubscriptionTags(userId, subscriptionData) {
+    try {
+        const user = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
+        if (!user.rows[0]) return;
+        
+        const email = user.rows[0].email;
+        
+        // Remove all subscription tags first
+        const tagsToRemove = [
+            'tickedify-beta-tester',
+            'tickedify-subscription-monthly',
+            'tickedify-subscription-yearly',
+            'tickedify-addon-medium',
+            'tickedify-addon-unlimited',
+            'tickedify-cancelled',
+            'tickedify-suspended'
+        ];
+        
+        // Add current tags
+        const tagsToAdd = [];
+        if (subscriptionData.plan_type === 'monthly') tagsToAdd.push('tickedify-subscription-monthly');
+        if (subscriptionData.plan_type === 'yearly') tagsToAdd.push('tickedify-subscription-yearly');
+        if (subscriptionData.addon_storage === 'medium') tagsToAdd.push('tickedify-addon-medium');
+        if (subscriptionData.addon_storage === 'unlimited') tagsToAdd.push('tickedify-addon-unlimited');
+        if (subscriptionData.status === 'cancelled') tagsToAdd.push('tickedify-cancelled');
+        if (subscriptionData.status === 'suspended') tagsToAdd.push('tickedify-suspended');
+        
+        // Use existing GHL function
+        await addContactToGHL(email, email, tagsToAdd);
+        
+    } catch (error) {
+        console.error('Error updating GHL tags:', error);
+    }
+}
+
+// ======================
+// PLUG&PAY WEBHOOK ENDPOINTS
+// ======================
+
+// Webhook for successful payment
+app.post('/api/webhooks/plugandpay/payment-success', async (req, res) => {
+    try {
+        console.log('💳 Plug&Pay payment success webhook:', req.body);
+        
+        // TODO: Validate webhook signature here
+        const { customer_id, subscription_id, user_email, plan_type, addon_storage } = req.body;
+        
+        // Find user by email
+        const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [user_email]);
+        if (userResult.rows.length === 0) {
+            console.error('User not found for payment webhook:', user_email);
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userId = userResult.rows[0].id;
+        
+        // Update subscription to active
+        const now = new Date();
+        const periodEnd = new Date();
+        if (plan_type === 'monthly') {
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+        } else {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        }
+        
+        await db.updateSubscription(userId, {
+            status: 'active',
+            plan_type: plan_type,
+            addon_storage: addon_storage || 'basic',
+            current_period_start: now,
+            current_period_end: periodEnd,
+            plugandpay_customer_id: customer_id,
+            plugandpay_subscription_id: subscription_id
+        });
+        
+        await db.logSubscriptionHistory(userId, 'payment_recovered', 'grace_period', 'active', null, null, 'Payment successful');
+        
+        // Update GHL tags
+        const subscription = await db.getUserSubscription(userId);
+        await updateGHLSubscriptionTags(userId, subscription);
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Error processing payment success webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Webhook for failed payment
+app.post('/api/webhooks/plugandpay/payment-failed', async (req, res) => {
+    try {
+        console.log('❌ Plug&Pay payment failed webhook:', req.body);
+        
+        const { customer_id, subscription_id, user_email } = req.body;
+        
+        // Find user by email
+        const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [user_email]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userId = userResult.rows[0].id;
+        
+        // Set grace period (2 days)
+        const gracePeriodEnd = new Date();
+        gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 2);
+        
+        await db.updateSubscription(userId, {
+            status: 'grace_period',
+            grace_period_ends_at: gracePeriodEnd
+        });
+        
+        await db.logSubscriptionHistory(userId, 'payment_failed', 'active', 'grace_period', null, null, 'Payment failed - grace period started');
+        
+        // TODO: Send email notification about failed payment
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Error processing payment failed webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Webhook for cancelled subscription
+app.post('/api/webhooks/plugandpay/subscription-cancelled', async (req, res) => {
+    try {
+        console.log('🚫 Plug&Pay subscription cancelled webhook:', req.body);
+        
+        const { customer_id, subscription_id, user_email } = req.body;
+        
+        // Find user by email  
+        const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [user_email]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userId = userResult.rows[0].id;
+        
+        await db.updateSubscription(userId, {
+            status: 'cancelled',
+            cancelled_at: new Date()
+        });
+        
+        await db.logSubscriptionHistory(userId, 'cancelled', 'active', 'cancelled', null, null, 'Subscription cancelled via payment provider');
+        
+        // Update GHL tags
+        const subscription = await db.getUserSubscription(userId);
+        await updateGHLSubscriptionTags(userId, subscription);
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Error processing subscription cancelled webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// ======================
+// ADMIN SUBSCRIPTION ENDPOINTS  
+// ======================
+
+// End beta period for all users
+app.post('/api/admin/end-beta', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        // Update beta config
+        await db.updateBetaConfig(false);
+        
+        // Mark all beta users as ended
+        await pool.query(`
+            UPDATE users 
+            SET beta_ended_at = CURRENT_TIMESTAMP 
+            WHERE account_type = 'beta' AND beta_ended_at IS NULL
+        `);
+        
+        console.log('🎯 Beta period ended - all users will need to choose subscription on next login');
+        
+        res.json({ 
+            success: true, 
+            message: 'Beta period ended successfully',
+            ended_at: new Date()
+        });
+        
+    } catch (error) {
+        console.error('Error ending beta period:', error);
+        res.status(500).json({ error: 'Failed to end beta period' });
+    }
+});
+
+// Get all subscriptions for admin dashboard
+app.get('/api/admin/subscriptions', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const subscriptions = await db.getAllActiveSubscriptions();
+        
+        // Get additional stats
+        const statsResult = await pool.query(`
+            SELECT 
+                COUNT(*) as total_users,
+                COUNT(CASE WHEN s.status = 'active' THEN 1 END) as active_subscriptions,
+                COUNT(CASE WHEN s.status = 'trial' THEN 1 END) as trial_users,
+                COUNT(CASE WHEN s.status = 'cancelled' THEN 1 END) as cancelled_users,
+                COUNT(CASE WHEN u.account_type = 'beta' THEN 1 END) as beta_users
+            FROM users u
+            LEFT JOIN subscriptions s ON u.id = s.user_id
+        `);
+        
+        const stats = statsResult.rows[0];
+        
+        res.json({
+            subscriptions: subscriptions,
+            stats: stats
+        });
+        
+    } catch (error) {
+        console.error('Error getting admin subscriptions:', error);
+        res.status(500).json({ error: 'Failed to get subscriptions' });
+    }
+});
+
+// Get revenue metrics for admin dashboard
+app.get('/api/admin/revenue-metrics', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { days = 30 } = req.query;
+        
+        // Update today's metrics first
+        await db.updateDailyMetrics();
+        
+        // Get metrics for requested period
+        const metrics = await db.getRevenueMetrics(days);
+        
+        // Calculate summary stats
+        const latest = metrics[0];
+        const summary = {
+            current_mrr: latest?.mrr || 0,
+            current_arr: latest?.arr || 0,
+            active_subscriptions: latest?.active_subscriptions || 0,
+            trial_users: latest?.trial_users || 0,
+            total_users: latest?.active_subscriptions + latest?.trial_users || 0
+        };
+        
+        res.json({
+            metrics: metrics,
+            summary: summary
+        });
+        
+    } catch (error) {
+        console.error('Error getting revenue metrics:', error);
+        res.status(500).json({ error: 'Failed to get revenue metrics' });
+    }
+});
+
+// Manually override subscription (admin only)
+app.put('/api/admin/subscription/:userId', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const updates = req.body;
+        
+        const subscription = await db.updateSubscription(userId, updates);
+        
+        await db.logSubscriptionHistory(userId, 'admin_override', null, updates.status, null, updates.addon_storage, 'Manual admin override', { admin_user: req.session.userId });
+        
+        // Update GHL tags if needed
+        if (updates.status || updates.plan_type || updates.addon_storage) {
+            await updateGHLSubscriptionTags(userId, subscription);
+        }
+        
+        res.json({ success: true, subscription: subscription });
+        
+    } catch (error) {
+        console.error('Error updating subscription (admin):', error);
+        res.status(500).json({ error: 'Failed to update subscription' });
+    }
+});
+
+// Check storage limit for file upload (used by frontend before upload)
+app.get('/api/subscription/storage-usage', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const additionalBytes = parseInt(req.query.additionalBytes) || 0;
+        
+        const storageCheck = await db.checkStorageLimit(userId, additionalBytes);
+        
+        if (storageCheck.allowed) {
+            res.json({
+                allowed: true,
+                usage: storageCheck.usage,
+                limits: storageCheck.limits
+            });
+        } else {
+            // Format the error response for the frontend
+            const usageInfo = {
+                allowed: false,
+                reason: storageCheck.reason,
+                message: storageCheck.message,
+                addon: storageCheck.limits?.addon || 'basic'
+            };
+            
+            if (storageCheck.reason === 'file_size') {
+                const fileSizeMB = (additionalBytes / (1024 * 1024)).toFixed(1);
+                const maxSizeMB = (storageCheck.limits?.maxFileSize / (1024 * 1024)).toFixed(0);
+                usageInfo.current = parseFloat(fileSizeMB);
+                usageInfo.limit = maxSizeMB;
+                usageInfo.reason = 'file_too_large';
+            } else if (storageCheck.reason === 'total_size') {
+                const currentMB = (storageCheck.usage?.total_size / (1024 * 1024)).toFixed(1);
+                const limitMB = (storageCheck.limits?.maxTotalSize / (1024 * 1024)).toFixed(0);
+                usageInfo.current = parseFloat(currentMB);
+                usageInfo.limit = limitMB;
+            }
+            
+            res.json(usageInfo);
+        }
+        
+    } catch (error) {
+        console.error('Error checking storage usage:', error);
+        res.status(500).json({ error: 'Failed to check storage usage' });
     }
 });
 
