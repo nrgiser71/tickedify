@@ -7208,6 +7208,274 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
     }
 });
 
+// Test users cleanup endpoints
+app.get('/api/admin/test-users', async (req, res) => {
+    try {
+        // Check for admin authentication via session or basic check
+        if (!req.session.adminAuthenticated) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        // Get all users with their related data counts for preview
+        const result = await pool.query(`
+            SELECT 
+                u.id,
+                u.email,
+                u.naam,
+                u.created_at,
+                u.account_type,
+                u.subscription_status,
+                u.ghl_contact_id,
+                u.laatste_login,
+                (SELECT COUNT(*) FROM taken WHERE user_id = u.id) as task_count,
+                (SELECT COUNT(*) FROM projecten WHERE user_id = u.id) as project_count,
+                (SELECT COUNT(*) FROM contexten WHERE user_id = u.id) as context_count
+            FROM users u
+            ORDER BY u.created_at DESC
+        `);
+        
+        // Filter for potential test users based on email patterns
+        const testUsers = result.rows.filter(user => {
+            const email = (user.email || '').toLowerCase();
+            return (
+                email.startsWith('test') ||
+                email.startsWith('demo') ||
+                email.includes('@test.') ||
+                email.includes('@example.') ||
+                email.includes('@demo.') ||
+                email.includes('foo@') ||
+                email.includes('bar@') ||
+                email.startsWith('example')
+            );
+        });
+        
+        res.json({
+            success: true,
+            users: testUsers,
+            total: testUsers.length
+        });
+        
+    } catch (error) {
+        console.error('Error getting test users:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/admin/delete-test-users', async (req, res) => {
+    try {
+        // Check for admin authentication
+        if (!req.session.adminAuthenticated) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        const { userIds } = req.body;
+        
+        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+            return res.status(400).json({ error: 'No user IDs provided' });
+        }
+        
+        console.log(`🗑️ Admin cleanup: Deleting ${userIds.length} test users...`);
+        
+        let deletedCount = 0;
+        const results = [];
+        
+        // Use transaction for safety
+        const client = await pool.connect();
+        
+        try {
+            await client.query('BEGIN');
+            
+            for (const userId of userIds) {
+                try {
+                    // Get user info for logging
+                    const userResult = await client.query('SELECT email, naam FROM users WHERE id = $1', [userId]);
+                    const user = userResult.rows[0];
+                    
+                    if (!user) {
+                        results.push({ userId, status: 'not_found', error: 'User not found' });
+                        continue;
+                    }
+                    
+                    console.log(`🗑️ Deleting user: ${user.email} (${userId})`);
+                    
+                    // Delete user (CASCADE will handle related data)
+                    // The database schema should have ON DELETE CASCADE for related tables
+                    const deleteResult = await client.query('DELETE FROM users WHERE id = $1', [userId]);
+                    
+                    if (deleteResult.rowCount > 0) {
+                        deletedCount++;
+                        results.push({ 
+                            userId, 
+                            email: user.email,
+                            status: 'deleted' 
+                        });
+                        console.log(`✅ Deleted user: ${user.email}`);
+                    } else {
+                        results.push({ 
+                            userId, 
+                            email: user.email,
+                            status: 'failed', 
+                            error: 'No rows affected' 
+                        });
+                    }
+                    
+                } catch (userError) {
+                    console.error(`❌ Error deleting user ${userId}:`, userError);
+                    results.push({ 
+                        userId, 
+                        status: 'error', 
+                        error: userError.message 
+                    });
+                }
+            }
+            
+            await client.query('COMMIT');
+            
+            res.json({
+                success: true,
+                deleted: deletedCount,
+                total: userIds.length,
+                message: `${deletedCount}/${userIds.length} test users deleted successfully`,
+                results: results
+            });
+            
+        } catch (transactionError) {
+            await client.query('ROLLBACK');
+            throw transactionError;
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('Error deleting test users:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
+app.get('/api/admin/user-data/:userId', async (req, res) => {
+    try {
+        // Check for admin authentication
+        if (!req.session.adminAuthenticated) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        const { userId } = req.params;
+        
+        // Get detailed user data preview
+        const userResult = await pool.query(`
+            SELECT 
+                id, email, naam, created_at, laatste_login,
+                account_type, subscription_status, ghl_contact_id
+            FROM users 
+            WHERE id = $1
+        `, [userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Get related data counts
+        const [tasksResult, projectsResult, contextsResult] = await Promise.all([
+            pool.query('SELECT COUNT(*) FROM taken WHERE user_id = $1', [userId]),
+            pool.query('SELECT COUNT(*) FROM projecten WHERE user_id = $1', [userId]),
+            pool.query('SELECT COUNT(*) FROM contexten WHERE user_id = $1', [userId])
+        ]);
+        
+        const dataPreview = {
+            user: user,
+            relatedData: {
+                tasks: parseInt(tasksResult.rows[0].count),
+                projects: parseInt(projectsResult.rows[0].count),
+                contexts: parseInt(contextsResult.rows[0].count)
+            }
+        };
+        
+        res.json({
+            success: true,
+            data: dataPreview
+        });
+        
+    } catch (error) {
+        console.error('Error getting user data:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Migrate database constraints to enable CASCADE DELETE
+app.get('/api/admin/migrate-cascade-delete', async (req, res) => {
+    try {
+        // Check for admin authentication
+        if (!req.session.adminAuthenticated) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        console.log('🔄 Starting CASCADE DELETE migration...');
+        
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Drop and recreate foreign key constraints with CASCADE DELETE
+            const migrations = [
+                // Projecten table
+                'ALTER TABLE projecten DROP CONSTRAINT IF EXISTS projecten_user_id_fkey',
+                'ALTER TABLE projecten ADD CONSTRAINT projecten_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Contexten table  
+                'ALTER TABLE contexten DROP CONSTRAINT IF EXISTS contexten_user_id_fkey',
+                'ALTER TABLE contexten ADD CONSTRAINT contexten_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Taken table
+                'ALTER TABLE taken DROP CONSTRAINT IF EXISTS taken_user_id_fkey',
+                'ALTER TABLE taken ADD CONSTRAINT taken_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Dagelijkse planning table (user_id)
+                'ALTER TABLE dagelijkse_planning DROP CONSTRAINT IF EXISTS dagelijkse_planning_user_id_fkey',
+                'ALTER TABLE dagelijkse_planning ADD CONSTRAINT dagelijkse_planning_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Feedback table
+                'ALTER TABLE feedback DROP CONSTRAINT IF EXISTS feedback_user_id_fkey',
+                'ALTER TABLE feedback ADD CONSTRAINT feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+            ];
+            
+            for (const migration of migrations) {
+                try {
+                    await client.query(migration);
+                    console.log(`✅ Executed: ${migration.substring(0, 50)}...`);
+                } catch (migError) {
+                    console.log(`⚠️ Migration warning: ${migError.message}`);
+                }
+            }
+            
+            await client.query('COMMIT');
+            
+            res.json({
+                success: true,
+                message: 'CASCADE DELETE constraints migrated successfully',
+                note: 'All user-related data will now be automatically deleted when users are deleted'
+            });
+            
+        } catch (transactionError) {
+            await client.query('ROLLBACK');
+            throw transactionError;
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ CASCADE DELETE migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 
