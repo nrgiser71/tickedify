@@ -142,6 +142,92 @@ app.get('/api/auth/check', (req, res) => {
     }
 });
 
+// User info endpoint
+app.get('/api/auth/me', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        if (!db || typeof db.getUserById !== 'function') {
+            return res.json({
+                id: userId,
+                email: req.session.userEmail,
+                naam: 'Unknown',
+                fallback: 'database_unavailable'
+            });
+        }
+        
+        const user = await db.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({
+            id: user.id,
+            email: user.email,
+            naam: user.naam,
+            storage_used_mb: user.storage_used_mb || 0
+        });
+    } catch (error) {
+        console.error('⚠️ Auth me error:', error);
+        res.json({
+            id: req.session.userId,
+            email: req.session.userEmail,
+            naam: 'Unknown',
+            error: 'user_info_failed'
+        });
+    }
+});
+
+// Basic subscription status with full fallbacks
+app.get('/api/subscription/status', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        if (!db) {
+            return res.json({
+                status: 'beta',
+                beta_ended: false,
+                subscription: null,
+                fallback: 'database_unavailable'
+            });
+        }
+        
+        // Check if subscription functions exist
+        let subscription = null;
+        let user = null;
+        
+        try {
+            if (typeof db.getUserSubscription === 'function') {
+                subscription = await db.getUserSubscription(userId);
+            }
+            if (typeof db.getUserById === 'function') {
+                user = await db.getUserById(userId);
+            }
+        } catch (dbError) {
+            console.log('⚠️ Subscription tables not available, using fallback:', dbError.message);
+        }
+        
+        // Always return a valid response
+        res.json({
+            status: subscription?.status || 'beta',
+            beta_ended: false,
+            storage_used_mb: user?.storage_used_mb || 0,
+            subscription: subscription || null,
+            fallback: subscription ? null : 'subscription_system_unavailable'
+        });
+        
+    } catch (error) {
+        console.error('⚠️ Subscription status error:', error);
+        res.json({
+            status: 'beta',
+            beta_ended: false,
+            storage_used_mb: 0,
+            subscription: null,
+            error: 'subscription_check_failed'
+        });
+    }
+});
+
 // Catch all
 app.use((req, res) => {
     res.status(404).json({ 
