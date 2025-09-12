@@ -2172,6 +2172,20 @@ const db = {
 
   async getUserSubscription(userId) {
     try {
+      // Check if subscriptions table exists first
+      const tableCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'subscriptions'
+        );
+      `);
+      
+      if (!tableCheck.rows[0].exists) {
+        console.log('⚠️ Subscriptions table not yet created - no subscription data available');
+        return null;
+      }
+      
       const result = await pool.query(`
         SELECT * FROM subscriptions WHERE user_id = $1
       `, [userId]);
@@ -2417,6 +2431,24 @@ const db = {
 
   async getUserStorageLimits(userId) {
     try {
+      // Check if subscriptions table exists first
+      const tableCheck = await pool.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'subscriptions'
+        );
+      `);
+      
+      if (!tableCheck.rows[0].exists) {
+        console.log('⚠️ Subscriptions table not yet created - using basic limits');
+        return {
+          maxFileSize: 5 * 1024 * 1024, // 5MB per file
+          maxTotalSize: 100 * 1024 * 1024, // 100MB total
+          addon: 'basic'
+        };
+      }
+      
       const subscription = await this.getUserSubscription(userId);
       
       if (!subscription) {
