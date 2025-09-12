@@ -3131,24 +3131,50 @@ app.get('/api/auth/me', async (req, res) => {
     }
     
     try {
-        // Get user information including beta status
-        const userResult = await pool.query(`
-            SELECT 
-                id, email, naam, 
-                account_type, subscription_status,
-                created_at
-            FROM users 
-            WHERE id = $1
-        `, [req.session.userId]);
+        // Get user information with fallback for missing subscription columns
+        let user;
+        let betaConfig;
         
-        if (userResult.rows.length === 0) {
-            return res.status(401).json({ error: 'User not found' });
+        try {
+            // Try to get user information including beta status
+            const userResult = await pool.query(`
+                SELECT 
+                    id, email, naam, 
+                    account_type, subscription_status
+                FROM users 
+                WHERE id = $1
+            `, [req.session.userId]);
+            
+            if (userResult.rows.length === 0) {
+                return res.status(401).json({ error: 'User not found' });
+            }
+            
+            user = userResult.rows[0];
+            
+            // Get beta configuration
+            betaConfig = await db.getBetaConfig();
+        } catch (subscriptionError) {
+            console.log('⚠️ Subscription columns not available - using fallback user info');
+            
+            // Fallback to basic user query
+            const basicUserResult = await pool.query(`
+                SELECT id, email, naam
+                FROM users 
+                WHERE id = $1
+            `, [req.session.userId]);
+            
+            if (basicUserResult.rows.length === 0) {
+                return res.status(401).json({ error: 'User not found' });
+            }
+            
+            user = {
+                ...basicUserResult.rows[0],
+                account_type: 'beta', // Default for backward compatibility
+                subscription_status: 'beta_active'
+            };
+            
+            betaConfig = { beta_period_active: true }; // Default to active
         }
-        
-        const user = userResult.rows[0];
-        
-        // Get beta configuration
-        const betaConfig = await db.getBetaConfig();
         
         // Check if user has access
         let hasAccess = true;
@@ -4055,16 +4081,30 @@ const testModule = require('./test-runner');
 
 // Version endpoint voor deployment tracking
 app.get('/api/version', (req, res) => {
-    // Clear require cache for package.json to get fresh version
-    delete require.cache[require.resolve('./package.json')];
-    const packageJson = require('./package.json');
-    res.json({
-        version: packageJson.version,
-        commit_hash: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'unknown',
-        deployed_at: new Date().toISOString(),
-        features: ['toast-notifications', 'recurring-tasks', 'test-dashboard', 'smart-date-filtering'],
-        environment: process.env.NODE_ENV || 'development'
-    });
+    try {
+        // Clear require cache for package.json to get fresh version
+        delete require.cache[require.resolve('./package.json')];
+        const packageJson = require('./package.json');
+        
+        res.json({
+            version: packageJson.version,
+            commit_hash: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'unknown',
+            deployed_at: new Date().toISOString(),
+            features: ['toast-notifications', 'recurring-tasks', 'test-dashboard', 'smart-date-filtering'],
+            environment: process.env.NODE_ENV || 'development'
+        });
+    } catch (error) {
+        console.error('⚠️ Version endpoint error:', error);
+        // Fallback version response
+        res.json({
+            version: '0.15.20', // Hardcoded fallback
+            commit_hash: 'unknown',
+            deployed_at: new Date().toISOString(),
+            features: ['toast-notifications', 'recurring-tasks', 'test-dashboard', 'smart-date-filtering'],
+            environment: process.env.NODE_ENV || 'production',
+            error: 'Package.json read failed - using fallback'
+        });
+    }
 });
 
 // Serve test dashboard (multiple routes for accessibility)
@@ -8661,35 +8701,64 @@ app.get('/api/debug/database-columns', async (req, res) => {
 app.get('/api/subscription/status', requireAuth, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const subscription = await db.getUserSubscription(userId);
-        const user = await db.getUserById(userId);
         
-        if (!subscription) {
-            // No subscription yet - check if beta ended
-            const betaConfig = await db.getBetaConfig();
+        // Check if subscription tables exist first
+        try {
+            const subscription = await db.getUserSubscription(userId);
+            const user = await db.getUserById(userId);
             
-            if (!betaConfig.beta_period_active && !user.beta_ended_at) {
-                // Beta just ended for this user
-                await pool.query('UPDATE users SET beta_ended_at = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
+            if (!subscription) {
+                // No subscription yet - check if beta ended
+                const betaConfig = await db.getBetaConfig();
+                
+                if (!betaConfig.beta_period_active && !user.beta_ended_at) {
+                    // Beta just ended for this user - try to update if column exists
+                    try {
+                        await pool.query('UPDATE users SET beta_ended_at = CURRENT_TIMESTAMP WHERE id = $1', [userId]);
+                    } catch (updateError) {
+                        console.log('⚠️ Beta ended update failed - column might not exist:', updateError.message);
+                    }
+                }
+                
+                res.json({
+                    status: betaConfig.beta_period_active ? 'beta' : 'needs_subscription',
+                    beta_ended: !betaConfig.beta_period_active,
+                    storage_used_mb: user.storage_used_mb || 0,
+                    subscription: null
+                });
+            } else {
+                res.json({
+                    status: subscription.status,
+                    subscription: subscription,
+                    storage_used_mb: user.storage_used_mb || 0,
+                    beta_ended: true
+                });
             }
+        } catch (subscriptionError) {
+            console.log('⚠️ Subscription tables not available - using basic fallback:', subscriptionError.message);
+            
+            // Fallback for databases without subscription system
+            const user = await db.getUserById(userId);
             
             res.json({
-                status: betaConfig.beta_period_active ? 'beta' : 'needs_subscription',
-                beta_ended: !betaConfig.beta_period_active,
+                status: 'beta', // Default to beta for backward compatibility
+                beta_ended: false,
                 storage_used_mb: user.storage_used_mb || 0,
-                subscription: null
-            });
-        } else {
-            res.json({
-                status: subscription.status,
-                subscription: subscription,
-                storage_used_mb: user.storage_used_mb || 0,
-                beta_ended: true
+                subscription: null,
+                fallback: 'subscription_system_unavailable'
             });
         }
     } catch (error) {
-        console.error('Error getting subscription status:', error);
-        res.status(500).json({ error: 'Failed to get subscription status' });
+        console.error('⚠️ Subscription status endpoint error:', error);
+        
+        // Ultimate fallback response
+        res.json({
+            status: 'beta',
+            beta_ended: false,
+            storage_used_mb: 0,
+            subscription: null,
+            error: 'subscription_check_failed'
+        });
     }
 });
 
