@@ -6593,7 +6593,7 @@ app.get('/api/admin/projects', async (req, res) => {
                         NULLIF(COUNT(t.id), 0)), 0
                    ) as completion_rate
             FROM projecten p
-            LEFT JOIN taken t ON p.naam = t.project
+            LEFT JOIN taken t ON p.naam = t.project_naam
             GROUP BY p.naam
             HAVING COUNT(t.id) > 0
             ORDER BY task_count DESC
@@ -6623,7 +6623,7 @@ app.get('/api/admin/contexts', async (req, res) => {
                    COUNT(DISTINCT t.user_id) as user_count,
                    COALESCE(AVG(t.duur), 0) as avg_duration
             FROM contexten c
-            LEFT JOIN taken t ON c.naam = t.context
+            LEFT JOIN taken t ON c.naam = t.context_naam
             GROUP BY c.naam
             HAVING COUNT(t.id) > 0
             ORDER BY task_count DESC
@@ -7129,7 +7129,7 @@ app.get('/api/admin/beta/users', async (req, res) => {
                 subscription_status,
                 ghl_contact_id,
                 created_at,
-                last_activity
+                laatste_login as last_activity
             FROM users 
             WHERE account_type = 'beta'
             ORDER BY created_at DESC
