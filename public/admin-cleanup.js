@@ -27,7 +27,9 @@ class AdminCleanup {
 
     async checkAuthentication() {
         try {
-            const response = await fetch('/api/admin/test-users');
+            const response = await fetch('/api/admin/test-users', {
+                credentials: 'include'
+            });
             if (response.status === 401) {
                 this.showLoginSection();
             } else if (response.ok) {
@@ -60,6 +62,7 @@ class AdminCleanup {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ password }),
+                credentials: 'include'
             });
 
             if (response.ok) {
@@ -92,7 +95,9 @@ class AdminCleanup {
         this.showLoading('Testgebruikers laden...');
         
         try {
-            const response = await fetch('/api/admin/test-users');
+            const response = await fetch('/api/admin/test-users', {
+                credentials: 'include'
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -275,6 +280,7 @@ Deze actie kan NIET ongedaan gemaakt worden!
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ userIds }),
+                credentials: 'include'
             });
             
             if (!response.ok) {
