@@ -7190,6 +7190,17 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
         `);
         console.log('✅ Existing users converted to beta type');
         
+        // Also reset any expired users back to active if beta period is active
+        const betaConfig = await db.getBetaConfig();
+        if (betaConfig.beta_period_active) {
+            await pool.query(`
+                UPDATE users 
+                SET subscription_status = 'beta_active'
+                WHERE account_type = 'beta' AND subscription_status = 'expired'
+            `);
+            console.log('✅ Expired beta users reactivated');
+        }
+        
         res.json({
             success: true,
             message: 'Beta migration completed successfully',
