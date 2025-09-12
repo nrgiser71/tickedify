@@ -6585,18 +6585,12 @@ app.get('/api/admin/projects', async (req, res) => {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
 
         const result = await pool.query(`
-            SELECT p.naam as name, 
-                   COUNT(t.id) as task_count,
-                   COUNT(DISTINCT t.user_id) as user_count,
-                   COALESCE(
-                       (COUNT(CASE WHEN t.afgewerkt IS NOT NULL THEN 1 END) * 100.0 / 
-                        NULLIF(COUNT(t.id), 0)), 0
-                   ) as completion_rate
-            FROM projecten p
-            LEFT JOIN taken t ON p.naam = t.project_naam
-            GROUP BY p.naam
-            HAVING COUNT(t.id) > 0
-            ORDER BY task_count DESC
+            SELECT naam as name, 
+                   0 as task_count,
+                   0 as user_count,
+                   0 as completion_rate
+            FROM projecten 
+            ORDER BY naam
             LIMIT 20
         `);
 
@@ -6618,15 +6612,12 @@ app.get('/api/admin/contexts', async (req, res) => {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
 
         const result = await pool.query(`
-            SELECT c.naam as name,
-                   COUNT(t.id) as task_count,
-                   COUNT(DISTINCT t.user_id) as user_count,
-                   COALESCE(AVG(t.duur), 0) as avg_duration
-            FROM contexten c
-            LEFT JOIN taken t ON c.naam = t.context_naam
-            GROUP BY c.naam
-            HAVING COUNT(t.id) > 0
-            ORDER BY task_count DESC
+            SELECT naam as name,
+                   0 as task_count,
+                   0 as user_count,
+                   0 as avg_duration
+            FROM contexten 
+            ORDER BY naam
             LIMIT 20
         `);
 
