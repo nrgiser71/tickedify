@@ -112,7 +112,8 @@ class AdminDashboard {
             '/api/admin/feedback/stats',
             '/api/admin/feedback',
             '/api/admin/beta/status',
-            '/api/admin/beta/users'
+            '/api/admin/beta/users',
+            '/api/admin/all-users'
         ];
 
         const results = await Promise.allSettled(
@@ -133,7 +134,8 @@ class AdminDashboard {
             feedbackStats: results[10].status === 'fulfilled' ? results[10].value : {},
             feedback: results[11].status === 'fulfilled' ? results[11].value : {},
             betaStatus: results[12].status === 'fulfilled' ? results[12].value : {},
-            betaUsers: results[13].status === 'fulfilled' ? results[13].value : {}
+            betaUsers: results[13].status === 'fulfilled' ? results[13].value : {},
+            allUsers: results[14].status === 'fulfilled' ? results[14].value : {}
         };
     }
 
@@ -267,6 +269,9 @@ class AdminDashboard {
 
         // Beta users tabel
         this.renderBetaUsersTable();
+        
+        // All users tabel
+        this.renderAllUsersTable();
 
         // Feedback tabel
         this.renderFeedbackTable();
@@ -292,6 +297,45 @@ class AdminDashboard {
             html += `<div><span class="status-badge ${user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw'}">${user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen'}</span></div>`;
             html += `<div>${user.ghl_contact_id ? '✅ Gesynchroniseerd' : '❌ Niet gesynd'}</div>`;
             html += `<div>${this.formatRelativeTime(user.created_at)}</div>`;
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    renderAllUsersTable() {
+        const container = document.getElementById('allUsersTable');
+        const allUsers = this.data.allUsers && this.data.allUsers.users || [];
+        
+        if (!allUsers || allUsers.length === 0) {
+            container.innerHTML = '<div class="loading">Geen gebruikers beschikbaar</div>';
+            return;
+        }
+
+        let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
+        html += '<div>Email</div><div>Naam</div><div>Account Type</div><div>Status</div><div>Taken</div><div>Laatste Login</div><div>Acties</div>';
+        html += '</div>';
+
+        allUsers.forEach(user => {
+            const accountTypeText = user.account_type === 'beta' ? 'Beta' : 'Regular';
+            const accountTypeBadge = user.account_type === 'beta' ? 'status-nieuw' : 'status-opgelost';
+            const statusText = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen';
+            const statusBadge = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw';
+            
+            html += '<div class="table-row">';
+            html += `<div>${this.escapeHtml(user.email)}</div>`;
+            html += `<div>${this.escapeHtml(user.naam || 'Geen naam')}</div>`;
+            html += `<div><span class="status-badge ${accountTypeBadge}">${accountTypeText}</span></div>`;
+            html += `<div><span class="status-badge ${statusBadge}">${statusText}</span></div>`;
+            html += `<div>${user.task_count || 0}</div>`;
+            html += `<div>${user.last_activity ? this.formatRelativeTime(user.last_activity) : 'Nooit'}</div>`;
+            html += `<div>
+                <select id="accountType-${user.id}" data-current="${user.account_type}" style="margin-right: 8px; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="beta" ${user.account_type === 'beta' ? 'selected' : ''}>Beta</option>
+                    <option value="regular" ${user.account_type === 'regular' ? 'selected' : ''}>Regular</option>
+                </select>
+                <button onclick="changeUserAccountType('${user.id}', '${user.email}')" class="admin-btn" style="padding: 4px 8px; font-size: 12px;">Wijzig</button>
+            </div>`;
             html += '</div>';
         });
 
@@ -651,6 +695,78 @@ async function updateFeedbackStatus() {
     } catch (error) {
         console.error('Error updating feedback status:', error);
         adminDashboard.showError('Fout bij updaten status');
+    }
+}
+
+// Change user account type function
+async function changeUserAccountType(userId, userEmail) {
+    const selectElement = document.getElementById(`accountType-${userId}`);
+    if (!selectElement) {
+        alert('Kan account type selector niet vinden');
+        return;
+    }
+    
+    const newAccountType = selectElement.value;
+    const currentAccountType = selectElement.getAttribute('data-current');
+    
+    if (newAccountType === currentAccountType) {
+        alert('Geen wijziging - account type is al ' + newAccountType);
+        return;
+    }
+    
+    const confirmMessage = `Weet je zeker dat je het account type van ${userEmail} wilt wijzigen van ${currentAccountType} naar ${newAccountType}?`;
+    if (!confirm(confirmMessage)) {
+        // Reset selectie als geannuleerd
+        selectElement.value = currentAccountType;
+        return;
+    }
+    
+    // Button disable
+    const button = selectElement.nextElementSibling;
+    const originalText = button.textContent;
+    button.textContent = '🔄 Bezig...';
+    button.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/admin/user/${userId}/account-type`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ account_type: newAccountType })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Success message
+            if (window.dashboard) {
+                window.dashboard.showSuccess(`✅ ${userEmail} account type gewijzigd naar ${newAccountType}`);
+                
+                // Refresh data
+                await window.dashboard.refreshData();
+            } else {
+                alert(`✅ Account type succesvol gewijzigd naar ${newAccountType}`);
+                window.location.reload();
+            }
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+        
+    } catch (error) {
+        console.error('Error changing account type:', error);
+        if (window.dashboard) {
+            window.dashboard.showError('❌ Fout bij wijzigen account type: ' + error.message);
+        } else {
+            alert('❌ Fout bij wijzigen account type: ' + error.message);
+        }
+        
+        // Reset selectie bij fout
+        selectElement.value = currentAccountType;
+    } finally {
+        // Button restore
+        button.textContent = originalText;
+        button.disabled = false;
     }
 }
 

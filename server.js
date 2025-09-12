@@ -7163,6 +7163,98 @@ app.get('/api/admin/beta/users', async (req, res) => {
     }
 });
 
+// Get all users (both beta and regular) for admin management
+app.get('/api/admin/all-users', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_status,
+                ghl_contact_id,
+                created_at,
+                laatste_login as last_activity,
+                (SELECT COUNT(*) FROM taken WHERE user_id = users.id) as task_count
+            FROM users 
+            ORDER BY laatste_login DESC NULLS LAST, created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({
+            success: true,
+            users: result.rows
+        });
+    } catch (error) {
+        console.error('Error getting all users:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update user account type
+app.put('/api/admin/user/:id/account-type', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { account_type } = req.body;
+        
+        // Validate account type
+        if (!account_type || !['beta', 'regular'].includes(account_type)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid account type. Must be "beta" or "regular"' 
+            });
+        }
+        
+        // Get current user data
+        const currentUserResult = await pool.query(
+            'SELECT email, account_type, subscription_status FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (currentUserResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        
+        const currentUser = currentUserResult.rows[0];
+        let newSubscriptionStatus;
+        
+        // Determine new subscription status based on account type
+        if (account_type === 'regular') {
+            newSubscriptionStatus = 'active';
+        } else if (account_type === 'beta') {
+            // Check if beta period is active to set correct status
+            const betaConfig = await db.getBetaConfig();
+            newSubscriptionStatus = betaConfig.beta_period_active ? 'beta_active' : 'expired';
+        }
+        
+        // Update user account type and subscription status
+        await pool.query(`
+            UPDATE users 
+            SET account_type = $1, 
+                subscription_status = $2
+            WHERE id = $3
+        `, [account_type, newSubscriptionStatus, userId]);
+        
+        console.log(`✅ Admin updated user ${currentUser.email} from ${currentUser.account_type} to ${account_type}`);
+        
+        res.json({
+            success: true,
+            message: `User account type updated from ${currentUser.account_type} to ${account_type}`,
+            user: {
+                id: userId,
+                email: currentUser.email,
+                account_type: account_type,
+                subscription_status: newSubscriptionStatus
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error updating user account type:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Force beta database migration endpoint
 app.get('/api/admin/force-beta-migration', async (req, res) => {
     try {
