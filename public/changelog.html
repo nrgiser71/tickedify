@@ -134,10 +134,50 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.15.23 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.15.23</span>
+                <span class="version-date">12 september 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🚨</span>
+                    <div class="change-content">
+                        <div class="change-title">KRITIEKE PRODUCTIE CRASH OPGELOST</div>
+                        <div class="change-description">
+                            Server crash na v0.15.20 deployment volledig opgelost. Oorzaak: ontbrekende getUserById functie in database.js 
+                            werd aangeroepen door server.js maar bestond niet. Emergency rollback uitgevoerd + definitieve fix gedeployed.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">⚡</span>
+                    <div class="change-content">
+                        <div class="change-title">Server Stabiliteit Verbeterd</div>
+                        <div class="change-description">
+                            Ultra-minimale server configuration geïmplementeerd voor maximale stabiliteit. API endpoints (/api/ping, /api/version, /api/health) 
+                            werken nu gegarandeerd zonder crashes door subscription-gerelateerde code conflicten.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Emergency Response Workflow</div>
+                        <div class="change-description">
+                            Effectieve emergency rollback strategie toegepast: probleem gedetecteerd → minimale versie gedeployed → 
+                            oorzaak geïdentificeerd → definitieve fix toegepast. Downtime geminimaliseerd door snelle response.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.15.14 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.15.14</span>
+                <span class="version-badge badge-feature">v0.15.14</span>
                 <span class="version-date">12 september 2025</span>
             </div>
             <div class="changes-list">
