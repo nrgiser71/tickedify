@@ -324,88 +324,94 @@ const initDatabase = async () => {
       console.log('⚠️ Could not update existing tasks priority (might not have prioriteit column yet):', error.message);
     }
 
-    // Create subscriptions table for subscription management
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS subscriptions (
-        id SERIAL PRIMARY KEY,
-        user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        status VARCHAR(50) DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'grace_period', 'read_only', 'suspended', 'cancelled')),
-        plan_type VARCHAR(20) DEFAULT 'monthly' CHECK (plan_type IN ('monthly', 'yearly')),
-        addon_storage VARCHAR(20) DEFAULT 'basic' CHECK (addon_storage IN ('basic', 'medium', 'unlimited')),
-        trial_ends_at TIMESTAMP,
-        current_period_start TIMESTAMP,
-        current_period_end TIMESTAMP,
-        grace_period_ends_at TIMESTAMP,
-        read_only_starts_at TIMESTAMP,
-        suspended_at TIMESTAMP,
-        cancelled_at TIMESTAMP,
-        plugandpay_subscription_id VARCHAR(255) UNIQUE,
-        plugandpay_customer_id VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Create subscription history table for audit trail
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS subscription_history (
-        id SERIAL PRIMARY KEY,
-        user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        action VARCHAR(50) NOT NULL CHECK (action IN ('started_trial', 'upgraded', 'downgraded', 'cancelled', 'reactivated', 'suspended', 'payment_failed', 'payment_recovered')),
-        from_plan VARCHAR(50),
-        to_plan VARCHAR(50),
-        from_addon VARCHAR(50),
-        to_addon VARCHAR(50),
-        reason TEXT,
-        metadata JSONB,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Create revenue metrics table for admin dashboard
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS revenue_metrics (
-        id SERIAL PRIMARY KEY,
-        date DATE UNIQUE NOT NULL,
-        mrr DECIMAL(10,2) DEFAULT 0, -- Monthly Recurring Revenue
-        arr DECIMAL(10,2) DEFAULT 0, -- Annual Recurring Revenue
-        active_subscriptions INTEGER DEFAULT 0,
-        trial_users INTEGER DEFAULT 0,
-        churned_users INTEGER DEFAULT 0,
-        new_subscriptions INTEGER DEFAULT 0,
-        upgraded_subscriptions INTEGER DEFAULT 0,
-        downgraded_subscriptions INTEGER DEFAULT 0,
-        total_revenue DECIMAL(10,2) DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Add subscription-related columns to users table
+    // Create subscription tables (wrapped in try-catch for backward compatibility)
     try {
+      // Create subscriptions table for subscription management
       await pool.query(`
-        ALTER TABLE users 
-        ADD COLUMN IF NOT EXISTS storage_used_mb DECIMAL(10,2) DEFAULT 0,
-        ADD COLUMN IF NOT EXISTS beta_ended_at TIMESTAMP
+        CREATE TABLE IF NOT EXISTS subscriptions (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          status VARCHAR(50) DEFAULT 'trial' CHECK (status IN ('trial', 'active', 'grace_period', 'read_only', 'suspended', 'cancelled')),
+          plan_type VARCHAR(20) DEFAULT 'monthly' CHECK (plan_type IN ('monthly', 'yearly')),
+          addon_storage VARCHAR(20) DEFAULT 'basic' CHECK (addon_storage IN ('basic', 'medium', 'unlimited')),
+          trial_ends_at TIMESTAMP,
+          current_period_start TIMESTAMP,
+          current_period_end TIMESTAMP,
+          grace_period_ends_at TIMESTAMP,
+          read_only_starts_at TIMESTAMP,
+          suspended_at TIMESTAMP,
+          cancelled_at TIMESTAMP,
+          plugandpay_subscription_id VARCHAR(255) UNIQUE,
+          plugandpay_customer_id VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
       `);
-      console.log('✅ Added subscription columns to users table');
-    } catch (subscriptionMigrateError) {
-      console.log('⚠️ Could not add subscription columns, trying individually:', subscriptionMigrateError.message);
-      const subscriptionColumns = [
-        { name: 'storage_used_mb', type: 'DECIMAL(10,2) DEFAULT 0' },
-        { name: 'beta_ended_at', type: 'TIMESTAMP' }
-      ];
-      
-      for (const col of subscriptionColumns) {
-        try {
-          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
-          console.log(`✅ Added subscription column ${col.name}`);
-        } catch (colError) {
-          console.log(`⚠️ Subscription column ${col.name} might already exist:`, colError.message);
+
+      // Create subscription history table for audit trail
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS subscription_history (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          action VARCHAR(50) NOT NULL CHECK (action IN ('started_trial', 'upgraded', 'downgraded', 'cancelled', 'reactivated', 'suspended', 'payment_failed', 'payment_recovered')),
+          from_plan VARCHAR(50),
+          to_plan VARCHAR(50),
+          from_addon VARCHAR(50),
+          to_addon VARCHAR(50),
+          reason TEXT,
+          metadata JSONB,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Create revenue metrics table for admin dashboard
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS revenue_metrics (
+          id SERIAL PRIMARY KEY,
+          date DATE UNIQUE NOT NULL,
+          mrr DECIMAL(10,2) DEFAULT 0, -- Monthly Recurring Revenue
+          arr DECIMAL(10,2) DEFAULT 0, -- Annual Recurring Revenue
+          active_subscriptions INTEGER DEFAULT 0,
+          trial_users INTEGER DEFAULT 0,
+          churned_users INTEGER DEFAULT 0,
+          new_subscriptions INTEGER DEFAULT 0,
+          upgraded_subscriptions INTEGER DEFAULT 0,
+          downgraded_subscriptions INTEGER DEFAULT 0,
+          total_revenue DECIMAL(10,2) DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Add subscription-related columns to users table
+      try {
+        await pool.query(`
+          ALTER TABLE users 
+          ADD COLUMN IF NOT EXISTS storage_used_mb DECIMAL(10,2) DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS beta_ended_at TIMESTAMP
+        `);
+        console.log('✅ Added subscription columns to users table');
+      } catch (subscriptionMigrateError) {
+        console.log('⚠️ Could not add subscription columns, trying individually:', subscriptionMigrateError.message);
+        const subscriptionColumns = [
+          { name: 'storage_used_mb', type: 'DECIMAL(10,2) DEFAULT 0' },
+          { name: 'beta_ended_at', type: 'TIMESTAMP' }
+        ];
+        
+        for (const col of subscriptionColumns) {
+          try {
+            await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+            console.log(`✅ Added subscription column ${col.name}`);
+          } catch (colError) {
+            console.log(`⚠️ Subscription column ${col.name} might already exist:`, colError.message);
+          }
         }
       }
-    }
 
-    console.log('✅ Subscription tables created successfully');
+      console.log('✅ Subscription tables created successfully');
+    } catch (subscriptionTableError) {
+      console.error('⚠️ Could not create subscription tables - subscription system will be disabled:', subscriptionTableError.message);
+      console.log('✅ Server will continue without subscription system (for backward compatibility)');
+    }
 
     // Create indexes for performance
     await pool.query(`
