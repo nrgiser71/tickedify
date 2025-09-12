@@ -7299,25 +7299,89 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
                     
                     console.log(`🗑️ Deleting user: ${user.email} (${userId})`);
                     
-                    // Delete user (CASCADE will handle related data)
-                    // The database schema should have ON DELETE CASCADE for related tables
+                    // First check what data this user has
+                    const dataCheck = await client.query(`
+                        SELECT 
+                            (SELECT COUNT(*) FROM taken WHERE user_id = $1) as tasks,
+                            (SELECT COUNT(*) FROM projecten WHERE user_id = $1) as projects,
+                            (SELECT COUNT(*) FROM contexten WHERE user_id = $1) as contexts,
+                            (SELECT COUNT(*) FROM dagelijkse_planning WHERE user_id = $1) as planning,
+                            (SELECT COUNT(*) FROM feedback WHERE user_id = $1) as feedback
+                    `, [userId]);
+                    
+                    const counts = dataCheck.rows[0];
+                    console.log(`📊 User ${user.email} has:`, counts);
+                    
+                    // Delete all related data first (in correct order to avoid FK violations)
+                    console.log(`🧹 Cleaning up related data for ${user.email}...`);
+                    
+                    // 1. Delete subtaken (depends on taken)
+                    const subtakenDeleted = await client.query('DELETE FROM subtaken WHERE parent_taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
+                    console.log(`🗑️ Deleted ${subtakenDeleted.rowCount} subtaken`);
+                    
+                    // 2. Delete bijlagen (depends on taken)  
+                    const bijlagenDeleted = await client.query('DELETE FROM bijlagen WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
+                    console.log(`🗑️ Deleted ${bijlagenDeleted.rowCount} bijlagen`);
+                    
+                    // 3. Delete dagelijkse_planning (references taken)
+                    const planningDeleted = await client.query('DELETE FROM dagelijkse_planning WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${planningDeleted.rowCount} planning items`);
+                    
+                    // 4. Delete taken (references projecten/contexten)
+                    const takenDeleted = await client.query('DELETE FROM taken WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${takenDeleted.rowCount} taken`);
+                    
+                    // 5. Delete projecten 
+                    const projectenDeleted = await client.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${projectenDeleted.rowCount} projecten`);
+                    
+                    // 6. Delete contexten
+                    const contextenDeleted = await client.query('DELETE FROM contexten WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${contextenDeleted.rowCount} contexten`);
+                    
+                    // 7. Delete feedback
+                    const feedbackDeleted = await client.query('DELETE FROM feedback WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${feedbackDeleted.rowCount} feedback`);
+                    
+                    // 8. Delete mind_dump_preferences if exists
+                    try {
+                        const mindDumpDeleted = await client.query('DELETE FROM mind_dump_preferences WHERE user_id = $1', [userId]);
+                        console.log(`🗑️ Deleted ${mindDumpDeleted.rowCount} mind dump preferences`);
+                    } catch (mindDumpError) {
+                        console.log(`⚠️ Mind dump preferences table might not exist: ${mindDumpError.message}`);
+                    }
+                    
+                    // 9. Finally delete the user
                     const deleteResult = await client.query('DELETE FROM users WHERE id = $1', [userId]);
+                    console.log(`🔄 DELETE user result: rowCount=${deleteResult.rowCount}`);
                     
                     if (deleteResult.rowCount > 0) {
                         deletedCount++;
                         results.push({ 
                             userId, 
                             email: user.email,
-                            status: 'deleted' 
+                            status: 'deleted',
+                            originalCounts: counts,
+                            deletedCounts: {
+                                subtaken: subtakenDeleted.rowCount,
+                                bijlagen: bijlagenDeleted.rowCount,
+                                planning: planningDeleted.rowCount,
+                                taken: takenDeleted.rowCount,
+                                projecten: projectenDeleted.rowCount,
+                                contexten: contextenDeleted.rowCount,
+                                feedback: feedbackDeleted.rowCount
+                            }
                         });
-                        console.log(`✅ Deleted user: ${user.email}`);
+                        console.log(`✅ Successfully deleted user: ${user.email} and all related data`);
                     } else {
                         results.push({ 
                             userId, 
                             email: user.email,
                             status: 'failed', 
-                            error: 'No rows affected' 
+                            error: 'User delete failed after cleaning related data',
+                            originalCounts: counts
                         });
+                        console.log(`❌ User delete failed for ${user.email} after cleaning related data`);
                     }
                     
                 } catch (userError) {
