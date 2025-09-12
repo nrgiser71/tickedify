@@ -2572,6 +2572,44 @@ const db = {
         message: 'Fout bij controleren storage limiet. Probeer opnieuw.'
       };
     }
+  },
+
+  // Get user by ID function (was missing)
+  async getUserById(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT id, email, naam, account_type, subscription_status, storage_used_mb, created_at
+        FROM users 
+        WHERE id = $1
+      `, [userId]);
+      
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      
+      // Fallback without subscription columns
+      try {
+        const fallbackResult = await pool.query(`
+          SELECT id, email, naam, created_at
+          FROM users 
+          WHERE id = $1
+        `, [userId]);
+        
+        const user = fallbackResult.rows[0];
+        if (user) {
+          return {
+            ...user,
+            account_type: 'beta',
+            subscription_status: 'beta_active',
+            storage_used_mb: 0
+          };
+        }
+      } catch (fallbackError) {
+        console.error('Fallback getUserById also failed:', fallbackError);
+      }
+      
+      return null;
+    }
   }
 };
 
