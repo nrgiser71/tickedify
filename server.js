@@ -103,32 +103,48 @@ app.get('/api/health', (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log('🔐 Login attempt for:', email);
         
         if (!db) {
+            console.error('❌ Database not available');
             return res.status(500).json({ error: 'Database not available' });
         }
         
         const user = await db.getUserByEmail(email);
         if (!user) {
+            console.log('❌ User not found:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+        
+        console.log('✅ User found:', user.email);
         
         // Check password with bcrypt  
         const validPassword = await bcrypt.compare(password, user.wachtwoord_hash);
         if (!validPassword) {
+            console.log('❌ Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
+        console.log('✅ Password valid for:', email);
+        
+        // Check if session exists
+        if (!req.session) {
+            console.error('❌ No session available');
+            return res.status(500).json({ error: 'Session not available' });
+        }
+        
+        console.log('✅ Session available, setting user data');
         req.session.userId = user.id;
         req.session.userEmail = user.email;
         
+        console.log('✅ Login successful for:', email);
         res.json({ 
             message: 'Login successful',
             user: { id: user.id, email: user.email, naam: user.naam }
         });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
+        console.error('💥 Login error:', error);
+        res.status(500).json({ error: 'Login failed', details: error.message });
     }
 });
 
@@ -387,6 +403,31 @@ app.get('/api/debug/schema', async (req, res) => {
         });
     } catch (error) {
         console.error('Debug schema error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint for session status
+app.get('/api/debug/session-test', (req, res) => {
+    try {
+        if (!req.session) {
+            return res.json({ error: 'No session available', hasSession: false });
+        }
+        
+        // Test session write
+        req.session.test = 'test-value';
+        req.session.timestamp = new Date().toISOString();
+        
+        res.json({
+            hasSession: !!req.session,
+            sessionId: req.session.id,
+            userId: req.session.userId,
+            userEmail: req.session.userEmail,
+            test: req.session.test,
+            timestamp: req.session.timestamp
+        });
+    } catch (error) {
+        console.error('Session test error:', error);
         res.status(500).json({ error: error.message });
     }
 });
