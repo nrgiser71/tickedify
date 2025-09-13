@@ -881,6 +881,16 @@ app.get('/api/admin/check', (req, res) => {
     }
 });
 
+// Debug endpoint for admin auth
+app.get('/api/debug/admin-config', (req, res) => {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123tickedify';
+    res.json({
+        envPasswordSet: !!process.env.ADMIN_PASSWORD,
+        expectedPassword: adminPassword,
+        fallbackUsed: !process.env.ADMIN_PASSWORD
+    });
+});
+
 // Admin logout endpoint
 app.post('/api/admin/logout', (req, res) => {
     try {
