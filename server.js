@@ -876,58 +876,7 @@ app.get('/api/admin/check', (req, res) => {
     }
 });
 
-// Debug endpoint to check database schema and test queries
-app.get('/api/debug/schema-check', requireAdminAuth, async (req, res) => {
-    try {
-        // Check if account_type column exists
-        const schemaQuery = `
-            SELECT column_name, data_type, is_nullable 
-            FROM information_schema.columns 
-            WHERE table_name = 'users' 
-            AND column_name IN ('account_type', 'subscription_status')
-            ORDER BY column_name
-        `;
-        
-        const schemaResult = await pool.query(schemaQuery);
-        
-        // Test the full query that getAllUsers uses
-        const fullQuery = `
-          SELECT id, naam, email, account_type, subscription_status, created_at, 
-                 COALESCE(storage_used_mb, 0) as storage_used_mb,
-                 COALESCE(storage_limit_mb, 100) as storage_limit_mb
-          FROM users 
-          ORDER BY created_at DESC
-          LIMIT 2
-        `;
-        
-        let fullQueryResult = null;
-        let fullQueryError = null;
-        
-        try {
-            fullQueryResult = await pool.query(fullQuery);
-        } catch (err) {
-            fullQueryError = err.message;
-        }
-        
-        res.json({
-            table: 'users',
-            columns: schemaResult.rows,
-            has_account_type: schemaResult.rows.some(col => col.column_name === 'account_type'),
-            has_subscription_status: schemaResult.rows.some(col => col.column_name === 'subscription_status'),
-            fullQuery: {
-                success: !fullQueryError,
-                error: fullQueryError,
-                results: fullQueryResult?.rows || null
-            }
-        });
-    } catch (error) {
-        res.json({
-            error: error.message,
-            table: 'users',
-            columns: []
-        });
-    }
-});
+// Debug endpoints removed - admin dashboard fully functional
 
 // Admin change user account type endpoint
 app.put('/api/admin/user/:id/account-type', requireAdminAuth, async (req, res) => {
