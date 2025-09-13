@@ -173,6 +173,30 @@
             background: var(--macos-orange);
         }
 
+        .admin-btn-small {
+            background: var(--macos-blue);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            margin: 0 2px;
+            border-radius: var(--macos-radius-button);
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .admin-btn-small:hover {
+            background: var(--macos-blue-hover);
+        }
+
+        .admin-btn-small.success {
+            background: var(--macos-green);
+        }
+
+        .admin-btn-small.danger {
+            background: var(--macos-red);
+        }
+
         .loading {
             text-align: center;
             padding: 20px;
@@ -543,6 +567,15 @@
                 <div class="stat-value" id="betaStatus">-</div>
                 <div class="stat-description">Beta gebruikers: <span id="betaUsers">-</span> | Nieuw deze week: <span id="betaNewThisWeek">-</span></div>
             </div>
+
+            <div class="stat-card tools">
+                <div class="stat-header">
+                    <span class="stat-icon">💎</span>
+                    <span class="stat-title">Subscriptions</span>
+                </div>
+                <div class="stat-value" id="subscriptionCount">-</div>
+                <div class="stat-description">Regular: <span id="regularUsers">-</span> | Met subscriptie: <span id="usersWithSub">-</span></div>
+            </div>
         </div>
 
         <!-- Gebruikers Overzicht -->
@@ -618,6 +651,17 @@
                 <span>Beta Gebruikers</span>
             </div>
             <div class="table-content" id="betaUsersTable">
+                <div class="loading">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Subscription Management -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">💎</span>
+                <span>Subscription Management</span>
+            </div>
+            <div class="table-content" id="subscriptionTable">
                 <div class="loading">Laden...</div>
             </div>
         </div>

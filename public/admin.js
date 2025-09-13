@@ -203,6 +203,14 @@ class AdminDashboard {
                 toggleBtn.className = 'admin-btn success';
             }
         }
+
+        // Subscription statistics
+        if (this.data.allUsers) {
+            const users = this.data.allUsers;
+            document.getElementById('subscriptionCount').textContent = users.total || 0;
+            document.getElementById('regularUsers').textContent = users.regular_users || 0;
+            document.getElementById('usersWithSub').textContent = users.with_subscriptions || 0;
+        }
     }
 
     updateTables() {
@@ -270,6 +278,9 @@ class AdminDashboard {
         // Beta users tabel
         this.renderBetaUsersTable();
         
+        // Subscription management tabel
+        this.renderSubscriptionTable();
+        
         // All users tabel
         this.renderAllUsersTable();
 
@@ -335,6 +346,50 @@ class AdminDashboard {
                     <option value="regular" ${user.account_type === 'regular' ? 'selected' : ''}>Regular</option>
                 </select>
                 <button onclick="changeUserAccountType('${user.id}', '${user.email}')" class="admin-btn" style="padding: 4px 8px; font-size: 12px;">Wijzig</button>
+            </div>`;
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    renderSubscriptionTable() {
+        const container = document.getElementById('subscriptionTable');
+        const allUsers = this.data.allUsers && this.data.allUsers.users || [];
+        
+        if (!allUsers || allUsers.length === 0) {
+            container.innerHTML = '<div class="loading">Geen gebruikers beschikbaar</div>';
+            return;
+        }
+
+        let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
+        html += '<div>Gebruiker</div><div>Account Type</div><div>Subscription</div><div>Status</div><div>Acties</div>';
+        html += '</div>';
+
+        allUsers.forEach(user => {
+            const accountTypeText = user.account_type === 'beta' ? 'Beta' : 'Regular';
+            const accountTypeBadge = user.account_type === 'beta' ? 'status-nieuw' : 'status-opgelost';
+            const statusText = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen';
+            const statusBadge = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw';
+            const subscriptionText = user.subscription ? `${user.subscription.addon_storage} (${user.subscription.status})` : 'Geen';
+            
+            html += `<div class="table-row">`;
+            html += `<div>
+                <div style="font-weight: 600;">${this.escapeHtml(user.naam || 'Onbekend')}</div>
+                <div style="font-size: 12px; color: var(--macos-text-secondary);">${this.escapeHtml(user.email)}</div>
+            </div>`;
+            html += `<div>
+                <span class="status-badge ${accountTypeBadge}">${accountTypeText}</span>
+                <select onchange="updateUserAccountType('${user.id}', this.value)" style="margin-left: 10px; padding: 4px;">
+                    <option value="beta" ${user.account_type === 'beta' ? 'selected' : ''}>Beta</option>
+                    <option value="regular" ${user.account_type === 'regular' ? 'selected' : ''}>Regular</option>
+                </select>
+            </div>`;
+            html += `<div>${subscriptionText}</div>`;
+            html += `<div><span class="status-badge ${statusBadge}">${statusText}</span></div>`;
+            html += `<div>
+                <button onclick="viewUserDetails('${user.id}')" class="admin-btn-small">📋 Details</button>
+                ${user.account_type === 'beta' ? `<button onclick="convertToPaid('${user.id}')" class="admin-btn-small success">💎 Upgrade</button>` : ''}
             </div>`;
             html += '</div>';
         });
@@ -768,6 +823,46 @@ async function changeUserAccountType(userId, userEmail) {
         button.textContent = originalText;
         button.disabled = false;
     }
+}
+
+// Subscription management functions
+function viewUserDetails(userId) {
+    const users = adminDashboard.data.allUsers?.users || [];
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+        alert('Gebruiker niet gevonden');
+        return;
+    }
+    
+    const details = [
+        `Naam: ${user.naam || 'Onbekend'}`,
+        `Email: ${user.email}`,
+        `Account Type: ${user.account_type}`,
+        `Subscription Status: ${user.subscription_status}`,
+        `Aangemaakt: ${new Date(user.created_at).toLocaleDateString('nl-NL')}`,
+        `Storage gebruikt: ${user.storage_used_mb || 0} MB`,
+        user.subscription ? `Subscription: ${user.subscription.addon_storage} (${user.subscription.status})` : 'Geen subscription'
+    ].join('\n');
+    
+    alert(details);
+}
+
+function convertToPaid(userId) {
+    const users = adminDashboard.data.allUsers?.users || [];
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) {
+        alert('Gebruiker niet gevonden');
+        return;
+    }
+    
+    if (!confirm(`Weet je zeker dat je ${user.naam || user.email} wilt upgraden naar een betaald account?`)) {
+        return;
+    }
+    
+    // For now, just update to regular account type
+    updateUserAccountType(userId, 'regular');
 }
 
 // Close modal when clicking outside

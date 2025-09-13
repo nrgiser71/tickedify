@@ -544,6 +544,182 @@ app.get('/api/subscription/storage-usage', requireAuth, async (req, res) => {
     }
 });
 
+// Admin beta status endpoint
+app.get('/api/admin/beta/status', async (req, res) => {
+    try {
+        if (!db || typeof db.getBetaConfig !== 'function') {
+            return res.json({
+                betaConfig: { beta_period_active: true, beta_ended_at: null },
+                statistics: { totalBetaUsers: 0, newThisWeek: 0 },
+                fallback: true
+            });
+        }
+        
+        const betaConfig = await db.getBetaConfig();
+        
+        // Get user statistics if available
+        let statistics = { totalBetaUsers: 0, newThisWeek: 0 };
+        try {
+            if (typeof db.getAllUsers === 'function') {
+                const users = await db.getAllUsers();
+                statistics.totalBetaUsers = users.filter(u => u.account_type === 'beta').length;
+                
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                statistics.newThisWeek = users.filter(u => 
+                    u.account_type === 'beta' && 
+                    new Date(u.created_at) >= oneWeekAgo
+                ).length;
+            }
+        } catch (statsError) {
+            console.log('⚠️ Could not get user statistics:', statsError.message);
+        }
+        
+        res.json({
+            betaConfig,
+            statistics
+        });
+        
+    } catch (error) {
+        console.error('❌ Beta status error:', error);
+        res.status(500).json({ error: 'Failed to get beta status' });
+    }
+});
+
+// Admin beta users endpoint  
+app.get('/api/admin/beta/users', async (req, res) => {
+    try {
+        if (!db || typeof db.getAllUsers !== 'function') {
+            return res.json({
+                users: [],
+                fallback: true
+            });
+        }
+        
+        const allUsers = await db.getAllUsers();
+        const betaUsers = allUsers.filter(user => user.account_type === 'beta');
+        
+        res.json({
+            users: betaUsers,
+            total: betaUsers.length
+        });
+        
+    } catch (error) {
+        console.error('❌ Beta users error:', error);
+        res.json({
+            users: [],
+            error: 'Failed to get beta users'
+        });
+    }
+});
+
+// Admin beta toggle endpoint
+app.post('/api/admin/beta/toggle', async (req, res) => {
+    try {
+        if (!db || typeof db.getBetaConfig !== 'function' || typeof db.updateBetaConfig !== 'function') {
+            return res.status(501).json({ error: 'Beta config not available' });
+        }
+        
+        const currentConfig = await db.getBetaConfig();
+        const newStatus = !currentConfig.beta_period_active;
+        
+        await db.updateBetaConfig(newStatus);
+        console.log(`🔄 Beta period toggled to: ${newStatus ? 'ACTIVE' : 'ENDED'}`);
+        
+        res.json({
+            success: true,
+            message: `Beta period ${newStatus ? 'activated' : 'ended'}`,
+            beta_period_active: newStatus
+        });
+        
+    } catch (error) {
+        console.error('❌ Error toggling beta period:', error);
+        res.status(500).json({ error: 'Failed to toggle beta period' });
+    }
+});
+
+// Admin all users with subscription info endpoint
+app.get('/api/admin/all-users', async (req, res) => {
+    try {
+        if (!db || typeof db.getAllUsers !== 'function') {
+            return res.json({
+                users: [],
+                fallback: true
+            });
+        }
+        
+        const users = await db.getAllUsers();
+        
+        // Enrich with subscription data if available
+        const enrichedUsers = [];
+        for (const user of users) {
+            let subscription = null;
+            try {
+                if (typeof db.getUserSubscription === 'function') {
+                    subscription = await db.getUserSubscription(user.id);
+                }
+            } catch (subError) {
+                // Subscription system not available for this user
+            }
+            
+            enrichedUsers.push({
+                ...user,
+                subscription: subscription,
+                has_subscription: !!subscription
+            });
+        }
+        
+        res.json({
+            users: enrichedUsers,
+            total: enrichedUsers.length,
+            beta_users: enrichedUsers.filter(u => u.account_type === 'beta').length,
+            regular_users: enrichedUsers.filter(u => u.account_type === 'regular').length,
+            with_subscriptions: enrichedUsers.filter(u => u.has_subscription).length
+        });
+        
+    } catch (error) {
+        console.error('❌ All users error:', error);
+        res.status(500).json({ error: 'Failed to get users' });
+    }
+});
+
+// Admin user account type management endpoint
+app.put('/api/admin/user/:id/account-type', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { account_type } = req.body;
+        
+        if (!['beta', 'regular'].includes(account_type)) {
+            return res.status(400).json({ error: 'Invalid account type' });
+        }
+        
+        if (!db || !pool) {
+            return res.status(501).json({ error: 'Database not available' });
+        }
+        
+        // Update account type and set appropriate subscription status
+        const subscription_status = account_type === 'regular' ? 'active' : 'beta_active';
+        
+        await pool.query(
+            'UPDATE users SET account_type = $1, subscription_status = $2 WHERE id = $3',
+            [account_type, subscription_status, userId]
+        );
+        
+        console.log(`👤 User ${userId} account type changed to: ${account_type}`);
+        
+        res.json({
+            success: true,
+            message: `Account type updated to ${account_type}`,
+            account_type,
+            subscription_status
+        });
+        
+    } catch (error) {
+        console.error('❌ Update account type error:', error);
+        res.status(500).json({ error: 'Failed to update account type' });
+    }
+});
+
 // Add single task to inbox endpoint
 app.post('/api/taak/add-to-inbox', requireAuth, async (req, res) => {
     try {
