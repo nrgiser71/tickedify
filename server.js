@@ -432,6 +432,50 @@ app.get('/api/debug/session-test', (req, res) => {
     }
 });
 
+// Debug endpoint for session table
+app.get('/api/debug/session-table', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(500).json({ error: 'Database not available' });
+        }
+        
+        // Check if session table exists
+        const tableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'session'
+            );
+        `);
+        
+        if (!tableExists.rows[0].exists) {
+            return res.json({ 
+                sessionTableExists: false,
+                error: 'Session table does not exist'
+            });
+        }
+        
+        // Get session table structure
+        const schemaResult = await pool.query(`
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_name = 'session' 
+            ORDER BY ordinal_position
+        `);
+        
+        // Count sessions
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM session');
+        
+        res.json({
+            sessionTableExists: true,
+            schema: schemaResult.rows,
+            sessionCount: countResult.rows[0].count
+        });
+    } catch (error) {
+        console.error('Session table debug error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Catch all
 app.use((req, res) => {
     res.status(404).json({ 
