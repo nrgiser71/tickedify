@@ -12521,8 +12521,12 @@ class AuthManager {
 
     async checkAuthStatus() {
         try {
+            // Silence 401 errors in console - these are expected when not logged in  
             const response = await fetch('/api/auth/me', {
                 credentials: 'include'
+            }).catch(error => {
+                // Return a mock 401 response to handle gracefully
+                return { ok: false, status: 401 };
             });
             
             if (response.ok) {
@@ -14756,9 +14760,20 @@ class SubscriptionManager {
 
     async checkSubscriptionStatus() {
         try {
+            // Silence 401 errors in console - these are expected when not logged in
             const response = await fetch('/api/subscription/status', {
                 credentials: 'include'
+            }).catch(error => {
+                // Return a mock 401 response to handle gracefully  
+                return { ok: false, status: 401 };
             });
+            
+            if (!response.ok) {
+                // Handle 401 or other errors gracefully
+                this.currentStatus = null;
+                return;
+            }
+            
             const data = await response.json();
             
             this.currentStatus = data;
