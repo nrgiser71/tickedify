@@ -891,6 +891,17 @@ app.get('/api/debug/admin-config', (req, res) => {
     });
 });
 
+// Debug endpoint for database functions
+app.get('/api/debug/db-functions', (req, res) => {
+    res.json({
+        dbExists: !!db,
+        dbType: typeof db,
+        getAllUsersExists: !!(db && db.getAllUsers),
+        getAllUsersType: typeof (db && db.getAllUsers),
+        availableMethods: db ? Object.getOwnPropertyNames(Object.getPrototypeOf(db)) : null
+    });
+});
+
 // Admin logout endpoint
 app.post('/api/admin/logout', (req, res) => {
     try {
