@@ -12485,7 +12485,7 @@ class AuthManager {
             
             if (response.ok) {
                 const data = await response.json();
-                this.currentUser = data.user;
+                this.currentUser = data; // API returns user data directly, not wrapped in user property
                 this.isAuthenticated = true;
                 
                 // Check beta period access
