@@ -65,9 +65,10 @@ const requireAuth = (req, res, next) => {
 
 // Minimal working endpoints
 app.get('/api/ping', (req, res) => {
+    const packageJson = require('./package.json');
     res.json({ 
         status: 'ok',
-        version: '0.15.23-minimal',
+        version: packageJson.version,
         timestamp: new Date().toISOString() 
     });
 });
@@ -324,6 +325,36 @@ app.post('/api/auth/logout', (req, res) => {
     }
 });
 
+// Debug endpoint for user lookup
+app.get('/api/debug/user/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        
+        if (!db) {
+            return res.status(500).json({ error: 'Database not available' });
+        }
+        
+        console.log('🔍 Debug: Looking up user:', email);
+        const user = await db.getUserByEmail(email);
+        
+        res.json({
+            email: email,
+            found: !!user,
+            user: user ? {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                hasPassword: !!user.wachtwoord_hash,
+                account_type: user.account_type,
+                subscription_status: user.subscription_status
+            } : null
+        });
+    } catch (error) {
+        console.error('Debug user lookup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Catch all
 app.use((req, res) => {
     res.status(404).json({ 
@@ -333,5 +364,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Minimal server v0.15.23 running on port ${PORT}`);
+    const packageJson = require('./package.json');
+    console.log(`🚀 Minimal server v${packageJson.version} running on port ${PORT}`);
 });
