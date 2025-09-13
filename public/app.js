@@ -1795,7 +1795,9 @@ class Taakbeheer {
         }
 
         try {
-            const response = await fetch('/api/tellingen');
+            const response = await fetch('/api/tellingen', {
+                credentials: 'include'
+            });
             if (response.ok) {
                 const tellingen = await response.json();
                 
@@ -1914,8 +1916,8 @@ class Taakbeheer {
         try {
             // Single batch call - much faster than individual calls per project
             const [actiesResponse, afgewerkteResponse] = await Promise.all([
-                fetch('/api/lijst/acties'),
-                fetch('/api/lijst/afgewerkte-taken')
+                fetch('/api/lijst/acties', { credentials: 'include' }),
+                fetch('/api/lijst/afgewerkte-taken', { credentials: 'include' })
             ]);
             
             const taskCounts = {};
@@ -2052,8 +2054,8 @@ class Taakbeheer {
         try {
             // Haal alle acties en afgewerkte taken op voor dit project
             const [actiesResponse, afgewerkteResponse] = await Promise.all([
-                fetch('/api/lijst/acties'),
-                fetch('/api/lijst/afgewerkte-taken')
+                fetch('/api/lijst/acties', { credentials: 'include' }),
+                fetch('/api/lijst/afgewerkte-taken', { credentials: 'include' })
             ]);
             
             let openActies = [];
@@ -2159,7 +2161,9 @@ class Taakbeheer {
     async taakAfwerkenVanuitProject(actieId, containerId) {
         try {
             // Haal de actie op uit de acties lijst
-            const actiesResponse = await fetch('/api/lijst/acties');
+            const actiesResponse = await fetch('/api/lijst/acties', {
+                credentials: 'include'
+            });
             if (!actiesResponse.ok) return;
             
             const acties = await actiesResponse.json();
@@ -2203,6 +2207,7 @@ class Taakbeheer {
                 await fetch('/api/lijst/acties', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(nieuweActies)
                 });
             }
@@ -2243,7 +2248,9 @@ class Taakbeheer {
     async taakHeropenenVanuitProject(actieId, containerId) {
         try {
             // Haal de afgewerkte taak op uit de afgewerkte-taken lijst
-            const afgewerkteResponse = await fetch('/api/lijst/afgewerkte-taken');
+            const afgewerkteResponse = await fetch('/api/lijst/afgewerkte-taken', {
+                credentials: 'include'
+            });
             if (!afgewerkteResponse.ok) return;
             
             const afgewerkteActies = await afgewerkteResponse.json();
@@ -2254,7 +2261,9 @@ class Taakbeheer {
             delete actie.afgewerkt;
             
             // Verplaats terug naar acties lijst
-            const actiesResponse = await fetch('/api/lijst/acties');
+            const actiesResponse = await fetch('/api/lijst/acties', {
+                credentials: 'include'
+            });
             let huidigeActies = [];
             if (actiesResponse.ok) {
                 huidigeActies = await actiesResponse.json();
@@ -2264,6 +2273,7 @@ class Taakbeheer {
             await fetch('/api/lijst/acties', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(huidigeActies)
             });
             
@@ -2272,6 +2282,7 @@ class Taakbeheer {
             await fetch('/api/lijst/afgewerkte-taken', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(nieuweAfgewerkteActies)
             });
             
@@ -2307,7 +2318,9 @@ class Taakbeheer {
         this.huidigeLijst = 'acties';
         
         // Laad de acties
-        const response = await fetch('/api/lijst/acties');
+        const response = await fetch('/api/lijst/acties', {
+            credentials: 'include'
+        });
         if (response.ok) {
             this.taken = await response.json();
         }
@@ -2917,7 +2930,9 @@ class Taakbeheer {
         }
 
         try {
-            const response = await fetch('/api/lijst/inbox');
+            const response = await fetch('/api/lijst/inbox', {
+                credentials: 'include'
+            });
             if (response.ok) {
                 const newTaken = await response.json();
                 
@@ -3000,7 +3015,9 @@ class Taakbeheer {
             try {
                 if (this.huidigeLijst === 'projecten') {
                     // Voor projecten laden we de projecten lijst
-                    const response = await fetch('/api/lijst/projecten-lijst');
+                    const response = await fetch('/api/lijst/projecten-lijst', {
+                        credentials: 'include'
+                    });
                     if (response.ok) {
                         this.projecten = await response.json();
                     }
@@ -3011,7 +3028,9 @@ class Taakbeheer {
                     await this.renderUitgesteldConsolidated();
                     return; // Skip normal renderTaken
                 } else {
-                    const response = await fetch(`/api/lijst/${this.huidigeLijst}`);
+                    const response = await fetch(`/api/lijst/${this.huidigeLijst}`, {
+                        credentials: 'include'
+                    });
                     if (response.ok) {
                         let taken = await response.json();
                         console.log(`🔍 DEBUG laadHuidigeLijst: Ontvangen ${taken.length} taken van API voor lijst "${this.huidigeLijst}"`);
@@ -3100,6 +3119,7 @@ class Taakbeheer {
                 const response = await fetch('/api/taak/add-to-inbox', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(nieuweTaak)
                 });
                 
@@ -4054,7 +4074,9 @@ class Taakbeheer {
         }
 
         try {
-            const response = await fetch('/api/lijst/projecten-lijst');
+            const response = await fetch('/api/lijst/projecten-lijst', {
+                credentials: 'include'
+            });
             if (response.ok) {
                 this.projecten = await response.json();
             }
@@ -4072,7 +4094,9 @@ class Taakbeheer {
         }
 
         try {
-            const response = await fetch('/api/lijst/contexten');
+            const response = await fetch('/api/lijst/contexten', {
+                credentials: 'include'
+            });
             if (response.ok) {
                 this.contexten = await response.json();
             }
@@ -5002,6 +5026,7 @@ class Taakbeheer {
             await fetch('/api/lijst/projecten-lijst', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(this.projecten)
             });
         } catch (error) {
@@ -5014,6 +5039,7 @@ class Taakbeheer {
             await fetch('/api/lijst/contexten', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(this.contexten)
             });
         } catch (error) {
@@ -5632,6 +5658,7 @@ class Taakbeheer {
             const response = await fetch('/api/taak/recurring', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     originalTask: originalTask,
                     nextDate: nextDate
@@ -7601,7 +7628,9 @@ class Taakbeheer {
         
         // Load user preferences from database (per user)
         try {
-            const response = await fetch('/api/mind-dump/preferences');
+            const response = await fetch('/api/mind-dump/preferences', {
+                credentials: 'include'
+            });
             if (response.ok) {
                 const data = await response.json();
                 this.mindDumpPreferences = data.preferences || {};
@@ -7691,6 +7720,7 @@ class Taakbeheer {
                 const response = await fetch('/api/taak', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(nieuweTaak)
                 });
                 
@@ -7837,6 +7867,7 @@ class Taakbeheer {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     preferences: this.mindDumpPreferences,
                     customWords: this.mindDumpWords // Include custom words
@@ -8108,7 +8139,9 @@ class Taakbeheer {
         const today = new Date().toISOString().split('T')[0];
         
         // Laad acties lijst voor filtering en drag & drop
-        const actiesResponse = await fetch('/api/lijst/acties');
+        const actiesResponse = await fetch('/api/lijst/acties', {
+            credentials: 'include'
+        });
         let acties = actiesResponse.ok ? await actiesResponse.json() : [];
         
         // Apply date filtering to planning actions (same as main actions list)
@@ -9541,7 +9574,9 @@ class Taakbeheer {
                 } else {
                     // Only fetch from API if not found in cache
                     console.log('<i class="ti ti-search"></i> Task not in cache, fetching from API...');
-                    const actiesResponse = await fetch('/api/lijst/acties');
+                    const actiesResponse = await fetch('/api/lijst/acties', {
+                        credentials: 'include'
+                    });
                     if (actiesResponse.ok) {
                         const acties = await actiesResponse.json();
                         actie = acties.find(t => t.id === data.actieId);
@@ -9569,6 +9604,7 @@ class Taakbeheer {
             const response = await fetch('/api/dagelijkse-planning', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(planningItem)
             });
             
@@ -10292,7 +10328,9 @@ class Taakbeheer {
                 console.log('<i class="ti ti-search"></i> Task not found locally, fetching from API...');
                 // If not found locally, fetch from API
                 try {
-                    const actiesResponse = await fetch('/api/lijst/acties');
+                    const actiesResponse = await fetch('/api/lijst/acties', {
+                        credentials: 'include'
+                    });
                     if (actiesResponse.ok) {
                         const acties = await actiesResponse.json();
                         taak = acties.find(t => t.id === actieId);
@@ -10477,7 +10515,9 @@ class Taakbeheer {
                     if (this.huidigeLijst === 'dagelijkse-planning') {
                         console.log('<i class="fas fa-clipboard"></i> Refreshing actions list to show new recurring task...');
                         // Re-fetch actions from API to get the new recurring task
-                        const actiesResponse = await fetch('/api/lijst/acties');
+                        const actiesResponse = await fetch('/api/lijst/acties', {
+                        credentials: 'include'
+                    });
                         if (actiesResponse.ok) {
                             const refreshedActies = await actiesResponse.json();
                             this.planningActies = this.filterTakenOpDatum(refreshedActies, true);
@@ -12481,7 +12521,9 @@ class AuthManager {
 
     async checkAuthStatus() {
         try {
-            const response = await fetch('/api/auth/me');
+            const response = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
             
             if (response.ok) {
                 const data = await response.json();
@@ -12866,7 +12908,9 @@ class UpdateManager {
     
     async loadCurrentVersion() {
         try {
-            const response = await fetch('/api/version');
+            const response = await fetch('/api/version', {
+                credentials: 'include'
+            });
             const data = await response.json();
             this.currentVersion = data.version;
             
@@ -12905,7 +12949,9 @@ class UpdateManager {
     
     async checkForUpdates() {
         try {
-            const response = await fetch('/api/version');
+            const response = await fetch('/api/version', {
+                credentials: 'include'
+            });
             const data = await response.json();
             
             console.log('Update check:', {
@@ -13227,12 +13273,16 @@ class QuickAddModal {
             console.log('<i class="ti ti-search"></i> DEBUG: Adding task via API:', taakNaam);
             
             // Check current user first
-            const userResponse = await fetch('/api/debug/current-user');
+            const userResponse = await fetch('/api/debug/current-user', {
+                credentials: 'include'
+            });
             const userData = await userResponse.json();
             console.log('<i class="ti ti-search"></i> DEBUG: Current user:', userData);
             
             // Check inbox before adding
-            const beforeResponse = await fetch('/api/lijst/inbox');
+            const beforeResponse = await fetch('/api/lijst/inbox', {
+                credentials: 'include'
+            });
             const beforeTasks = await beforeResponse.json();
             console.log('<i class="ti ti-search"></i> DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
             
@@ -13256,7 +13306,9 @@ class QuickAddModal {
                 console.log('<i class="ti ti-search"></i> DEBUG: Response data:', responseData);
                 
                 // Check inbox after adding
-                const afterResponse = await fetch('/api/lijst/inbox');
+                const afterResponse = await fetch('/api/lijst/inbox', {
+                    credentials: 'include'
+                });
                 const afterTasks = await afterResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
                 
@@ -13286,7 +13338,9 @@ class QuickAddModal {
                 });
                 
                 // Check inbox after failed request
-                const afterFailResponse = await fetch('/api/lijst/inbox');
+                const afterFailResponse = await fetch('/api/lijst/inbox', {
+                    credentials: 'include'
+                });
                 const afterFailTasks = await afterFailResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
                 
@@ -14702,7 +14756,9 @@ class SubscriptionManager {
 
     async checkSubscriptionStatus() {
         try {
-            const response = await fetch('/api/subscription/status');
+            const response = await fetch('/api/subscription/status', {
+                credentials: 'include'
+            });
             const data = await response.json();
             
             this.currentStatus = data;
