@@ -355,6 +355,42 @@ app.get('/api/debug/user/:email', async (req, res) => {
     }
 });
 
+// Debug endpoint for database schema check
+app.get('/api/debug/schema', async (req, res) => {
+    try {
+        if (!db || !pool) {
+            return res.status(500).json({ error: 'Database not available' });
+        }
+        
+        // Check users table structure
+        const schemaResult = await pool.query(`
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' 
+            ORDER BY ordinal_position
+        `);
+        
+        // Count users
+        const countResult = await pool.query('SELECT COUNT(*) as count FROM users');
+        
+        // Get sample users (without passwords)
+        const sampleResult = await pool.query(`
+            SELECT id, email, naam, account_type, created_at 
+            FROM users 
+            LIMIT 5
+        `);
+        
+        res.json({
+            schema: schemaResult.rows,
+            userCount: countResult.rows[0].count,
+            sampleUsers: sampleResult.rows
+        });
+    } catch (error) {
+        console.error('Debug schema error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Catch all
 app.use((req, res) => {
     res.status(404).json({ 
