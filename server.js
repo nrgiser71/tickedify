@@ -81,13 +81,13 @@ app.get('/api/version', (req, res) => {
         const packageJson = require('./package.json');
         res.json({
             version: packageJson.version,
-            status: 'minimal_mode',
+            status: 'active',
             timestamp: new Date().toISOString()
         });
     } catch (error) {
         res.json({
-            version: '0.15.23-minimal',
-            status: 'minimal_mode',
+            version: '0.15.46-fallback',
+            status: 'active_fallback',
             error: error.message,
             timestamp: new Date().toISOString()
         });
@@ -598,7 +598,7 @@ app.post('/api/debug/create-session-table', async (req, res) => {
 app.use((req, res) => {
     res.status(404).json({ 
         error: `Route ${req.path} not found`,
-        minimal_mode: true
+        status: 'active'
     });
 });
 
