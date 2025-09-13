@@ -1426,6 +1426,48 @@ app.post('/api/taak/recurring', requireAuth, async (req, res) => {
     }
 });
 
+// Get individual task endpoint (for verification)
+app.get('/api/taak/:id', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.session.userId;
+        
+        console.log('🔍 Getting task:', { id, userId });
+        
+        if (!id) {
+            return res.status(400).json({ error: 'Task ID is required' });
+        }
+        
+        // Try to find the task in all lists
+        const lists = ['inbox', 'acties', 'opvolgen', 'afgewerkt', 
+                      'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 
+                      'uitgesteld-3maandelijks', 'uitgesteld-6maandelijks', 
+                      'uitgesteld-jaarlijks'];
+        
+        for (const listName of lists) {
+            try {
+                const tasks = await db.getTakenByLijst(userId, listName) || [];
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    console.log('✅ Task found in list:', listName);
+                    return res.json(task);
+                }
+            } catch (listError) {
+                console.warn(`⚠️ Error checking list ${listName}:`, listError.message);
+                continue;
+            }
+        }
+        
+        // Task not found in any list
+        console.log('❌ Task not found:', id);
+        res.status(404).json({ error: 'Task not found' });
+        
+    } catch (error) {
+        console.error('❌ Error getting task:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+
 // Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
     if (req.session) {
