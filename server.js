@@ -1380,6 +1380,52 @@ app.post('/api/taak/add-to-inbox', requireAuth, async (req, res) => {
     }
 });
 
+// Create recurring task endpoint
+app.post('/api/taak/recurring', requireAuth, async (req, res) => {
+    try {
+        const { originalTask, nextDate } = req.body;
+        const userId = req.session.userId;
+        
+        console.log('🔄 Creating recurring task:', { 
+            originalTask: originalTask?.tekst || 'Unknown task', 
+            nextDate, 
+            userId 
+        });
+        
+        // Validate input
+        if (!originalTask || !nextDate) {
+            console.error('❌ Missing required fields for recurring task');
+            return res.status(400).json({ error: 'Missing originalTask or nextDate' });
+        }
+        
+        // Validate date format
+        if (!nextDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            console.error('❌ Invalid date format for recurring task:', nextDate);
+            return res.status(400).json({ error: 'Invalid date format. Expected YYYY-MM-DD' });
+        }
+        
+        // Validate database functions availability
+        if (!db || typeof db.createRecurringTask !== 'function') {
+            console.error('❌ Database createRecurringTask function not available');
+            return res.status(501).json({ error: 'Database recurring task function not available' });
+        }
+        
+        // Create the recurring task
+        const newTaskId = await db.createRecurringTask(originalTask, nextDate, userId);
+        
+        if (newTaskId) {
+            console.log('✅ Recurring task created successfully with ID:', newTaskId);
+            res.json({ taskId: newTaskId });
+        } else {
+            console.error('❌ Database createRecurringTask returned null');
+            res.status(500).json({ error: 'Failed to create recurring task - database operation failed' });
+        }
+    } catch (error) {
+        console.error('❌ Error creating recurring task:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+});
+
 // Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
     if (req.session) {
