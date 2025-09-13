@@ -913,6 +913,222 @@ app.post('/api/admin/test-email', requireAdminAuth, async (req, res) => {
     }
 });
 
+// Admin fallback endpoints - these provide empty data for admin UI compatibility
+app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
+    try {
+        // This is a fallback - we use /api/admin/all-users instead
+        res.json({
+            total: 0,
+            active: 0,
+            inactive: 0,
+            recent: [],
+            fallback: 'Use /api/admin/all-users for real user data'
+        });
+    } catch (error) {
+        console.error('❌ Admin users fallback error:', error);
+        res.status(500).json({ error: 'Failed to get users' });
+    }
+});
+
+app.get('/api/admin/tasks', requireAdminAuth, async (req, res) => {
+    try {
+        if (!db || !pool) {
+            return res.json({
+                total: 0,
+                completed: 0,
+                pending: 0,
+                overdue: 0,
+                recent: [],
+                fallback: 'Database not available'
+            });
+        }
+
+        // Get task statistics from database
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
+        const completedResult = await pool.query("SELECT COUNT(*) as count FROM taken WHERE lijst = 'afgewerkt'");
+        const pendingResult = await pool.query("SELECT COUNT(*) as count FROM taken WHERE lijst != 'afgewerkt'");
+
+        res.json({
+            total: parseInt(totalResult.rows[0]?.count || 0),
+            completed: parseInt(completedResult.rows[0]?.count || 0),
+            pending: parseInt(pendingResult.rows[0]?.count || 0),
+            overdue: 0, // TODO: Calculate overdue based on deadlines
+            recent: [],
+            fallback: false
+        });
+    } catch (error) {
+        console.error('❌ Admin tasks error:', error);
+        res.json({
+            total: 0,
+            completed: 0,
+            pending: 0,
+            overdue: 0,
+            recent: [],
+            error: 'Task statistics failed'
+        });
+    }
+});
+
+app.get('/api/admin/system', requireAdminAuth, async (req, res) => {
+    try {
+        const packageJson = require('./package.json');
+        
+        res.json({
+            version: packageJson.version,
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+            platform: process.platform,
+            node_version: process.version,
+            timestamp: new Date().toISOString(),
+            database_connected: !!db,
+            email_configured: emailNotifications?.isAvailable() || false
+        });
+    } catch (error) {
+        console.error('❌ Admin system error:', error);
+        res.status(500).json({ error: 'System info failed' });
+    }
+});
+
+app.get('/api/admin/insights', requireAdminAuth, (req, res) => {
+    res.json({
+        daily_active_users: 0,
+        tasks_created_today: 0,
+        completion_rate: 0,
+        popular_features: [],
+        user_engagement: {},
+        fallback: 'Insights not implemented yet'
+    });
+});
+
+app.get('/api/admin/monitoring', requireAdminAuth, (req, res) => {
+    res.json({
+        uptime: process.uptime(),
+        health_checks: {
+            database: !!db,
+            email_service: emailNotifications?.isAvailable() || false,
+            api_responses: 'ok'
+        },
+        last_errors: [],
+        response_times: {},
+        fallback: 'Basic monitoring only'
+    });
+});
+
+app.get('/api/admin/projects', requireAdminAuth, async (req, res) => {
+    try {
+        if (!db || !pool) {
+            return res.json({
+                total: 0,
+                projects: [],
+                fallback: 'Database not available'
+            });
+        }
+
+        // Get project statistics (distinct project names from tasks)
+        const result = await pool.query(`
+            SELECT project, COUNT(*) as task_count 
+            FROM taken 
+            WHERE project IS NOT NULL AND project != '' 
+            GROUP BY project 
+            ORDER BY task_count DESC
+        `);
+
+        res.json({
+            total: result.rows.length,
+            projects: result.rows,
+            fallback: false
+        });
+    } catch (error) {
+        console.error('❌ Admin projects error:', error);
+        res.json({
+            total: 0,
+            projects: [],
+            error: 'Projects statistics failed'
+        });
+    }
+});
+
+app.get('/api/admin/contexts', requireAdminAuth, async (req, res) => {
+    try {
+        if (!db || !pool) {
+            return res.json({
+                total: 0,
+                contexts: [],
+                fallback: 'Database not available'
+            });
+        }
+
+        // Get context statistics (distinct context names from tasks)
+        const result = await pool.query(`
+            SELECT context, COUNT(*) as task_count 
+            FROM taken 
+            WHERE context IS NOT NULL AND context != '' 
+            GROUP BY context 
+            ORDER BY task_count DESC
+        `);
+
+        res.json({
+            total: result.rows.length,
+            contexts: result.rows,
+            fallback: false
+        });
+    } catch (error) {
+        console.error('❌ Admin contexts error:', error);
+        res.json({
+            total: 0,
+            contexts: [],
+            error: 'Contexts statistics failed'
+        });
+    }
+});
+
+app.get('/api/admin/errors', requireAdminAuth, (req, res) => {
+    res.json({
+        recent_errors: [],
+        error_count: 0,
+        critical_errors: 0,
+        fallback: 'Error logging not implemented yet'
+    });
+});
+
+app.get('/api/admin/api-usage', requireAdminAuth, (req, res) => {
+    res.json({
+        requests_today: 0,
+        popular_endpoints: [],
+        average_response_time: 0,
+        fallback: 'API usage tracking not implemented yet'
+    });
+});
+
+app.get('/api/admin/email-stats', requireAdminAuth, (req, res) => {
+    res.json({
+        emails_sent: 0,
+        success_rate: 100,
+        bounce_rate: 0,
+        email_types: {},
+        fallback: emailNotifications?.isAvailable() ? 'Email stats tracking not implemented yet' : 'Email service not configured'
+    });
+});
+
+app.get('/api/admin/feedback/stats', requireAdminAuth, (req, res) => {
+    res.json({
+        total_feedback: 0,
+        new_feedback: 0,
+        resolved_feedback: 0,
+        bug_reports: 0,
+        feature_requests: 0,
+        fallback: 'Feedback system not implemented yet'
+    });
+});
+
+app.get('/api/admin/feedback', requireAdminAuth, (req, res) => {
+    res.json({
+        feedback_items: [],
+        total: 0,
+        fallback: 'Feedback system not implemented yet'
+    });
+});
+
 // Add single task to inbox endpoint
 app.post('/api/taak/add-to-inbox', requireAuth, async (req, res) => {
     try {
