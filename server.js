@@ -363,6 +363,37 @@ app.post('/api/auth/logout', (req, res) => {
     }
 });
 
+// Database schema debug endpoint - EXACT column verification
+app.get('/api/debug/schema', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(500).json({ error: 'Database pool not available' });
+        }
+        
+        // Get EXACT column structure of users table
+        const result = await pool.query(`
+            SELECT column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND table_schema = 'public'
+            ORDER BY ordinal_position
+        `);
+        
+        res.json({
+            table: 'users',
+            columns: result.rows,
+            total_columns: result.rows.length,
+            timestamp: new Date().toISOString(),
+            purpose: 'EXACT database schema verification for login fix'
+        });
+    } catch (error) {
+        console.error('Schema debug error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            purpose: 'Failed to get exact database schema'
+        });
+    }
+});
+
 // Debug endpoint for user lookup
 app.get('/api/debug/user/:email', async (req, res) => {
     try {
