@@ -2676,9 +2676,7 @@ const db = {
       // Try full query first, fallback to basic query if columns don't exist
       try {
         const query = `
-          SELECT id, naam, email, account_type, subscription_status, created_at, 
-                 COALESCE(storage_used_mb, 0) as storage_used_mb,
-                 COALESCE(storage_limit_mb, 100) as storage_limit_mb
+          SELECT id, naam, email, account_type, subscription_status, created_at
           FROM users 
           ORDER BY created_at DESC
         `;
@@ -2693,8 +2691,8 @@ const db = {
           account_type: user.account_type || 'regular',
           subscription_status: user.subscription_status || 'active',
           created_at: user.created_at,
-          storage_used_mb: parseFloat(user.storage_used_mb || 0),
-          storage_limit_mb: parseFloat(user.storage_limit_mb || 100)
+          storage_used_mb: 0, // Default values since columns don't exist
+          storage_limit_mb: 100
         }));
         
       } catch (columnError) {
