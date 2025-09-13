@@ -12489,7 +12489,7 @@ class AuthManager {
                 this.isAuthenticated = true;
                 
                 // Check beta period access
-                if (!data.hasAccess) {
+                if (data.hasAccess === false) {
                     this.showUpgradeMessage(data.accessMessage);
                     this.isAuthenticated = false; // Treat as not authenticated for UI purposes
                     
