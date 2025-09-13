@@ -476,6 +476,46 @@ app.get('/api/debug/session-table', async (req, res) => {
     }
 });
 
+// Debug endpoint to create session table
+app.post('/api/debug/create-session-table', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(500).json({ error: 'Database not available' });
+        }
+        
+        // Create session table with connect-pg-simple schema
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS "session" (
+              "sid" varchar NOT NULL COLLATE "default",
+              "sess" json NOT NULL,
+              "expire" timestamp(6) NOT NULL
+            )
+            WITH (OIDS=FALSE);
+        `);
+        
+        await pool.query(`
+            ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+        `);
+        
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+        `);
+        
+        console.log('✅ Session table created successfully');
+        
+        res.json({ 
+            message: 'Session table created successfully',
+            success: true 
+        });
+    } catch (error) {
+        console.error('Create session table error:', error);
+        res.status(500).json({ 
+            error: error.message,
+            success: false 
+        });
+    }
+});
+
 // Catch all
 app.use((req, res) => {
     res.status(404).json({ 
