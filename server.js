@@ -633,9 +633,28 @@ app.get('/api/admin/beta/users', requireAdminAuth, async (req, res) => {
         const allUsers = await db.getAllUsers();
         const betaUsers = allUsers.filter(user => user.account_type === 'beta');
         
+        // Add task count for each beta user
+        const betaUsersWithStats = [];
+        for (const user of betaUsers) {
+            let taskCount = 0;
+            try {
+                if (pool) {
+                    const taskResult = await pool.query('SELECT COUNT(*) as count FROM taken WHERE user_id = $1', [user.id]);
+                    taskCount = parseInt(taskResult.rows[0]?.count || 0);
+                }
+            } catch (taskError) {
+                console.warn('Could not get task count for user:', user.id);
+            }
+            
+            betaUsersWithStats.push({
+                ...user,
+                task_count: taskCount
+            });
+        }
+        
         res.json({
-            users: betaUsers,
-            total: betaUsers.length
+            users: betaUsersWithStats,
+            total: betaUsersWithStats.length
         });
         
     } catch (error) {
@@ -705,10 +724,12 @@ app.get('/api/admin/all-users', requireAdminAuth, async (req, res) => {
         
         const users = await db.getAllUsers();
         
-        // Enrich with subscription data if available
+        // Enrich with subscription data and task counts
         const enrichedUsers = [];
         for (const user of users) {
             let subscription = null;
+            let taskCount = 0;
+            
             try {
                 if (typeof db.getUserSubscription === 'function') {
                     subscription = await db.getUserSubscription(user.id);
@@ -717,10 +738,20 @@ app.get('/api/admin/all-users', requireAdminAuth, async (req, res) => {
                 // Subscription system not available for this user
             }
             
+            try {
+                if (pool) {
+                    const taskResult = await pool.query('SELECT COUNT(*) as count FROM taken WHERE user_id = $1', [user.id]);
+                    taskCount = parseInt(taskResult.rows[0]?.count || 0);
+                }
+            } catch (taskError) {
+                console.warn('Could not get task count for user:', user.id);
+            }
+            
             enrichedUsers.push({
                 ...user,
                 subscription: subscription,
-                has_subscription: !!subscription
+                has_subscription: !!subscription,
+                task_count: taskCount
             });
         }
         
@@ -1215,6 +1246,7 @@ app.get('/api/admin/feedback/stats', requireAdminAuth, (req, res) => {
 
 app.get('/api/admin/feedback', requireAdminAuth, (req, res) => {
     res.json({
+        feedback: [], // Admin.js expects 'feedback' property, not 'feedback_items'
         feedback_items: [],
         total: 0,
         fallback: 'Feedback system not implemented yet'
