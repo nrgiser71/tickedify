@@ -30,7 +30,9 @@ class AdminDashboard {
 
     async checkExistingAuth() {
         try {
-            const response = await fetch('/api/admin/check');
+            const response = await fetch('/api/admin/check', {
+                credentials: 'same-origin'
+            });
             const authStatus = await response.json();
             
             if (authStatus.authenticated) {
@@ -60,6 +62,7 @@ class AdminDashboard {
             // Try server-side authentication first
             const response = await fetch('/api/admin/auth', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -91,6 +94,7 @@ class AdminDashboard {
             // Try server-side logout
             await fetch('/api/admin/logout', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -142,7 +146,13 @@ class AdminDashboard {
         ];
 
         const results = await Promise.allSettled(
-            endpoints.map(endpoint => fetch(endpoint).then(r => r.json()))
+            endpoints.map(endpoint => fetch(endpoint, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(r => r.json()))
         );
 
         this.data = {
@@ -651,6 +661,7 @@ async function toggleBetaPeriod() {
     try {
         const response = await fetch('/api/admin/beta/toggle', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json'
             },
