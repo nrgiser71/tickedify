@@ -6,6 +6,7 @@ class AdminDashboard {
         this.refreshInterval = null;
         
         this.initializeEventListeners();
+        this.checkExistingAuth();
     }
 
     initializeEventListeners() {
@@ -25,6 +26,30 @@ class AdminDashboard {
                 if (this.isAuthenticated) this.refreshData();
             }
         });
+    }
+
+    async checkExistingAuth() {
+        try {
+            const response = await fetch('/api/admin/check');
+            const authStatus = await response.json();
+            
+            if (authStatus.authenticated) {
+                console.log('🔓 Existing admin session found');
+                this.isAuthenticated = true;
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                await this.loadDashboard();
+                this.startAutoRefresh();
+            } else {
+                console.log('🔒 No admin session found, showing login');
+                document.getElementById('loginContainer').style.display = 'block';
+                document.getElementById('adminDashboard').style.display = 'none';
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not check existing auth, showing login:', error);
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('adminDashboard').style.display = 'none';
+        }
     }
 
     async handleLogin() {

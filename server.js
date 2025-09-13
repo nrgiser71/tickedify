@@ -825,6 +825,25 @@ app.post('/api/admin/auth', async (req, res) => {
     }
 });
 
+// Admin check endpoint
+app.get('/api/admin/check', (req, res) => {
+    try {
+        const isAuthenticated = !!(req.session && req.session.adminAuthenticated);
+        
+        res.json({
+            authenticated: isAuthenticated,
+            loginTime: req.session?.adminLoginTime || null,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Admin check error:', error);
+        res.json({
+            authenticated: false,
+            error: 'Session check failed'
+        });
+    }
+});
+
 // Admin logout endpoint
 app.post('/api/admin/logout', (req, res) => {
     try {
