@@ -825,12 +825,7 @@ app.post('/api/admin/auth', async (req, res) => {
         const { password } = req.body;
         const adminPassword = process.env.ADMIN_PASSWORD || 'admin123tickedify';
         
-        console.log('🔍 Admin auth attempt:', {
-            receivedPassword: password,
-            expectedPassword: adminPassword,
-            envPasswordSet: !!process.env.ADMIN_PASSWORD,
-            match: password === adminPassword
-        });
+        // Debug logging removed - admin auth working correctly
         
         if (!process.env.ADMIN_PASSWORD) {
             console.warn('⚠️ Using fallback admin password - set ADMIN_PASSWORD environment variable');
@@ -881,59 +876,7 @@ app.get('/api/admin/check', (req, res) => {
     }
 });
 
-// Debug endpoint for admin auth
-app.get('/api/debug/admin-config', (req, res) => {
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123tickedify';
-    res.json({
-        envPasswordSet: !!process.env.ADMIN_PASSWORD,
-        expectedPassword: adminPassword,
-        fallbackUsed: !process.env.ADMIN_PASSWORD
-    });
-});
-
-// Debug endpoint for database functions
-app.get('/api/debug/db-functions', (req, res) => {
-    res.json({
-        dbExists: !!db,
-        dbType: typeof db,
-        getAllUsersExists: !!(db && db.getAllUsers),
-        getAllUsersType: typeof (db && db.getAllUsers),
-        ownProperties: db ? Object.getOwnPropertyNames(db) : null,
-        prototypeProperties: db ? Object.getOwnPropertyNames(Object.getPrototypeOf(db)) : null,
-        hasGetAllUsers: db ? db.hasOwnProperty('getAllUsers') : false
-    });
-});
-
-// Direct test of getAllUsers function
-app.get('/api/debug/test-getallusers', async (req, res) => {
-    try {
-        console.log('🔍 Direct getAllUsers test starting...');
-        
-        if (!db) {
-            return res.json({ error: 'db object not available', success: false });
-        }
-        
-        if (typeof db.getAllUsers !== 'function') {
-            return res.json({ error: 'getAllUsers is not a function', type: typeof db.getAllUsers, success: false });
-        }
-        
-        const users = await db.getAllUsers();
-        
-        res.json({
-            success: true,
-            userCount: users.length,
-            users: users.slice(0, 2), // First 2 users only for debugging
-            fullTest: true
-        });
-        
-    } catch (error) {
-        res.json({
-            success: false,
-            error: error.message,
-            stack: error.stack
-        });
-    }
-});
+// Debug endpoints removed - admin dashboard fully functional
 
 // Admin logout endpoint
 app.post('/api/admin/logout', (req, res) => {
