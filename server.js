@@ -878,6 +878,34 @@ app.get('/api/admin/check', (req, res) => {
 
 // Debug endpoints removed - admin dashboard fully functional
 
+// Admin change user account type endpoint
+app.put('/api/admin/user/:id/account-type', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { account_type } = req.body;
+        
+        if (!['regular', 'beta'].includes(account_type)) {
+            return res.status(400).json({ error: 'Invalid account type. Must be regular or beta.' });
+        }
+        
+        console.log(`🔧 Changing user ${id} account type to ${account_type}`);
+        
+        const updateQuery = `UPDATE users SET account_type = $1 WHERE id = $2`;
+        await pool.query(updateQuery, [account_type, id]);
+        
+        res.json({
+            success: true,
+            message: `User account type changed to ${account_type}`,
+            user_id: id,
+            account_type: account_type
+        });
+        
+    } catch (error) {
+        console.error('❌ Error changing user account type:', error);
+        res.status(500).json({ error: 'Failed to change user account type' });
+    }
+});
+
 // Admin logout endpoint
 app.post('/api/admin/logout', (req, res) => {
     try {
@@ -1236,24 +1264,72 @@ app.get('/api/admin/email-stats', requireAdminAuth, (req, res) => {
     });
 });
 
-app.get('/api/admin/feedback/stats', requireAdminAuth, (req, res) => {
-    res.json({
-        total_feedback: 0,
-        new_feedback: 0,
-        resolved_feedback: 0,
-        bug_reports: 0,
-        feature_requests: 0,
-        fallback: 'Feedback system not implemented yet'
-    });
+app.get('/api/admin/feedback/stats', requireAdminAuth, async (req, res) => {
+    try {
+        if (!db || typeof db.getFeedback !== 'function') {
+            return res.json({
+                total_feedback: 0,
+                new_feedback: 0,
+                resolved_feedback: 0,
+                bug_reports: 0,
+                feature_requests: 0,
+                fallback: 'Database not available'
+            });
+        }
+        
+        const allFeedback = await db.getFeedback(null, true); // Admin view, all feedback
+        
+        const stats = {
+            total_feedback: allFeedback.length,
+            new_feedback: allFeedback.filter(item => item.status === 'nieuw').length,
+            resolved_feedback: allFeedback.filter(item => item.status === 'opgelost').length,
+            bug_reports: allFeedback.filter(item => item.type === 'bug').length,
+            feature_requests: allFeedback.filter(item => item.type === 'feature').length
+        };
+        
+        res.json(stats);
+    } catch (error) {
+        console.error('❌ Error getting feedback stats:', error);
+        res.json({
+            total_feedback: 0,
+            new_feedback: 0,
+            resolved_feedback: 0,
+            bug_reports: 0,
+            feature_requests: 0,
+            fallback: 'Error loading feedback stats'
+        });
+    }
 });
 
-app.get('/api/admin/feedback', requireAdminAuth, (req, res) => {
-    res.json({
-        feedback: [], // Admin.js expects 'feedback' property, not 'feedback_items'
-        feedback_items: [],
-        total: 0,
-        fallback: 'Feedback system not implemented yet'
-    });
+app.get('/api/admin/feedback', requireAdminAuth, async (req, res) => {
+    try {
+        if (!db || typeof db.getFeedback !== 'function') {
+            return res.json({
+                feedback: [],
+                feedback_items: [],
+                total: 0,
+                fallback: 'Database not available'
+            });
+        }
+        
+        const allFeedback = await db.getFeedback(null, true); // Admin view, all feedback
+        
+        res.json({
+            feedback: allFeedback, // Admin.js expects 'feedback' property
+            feedback_items: allFeedback, // Backwards compatibility
+            total: allFeedback.length,
+            success: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Error getting feedback:', error);
+        res.json({
+            feedback: [],
+            feedback_items: [],
+            total: 0,
+            fallback: 'Error loading feedback'
+        });
+    }
 });
 
 // Add single task to inbox endpoint
