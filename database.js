@@ -2610,6 +2610,44 @@ const db = {
       
       return null;
     }
+  },
+
+  // Get user by email for login
+  async getUserByEmail(email) {
+    try {
+      const result = await pool.query(`
+        SELECT id, email, naam, wachtwoord as wachtwoord_hash, account_type, subscription_status, storage_used_mb, created_at
+        FROM users 
+        WHERE email = $1
+      `, [email]);
+      
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      
+      // Fallback query without subscription columns
+      try {
+        console.log('⚠️ Trying fallback getUserByEmail without subscription columns');
+        const fallbackResult = await pool.query(`
+          SELECT id, email, naam, wachtwoord as wachtwoord_hash, created_at
+          FROM users 
+          WHERE email = $1
+        `, [email]);
+        
+        const user = fallbackResult.rows[0];
+        if (user) {
+          // Add default values for missing columns
+          user.account_type = 'beta';
+          user.subscription_status = 'active';
+          user.storage_used_mb = 0;
+        }
+        
+        return user || null;
+      } catch (fallbackError) {
+        console.error('Fallback getUserByEmail also failed:', fallbackError);
+        return null;
+      }
+    }
   }
 };
 

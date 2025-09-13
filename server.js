@@ -112,8 +112,8 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Check password with bcrypt
-        const validPassword = await bcrypt.compare(password, user.wachtwoord);
+        // Check password with bcrypt  
+        const validPassword = await bcrypt.compare(password, user.wachtwoord_hash);
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
