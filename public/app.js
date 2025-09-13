@@ -12551,16 +12551,31 @@ class AuthManager {
 
     async checkAuthStatus() {
         try {
-            // Silence 401 errors in console - these are expected when not logged in  
             const response = await fetch('/api/auth/me', {
                 credentials: 'include'
-            }).catch(error => {
-                // Return a mock 401 response to handle gracefully
-                return { ok: false, status: 401 };
             });
             
             if (response.ok) {
                 const data = await response.json();
+                
+                // Check if server responded with authenticated: false
+                if (data.authenticated === false) {
+                    this.currentUser = null;
+                    this.isAuthenticated = false;
+                    
+                    // Clear data for unauthenticated state
+                    if (app) {
+                        app.taken = [];
+                        app.renderTaken();
+                    }
+                    
+                    // Only update UI if not called from login flow
+                    if (!this._isFromLogin) {
+                        this.updateUI();
+                    }
+                    return;
+                }
+                
                 this.currentUser = data; // API returns user data directly, not wrapped in user property
                 this.isAuthenticated = true;
                 
@@ -14803,21 +14818,23 @@ class SubscriptionManager {
 
     async checkSubscriptionStatus() {
         try {
-            // Silence 401 errors in console - these are expected when not logged in
             const response = await fetch('/api/subscription/status', {
                 credentials: 'include'
-            }).catch(error => {
-                // Return a mock 401 response to handle gracefully  
-                return { ok: false, status: 401 };
             });
             
             if (!response.ok) {
-                // Handle 401 or other errors gracefully
+                // Handle server errors gracefully
                 this.currentStatus = null;
                 return;
             }
             
             const data = await response.json();
+            
+            // Check if server responded with authenticated: false
+            if (data.authenticated === false) {
+                this.currentStatus = null;
+                return;
+            }
             
             this.currentStatus = data;
             

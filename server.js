@@ -213,8 +213,12 @@ app.get('/api/user/info', requireAuth, async (req, res) => {
     }
 });
 
-// User info endpoint
-app.get('/api/auth/me', requireAuth, async (req, res) => {
+// User info endpoint - graceful authentication check without 401 errors
+app.get('/api/auth/me', async (req, res) => {
+    // Don't use requireAuth middleware to avoid 401 errors during login race condition
+    if (!req.session || !req.session.userId) {
+        return res.status(200).json({ authenticated: false });
+    }
     try {
         const userId = req.session.userId;
         
@@ -249,8 +253,15 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
     }
 });
 
-// Basic subscription status with full fallbacks
-app.get('/api/subscription/status', requireAuth, async (req, res) => {
+// Basic subscription status with full fallbacks - graceful authentication check
+app.get('/api/subscription/status', async (req, res) => {
+    // Don't use requireAuth middleware to avoid 401 errors during login race condition
+    if (!req.session || !req.session.userId) {
+        return res.status(200).json({ 
+            authenticated: false,
+            status: 'not_authenticated' 
+        });
+    }
     try {
         const userId = req.session.userId;
         
