@@ -743,11 +743,14 @@ class Taakbeheer {
     
     async isSessionReady() {
         // Test if session is actually ready by making a lightweight API call
+        // Use version endpoint instead of auth/me to avoid circular 401 errors
         try {
-            const response = await fetch('/api/auth/me', {
+            const response = await fetch('/api/version', {
                 credentials: 'include'
             });
-            return response.ok;
+            
+            // If we can reach the version endpoint and have currentUser set, session is ready
+            return response.ok && auth && auth.currentUser;
         } catch (error) {
             return false;
         }
@@ -12422,6 +12425,9 @@ class AuthManager {
                 // Set flag to prevent duplicate loadUserData call
                 this._isFromLogin = true;
                 
+                // Give browser time to establish session before checking auth status
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 // Check auth status first to ensure proper session validation
                 await this.checkAuthStatus();
                 
@@ -12644,15 +12650,18 @@ class AuthManager {
         // Clear any existing interval first
         this.stopBetaCheckInterval();
         
-        // Check elke 60 minuten (3600000 ms)
-        this.betaCheckInterval = setInterval(() => {
-            if (this.isAuthenticated) {
-                console.log('🕐 Periodieke beta controle uitgevoerd');
-                this.checkAuthStatus();
-            }
-        }, 3600000); // 1 hour
-        
-        console.log('✅ Beta controle interval gestart (elk uur)');
+        // Delay the first check to allow session to settle
+        setTimeout(() => {
+            // Check elke 60 minuten (3600000 ms)
+            this.betaCheckInterval = setInterval(() => {
+                if (this.isAuthenticated) {
+                    console.log('🕐 Periodieke beta controle uitgevoerd');
+                    this.checkAuthStatus();
+                }
+            }, 3600000); // 1 hour
+            
+            console.log('✅ Beta controle interval gestart (elk uur)');
+        }, 2000); // 2 second delay for initial start
     }
 
     stopBetaCheckInterval() {
