@@ -160,10 +160,18 @@ app.post('/api/auth/login', async (req, res) => {
         req.session.userId = user.id;
         req.session.userEmail = user.email;
         
-        console.log('✅ Login successful for:', email);
-        res.json({ 
-            message: 'Login successful',
-            user: { id: user.id, email: user.email, naam: user.naam }
+        // Explicitly save session to ensure persistence
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ Session save error:', err);
+                return res.status(500).json({ error: 'Session save failed' });
+            }
+            
+            console.log('✅ Session saved, login successful for:', email);
+            res.json({ 
+                message: 'Login successful',
+                user: { id: user.id, email: user.email, naam: user.naam }
+            });
         });
     } catch (error) {
         console.error('💥 Login error:', error);
@@ -185,6 +193,43 @@ app.get('/api/auth/check', (req, res) => {
         res.json({ 
             authenticated: false,
             user: null
+        });
+    }
+});
+
+// User info endpoint (for compatibility)
+app.get('/api/user/info', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        if (!db || typeof db.getUserById !== 'function') {
+            return res.json({
+                id: userId,
+                email: req.session.userEmail,
+                naam: 'Unknown',
+                fallback: 'database_unavailable'
+            });
+        }
+        
+        const user = await db.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({
+            id: user.id,
+            email: user.email,
+            naam: user.naam,
+            storage_used_mb: user.storage_used_mb || 0,
+            email_import_code: user.email_import_code || null
+        });
+    } catch (error) {
+        console.error('⚠️ User info error:', error);
+        res.json({
+            id: req.session.userId,
+            email: req.session.userEmail,
+            naam: 'Unknown',
+            error: 'user_info_failed'
         });
     }
 });
