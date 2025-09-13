@@ -31,20 +31,39 @@ try {
     console.error('Database import failed:', error);
 }
 
-// Simple session configuration for stability
+// Session configuration - try PostgreSQL first, fallback to memory
 try {
-    // Always use memory store for now - PostgreSQL session store has timing issues
-    app.use(session({
-        secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
-        resave: true,
-        saveUninitialized: false,
-        cookie: {
-            secure: false,
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
-        }
-    }));
-    console.log('✅ Memory session store configured');
+    if (db && pool) {
+        // Use PostgreSQL session store if available
+        app.use(session({
+            store: new pgSession({
+                pool: pool,
+                tableName: 'session'
+            }),
+            secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
+            resave: false,
+            saveUninitialized: false,
+            cookie: {
+                secure: false,
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            }
+        }));
+        console.log('✅ PostgreSQL session store configured');
+    } else {
+        // Fallback to memory store with forced resave
+        app.use(session({
+            secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
+            resave: true,
+            saveUninitialized: false,
+            cookie: {
+                secure: false,
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            }
+        }));
+        console.log('⚠️ Memory session store configured (fallback)');
+    }
 } catch (sessionError) {
     console.error('Session configuration failed:', sessionError);
     // Emergency fallback - simple memory store
@@ -141,17 +160,41 @@ app.post('/api/auth/login', async (req, res) => {
         req.session.userId = user.id;
         req.session.userEmail = user.email;
         
-        // Explicitly save session to ensure persistence
-        req.session.save((err) => {
+        // Force session regeneration to ensure persistence across serverless instances
+        req.session.regenerate((err) => {
             if (err) {
-                console.error('❌ Session save error:', err);
-                return res.status(500).json({ error: 'Session save failed' });
+                console.error('❌ Session regenerate error:', err);
+                // Fallback to direct save
+                req.session.save((saveErr) => {
+                    if (saveErr) {
+                        console.error('❌ Session save error:', saveErr);
+                        return res.status(500).json({ error: 'Session save failed' });
+                    }
+                    
+                    console.log('✅ Session saved (fallback), login successful for:', email);
+                    res.json({ 
+                        message: 'Login successful',
+                        user: { id: user.id, email: user.email, naam: user.naam }
+                    });
+                });
+                return;
             }
             
-            console.log('✅ Session saved, login successful for:', email);
-            res.json({ 
-                message: 'Login successful',
-                user: { id: user.id, email: user.email, naam: user.naam }
+            // Set user data in new session
+            req.session.userId = user.id;
+            req.session.userEmail = user.email;
+            
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error('❌ Session save error after regenerate:', saveErr);
+                    return res.status(500).json({ error: 'Session save failed' });
+                }
+                
+                console.log('✅ Session regenerated and saved, login successful for:', email);
+                res.json({ 
+                    message: 'Login successful',
+                    user: { id: user.id, email: user.email, naam: user.naam }
+                });
             });
         });
     } catch (error) {
