@@ -33,37 +33,18 @@ try {
 
 // Simple session configuration for stability
 try {
-    // Try PostgreSQL session store first
-    if (db && pool) {
-        app.use(session({
-            store: new pgSession({
-                pool: pool,
-                tableName: 'session'
-            }),
-            secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
-            resave: false,
-            saveUninitialized: false,
-            cookie: {
-                secure: false,
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000 // 24 hours
-            }
-        }));
-        console.log('✅ PostgreSQL session store configured');
-    } else {
-        // Fallback to memory store
-        app.use(session({
-            secret: 'development-secret-key-for-tickedify',
-            resave: false,
-            saveUninitialized: false,
-            cookie: {
-                secure: false,
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000
-            }
-        }));
-        console.log('⚠️ Using memory session store (fallback)');
-    }
+    // Always use memory store for now - PostgreSQL session store has timing issues
+    app.use(session({
+        secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
+        resave: true,
+        saveUninitialized: false,
+        cookie: {
+            secure: false,
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        }
+    }));
+    console.log('✅ Memory session store configured');
 } catch (sessionError) {
     console.error('Session configuration failed:', sessionError);
     // Emergency fallback - simple memory store
