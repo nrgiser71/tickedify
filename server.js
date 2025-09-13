@@ -876,7 +876,34 @@ app.get('/api/admin/check', (req, res) => {
     }
 });
 
-// Debug endpoints removed - admin dashboard fully functional
+// Debug endpoint to check database schema
+app.get('/api/debug/schema-check', requireAdminAuth, async (req, res) => {
+    try {
+        // Check if account_type column exists
+        const schemaQuery = `
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' 
+            AND column_name IN ('account_type', 'subscription_status')
+            ORDER BY column_name
+        `;
+        
+        const result = await pool.query(schemaQuery);
+        
+        res.json({
+            table: 'users',
+            columns: result.rows,
+            has_account_type: result.rows.some(col => col.column_name === 'account_type'),
+            has_subscription_status: result.rows.some(col => col.column_name === 'subscription_status')
+        });
+    } catch (error) {
+        res.json({
+            error: error.message,
+            table: 'users',
+            columns: []
+        });
+    }
+});
 
 // Admin change user account type endpoint
 app.put('/api/admin/user/:id/account-type', requireAdminAuth, async (req, res) => {
