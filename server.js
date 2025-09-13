@@ -124,7 +124,8 @@ app.get('/api/health', (req, res) => {
 // Basic login endpoint
 app.post('/api/auth/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, wachtwoord } = req.body;
+        const actualPassword = password || wachtwoord; // Support both English and Dutch
         console.log('🔐 Login attempt for:', email);
         
         if (!db) {
@@ -141,7 +142,7 @@ app.post('/api/auth/login', async (req, res) => {
         console.log('✅ User found:', user.email);
         
         // Check password with bcrypt  
-        const validPassword = await bcrypt.compare(password, user.wachtwoord_hash);
+        const validPassword = await bcrypt.compare(actualPassword, user.wachtwoord_hash);
         if (!validPassword) {
             console.log('❌ Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
