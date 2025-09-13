@@ -397,6 +397,54 @@ app.post('/api/lijst/:lijstNaam', requireAuth, async (req, res) => {
     }
 });
 
+// Add single task to inbox endpoint
+app.post('/api/taak/add-to-inbox', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { tekst, id, aangemaakt, lijst } = req.body;
+        
+        console.log('📝 Adding task to inbox:', { tekst, id, userId });
+        
+        if (!tekst || !tekst.trim()) {
+            return res.status(400).json({ error: 'Task text is required' });
+        }
+        
+        if (!db || typeof db.getTakenByLijst !== 'function' || typeof db.saveTakenToLijst !== 'function') {
+            return res.status(501).json({ error: 'Database functions not available' });
+        }
+        
+        // Get current inbox tasks
+        const currentInbox = await db.getTakenByLijst(userId, 'inbox') || [];
+        console.log('📊 Current inbox has', currentInbox.length, 'tasks');
+        
+        // Create new task object
+        const newTask = {
+            id: id || `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tekst: tekst.trim(),
+            aangemaakt: aangemaakt || new Date().toISOString(),
+            lijst: 'inbox'
+        };
+        
+        // Add new task to inbox
+        const updatedInbox = [...currentInbox, newTask];
+        console.log('📝 Adding task, new inbox size:', updatedInbox.length);
+        
+        // Save updated inbox
+        await db.saveTakenToLijst(userId, 'inbox', updatedInbox);
+        
+        console.log('✅ Task added successfully to inbox');
+        res.json({ 
+            success: true, 
+            message: 'Task added to inbox',
+            task: newTask,
+            inboxSize: updatedInbox.length
+        });
+    } catch (error) {
+        console.error('❌ Add task to inbox error:', error);
+        res.status(500).json({ error: 'Failed to add task to inbox' });
+    }
+});
+
 // Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
     if (req.session) {
