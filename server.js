@@ -825,6 +825,13 @@ app.post('/api/admin/auth', async (req, res) => {
         const { password } = req.body;
         const adminPassword = process.env.ADMIN_PASSWORD || 'admin123tickedify';
         
+        console.log('🔍 Admin auth attempt:', {
+            receivedPassword: password,
+            expectedPassword: adminPassword,
+            envPasswordSet: !!process.env.ADMIN_PASSWORD,
+            match: password === adminPassword
+        });
+        
         if (!process.env.ADMIN_PASSWORD) {
             console.warn('⚠️ Using fallback admin password - set ADMIN_PASSWORD environment variable');
         }
