@@ -12402,17 +12402,29 @@ class AuthManager {
             if (response.ok) {
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
-                this.updateUI();
-                this.hideLoginModal();
                 
+                // Hide login modal immediately
+                this.hideLoginModal();
                 toast.success(`Welkom terug, ${data.user.naam}!`);
                 
-                // Check auth status immediately after login (includes beta access check)
+                // Set flag to prevent duplicate loadUserData call
+                this._isFromLogin = true;
+                
+                // Check auth status first to ensure proper session validation
                 await this.checkAuthStatus();
                 
-                // Load user-specific data (only if still authenticated after checkAuthStatus)
-                if (this.isAuthenticated && app) {
-                    await app.loadUserData();
+                // Clear flag
+                this._isFromLogin = false;
+                
+                // Only proceed if authentication is still valid after check
+                if (this.isAuthenticated) {
+                    // Update UI (this starts beta check interval)
+                    this.updateUI();
+                    
+                    // Load user-specific data after UI is updated
+                    if (app) {
+                        await app.loadUserData();
+                    }
                 }
             } else {
                 // Handle beta upgrade requirement
@@ -12550,12 +12562,16 @@ class AuthManager {
                         loading.hideGlobal();
                     }
                     
-                    this.updateUI();
+                    // Only update UI if not called from login flow
+                    if (!this._isFromLogin) {
+                        this.updateUI();
+                    }
                     return;
                 }
                 
-                // Load user-specific data
-                if (app) {
+                // Don't load user data if this is being called from handleLogin
+                // (handleLogin will load user data itself after updateUI)
+                if (app && !this._isFromLogin) {
                     await app.loadUserData();
                 }
             } else {
@@ -12579,7 +12595,10 @@ class AuthManager {
                 }
             }
             
-            this.updateUI();
+            // Only update UI if not called from login flow
+            if (!this._isFromLogin) {
+                this.updateUI();
+            }
         } catch (error) {
             console.error('Auth check error:', error);
             this.currentUser = null;
@@ -12590,7 +12609,10 @@ class AuthManager {
                 loading.hideGlobal();
             }
             
-            this.updateUI();
+            // Only update UI if not called from login flow
+            if (!this._isFromLogin) {
+                this.updateUI();
+            }
         }
     }
 
