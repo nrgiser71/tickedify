@@ -91,6 +91,15 @@ const requireAuth = (req, res, next) => {
     }
 };
 
+// Admin authentication middleware
+const requireAdminAuth = (req, res, next) => {
+    if (req.session && req.session.adminAuthenticated) {
+        next();
+    } else {
+        res.status(401).json({ error: 'Admin authentication required' });
+    }
+};
+
 // Minimal working endpoints
 app.get('/api/ping', (req, res) => {
     const packageJson = require('./package.json');
@@ -510,7 +519,7 @@ app.post('/api/subscription/start-trial', requireAuth, async (req, res) => {
 });
 
 // End beta period for testing purposes (admin only)
-app.post('/api/admin/end-beta', async (req, res) => {
+app.post('/api/admin/end-beta', requireAdminAuth, async (req, res) => {
     try {
         if (!db || typeof db.updateBetaConfig !== 'function') {
             return res.status(501).json({ error: 'Beta config not available' });
@@ -570,7 +579,7 @@ app.get('/api/subscription/storage-usage', requireAuth, async (req, res) => {
 });
 
 // Admin beta status endpoint
-app.get('/api/admin/beta/status', async (req, res) => {
+app.get('/api/admin/beta/status', requireAdminAuth, async (req, res) => {
     try {
         if (!db || typeof db.getBetaConfig !== 'function') {
             return res.json({
@@ -612,7 +621,7 @@ app.get('/api/admin/beta/status', async (req, res) => {
 });
 
 // Admin beta users endpoint  
-app.get('/api/admin/beta/users', async (req, res) => {
+app.get('/api/admin/beta/users', requireAdminAuth, async (req, res) => {
     try {
         if (!db || typeof db.getAllUsers !== 'function') {
             return res.json({
@@ -639,7 +648,7 @@ app.get('/api/admin/beta/users', async (req, res) => {
 });
 
 // Admin beta toggle endpoint
-app.post('/api/admin/beta/toggle', async (req, res) => {
+app.post('/api/admin/beta/toggle', requireAdminAuth, async (req, res) => {
     try {
         if (!db || typeof db.getBetaConfig !== 'function' || typeof db.updateBetaConfig !== 'function') {
             return res.status(501).json({ error: 'Beta config not available' });
@@ -685,7 +694,7 @@ app.post('/api/admin/beta/toggle', async (req, res) => {
 });
 
 // Admin all users with subscription info endpoint
-app.get('/api/admin/all-users', async (req, res) => {
+app.get('/api/admin/all-users', requireAdminAuth, async (req, res) => {
     try {
         if (!db || typeof db.getAllUsers !== 'function') {
             return res.json({
@@ -730,7 +739,7 @@ app.get('/api/admin/all-users', async (req, res) => {
 });
 
 // Admin user account type management endpoint
-app.put('/api/admin/user/:id/account-type', async (req, res) => {
+app.put('/api/admin/user/:id/account-type', requireAdminAuth, async (req, res) => {
     try {
         const userId = req.params.id;
         const { account_type } = req.body;
@@ -779,8 +788,64 @@ app.put('/api/admin/user/:id/account-type', async (req, res) => {
     }
 });
 
+// Admin authentication endpoint
+app.post('/api/admin/auth', async (req, res) => {
+    try {
+        const { password } = req.body;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+        
+        if (!adminPassword) {
+            console.error('❌ ADMIN_PASSWORD environment variable not set');
+            return res.status(501).json({ error: 'Admin authentication not configured' });
+        }
+        
+        if (!password) {
+            return res.status(400).json({ error: 'Password required' });
+        }
+        
+        if (password === adminPassword) {
+            // Set admin session
+            req.session.adminAuthenticated = true;
+            req.session.adminLoginTime = new Date().toISOString();
+            
+            console.log('✅ Admin authentication successful');
+            res.json({
+                success: true,
+                message: 'Admin authentication successful',
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            console.log('❌ Admin authentication failed - incorrect password');
+            res.status(401).json({ error: 'Invalid admin password' });
+        }
+        
+    } catch (error) {
+        console.error('❌ Admin auth error:', error);
+        res.status(500).json({ error: 'Admin authentication failed' });
+    }
+});
+
+// Admin logout endpoint
+app.post('/api/admin/logout', (req, res) => {
+    try {
+        if (req.session) {
+            req.session.adminAuthenticated = false;
+            delete req.session.adminLoginTime;
+        }
+        
+        console.log('🚪 Admin logout successful');
+        res.json({
+            success: true,
+            message: 'Admin logout successful'
+        });
+    } catch (error) {
+        console.error('❌ Admin logout error:', error);
+        res.status(500).json({ error: 'Admin logout failed' });
+    }
+});
+
 // Test email endpoint for admin
-app.post('/api/admin/test-email', async (req, res) => {
+app.post('/api/admin/test-email', requireAdminAuth, async (req, res) => {
     try {
         const { email, type = 'welcome' } = req.body;
         
