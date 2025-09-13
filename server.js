@@ -31,28 +31,49 @@ try {
     console.error('Database import failed:', error);
 }
 
-// Session configuration with fallback
-if (db && pool) {
-    try {
+// Simple session configuration for stability
+try {
+    // Try PostgreSQL session store first
+    if (db && pool) {
         app.use(session({
             store: new pgSession({
                 pool: pool,
                 tableName: 'session'
             }),
-            secret: process.env.SESSION_SECRET || 'development-secret',
+            secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
             resave: false,
             saveUninitialized: false,
             cookie: {
-                secure: false, // Temporarily disabled for debugging
+                secure: false,
                 httpOnly: true,
-                maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dagen
+                maxAge: 24 * 60 * 60 * 1000 // 24 hours
             }
         }));
-        console.log('✅ Session store configured');
-    } catch (sessionError) {
-        console.error('Session configuration failed:', sessionError);
-        // Continue without sessions
+        console.log('✅ PostgreSQL session store configured');
+    } else {
+        // Fallback to memory store
+        app.use(session({
+            secret: 'development-secret-key-for-tickedify',
+            resave: false,
+            saveUninitialized: false,
+            cookie: {
+                secure: false,
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000
+            }
+        }));
+        console.log('⚠️ Using memory session store (fallback)');
     }
+} catch (sessionError) {
+    console.error('Session configuration failed:', sessionError);
+    // Emergency fallback - simple memory store
+    app.use(session({
+        secret: 'emergency-secret',
+        resave: true,
+        saveUninitialized: true,
+        cookie: { secure: false }
+    }));
+    console.log('🚨 Using emergency session configuration');
 }
 
 // Simple middleware
