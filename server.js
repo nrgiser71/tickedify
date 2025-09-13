@@ -266,7 +266,7 @@ app.get('/api/auth/me', async (req, res) => {
     }
 });
 
-// Basic subscription status with full fallbacks - graceful authentication check
+// Enhanced subscription status with beta-end logic
 app.get('/api/subscription/status', async (req, res) => {
     // Don't use requireAuth middleware to avoid 401 errors during login race condition
     if (!req.session || !req.session.userId) {
@@ -287,11 +287,15 @@ app.get('/api/subscription/status', async (req, res) => {
             });
         }
         
-        // Check if subscription functions exist
+        // Get beta configuration and user data
+        let betaConfig = null;
         let subscription = null;
         let user = null;
         
         try {
+            if (typeof db.getBetaConfig === 'function') {
+                betaConfig = await db.getBetaConfig();
+            }
             if (typeof db.getUserSubscription === 'function') {
                 subscription = await db.getUserSubscription(userId);
             }
@@ -299,16 +303,55 @@ app.get('/api/subscription/status', async (req, res) => {
                 user = await db.getUserById(userId);
             }
         } catch (dbError) {
-            console.log('⚠️ Subscription tables not available, using fallback:', dbError.message);
+            console.log('⚠️ Subscription/beta tables not available, using fallback:', dbError.message);
         }
+        
+        // Determine user status based on beta config and user data
+        let userStatus = 'beta';
+        let betaEnded = false;
+        
+        if (betaConfig && !betaConfig.beta_period_active) {
+            // Global beta period has ended
+            betaEnded = true;
+            
+            if (user && user.account_type === 'regular') {
+                // User is already converted to regular (has made choice)
+                userStatus = user.subscription_status || 'active';
+            } else if (subscription) {
+                // User has active subscription
+                userStatus = subscription.status;
+            } else {
+                // User needs to choose subscription
+                userStatus = 'needs_subscription';
+            }
+        } else {
+            // Beta period still active or no beta config
+            if (subscription) {
+                userStatus = subscription.status;
+            } else {
+                userStatus = user?.account_type === 'regular' ? user?.subscription_status || 'active' : 'beta';
+            }
+        }
+        
+        console.log('🔍 Subscription status check:', {
+            userId,
+            betaActive: betaConfig?.beta_period_active,
+            userAccountType: user?.account_type,
+            userStatus,
+            betaEnded
+        });
         
         // Always return a valid response
         res.json({
-            status: subscription?.status || 'beta',
-            beta_ended: false,
-            storage_used_mb: user?.storage_used_mb || 0,
+            status: userStatus,
+            beta_ended: betaEnded,
+            storage_used_mb: user?.storage_used_mb || '0.00',
             subscription: subscription || null,
-            fallback: subscription ? null : 'subscription_system_unavailable'
+            beta_config: betaConfig ? {
+                active: betaConfig.beta_period_active,
+                ended_at: betaConfig.beta_ended_at
+            } : null,
+            fallback: (subscription || betaConfig) ? null : 'subscription_system_unavailable'
         });
         
     } catch (error) {
@@ -316,7 +359,7 @@ app.get('/api/subscription/status', async (req, res) => {
         res.json({
             status: 'beta',
             beta_ended: false,
-            storage_used_mb: 0,
+            storage_used_mb: '0.00',
             subscription: null,
             error: 'subscription_check_failed'
         });
@@ -394,6 +437,110 @@ app.post('/api/lijst/:lijstNaam', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('⚠️ Save list error:', error);
         res.status(500).json({ error: 'Save list failed' });
+    }
+});
+
+// Start trial subscription endpoint
+app.post('/api/subscription/start-trial', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        console.log('🆓 Starting trial for user:', userId);
+        
+        if (!db || typeof db.createUserSubscription !== 'function') {
+            console.log('⚠️ Subscription system not available - simulating trial');
+            return res.json({ 
+                success: true, 
+                message: 'Trial started',
+                trial: true,
+                fallback: true 
+            });
+        }
+        
+        // Create trial subscription
+        const trialData = {
+            addon_storage: 'basic',
+            storage_limit_mb: 100,
+            status: 'trial',
+            trial_ends_at: new Date(Date.now() + (14 * 24 * 60 * 60 * 1000)), // 14 days
+            plugandpay_subscription_id: null // No payment for trial
+        };
+        
+        await db.createUserSubscription(userId, trialData);
+        console.log('✅ Trial subscription created for user:', userId);
+        
+        res.json({
+            success: true,
+            message: 'Trial started successfully',
+            trial: true,
+            trial_ends_at: trialData.trial_ends_at
+        });
+        
+    } catch (error) {
+        console.error('❌ Error starting trial:', error);
+        res.status(500).json({ 
+            error: 'Failed to start trial',
+            fallback: true
+        });
+    }
+});
+
+// End beta period for testing purposes (admin only)
+app.post('/api/admin/end-beta', async (req, res) => {
+    try {
+        if (!db || typeof db.updateBetaConfig !== 'function') {
+            return res.status(501).json({ error: 'Beta config not available' });
+        }
+        
+        await db.updateBetaConfig(false); // End beta period
+        console.log('🚨 Beta period ended via admin endpoint');
+        
+        res.json({
+            success: true,
+            message: 'Beta period ended',
+            beta_period_active: false
+        });
+        
+    } catch (error) {
+        console.error('❌ Error ending beta period:', error);
+        res.status(500).json({ error: 'Failed to end beta period' });
+    }
+});
+
+// Storage usage check endpoint
+app.get('/api/subscription/storage-usage', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const additionalBytes = parseInt(req.query.additionalBytes) || 0;
+        
+        if (!db || typeof db.getStorageLimits !== 'function') {
+            // Fallback for systems without subscription tables
+            return res.json({
+                allowed: true,
+                used_mb: 0,
+                limit_mb: 1000,
+                percentage: 0,
+                fallback: true
+            });
+        }
+        
+        const limits = await db.getStorageLimits(userId);
+        const wouldUseMB = parseFloat(limits.storage_used_mb) + (additionalBytes / (1024 * 1024));
+        const allowed = wouldUseMB <= limits.storage_limit_mb;
+        
+        res.json({
+            allowed: allowed,
+            used_mb: limits.storage_used_mb,
+            limit_mb: limits.storage_limit_mb,
+            percentage: Math.round((wouldUseMB / limits.storage_limit_mb) * 100),
+            would_use_mb: wouldUseMB.toFixed(2)
+        });
+        
+    } catch (error) {
+        console.error('❌ Storage usage check error:', error);
+        res.json({
+            allowed: true, // Allow on error to not block user
+            error: 'storage_check_failed'
+        });
     }
 });
 
