@@ -31,39 +31,20 @@ try {
     console.error('Database import failed:', error);
 }
 
-// Session configuration - optimized for serverless
+// Session configuration - forced memory store for serverless reliability
 try {
-    if (db && pool) {
-        // Use PostgreSQL session store with forced resave
-        app.use(session({
-            store: new pgSession({
-                pool: pool,
-                tableName: 'session'
-            }),
-            secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
-            resave: true,  // Force save on every request for serverless reliability
-            saveUninitialized: false,
-            cookie: {
-                secure: false,
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000 // 24 hours
-            }
-        }));
-        console.log('✅ PostgreSQL session store configured with forced resave');
-    } else {
-        // Fallback to memory store with forced resave
-        app.use(session({
-            secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
-            resave: true,
-            saveUninitialized: false,
-            cookie: {
-                secure: false,
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000 // 24 hours
-            }
-        }));
-        console.log('⚠️ Memory session store configured (fallback)');
-    }
+    // Force memory store - PostgreSQL session store has timing issues in serverless
+    app.use(session({
+        secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
+        resave: true,
+        saveUninitialized: true,  // Force session creation
+        cookie: {
+            secure: false,
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        }
+    }));
+    console.log('✅ Memory session store configured (forced for serverless)');
 } catch (sessionError) {
     console.error('Session configuration failed:', sessionError);
     // Emergency fallback - simple memory store
