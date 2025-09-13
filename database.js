@@ -2616,7 +2616,7 @@ const db = {
   async getUserByEmail(email) {
     try {
       const result = await pool.query(`
-        SELECT id, email, naam, wachtwoord as wachtwoord_hash, account_type, subscription_status, storage_used_mb, created_at
+        SELECT id, email, naam, wachtwoord_hash, account_type, subscription_status, storage_used_mb, created_at
         FROM users 
         WHERE email = $1
       `, [email]);
@@ -2629,7 +2629,7 @@ const db = {
       try {
         console.log('⚠️ Trying fallback getUserByEmail without subscription columns');
         const fallbackResult = await pool.query(`
-          SELECT id, email, naam, wachtwoord as wachtwoord_hash, created_at
+          SELECT id, email, naam, wachtwoord_hash, created_at
           FROM users 
           WHERE email = $1
         `, [email]);
