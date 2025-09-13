@@ -898,7 +898,9 @@ app.get('/api/debug/db-functions', (req, res) => {
         dbType: typeof db,
         getAllUsersExists: !!(db && db.getAllUsers),
         getAllUsersType: typeof (db && db.getAllUsers),
-        availableMethods: db ? Object.getOwnPropertyNames(Object.getPrototypeOf(db)) : null
+        ownProperties: db ? Object.getOwnPropertyNames(db) : null,
+        prototypeProperties: db ? Object.getOwnPropertyNames(Object.getPrototypeOf(db)) : null,
+        hasGetAllUsers: db ? db.hasOwnProperty('getAllUsers') : false
     });
 });
 
