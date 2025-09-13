@@ -31,30 +31,43 @@ try {
     console.error('Database import failed:', error);
 }
 
-// Session configuration - forced memory store for serverless reliability
+// Session configuration - try PostgreSQL store first for persistence across serverless instances
 try {
-    // Force memory store - PostgreSQL session store has timing issues in serverless
+    // First try PostgreSQL session store for persistence
+    const pgSession = require('connect-pg-simple')(session);
+    
     app.use(session({
+        store: new pgSession({
+            conString: process.env.DATABASE_URL,
+            tableName: 'user_sessions',
+            createTableIfMissing: true
+        }),
         secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
-        resave: true,
-        saveUninitialized: true,  // Force session creation
+        resave: false,
+        saveUninitialized: true,
         cookie: {
             secure: false,
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         }
     }));
-    console.log('✅ Memory session store configured (forced for serverless)');
+    console.log('✅ PostgreSQL session store configured for serverless persistence');
 } catch (sessionError) {
-    console.error('Session configuration failed:', sessionError);
-    // Emergency fallback - simple memory store
+    console.error('❌ PostgreSQL session store failed:', sessionError);
+    console.log('🔄 Falling back to memory store (may not work in serverless)');
+    
+    // Fallback to memory store
     app.use(session({
         secret: 'emergency-secret',
         resave: true,
         saveUninitialized: true,
-        cookie: { secure: false }
+        cookie: { 
+            secure: false,
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000
+        }
     }));
-    console.log('🚨 Using emergency session configuration');
+    console.log('🚨 Using memory session store fallback');
 }
 
 // Simple middleware
