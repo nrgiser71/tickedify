@@ -740,6 +740,18 @@ class Taakbeheer {
     isLoggedIn() {
         return auth && auth.isLoggedIn() ? true : false;
     }
+    
+    async isSessionReady() {
+        // Test if session is actually ready by making a lightweight API call
+        try {
+            const response = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
 
     async loadUserData() {
         // Called by AuthManager after successful login
@@ -2980,8 +2992,8 @@ class Taakbeheer {
         // Handle auto-refresh for inbox
         this.handleInboxAutoRefresh();
         
-        // Only load data if user is logged in
-        if (!this.isLoggedIn()) {
+        // Only load data if user is logged in and session is ready
+        if (!this.isLoggedIn() || !await this.isSessionReady()) {
             this.taken = [];
             await this.renderTaken();
             return;
@@ -4067,7 +4079,7 @@ class Taakbeheer {
 
     // Planning popup methods (aangepast van originele code)
     async laadProjecten() {
-        if (!this.isLoggedIn()) {
+        if (!this.isLoggedIn() || !await this.isSessionReady()) {
             this.projecten = [];
             this.vulProjectSelect();
             return;
@@ -4087,7 +4099,7 @@ class Taakbeheer {
     }
 
     async laadContexten() {
-        if (!this.isLoggedIn()) {
+        if (!this.isLoggedIn() || !await this.isSessionReady()) {
             this.contexten = [];
             this.vulContextSelect();
             return;
