@@ -1017,8 +1017,8 @@ const db = {
     }
   },
 
-  // Dagelijkse Planning functions
-  async getDagelijksePlanning(datum, userId) {
+  // Dagelijkse Planning functions - PARAMETER ORDER FIXED for server.js compatibility
+  async getDagelijksePlanning(userId, datum) {
     try {
       if (!userId) {
         console.warn('⚠️ getDagelijksePlanning called without userId - returning empty results');
@@ -2648,6 +2648,20 @@ const db = {
         return null;
       }
     }
+  },
+
+  // COMPATIBILITY WRAPPERS - Fix server.js to database.js function name and parameter mismatches
+  
+  // Wrapper for getTakenByLijst - server expects (userId, lijstNaam), but getList needs (listName, userId)
+  async getTakenByLijst(userId, lijstNaam) {
+    console.log(`🔄 WRAPPER: getTakenByLijst called with userId: ${userId}, lijstNaam: ${lijstNaam}`);
+    return await this.getList(lijstNaam, userId);
+  },
+
+  // Wrapper for saveTakenToLijst - server expects (userId, lijstNaam, taken), but saveList needs (listName, items, userId)  
+  async saveTakenToLijst(userId, lijstNaam, taken) {
+    console.log(`🔄 WRAPPER: saveTakenToLijst called with userId: ${userId}, lijstNaam: ${lijstNaam}, taken count: ${taken?.length || 0}`);
+    return await this.saveList(lijstNaam, taken, userId);
   }
 };
 
