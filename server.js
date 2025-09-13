@@ -935,17 +935,56 @@ app.post('/api/admin/test-email', requireAdminAuth, async (req, res) => {
 // Admin fallback endpoints - these provide empty data for admin UI compatibility
 app.get('/api/admin/users', requireAdminAuth, async (req, res) => {
     try {
-        // This is a fallback - we use /api/admin/all-users instead
+        if (!db || !pool) {
+            return res.json({
+                total: 0,
+                active: 0,
+                inactive: 0,
+                recent: [],
+                fallback: 'Database not available'
+            });
+        }
+
+        // Get user statistics with recent users
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM users');
+        const recentResult = await pool.query(`
+            SELECT id, naam, email, created_at, 
+                   (SELECT COUNT(*) FROM taken WHERE user_id = users.id) as task_count
+            FROM users 
+            ORDER BY created_at DESC 
+            LIMIT 10
+        `);
+
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const activeResult = await pool.query(`
+            SELECT COUNT(DISTINCT user_id) as count 
+            FROM taken 
+            WHERE aangemaakt >= $1
+        `, [oneWeekAgo]);
+
+        res.json({
+            total: parseInt(totalResult.rows[0]?.count || 0),
+            active: parseInt(activeResult.rows[0]?.count || 0),
+            inactive: 0, // TODO: Calculate inactive users
+            recent: recentResult.rows.map(user => ({
+                name: user.naam,
+                email: user.email,
+                created_at: user.created_at,
+                task_count: parseInt(user.task_count || 0)
+            })),
+            fallback: false
+        });
+    } catch (error) {
+        console.error('❌ Admin users error:', error);
         res.json({
             total: 0,
             active: 0,
             inactive: 0,
             recent: [],
-            fallback: 'Use /api/admin/all-users for real user data'
+            error: 'Users statistics failed'
         });
-    } catch (error) {
-        console.error('❌ Admin users fallback error:', error);
-        res.status(500).json({ error: 'Failed to get users' });
     }
 });
 
@@ -966,12 +1005,28 @@ app.get('/api/admin/tasks', requireAdminAuth, async (req, res) => {
         const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
         const completedResult = await pool.query("SELECT COUNT(*) as count FROM taken WHERE lijst = 'afgewerkt'");
         const pendingResult = await pool.query("SELECT COUNT(*) as count FROM taken WHERE lijst != 'afgewerkt'");
+        
+        // Get tasks by list for byList data that admin.js expects
+        const byListResult = await pool.query(`
+            SELECT lijst as list_name, COUNT(*) as count
+            FROM taken 
+            GROUP BY lijst 
+            ORDER BY count DESC
+        `);
+
+        const total = parseInt(totalResult.rows[0]?.count || 0);
 
         res.json({
-            total: parseInt(totalResult.rows[0]?.count || 0),
+            total: total,
             completed: parseInt(completedResult.rows[0]?.count || 0),
             pending: parseInt(pendingResult.rows[0]?.count || 0),
             overdue: 0, // TODO: Calculate overdue based on deadlines
+            recurring: 0, // TODO: Count recurring tasks
+            byList: byListResult.rows.map(item => ({
+                list_name: item.list_name,
+                count: parseInt(item.count),
+                percentage: total > 0 ? Math.round((parseInt(item.count) / total) * 100) : 0
+            })),
             recent: [],
             fallback: false
         });
@@ -1020,8 +1075,14 @@ app.get('/api/admin/insights', requireAdminAuth, (req, res) => {
 });
 
 app.get('/api/admin/monitoring', requireAdminAuth, (req, res) => {
+    const uptimeSeconds = process.uptime();
+    const uptimeFormatted = `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m`;
+    
     res.json({
-        uptime: process.uptime(),
+        uptime: uptimeFormatted,
+        uptimeSeconds: uptimeSeconds,
+        status: 'Online',
+        errors24h: 0, // TODO: Implement error counting
         health_checks: {
             database: !!db,
             email_service: emailNotifications?.isAvailable() || false,
@@ -1055,6 +1116,12 @@ app.get('/api/admin/projects', requireAdminAuth, async (req, res) => {
         res.json({
             total: result.rows.length,
             projects: result.rows,
+            popular: result.rows.map(project => ({
+                name: project.project,
+                task_count: parseInt(project.task_count),
+                user_count: 1, // TODO: Calculate unique users per project
+                completion_rate: 0 // TODO: Calculate completion rate per project
+            })),
             fallback: false
         });
     } catch (error) {
@@ -1089,6 +1156,12 @@ app.get('/api/admin/contexts', requireAdminAuth, async (req, res) => {
         res.json({
             total: result.rows.length,
             contexts: result.rows,
+            popular: result.rows.map(context => ({
+                name: context.context,
+                task_count: parseInt(context.task_count),
+                user_count: 1, // TODO: Calculate unique users per context  
+                avg_duration: 30 // TODO: Calculate average task duration per context
+            })),
             fallback: false
         });
     } catch (error) {
