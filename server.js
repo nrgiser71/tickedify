@@ -31,6 +31,18 @@ try {
     console.error('Database import failed:', error);
 }
 
+// Email notifications system
+let emailNotifications = null;
+
+try {
+    const EmailNotificationManager = require('./email-notifications');
+    emailNotifications = new EmailNotificationManager();
+    console.log('📧 Email notification system initialized');
+} catch (error) {
+    console.error('Email notification system import failed:', error);
+    console.log('⚠️ Email notifications will be disabled');
+}
+
 // Session configuration - try PostgreSQL store first for persistence across serverless instances
 try {
     // First try PostgreSQL session store for persistence
@@ -468,6 +480,19 @@ app.post('/api/subscription/start-trial', requireAuth, async (req, res) => {
         await db.createUserSubscription(userId, trialData);
         console.log('✅ Trial subscription created for user:', userId);
         
+        // Send trial started email notification
+        if (emailNotifications && emailNotifications.isAvailable()) {
+            try {
+                const user = await db.getUserById(userId);
+                if (user) {
+                    await emailNotifications.sendTrialStartedEmail(user, trialData.trial_ends_at);
+                    console.log('📧 Trial started email sent to:', user.email);
+                }
+            } catch (emailError) {
+                console.warn('⚠️ Failed to send trial started email:', emailError.message);
+            }
+        }
+        
         res.json({
             success: true,
             message: 'Trial started successfully',
@@ -626,6 +651,27 @@ app.post('/api/admin/beta/toggle', async (req, res) => {
         await db.updateBetaConfig(newStatus);
         console.log(`🔄 Beta period toggled to: ${newStatus ? 'ACTIVE' : 'ENDED'}`);
         
+        // Send beta ended emails to all beta users when beta is ended
+        if (!newStatus && emailNotifications && emailNotifications.isAvailable()) {
+            try {
+                const betaUsers = await db.getAllUsers();
+                const betaUsersFiltered = betaUsers?.filter(user => user.account_type === 'beta') || [];
+                
+                console.log(`📧 Sending beta ended emails to ${betaUsersFiltered.length} beta users`);
+                
+                for (const user of betaUsersFiltered) {
+                    try {
+                        await emailNotifications.sendBetaEndedEmail(user);
+                        console.log(`📧 Beta ended email sent to: ${user.email}`);
+                    } catch (userEmailError) {
+                        console.warn(`⚠️ Failed to send beta ended email to ${user.email}:`, userEmailError.message);
+                    }
+                }
+            } catch (emailError) {
+                console.warn('⚠️ Failed to send beta ended emails:', emailError.message);
+            }
+        }
+        
         res.json({
             success: true,
             message: `Beta period ${newStatus ? 'activated' : 'ended'}`,
@@ -707,6 +753,19 @@ app.put('/api/admin/user/:id/account-type', async (req, res) => {
         
         console.log(`👤 User ${userId} account type changed to: ${account_type}`);
         
+        // Send account upgrade email notification if upgraded to regular
+        if (account_type === 'regular' && emailNotifications && emailNotifications.isAvailable()) {
+            try {
+                const user = await db.getUserById(userId);
+                if (user) {
+                    await emailNotifications.sendAccountUpgradeEmail(user, 'regular');
+                    console.log('📧 Account upgrade email sent to:', user.email);
+                }
+            } catch (emailError) {
+                console.warn('⚠️ Failed to send account upgrade email:', emailError.message);
+            }
+        }
+        
         res.json({
             success: true,
             message: `Account type updated to ${account_type}`,
@@ -717,6 +776,75 @@ app.put('/api/admin/user/:id/account-type', async (req, res) => {
     } catch (error) {
         console.error('❌ Update account type error:', error);
         res.status(500).json({ error: 'Failed to update account type' });
+    }
+});
+
+// Test email endpoint for admin
+app.post('/api/admin/test-email', async (req, res) => {
+    try {
+        const { email, type = 'welcome' } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email address required' });
+        }
+        
+        if (!emailNotifications || !emailNotifications.isAvailable()) {
+            return res.status(501).json({ 
+                error: 'Email system not available',
+                details: 'Mailgun credentials not configured'
+            });
+        }
+        
+        console.log(`🧪 Testing email type '${type}' to: ${email}`);
+        
+        // Create test user object
+        const testUser = {
+            email: email,
+            naam: 'Test Gebruiker'
+        };
+        
+        let result;
+        
+        switch (type) {
+            case 'welcome':
+                result = await emailNotifications.sendWelcomeEmail(testUser);
+                break;
+            case 'trial-started':
+                const trialEndsAt = new Date(Date.now() + (14 * 24 * 60 * 60 * 1000));
+                result = await emailNotifications.sendTrialStartedEmail(testUser, trialEndsAt);
+                break;
+            case 'beta-ended':
+                result = await emailNotifications.sendBetaEndedEmail(testUser);
+                break;
+            case 'trial-ending':
+                result = await emailNotifications.sendTrialEndingEmail(testUser, 3);
+                break;
+            case 'account-upgrade':
+                result = await emailNotifications.sendAccountUpgradeEmail(testUser, 'yearly');
+                break;
+            default:
+                return res.status(400).json({ error: 'Invalid email type' });
+        }
+        
+        if (result.success) {
+            console.log(`✅ Test email sent successfully: ${result.messageId}`);
+            res.json({
+                success: true,
+                message: `Test email '${type}' sent successfully`,
+                messageId: result.messageId
+            });
+        } else {
+            console.error(`❌ Test email failed: ${result.error}`);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to send test email',
+                details: result.error
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Test email error:', error);
+        res.status(500).json({ error: 'Test email failed', details: error.message });
     }
 });
 
