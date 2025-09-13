@@ -2662,6 +2662,43 @@ const db = {
   async saveTakenToLijst(userId, lijstNaam, taken) {
     console.log(`🔄 WRAPPER: saveTakenToLijst called with userId: ${userId}, lijstNaam: ${lijstNaam}, taken count: ${taken?.length || 0}`);
     return await this.saveList(lijstNaam, taken, userId);
+  },
+
+  // Get all users for admin dashboard
+  async getAllUsers() {
+    console.log('🔍 getAllUsers called for admin dashboard');
+    try {
+      if (!pool) {
+        console.error('❌ Database pool not available in getAllUsers');
+        return [];
+      }
+
+      const query = `
+        SELECT id, naam, email, account_type, subscription_status, created_at, 
+               COALESCE(storage_used_mb, 0) as storage_used_mb,
+               COALESCE(storage_limit_mb, 100) as storage_limit_mb
+        FROM users 
+        ORDER BY created_at DESC
+      `;
+      
+      const result = await pool.query(query);
+      console.log(`✅ getAllUsers found ${result.rows.length} users`);
+      
+      return result.rows.map(user => ({
+        id: user.id,
+        naam: user.naam,
+        email: user.email,
+        account_type: user.account_type || 'regular',
+        subscription_status: user.subscription_status || 'active',
+        created_at: user.created_at,
+        storage_used_mb: parseFloat(user.storage_used_mb || 0),
+        storage_limit_mb: parseFloat(user.storage_limit_mb || 100)
+      }));
+      
+    } catch (error) {
+      console.error('❌ Error in getAllUsers:', error);
+      return [];
+    }
   }
 };
 
