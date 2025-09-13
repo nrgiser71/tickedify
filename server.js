@@ -31,17 +31,17 @@ try {
     console.error('Database import failed:', error);
 }
 
-// Session configuration - try PostgreSQL first, fallback to memory
+// Session configuration - optimized for serverless
 try {
     if (db && pool) {
-        // Use PostgreSQL session store if available
+        // Use PostgreSQL session store with forced resave
         app.use(session({
             store: new pgSession({
                 pool: pool,
                 tableName: 'session'
             }),
             secret: process.env.SESSION_SECRET || 'development-secret-key-for-tickedify',
-            resave: false,
+            resave: true,  // Force save on every request for serverless reliability
             saveUninitialized: false,
             cookie: {
                 secure: false,
@@ -49,7 +49,7 @@ try {
                 maxAge: 24 * 60 * 60 * 1000 // 24 hours
             }
         }));
-        console.log('✅ PostgreSQL session store configured');
+        console.log('✅ PostgreSQL session store configured with forced resave');
     } else {
         // Fallback to memory store with forced resave
         app.use(session({
@@ -160,43 +160,17 @@ app.post('/api/auth/login', async (req, res) => {
         req.session.userId = user.id;
         req.session.userEmail = user.email;
         
-        // Force session regeneration to ensure persistence across serverless instances
-        req.session.regenerate((err) => {
-            if (err) {
-                console.error('❌ Session regenerate error:', err);
-                // Fallback to direct save
-                req.session.save((saveErr) => {
-                    if (saveErr) {
-                        console.error('❌ Session save error:', saveErr);
-                        return res.status(500).json({ error: 'Session save failed' });
-                    }
-                    
-                    console.log('✅ Session saved (fallback), login successful for:', email);
-                    res.json({ 
-                        message: 'Login successful',
-                        user: { id: user.id, email: user.email, naam: user.naam }
-                    });
-                });
-                return;
-            }
-            
-            // Set user data in new session
-            req.session.userId = user.id;
-            req.session.userEmail = user.email;
-            
-            req.session.save((saveErr) => {
-                if (saveErr) {
-                    console.error('❌ Session save error after regenerate:', saveErr);
-                    return res.status(500).json({ error: 'Session save failed' });
-                }
-                
-                console.log('✅ Session regenerated and saved, login successful for:', email);
-                res.json({ 
-                    message: 'Login successful',
-                    user: { id: user.id, email: user.email, naam: user.naam }
-                });
+        // Simple direct session save - fallback if complex methods fail
+        try {
+            console.log('✅ Session data set, sending response');
+            res.json({ 
+                message: 'Login successful',
+                user: { id: user.id, email: user.email, naam: user.naam }
             });
-        });
+        } catch (responseError) {
+            console.error('❌ Response error:', responseError);
+            res.status(500).json({ error: 'Login response failed' });
+        }
     } catch (error) {
         console.error('💥 Login error:', error);
         res.status(500).json({ error: 'Login failed', details: error.message });
