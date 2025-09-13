@@ -2672,28 +2672,55 @@ const db = {
         console.error('❌ Database pool not available in getAllUsers');
         return [];
       }
-
-      const query = `
-        SELECT id, naam, email, account_type, subscription_status, created_at, 
-               COALESCE(storage_used_mb, 0) as storage_used_mb,
-               COALESCE(storage_limit_mb, 100) as storage_limit_mb
-        FROM users 
-        ORDER BY created_at DESC
-      `;
       
-      const result = await pool.query(query);
-      console.log(`✅ getAllUsers found ${result.rows.length} users`);
-      
-      return result.rows.map(user => ({
-        id: user.id,
-        naam: user.naam,
-        email: user.email,
-        account_type: user.account_type || 'regular',
-        subscription_status: user.subscription_status || 'active',
-        created_at: user.created_at,
-        storage_used_mb: parseFloat(user.storage_used_mb || 0),
-        storage_limit_mb: parseFloat(user.storage_limit_mb || 100)
-      }));
+      // Try full query first, fallback to basic query if columns don't exist
+      try {
+        const query = `
+          SELECT id, naam, email, account_type, subscription_status, created_at, 
+                 COALESCE(storage_used_mb, 0) as storage_used_mb,
+                 COALESCE(storage_limit_mb, 100) as storage_limit_mb
+          FROM users 
+          ORDER BY created_at DESC
+        `;
+        
+        const result = await pool.query(query);
+        console.log(`✅ getAllUsers found ${result.rows.length} users (full query)`);
+        
+        return result.rows.map(user => ({
+          id: user.id,
+          naam: user.naam,
+          email: user.email,
+          account_type: user.account_type || 'regular',
+          subscription_status: user.subscription_status || 'active',
+          created_at: user.created_at,
+          storage_used_mb: parseFloat(user.storage_used_mb || 0),
+          storage_limit_mb: parseFloat(user.storage_limit_mb || 100)
+        }));
+        
+      } catch (columnError) {
+        console.warn('⚠️ Full query failed, trying basic query:', columnError.message);
+        
+        // Fallback to basic query without extra columns
+        const basicQuery = `
+          SELECT id, naam, email, created_at
+          FROM users 
+          ORDER BY created_at DESC
+        `;
+        
+        const result = await pool.query(basicQuery);
+        console.log(`✅ getAllUsers found ${result.rows.length} users (basic query)`);
+        
+        return result.rows.map(user => ({
+          id: user.id,
+          naam: user.naam,
+          email: user.email,
+          account_type: 'regular', // Default values when columns don't exist
+          subscription_status: 'active',
+          created_at: user.created_at,
+          storage_used_mb: 0,
+          storage_limit_mb: 100
+        }));
+      }
       
     } catch (error) {
       console.error('❌ Error in getAllUsers:', error);
