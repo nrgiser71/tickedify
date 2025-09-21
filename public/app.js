@@ -12359,30 +12359,34 @@ class AuthManager {
 
             const data = await response.json();
 
-            if (response.ok) {
+            if (response.ok && data.success) {
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 this.updateUI();
                 this.hideLoginModal();
-                
-                toast.success(`Welkom terug, ${data.user.naam}!`);
-                
-                // Check auth status immediately after login (includes beta access check)
-                await this.checkAuthStatus();
-                
-                // Load user-specific data (only if still authenticated after checkAuthStatus)
-                if (this.isAuthenticated && app) {
-                    await app.loadUserData();
-                }
-            } else {
-                // Handle beta upgrade requirement
+
+                // Handle different login scenarios
                 if (data.requiresUpgrade) {
-                    // Direct redirect to beta expired page instead of showing toast
+                    // Beta user with expired period - limited login successful
+                    console.log('Beta user login successful, redirecting to upgrade page');
+                    toast.success(`Welkom ${data.user.naam}! Kies je abonnement om door te gaan.`);
                     window.location.replace('/beta-expired.html');
                     return;
                 } else {
-                    toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+                    // Normal login
+                    toast.success(`Welkom terug, ${data.user.naam}!`);
+
+                    // Check auth status immediately after login (includes beta access check)
+                    await this.checkAuthStatus();
+
+                    // Load user-specific data (only if still authenticated after checkAuthStatus)
+                    if (this.isAuthenticated && app) {
+                        await app.loadUserData();
+                    }
                 }
+            } else {
+                // Handle login failures
+                toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
             }
         } catch (error) {
             console.error('Login error:', error);

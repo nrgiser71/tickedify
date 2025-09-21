@@ -2038,15 +2038,29 @@ app.post('/api/auth/login', async (req, res) => {
         const userDetails = userDetailsResult.rows[0];
         
         // If beta period is not active and user is beta type without paid subscription
-        if (!betaConfig.beta_period_active && 
-            userDetails.account_type === 'beta' && 
-            userDetails.subscription_status !== 'paid' && 
+        if (!betaConfig.beta_period_active &&
+            userDetails.account_type === 'beta' &&
+            userDetails.subscription_status !== 'paid' &&
             userDetails.subscription_status !== 'active') {
-            
-            console.log(`❌ Login denied for user ${email} - beta period ended, upgrade required`);
-            return res.status(401).json({ 
-                error: 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.',
-                requiresUpgrade: true 
+
+            console.log(`⚠️ Limited login for user ${email} - beta period ended, upgrade required`);
+
+            // Create session for subscription selection (limited access)
+            req.session.userId = user.id;
+            req.session.userEmail = user.email;
+            req.session.userNaam = user.naam;
+            req.session.requiresUpgrade = true; // Flag for limited access
+
+            return res.json({
+                success: true,
+                requiresUpgrade: true,
+                message: 'Login succesvol, upgrade vereist voor volledige toegang',
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    naam: user.naam,
+                    rol: user.rol
+                }
             });
         }
         
