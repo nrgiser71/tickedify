@@ -35,7 +35,7 @@ const SubscriptionAPI = {
                 ...this.config.headers,
                 ...options.headers
             },
-            credentials: 'same-origin',
+            credentials: 'include',
             ...options
         };
 
