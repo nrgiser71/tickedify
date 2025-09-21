@@ -12549,18 +12549,9 @@ class AuthManager {
     }
 
     showUpgradeMessage(message) {
-        // Show upgrade message in a prominent way
-        if (window.toast) {
-            toast.error(message);
-        } else {
-            alert(message);
-        }
-
-        // Redirect to subscription page with beta source parameter
-        console.log('Redirecting to subscription page due to beta expiry');
-        setTimeout(() => {
-            window.location.href = '/subscription.html?source=beta';
-        }, 2000); // 2 second delay to show the message first
+        // Direct redirect to beta expired page instead of showing toast
+        console.log('Redirecting to beta expired page due to beta expiry');
+        window.location.replace('/beta-expired.html');
     }
 
     startBetaCheckInterval() {
