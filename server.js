@@ -8611,122 +8611,6 @@ app.get('/api/debug/database-columns', async (req, res) => {
     }
 });
 
-// 404 handler - MUST be after all routes!
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
-    
-    // Initialize database and storage manager after server starts
-    setTimeout(async () => {
-        try {
-            if (db) {
-                const { initDatabase } = require('./database');
-                await initDatabase();
-                dbInitialized = true;
-                console.log('✅ Database initialized successfully');
-            } else {
-                console.log('⚠️ Database module not available, skipping initialization');
-            }
-        } catch (error) {
-            console.error('⚠️ Database initialization failed:', error.message);
-        }
-        
-        // Initialize storage manager for B2 functionality
-        try {
-            if (storageManager) {
-                await storageManager.initialize();
-                console.log('✅ Storage manager initialized successfully');
-                console.log('🔧 B2 available:', storageManager.isB2Available());
-            } else {
-                console.log('⚠️ Storage manager not available, skipping initialization');
-            }
-        } catch (error) {
-            console.error('⚠️ Storage manager initialization failed:', error.message);
-        }
-    }, 1000);
-});
-
-// Debug endpoint to find specific task by ID without user filtering
-app.get('/api/debug/find-task/:id', async (req, res) => {
-    try {
-        if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-        
-        const { id } = req.params;
-        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
-        
-        if (result.rows.length > 0) {
-            res.json({
-                found: true,
-                task: result.rows[0],
-                message: `Task ${id} found`
-            });
-        } else {
-            res.json({
-                found: false,
-                message: `Task ${id} not found in database`
-            });
-        }
-    } catch (error) {
-        console.error('Error finding task:', error);
-        res.status(500).json({ error: 'Database error', details: error.message });
-    }
-});
-
-// Fix user_id for specific task
-app.put('/api/debug/fix-user/:id', async (req, res) => {
-    try {
-        if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-        
-        const { id } = req.params;
-        const result = await pool.query(
-            'UPDATE taken SET user_id = $1 WHERE id = $2 RETURNING *',
-            ['default-user-001', id]
-        );
-        
-        if (result.rows.length > 0) {
-            res.json({
-                success: true,
-                message: `Task ${id} user_id updated to default-user-001`,
-                task: result.rows[0]
-            });
-        } else {
-            res.status(404).json({ error: 'Task not found' });
-        }
-    } catch (error) {
-        console.error('Error fixing user_id:', error);
-        res.status(500).json({ error: 'Database error', details: error.message });
-    }
-});
-
-// Migration endpoint for pure B2 storage
-app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
-    try {
-        const { migrateDatabaseFilesToB2 } = require('./migrate-to-pure-b2.js');
-        
-        console.log('🚀 Starting migration to pure B2 storage via API...');
-        await migrateDatabaseFilesToB2();
-        
-        res.json({
-            success: true,
-            message: 'Migration to pure B2 storage completed successfully'
-        });
-        
-    } catch (error) {
-        console.error('❌ Migration API failed:', error);
-        res.status(500).json({
-            error: 'Migration failed',
-            details: error.message
-        });
-    }
-});
-
 // Subscription API Endpoints
 // GET /api/subscription/plans - Get available subscription plans
 app.get('/api/subscription/plans', (req, res) => {
@@ -8896,5 +8780,122 @@ app.get('/api/subscription/status', requireAuth, async (req, res) => {
         });
     }
 });
+
+// 404 handler - MUST be after all routes!
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
+    
+    // Initialize database and storage manager after server starts
+    setTimeout(async () => {
+        try {
+            if (db) {
+                const { initDatabase } = require('./database');
+                await initDatabase();
+                dbInitialized = true;
+                console.log('✅ Database initialized successfully');
+            } else {
+                console.log('⚠️ Database module not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Database initialization failed:', error.message);
+        }
+        
+        // Initialize storage manager for B2 functionality
+        try {
+            if (storageManager) {
+                await storageManager.initialize();
+                console.log('✅ Storage manager initialized successfully');
+                console.log('🔧 B2 available:', storageManager.isB2Available());
+            } else {
+                console.log('⚠️ Storage manager not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Storage manager initialization failed:', error.message);
+        }
+    }, 1000);
+});
+
+// Debug endpoint to find specific task by ID without user filtering
+app.get('/api/debug/find-task/:id', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        
+        if (result.rows.length > 0) {
+            res.json({
+                found: true,
+                task: result.rows[0],
+                message: `Task ${id} found`
+            });
+        } else {
+            res.json({
+                found: false,
+                message: `Task ${id} not found in database`
+            });
+        }
+    } catch (error) {
+        console.error('Error finding task:', error);
+        res.status(500).json({ error: 'Database error', details: error.message });
+    }
+});
+
+// Fix user_id for specific task
+app.put('/api/debug/fix-user/:id', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const { id } = req.params;
+        const result = await pool.query(
+            'UPDATE taken SET user_id = $1 WHERE id = $2 RETURNING *',
+            ['default-user-001', id]
+        );
+        
+        if (result.rows.length > 0) {
+            res.json({
+                success: true,
+                message: `Task ${id} user_id updated to default-user-001`,
+                task: result.rows[0]
+            });
+        } else {
+            res.status(404).json({ error: 'Task not found' });
+        }
+    } catch (error) {
+        console.error('Error fixing user_id:', error);
+        res.status(500).json({ error: 'Database error', details: error.message });
+    }
+});
+
+// Migration endpoint for pure B2 storage
+app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
+    try {
+        const { migrateDatabaseFilesToB2 } = require('./migrate-to-pure-b2.js');
+        
+        console.log('🚀 Starting migration to pure B2 storage via API...');
+        await migrateDatabaseFilesToB2();
+        
+        res.json({
+            success: true,
+            message: 'Migration to pure B2 storage completed successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Migration API failed:', error);
+        res.status(500).json({
+            error: 'Migration failed',
+            details: error.message
+        });
+    }
+});
+
 
 // Force deploy Thu Jun 26 11:21:42 CEST 2025
