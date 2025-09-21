@@ -8733,12 +8733,26 @@ app.post('/api/subscription/select', requireAuth, async (req, res) => {
 });
 
 // GET /api/subscription/status - Get user subscription status
-app.get('/api/subscription/status', requireAuth, async (req, res) => {
+app.get('/api/subscription/status', async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({
                 success: false,
                 error: 'Database not available'
+            });
+        }
+
+        // Check if user is authenticated
+        if (!req.session.userId) {
+            return res.json({
+                success: true,
+                authenticated: false,
+                selected_plan: null,
+                plan_selected_at: null,
+                selection_source: null,
+                can_select: false,
+                account_type: null,
+                message: 'User not authenticated'
             });
         }
 
