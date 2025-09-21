@@ -12555,9 +12555,12 @@ class AuthManager {
         } else {
             alert(message);
         }
-        
-        // Could also redirect to upgrade page
-        // window.location.href = '/upgrade';
+
+        // Redirect to subscription page with beta source parameter
+        console.log('Redirecting to subscription page due to beta expiry');
+        setTimeout(() => {
+            window.location.href = '/subscription.html?source=beta';
+        }, 2000); // 2 second delay to show the message first
     }
 
     startBetaCheckInterval() {

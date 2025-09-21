@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kies je abonnement - Tickedify</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/subscription.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="subscription-page">
+    <!-- Header -->
+    <header class="subscription-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-check-circle"></i>
+                <span>Tickedify</span>
+            </div>
+            <div class="header-subtitle">
+                Kies het abonnement dat bij je past
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="subscription-main">
+        <div class="subscription-container">
+            <!-- Welcome Message -->
+            <div class="welcome-section">
+                <h1 class="welcome-title">Welkom bij Tickedify Premium</h1>
+                <p class="welcome-description">
+                    Kies het abonnement dat het beste bij jouw productiviteitsbehoeften past.
+                    Alle plannen bevatten volledige toegang tot de Tickedify functionaliteit.
+                </p>
+            </div>
+
+            <!-- Pricing Plans -->
+            <div class="pricing-plans">
+                <div class="plans-grid" id="plans-grid">
+                    <!-- Plans will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Selection Actions -->
+            <div class="selection-actions">
+                <button type="button" class="btn btn-primary" id="confirm-selection" disabled>
+                    <i class="fas fa-check"></i>
+                    Bevestig selectie
+                </button>
+                <button type="button" class="btn btn-secondary" id="back-button">
+                    <i class="fas fa-arrow-left"></i>
+                    Terug
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-overlay" id="loading-overlay" style="display: none;">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Bezig met laden...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="subscription-footer">
+        <div class="footer-content">
+            <p>
+                <i class="fas fa-shield-alt"></i>
+                Veilige betalingen en 30 dagen geld-terug-garantie
+            </p>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Voorwaarden</a>
+                <a href="#" class="footer-link">Privacy</a>
+                <a href="#" class="footer-link">Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Hidden Elements for State Management -->
+    <input type="hidden" id="selected-plan-id" value="">
+    <input type="hidden" id="selection-source" value="">
+
+    <!-- Scripts -->
+    <script src="js/subscription-data.js"></script>
+    <script src="js/subscription-api.js"></script>
+    <script src="js/subscription.js"></script>
+
+    <!-- Template for Plan Option (used by JavaScript) -->
+    <template id="plan-option-template">
+        <div class="plan-option" data-plan-id="">
+            <div class="plan-header">
+                <h3 class="plan-name"></h3>
+                <div class="plan-price"></div>
+            </div>
+            <div class="plan-description"></div>
+            <div class="plan-highlight"></div>
+            <ul class="plan-features"></ul>
+            <div class="plan-selection-indicator">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </template>
+
+    <!-- Error Modal Template -->
+    <div class="modal" id="error-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Fout
+                </h3>
+                <button type="button" class="modal-close" onclick="closeErrorModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeErrorModal()">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal Template -->
+    <div class="modal" id="success-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-check-circle"></i>
+                    Succes
+                </h3>
+            </div>
+            <div class="modal-body">
+                <p id="success-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeSuccessModal()">
+                    Doorgaan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global modal functions
+        function closeErrorModal() {
+            document.getElementById('error-modal').style.display = 'none';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').style.display = 'none';
+            // Optionally redirect or perform other actions
+        }
+
+        function showErrorModal(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-modal').style.display = 'flex';
+        }
+
+        function showSuccessModal(message) {
+            document.getElementById('success-message').textContent = message;
+            document.getElementById('success-modal').style.display = 'flex';
+        }
+
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initializeSubscriptionPage === 'function') {
+                initializeSubscriptionPage();
+            }
+        });
+    </script>
+</body>
+</html>

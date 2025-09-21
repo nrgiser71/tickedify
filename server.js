@@ -8727,4 +8727,174 @@ app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
     }
 });
 
+// Subscription API Endpoints
+// GET /api/subscription/plans - Get available subscription plans
+app.get('/api/subscription/plans', (req, res) => {
+    try {
+        // Static subscription plans data as defined in data-model.md
+        const SUBSCRIPTION_PLANS = [
+            {
+                id: 'trial_14_days',
+                name: '14 dagen gratis',
+                description: 'Probeer alle functies gratis uit',
+                price: 0,
+                billing_cycle: 'trial',
+                trial_days: 14,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import']
+            },
+            {
+                id: 'monthly_7',
+                name: 'Maandelijks',
+                description: 'Per maand, stop wanneer je wilt',
+                price: 7,
+                billing_cycle: 'monthly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support']
+            },
+            {
+                id: 'yearly_70',
+                name: 'Jaarlijks',
+                description: 'Bespaar €14 per jaar',
+                price: 70,
+                billing_cycle: 'yearly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', '2 maanden gratis']
+            }
+        ];
+
+        res.json({
+            success: true,
+            plans: SUBSCRIPTION_PLANS
+        });
+    } catch (error) {
+        console.error('Error fetching subscription plans:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
+
+// POST /api/subscription/select - Select subscription plan
+app.post('/api/subscription/select', requireAuth, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({
+                success: false,
+                error: 'Database not available'
+            });
+        }
+
+        const { plan_id, source } = req.body;
+
+        // Validate required fields
+        if (!plan_id || !source) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: plan_id and source are required'
+            });
+        }
+
+        // Validate plan_id
+        const validPlanIds = ['trial_14_days', 'monthly_7', 'yearly_70'];
+        if (!validPlanIds.includes(plan_id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid plan_id. Must be one of: ' + validPlanIds.join(', ')
+            });
+        }
+
+        // Validate source
+        const validSources = ['beta', 'upgrade', 'registration'];
+        if (!validSources.includes(source)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid source. Must be one of: ' + validSources.join(', ')
+            });
+        }
+
+        const userId = req.session.userId;
+
+        // Update user's subscription selection
+        const updateResult = await pool.query(`
+            UPDATE users
+            SET selected_plan = $1,
+                plan_selected_at = NOW(),
+                selection_source = $2
+            WHERE id = $3
+            RETURNING selected_plan
+        `, [plan_id, source, userId]);
+
+        if (updateResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Plan selection saved successfully',
+            selected_plan: plan_id
+        });
+
+    } catch (error) {
+        console.error('Error selecting subscription plan:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
+
+// GET /api/subscription/status - Get user subscription status
+app.get('/api/subscription/status', requireAuth, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({
+                success: false,
+                error: 'Database not available'
+            });
+        }
+
+        const userId = req.session.userId;
+
+        // Get user's subscription information
+        const userResult = await pool.query(`
+            SELECT selected_plan, plan_selected_at, selection_source, account_type, subscription_status
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const user = userResult.rows[0];
+
+        // Determine if user can select a plan
+        // Generally, users can select or change plans unless they're in a locked state
+        const canSelect = true; // For now, all authenticated users can select
+
+        res.json({
+            success: true,
+            selected_plan: user.selected_plan,
+            plan_selected_at: user.plan_selected_at ? user.plan_selected_at.toISOString() : null,
+            selection_source: user.selection_source,
+            can_select: canSelect,
+            account_type: user.account_type || 'beta'
+        });
+
+    } catch (error) {
+        console.error('Error fetching subscription status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
+
 // Force deploy Thu Jun 26 11:21:42 CEST 2025

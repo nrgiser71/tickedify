@@ -1,0 +1,260 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Subscription Selection API",
+    "description": "API endpoints for subscription plan selection",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/subscription/plans": {
+      "get": {
+        "summary": "Get available subscription plans",
+        "description": "Returns list of available subscription plans for user selection",
+        "responses": {
+          "200": {
+            "description": "List of available subscription plans",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "plans": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubscriptionPlan"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/subscription/select": {
+      "post": {
+        "summary": "Select subscription plan",
+        "description": "Store user's subscription plan selection",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["plan_id", "source"],
+                "properties": {
+                  "plan_id": {
+                    "type": "string",
+                    "enum": ["trial_14_days", "monthly_7", "yearly_70"],
+                    "description": "Selected subscription plan identifier"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": ["beta", "upgrade", "registration"],
+                    "description": "Source of the selection"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Selection stored successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Plan selection saved successfully"
+                    },
+                    "selected_plan": {
+                      "type": "string",
+                      "example": "monthly_7"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/subscription/status": {
+      "get": {
+        "summary": "Get user subscription status",
+        "description": "Returns user's current subscription selection and eligibility",
+        "responses": {
+          "200": {
+            "description": "User subscription status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "selected_plan": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "monthly_7"
+                    },
+                    "plan_selected_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "example": "2025-01-21T10:30:00Z"
+                    },
+                    "selection_source": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "beta"
+                    },
+                    "can_select": {
+                      "type": "boolean",
+                      "description": "Whether user can make a new selection",
+                      "example": true
+                    },
+                    "account_type": {
+                      "type": "string",
+                      "example": "beta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SubscriptionPlan": {
+        "type": "object",
+        "required": ["id", "name", "description", "price", "billing_cycle"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "monthly_7"
+          },
+          "name": {
+            "type": "string",
+            "example": "Maandelijks"
+          },
+          "description": {
+            "type": "string",
+            "example": "Per maand, stop wanneer je wilt"
+          },
+          "price": {
+            "type": "number",
+            "example": 7
+          },
+          "billing_cycle": {
+            "type": "string",
+            "enum": ["trial", "monthly", "yearly"],
+            "example": "monthly"
+          },
+          "trial_days": {
+            "type": "integer",
+            "example": 0
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Alle functies", "Onbeperkte taken", "Premium support"]
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["success", "error"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Invalid plan_id"
+          }
+        }
+      }
+    }
+  }
+}

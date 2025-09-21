@@ -131,6 +131,45 @@ const initDatabase = async () => {
       }
     }
 
+    // Add subscription selection columns to users table
+    try {
+      await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS selected_plan VARCHAR(20),
+        ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS selection_source VARCHAR(20)
+      `);
+      console.log('✅ Added subscription selection columns to users table');
+    } catch (subscriptionMigrateError) {
+      console.log('⚠️ Could not add subscription columns, trying individually:', subscriptionMigrateError.message);
+      // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
+      const subscriptionColumns = [
+        { name: 'selected_plan', type: 'VARCHAR(20)' },
+        { name: 'plan_selected_at', type: 'TIMESTAMP' },
+        { name: 'selection_source', type: 'VARCHAR(20)' }
+      ];
+
+      for (const col of subscriptionColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added subscription column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Subscription column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    // Add index for subscription plan queries
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_selected_plan
+        ON users(selected_plan) WHERE selected_plan IS NOT NULL
+      `);
+      console.log('✅ Added index for selected_plan column');
+    } catch (indexError) {
+      console.log('⚠️ Could not add selected_plan index:', indexError.message);
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projecten (
         id VARCHAR(50) PRIMARY KEY,
