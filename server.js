@@ -8699,14 +8699,15 @@ app.post('/api/subscription/select', requireAuth, async (req, res) => {
 
         const userId = req.session.userId;
 
-        // Update user's subscription selection
+        // Update user's subscription selection and status
         const updateResult = await pool.query(`
             UPDATE users
             SET selected_plan = $1,
                 plan_selected_at = NOW(),
-                selection_source = $2
+                selection_source = $2,
+                subscription_status = 'active'
             WHERE id = $3
-            RETURNING selected_plan
+            RETURNING selected_plan, subscription_status
         `, [plan_id, source, userId]);
 
         if (updateResult.rows.length === 0) {
