@@ -7181,17 +7181,20 @@ app.get('/api/admin/beta/users', async (req, res) => {
 app.get('/api/admin/all-users', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT 
+            SELECT
                 id,
                 email,
                 naam,
                 account_type,
                 subscription_status,
+                selected_plan,
+                plan_selected_at,
+                selection_source,
                 ghl_contact_id,
                 created_at,
                 laatste_login as last_activity,
                 (SELECT COUNT(*) FROM taken WHERE user_id = users.id) as task_count
-            FROM users 
+            FROM users
             ORDER BY laatste_login DESC NULLS LAST, created_at DESC
             LIMIT 100
         `);

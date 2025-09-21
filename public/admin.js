@@ -313,7 +313,7 @@ class AdminDashboard {
         }
 
         let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
-        html += '<div>Email</div><div>Naam</div><div>Account Type</div><div>Status</div><div>Taken</div><div>Laatste Login</div><div>Acties</div>';
+        html += '<div>Email</div><div>Naam</div><div>Account Type</div><div>Status</div><div>Abonnement</div><div>Taken</div><div>Laatste Login</div><div>Acties</div>';
         html += '</div>';
 
         allUsers.forEach(user => {
@@ -321,12 +321,16 @@ class AdminDashboard {
             const accountTypeBadge = user.account_type === 'beta' ? 'status-nieuw' : 'status-opgelost';
             const statusText = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen';
             const statusBadge = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw';
-            
+
+            // Format subscription plan
+            const subscriptionInfo = this.formatSubscriptionPlan(user.selected_plan);
+
             html += '<div class="table-row">';
             html += `<div>${this.escapeHtml(user.email)}</div>`;
             html += `<div>${this.escapeHtml(user.naam || 'Geen naam')}</div>`;
             html += `<div><span class="status-badge ${accountTypeBadge}">${accountTypeText}</span></div>`;
             html += `<div><span class="status-badge ${statusBadge}">${statusText}</span></div>`;
+            html += `<div>${subscriptionInfo.html}</div>`;
             html += `<div>${user.task_count || 0}</div>`;
             html += `<div>${user.last_activity ? this.formatRelativeTime(user.last_activity) : 'Nooit'}</div>`;
             html += `<div>
@@ -523,12 +527,49 @@ class AdminDashboard {
         notification.style.padding = '15px 20px';
         notification.style.borderRadius = '8px';
         notification.style.fontWeight = '500';
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             document.body.removeChild(notification);
         }, 5000);
+    }
+
+    formatSubscriptionPlan(selectedPlan) {
+        if (!selectedPlan) {
+            return {
+                text: 'Geen',
+                html: '<span class="status-badge" style="background-color: #f1f5f9; color: #475569;">Geen</span>'
+            };
+        }
+
+        let text, badge, color;
+        switch (selectedPlan) {
+            case 'trial_14_days':
+                text = '14 dagen gratis';
+                badge = 'trial';
+                color = '#f59e0b'; // Orange
+                break;
+            case 'monthly_7':
+                text = '€7/maand';
+                badge = 'monthly';
+                color = '#3b82f6'; // Blue
+                break;
+            case 'yearly_70':
+                text = '€70/jaar';
+                badge = 'yearly';
+                color = '#10b981'; // Green
+                break;
+            default:
+                text = selectedPlan;
+                badge = 'unknown';
+                color = '#6b7280'; // Gray
+        }
+
+        return {
+            text: text,
+            html: `<span class="status-badge" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">${text}</span>`
+        };
     }
 }
 
