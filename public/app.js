@@ -12377,9 +12377,9 @@ class AuthManager {
             } else {
                 // Handle beta upgrade requirement
                 if (data.requiresUpgrade) {
-                    toast.error(data.error);
-                    // Could redirect to upgrade page here if available
-                    // window.location.href = '/upgrade';
+                    // Direct redirect to beta expired page instead of showing toast
+                    window.location.replace('/beta-expired.html');
+                    return;
                 } else {
                     toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
                 }
