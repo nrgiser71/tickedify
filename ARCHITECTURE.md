@@ -76,6 +76,8 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `laadHuidigeLijst()` - regel ~400 - Laadt taken voor huidige lijst
 - `renderTakenLijst(taken)` - regel ~600 - Rendert taken in UI
 - `verplaatsTaak(taakId, nieuweLijst)` - regel ~1,000
+- `verwijderTaak(id, categoryKey)` - regel ~3921 - Algemene taak verwijdering
+- `verwijderInboxTaak()` - regel ~4036 - Specifieke inbox taak verwijdering met workflow
 
 **Drag & Drop Systeem (regels 1,500-2,500)**
 - `initializeDragAndDrop()` - regel ~1,600
@@ -443,6 +445,29 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `setupIntelligentScrollIndicators()` - app.js:~9000-9200
 - Position:fixed scroll indicators voor uitgesteld lijsten
 - ResizeObserver voor content detection
+
+### Inbox Task Deletion System (v0.16.1) ✅
+**Complete verwijder functionaliteit voor inbox taken met automatische workflow**
+
+**Core Functionaliteit:**
+- **Delete Button**: `setDeleteButtonVisibility()` in app.js:4241 - Context-aware button visibility
+- **Main Function**: `verwijderInboxTaak()` in app.js:4036 - Inbox-specific deletion with workflow
+- **Event Handler**: Event listener in app.js:1217 voor verwijder knop click
+- **HTML Element**: `#verwijderInboxTaakBtn` in index.html:481 (rode "Verwijderen" knop)
+- **CSS Styling**: Button styling in style.css:2239-2260 (rode border, hover effects)
+
+**Workflow Mechanisme:**
+- **Context Detection**: Knop alleen zichtbaar wanneer `this.huidigeLijst === 'inbox'`
+- **Confirmation Dialog**: `confirmModal.show()` voor veiligheidscheck
+- **B2 Cleanup**: Automatische bijlagen verwijdering uit cloud storage
+- **Next Task Logic**: `openVolgendeInboxTaak()` voor automatische workflow
+- **Success Handling**: Toast notifications met B2 cleanup status
+
+**Integration Points:**
+- **Planning Popup**: `planTaak()` in app.js:4305 roept `setDeleteButtonVisibility()`
+- **Edit Action**: `bewerkActie()` in app.js:6529 roept `setDeleteButtonVisibility()`
+- **Button Layout**: Popup-acties tussen "Annuleren" en "Maak actie" knoppen
+- **CSS Specificity**: `#planningPopup .popup-acties button.verwijder-btn` voor styling override
 
 ### Context Menu & Highlighting Helpers
 - `addContextMenuToTaskItems()` - app.js:3687 - Attach right-click listeners

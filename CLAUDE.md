@@ -1,5 +1,34 @@
 # Tickedify Development Notes
 
+## 🗑️ VERWIJDER FUNCTIONALITEIT INBOX TAKEN VOLTOOID (Januari 3, 2025) ✅
+
+**🚀 INBOX TASK DELETION SYSTEM: Versie 0.16.1**
+- **Status**: Production-ready verwijder functionaliteit voor inbox taken
+- **User Experience**: Automatische workflow met volgende taak of popup sluiten
+- **Features**: Rode warning knop, bevestiging, B2 cleanup, consistent design
+
+**📋 GEÏMPLEMENTEERDE COMPONENTEN:**
+1. ✅ **Verwijder Knop** - Rode "Verwijderen" knop alleen zichtbaar voor inbox taken
+2. ✅ **Bevestiging Dialog** - Veiligheidscheck voordat definitief verwijderen
+3. ✅ **Automatische Workflow** - Na verwijdering opent volgende taak of popup sluit
+4. ✅ **B2 Cleanup** - Automatische verwijdering van gekoppelde bijlagen uit cloud storage
+5. ✅ **macOS Styling** - Consistente rode warning styling met hover effects
+6. ✅ **Error Handling** - Robuuste afhandeling van fouten met gebruiker feedback
+
+**🎯 VERWIJDER WORKFLOW VOLLEDIG WERKEND:**
+- **Open inbox taak** → Planning popup met rode verwijder knop verschijnt
+- **Klik "Verwijderen"** → Bevestigingspopup vraagt om zekerheid
+- **Bevestig verwijdering** → Taak en bijlagen worden verwijderd
+- **Automatisch** → Volgende inbox taak opent of success bericht + popup sluit
+
+**⚙️ TECHNISCHE IMPLEMENTATIE:**
+- HTML: Verwijder knop toegevoegd aan popup-acties tussen Annuleren en Maak actie
+- JavaScript: verwijderInboxTaak() functie met B2 cleanup en workflow logica
+- CSS: Rode border styling met hover naar rode achtergrond + witte tekst
+- Context-aware: setDeleteButtonVisibility() toont knop alleen voor inbox taken
+
+**✅ PRODUCTIE READY:** Inbox taak verwijdering volledig operationeel met automatische workflow
+
 ## 🎯 ABONNEMENT SELECTIE SYSTEEM VOLLEDIG GEÏMPLEMENTEERD (September 21, 2025) ✅
 
 **🚀 COMPLETE SUBSCRIPTION MANAGEMENT SYSTEEM: Versie 0.16.0**
