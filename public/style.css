@@ -2235,6 +2235,22 @@ button:focus {
     box-shadow: none !important;
 }
 
+/* Verwijder knop styling voor planning popup */
+#planningPopup .popup-acties .verwijder-btn {
+    background: var(--macos-bg-primary) !important;
+    border: 1px solid var(--macos-red) !important;
+    color: var(--macos-red) !important;
+    box-shadow: none !important;
+}
+
+#planningPopup .popup-acties .verwijder-btn:hover {
+    background: var(--macos-red) !important;
+    border-color: var(--macos-red) !important;
+    color: white !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 /* Subtaken Styling */
 .subtaken-header {
     display: flex;

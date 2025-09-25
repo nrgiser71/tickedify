@@ -1214,6 +1214,10 @@ class Taakbeheer {
             this.maakActie();
         });
 
+        document.getElementById('verwijderInboxTaakBtn').addEventListener('click', () => {
+            this.verwijderInboxTaak();
+        });
+
         // Form validation
         const verplichteVelden = ['taakNaamInput', 'verschijndatum', 'contextSelect', 'duur'];
         verplichteVelden.forEach(fieldId => {
@@ -4029,6 +4033,89 @@ class Taakbeheer {
         });
     }
 
+    async verwijderInboxTaak() {
+        if (!this.huidigeTaakId) return;
+        
+        const taak = this.taken.find(t => t.id === this.huidigeTaakId);
+        if (!taak) {
+            toast.error('Taak niet gevonden');
+            return;
+        }
+        
+        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
+        if (!bevestiging) return;
+        
+        await loading.withLoading(async () => {
+            try {
+                // Use DELETE endpoint for single task deletion
+                const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Check B2 cleanup status and provide user feedback
+                    let successMessage = 'Taak verwijderd';
+                    let hasB2Warning = false;
+                    
+                    if (result.b2Cleanup) {
+                        const cleanup = result.b2Cleanup;
+                        
+                        if (cleanup.failed > 0) {
+                            hasB2Warning = true;
+                            if (cleanup.configError) {
+                                console.warn(`⚠️ B2 configuratie probleem voor taak ${this.huidigeTaakId}`);
+                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering is niet geconfigureerd. Cloud storage cleanup overgeslagen.`);
+                            } else if (cleanup.timeout) {
+                                console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${this.huidigeTaakId}`);
+                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
+                            } else if (cleanup.deleted > 0) {
+                                console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${this.huidigeTaakId}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
+                                toast.warning(`Taak verwijderd. ${cleanup.deleted} van de ${cleanup.deleted + cleanup.failed} bijlagen verwijderd uit cloud storage.`);
+                            } else {
+                                console.error(`❌ Volledige B2 cleanup failure voor taak ${this.huidigeTaakId}`);
+                                toast.error(`Taak verwijderd, maar bijlagen konden niet verwijderd worden uit cloud storage. Controleer je internetverbinding.`);
+                            }
+                        } else if (cleanup.deleted > 0) {
+                            console.log(`✅ B2 cleanup succesvol voor taak ${this.huidigeTaakId}: ${cleanup.deleted} bestanden verwijderd`);
+                            successMessage = `Taak en ${cleanup.deleted} bijlagen verwijderd`;
+                        }
+                    }
+                    
+                    // Remove from local list
+                    this.taken = this.taken.filter(taak => taak.id !== this.huidigeTaakId);
+                    
+                    // Show success message if no B2 warnings
+                    if (!hasB2Warning) {
+                        toast.success(successMessage);
+                    }
+                    
+                    // Try to open next inbox task or close popup
+                    const volgendeGeopend = await this.openVolgendeInboxTaak();
+                    
+                    if (!volgendeGeopend) {
+                        // No more tasks, close popup and refresh list
+                        this.sluitPopup();
+                        this.renderTaken();
+                    }
+                    
+                    console.log(`✅ Task ${this.huidigeTaakId} deleted successfully with B2 cleanup:`, result.b2Cleanup);
+                } else {
+                    const error = await response.json();
+                    toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting inbox task:', error);
+                toast.error('Fout bij verwijderen van taak');
+            }
+        }, {
+            operationId: `delete-inbox-task-${this.huidigeTaakId}`,
+            showGlobal: true,
+            message: 'Taak verwijderen...'
+        });
+    }
+
     async slaLijstOp() {
         // DISABLED: This function was causing data loss by overwriting the entire list on the server
         // Individual task updates should be used instead (PUT /api/taak/:id)
@@ -4150,6 +4237,19 @@ class Taakbeheer {
         }
     }
 
+    // Helper function to show/hide delete button for inbox tasks
+    setDeleteButtonVisibility() {
+        const deleteButton = document.getElementById('verwijderInboxTaakBtn');
+        if (deleteButton) {
+            // Only show delete button for inbox tasks
+            if (this.huidigeLijst === 'inbox') {
+                deleteButton.style.display = 'block';
+            } else {
+                deleteButton.style.display = 'none';
+            }
+        }
+    }
+
     async planTaak(id) {
         if (this.huidigeLijst !== 'inbox') return;
         
@@ -4213,6 +4313,9 @@ class Taakbeheer {
             
             // Set button text for new action (from inbox)
             this.setActionButtonText(true);
+            
+            // Show/hide delete button for inbox tasks only
+            this.setDeleteButtonVisibility();
             
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
