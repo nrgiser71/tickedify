@@ -2236,14 +2236,22 @@ button:focus {
 }
 
 /* Verwijder knop styling voor planning popup */
-#planningPopup .popup-acties .verwijder-btn {
+#planningPopup .popup-acties button.verwijder-btn {
     background: var(--macos-bg-primary) !important;
     border: 1px solid var(--macos-red) !important;
     color: var(--macos-red) !important;
     box-shadow: none !important;
+    padding: 12px 24px !important;
+    border-radius: var(--macos-radius-button) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    flex: 0 0 auto !important;
+    min-width: 120px !important;
 }
 
-#planningPopup .popup-acties .verwijder-btn:hover {
+#planningPopup .popup-acties button.verwijder-btn:hover {
     background: var(--macos-red) !important;
     border-color: var(--macos-red) !important;
     color: white !important;

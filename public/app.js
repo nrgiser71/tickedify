@@ -4240,23 +4240,13 @@ class Taakbeheer {
     // Helper function to show/hide delete button for inbox tasks
     setDeleteButtonVisibility() {
         const deleteButton = document.getElementById('verwijderInboxTaakBtn');
-        console.log('DEBUG setDeleteButtonVisibility:', {
-            deleteButton: !!deleteButton,
-            huidigeLijst: this.huidigeLijst,
-            shouldShow: this.huidigeLijst === 'inbox'
-        });
-        
         if (deleteButton) {
             // Only show delete button for inbox tasks
             if (this.huidigeLijst === 'inbox') {
                 deleteButton.style.display = 'block';
-                console.log('DEBUG: Delete button shown for inbox task');
             } else {
                 deleteButton.style.display = 'none';
-                console.log('DEBUG: Delete button hidden for non-inbox task');
             }
-        } else {
-            console.error('DEBUG: verwijderInboxTaakBtn element not found!');
         }
     }
 
