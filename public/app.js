@@ -4091,13 +4091,15 @@ class Taakbeheer {
                         toast.success(successMessage);
                     }
                     
+                    // Always refresh the inbox list after deletion to remove the deleted task from UI
+                    this.renderTaken();
+                    
                     // Try to open next inbox task or close popup
                     const volgendeGeopend = await this.openVolgendeInboxTaak();
                     
                     if (!volgendeGeopend) {
-                        // No more tasks, close popup and refresh list
+                        // No more tasks, close popup (list already refreshed above)
                         this.sluitPopup();
-                        this.renderTaken();
                     }
                     
                     console.log(`✅ Task ${this.huidigeTaakId} deleted successfully with B2 cleanup:`, result.b2Cleanup);
