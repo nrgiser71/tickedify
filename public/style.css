@@ -2249,6 +2249,9 @@ button:focus {
     transition: all 0.2s ease !important;
     flex: 0 0 auto !important;
     min-width: 120px !important;
+    height: auto !important;
+    line-height: normal !important;
+    box-sizing: border-box !important;
 }
 
 #planningPopup .popup-acties button.verwijder-btn:hover {
