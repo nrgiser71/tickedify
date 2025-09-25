@@ -6525,6 +6525,9 @@ class Taakbeheer {
             const isInboxAction = this.huidigeLijst === 'inbox';
             this.setActionButtonText(isInboxAction);
             
+            // Show/hide delete button for inbox tasks only
+            this.setDeleteButtonVisibility();
+            
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
