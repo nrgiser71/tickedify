@@ -1914,10 +1914,16 @@ button:focus {
     gap: 8px;
 }
 
+.checkbox-input-wrapper #taakNaamInput {
+    flex: 1;
+    width: auto; /* Override de 100% width */
+}
+
 #completeTaskCheckbox {
     margin: 0;
     cursor: pointer;
     accent-color: var(--macos-blue);
+    flex-shrink: 0; /* Voorkom dat checkbox krimpt */
 }
 
 /* Button state styling voor taak afwerken modus */
