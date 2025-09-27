@@ -1918,6 +1918,7 @@ button:focus {
     margin: 0;
     cursor: pointer;
     accent-color: var(--macos-blue);
+    width: 20px;
 }
 
 /* Button state styling voor taak afwerken modus */
