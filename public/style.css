@@ -6261,20 +6261,6 @@ button:focus {
     border: 1px solid var(--macos-gray-5);
 }
 
-/* ===== WEKELIJKSE OPTIMALISATIE STYLES ===== */
-.wekelijkse-optimalisatie-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.optimalisatie-sectie {
-    background: var(--macos-bg-secondary);
-    border-radius: var(--macos-radius-large);
-    margin-bottom: 20px;
-    padding: 20px;
-    box-shadow: var(--macos-shadow-light);
-}
 
 .sectie-titel {
     font-size: 18px;
