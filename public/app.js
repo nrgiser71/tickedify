@@ -4391,24 +4391,24 @@ class Taakbeheer {
         checkbox.parentNode.replaceChild(newCheckbox, checkbox);
         console.log('DEBUG: Replaced checkbox to remove all listeners');
 
-        // Create bound handler
-        this.checkboxChangeHandler = (e) => {
-            console.log('DEBUG: Checkbox change event fired, checked:', e.target.checked);
-            this.handleCompleteTaskCheckboxChange(e.target.checked);
+        // Use onclick instead of addEventListener - more direct
+        const self = this;
+        newCheckbox.onclick = function(e) {
+            console.log('DEBUG: Checkbox onclick fired, checked:', this.checked);
+            self.handleCompleteTaskCheckboxChange(this.checked);
+            // Don't prevent default - let checkbox toggle normally
         };
 
-        // Add multiple event types to be sure
-        const events = ['change', 'click', 'input'];
-        events.forEach(eventType => {
-            newCheckbox.addEventListener(eventType, this.checkboxChangeHandler);
-            console.log('DEBUG: Added', eventType, 'event listener');
-        });
+        // Also try onchange as backup
+        newCheckbox.onchange = function(e) {
+            console.log('DEBUG: Checkbox onchange fired, checked:', this.checked);
+            self.handleCompleteTaskCheckboxChange(this.checked);
+        };
 
-        // Test event listener immediately
-        console.log('DEBUG: Testing click simulation...');
-        newCheckbox.addEventListener('click', () => {
-            console.log('DEBUG: Direct click listener fired!');
-        });
+        console.log('DEBUG: Set onclick and onchange handlers');
+
+        // Store reference to new checkbox for future access
+        this.completeTaskCheckbox = newCheckbox;
     }
 
     handleCompleteTaskCheckboxChange(isChecked) {
