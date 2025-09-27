@@ -4253,7 +4253,11 @@ class Taakbeheer {
     }
 
     async planTaak(id) {
-        if (this.huidigeLijst !== 'inbox') return;
+        console.log('DEBUG: planTaak called with id:', id, 'huidigeLijst:', this.huidigeLijst);
+        if (this.huidigeLijst !== 'inbox') {
+            console.log('DEBUG: planTaak early return - not inbox lijst');
+            return;
+        }
         
         if (!this.isLoggedIn()) {
             toast.warning('Log in om taken te plannen.');
@@ -6748,7 +6752,10 @@ class Taakbeheer {
             
             // Show/hide delete button for inbox tasks only
             this.setDeleteButtonVisibility();
-            
+
+            // Setup checkbox event handler for task completion
+            this.setupCompleteTaskCheckbox();
+
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
@@ -8378,6 +8385,9 @@ class Taakbeheer {
         if (subtakenManager && taakId) {
             subtakenManager.loadSubtaken(taakId);
         }
+
+        // Setup checkbox event handler for task completion
+        this.setupCompleteTaskCheckbox();
 
         // Show popup
         document.getElementById('planningPopup').style.display = 'flex';
