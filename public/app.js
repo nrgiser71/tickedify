@@ -4386,11 +4386,10 @@ class Taakbeheer {
 
         console.log('DEBUG: Reset checkbox and button state');
 
-        // Remove existing listener if any
-        if (this.checkboxChangeHandler) {
-            checkbox.removeEventListener('change', this.checkboxChangeHandler);
-            console.log('DEBUG: Removed existing event listener');
-        }
+        // Remove ALL existing listeners (brute force cleanup)
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+        console.log('DEBUG: Replaced checkbox to remove all listeners');
 
         // Create bound handler
         this.checkboxChangeHandler = (e) => {
@@ -4398,9 +4397,18 @@ class Taakbeheer {
             this.handleCompleteTaskCheckboxChange(e.target.checked);
         };
 
-        // Add new listener
-        checkbox.addEventListener('change', this.checkboxChangeHandler);
-        console.log('DEBUG: Added new event listener');
+        // Add multiple event types to be sure
+        const events = ['change', 'click', 'input'];
+        events.forEach(eventType => {
+            newCheckbox.addEventListener(eventType, this.checkboxChangeHandler);
+            console.log('DEBUG: Added', eventType, 'event listener');
+        });
+
+        // Test event listener immediately
+        console.log('DEBUG: Testing click simulation...');
+        newCheckbox.addEventListener('click', () => {
+            console.log('DEBUG: Direct click listener fired!');
+        });
     }
 
     handleCompleteTaskCheckboxChange(isChecked) {
