@@ -4395,6 +4395,7 @@ class Taakbeheer {
         const button = document.getElementById('maakActieBtn');
         const checkbox = document.getElementById('completeTaskCheckbox');
         const checkboxLabel = checkbox?.parentElement;
+        const taakNaam = document.getElementById('taakNaamInput').value.trim();
 
         if (isChecked) {
             // Checkbox is checked - enter completion mode
@@ -4402,6 +4403,10 @@ class Taakbeheer {
             button.classList.add('complete-mode');
             if (checkboxLabel) {
                 checkboxLabel.classList.add('checked');
+            }
+            // Enable button immediately if there's a task name
+            if (taakNaam) {
+                button.disabled = false;
             }
         } else {
             // Checkbox is unchecked - normal mode
