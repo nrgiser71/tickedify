@@ -4432,6 +4432,29 @@ class Taakbeheer {
 
             // Test that the checkbox is responsive
             console.log('DEBUG: Testing checkbox properties - id:', checkbox.id, 'type:', checkbox.type, 'disabled:', checkbox.disabled);
+
+            // Force test the checkbox state change
+            console.log('DEBUG: Forcing checkbox test...');
+            setTimeout(() => {
+                console.log('DEBUG: Before manual toggle - checked:', checkbox.checked);
+                checkbox.checked = true;
+                console.log('DEBUG: After manual toggle - checked:', checkbox.checked);
+
+                // Manually fire events
+                console.log('DEBUG: Manually firing click event...');
+                const clickEvent = new Event('click', { bubbles: true });
+                checkbox.dispatchEvent(clickEvent);
+
+                console.log('DEBUG: Manually firing change event...');
+                const changeEvent = new Event('change', { bubbles: true });
+                checkbox.dispatchEvent(changeEvent);
+
+                // Reset after test
+                setTimeout(() => {
+                    checkbox.checked = false;
+                    console.log('DEBUG: Reset checkbox after test');
+                }, 1000);
+            }, 100);
         }, 10);
     }
 
