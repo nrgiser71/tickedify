@@ -4367,48 +4367,72 @@ class Taakbeheer {
     }
 
     setupCompleteTaskCheckbox() {
-        const checkbox = document.getElementById('completeTaskCheckbox');
-        const button = document.getElementById('maakActieBtn');
-
         console.log('DEBUG: setupCompleteTaskCheckbox called');
-        console.log('DEBUG: checkbox found:', !!checkbox, checkbox);
-        console.log('DEBUG: button found:', !!button, button);
 
-        if (!checkbox || !button) {
-            console.log('DEBUG: Missing elements, returning');
-            return;
-        }
+        // Small delay to ensure DOM is fully updated
+        setTimeout(() => {
+            const checkbox = document.getElementById('completeTaskCheckbox');
+            const button = document.getElementById('maakActieBtn');
 
-        // Reset checkbox state
-        checkbox.checked = false;
-        button.classList.remove('complete-mode');
-        button.textContent = 'Maak actie';
+            console.log('DEBUG: Elements after timeout - checkbox:', !!checkbox, 'button:', !!button);
+            console.log('DEBUG: Checkbox element details:', checkbox);
 
-        console.log('DEBUG: Reset checkbox and button state');
+            if (!checkbox || !button) {
+                console.log('DEBUG: Missing elements, returning');
+                return;
+            }
 
-        // Remove ALL existing listeners (brute force cleanup)
-        const newCheckbox = checkbox.cloneNode(true);
-        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
-        console.log('DEBUG: Replaced checkbox to remove all listeners');
+            // Reset checkbox state
+            checkbox.checked = false;
+            button.classList.remove('complete-mode');
+            button.textContent = 'Maak actie';
 
-        // Use onclick instead of addEventListener - more direct
-        const self = this;
-        newCheckbox.onclick = function(e) {
-            console.log('DEBUG: Checkbox onclick fired, checked:', this.checked);
-            self.handleCompleteTaskCheckboxChange(this.checked);
-            // Don't prevent default - let checkbox toggle normally
-        };
+            console.log('DEBUG: Reset checkbox and button state');
 
-        // Also try onchange as backup
-        newCheckbox.onchange = function(e) {
-            console.log('DEBUG: Checkbox onchange fired, checked:', this.checked);
-            self.handleCompleteTaskCheckboxChange(this.checked);
-        };
+            // Clear any existing handlers by setting to null
+            checkbox.onclick = null;
+            checkbox.onchange = null;
 
-        console.log('DEBUG: Set onclick and onchange handlers');
+            // Remove any addEventListener handlers if they exist
+            if (this.checkboxChangeHandler) {
+                checkbox.removeEventListener('change', this.checkboxChangeHandler);
+                checkbox.removeEventListener('click', this.checkboxChangeHandler);
+                console.log('DEBUG: Removed existing addEventListener handlers');
+            }
 
-        // Store reference to new checkbox for future access
-        this.completeTaskCheckbox = newCheckbox;
+            // Create bound handler function
+            this.checkboxChangeHandler = (e) => {
+                console.log('DEBUG: Event handler fired, type:', e.type, 'checked:', e.target.checked);
+                this.handleCompleteTaskCheckboxChange(e.target.checked);
+            };
+
+            // Try multiple binding approaches
+            console.log('DEBUG: Adding multiple event bindings...');
+
+            // Method 1: onclick property
+            checkbox.onclick = (e) => {
+                console.log('DEBUG: onclick property fired, checked:', e.target.checked);
+                this.handleCompleteTaskCheckboxChange(e.target.checked);
+            };
+
+            // Method 2: onchange property
+            checkbox.onchange = (e) => {
+                console.log('DEBUG: onchange property fired, checked:', e.target.checked);
+                this.handleCompleteTaskCheckboxChange(e.target.checked);
+            };
+
+            // Method 3: addEventListener as backup
+            checkbox.addEventListener('change', this.checkboxChangeHandler);
+            checkbox.addEventListener('click', this.checkboxChangeHandler);
+
+            console.log('DEBUG: All event handlers added');
+
+            // Store reference for future access
+            this.completeTaskCheckbox = checkbox;
+
+            // Test that the checkbox is responsive
+            console.log('DEBUG: Testing checkbox properties - id:', checkbox.id, 'type:', checkbox.type, 'disabled:', checkbox.disabled);
+        }, 10);
     }
 
     handleCompleteTaskCheckboxChange(isChecked) {
