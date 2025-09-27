@@ -5042,6 +5042,7 @@ class Taakbeheer {
                         herhalingActief: !!herhalingType,
                         prioriteit: prioriteit,
                         lijst: 'afgewerkt',
+                        afgewerkt: new Date().toISOString(),
                         completedViaCheckbox: true
                     };
 
