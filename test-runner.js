@@ -7,13 +7,31 @@ const { db, pool } = require('./database');
 class TestRunner {
     constructor() {
         this.createdRecords = {
-            taken: [],      // Track task IDs 
+            taken: [],      // Track task IDs
             acties: [],     // Track action IDs
-            projecten: [],  // Track project IDs  
+            projecten: [],  // Track project IDs
             contexten: []   // Track context IDs
         };
         this.testResults = [];
         this.startTime = Date.now();
+        this.validUserId = null;
+    }
+
+    /**
+     * Get a valid user_id from existing data
+     */
+    async getValidUserId() {
+        if (this.validUserId) return this.validUserId;
+
+        const result = await pool.query('SELECT DISTINCT user_id FROM taken LIMIT 1');
+        if (result.rows.length > 0) {
+            this.validUserId = result.rows[0].user_id;
+            return this.validUserId;
+        }
+
+        // Fallback to a default if no users found
+        this.validUserId = 'test_user_id';
+        return this.validUserId;
     }
 
     /**
@@ -34,6 +52,7 @@ class TestRunner {
      */
     async createTestTask(taskData) {
         const testId = `test_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`;
+        const validUserId = await this.getValidUserId();
         const taskToCreate = {
             id: testId,
             tekst: taskData.tekst || 'Test taak',
@@ -47,19 +66,21 @@ class TestRunner {
             herhalingType: taskData.herhalingType || null,
             herhalingWaarde: taskData.herhalingWaarde || null,
             herhalingActief: taskData.herhalingActief || false,
-            afgewerkt: taskData.afgewerkt || null
+            afgewerkt: taskData.afgewerkt || null,
+            user_id: validUserId
         };
 
         try {
             // Insert direct in database
             await pool.query(`
-                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt, user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             `, [
                 taskToCreate.id, taskToCreate.tekst, taskToCreate.aangemaakt, taskToCreate.lijst,
-                taskToCreate.projectId, taskToCreate.verschijndatum, taskToCreate.contextId, 
-                taskToCreate.duur, taskToCreate.type, taskToCreate.herhalingType, 
-                taskToCreate.herhalingWaarde, taskToCreate.herhalingActief, taskToCreate.afgewerkt
+                taskToCreate.projectId, taskToCreate.verschijndatum, taskToCreate.contextId,
+                taskToCreate.duur, taskToCreate.type, taskToCreate.herhalingType,
+                taskToCreate.herhalingWaarde, taskToCreate.herhalingActief, taskToCreate.afgewerkt,
+                taskToCreate.user_id
             ]);
             
             this.createdRecords.taken.push(testId);
@@ -71,12 +92,12 @@ class TestRunner {
                 error.message.includes('herhaling_actief')) {
                 
                 await pool.query(`
-                    INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                    INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, user_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                 `, [
                     taskToCreate.id, taskToCreate.tekst, taskToCreate.aangemaakt, taskToCreate.lijst,
-                    taskToCreate.projectId, taskToCreate.verschijndatum, taskToCreate.contextId, 
-                    taskToCreate.duur, taskToCreate.type, taskToCreate.afgewerkt
+                    taskToCreate.projectId, taskToCreate.verschijndatum, taskToCreate.contextId,
+                    taskToCreate.duur, taskToCreate.type, taskToCreate.afgewerkt, taskToCreate.user_id
                 ]);
                 
                 this.createdRecords.taken.push(testId);
