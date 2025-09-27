@@ -4253,11 +4253,7 @@ class Taakbeheer {
     }
 
     async planTaak(id) {
-        console.log('DEBUG: planTaak called with id:', id, 'huidigeLijst:', this.huidigeLijst);
-        if (this.huidigeLijst !== 'inbox') {
-            console.log('DEBUG: planTaak early return - not inbox lijst');
-            return;
-        }
+        if (this.huidigeLijst !== 'inbox') return;
         
         if (!this.isLoggedIn()) {
             toast.warning('Log in om taken te plannen.');
@@ -4371,18 +4367,12 @@ class Taakbeheer {
     }
 
     setupCompleteTaskCheckbox() {
-        console.log('DEBUG: setupCompleteTaskCheckbox called');
-
         // Small delay to ensure DOM is fully updated
         setTimeout(() => {
             const checkbox = document.getElementById('completeTaskCheckbox');
             const button = document.getElementById('maakActieBtn');
 
-            console.log('DEBUG: Elements after timeout - checkbox:', !!checkbox, 'button:', !!button);
-            console.log('DEBUG: Checkbox element details:', checkbox);
-
             if (!checkbox || !button) {
-                console.log('DEBUG: Missing elements, returning');
                 return;
             }
 
@@ -4391,9 +4381,7 @@ class Taakbeheer {
             button.classList.remove('complete-mode');
             button.textContent = 'Maak actie';
 
-            console.log('DEBUG: Reset checkbox and button state');
-
-            // Clear any existing handlers by setting to null
+            // Clear any existing handlers
             checkbox.onclick = null;
             checkbox.onchange = null;
 
@@ -4401,82 +4389,31 @@ class Taakbeheer {
             if (this.checkboxChangeHandler) {
                 checkbox.removeEventListener('change', this.checkboxChangeHandler);
                 checkbox.removeEventListener('click', this.checkboxChangeHandler);
-                console.log('DEBUG: Removed existing addEventListener handlers');
             }
-
-            // Create bound handler function
-            this.checkboxChangeHandler = (e) => {
-                console.log('DEBUG: Event handler fired, type:', e.type, 'checked:', e.target.checked);
-                this.handleCompleteTaskCheckboxChange(e.target.checked);
-            };
-
-            // Try multiple binding approaches
-            console.log('DEBUG: Adding multiple event bindings...');
 
             // Method 1: onclick property
             checkbox.onclick = (e) => {
-                console.log('DEBUG: onclick property fired, checked:', e.target.checked);
                 this.handleCompleteTaskCheckboxChange(e.target.checked);
             };
 
             // Method 2: onchange property
             checkbox.onchange = (e) => {
-                console.log('DEBUG: onchange property fired, checked:', e.target.checked);
                 this.handleCompleteTaskCheckboxChange(e.target.checked);
             };
 
-            // Method 3: addEventListener as backup
-            checkbox.addEventListener('change', this.checkboxChangeHandler);
-            checkbox.addEventListener('click', this.checkboxChangeHandler);
-
-            console.log('DEBUG: All event handlers added');
-
             // Store reference for future access
             this.completeTaskCheckbox = checkbox;
-
-            // Test that the checkbox is responsive
-            console.log('DEBUG: Testing checkbox properties - id:', checkbox.id, 'type:', checkbox.type, 'disabled:', checkbox.disabled);
-
-            // Force test the checkbox state change
-            console.log('DEBUG: Forcing checkbox test...');
-            setTimeout(() => {
-                console.log('DEBUG: Before manual toggle - checked:', checkbox.checked);
-                checkbox.checked = true;
-                console.log('DEBUG: After manual toggle - checked:', checkbox.checked);
-
-                // Manually fire events
-                console.log('DEBUG: Manually firing click event...');
-                const clickEvent = new Event('click', { bubbles: true });
-                checkbox.dispatchEvent(clickEvent);
-
-                console.log('DEBUG: Manually firing change event...');
-                const changeEvent = new Event('change', { bubbles: true });
-                checkbox.dispatchEvent(changeEvent);
-
-                // Reset after test
-                setTimeout(() => {
-                    checkbox.checked = false;
-                    console.log('DEBUG: Reset checkbox after test');
-                }, 1000);
-            }, 100);
         }, 10);
     }
 
     handleCompleteTaskCheckboxChange(isChecked) {
-        console.log('DEBUG: handleCompleteTaskCheckboxChange called with isChecked:', isChecked);
-
         const button = document.getElementById('maakActieBtn');
         const checkbox = document.getElementById('completeTaskCheckbox');
         const checkboxLabel = checkbox?.parentElement;
         const taakNaam = document.getElementById('taakNaamInput').value.trim();
 
-        console.log('DEBUG: Elements found - button:', !!button, 'checkbox:', !!checkbox);
-        console.log('DEBUG: Current taakNaam:', taakNaam);
-        console.log('DEBUG: Button current state - text:', button?.textContent, 'disabled:', button?.disabled);
-
         if (isChecked) {
             // Checkbox is checked - enter completion mode
-            console.log('DEBUG: Entering completion mode');
             button.textContent = 'Taak afwerken';
             button.classList.add('complete-mode');
             if (checkboxLabel) {
@@ -4484,12 +4421,10 @@ class Taakbeheer {
             }
             // Enable button immediately if there's a task name
             if (taakNaam) {
-                console.log('DEBUG: Enabling button because taakNaam exists');
                 button.disabled = false;
             }
         } else {
             // Checkbox is unchecked - normal mode
-            console.log('DEBUG: Entering normal mode');
             button.textContent = 'Maak actie';
             button.classList.remove('complete-mode');
             if (checkboxLabel) {
@@ -4497,10 +4432,7 @@ class Taakbeheer {
             }
         }
 
-        console.log('DEBUG: Button after changes - text:', button.textContent, 'disabled:', button.disabled);
-
         // Update button state based on new validation rules
-        console.log('DEBUG: Calling updateButtonState()');
         this.updateButtonState();
     }
 
@@ -5336,41 +5268,29 @@ class Taakbeheer {
 
 
     updateButtonState() {
-        console.log('DEBUG: updateButtonState() called');
-
         const taakNaam = document.getElementById('taakNaamInput').value.trim();
         const projectId = document.getElementById('projectSelect').value;
         const verschijndatum = document.getElementById('verschijndatum').value;
         const contextId = document.getElementById('contextSelect').value;
         const duur = parseInt(document.getElementById('duur').value) || 0;
 
-        console.log('DEBUG: Field values - taakNaam:', taakNaam, 'projectId:', projectId, 'verschijndatum:', verschijndatum, 'contextId:', contextId, 'duur:', duur);
-
         // Check if completion checkbox is checked
         const completeTaskCheckbox = document.getElementById('completeTaskCheckbox');
         const isCompletionMode = completeTaskCheckbox && completeTaskCheckbox.checked;
-
-        console.log('DEBUG: completeTaskCheckbox found:', !!completeTaskCheckbox, 'checked:', completeTaskCheckbox?.checked, 'isCompletionMode:', isCompletionMode);
 
         // Validation logic depends on completion mode
         let isButtonEnabled;
         if (isCompletionMode) {
             // Completion mode: only task name required
             isButtonEnabled = !!taakNaam;
-            console.log('DEBUG: Completion mode - isButtonEnabled:', isButtonEnabled, '(only taakNaam required)');
         } else {
             // Normal mode: all fields required except project
             isButtonEnabled = taakNaam && verschijndatum && contextId && duur;
-            console.log('DEBUG: Normal mode - isButtonEnabled:', isButtonEnabled, '(all fields required except project)');
         }
 
         const button = document.getElementById('maakActieBtn');
         if (button) {
-            console.log('DEBUG: Setting button.disabled to:', !isButtonEnabled, '(was:', button.disabled, ')');
             button.disabled = !isButtonEnabled;
-            console.log('DEBUG: Button final state - text:', button.textContent, 'disabled:', button.disabled);
-        } else {
-            console.log('DEBUG: Button not found!');
         }
         
         // Update field styles alleen voor velden die al geïnteracteerd zijn
