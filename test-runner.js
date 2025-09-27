@@ -878,6 +878,9 @@ async function runPerformanceTests(testRunner) {
     const measureApiCall = async (url, method = 'GET', body = null) => {
         const startTime = Date.now();
 
+        // Make URL absolute if it's relative
+        const absoluteUrl = url.startsWith('http') ? url : `http://localhost:3000${url}`;
+
         const options = {
             method,
             headers: { 'Content-Type': 'application/json' }
@@ -887,7 +890,7 @@ async function runPerformanceTests(testRunner) {
             options.body = JSON.stringify(body);
         }
 
-        const response = await fetch(url, options);
+        const response = await fetch(absoluteUrl, options);
         const endTime = Date.now();
         const responseTime = endTime - startTime;
 
