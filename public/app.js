@@ -4369,26 +4369,26 @@ class Taakbeheer {
     setupCompleteTaskCheckbox() {
         const checkbox = document.getElementById('completeTaskCheckbox');
         const button = document.getElementById('maakActieBtn');
-        const checkboxLabel = checkbox?.parentElement;
 
         if (!checkbox || !button) return;
 
         // Reset checkbox state
         checkbox.checked = false;
-        if (checkboxLabel) {
-            checkboxLabel.classList.remove('checked');
-        }
         button.classList.remove('complete-mode');
         button.textContent = 'Maak actie';
 
-        // Remove any existing listeners to prevent duplicates
-        const newCheckbox = checkbox.cloneNode(true);
-        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+        // Remove existing listener if any
+        if (this.checkboxChangeHandler) {
+            checkbox.removeEventListener('change', this.checkboxChangeHandler);
+        }
 
-        // Add event listener to the new checkbox
-        newCheckbox.addEventListener('change', (e) => {
+        // Create bound handler
+        this.checkboxChangeHandler = (e) => {
             this.handleCompleteTaskCheckboxChange(e.target.checked);
-        });
+        };
+
+        // Add new listener
+        checkbox.addEventListener('change', this.checkboxChangeHandler);
     }
 
     handleCompleteTaskCheckboxChange(isChecked) {
