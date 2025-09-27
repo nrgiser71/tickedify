@@ -619,7 +619,7 @@ async function runTaskCompletionAPITests(testRunner) {
 
         // This should FAIL until T010 is implemented
         try {
-            const response = await fetch(`/api/taak/${testTask.id}`, {
+            const response = await fetch(`http://localhost:3000/api/taak/${testTask.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(completionData)
@@ -676,7 +676,7 @@ async function runRecurringTaskAPITests(testRunner) {
 
         // This should FAIL until T012 is implemented
         try {
-            const response = await fetch(`/api/taak/${recurringTask.id}`, {
+            const response = await fetch(`http://localhost:3000/api/taak/${recurringTask.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(completionData)
@@ -721,7 +721,7 @@ async function runErrorHandlingAPITests(testRunner) {
         };
 
         try {
-            const response = await fetch('/api/taak/99999', {
+            const response = await fetch('http://localhost:3000/api/taak/99999', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(completionData)
@@ -756,7 +756,7 @@ async function runErrorHandlingAPITests(testRunner) {
         };
 
         try {
-            const response = await fetch(`/api/taak/${testTask.id}`, {
+            const response = await fetch(`http://localhost:3000/api/taak/${testTask.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(completionData)
