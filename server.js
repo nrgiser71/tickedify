@@ -3795,19 +3795,117 @@ app.put('/api/taak/:id', async (req, res) => {
         if (!db) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { id } = req.params;
         const userId = getCurrentUserId(req);
+        const { completedViaCheckbox, ...updateData } = req.body;
+
         console.log(`🔄 Server: Updating task ${id} for user ${userId}:`, JSON.stringify(req.body, null, 2));
-        
-        const success = await db.updateTask(id, req.body, userId);
-        
-        if (success) {
-            console.log(`Task ${id} updated successfully`);
-            res.json({ success: true });
+
+        // Check if this is a completion via checkbox
+        if (completedViaCheckbox && updateData.lijst === 'afgewerkt') {
+            console.log(`✅ Processing task completion via checkbox for task ${id}`);
+
+            // First, get the current task to check its status and recurring settings
+            const currentTask = await db.getTask(id, userId);
+            if (!currentTask) {
+                console.log(`Task ${id} not found`);
+                return res.status(404).json({
+                    success: false,
+                    error: 'Task not found',
+                    code: 'TASK_NOT_FOUND'
+                });
+            }
+
+            // Check if task is already completed
+            if (currentTask.lijst === 'afgewerkt') {
+                console.log(`Task ${id} is already completed`);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Task is already completed',
+                    code: 'INVALID_TASK_STATE',
+                    currentState: currentTask.lijst
+                });
+            }
+
+            // Validate required completion fields
+            if (!updateData.afgewerkt) {
+                console.log(`Missing completion timestamp for task ${id}`);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Completion timestamp (afgewerkt) is required',
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+
+            // Update task to completed status
+            const success = await db.updateTask(id, updateData, userId);
+
+            if (!success) {
+                console.log(`Failed to update task ${id} to completed status`);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to update task status',
+                    code: 'UPDATE_FAILED'
+                });
+            }
+
+            // Get updated task for response
+            const updatedTask = await db.getTask(id, userId);
+
+            // Check if task has recurring settings and needs a new instance
+            let recurringTaskCreated = false;
+            let nextTask = null;
+
+            if (currentTask.herhaling_actief && currentTask.herhaling_type) {
+                console.log(`🔄 Creating recurring task for completed task ${id} with pattern: ${currentTask.herhaling_type}`);
+
+                try {
+                    // Create next recurring task instance
+                    const recurringResult = await db.createRecurringTask(currentTask);
+                    if (recurringResult && recurringResult.success) {
+                        recurringTaskCreated = true;
+                        nextTask = recurringResult.newTask;
+                        console.log(`✅ Created recurring task ${nextTask.id} for completed task ${id}`);
+                    } else {
+                        console.log(`⚠️ Failed to create recurring task for ${id}:`, recurringResult);
+                    }
+                } catch (recurringError) {
+                    console.error(`❌ Error creating recurring task for ${id}:`, recurringError);
+                    // Don't fail the main completion - just log the error
+                }
+            }
+
+            // Return success response with task data and recurring info
+            console.log(`✅ Task ${id} completed successfully via checkbox`);
+            return res.json({
+                success: true,
+                task: {
+                    id: updatedTask.id,
+                    tekst: updatedTask.tekst,
+                    lijst: updatedTask.lijst,
+                    afgewerkt: updatedTask.afgewerkt,
+                    herhaling_actief: updatedTask.herhaling_actief
+                },
+                recurringTaskCreated,
+                ...(nextTask && { nextTask: {
+                    id: nextTask.id,
+                    tekst: nextTask.tekst,
+                    lijst: nextTask.lijst,
+                    verschijndatum: nextTask.verschijndatum
+                }})
+            });
         } else {
-            console.log(`Task ${id} not found or update failed`);
-            res.status(404).json({ error: 'Taak niet gevonden' });
+            // Normal task update (existing functionality)
+            const success = await db.updateTask(id, req.body, userId);
+
+            if (success) {
+                console.log(`Task ${id} updated successfully`);
+                res.json({ success: true });
+            } else {
+                console.log(`Task ${id} not found or update failed`);
+                res.status(404).json({ error: 'Taak niet gevonden' });
+            }
         }
     } catch (error) {
         console.error(`Error updating task ${id}:`, error);
@@ -4145,6 +4243,99 @@ app.get('/api/test/run-business', async (req, res) => {
         res.json(summary);
     } catch (error) {
         console.error('❌ Business logic tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-taskCompletionAPI', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runTaskCompletionAPITests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Task completion API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-recurringTaskAPI', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runRecurringTaskAPITests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Recurring task API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-errorHandlingAPI', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runErrorHandlingAPITests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Error handling API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-uiIntegration', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runUIIntegrationTests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ UI integration tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Performance Tests API endpoint
+app.get('/api/test/run-performance', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runPerformanceTests(testRunner);
+
+        const summary = {
+            passed: testRunner.testResults.filter(r => r.passed).length,
+            failed: testRunner.testResults.filter(r => !r.passed).length,
+            total: testRunner.testResults.length,
+            results: testRunner.testResults,
+            cleanup_successful: true,
+            test_data_created: Object.values(testRunner.createdRecords).flat().length
+        };
+
+        await testRunner.cleanup();
+        console.log('✅ Performance tests completed successfully');
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Performance tests failed:', error);
         res.status(500).json({ error: error.message });
     }
 });

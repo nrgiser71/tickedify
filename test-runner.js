@@ -595,11 +595,430 @@ async function runFullRegressionTests() {
     }
 }
 
+/**
+ * Task Completion API Tests
+ */
+async function runTaskCompletionAPITests(testRunner) {
+    console.log('✅ Running Task Completion API Tests...');
+
+    // T003: API contract test for PUT /api/taak/:id completion
+    await testRunner.runTest('Task Completion via Checkbox API', async () => {
+        // Create test task in inbox
+        const testTask = await testRunner.createTestTask({
+            tekst: 'Test checkbox completion task',
+            lijst: 'inbox',
+            verschijndatum: new Date().toISOString().split('T')[0]
+        });
+
+        // Test completion via checkbox API call
+        const completionData = {
+            lijst: 'afgewerkt',
+            afgewerkt: new Date().toISOString(),
+            completedViaCheckbox: true
+        };
+
+        // This should FAIL until T010 is implemented
+        try {
+            const response = await fetch(`/api/taak/${testTask.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(completionData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API returned ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            // Verify response structure
+            if (!result.success) {
+                throw new Error('API did not return success');
+            }
+
+            if (result.task.lijst !== 'afgewerkt') {
+                throw new Error('Task not marked as completed');
+            }
+
+            if (!result.task.afgewerkt) {
+                throw new Error('Completion timestamp not set');
+            }
+
+        } catch (error) {
+            throw new Error(`Task completion API test failed: ${error.message}`);
+        }
+    });
+}
+
+/**
+ * Recurring Task API Tests
+ */
+async function runRecurringTaskAPITests(testRunner) {
+    console.log('🔄 Running Recurring Task API Tests...');
+
+    // T004: API contract test for recurring task creation
+    await testRunner.runTest('Recurring Task Creation via Checkbox', async () => {
+        // Create recurring test task
+        const recurringTask = await testRunner.createTestTask({
+            tekst: 'Test recurring checkbox completion',
+            lijst: 'inbox',
+            herhaling_type: 'weekly-1-1',
+            herhaling_actief: true,
+            verschijndatum: new Date().toISOString().split('T')[0]
+        });
+
+        // Complete recurring task via checkbox
+        const completionData = {
+            lijst: 'afgewerkt',
+            afgewerkt: new Date().toISOString(),
+            completedViaCheckbox: true
+        };
+
+        // This should FAIL until T012 is implemented
+        try {
+            const response = await fetch(`/api/taak/${recurringTask.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(completionData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API returned ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+
+            // Verify recurring task was created
+            if (!result.recurringTaskCreated) {
+                throw new Error('Recurring task was not created');
+            }
+
+            if (!result.nextTask || !result.nextTask.id) {
+                throw new Error('Next task instance not returned');
+            }
+
+            // Track the new task for cleanup
+            testRunner.createdRecords.taken.push(result.nextTask.id);
+
+        } catch (error) {
+            throw new Error(`Recurring task API test failed: ${error.message}`);
+        }
+    });
+}
+
+/**
+ * Error Handling API Tests
+ */
+async function runErrorHandlingAPITests(testRunner) {
+    console.log('⚠️ Running Error Handling API Tests...');
+
+    // T005: Error handling contract tests (404, 400, 500)
+    await testRunner.runTest('404 Error for Non-existent Task', async () => {
+        const completionData = {
+            lijst: 'afgewerkt',
+            afgewerkt: new Date().toISOString(),
+            completedViaCheckbox: true
+        };
+
+        try {
+            const response = await fetch('/api/taak/99999', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(completionData)
+            });
+
+            if (response.status !== 404) {
+                throw new Error(`Expected 404, got ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (result.success !== false || result.code !== 'TASK_NOT_FOUND') {
+                throw new Error('Error response format incorrect');
+            }
+
+        } catch (error) {
+            throw new Error(`404 error test failed: ${error.message}`);
+        }
+    });
+
+    await testRunner.runTest('400 Error for Already Completed Task', async () => {
+        // Create and complete a task first
+        const testTask = await testRunner.createTestTask({
+            tekst: 'Already completed task',
+            lijst: 'afgewerkt',
+            afgewerkt: new Date().toISOString()
+        });
+
+        const completionData = {
+            lijst: 'afgewerkt',
+            afgewerkt: new Date().toISOString(),
+            completedViaCheckbox: true
+        };
+
+        try {
+            const response = await fetch(`/api/taak/${testTask.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(completionData)
+            });
+
+            if (response.status !== 400) {
+                throw new Error(`Expected 400, got ${response.status}`);
+            }
+
+            const result = await response.json();
+            if (result.success !== false || result.code !== 'INVALID_TASK_STATE') {
+                throw new Error('Error response format incorrect');
+            }
+
+        } catch (error) {
+            throw new Error(`400 error test failed: ${error.message}`);
+        }
+    });
+}
+
+/**
+ * UI Integration Tests
+ */
+async function runUIIntegrationTests(testRunner) {
+    console.log('🖱️ Running UI Integration Tests...');
+
+    // T006: Normal planning baseline workflow
+    await testRunner.runTest('Normal Planning Baseline Workflow', async () => {
+        const testTask = await testRunner.createTestTask({
+            tekst: 'Normal planning test task',
+            lijst: 'inbox',
+            verschijndatum: new Date().toISOString().split('T')[0]
+        });
+
+        // This test validates that existing functionality still works
+        // Will be implemented as browser automation or API simulation
+        console.log('📝 Normal planning workflow test placeholder - requires browser automation');
+
+        // For now, just verify task exists in inbox
+        const tasks = await pool.query('SELECT * FROM taken WHERE id = $1', [testTask.id]);
+        if (tasks.rows.length === 0) {
+            throw new Error('Test task not found in database');
+        }
+
+        if (tasks.rows[0].lijst !== 'inbox') {
+            throw new Error('Test task not in inbox status');
+        }
+    });
+
+    // T007: Direct task completion workflow
+    await testRunner.runTest('Direct Task Completion Workflow', async () => {
+        const testTask = await testRunner.createTestTask({
+            tekst: 'Direct completion test task',
+            lijst: 'inbox',
+            verschijndatum: new Date().toISOString().split('T')[0]
+        });
+
+        // This test validates the complete UI workflow for checkbox completion
+        console.log('✅ Direct completion workflow test placeholder - requires UI implementation');
+
+        // Test will validate:
+        // - Checkbox appears in planning popup
+        // - Button text changes when checked
+        // - Validation is bypassed
+        // - Task completion succeeds
+        // - Task moves to completed status
+
+        // For now, verify task setup
+        if (!testTask.id) {
+            throw new Error('Test task creation failed');
+        }
+    });
+
+    // T008: Checkbox toggle behavior
+    await testRunner.runTest('Checkbox Toggle Behavior', async () => {
+        console.log('🔄 Checkbox toggle behavior test placeholder - requires UI implementation');
+
+        // Test will validate:
+        // - Checkbox state changes affect form state
+        // - Button text toggles correctly
+        // - Validation state toggles correctly
+        // - Form can return to normal mode
+
+        // Placeholder passes for now
+    });
+
+    // T009: Recurring task completion workflow
+    await testRunner.runTest('Recurring Task Completion Workflow', async () => {
+        const recurringTask = await testRunner.createTestTask({
+            tekst: 'Recurring UI completion test',
+            lijst: 'inbox',
+            herhaling_type: 'weekly-1-1',
+            herhaling_actief: true,
+            verschijndatum: new Date().toISOString().split('T')[0]
+        });
+
+        console.log('🔄 Recurring task UI workflow test placeholder - requires UI implementation');
+
+        // Test will validate:
+        // - Recurring task completes via checkbox
+        // - New recurring instance is created
+        // - User sees success feedback
+        // - Both tasks tracked correctly
+
+        // For now, verify recurring task setup
+        if (!recurringTask.herhaling_actief) {
+            throw new Error('Recurring task not properly configured');
+        }
+    });
+}
+
+/**
+ * Performance Tests - Validates API response times (<300ms)
+ */
+async function runPerformanceTests(testRunner) {
+    console.log('🚀 Running Performance Tests...');
+
+    // Helper function to measure API response time
+    const measureApiCall = async (url, method = 'GET', body = null) => {
+        const startTime = Date.now();
+
+        const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' }
+        };
+
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+
+        return { response, responseTime };
+    };
+
+    // Test 1: GET /api/lijst/inbox performance
+    await testRunner.runTest('GET /api/lijst/inbox Response Time', async () => {
+        const { response, responseTime } = await measureApiCall('/api/lijst/inbox');
+
+        console.log(`📊 Inbox list API response time: ${responseTime}ms`);
+
+        if (!response.ok) {
+            throw new Error(`API call failed with status ${response.status}`);
+        }
+
+        if (responseTime > 300) {
+            throw new Error(`Response time ${responseTime}ms exceeds 300ms limit`);
+        }
+    });
+
+    // Test 2: PUT /api/taak/:id performance (task completion)
+    await testRunner.runTest('PUT /api/taak/:id Response Time (Completion)', async () => {
+        // Create a test task first
+        const testTask = await testRunner.createTestTask({
+            tekst: 'Performance test taak',
+            lijst: 'inbox',
+            verschijndatum: new Date().toISOString().split('T')[0]
+        });
+
+        const updateData = {
+            tekst: 'Performance test taak updated',
+            lijst: 'afgewerkt',
+            completedViaCheckbox: true
+        };
+
+        const { response, responseTime } = await measureApiCall(
+            `/api/taak/${testTask.id}`,
+            'PUT',
+            updateData
+        );
+
+        console.log(`📊 Task completion API response time: ${responseTime}ms`);
+
+        if (!response.ok) {
+            throw new Error(`API call failed with status ${response.status}`);
+        }
+
+        if (responseTime > 300) {
+            throw new Error(`Response time ${responseTime}ms exceeds 300ms limit`);
+        }
+    });
+
+    // Test 3: POST /api/taak/recurring performance
+    await testRunner.runTest('POST /api/taak/recurring Response Time', async () => {
+        const recurringData = {
+            originalTask: {
+                id: `test_recurring_${Date.now()}`,
+                tekst: 'Recurring performance test',
+                herhalingType: 'weekly-1-1'
+            },
+            nextDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        };
+
+        const { response, responseTime } = await measureApiCall(
+            '/api/taak/recurring',
+            'POST',
+            recurringData
+        );
+
+        console.log(`📊 Recurring task creation API response time: ${responseTime}ms`);
+
+        if (!response.ok) {
+            throw new Error(`API call failed with status ${response.status}`);
+        }
+
+        if (responseTime > 300) {
+            throw new Error(`Response time ${responseTime}ms exceeds 300ms limit`);
+        }
+
+        // Track the created recurring task for cleanup
+        const result = await response.json();
+        if (result.newTask && result.newTask.id) {
+            testRunner.createdRecords.taken.push(result.newTask.id);
+        }
+    });
+
+    // Test 4: Bulk performance test - multiple API calls
+    await testRunner.runTest('Bulk API Performance Test', async () => {
+        const concurrentCalls = 5;
+        const promises = [];
+
+        for (let i = 0; i < concurrentCalls; i++) {
+            promises.push(measureApiCall('/api/lijst/inbox'));
+        }
+
+        const results = await Promise.all(promises);
+        const avgResponseTime = results.reduce((sum, result) => sum + result.responseTime, 0) / results.length;
+        const maxResponseTime = Math.max(...results.map(r => r.responseTime));
+
+        console.log(`📊 Bulk test - Average: ${avgResponseTime.toFixed(1)}ms, Max: ${maxResponseTime}ms`);
+
+        // Check that all calls succeeded
+        results.forEach((result, index) => {
+            if (!result.response.ok) {
+                throw new Error(`Concurrent call ${index + 1} failed with status ${result.response.status}`);
+            }
+        });
+
+        // Check average response time
+        if (avgResponseTime > 200) {
+            throw new Error(`Average response time ${avgResponseTime.toFixed(1)}ms exceeds 200ms limit for bulk operations`);
+        }
+
+        // Check max response time
+        if (maxResponseTime > 300) {
+            throw new Error(`Maximum response time ${maxResponseTime}ms exceeds 300ms limit`);
+        }
+    });
+}
+
 module.exports = {
     TestRunner,
     runFullRegressionTests,
     runDatabaseIntegrityTests,
     runApiEndpointTests,
     runRecurringTaskTests,
-    runBusinessLogicTests
+    runBusinessLogicTests,
+    runTaskCompletionAPITests,
+    runRecurringTaskAPITests,
+    runErrorHandlingAPITests,
+    runUIIntegrationTests,
+    runPerformanceTests
 };

@@ -1907,6 +1907,54 @@ button:focus {
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3) !important;
 }
 
+/* Checkbox groep styling voor taak afwerken */
+.form-groep.checkbox-groep {
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+.checkbox-groep .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--macos-text-primary);
+    cursor: pointer;
+    padding: 8px 12px;
+    background: var(--macos-bg-secondary);
+    border-radius: var(--macos-radius-medium);
+    border: 1px solid var(--macos-gray-5);
+    transition: all 0.2s ease;
+}
+
+.checkbox-groep .checkbox-label:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.checkbox-groep .checkbox-label input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--macos-blue);
+}
+
+.checkbox-groep .checkbox-label.checked {
+    background: var(--soft-blue-bg);
+    border-color: var(--macos-blue);
+    color: var(--macos-blue);
+}
+
+/* Button state styling voor taak afwerken modus */
+.popup-acties #maakActieBtn.complete-mode {
+    background: var(--macos-green);
+    border-color: var(--macos-green);
+    color: white;
+}
+
+.popup-acties #maakActieBtn.complete-mode:hover {
+    background: var(--macos-green-hover);
+    border-color: var(--macos-green-hover);
+}
+
 .select-met-toevoeg button:focus {
     outline: 2px solid #3498db;
     outline-offset: 2px;

@@ -4315,10 +4315,13 @@ class Taakbeheer {
             
             // Set button text for new action (from inbox)
             this.setActionButtonText(true);
-            
+
             // Show/hide delete button for inbox tasks only
             this.setDeleteButtonVisibility();
-            
+
+            // Setup checkbox event handler for task completion
+            this.setupCompleteTaskCheckbox();
+
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
@@ -4361,6 +4364,56 @@ class Taakbeheer {
             // Track usage for progressive F-key tips
             this.trackPlanningUsage();
         }
+    }
+
+    setupCompleteTaskCheckbox() {
+        const checkbox = document.getElementById('completeTaskCheckbox');
+        const button = document.getElementById('maakActieBtn');
+        const checkboxLabel = checkbox?.parentElement;
+
+        if (!checkbox || !button) return;
+
+        // Reset checkbox state
+        checkbox.checked = false;
+        if (checkboxLabel) {
+            checkboxLabel.classList.remove('checked');
+        }
+        button.classList.remove('complete-mode');
+        button.textContent = 'Maak actie';
+
+        // Remove any existing listeners to prevent duplicates
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+
+        // Add event listener to the new checkbox
+        newCheckbox.addEventListener('change', (e) => {
+            this.handleCompleteTaskCheckboxChange(e.target.checked);
+        });
+    }
+
+    handleCompleteTaskCheckboxChange(isChecked) {
+        const button = document.getElementById('maakActieBtn');
+        const checkbox = document.getElementById('completeTaskCheckbox');
+        const checkboxLabel = checkbox?.parentElement;
+
+        if (isChecked) {
+            // Checkbox is checked - enter completion mode
+            button.textContent = 'Taak afwerken';
+            button.classList.add('complete-mode');
+            if (checkboxLabel) {
+                checkboxLabel.classList.add('checked');
+            }
+        } else {
+            // Checkbox is unchecked - normal mode
+            button.textContent = 'Maak actie';
+            button.classList.remove('complete-mode');
+            if (checkboxLabel) {
+                checkboxLabel.classList.remove('checked');
+            }
+        }
+
+        // Update button state based on new validation rules
+        this.updateButtonState();
     }
 
     sluitPopup() {
@@ -4908,12 +4961,24 @@ class Taakbeheer {
         const isInboxTaak = this.huidigeLijst !== 'acties';
         const prioriteit = document.getElementById('prioriteitSelect').value || 'gemiddeld';
 
+        // Check if completion checkbox is checked
+        const completeTaskCheckbox = document.getElementById('completeTaskCheckbox');
+        const isCompletionMode = completeTaskCheckbox && completeTaskCheckbox.checked;
+
         console.log('maakActie - herhalingType:', herhalingType);
         console.log('maakActie - herhalingActief:', !!herhalingType);
         console.log('maakActie - prioriteit:', prioriteit, 'isInboxTaak:', isInboxTaak);
+        console.log('maakActie - isCompletionMode:', isCompletionMode);
 
-        if (!taakNaam || !verschijndatum || !contextId || !duur) {
+        // Validation: skip required field validation if in completion mode
+        if (!isCompletionMode && (!taakNaam || !verschijndatum || !contextId || !duur)) {
             toast.warning('Alle velden behalve project zijn verplicht!');
+            return;
+        }
+
+        // Minimal validation for completion mode - only task name required
+        if (isCompletionMode && !taakNaam) {
+            toast.warning('Taaknaam is verplicht!');
             return;
         }
 
@@ -4960,65 +5025,119 @@ class Taakbeheer {
                     }
                 }
             } else {
-                // Maak nieuwe actie van inbox taak
+                // Handle inbox task - either create action or complete directly
                 const taak = this.taken.find(t => t.id === this.huidigeTaakId);
                 if (!taak) return;
 
-                const actie = {
-                    id: taak.id,
-                    tekst: taakNaam,
-                    aangemaakt: taak.aangemaakt,
-                    projectId: projectId,
-                    verschijndatum: verschijndatum,
-                    contextId: contextId,
-                    duur: duur,
-                    opmerkingen: opmerkingen,
-                    type: 'actie',
-                    herhalingType: herhalingType,
-                    herhalingActief: !!herhalingType,
-                    prioriteit: prioriteit
-                };
+                if (isCompletionMode) {
+                    // Complete task directly via checkbox completion
+                    const updateData = {
+                        tekst: taakNaam,
+                        projectId: projectId || null,
+                        verschijndatum: verschijndatum || null,
+                        contextId: contextId || null,
+                        duur: duur || 0,
+                        opmerkingen: opmerkingen,
+                        herhalingType: herhalingType,
+                        herhalingActief: !!herhalingType,
+                        prioriteit: prioriteit,
+                        lijst: 'afgewerkt',
+                        completedViaCheckbox: true
+                    };
 
-                // Save the new action via direct single action API (bypasses list corruption issues)
-                const response = await fetch('/api/debug/add-single-action', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(actie)
-                });
-                
-                if (response.ok) {
-                    console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
-                    
-                    // Save subtaken if any were created
-                    if (subtakenManager) {
-                        await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
-                    }
-                    
-                    // Only remove from inbox AFTER successful save
-                    this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-                    
-                    // If we're currently viewing acties, refresh the list with preserved filters
-                    if (this.huidigeLijst === 'acties') {
-                        await this.preserveActionsFilters(() => this.laadHuidigeLijst());
-                    }
-                    
-                    // Probeer automatisch volgende inbox taak te openen
-                    // Loading blijft actief totdat volgende taak geladen is
-                    const volgendeGeopend = await this.openVolgendeInboxTaak();
-                    if (!volgendeGeopend) {
-                        this.sluitPopup();
+                    const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updateData)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Taak afgewerkt via checkbox:', result);
+
+                        if (result.recurringCreated) {
+                            toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${result.nextDate}`);
+                        } else {
+                            toast.success('Taak afgewerkt!');
+                        }
+
+                        // Save subtaken if any were created
+                        if (subtakenManager) {
+                            await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                        }
+
+                        // Remove from inbox
+                        this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+
+                        // Open next inbox task or close popup
+                        const volgendeGeopend = await this.openVolgendeInboxTaak();
+                        if (!volgendeGeopend) {
+                            this.sluitPopup();
+                        }
+                    } else {
+                        console.error('Fout bij afwerken taak:', response.status);
+                        toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                        return;
                     }
                 } else {
-                    console.error('Fout bij opslaan actie:', response.status);
-                    toast.error('Fout bij plannen van taak. Probeer opnieuw.');
-                    return;
+                    // Create new action from inbox task (normal mode)
+                    const actie = {
+                        id: taak.id,
+                        tekst: taakNaam,
+                        aangemaakt: taak.aangemaakt,
+                        projectId: projectId,
+                        verschijndatum: verschijndatum,
+                        contextId: contextId,
+                        duur: duur,
+                        opmerkingen: opmerkingen,
+                        type: 'actie',
+                        herhalingType: herhalingType,
+                        herhalingActief: !!herhalingType,
+                        prioriteit: prioriteit
+                    };
+
+                    // Save the new action via direct single action API (bypasses list corruption issues)
+                    const response = await fetch('/api/debug/add-single-action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(actie)
+                    });
+
+                    if (response.ok) {
+                        console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
+
+                        // Save subtaken if any were created
+                        if (subtakenManager) {
+                            await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                        }
+
+                        // Only remove from inbox AFTER successful save
+                        this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+                        // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+
+                        // If we're currently viewing acties, refresh the list with preserved filters
+                        if (this.huidigeLijst === 'acties') {
+                            await this.preserveActionsFilters(() => this.laadHuidigeLijst());
+                        }
+
+                        // Probeer automatisch volgende inbox taak te openen
+                        // Loading blijft actief totdat volgende taak geladen is
+                        const volgendeGeopend = await this.openVolgendeInboxTaak();
+                        if (!volgendeGeopend) {
+                            this.sluitPopup();
+                        }
+                    } else {
+                        console.error('Fout bij opslaan actie:', response.status);
+                        toast.error('Fout bij plannen van taak. Probeer opnieuw.');
+                        return;
+                    }
                 }
             }
         }, {
             operationId: 'save-action',
             button: maakActieBtn,
-            message: isInboxTaak ? 'Taak opslaan en volgende laden...' : 'Actie opslaan...'
+            message: isCompletionMode ? 'Taak afwerken en volgende laden...' :
+                    (isInboxTaak ? 'Taak opslaan en volgende laden...' : 'Actie opslaan...')
         });
     }
 
@@ -5134,21 +5253,34 @@ class Taakbeheer {
         const contextId = document.getElementById('contextSelect').value;
         const duur = parseInt(document.getElementById('duur').value) || 0;
 
-        const alleVeldenIngevuld = taakNaam && verschijndatum && contextId && duur;
-        
+        // Check if completion checkbox is checked
+        const completeTaskCheckbox = document.getElementById('completeTaskCheckbox');
+        const isCompletionMode = completeTaskCheckbox && completeTaskCheckbox.checked;
+
+        // Validation logic depends on completion mode
+        let isButtonEnabled;
+        if (isCompletionMode) {
+            // Completion mode: only task name required
+            isButtonEnabled = !!taakNaam;
+        } else {
+            // Normal mode: all fields required except project
+            isButtonEnabled = taakNaam && verschijndatum && contextId && duur;
+        }
+
         const button = document.getElementById('maakActieBtn');
         if (button) {
-            button.disabled = !alleVeldenIngevuld;
+            button.disabled = !isButtonEnabled;
         }
         
         // Update field styles alleen voor velden die al geïnteracteerd zijn
+        // In completion mode, only validate task name
         const fieldValues = {
             'taakNaamInput': taakNaam,
-            'verschijndatum': verschijndatum,
-            'contextSelect': contextId,
-            'duur': duur
+            'verschijndatum': isCompletionMode ? true : verschijndatum,
+            'contextSelect': isCompletionMode ? true : contextId,
+            'duur': isCompletionMode ? true : duur
         };
-        
+
         Object.keys(fieldValues).forEach(fieldId => {
             if (this.touchedFields.has(fieldId)) {
                 this.updateFieldStyle(fieldId, fieldValues[fieldId]);

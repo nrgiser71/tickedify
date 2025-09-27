@@ -398,6 +398,34 @@ const initDatabase = async () => {
 
 // Database helper functions
 const db = {
+  // Get a single task by ID for a specific user
+  async getTask(taskId, userId) {
+    try {
+      if (!pool) {
+        throw new Error('Database pool not available');
+      }
+
+      if (!userId) {
+        console.warn('⚠️ getTask called without userId - operation cancelled');
+        return null;
+      }
+
+      const result = await pool.query(
+        'SELECT * FROM taken WHERE id = $1 AND user_id = $2',
+        [taskId, userId]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error getting task:', error);
+      throw error;
+    }
+  },
+
   // Get all items from a specific list for a specific user
   async getList(listName, userId) {
     try {
