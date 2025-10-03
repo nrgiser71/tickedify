@@ -7945,6 +7945,15 @@ class Taakbeheer {
         await this.laadProjecten();
         await this.laadContexten();
 
+        // Load top priorities for today to show stars in planning
+        const prioriteitenResponse = await fetch(`/api/prioriteiten/${today}`);
+        if (prioriteitenResponse.ok) {
+            const prioriteiten = await prioriteitenResponse.json();
+            this.topPrioriteiten = prioriteiten; // Store as array, not indexed by position
+        } else {
+            this.topPrioriteiten = [];
+        }
+
         // Laad dagelijkse planning voor vandaag
         const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
         const planning = planningResponse.ok ? await planningResponse.json() : [];
