@@ -2976,24 +2976,21 @@ button:focus {
 
 /* Make the section containers themselves compact when collapsed */
 .templates-sectie.collapsed,
-.tijd-sectie.collapsed,
-.top-prioriteiten-sectie.collapsed {
+.tijd-sectie.collapsed {
     margin-bottom: 2px !important;
     padding: 0 !important;
     min-height: auto !important;
 }
 
 .templates-sectie.collapsed .section-header,
-.tijd-sectie.collapsed .section-header,
-.top-prioriteiten-sectie.collapsed .section-header {
+.tijd-sectie.collapsed .section-header {
     margin: 0 !important;
     padding: 4px 8px !important;
 }
 
 /* Completely minimize collapsed containers - only header visible */
 .templates-sectie.collapsed,
-.tijd-sectie.collapsed,
-.top-prioriteiten-sectie.collapsed {
+.tijd-sectie.collapsed {
     /* Remove ALL spacing and sizing */
     border: none !important;
     background: transparent !important;
@@ -3009,8 +3006,7 @@ button:focus {
 
 /* Header becomes the entire visible element */
 .templates-sectie.collapsed .section-header,
-.tijd-sectie.collapsed .section-header,
-.top-prioriteiten-sectie.collapsed .section-header {
+.tijd-sectie.collapsed .section-header {
     margin: 0 !important;
     padding: 3px 8px !important;
     background: rgba(0, 0, 0, 0.05) !important;
@@ -4181,15 +4177,13 @@ button:focus {
     }
     
     .tijd-sectie .section-content,
-    .templates-sectie .section-content,
-    .top-prioriteiten-sectie .section-content {
+    .templates-sectie .section-content {
         padding: 10px !important;
     }
     
     /* Smaller margins between sections */
     .tijd-sectie,
-    .templates-sectie,
-    .top-prioriteiten-sectie {
+    .templates-sectie {
         margin-bottom: 8px !important;
     }
     
@@ -4447,194 +4441,41 @@ button:focus {
     border-color: var(--soft-green-hover);
 }
 
-/* Top 3 Priorities section */
-.top-prioriteiten-sectie {
-    background: linear-gradient(135deg, var(--priority-bg), var(--macos-bg-primary));
-    border-radius: var(--macos-radius-medium);
-    border: 1px solid var(--priority-border);
-    margin-bottom: 10px;
-    box-shadow: 0 2px 8px var(--priority-shadow);
-}
-
-.top-prioriteiten-sectie .section-content {
-    padding: 12px;
-}
-
-.top-prioriteiten-sectie h3 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: var(--priority-text);
-    font-weight: 600;
-    text-align: center;
-}
-
-.prioriteit-slots {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.prioriteit-slot {
+/* Top Priority Star Checkbox Styling */
+.actie-star {
     display: flex;
     align-items: center;
-    background: white;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 10px;
+    margin-right: 8px;
     position: relative;
-    transition: all 0.3s ease;
-    min-height: 50px;
 }
 
-.prioriteit-slot.empty {
-    border-style: dashed;
-    border-color: var(--priority-border);
-    background: var(--priority-bg);
-}
-
-.prioriteit-slot.empty:hover {
-    border-color: var(--priority-border-hover);
-    background: var(--priority-bg-hover);
-}
-
-.prioriteit-slot.filled {
-    border-color: var(--priority-border);
-    background: linear-gradient(135deg, var(--macos-bg-primary), var(--priority-bg));
-    box-shadow: 0 2px 4px var(--priority-shadow);
-}
-
-.prioriteit-slot.filled:hover {
-    border-color: var(--priority-border-hover);
-    box-shadow: 0 4px 8px var(--priority-shadow);
-    transform: translateY(-1px);
-}
-
-.prioriteit-slot.drag-over {
-    border-color: #32CD32;
-    background: rgba(50, 205, 50, 0.1);
-    box-shadow: 0 4px 12px rgba(50, 205, 50, 0.3);
+.actie-star .star-checkbox {
+    position: absolute;
+    opacity: 0;
     cursor: pointer;
-    position: relative;
-}
-
-.prioriteit-slot.drag-over::after {
-    content: "✅";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.prioriteit-slot.drag-rejected {
-    border-color: #DC143C;
-    background: rgba(220, 20, 60, 0.1);
-    animation: shake 0.5s ease-in-out;
-    cursor: not-allowed !important;
-    position: relative;
-}
-
-.prioriteit-slot.drag-rejected::after {
-    content: "🚫";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.slot-nummer {
     width: 24px;
     height: 24px;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    margin-right: 10px;
-    flex-shrink: 0;
+    z-index: 2;
 }
 
-.slot-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.slot-placeholder {
-    color: #999;
-    font-style: italic;
-    font-size: 12px;
-    text-align: center;
-    padding: 8px;
-}
-
-.prioriteit-taak {
-    cursor: grab;
-}
-
-.prioriteit-taak:active {
-    cursor: grabbing;
-}
-
-.prioriteit-titel {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--macos-text-primary);
-    margin-bottom: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.prioriteit-details {
-    font-size: 11px;
-    color: #666;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.remove-prioriteit {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 20px;
-    height: 20px;
-    background: #FF6347;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 12px;
-    line-height: 1;
+.actie-star .star-label {
+    font-size: 20px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    filter: grayscale(100%);
+    opacity: 0.3;
+    transition: all 0.2s ease;
+    user-select: none;
+    pointer-events: none;
 }
 
-.prioriteit-slot.filled:hover .remove-prioriteit {
+.actie-star .star-checkbox:hover ~ .star-label {
+    opacity: 0.6;
+}
+
+.actie-star .star-checkbox:checked ~ .star-label {
+    filter: grayscale(0%);
     opacity: 1;
-}
-
-.remove-prioriteit:hover {
-    background: #DC143C;
     transform: scale(1.1);
-}
-
-/* Shake animation for rejected drops */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
 }
 
 /* Actions section - takes remaining space */

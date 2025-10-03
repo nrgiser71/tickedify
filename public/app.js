@@ -5705,39 +5705,74 @@ class Taakbeheer {
         return `<i class="${config.icon} prioriteit-indicator prioriteit-${prioriteit}" style="color: ${config.color};" title="${config.label}"></i>`;
     }
 
-    async removePrioriteit(position) {
-        const index = position - 1;
-        const taak = this.topPrioriteiten[index];
-        
-        if (taak) {
-            await loading.withLoading(async () => {
-                // Remove priority from server
-                await fetch(`/api/taak/${taak.id}/prioriteit`, {
+    async toggleTopPriority(taakId, checkbox) {
+        await loading.withLoading(async () => {
+            const isChecked = checkbox.checked;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (isChecked) {
+                // Check current count of top priorities
+                const response = await fetch(`/api/prioriteiten/${today}`);
+                const currentPriorities = response.ok ? await response.json() : [];
+
+                if (currentPriorities.length >= 3) {
+                    // Maximum 3 priorities - show error and uncheck
+                    checkbox.checked = false;
+                    toast.error('Maximum 3 top prioriteiten - verwijder eerst een andere prioriteit');
+                    return;
+                }
+
+                // Find next available position (1, 2, or 3)
+                const usedPositions = currentPriorities.map(p => p.top_prioriteit);
+                let nextPosition = 1;
+                while (usedPositions.includes(nextPosition) && nextPosition <= 3) {
+                    nextPosition++;
+                }
+
+                // Set priority on server
+                const setPriorityResponse = await fetch(`/api/taak/${taakId}/prioriteit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prioriteit: nextPosition,
+                        datum: today
+                    })
+                });
+
+                if (!setPriorityResponse.ok) {
+                    const errorData = await setPriorityResponse.json();
+                    checkbox.checked = false;
+                    toast.error(errorData.error || 'Fout bij instellen prioriteit');
+                    return;
+                }
+
+                // Reload planning view to show updated star states
+                await this.toonDagelijksePlanning();
+                toast.success('Top prioriteit ingesteld');
+            } else {
+                // Remove priority
+                const removePriorityResponse = await fetch(`/api/taak/${taakId}/prioriteit`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prioriteit: null })
                 });
-                
-                // Update local state
-                this.topPrioriteiten[index] = null;
-                
-                // Re-render slots
-                const prioriteitSlots = document.getElementById('prioriteitSlots');
-                if (prioriteitSlots) {
-                    prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
-                    this.bindPrioriteitEvents();
+
+                if (!removePriorityResponse.ok) {
+                    const errorData = await removePriorityResponse.json();
+                    checkbox.checked = true;
+                    toast.error(errorData.error || 'Fout bij verwijderen prioriteit');
+                    return;
                 }
-                
-                // Update planning grid to remove golden styling
-                await this.updatePlanningGridAfterPriorityChange();
-                
-                toast.success(`Taak verwijderd uit prioriteit ${position}`);
-            }, {
-                operationId: 'remove-priority',
-                showGlobal: true,
-                message: 'Prioriteit verwijderen...'
-            });
-        }
+
+                // Reload planning view to show updated star states
+                await this.toonDagelijksePlanning();
+                toast.success('Top prioriteit verwijderd');
+            }
+        }, {
+            operationId: 'toggle-priority',
+            showGlobal: true,
+            message: 'Prioriteit bijwerken...'
+        });
     }
 
     async updatePlanningGridAfterPriorityChange() {
@@ -5780,216 +5815,6 @@ class Taakbeheer {
                 }
             }
         });
-    }
-
-    bindPrioriteitEvents() {
-        // Enable drag and drop for priority slots
-        const prioriteitSlots = document.querySelectorAll('.prioriteit-slot');
-        prioriteitSlots.forEach(slot => {
-            // Enable drop events
-            slot.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const position = parseInt(slot.dataset.position);
-                const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
-                const targetSlot = this.topPrioriteiten[position - 1];
-                
-                // Parse drag data to check if it's from our own priorities (reordering)
-                let isReordering = false;
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    isReordering = dragData.type === 'prioriteit';
-                } catch (error) {
-                    // Not JSON or error parsing, assume external drag
-                    isReordering = false;
-                }
-                
-                // Allow drop if:
-                // 1. Slot is empty and we have space (< 3 total)
-                // 2. It's internal reordering (moving within priorities)
-                if ((!targetSlot && currentTaskCount < 3) || isReordering) {
-                    slot.classList.add('drag-over');
-                } else {
-                    slot.classList.add('drag-rejected');
-                }
-            });
-            
-            slot.addEventListener('dragleave', (e) => {
-                slot.classList.remove('drag-over', 'drag-rejected');
-            });
-            
-            slot.addEventListener('drop', (e) => {
-                e.preventDefault();
-                slot.classList.remove('drag-over', 'drag-rejected');
-                
-                const position = parseInt(slot.dataset.position);
-                
-                // Parse drag data - should be JSON now
-                let taakId;
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    if (dragData.type === 'actie' || dragData.type === 'prioriteit') {
-                        taakId = dragData.actieId;
-                    } else {
-                        console.log('🔍 Unknown drag type:', dragData.type);
-                        return;
-                    }
-                } catch (error) {
-                    console.error('🔍 Failed to parse drag data:', error);
-                    toast.error('Fout bij verwerken drag data');
-                    return;
-                }
-                
-                console.log('🔍 Extracted task ID:', taakId);
-                this.handlePriorityDrop(taakId, position);
-            });
-        });
-        
-        // Enable drag for existing priority tasks
-        const prioriteitTaken = document.querySelectorAll('.prioriteit-taak');
-        const planningContainer = document.querySelector('.dagelijkse-planning-layout');
-        
-        prioriteitTaken.forEach(taak => {
-            taak.addEventListener('dragstart', (e) => {
-                const slot = taak.closest('.prioriteit-slot');
-                const taakId = slot.dataset.taakId;
-                
-                // Find the task to get duration
-                const taskData = this.topPrioriteiten.find(t => t && t.id === taakId);
-                const duurMinuten = taskData?.duur || 60;
-                
-                // Send JSON data like other draggable items
-                const dragData = {
-                    type: 'prioriteit',
-                    actieId: taakId,
-                    duurMinuten: duurMinuten
-                };
-                
-                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-                // Store globally for access during dragover events
-                this.currentDragData = dragData;
-                e.dataTransfer.effectAllowed = 'move';
-                
-                // Start dynamic drag tracking
-                this.startDynamicDragTracking();
-            });
-            
-            taak.addEventListener('dragend', (e) => {
-                // Clear global drag data
-                this.currentDragData = null;
-                // Stop dynamic drag tracking
-                this.stopDynamicDragTracking();
-            });
-        });
-    }
-
-    async handlePriorityDrop(taakId, position) {
-        await loading.withLoading(async () => {
-            // Check if this task is already in priorities (prevent duplicates)
-            const isAlreadyInPriorities = this.topPrioriteiten.some(p => p && p.id === taakId);
-            if (isAlreadyInPriorities) {
-                toast.warning('Deze taak staat al in je Top 3 prioriteiten!');
-                return;
-            }
-            
-            // Debug logging
-            console.log('🔍 Looking for task with ID:', taakId);
-            console.log('🔍 planningActies array:', this.planningActies?.length || 0, 'items');
-            console.log('🔍 taken array:', this.taken?.length || 0, 'items');
-            
-            // Find task in actions list
-            const taak = this.planningActies?.find(t => t.id === taakId) || 
-                        this.taken?.find(t => t.id === taakId);
-            
-            console.log('🔍 Found task:', taak);
-            
-            if (!taak) {
-                console.error('❌ Task not found! Available IDs in planningActies:', this.planningActies?.map(t => t.id));
-                console.error('❌ Available IDs in taken:', this.taken?.map(t => t.id));
-                toast.error('Taak niet gevonden');
-                return;
-            }
-            
-            // Set priority on server
-            const today = new Date().toISOString().split('T')[0];
-            const response = await fetch(`/api/taak/${taakId}/prioriteit`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prioriteit: position, 
-                    datum: today 
-                })
-            });
-            
-            // Check for server-side validation errors
-            if (!response.ok) {
-                const errorData = await response.json();
-                toast.error(errorData.error || 'Fout bij instellen prioriteit');
-                return;
-            }
-            
-            // Update local state
-            this.topPrioriteiten[position - 1] = taak;
-            
-            // Remove from planning actions list (so it doesn't show in sidebar anymore)
-            if (this.planningActies) {
-                this.planningActies = this.planningActies.filter(t => t.id !== taakId);
-            }
-            
-            // Re-render slots
-            const prioriteitSlots = document.getElementById('prioriteitSlots');
-            if (prioriteitSlots) {
-                prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
-                this.bindPrioriteitEvents();
-            }
-            
-            // Re-render actions list to remove the task
-            const actiesContainer = document.getElementById('planningActiesLijst');
-            if (actiesContainer) {
-                const today = new Date().toISOString().split('T')[0];
-                const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
-                const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
-                actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies, ingeplandeActies);
-                this.bindDragAndDropEvents();
-            }
-            
-            // Update planning grid to show golden styling for new priority
-            await this.updatePlanningGridAfterPriorityChange();
-            
-            toast.success(`"${taak.tekst}" toegevoegd als prioriteit ${position}`);
-        }, {
-            operationId: 'add-priority',
-            showGlobal: true,
-            message: 'Prioriteit instellen...'
-        });
-    }
-
-    async loadTopPrioriteiten() {
-        try {
-            const today = new Date().toISOString().split('T')[0];
-            const response = await fetch(`/api/prioriteiten/${today}`);
-            
-            if (response.ok) {
-                const prioriteiten = await response.json();
-                
-                // Initialize empty array
-                this.topPrioriteiten = [null, null, null];
-                
-                // Fill in priorities based on their position
-                prioriteiten.forEach(taak => {
-                    if (taak.top_prioriteit >= 1 && taak.top_prioriteit <= 3) {
-                        this.topPrioriteiten[taak.top_prioriteit - 1] = taak;
-                    }
-                });
-                
-                console.log('Loaded top priorities:', this.topPrioriteiten);
-            } else {
-                console.log('No priorities found for today');
-                this.topPrioriteiten = [null, null, null];
-            }
-        } catch (error) {
-            console.error('Error loading priorities:', error);
-            this.topPrioriteiten = [null, null, null];
-        }
     }
 
     initPlanningResizer() {
@@ -6134,20 +5959,19 @@ class Taakbeheer {
     initCollapsibleSections() {
         // Load saved collapse states from localStorage
         const savedStates = JSON.parse(localStorage.getItem('planning-collapse-states') || '{}');
-        
+
         // Determine default states based on screen size
         const isLaptop = window.innerWidth <= 1599;
         const defaults = {
             'tijd': !isLaptop, // Open on desktop, closed on laptop
-            'templates': !isLaptop, // Open on desktop, closed on laptop
-            'prioriteiten': true // Always open by default
+            'templates': !isLaptop // Open on desktop, closed on laptop
         };
-        
+
         // Apply saved states or defaults
-        ['tijd', 'templates', 'prioriteiten'].forEach(section => {
+        ['tijd', 'templates'].forEach(section => {
             const shouldBeOpen = savedStates[section] !== undefined ? savedStates[section] : defaults[section];
             const sectionEl = document.getElementById(`${section}-sectie`);
-            
+
             if (sectionEl && !shouldBeOpen) {
                 sectionEl.classList.add('collapsed');
                 const chevron = sectionEl.querySelector('.chevron i');
@@ -6157,7 +5981,7 @@ class Taakbeheer {
                 }
             }
         });
-        
+
         console.log('🔍 Collapsible sections initialized');
     }
 
@@ -8120,10 +7944,7 @@ class Taakbeheer {
         // Load projecten and contexten for correct display in planning
         await this.laadProjecten();
         await this.laadContexten();
-        
-        // Load top priorities for today
-        await this.loadTopPrioriteiten();
-        
+
         // Laad dagelijkse planning voor vandaag
         const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
         const planning = planningResponse.ok ? await planningResponse.json() : [];
@@ -8199,20 +8020,7 @@ class Taakbeheer {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Top 3 Priorities - collapsible section -->
-                    <div class="top-prioriteiten-sectie collapsible" id="prioriteiten-sectie">
-                        <div class="section-header" onclick="app.toggleSection('prioriteiten')">
-                            <h3>⭐ Top 3 Prioriteiten</h3>
-                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
-                        </div>
-                        <div class="section-content">
-                            <div class="prioriteit-slots" id="prioriteitSlots">
-                                ${this.renderPrioriteitSlots()}
-                            </div>
-                        </div>
-                    </div>
-                    
+
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
                         <h3><i class="fas fa-clipboard"></i> Acties</h3>
@@ -8271,7 +8079,6 @@ class Taakbeheer {
         // Bind events for dagelijkse planning
         this.bindDagelijksePlanningEvents();
         this.bindDragAndDropEvents();
-        this.bindPrioriteitEvents();
         this.initPlanningResizer();
         this.initCollapsibleSections();
         this.updateTotaalTijd();
@@ -8284,50 +8091,6 @@ class Taakbeheer {
         
         // Restore focus mode if it was previously enabled
         this.restoreFocusMode();
-    }
-
-    renderPrioriteitSlots() {
-        // Initialize priorities array if not exists
-        if (!this.topPrioriteiten) {
-            this.topPrioriteiten = [null, null, null]; // 3 slots: positions 0, 1, 2
-        }
-        
-        return [1, 2, 3].map(position => {
-            const index = position - 1;
-            const taak = this.topPrioriteiten[index];
-            
-            if (taak) {
-                // Handle both database format (project_id) and frontend format (projectId)
-                const projectId = taak.project_id || taak.projectId;
-                const contextId = taak.context_id || taak.contextId;
-                
-                const projectNaam = this.getProjectNaam(projectId);
-                const contextNaam = this.getContextNaam(contextId);
-                const duurText = taak.duur ? `${taak.duur}min` : '';
-                
-                return `
-                    <div class="prioriteit-slot filled" data-position="${position}" data-taak-id="${taak.id}">
-                        <div class="slot-nummer">${position}</div>
-                        <div class="slot-content">
-                            <div class="prioriteit-taak" draggable="true">
-                                <div class="prioriteit-titel">${taak.tekst}</div>
-                                <div class="prioriteit-details">${projectNaam} • ${contextNaam} • ${duurText}</div>
-                            </div>
-                        </div>
-                        <button class="remove-prioriteit" onclick="app.removePrioriteit(${position})" title="Verwijder uit prioriteiten">×</button>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="prioriteit-slot empty" data-position="${position}">
-                        <div class="slot-nummer">${position}</div>
-                        <div class="slot-content">
-                            <div class="slot-placeholder">Sleep hier je belangrijkste taak</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }).join('');
     }
 
     renderActiesVoorPlanning(acties, ingeplandeActies) {
@@ -8353,12 +8116,21 @@ class Taakbeheer {
             }
             
             const prioriteitIndicator = this.getPrioriteitIndicator(actie.prioriteit);
-            
+
+            // Check if this task is a top priority
+            const isTopPriority = actie.top_prioriteit !== null && actie.top_prioriteit !== undefined;
+
             return `
                 <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-row">
                         <div class="actie-checkbox">
                             <input type="checkbox" onclick="app.completePlanningTask('${actie.id}', this)" title="Taak afwerken">
+                        </div>
+                        <div class="actie-star">
+                            <input type="checkbox" class="star-checkbox" ${isTopPriority ? 'checked' : ''}
+                                   onclick="app.toggleTopPriority('${actie.id}', this)"
+                                   title="Top prioriteit">
+                            <label class="star-label">⭐</label>
                         </div>
                         <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
