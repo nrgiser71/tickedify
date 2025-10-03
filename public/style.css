@@ -4462,20 +4462,21 @@ button:focus {
     font-size: 20px;
     cursor: pointer;
     filter: grayscale(100%);
-    opacity: 0.3;
+    opacity: 0.5;
     transition: all 0.2s ease;
     user-select: none;
     pointer-events: none;
 }
 
 .actie-star .star-checkbox:hover ~ .star-label {
-    opacity: 0.6;
+    opacity: 0.8;
+    filter: grayscale(50%);
 }
 
 .actie-star .star-checkbox:checked ~ .star-label {
     filter: grayscale(0%);
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 /* Actions section - takes remaining space */
