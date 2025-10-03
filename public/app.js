@@ -636,41 +636,6 @@ class Taakbeheer {
         this.init();
     }
 
-    // Utility function: Generate week days HTML for both context menu and bulk toolbar
-    generateWeekDaysHTML(isForBulk = false, currentDate = null, targetTaskId = null) {
-        const vandaag = currentDate || new Date();
-        const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
-        const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
-
-        // Calculate remaining days until Sunday
-        const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
-
-        let html = '';
-        const weekdayNames = [];
-
-        // Generate buttons for remaining days of the week (starting from day after tomorrow)
-        for (let i = 2; i <= dagenTotZondag; i++) {
-            const datum = new Date(vandaag);
-            datum.setDate(datum.getDate() + i);
-            const dagNaam = dagenVanDeWeek[datum.getDay()];
-            weekdayNames.push(dagNaam);
-
-            if (isForBulk) {
-                // Bulk mode: use bulkDateAction with day-N pattern
-                html += `<button onclick="window.bulkDateAction('day-${i}')" class="bulk-action-btn">${dagNaam}</button>`;
-            } else {
-                // Context menu mode: use stelDatumIn with task ID
-                html += `<button onclick="app.stelDatumIn('${targetTaskId}', ${i})" class="menu-item">${dagNaam}</button>`;
-            }
-        }
-
-        return {
-            html: html,
-            dayCount: weekdayNames.length,
-            weekdayNames: weekdayNames
-        };
-    }
-
     init() {
         console.log('🚀 Taakbeheer.init() called');
         this.bindEvents();
@@ -1247,10 +1212,6 @@ class Taakbeheer {
 
         document.getElementById('maakActieBtn').addEventListener('click', () => {
             this.maakActie();
-        });
-
-        document.getElementById('verwijderInboxTaakBtn').addEventListener('click', () => {
-            this.verwijderInboxTaak();
         });
 
         // Form validation
@@ -4068,91 +4029,6 @@ class Taakbeheer {
         });
     }
 
-    async verwijderInboxTaak() {
-        if (!this.huidigeTaakId) return;
-        
-        const taak = this.taken.find(t => t.id === this.huidigeTaakId);
-        if (!taak) {
-            toast.error('Taak niet gevonden');
-            return;
-        }
-        
-        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
-        if (!bevestiging) return;
-        
-        await loading.withLoading(async () => {
-            try {
-                // Use DELETE endpoint for single task deletion
-                const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    
-                    // Check B2 cleanup status and provide user feedback
-                    let successMessage = 'Taak verwijderd';
-                    let hasB2Warning = false;
-                    
-                    if (result.b2Cleanup) {
-                        const cleanup = result.b2Cleanup;
-                        
-                        if (cleanup.failed > 0) {
-                            hasB2Warning = true;
-                            if (cleanup.configError) {
-                                console.warn(`⚠️ B2 configuratie probleem voor taak ${this.huidigeTaakId}`);
-                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering is niet geconfigureerd. Cloud storage cleanup overgeslagen.`);
-                            } else if (cleanup.timeout) {
-                                console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${this.huidigeTaakId}`);
-                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
-                            } else if (cleanup.deleted > 0) {
-                                console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${this.huidigeTaakId}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
-                                toast.warning(`Taak verwijderd. ${cleanup.deleted} van de ${cleanup.deleted + cleanup.failed} bijlagen verwijderd uit cloud storage.`);
-                            } else {
-                                console.error(`❌ Volledige B2 cleanup failure voor taak ${this.huidigeTaakId}`);
-                                toast.error(`Taak verwijderd, maar bijlagen konden niet verwijderd worden uit cloud storage. Controleer je internetverbinding.`);
-                            }
-                        } else if (cleanup.deleted > 0) {
-                            console.log(`✅ B2 cleanup succesvol voor taak ${this.huidigeTaakId}: ${cleanup.deleted} bestanden verwijderd`);
-                            successMessage = `Taak en ${cleanup.deleted} bijlagen verwijderd`;
-                        }
-                    }
-                    
-                    // Remove from local list
-                    this.taken = this.taken.filter(taak => taak.id !== this.huidigeTaakId);
-                    
-                    // Show success message if no B2 warnings
-                    if (!hasB2Warning) {
-                        toast.success(successMessage);
-                    }
-                    
-                    // Always refresh the inbox list after deletion to remove the deleted task from UI
-                    this.renderTaken();
-                    
-                    // Try to open next inbox task or close popup
-                    const volgendeGeopend = await this.openVolgendeInboxTaak();
-                    
-                    if (!volgendeGeopend) {
-                        // No more tasks, close popup (list already refreshed above)
-                        this.sluitPopup();
-                    }
-                    
-                    console.log(`✅ Task ${this.huidigeTaakId} deleted successfully with B2 cleanup:`, result.b2Cleanup);
-                } else {
-                    const error = await response.json();
-                    toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
-                }
-            } catch (error) {
-                console.error('Error deleting inbox task:', error);
-                toast.error('Fout bij verwijderen van taak');
-            }
-        }, {
-            operationId: `delete-inbox-task-${this.huidigeTaakId}`,
-            showGlobal: true,
-            message: 'Taak verwijderen...'
-        });
-    }
-
     async slaLijstOp() {
         // DISABLED: This function was causing data loss by overwriting the entire list on the server
         // Individual task updates should be used instead (PUT /api/taak/:id)
@@ -4274,19 +4150,6 @@ class Taakbeheer {
         }
     }
 
-    // Helper function to show/hide delete button for inbox tasks
-    setDeleteButtonVisibility() {
-        const deleteButton = document.getElementById('verwijderInboxTaakBtn');
-        if (deleteButton) {
-            // Only show delete button for inbox tasks
-            if (this.huidigeLijst === 'inbox') {
-                deleteButton.style.display = 'block';
-            } else {
-                deleteButton.style.display = 'none';
-            }
-        }
-    }
-
     async planTaak(id) {
         if (this.huidigeLijst !== 'inbox') return;
         
@@ -4350,13 +4213,7 @@ class Taakbeheer {
             
             // Set button text for new action (from inbox)
             this.setActionButtonText(true);
-
-            // Show/hide delete button for inbox tasks only
-            this.setDeleteButtonVisibility();
-
-            // Setup checkbox event handler for task completion
-            this.setupCompleteTaskCheckbox();
-
+            
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
@@ -4399,76 +4256,6 @@ class Taakbeheer {
             // Track usage for progressive F-key tips
             this.trackPlanningUsage();
         }
-    }
-
-    setupCompleteTaskCheckbox() {
-        // Small delay to ensure DOM is fully updated
-        setTimeout(() => {
-            const checkbox = document.getElementById('completeTaskCheckbox');
-            const button = document.getElementById('maakActieBtn');
-
-            if (!checkbox || !button) {
-                return;
-            }
-
-            // Reset checkbox state
-            checkbox.checked = false;
-            button.classList.remove('complete-mode');
-            button.textContent = 'Maak actie';
-
-            // Clear any existing handlers
-            checkbox.onclick = null;
-            checkbox.onchange = null;
-
-            // Remove any addEventListener handlers if they exist
-            if (this.checkboxChangeHandler) {
-                checkbox.removeEventListener('change', this.checkboxChangeHandler);
-                checkbox.removeEventListener('click', this.checkboxChangeHandler);
-            }
-
-            // Method 1: onclick property
-            checkbox.onclick = (e) => {
-                this.handleCompleteTaskCheckboxChange(e.target.checked);
-            };
-
-            // Method 2: onchange property
-            checkbox.onchange = (e) => {
-                this.handleCompleteTaskCheckboxChange(e.target.checked);
-            };
-
-            // Store reference for future access
-            this.completeTaskCheckbox = checkbox;
-        }, 10);
-    }
-
-    handleCompleteTaskCheckboxChange(isChecked) {
-        const button = document.getElementById('maakActieBtn');
-        const checkbox = document.getElementById('completeTaskCheckbox');
-        const checkboxLabel = checkbox?.parentElement;
-        const taakNaam = document.getElementById('taakNaamInput').value.trim();
-
-        if (isChecked) {
-            // Checkbox is checked - enter completion mode
-            button.textContent = 'Taak afwerken';
-            button.classList.add('complete-mode');
-            if (checkboxLabel) {
-                checkboxLabel.classList.add('checked');
-            }
-            // Enable button immediately if there's a task name
-            if (taakNaam) {
-                button.disabled = false;
-            }
-        } else {
-            // Checkbox is unchecked - normal mode
-            button.textContent = 'Maak actie';
-            button.classList.remove('complete-mode');
-            if (checkboxLabel) {
-                checkboxLabel.classList.remove('checked');
-            }
-        }
-
-        // Update button state based on new validation rules
-        this.updateButtonState();
     }
 
     sluitPopup() {
@@ -4519,9 +4306,20 @@ class Taakbeheer {
         
         if (menuType === 'acties') {
             // Voor acties lijst: datum opties + uitgesteld + opvolgen
-            // Gebruik gedeelde utility functie voor weekdagen generatie
-            const weekDaysResult = this.generateWeekDaysHTML(false, null, taakId);
-            const weekdagenHTML = weekDaysResult.html;
+            const vandaag = new Date();
+            const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
+            const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+            
+            // Genereer de rest van de week dagen
+            let weekdagenHTML = '';
+            const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
+            
+            for (let i = 2; i <= dagenTotZondag; i++) {
+                const datum = new Date(vandaag);
+                datum.setDate(datum.getDate() + i);
+                const dagNaam = dagenVanDeWeek[datum.getDay()];
+                weekdagenHTML += `<button onclick="app.stelDatumIn('${taakId}', ${i})" class="menu-item">${dagNaam}</button>`;
+            }
             
             menuContentHTML = `
                 <h3>Plan op</h3>
@@ -5005,24 +4803,12 @@ class Taakbeheer {
         const isInboxTaak = this.huidigeLijst !== 'acties';
         const prioriteit = document.getElementById('prioriteitSelect').value || 'gemiddeld';
 
-        // Check if completion checkbox is checked
-        const completeTaskCheckbox = document.getElementById('completeTaskCheckbox');
-        const isCompletionMode = completeTaskCheckbox && completeTaskCheckbox.checked;
-
         console.log('maakActie - herhalingType:', herhalingType);
         console.log('maakActie - herhalingActief:', !!herhalingType);
         console.log('maakActie - prioriteit:', prioriteit, 'isInboxTaak:', isInboxTaak);
-        console.log('maakActie - isCompletionMode:', isCompletionMode);
 
-        // Validation: skip required field validation if in completion mode
-        if (!isCompletionMode && (!taakNaam || !verschijndatum || !contextId || !duur)) {
+        if (!taakNaam || !verschijndatum || !contextId || !duur) {
             toast.warning('Alle velden behalve project zijn verplicht!');
-            return;
-        }
-
-        // Minimal validation for completion mode - only task name required
-        if (isCompletionMode && !taakNaam) {
-            toast.warning('Taaknaam is verplicht!');
             return;
         }
 
@@ -5069,120 +4855,65 @@ class Taakbeheer {
                     }
                 }
             } else {
-                // Handle inbox task - either create action or complete directly
+                // Maak nieuwe actie van inbox taak
                 const taak = this.taken.find(t => t.id === this.huidigeTaakId);
                 if (!taak) return;
 
-                if (isCompletionMode) {
-                    // Complete task directly via checkbox completion
-                    const updateData = {
-                        tekst: taakNaam,
-                        projectId: projectId || null,
-                        verschijndatum: verschijndatum || null,
-                        contextId: contextId || null,
-                        duur: duur || 0,
-                        opmerkingen: opmerkingen,
-                        herhalingType: herhalingType,
-                        herhalingActief: !!herhalingType,
-                        prioriteit: prioriteit,
-                        lijst: 'afgewerkt',
-                        afgewerkt: new Date().toISOString(),
-                        completedViaCheckbox: true
-                    };
+                const actie = {
+                    id: taak.id,
+                    tekst: taakNaam,
+                    aangemaakt: taak.aangemaakt,
+                    projectId: projectId,
+                    verschijndatum: verschijndatum,
+                    contextId: contextId,
+                    duur: duur,
+                    opmerkingen: opmerkingen,
+                    type: 'actie',
+                    herhalingType: herhalingType,
+                    herhalingActief: !!herhalingType,
+                    prioriteit: prioriteit
+                };
 
-                    const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updateData)
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        console.log('Taak afgewerkt via checkbox:', result);
-
-                        if (result.recurringCreated) {
-                            toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${result.nextDate}`);
-                        } else {
-                            toast.success('Taak afgewerkt!');
-                        }
-
-                        // Save subtaken if any were created
-                        if (subtakenManager) {
-                            await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
-                        }
-
-                        // Remove from inbox
-                        this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-
-                        // Open next inbox task or close popup
-                        const volgendeGeopend = await this.openVolgendeInboxTaak();
-                        if (!volgendeGeopend) {
-                            this.sluitPopup();
-                        }
-                    } else {
-                        console.error('Fout bij afwerken taak:', response.status);
-                        toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
-                        return;
+                // Save the new action via direct single action API (bypasses list corruption issues)
+                const response = await fetch('/api/debug/add-single-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(actie)
+                });
+                
+                if (response.ok) {
+                    console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
+                    
+                    // Save subtaken if any were created
+                    if (subtakenManager) {
+                        await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                    }
+                    
+                    // Only remove from inbox AFTER successful save
+                    this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
+                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                    
+                    // If we're currently viewing acties, refresh the list with preserved filters
+                    if (this.huidigeLijst === 'acties') {
+                        await this.preserveActionsFilters(() => this.laadHuidigeLijst());
+                    }
+                    
+                    // Probeer automatisch volgende inbox taak te openen
+                    // Loading blijft actief totdat volgende taak geladen is
+                    const volgendeGeopend = await this.openVolgendeInboxTaak();
+                    if (!volgendeGeopend) {
+                        this.sluitPopup();
                     }
                 } else {
-                    // Create new action from inbox task (normal mode)
-                    const actie = {
-                        id: taak.id,
-                        tekst: taakNaam,
-                        aangemaakt: taak.aangemaakt,
-                        projectId: projectId,
-                        verschijndatum: verschijndatum,
-                        contextId: contextId,
-                        duur: duur,
-                        opmerkingen: opmerkingen,
-                        type: 'actie',
-                        herhalingType: herhalingType,
-                        herhalingActief: !!herhalingType,
-                        prioriteit: prioriteit
-                    };
-
-                    // Save the new action via direct single action API (bypasses list corruption issues)
-                    const response = await fetch('/api/debug/add-single-action', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(actie)
-                    });
-
-                    if (response.ok) {
-                        console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
-
-                        // Save subtaken if any were created
-                        if (subtakenManager) {
-                            await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
-                        }
-
-                        // Only remove from inbox AFTER successful save
-                        this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-                        // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-
-                        // If we're currently viewing acties, refresh the list with preserved filters
-                        if (this.huidigeLijst === 'acties') {
-                            await this.preserveActionsFilters(() => this.laadHuidigeLijst());
-                        }
-
-                        // Probeer automatisch volgende inbox taak te openen
-                        // Loading blijft actief totdat volgende taak geladen is
-                        const volgendeGeopend = await this.openVolgendeInboxTaak();
-                        if (!volgendeGeopend) {
-                            this.sluitPopup();
-                        }
-                    } else {
-                        console.error('Fout bij opslaan actie:', response.status);
-                        toast.error('Fout bij plannen van taak. Probeer opnieuw.');
-                        return;
-                    }
+                    console.error('Fout bij opslaan actie:', response.status);
+                    toast.error('Fout bij plannen van taak. Probeer opnieuw.');
+                    return;
                 }
             }
         }, {
             operationId: 'save-action',
             button: maakActieBtn,
-            message: isCompletionMode ? 'Taak afwerken en volgende laden...' :
-                    (isInboxTaak ? 'Taak opslaan en volgende laden...' : 'Actie opslaan...')
+            message: isInboxTaak ? 'Taak opslaan en volgende laden...' : 'Actie opslaan...'
         });
     }
 
@@ -5298,34 +5029,21 @@ class Taakbeheer {
         const contextId = document.getElementById('contextSelect').value;
         const duur = parseInt(document.getElementById('duur').value) || 0;
 
-        // Check if completion checkbox is checked
-        const completeTaskCheckbox = document.getElementById('completeTaskCheckbox');
-        const isCompletionMode = completeTaskCheckbox && completeTaskCheckbox.checked;
-
-        // Validation logic depends on completion mode
-        let isButtonEnabled;
-        if (isCompletionMode) {
-            // Completion mode: only task name required
-            isButtonEnabled = !!taakNaam;
-        } else {
-            // Normal mode: all fields required except project
-            isButtonEnabled = taakNaam && verschijndatum && contextId && duur;
-        }
-
+        const alleVeldenIngevuld = taakNaam && verschijndatum && contextId && duur;
+        
         const button = document.getElementById('maakActieBtn');
         if (button) {
-            button.disabled = !isButtonEnabled;
+            button.disabled = !alleVeldenIngevuld;
         }
         
         // Update field styles alleen voor velden die al geïnteracteerd zijn
-        // In completion mode, only validate task name
         const fieldValues = {
             'taakNaamInput': taakNaam,
-            'verschijndatum': isCompletionMode ? true : verschijndatum,
-            'contextSelect': isCompletionMode ? true : contextId,
-            'duur': isCompletionMode ? true : duur
+            'verschijndatum': verschijndatum,
+            'contextSelect': contextId,
+            'duur': duur
         };
-
+        
         Object.keys(fieldValues).forEach(fieldId => {
             if (this.touchedFields.has(fieldId)) {
                 this.updateFieldStyle(fieldId, fieldValues[fieldId]);
@@ -5987,39 +5705,74 @@ class Taakbeheer {
         return `<i class="${config.icon} prioriteit-indicator prioriteit-${prioriteit}" style="color: ${config.color};" title="${config.label}"></i>`;
     }
 
-    async removePrioriteit(position) {
-        const index = position - 1;
-        const taak = this.topPrioriteiten[index];
-        
-        if (taak) {
-            await loading.withLoading(async () => {
-                // Remove priority from server
-                await fetch(`/api/taak/${taak.id}/prioriteit`, {
+    async toggleTopPriority(taakId, checkbox) {
+        await loading.withLoading(async () => {
+            const isChecked = checkbox.checked;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (isChecked) {
+                // Check current count of top priorities
+                const response = await fetch(`/api/prioriteiten/${today}`);
+                const currentPriorities = response.ok ? await response.json() : [];
+
+                if (currentPriorities.length >= 3) {
+                    // Maximum 3 priorities - show error and uncheck
+                    checkbox.checked = false;
+                    toast.error('Maximum 3 top prioriteiten - verwijder eerst een andere prioriteit');
+                    return;
+                }
+
+                // Find next available position (1, 2, or 3)
+                const usedPositions = currentPriorities.map(p => p.top_prioriteit);
+                let nextPosition = 1;
+                while (usedPositions.includes(nextPosition) && nextPosition <= 3) {
+                    nextPosition++;
+                }
+
+                // Set priority on server
+                const setPriorityResponse = await fetch(`/api/taak/${taakId}/prioriteit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prioriteit: nextPosition,
+                        datum: today
+                    })
+                });
+
+                if (!setPriorityResponse.ok) {
+                    const errorData = await setPriorityResponse.json();
+                    checkbox.checked = false;
+                    toast.error(errorData.error || 'Fout bij instellen prioriteit');
+                    return;
+                }
+
+                // Reload planning view to show updated star states
+                await this.toonDagelijksePlanning();
+                toast.success('Top prioriteit ingesteld');
+            } else {
+                // Remove priority
+                const removePriorityResponse = await fetch(`/api/taak/${taakId}/prioriteit`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prioriteit: null })
                 });
-                
-                // Update local state
-                this.topPrioriteiten[index] = null;
-                
-                // Re-render slots
-                const prioriteitSlots = document.getElementById('prioriteitSlots');
-                if (prioriteitSlots) {
-                    prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
-                    this.bindPrioriteitEvents();
+
+                if (!removePriorityResponse.ok) {
+                    const errorData = await removePriorityResponse.json();
+                    checkbox.checked = true;
+                    toast.error(errorData.error || 'Fout bij verwijderen prioriteit');
+                    return;
                 }
-                
-                // Update planning grid to remove golden styling
-                await this.updatePlanningGridAfterPriorityChange();
-                
-                toast.success(`Taak verwijderd uit prioriteit ${position}`);
-            }, {
-                operationId: 'remove-priority',
-                showGlobal: true,
-                message: 'Prioriteit verwijderen...'
-            });
-        }
+
+                // Reload planning view to show updated star states
+                await this.toonDagelijksePlanning();
+                toast.success('Top prioriteit verwijderd');
+            }
+        }, {
+            operationId: 'toggle-priority',
+            showGlobal: true,
+            message: 'Prioriteit bijwerken...'
+        });
     }
 
     async updatePlanningGridAfterPriorityChange() {
@@ -6062,216 +5815,6 @@ class Taakbeheer {
                 }
             }
         });
-    }
-
-    bindPrioriteitEvents() {
-        // Enable drag and drop for priority slots
-        const prioriteitSlots = document.querySelectorAll('.prioriteit-slot');
-        prioriteitSlots.forEach(slot => {
-            // Enable drop events
-            slot.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const position = parseInt(slot.dataset.position);
-                const currentTaskCount = this.topPrioriteiten.filter(t => t !== null).length;
-                const targetSlot = this.topPrioriteiten[position - 1];
-                
-                // Parse drag data to check if it's from our own priorities (reordering)
-                let isReordering = false;
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    isReordering = dragData.type === 'prioriteit';
-                } catch (error) {
-                    // Not JSON or error parsing, assume external drag
-                    isReordering = false;
-                }
-                
-                // Allow drop if:
-                // 1. Slot is empty and we have space (< 3 total)
-                // 2. It's internal reordering (moving within priorities)
-                if ((!targetSlot && currentTaskCount < 3) || isReordering) {
-                    slot.classList.add('drag-over');
-                } else {
-                    slot.classList.add('drag-rejected');
-                }
-            });
-            
-            slot.addEventListener('dragleave', (e) => {
-                slot.classList.remove('drag-over', 'drag-rejected');
-            });
-            
-            slot.addEventListener('drop', (e) => {
-                e.preventDefault();
-                slot.classList.remove('drag-over', 'drag-rejected');
-                
-                const position = parseInt(slot.dataset.position);
-                
-                // Parse drag data - should be JSON now
-                let taakId;
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    if (dragData.type === 'actie' || dragData.type === 'prioriteit') {
-                        taakId = dragData.actieId;
-                    } else {
-                        console.log('🔍 Unknown drag type:', dragData.type);
-                        return;
-                    }
-                } catch (error) {
-                    console.error('🔍 Failed to parse drag data:', error);
-                    toast.error('Fout bij verwerken drag data');
-                    return;
-                }
-                
-                console.log('🔍 Extracted task ID:', taakId);
-                this.handlePriorityDrop(taakId, position);
-            });
-        });
-        
-        // Enable drag for existing priority tasks
-        const prioriteitTaken = document.querySelectorAll('.prioriteit-taak');
-        const planningContainer = document.querySelector('.dagelijkse-planning-layout');
-        
-        prioriteitTaken.forEach(taak => {
-            taak.addEventListener('dragstart', (e) => {
-                const slot = taak.closest('.prioriteit-slot');
-                const taakId = slot.dataset.taakId;
-                
-                // Find the task to get duration
-                const taskData = this.topPrioriteiten.find(t => t && t.id === taakId);
-                const duurMinuten = taskData?.duur || 60;
-                
-                // Send JSON data like other draggable items
-                const dragData = {
-                    type: 'prioriteit',
-                    actieId: taakId,
-                    duurMinuten: duurMinuten
-                };
-                
-                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-                // Store globally for access during dragover events
-                this.currentDragData = dragData;
-                e.dataTransfer.effectAllowed = 'move';
-                
-                // Start dynamic drag tracking
-                this.startDynamicDragTracking();
-            });
-            
-            taak.addEventListener('dragend', (e) => {
-                // Clear global drag data
-                this.currentDragData = null;
-                // Stop dynamic drag tracking
-                this.stopDynamicDragTracking();
-            });
-        });
-    }
-
-    async handlePriorityDrop(taakId, position) {
-        await loading.withLoading(async () => {
-            // Check if this task is already in priorities (prevent duplicates)
-            const isAlreadyInPriorities = this.topPrioriteiten.some(p => p && p.id === taakId);
-            if (isAlreadyInPriorities) {
-                toast.warning('Deze taak staat al in je Top 3 prioriteiten!');
-                return;
-            }
-            
-            // Debug logging
-            console.log('🔍 Looking for task with ID:', taakId);
-            console.log('🔍 planningActies array:', this.planningActies?.length || 0, 'items');
-            console.log('🔍 taken array:', this.taken?.length || 0, 'items');
-            
-            // Find task in actions list
-            const taak = this.planningActies?.find(t => t.id === taakId) || 
-                        this.taken?.find(t => t.id === taakId);
-            
-            console.log('🔍 Found task:', taak);
-            
-            if (!taak) {
-                console.error('❌ Task not found! Available IDs in planningActies:', this.planningActies?.map(t => t.id));
-                console.error('❌ Available IDs in taken:', this.taken?.map(t => t.id));
-                toast.error('Taak niet gevonden');
-                return;
-            }
-            
-            // Set priority on server
-            const today = new Date().toISOString().split('T')[0];
-            const response = await fetch(`/api/taak/${taakId}/prioriteit`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prioriteit: position, 
-                    datum: today 
-                })
-            });
-            
-            // Check for server-side validation errors
-            if (!response.ok) {
-                const errorData = await response.json();
-                toast.error(errorData.error || 'Fout bij instellen prioriteit');
-                return;
-            }
-            
-            // Update local state
-            this.topPrioriteiten[position - 1] = taak;
-            
-            // Remove from planning actions list (so it doesn't show in sidebar anymore)
-            if (this.planningActies) {
-                this.planningActies = this.planningActies.filter(t => t.id !== taakId);
-            }
-            
-            // Re-render slots
-            const prioriteitSlots = document.getElementById('prioriteitSlots');
-            if (prioriteitSlots) {
-                prioriteitSlots.innerHTML = this.renderPrioriteitSlots();
-                this.bindPrioriteitEvents();
-            }
-            
-            // Re-render actions list to remove the task
-            const actiesContainer = document.getElementById('planningActiesLijst');
-            if (actiesContainer) {
-                const today = new Date().toISOString().split('T')[0];
-                const ingeplandeResponse = await fetch(`/api/ingeplande-acties/${today}`);
-                const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
-                actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies, ingeplandeActies);
-                this.bindDragAndDropEvents();
-            }
-            
-            // Update planning grid to show golden styling for new priority
-            await this.updatePlanningGridAfterPriorityChange();
-            
-            toast.success(`"${taak.tekst}" toegevoegd als prioriteit ${position}`);
-        }, {
-            operationId: 'add-priority',
-            showGlobal: true,
-            message: 'Prioriteit instellen...'
-        });
-    }
-
-    async loadTopPrioriteiten() {
-        try {
-            const today = new Date().toISOString().split('T')[0];
-            const response = await fetch(`/api/prioriteiten/${today}`);
-            
-            if (response.ok) {
-                const prioriteiten = await response.json();
-                
-                // Initialize empty array
-                this.topPrioriteiten = [null, null, null];
-                
-                // Fill in priorities based on their position
-                prioriteiten.forEach(taak => {
-                    if (taak.top_prioriteit >= 1 && taak.top_prioriteit <= 3) {
-                        this.topPrioriteiten[taak.top_prioriteit - 1] = taak;
-                    }
-                });
-                
-                console.log('Loaded top priorities:', this.topPrioriteiten);
-            } else {
-                console.log('No priorities found for today');
-                this.topPrioriteiten = [null, null, null];
-            }
-        } catch (error) {
-            console.error('Error loading priorities:', error);
-            this.topPrioriteiten = [null, null, null];
-        }
     }
 
     initPlanningResizer() {
@@ -6416,19 +5959,19 @@ class Taakbeheer {
     initCollapsibleSections() {
         // Load saved collapse states from localStorage
         const savedStates = JSON.parse(localStorage.getItem('planning-collapse-states') || '{}');
-        
+
         // Determine default states based on screen size
         const isLaptop = window.innerWidth <= 1599;
         const defaults = {
-            'templates': !isLaptop, // Open on desktop, closed on laptop
-            'prioriteiten': true // Always open by default
+            'tijd': !isLaptop, // Open on desktop, closed on laptop
+            'templates': !isLaptop // Open on desktop, closed on laptop
         };
 
         // Apply saved states or defaults
-        ['templates', 'prioriteiten'].forEach(section => {
+        ['tijd', 'templates'].forEach(section => {
             const shouldBeOpen = savedStates[section] !== undefined ? savedStates[section] : defaults[section];
             const sectionEl = document.getElementById(`${section}-sectie`);
-            
+
             if (sectionEl && !shouldBeOpen) {
                 sectionEl.classList.add('collapsed');
                 const chevron = sectionEl.querySelector('.chevron i');
@@ -6438,7 +5981,7 @@ class Taakbeheer {
                 }
             }
         });
-        
+
         console.log('🔍 Collapsible sections initialized');
     }
 
@@ -6693,12 +6236,6 @@ class Taakbeheer {
             const isInboxAction = this.huidigeLijst === 'inbox';
             this.setActionButtonText(isInboxAction);
             
-            // Show/hide delete button for inbox tasks only
-            this.setDeleteButtonVisibility();
-
-            // Setup checkbox event handler for task completion
-            this.setupCompleteTaskCheckbox();
-
             this.updateButtonState();
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
@@ -6981,6 +6518,9 @@ class Taakbeheer {
                 break;
             case 'notion-import-old':
                 window.open('/notion-import.html', '_blank');
+                break;
+            case 'wekelijkse-optimalisatie':
+                this.showWekelijkseOptimalisatie();
                 break;
             case 'zoeken':
                 this.showZoekInterface();
@@ -7274,9 +6814,186 @@ class Taakbeheer {
         `;
     }
 
+    showWekelijkseOptimalisatie() {
+        // Update active list in sidebar - remove all actief classes
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
 
+        // Highlight the wekelijkse optimalisatie tool item
+        const wekelijkseItem = document.querySelector('[data-tool="wekelijkse-optimalisatie"]');
+        if (wekelijkseItem) {
+            wekelijkseItem.classList.add('actief');
+        }
 
+        // Ensure tools dropdown is open
+        const toolsContent = document.getElementById('tools-content');
+        const toolsDropdown = document.getElementById('tools-dropdown');
+        if (toolsContent && toolsDropdown) {
+            toolsContent.style.display = 'block';
+            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
+            if (arrow) {
+                arrow.textContent = '▼';
+            }
+        }
 
+        // Update page title
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = 'Wekelijkse Optimalisatie';
+        }
+
+        // Hide input container
+        const inputContainer = document.getElementById('taak-input-container');
+        if (inputContainer) {
+            inputContainer.style.display = 'none';
+        }
+
+        // Set current list and save it
+        this.huidigeLijst = 'wekelijkse-optimalisatie';
+        this.saveCurrentList();
+
+        // Show wekelijkse optimalisatie interface
+        this.renderWekelijkseOptimalisatie();
+    }
+
+    async renderWekelijkseOptimalisatie() {
+        // Find the container - similar to renderContextenBeheer
+        let container;
+        const takenLijst = document.getElementById('takenLijst');
+        if (takenLijst) {
+            container = takenLijst.parentNode;
+        } else {
+            // If takenLijst doesn't exist, we might be in daily planning mode
+            // First try to restore normal container structure
+            this.restoreNormalContainer();
+            
+            // Try again to find takenLijst after restoration
+            const restoredTakenLijst = document.getElementById('takenLijst');
+            if (restoredTakenLijst) {
+                container = restoredTakenLijst.parentNode;
+            } else {
+                // If still no luck, find the content area
+                const contentArea = document.querySelector('.content-area');
+                if (contentArea) {
+                    container = contentArea.querySelector('.taken-container');
+                    if (!container) {
+                        // Create container if it doesn't exist
+                        container = document.createElement('div');
+                        container.className = 'taken-container';
+                        contentArea.appendChild(container);
+                    }
+                }
+            }
+        }
+
+        if (!container) {
+            console.error('Could not find container for wekelijkse optimalisatie');
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="wekelijkse-optimalisatie-container">
+                <!-- 1. OPRUIMEN -->
+                <div class="optimalisatie-sectie">
+                    <h2 class="sectie-titel">1. OPRUIMEN</h2>
+                    <div class="sectie-content">
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="verzamel-papieren" class="optimalisatie-checkbox">
+                            <label for="verzamel-papieren">Verzamel losse papieren en materialen</label>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="verzamelplaatsen-leeg" class="optimalisatie-checkbox">
+                            <label for="verzamelplaatsen-leeg">Maak al je verzamelplaatsen leeg</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ACTUALISEREN -->
+                <div class="optimalisatie-sectie">
+                    <h2 class="sectie-titel">2. ACTUALISEREN</h2>
+                    <div class="sectie-content">
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="mind-dump" class="optimalisatie-checkbox">
+                            <label for="mind-dump">Doe een mind dump</label>
+                            <div class="mind-dump-buttons">
+                                <button class="actie-knop" onclick="app.startMindDump()">Start</button>
+                                <button class="actie-knop secondary" onclick="app.configureMindDump()">Config</button>
+                            </div>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-acties" class="optimalisatie-checkbox">
+                            <label for="bekijk-acties">Bekijk je acties lijst</label>
+                            <button class="actie-knop" onclick="app.navigateToList('acties')">Ga naar Acties</button>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="blader-agenda" class="optimalisatie-checkbox">
+                            <label for="blader-agenda">Blader door je agenda</label>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-opvolgen" class="optimalisatie-checkbox">
+                            <label for="bekijk-opvolgen">Bekijk je opvolgen lijst</label>
+                            <button class="actie-knop" onclick="app.navigateToList('opvolgen')">Ga naar Opvolgen</button>
+                        </div>
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-projecten" class="optimalisatie-checkbox">
+                            <label for="bekijk-projecten">Bekijk je projecten lijst</label>
+                            <button class="actie-knop" onclick="app.navigateToList('projecten')">Ga naar Projecten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. VERBETEREN -->
+                <div class="optimalisatie-sectie">
+                    <h2 class="sectie-titel">3. VERBETEREN</h2>
+                    <div class="sectie-content">
+                        <div class="optimalisatie-item">
+                            <input type="checkbox" id="bekijk-uitgesteld" class="optimalisatie-checkbox">
+                            <label for="bekijk-uitgesteld">Bekijk je uitgesteld lijst</label>
+                            <button class="actie-knop dropdown-trigger" onclick="app.toggleUitgesteldDropdown()">Toon Uitgesteld Lijsten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voortgang sectie -->
+                <div class="voortgang-sectie">
+                    <div class="voortgang-info">
+                        <span>Voortgang: </span>
+                        <span id="voortgang-percentage">0%</span>
+                        <span id="voortgang-items">(0 van 8 items voltooid)</span>
+                    </div>
+                    <div class="voortgang-balk">
+                        <div id="voortgang-vulling" class="voortgang-vulling"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Bind checkbox change events voor voortgang tracking
+        this.bindWekelijkseOptimalisatieEvents();
+    }
+
+    bindWekelijkseOptimalisatieEvents() {
+        // Track checkbox changes for progress
+        const checkboxes = document.querySelectorAll('.optimalisatie-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => this.updateWekelijkseVoortgang());
+        });
+
+        // Initialize progress
+        this.updateWekelijkseVoortgang();
+    }
+
+    updateWekelijkseVoortgang() {
+        const checkboxes = document.querySelectorAll('.optimalisatie-checkbox');
+        const total = checkboxes.length;
+        const checked = document.querySelectorAll('.optimalisatie-checkbox:checked').length;
+        const percentage = Math.round((checked / total) * 100);
+
+        document.getElementById('voortgang-percentage').textContent = `${percentage}%`;
+        document.getElementById('voortgang-items').textContent = `(${checked} van ${total} items voltooid)`;
+        document.getElementById('voortgang-vulling').style.width = `${percentage}%`;
+    }
 
     showZoekInterface() {
         // Update active list in sidebar - remove all actief classes
@@ -8149,9 +7866,6 @@ class Taakbeheer {
             subtakenManager.loadSubtaken(taakId);
         }
 
-        // Setup checkbox event handler for task completion
-        this.setupCompleteTaskCheckbox();
-
         // Show popup
         document.getElementById('planningPopup').style.display = 'flex';
         document.getElementById('taakNaamInput').focus();
@@ -8230,10 +7944,7 @@ class Taakbeheer {
         // Load projecten and contexten for correct display in planning
         await this.laadProjecten();
         await this.laadContexten();
-        
-        // Load top priorities for today
-        await this.loadTopPrioriteiten();
-        
+
         // Laad dagelijkse planning voor vandaag
         const planningResponse = await fetch(`/api/dagelijkse-planning/${today}`);
         const planning = planningResponse.ok ? await planningResponse.json() : [];
@@ -8254,9 +7965,9 @@ class Taakbeheer {
             await this.loadSubtakenForPlanning(plannedTaskIds);
         }
         
-        // Fixed time range: 06:00 - 22:00
-        const startUur = 6;
-        const eindUur = 22;
+        // Get saved time range preference
+        const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
+        const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
         
         container.innerHTML = `
             <!-- Mobile header met hamburger menu -->
@@ -8272,19 +7983,44 @@ class Taakbeheer {
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
-                    <!-- Top 3 Priorities - collapsible section -->
-                    <div class="top-prioriteiten-sectie collapsible" id="prioriteiten-sectie">
-                        <div class="section-header" onclick="app.toggleSection('prioriteiten')">
-                            <h3>⭐ Top 3 Prioriteiten</h3>
+                    <!-- Time settings - collapsible section -->
+                    <div class="tijd-sectie collapsible" id="tijd-sectie">
+                        <div class="section-header" onclick="app.toggleSection('tijd')">
+                            <h3>⏰ Tijd</h3>
                             <span class="chevron"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div class="section-content">
-                            <div class="prioriteit-slots" id="prioriteitSlots">
-                                ${this.renderPrioriteitSlots()}
+                            <div class="tijd-inputs">
+                                <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
+                                <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Templates - collapsible section -->
+                    <div class="templates-sectie collapsible" id="templates-sectie">
+                        <div class="section-header" onclick="app.toggleSection('templates')">
+                            <h3>🔒 Geblokkeerd & Pauzes</h3>
+                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                        <div class="section-content">
+                            <h4>🔒 Geblokkeerd</h4>
+                            <div class="template-items">
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">🔒 90min</div>
+                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120min</div>
+                            </div>
+                            
+                            <h4>☕ Pauzes</h4>
+                            <div class="template-items">
+                                <div class="template-item" draggable="true" data-type="pauze" data-duur="5">☕ 5min</div>
+                                <div class="template-item" draggable="true" data-type="pauze" data-duur="10">☕ 10min</div>
+                                <div class="template-item" draggable="true" data-type="pauze" data-duur="15">☕ 15min</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
                         <h3><i class="fas fa-clipboard"></i> Acties</h3>
@@ -8343,7 +8079,6 @@ class Taakbeheer {
         // Bind events for dagelijkse planning
         this.bindDagelijksePlanningEvents();
         this.bindDragAndDropEvents();
-        this.bindPrioriteitEvents();
         this.initPlanningResizer();
         this.initCollapsibleSections();
         this.updateTotaalTijd();
@@ -8356,50 +8091,6 @@ class Taakbeheer {
         
         // Restore focus mode if it was previously enabled
         this.restoreFocusMode();
-    }
-
-    renderPrioriteitSlots() {
-        // Initialize priorities array if not exists
-        if (!this.topPrioriteiten) {
-            this.topPrioriteiten = [null, null, null]; // 3 slots: positions 0, 1, 2
-        }
-        
-        return [1, 2, 3].map(position => {
-            const index = position - 1;
-            const taak = this.topPrioriteiten[index];
-            
-            if (taak) {
-                // Handle both database format (project_id) and frontend format (projectId)
-                const projectId = taak.project_id || taak.projectId;
-                const contextId = taak.context_id || taak.contextId;
-                
-                const projectNaam = this.getProjectNaam(projectId);
-                const contextNaam = this.getContextNaam(contextId);
-                const duurText = taak.duur ? `${taak.duur}min` : '';
-                
-                return `
-                    <div class="prioriteit-slot filled" data-position="${position}" data-taak-id="${taak.id}">
-                        <div class="slot-nummer">${position}</div>
-                        <div class="slot-content">
-                            <div class="prioriteit-taak" draggable="true">
-                                <div class="prioriteit-titel">${taak.tekst}</div>
-                                <div class="prioriteit-details">${projectNaam} • ${contextNaam} • ${duurText}</div>
-                            </div>
-                        </div>
-                        <button class="remove-prioriteit" onclick="app.removePrioriteit(${position})" title="Verwijder uit prioriteiten">×</button>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="prioriteit-slot empty" data-position="${position}">
-                        <div class="slot-nummer">${position}</div>
-                        <div class="slot-content">
-                            <div class="slot-placeholder">Sleep hier je belangrijkste taak</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }).join('');
     }
 
     renderActiesVoorPlanning(acties, ingeplandeActies) {
@@ -8425,12 +8116,21 @@ class Taakbeheer {
             }
             
             const prioriteitIndicator = this.getPrioriteitIndicator(actie.prioriteit);
-            
+
+            // Check if this task is a top priority
+            const isTopPriority = actie.top_prioriteit !== null && actie.top_prioriteit !== undefined;
+
             return `
                 <div class="${itemClass}" draggable="true" data-actie-id="${actie.id}" data-duur="${actie.duur || 60}">
                     <div class="actie-row">
                         <div class="actie-checkbox">
                             <input type="checkbox" onclick="app.completePlanningTask('${actie.id}', this)" title="Taak afwerken">
+                        </div>
+                        <div class="actie-star">
+                            <input type="checkbox" class="star-checkbox" ${isTopPriority ? 'checked' : ''}
+                                   onclick="app.toggleTopPriority('${actie.id}', this)"
+                                   title="Top prioriteit">
+                            <label class="star-label">⭐</label>
                         </div>
                         <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
@@ -8735,9 +8435,27 @@ class Taakbeheer {
     }
 
     bindDagelijksePlanningEvents() {
-        // Initialize mobile sidebar if needed
+        // Initialize mobile sidebar if needed  
         this.initializeMobileSidebar();
-
+        
+        // Time range change handlers
+        const startUurInput = document.getElementById('startUur');
+        const eindUurInput = document.getElementById('eindUur');
+        
+        if (startUurInput) {
+            startUurInput.addEventListener('change', () => {
+                localStorage.setItem('dagplanning-start-uur', startUurInput.value);
+                this.renderTaken(); // Re-render with new time range
+            });
+        }
+        
+        if (eindUurInput) {
+            eindUurInput.addEventListener('change', () => {
+                localStorage.setItem('dagplanning-eind-uur', eindUurInput.value);
+                this.renderTaken(); // Re-render with new time range
+            });
+        }
+        
         // Filter handlers
         const taakFilter = document.getElementById('planningTaakFilter');
         const projectFilter = document.getElementById('planningProjectFilter');
@@ -10488,9 +10206,9 @@ class Taakbeheer {
                         console.log('🎯 Kalender container found:', !!kalenderContainer);
                         
                         if (kalenderContainer) {
-                            // Fixed time range: 06:00 - 22:00
-                            const startUur = 6;
-                            const eindUur = 22;
+                            // Get current time range preferences
+                            const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
+                            const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
                             console.log('⏰ Time range:', startUur, 'to', eindUur);
                             
                             const newHTML = this.renderKalenderGrid(startUur, eindUur, updatedPlanning);
@@ -11949,11 +11667,18 @@ class Taakbeheer {
             
             <div style="margin-bottom: 10px;">
                 <label>tijd-instellingen height:</label><br>
-                <input type="range" min="40" max="120" value="80"
+                <input type="range" min="40" max="120" value="80" 
                        oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.tijd-instellingen').style.height=this.value+'px'">
                 <span>80px</span>
             </div>
-
+            
+            <div style="margin-bottom: 10px;">
+                <label>templates-sectie height:</label><br>
+                <input type="range" min="100" max="300" value="200" 
+                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.templates-sectie').style.height=this.value+'px'">
+                <span>200px</span>
+            </div>
+            
             <hr style="margin: 15px 0;">
             
             <button onclick="app.resetDebugger()" style="background: #FF3B30; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px;">Reset</button>
@@ -11981,6 +11706,7 @@ class Taakbeheer {
         document.querySelector('.acties-sectie').style.maxHeight = '';
         document.querySelector('.acties-lijst').style.maxHeight = '';
         document.querySelector('.tijd-instellingen').style.height = '';
+        document.querySelector('.templates-sectie').style.height = '';
     }
 
     copyDebuggerValues() {
@@ -12120,21 +11846,8 @@ class Taakbeheer {
                     newDate = week.toISOString().split('T')[0];
                     break;
                 default:
-                    // Handle day-N patterns (day-2, day-3, etc.)
-                    if (action.startsWith('day-')) {
-                        const dayOffset = parseInt(action.substring(4));
-                        if (!isNaN(dayOffset) && dayOffset >= 2) {
-                            const targetDate = new Date(today);
-                            targetDate.setDate(today.getDate() + dayOffset);
-                            newDate = targetDate.toISOString().split('T')[0];
-                        } else {
-                            console.error('Ongeldige dag offset:', action);
-                            return;
-                        }
-                    } else {
-                        console.error('Onbekende bulk actie:', action);
-                        return;
-                    }
+                    console.error('Onbekende bulk actie:', action);
+                    return;
             }
 
             // Process selected tasks
@@ -12178,13 +11891,10 @@ class Taakbeheer {
     getBulkVerplaatsKnoppen() {
         // Use the same logic as individual task dropdown menus
         if (this.huidigeLijst === 'acties') {
-            // For actions list: show dagens datum opties + week days + uitgesteld opties
-            const weekDaysResult = this.generateWeekDaysHTML(true);
-
+            // For actions list: show dagens datum opties + uitgesteld opties
             return `
                 <button onclick="window.bulkDateAction('vandaag')" class="bulk-action-btn">Vandaag</button>
                 <button onclick="window.bulkDateAction('morgen')" class="bulk-action-btn">Morgen</button>
-                ${weekDaysResult.html}
                 <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Opvolgen</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Wekelijks</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-maandelijks')" class="bulk-action-btn">Maandelijks</button>
@@ -12421,34 +12131,30 @@ class AuthManager {
 
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (response.ok) {
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 this.updateUI();
                 this.hideLoginModal();
-
-                // Handle different login scenarios
-                if (data.requiresUpgrade) {
-                    // Beta user with expired period - limited login successful
-                    console.log('Beta user login successful, redirecting to upgrade page');
-                    toast.success(`Welkom ${data.user.naam}! Kies je abonnement om door te gaan.`);
-                    window.location.replace('/beta-expired.html');
-                    return;
-                } else {
-                    // Normal login
-                    toast.success(`Welkom terug, ${data.user.naam}!`);
-
-                    // Check auth status immediately after login (includes beta access check)
-                    await this.checkAuthStatus();
-
-                    // Load user-specific data (only if still authenticated after checkAuthStatus)
-                    if (this.isAuthenticated && app) {
-                        await app.loadUserData();
-                    }
+                
+                toast.success(`Welkom terug, ${data.user.naam}!`);
+                
+                // Check auth status immediately after login (includes beta access check)
+                await this.checkAuthStatus();
+                
+                // Load user-specific data (only if still authenticated after checkAuthStatus)
+                if (this.isAuthenticated && app) {
+                    await app.loadUserData();
                 }
             } else {
-                // Handle login failures
-                toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+                // Handle beta upgrade requirement
+                if (data.requiresUpgrade) {
+                    toast.error(data.error);
+                    // Could redirect to upgrade page here if available
+                    // window.location.href = '/upgrade';
+                } else {
+                    toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+                }
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -12615,9 +12321,18 @@ class AuthManager {
     }
 
     showUpgradeMessage(message) {
-        // Direct redirect to beta expired page instead of showing toast
-        console.log('Redirecting to beta expired page due to beta expiry');
-        window.location.replace('/beta-expired.html');
+        // Show upgrade message in a prominent way
+        if (window.toast) {
+            toast.error(message);
+        } else {
+            alert(message);
+        }
+
+        // Redirect to subscription page with beta source parameter
+        console.log('Redirecting to subscription page due to beta expiry');
+        setTimeout(() => {
+            window.location.href = '/subscription.html?source=beta';
+        }, 2000); // 2 second delay to show the message first
     }
 
     startBetaCheckInterval() {
