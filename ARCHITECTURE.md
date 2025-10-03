@@ -96,10 +96,10 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `calculateNextRecurringDate()` - regel ~4,500 - Datum berekeningen
 - `createRecurringTask()` - regel ~5,000 - API call voor nieuwe recurring
 
-**Top 3 Prioriteiten (regels 5,500-6,500)**
-- `laadTopPrioriteiten()` - regel ~5,600
-- `renderTopPrioriteiten()` - regel ~5,800
-- `handlePriorityDrop()` - regel ~6,200
+**Top 3 Prioriteiten (Sterretje Checkbox Systeem)**
+- `toggleTopPriority()` - regel ~5,708 - Toggle checkbox met max 3 validatie
+- `renderActiesVoorPlanning()` - regel ~8,333 - Sterretje checkbox rendering
+- Top prioriteiten data laden - regel ~7,949 - Ophalen via `/api/prioriteiten/${today}`
 
 **Bulk Acties (regels 6,500-7,500)**
 - `toggleBulkMode()` - regel ~6,600
@@ -260,11 +260,14 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Database**: `createRecurringTask()` in database.js:850
 - **API**: `/api/taak/recurring` in server.js:3200
 
-### Top 3 Prioriteiten
-- **UI Rendering**: `renderTopPrioriteiten()` in app.js:5800
-- **Drag & Drop**: `handlePriorityDrop()` in app.js:6200
-- **Database**: `top_prioriteit` kolom in taken tabel
-- **API**: `/api/taak/:id/prioriteit` in server.js:2700
+### Top 3 Prioriteiten (Sterretje Checkbox Systeem)
+- **UI**: Sterretje checkbox bij elke actie in dagelijkse planning (app.js:~8350)
+- **Toggle Functie**: `toggleTopPriority()` in app.js:~5708 - max 3 validatie
+- **Kalender Weergave**: Sterretjes tonen bij ingeplande prioriteiten (app.js:~8231)
+- **Data Laden**: Top prioriteiten ophalen in `toonDagelijksePlanning()` (app.js:~7949)
+- **Database**: `top_prioriteit` kolom (1-3) + `prioriteit_datum` in taken tabel
+- **API**: `/api/taak/:id/prioriteit` (PUT) en `/api/prioriteiten/:datum` (GET) in server.js:~4800
+- **Styling**: `.actie-star` checkbox styling in style.css:~4450
 
 ### Subtaken Systeem (Hierarchische Taken)
 - **SubtakenManager Class**: Volledige CRUD management in app.js:~1000
