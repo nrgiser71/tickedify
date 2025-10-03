@@ -6420,13 +6420,12 @@ class Taakbeheer {
         // Determine default states based on screen size
         const isLaptop = window.innerWidth <= 1599;
         const defaults = {
-            'tijd': !isLaptop, // Open on desktop, closed on laptop
             'templates': !isLaptop, // Open on desktop, closed on laptop
             'prioriteiten': true // Always open by default
         };
-        
+
         // Apply saved states or defaults
-        ['tijd', 'templates', 'prioriteiten'].forEach(section => {
+        ['templates', 'prioriteiten'].forEach(section => {
             const shouldBeOpen = savedStates[section] !== undefined ? savedStates[section] : defaults[section];
             const sectionEl = document.getElementById(`${section}-sectie`);
             
@@ -8255,9 +8254,9 @@ class Taakbeheer {
             await this.loadSubtakenForPlanning(plannedTaskIds);
         }
         
-        // Get saved time range preference
-        const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
-        const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+        // Fixed time range: 06:00 - 22:00
+        const startUur = 6;
+        const eindUur = 22;
         
         container.innerHTML = `
             <!-- Mobile header met hamburger menu -->
@@ -8273,20 +8272,6 @@ class Taakbeheer {
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
-                    <!-- Time settings - collapsible section -->
-                    <div class="tijd-sectie collapsible" id="tijd-sectie">
-                        <div class="section-header" onclick="app.toggleSection('tijd')">
-                            <h3>⏰ Tijd</h3>
-                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
-                        </div>
-                        <div class="section-content">
-                            <div class="tijd-inputs">
-                                <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
-                                <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Top 3 Priorities - collapsible section -->
                     <div class="top-prioriteiten-sectie collapsible" id="prioriteiten-sectie">
                         <div class="section-header" onclick="app.toggleSection('prioriteiten')">
@@ -8750,27 +8735,9 @@ class Taakbeheer {
     }
 
     bindDagelijksePlanningEvents() {
-        // Initialize mobile sidebar if needed  
+        // Initialize mobile sidebar if needed
         this.initializeMobileSidebar();
-        
-        // Time range change handlers
-        const startUurInput = document.getElementById('startUur');
-        const eindUurInput = document.getElementById('eindUur');
-        
-        if (startUurInput) {
-            startUurInput.addEventListener('change', () => {
-                localStorage.setItem('dagplanning-start-uur', startUurInput.value);
-                this.renderTaken(); // Re-render with new time range
-            });
-        }
-        
-        if (eindUurInput) {
-            eindUurInput.addEventListener('change', () => {
-                localStorage.setItem('dagplanning-eind-uur', eindUurInput.value);
-                this.renderTaken(); // Re-render with new time range
-            });
-        }
-        
+
         // Filter handlers
         const taakFilter = document.getElementById('planningTaakFilter');
         const projectFilter = document.getElementById('planningProjectFilter');
@@ -10521,9 +10488,9 @@ class Taakbeheer {
                         console.log('🎯 Kalender container found:', !!kalenderContainer);
                         
                         if (kalenderContainer) {
-                            // Get current time range preferences
-                            const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
-                            const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+                            // Fixed time range: 06:00 - 22:00
+                            const startUur = 6;
+                            const eindUur = 22;
                             console.log('⏰ Time range:', startUur, 'to', eindUur);
                             
                             const newHTML = this.renderKalenderGrid(startUur, eindUur, updatedPlanning);
