@@ -8286,31 +8286,7 @@ class Taakbeheer {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Templates - collapsible section -->
-                    <div class="templates-sectie collapsible" id="templates-sectie">
-                        <div class="section-header" onclick="app.toggleSection('templates')">
-                            <h3>🔒 Geblokkeerd & Pauzes</h3>
-                            <span class="chevron"><i class="fas fa-chevron-down"></i></span>
-                        </div>
-                        <div class="section-content">
-                            <h4>🔒 Geblokkeerd</h4>
-                            <div class="template-items">
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="90">🔒 90min</div>
-                            <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120min</div>
-                            </div>
-                            
-                            <h4>☕ Pauzes</h4>
-                            <div class="template-items">
-                                <div class="template-item" draggable="true" data-type="pauze" data-duur="5">☕ 5min</div>
-                                <div class="template-item" draggable="true" data-type="pauze" data-duur="10">☕ 10min</div>
-                                <div class="template-item" draggable="true" data-type="pauze" data-duur="15">☕ 15min</div>
-                            </div>
-                        </div>
-                    </div>
-                    
+
                     <!-- Top 3 Priorities - collapsible section -->
                     <div class="top-prioriteiten-sectie collapsible" id="prioriteiten-sectie">
                         <div class="section-header" onclick="app.toggleSection('prioriteiten')">
@@ -12006,18 +11982,11 @@ class Taakbeheer {
             
             <div style="margin-bottom: 10px;">
                 <label>tijd-instellingen height:</label><br>
-                <input type="range" min="40" max="120" value="80" 
+                <input type="range" min="40" max="120" value="80"
                        oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.tijd-instellingen').style.height=this.value+'px'">
                 <span>80px</span>
             </div>
-            
-            <div style="margin-bottom: 10px;">
-                <label>templates-sectie height:</label><br>
-                <input type="range" min="100" max="300" value="200" 
-                       oninput="this.nextElementSibling.textContent=this.value+'px'; document.querySelector('.templates-sectie').style.height=this.value+'px'">
-                <span>200px</span>
-            </div>
-            
+
             <hr style="margin: 15px 0;">
             
             <button onclick="app.resetDebugger()" style="background: #FF3B30; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-right: 5px;">Reset</button>
@@ -12045,7 +12014,6 @@ class Taakbeheer {
         document.querySelector('.acties-sectie').style.maxHeight = '';
         document.querySelector('.acties-lijst').style.maxHeight = '';
         document.querySelector('.tijd-instellingen').style.height = '';
-        document.querySelector('.templates-sectie').style.height = '';
     }
 
     copyDebuggerValues() {
