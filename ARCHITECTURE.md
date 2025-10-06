@@ -396,7 +396,10 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ### Modals & Popups
 - **Herhalingen**: `toonHerhalingPopup()` in app.js:4100
-- **Planning**: Planning popup in index.html
+- **Planning**: Planning popup in index.html (regel 328-484)
+  - **Checkbox Layout**: `.checkbox-input-wrapper` in style.css:1910-1929 (v0.16.31)
+  - **Flexbox Horizontal**: Checkbox links van input field via `display: flex`
+  - **Responsive**: Gap 10px spacing, werkt op desktop/tablet/mobile
 - **Event datum**: Event popup voor recurring taken
 
 ### Focus Mode (Dagelijkse Planning)
