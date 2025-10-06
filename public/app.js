@@ -4267,20 +4267,39 @@ class Taakbeheer {
     async openVolgendeInboxTaak() {
         // Alleen in inbox lijst automatisch volgende taak openen
         if (this.huidigeLijst !== 'inbox') return false;
-        
+
         // Zoek de eerste taak in de huidige inbox lijst
         const volgendeTaak = this.taken.find(taak => taak.id !== this.huidigeTaakId);
-        
+
         if (volgendeTaak) {
             // Direct planTaak aanroepen (loading is al actief)
             await this.planTaak(volgendeTaak.id);
             toast.info(`Volgende taak: ${volgendeTaak.tekst.substring(0, 30)}...`);
             return true;
         }
-        
+
         // Geen taken meer in inbox
         toast.success('<i class="fas fa-party-horn"></i> Inbox is leeg! Alle taken zijn verwerkt.');
         return false;
+    }
+
+    // Helper function voor weekdag knoppen generatie
+    getWeekdagKnoppen(dagenOffset, onclickCallback, btnClass = 'menu-item') {
+        const vandaag = new Date();
+        const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
+        const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+
+        let weekdagenHTML = '';
+        const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
+
+        for (let i = 2; i <= dagenTotZondag; i++) {
+            const datum = new Date(vandaag);
+            datum.setDate(datum.getDate() + i);
+            const dagNaam = dagenVanDeWeek[datum.getDay()];
+            weekdagenHTML += `<button ${onclickCallback(i)} class="${btnClass}">${dagNaam}</button>`;
+        }
+
+        return weekdagenHTML;
     }
 
     toonActiesMenu(taakId, menuType = 'acties', huidigeLijst = null, position = null, sourceElement = null) {
@@ -4306,21 +4325,10 @@ class Taakbeheer {
         
         if (menuType === 'acties') {
             // Voor acties lijst: datum opties + uitgesteld + opvolgen
-            const vandaag = new Date();
-            const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
-            const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
-            
-            // Genereer de rest van de week dagen
-            let weekdagenHTML = '';
-            const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
-            
-            for (let i = 2; i <= dagenTotZondag; i++) {
-                const datum = new Date(vandaag);
-                datum.setDate(datum.getDate() + i);
-                const dagNaam = dagenVanDeWeek[datum.getDay()];
-                weekdagenHTML += `<button onclick="app.stelDatumIn('${taakId}', ${i})" class="menu-item">${dagNaam}</button>`;
-            }
-            
+            const weekdagenHTML = this.getWeekdagKnoppen(0, (i) =>
+                `onclick="app.stelDatumIn('${taakId}', ${i})"`
+            );
+
             menuContentHTML = `
                 <h3>Plan op</h3>
                 <div class="menu-section">
@@ -11834,29 +11842,37 @@ class Taakbeheer {
         try {
             let newDate;
             const today = new Date();
-            
-            switch (action) {
-                case 'vandaag':
-                    newDate = today.toISOString().split('T')[0];
-                    break;
-                case 'morgen':
-                    const morgen = new Date(today);
-                    morgen.setDate(today.getDate() + 1);
-                    newDate = morgen.toISOString().split('T')[0];
-                    break;
-                case 'plus3':
-                    const plus3 = new Date(today);
-                    plus3.setDate(today.getDate() + 3);
-                    newDate = plus3.toISOString().split('T')[0];
-                    break;
-                case 'week':
-                    const week = new Date(today);
-                    week.setDate(today.getDate() + 7);
-                    newDate = week.toISOString().split('T')[0];
-                    break;
-                default:
-                    console.error('Onbekende bulk actie:', action);
-                    return;
+
+            // Handle numeric offset (0=vandaag, 1=morgen, 2+=weekdagen)
+            if (typeof action === 'number') {
+                const targetDate = new Date(today);
+                targetDate.setDate(today.getDate() + action);
+                newDate = targetDate.toISOString().split('T')[0];
+            } else {
+                // Handle legacy string actions
+                switch (action) {
+                    case 'vandaag':
+                        newDate = today.toISOString().split('T')[0];
+                        break;
+                    case 'morgen':
+                        const morgen = new Date(today);
+                        morgen.setDate(today.getDate() + 1);
+                        newDate = morgen.toISOString().split('T')[0];
+                        break;
+                    case 'plus3':
+                        const plus3 = new Date(today);
+                        plus3.setDate(today.getDate() + 3);
+                        newDate = plus3.toISOString().split('T')[0];
+                        break;
+                    case 'week':
+                        const week = new Date(today);
+                        week.setDate(today.getDate() + 7);
+                        newDate = week.toISOString().split('T')[0];
+                        break;
+                    default:
+                        console.error('Onbekende bulk actie:', action);
+                        return;
+                }
             }
 
             // Process selected tasks
@@ -11900,10 +11916,15 @@ class Taakbeheer {
     getBulkVerplaatsKnoppen() {
         // Use the same logic as individual task dropdown menus
         if (this.huidigeLijst === 'acties') {
-            // For actions list: show dagens datum opties + uitgesteld opties
+            // For actions list: show dagens datum opties + weekdagen + uitgesteld opties
+            const weekdagenHTML = this.getWeekdagKnoppen(0, (i) =>
+                `onclick="window.bulkDateAction(${i})"`, 'bulk-action-btn'
+            );
+
             return `
-                <button onclick="window.bulkDateAction('vandaag')" class="bulk-action-btn">Vandaag</button>
-                <button onclick="window.bulkDateAction('morgen')" class="bulk-action-btn">Morgen</button>
+                <button onclick="window.bulkDateAction(0)" class="bulk-action-btn">Vandaag</button>
+                <button onclick="window.bulkDateAction(1)" class="bulk-action-btn">Morgen</button>
+                ${weekdagenHTML}
                 <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Opvolgen</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Wekelijks</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-maandelijks')" class="bulk-action-btn">Maandelijks</button>
