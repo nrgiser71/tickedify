@@ -629,8 +629,7 @@ class Taakbeheer {
         this.bulkModus = false; // Bulk edit mode voor overtijd taken
         this.geselecteerdeTaken = new Set(); // Geselecteerde taken in bulk modus
         this.prevInboxCount = -1; // Track previous inbox count for celebration detection
-        this.lastActionWasPlanning = false; // Track if last action was planning a task (for popup trigger)
-
+        
         // Fix: Reset eventsAlreadyBound to ensure bindEvents runs
         this.eventsAlreadyBound = false;
         
@@ -3587,12 +3586,11 @@ class Taakbeheer {
         
         // Check for empty inbox and show motivational message
         if (this.huidigeLijst === 'inbox' && this.taken.length === 0) {
-            // Check if inbox just got cleared by user action
-            if (this.lastActionWasPlanning) {
+            // Check if inbox just got cleared (from >0 to 0) for celebration
+            if (this.prevInboxCount > 0) {
                 this.triggerInboxCelebration();
-                this.lastActionWasPlanning = false; // Reset after popup
             }
-
+            
             container.innerHTML = `
                 <div class="inbox-empty-state">
                     <div class="inbox-empty-icon">✨</div>
@@ -3607,13 +3605,8 @@ class Taakbeheer {
         // Track inbox count for celebration detection
         if (this.huidigeLijst === 'inbox') {
             this.prevInboxCount = this.taken.length;
-
-            // Reset planning flag when inbox is not empty
-            if (this.taken.length > 0) {
-                this.lastActionWasPlanning = false;
-            }
         }
-
+        
         container.innerHTML = '';
 
         this.taken.forEach(taak => {
@@ -4874,9 +4867,6 @@ class Taakbeheer {
                 const taak = this.taken.find(t => t.id === this.huidigeTaakId);
                 if (!taak) return;
 
-                // Set flag: we are planning a task from inbox
-                this.lastActionWasPlanning = true;
-
                 const actie = {
                     id: taak.id,
                     tekst: taakNaam,
@@ -4937,14 +4927,9 @@ class Taakbeheer {
 
     async verplaatsTaak(naarLijst) {
         if (!this.huidigeTaakId) return;
-
+        
         const taak = this.taken.find(t => t.id === this.huidigeTaakId);
         if (!taak) return;
-
-        // Set flag if moving task from inbox
-        if (this.huidigeLijst === 'inbox') {
-            this.lastActionWasPlanning = true;
-        }
 
         await loading.withLoading(async () => {
             await this.verplaatsTaakNaarLijst(taak, naarLijst);
@@ -11918,12 +11903,7 @@ class Taakbeheer {
             loading.show('Afronden...');
             
             toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
-
-            // Set flag if bulk update cleared inbox
-            if (this.huidigeLijst === 'inbox' && successCount > 0) {
-                this.lastActionWasPlanning = true;
-            }
-
+            
             // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
             await this.preserveActionsFilters(() => this.laadHuidigeLijst());
