@@ -3943,6 +3943,15 @@ button:focus {
     background: rgba(255, 149, 0, 0.1);
 }
 
+/* Hide collapsible blocks in daily planning - Feature 007 */
+#tijd-sectie {
+    display: none;
+}
+
+#templates-sectie {
+    display: none;
+}
+
 /* Tablet and iPad responsive */
 @media (max-width: 1400px) {
     .hamburger-menu {
