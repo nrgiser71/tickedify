@@ -1154,10 +1154,7 @@ class Taakbeheer {
 
         // Skip uitgesteld dropdown - now using direct button navigation
 
-        // Tools dropdown functionaliteit
-        document.getElementById('tools-dropdown').addEventListener('click', () => {
-            this.toggleDropdown('tools');
-        });
+        // Tools dropdown removed - Feature 009: items now directly visible
 
         // Tools menu items - use event delegation
         document.addEventListener('click', (e) => {
@@ -6584,16 +6581,7 @@ class Taakbeheer {
             contextenbeheerItem.classList.add('actief');
         }
 
-        // Ensure tools dropdown is open
-        const toolsContent = document.getElementById('tools-content');
-        const toolsDropdown = document.getElementById('tools-dropdown');
-        if (toolsContent && toolsDropdown) {
-            toolsContent.style.display = 'block';
-            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
-            if (arrow) {
-                arrow.textContent = '▼';
-            }
-        }
+        // Tools dropdown removed - Feature 009: no longer needed
 
         // Update page title
         const pageTitle = document.getElementById('page-title');
@@ -6849,16 +6837,7 @@ class Taakbeheer {
             wekelijkseItem.classList.add('actief');
         }
 
-        // Ensure tools dropdown is open
-        const toolsContent = document.getElementById('tools-content');
-        const toolsDropdown = document.getElementById('tools-dropdown');
-        if (toolsContent && toolsDropdown) {
-            toolsContent.style.display = 'block';
-            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
-            if (arrow) {
-                arrow.textContent = '▼';
-            }
-        }
+        // Tools dropdown removed - Feature 009: no longer needed
 
         // Update page title
         const pageTitle = document.getElementById('page-title');
@@ -7030,16 +7009,7 @@ class Taakbeheer {
             zoekenItem.classList.add('actief');
         }
 
-        // Ensure tools dropdown is open
-        const toolsContent = document.getElementById('tools-content');
-        const toolsDropdown = document.getElementById('tools-dropdown');
-        if (toolsContent && toolsDropdown) {
-            toolsContent.style.display = 'block';
-            const arrow = toolsDropdown.querySelector('.dropdown-arrow');
-            if (arrow) {
-                arrow.textContent = '▼';
-            }
-        }
+        // Tools dropdown removed - Feature 009: no longer needed
 
         // Update page title
         document.getElementById('page-title').textContent = 'Zoeken';
