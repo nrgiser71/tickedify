@@ -248,6 +248,11 @@ body {
     color: white;
 }
 
+/* Extra ruimte tussen Afgewerkt en Dagelijkse Planning - Feature 009 */
+.lijst-item[data-lijst="dagelijkse-planning"] {
+    margin-top: 20px;
+}
+
 .lijst-icon {
     width: 20px;
     height: 20px;
