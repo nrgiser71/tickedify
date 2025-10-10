@@ -8850,6 +8850,21 @@ body.dagkalender-focus-active {
     margin-bottom: 20px;
 }
 
+/* Derde week sectie (Ctrl-toets activated) */
+#actiesDerdeWeekSection {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    transition: max-height 0.2s ease-out, opacity 0.2s ease-out, margin-bottom 0.2s ease-out;
+}
+
+#actiesDerdeWeekSection.visible {
+    max-height: 100px;
+    opacity: 1;
+    margin-bottom: 20px;
+}
+
 .acties-floating-panel .week-section h5 {
     margin: 0 0 10px 0;
     color: var(--text-color);

@@ -631,9 +631,14 @@ class Taakbeheer {
         this.prevInboxCount = -1; // Track previous inbox count for celebration detection
         this.lastActionWasPlanning = false; // Track if last action was planning a task (for popup trigger)
 
+        // Ctrl-toets tracking voor derde week toggle
+        this.ctrlKeyPressed = false;
+        this.keydownHandler = null;
+        this.keyupHandler = null;
+
         // Fix: Reset eventsAlreadyBound to ensure bindEvents runs
         this.eventsAlreadyBound = false;
-        
+
         this.init();
     }
 
@@ -11015,13 +11020,16 @@ class Taakbeheer {
         if (panel) {
             // Update datums dynamisch - dit moet EERST gebeuren om day zones te creëren
             this.updateActiesFloatingPanelDates();
-            
+
             panel.classList.add('active');
             panel.style.display = 'block';
-            
+
             // Setup drop zones NADAT day zones zijn gecreëerd - altijd opnieuw uitvoeren
             this.setupActiesFloatingDropZones();
             this.actiesFloatingDropZonesSetup = true;
+
+            // Setup keyboard handlers voor Ctrl-toets derde week toggle
+            this.setupKeyboardHandlers();
         }
     }
 
@@ -11033,36 +11041,41 @@ class Taakbeheer {
     generateActiesWeekDays() {
         const huidigeWeekContainer = document.getElementById('actiesHuidigeWeek');
         const volgendeWeekContainer = document.getElementById('actiesVolgendeWeek');
-        
+        const derdeWeekContainer = document.getElementById('actiesDerdeWeek');
+
         if (!huidigeWeekContainer || !volgendeWeekContainer) return;
-        
+
         // Reset setup flag zodat event listeners opnieuw worden toegevoegd na DOM wijzigingen
         this.actiesFloatingDropZonesSetup = false;
-        
+
         // Nederlandse weekdag afkortingen
         const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
-        
+
         // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
         const vandaagISO = vandaag.toISOString().split('T')[0]; // Voor vergelijking
         const huidigeWeekStart = new Date(vandaag);
         huidigeWeekStart.setDate(vandaag.getDate() - vandaag.getDay() + 1); // Maandag van deze week
-        
+
         // Bereken volgende week
         const volgendeWeekStart = new Date(huidigeWeekStart);
         volgendeWeekStart.setDate(huidigeWeekStart.getDate() + 7);
-        
+
+        // Bereken derde week
+        const derdeWeekStart = new Date(volgendeWeekStart);
+        derdeWeekStart.setDate(volgendeWeekStart.getDate() + 7);
+
         // Genereer huidige week zones
         huidigeWeekContainer.innerHTML = '';
         for (let i = 0; i < 7; i++) {
             const datum = new Date(huidigeWeekStart);
             datum.setDate(huidigeWeekStart.getDate() + i);
-            
+
             const weekdagIndex = datum.getDay();
             const weekdagAfkorting = weekdagen[weekdagIndex];
             const dagNummer = datum.getDate();
             const isoString = datum.toISOString().split('T')[0];
-            
+
             const dayZone = document.createElement('div');
             // Voeg current-day klasse toe als dit vandaag is
             const isVandaag = isoString === vandaagISO;
@@ -11073,21 +11086,21 @@ class Taakbeheer {
                 <div class="day-name">${weekdagAfkorting}</div>
                 <div class="day-date">${dagNummer}</div>
             `;
-            
+
             huidigeWeekContainer.appendChild(dayZone);
         }
-        
+
         // Genereer volgende week zones
         volgendeWeekContainer.innerHTML = '';
         for (let i = 0; i < 7; i++) {
             const datum = new Date(volgendeWeekStart);
             datum.setDate(volgendeWeekStart.getDate() + i);
-            
+
             const weekdagIndex = datum.getDay();
             const weekdagAfkorting = weekdagen[weekdagIndex];
             const dagNummer = datum.getDate();
             const isoString = datum.toISOString().split('T')[0];
-            
+
             const dayZone = document.createElement('div');
             // Voeg current-day klasse toe als dit vandaag is
             const isVandaag = isoString === vandaagISO;
@@ -11098,15 +11111,105 @@ class Taakbeheer {
                 <div class="day-name">${weekdagAfkorting}</div>
                 <div class="day-date">${dagNummer}</div>
             `;
-            
+
             volgendeWeekContainer.appendChild(dayZone);
+        }
+
+        // Genereer derde week zones (Ctrl-toets activated)
+        if (derdeWeekContainer) {
+            derdeWeekContainer.innerHTML = '';
+            for (let i = 0; i < 7; i++) {
+                const datum = new Date(derdeWeekStart);
+                datum.setDate(derdeWeekStart.getDate() + i);
+
+                const weekdagIndex = datum.getDay();
+                const weekdagAfkorting = weekdagen[weekdagIndex];
+                const dagNummer = datum.getDate();
+                const isoString = datum.toISOString().split('T')[0];
+
+                const dayZone = document.createElement('div');
+                // Voeg current-day klasse toe als dit vandaag is
+                const isVandaag = isoString === vandaagISO;
+                dayZone.className = isVandaag ? 'week-day-zone drop-zone-item current-day' : 'week-day-zone drop-zone-item';
+                dayZone.dataset.target = isoString;
+                dayZone.dataset.type = 'planning';
+                dayZone.innerHTML = `
+                    <div class="day-name">${weekdagAfkorting}</div>
+                    <div class="day-date">${dagNummer}</div>
+                `;
+
+                derdeWeekContainer.appendChild(dayZone);
+            }
         }
     }
 
 
+    toggleDerdeWeek(show) {
+        const derdeWeekSection = document.getElementById('actiesDerdeWeekSection');
+        if (!derdeWeekSection) return;
+
+        if (show) {
+            derdeWeekSection.style.display = 'block';
+            // Kleine delay voor smooth CSS transition
+            setTimeout(() => {
+                derdeWeekSection.classList.add('visible');
+            }, 10);
+        } else {
+            derdeWeekSection.classList.remove('visible');
+            // Wacht op transition voordat display: none
+            setTimeout(() => {
+                if (!derdeWeekSection.classList.contains('visible')) {
+                    derdeWeekSection.style.display = 'none';
+                }
+            }, 200); // Match CSS transition duration
+        }
+    }
+
+    setupKeyboardHandlers() {
+        // Keydown handler voor Ctrl detectie
+        this.keydownHandler = (e) => {
+            // Alleen actief tijdens drag operatie
+            if (this.currentDragData && e.ctrlKey && !this.ctrlKeyPressed) {
+                this.ctrlKeyPressed = true;
+                this.toggleDerdeWeek(true);
+            }
+        };
+
+        // Keyup handler voor Ctrl release
+        this.keyupHandler = (e) => {
+            // Check of Ctrl is losgelaten
+            if (this.ctrlKeyPressed && !e.ctrlKey) {
+                this.ctrlKeyPressed = false;
+                this.toggleDerdeWeek(false);
+            }
+        };
+
+        // Bind event listeners
+        document.addEventListener('keydown', this.keydownHandler);
+        document.addEventListener('keyup', this.keyupHandler);
+    }
+
+    removeKeyboardHandlers() {
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler);
+        }
+        if (this.keyupHandler) {
+            document.removeEventListener('keyup', this.keyupHandler);
+        }
+        this.keydownHandler = null;
+        this.keyupHandler = null;
+        this.ctrlKeyPressed = false;
+    }
+
     hideActiesFloatingPanel() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
+            // Remove keyboard handlers
+            this.removeKeyboardHandlers();
+
+            // Verberg derde week sectie
+            this.toggleDerdeWeek(false);
+
             // Fade-out animatie
             panel.classList.remove('active');
             // Wacht op fade-out voordat display: none
@@ -11121,6 +11224,16 @@ class Taakbeheer {
     hideActiesFloatingPanelImmediately() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
+            // Remove keyboard handlers
+            this.removeKeyboardHandlers();
+
+            // Verberg derde week sectie
+            const derdeWeekSection = document.getElementById('actiesDerdeWeekSection');
+            if (derdeWeekSection) {
+                derdeWeekSection.style.display = 'none';
+                derdeWeekSection.classList.remove('visible');
+            }
+
             // Onmiddellijk verbergen zonder animatie (voor drop events)
             panel.classList.remove('active');
             panel.style.display = 'none';
