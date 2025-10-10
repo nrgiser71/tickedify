@@ -134,10 +134,32 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.16.36 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.16.36</span>
+                <span class="version-date">10 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Bug Fix: Ctrl-toets Derde Week Nu Werkend</div>
+                        <div class="change-description">
+                            De Ctrl-toets functionaliteit om een derde week te tonen tijdens het slepen van acties werkt nu correct.
+                            Het probleem was dat de keyboard event handler geen toegang had tot de drag data tijdens Acties slepen.
+                            Dit is opgelost door <code>this.currentDragData</code> correct te zetten in de dragstart en dragend handlers.
+                            De derde week verschijnt nu smooth wanneer je Ctrl indrukt tijdens het slepen van een actie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.16.35 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.16.35</span>
+                <span class="version-badge badge-feature">v0.16.35</span>
                 <span class="version-date">10 oktober 2025</span>
             </div>
             <div class="changes-list">

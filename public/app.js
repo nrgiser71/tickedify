@@ -10997,7 +10997,10 @@ class Taakbeheer {
                 };
                 e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
                 e.dataTransfer.effectAllowed = 'move';
-                
+
+                // Store globally for keyboard handlers
+                this.currentDragData = dragData;
+
                 // Visual feedback (exact zoals uitgesteld)
                 li.style.opacity = '0.5';
                 
@@ -11008,7 +11011,10 @@ class Taakbeheer {
             li.addEventListener('dragend', (e) => {
                 // Reset visual feedback (exact zoals uitgesteld)
                 li.style.opacity = '1';
-                
+
+                // Clear global drag data
+                this.currentDragData = null;
+
                 // Verberg floating panel (exact zoals uitgesteld)
                 this.hideActiesFloatingPanel();
             });
