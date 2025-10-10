@@ -10996,8 +10996,7 @@ class Taakbeheer {
                     bronLijst: 'acties'
                 };
                 e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-                // Allow both move and copy, maar forceer move in dragover
-                e.dataTransfer.effectAllowed = 'copyMove';
+                e.dataTransfer.effectAllowed = 'move';
 
                 // Store globally for keyboard handlers
                 this.currentDragData = dragData;
@@ -11173,8 +11172,8 @@ class Taakbeheer {
     hideActiesFloatingPanel() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
-            // Reset Ctrl status
-            this.ctrlKeyPressed = false;
+            // Reset Shift status
+            this.shiftKeyPressed = false;
 
             // Verberg derde week sectie
             this.toggleDerdeWeek(false);
@@ -11193,8 +11192,8 @@ class Taakbeheer {
     hideActiesFloatingPanelImmediately() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
-            // Reset Ctrl status
-            this.ctrlKeyPressed = false;
+            // Reset Shift status
+            this.shiftKeyPressed = false;
 
             // Verberg derde week sectie
             const derdeWeekSection = document.getElementById('actiesDerdeWeekSection');
@@ -11218,12 +11217,12 @@ class Taakbeheer {
                 e.dataTransfer.dropEffect = 'move';
                 zone.classList.add('drag-over');
 
-                // Check Ctrl status en toggle derde week
-                if (e.ctrlKey && !this.ctrlKeyPressed) {
-                    this.ctrlKeyPressed = true;
+                // Check Shift status en toggle derde week
+                if (e.shiftKey && !this.shiftKeyPressed) {
+                    this.shiftKeyPressed = true;
                     this.toggleDerdeWeek(true);
-                } else if (!e.ctrlKey && this.ctrlKeyPressed) {
-                    this.ctrlKeyPressed = false;
+                } else if (!e.shiftKey && this.shiftKeyPressed) {
+                    this.shiftKeyPressed = false;
                     this.toggleDerdeWeek(false);
                 }
             });
