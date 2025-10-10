@@ -132,6 +132,17 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `setupFloatingDropZones()` - regel ~8,905 - Event handlers voor floating drop zones
 - `handleFloatingDropZoneDrop()` - regel ~8,938 - Drop verwerking naar inbox/opvolgen
 
+**Acties Floating Panel & Ctrl-toets Derde Week (regels 11,000-11,250)**
+- `showActiesFloatingPanel()` - regel ~11,018 - Toon acties drag panel met week dagen
+- `hideActiesFloatingPanel()` - regel ~11,204 - Verberg panel met cleanup van keyboard handlers
+- `hideActiesFloatingPanelImmediately()` - regel ~11,224 - Onmiddellijk verbergen (drop events)
+- `generateActiesWeekDays()` - regel ~11,033 - Genereer 3 weken (huidige + volgende + derde)
+- `toggleDerdeWeek(show)` - regel ~11,139 - Toggle derde week sectie met CSS transitions
+- `setupKeyboardHandlers()` - regel ~11,165 - Bind Ctrl-toets event listeners voor derde week
+- `removeKeyboardHandlers()` - regel ~11,189 - Unbind keyboard listeners bij drag end
+- `updateActiesFloatingPanelDates()` - regel ~11,036 - Update week datums dynamisch
+- `setupActiesFloatingDropZones()` - regel ~11,243 - Drop zone handlers voor acties panel
+
 **Utility Functions (regels 9,000-10,507)**
 - `formatDuration()` - regel ~8,600
 - `parseRecurringPattern()` - regel ~9,000
@@ -152,6 +163,8 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Floating Drop Panel**: regels 6,439-6,542 - Panel styling met blur effects en animaties
 - **Context Menu Highlighting**: regels 1,428-1,452 - `.context-menu-highlighted` met glow animatie
 - **Acties Menu Overlay**: regels 1,290-1,305 - Blur overlay styling voor menu achtergrond
+- **Acties Floating Panel & Derde Week**: regels 8,816-8,950 - `.acties-floating-panel` met week grid layout
+- **Derde Week Toggle (Ctrl-toets)**: regels 8,853-8,866 - `#actiesDerdeWeekSection` met smooth max-height transitions
 
 ### Backend
 
@@ -301,16 +314,40 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **CSS**: Panel styling met blur effects in style.css:6439-6542
 - **Positioning**: top: 80px rechts, smooth slide-in animaties
 
+### Acties Floating Panel & Ctrl-toets Derde Week (v0.16.35) ✅
+- **HTML Structure**: Acties floating panel in index.html:871-925
+  - `#actiesFloatingPanel` - Main panel container met `.acties-floating-panel` class
+  - `#actiesHuidigeWeek` - Huidige week container (regel 880)
+  - `#actiesVolgendeWeek` - Volgende week container (regel 888)
+  - `#actiesDerdeWeekSection` - Derde week sectie (regel 894, initieel hidden)
+  - `#actiesDerdeWeek` - Derde week container voor dynamische dag zones
+- **JavaScript Functions**:
+  - `generateActiesWeekDays()` - app.js:11033 - Genereert 3 weken datums
+  - `toggleDerdeWeek(show)` - app.js:11139 - Toggle derde week met CSS transitions
+  - `setupKeyboardHandlers()` - app.js:11165 - Bind Ctrl-toets listeners
+  - `removeKeyboardHandlers()` - app.js:11189 - Cleanup bij drag end
+  - `showActiesFloatingPanel()` - app.js:11018 - Activeer panel + keyboard handlers
+  - `hideActiesFloatingPanel()` - app.js:11204 - Deactiveer panel + cleanup
+- **CSS Styling**:
+  - Panel layout in style.css:8816-8950
+  - Derde week transitions in style.css:8853-8866 (max-height + opacity)
+  - Week grid layout in style.css:8861-8866
+- **User Interaction**:
+  - Ctrl-toets indrukken tijdens drag → 3e week verschijnt (14-20 dagen vooruit)
+  - Ctrl-toets loslaten → 3e week verdwijnt met smooth transition
+  - Real-time keyboard event detection via `event.ctrlKey`
+- **Performance**: <50ms response tijd tussen Ctrl event en UI update
+
 ### Beta Feedback Systeem (v0.11.93) ✅
 - **Frontend Manager**: `FeedbackManager` class in app.js:11247-11400
 - **Sidebar Buttons**: Bug Melden & Feature Request in index.html sidebar
 - **Modal Forms**: Feedback modals in index.html:697-724 (perfect gecentreerd, beide buttons zichtbaar)
 - **CSS Styling**: Feedback modal styling in style.css:7358-7478 (gekopieerd van confirmModal)
-- **API Endpoints**: 
+- **API Endpoints**:
   - `POST /api/feedback` - Nieuwe feedback
   - `GET /api/feedback` - Gebruiker feedback
   - Admin endpoints in server.js:5348-5462
-- **Admin Dashboard**: 
+- **Admin Dashboard**:
   - Feedback stats card in admin.html:388-395
   - Feedback tabel in admin.html:465-473
   - Detail modal in admin.html:477-525
