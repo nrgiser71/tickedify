@@ -10996,7 +10996,8 @@ class Taakbeheer {
                     bronLijst: 'acties'
                 };
                 e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
-                e.dataTransfer.effectAllowed = 'move';
+                // Allow both move and copy, maar forceer move in dragover
+                e.dataTransfer.effectAllowed = 'copyMove';
 
                 // Store globally for keyboard handlers
                 this.currentDragData = dragData;
