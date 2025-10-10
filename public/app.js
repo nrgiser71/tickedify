@@ -11033,9 +11033,6 @@ class Taakbeheer {
             // Setup drop zones NADAT day zones zijn gecreëerd - altijd opnieuw uitvoeren
             this.setupActiesFloatingDropZones();
             this.actiesFloatingDropZonesSetup = true;
-
-            // Setup keyboard handlers voor Ctrl-toets derde week toggle
-            this.setupKeyboardHandlers();
         }
     }
 
@@ -11171,47 +11168,12 @@ class Taakbeheer {
         }
     }
 
-    setupKeyboardHandlers() {
-        // Keydown handler voor Ctrl detectie
-        this.keydownHandler = (e) => {
-            // Alleen actief tijdens drag operatie
-            if (this.currentDragData && e.ctrlKey && !this.ctrlKeyPressed) {
-                this.ctrlKeyPressed = true;
-                this.toggleDerdeWeek(true);
-            }
-        };
-
-        // Keyup handler voor Ctrl release
-        this.keyupHandler = (e) => {
-            // Check of Ctrl is losgelaten
-            if (this.ctrlKeyPressed && !e.ctrlKey) {
-                this.ctrlKeyPressed = false;
-                this.toggleDerdeWeek(false);
-            }
-        };
-
-        // Bind event listeners
-        document.addEventListener('keydown', this.keydownHandler);
-        document.addEventListener('keyup', this.keyupHandler);
-    }
-
-    removeKeyboardHandlers() {
-        if (this.keydownHandler) {
-            document.removeEventListener('keydown', this.keydownHandler);
-        }
-        if (this.keyupHandler) {
-            document.removeEventListener('keyup', this.keyupHandler);
-        }
-        this.keydownHandler = null;
-        this.keyupHandler = null;
-        this.ctrlKeyPressed = false;
-    }
 
     hideActiesFloatingPanel() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
-            // Remove keyboard handlers
-            this.removeKeyboardHandlers();
+            // Reset Ctrl status
+            this.ctrlKeyPressed = false;
 
             // Verberg derde week sectie
             this.toggleDerdeWeek(false);
@@ -11230,8 +11192,8 @@ class Taakbeheer {
     hideActiesFloatingPanelImmediately() {
         const panel = document.getElementById('actiesFloatingPanel');
         if (panel) {
-            // Remove keyboard handlers
-            this.removeKeyboardHandlers();
+            // Reset Ctrl status
+            this.ctrlKeyPressed = false;
 
             // Verberg derde week sectie
             const derdeWeekSection = document.getElementById('actiesDerdeWeekSection');
@@ -11248,12 +11210,21 @@ class Taakbeheer {
 
     setupActiesFloatingDropZones() {
         const dropZones = document.querySelectorAll('#actiesFloatingPanel .drop-zone-item');
-        
+
         dropZones.forEach(zone => {
             zone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 zone.classList.add('drag-over');
+
+                // Check Ctrl status en toggle derde week
+                if (e.ctrlKey && !this.ctrlKeyPressed) {
+                    this.ctrlKeyPressed = true;
+                    this.toggleDerdeWeek(true);
+                } else if (!e.ctrlKey && this.ctrlKeyPressed) {
+                    this.ctrlKeyPressed = false;
+                    this.toggleDerdeWeek(false);
+                }
             });
             
             zone.addEventListener('dragleave', (e) => {

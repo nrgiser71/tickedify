@@ -134,10 +134,32 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.16.37 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.16.37</span>
+                <span class="version-date">10 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Bug Fix: Ctrl-toets Detectie via Dragover Events</div>
+                        <div class="change-description">
+                            De Ctrl-toets functionaliteit werkt nu correct! Het probleem was dat keyboard events (keydown/keyup)
+                            niet gefired worden tijdens een actieve HTML5 drag operatie. De oplossing: Ctrl detectie is verplaatst
+                            naar de <code>dragover</code> event handler, die WEL continu wordt aangeroepen tijdens het slepen.
+                            Nu verschijnt de derde week real-time wanneer je Ctrl indrukt tijdens het slepen van een actie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.16.36 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.16.36</span>
+                <span class="version-badge badge-fix">v0.16.36</span>
                 <span class="version-date">10 oktober 2025</span>
             </div>
             <div class="changes-list">
