@@ -244,7 +244,7 @@
 
 ## Phase 3.6: Documentation & Deployment
 
-- [ ] **T017** Update `ARCHITECTURE.md` met nieuwe functie locaties en regelnummers
+- [x] **T017** Update `ARCHITECTURE.md` met nieuwe functie locaties en regelnummers
   - Voeg `toggleDerdeWeek()` functie locatie toe
   - Voeg keyboard event handlers locatie toe
   - Update `generateActiesWeekDays()` beschrijving met derde week ondersteuning
@@ -255,7 +255,7 @@
 
 ---
 
-- [ ] **T018** Update `public/changelog.html` met v0.16.35 feature beschrijving + version bump in `package.json`
+- [x] **T018** Update `public/changelog.html` met v0.16.35 feature beschrijving + version bump in `package.json`
   - Changelog entry: "⚡ Ctrl-toets uitbreiding: 3e week in drag popup voor acties planning"
   - Beschrijf functionaliteit: "Houd Ctrl ingedrukt tijdens slepen om 7 extra dagen te zien (week 3)"
   - Version bump: `package.json` naar v0.16.35
@@ -354,4 +354,25 @@ Task(description="Test edge cases", prompt="Execute quickstart scenario 5...")
 **Estimated Time**: 4-6 hours (inclusief testing)
 **Parallel Opportunities**: 11 tasks kunnen parallel (T001-T003, T009-T011, T012-T016)
 
-✅ **Tasks ready for execution** - Proceed with implementation via `/implement` command of handmatige uitvoering
+---
+
+## ✅ FEATURE COMPLETED - v0.17.0
+
+**Implementation Status**: VOLLEDIG GEÏMPLEMENTEERD en LIVE op productie (tickedify.com)
+
+**Final Solution**:
+- Shift-toets in plaats van Ctrl-toets (browser drag & drop compatibility)
+- Shift detectie via `event.shiftKey` in dragover handlers
+- Real-time toggle van derde week (21 dagen totaal planning horizon)
+- Smooth CSS transitions (<200ms)
+- Geen conflicten met browser native drag & drop
+
+**Testing**: Handmatig getest op productie - functionaliteit werkt correct
+
+**Deployment History**:
+- v0.16.35: Initiële implementatie (Ctrl-toets, keyboard events - werkte niet)
+- v0.16.36: Bug fix currentDragData
+- v0.16.37: Verplaatst naar dragover events (Ctrl werkte deels)
+- v0.16.38: effectAllowed = 'copyMove' poging (drop faalde)
+- v0.16.39: Shift-toets implementatie (WERKT!)
+- v0.17.0: FINALE VERSIE - Feature compleet en stabiel
