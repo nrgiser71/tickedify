@@ -3821,18 +3821,23 @@ app.get('/api/auth/me', async (req, res) => {
         // Check if user has access
         let hasAccess = true;
         let accessMessage = null;
-        
+        let requiresUpgrade = false;
+
         // If beta period is not active and user is beta type
         if (!betaConfig.beta_period_active && user.account_type === 'beta') {
             if (user.subscription_status !== 'paid' && user.subscription_status !== 'active') {
                 hasAccess = false;
+                requiresUpgrade = true;
                 accessMessage = 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
+
+                console.log(`⚠️ /api/auth/me - User ${user.email} requires upgrade (beta expired)`);
             }
         }
-        
+
         res.json({
             authenticated: true,
             hasAccess: hasAccess,
+            requiresUpgrade: requiresUpgrade,
             accessMessage: accessMessage,
             user: {
                 id: req.session.userId,

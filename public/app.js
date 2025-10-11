@@ -12367,28 +12367,41 @@ class AuthManager {
     async checkAuthStatus() {
         try {
             const response = await fetch('/api/auth/me');
-            
+
             if (response.ok) {
                 const data = await response.json();
+
+                // Check if upgrade is required (beta period ended)
+                if (data.requiresUpgrade) {
+                    console.log('⚠️ checkAuthStatus detected requiresUpgrade - redirecting to subscription');
+                    toast.warning('Beta periode beëindigd. Kies een abonnement om door te gaan.');
+
+                    // Redirect to subscription selection page
+                    setTimeout(() => {
+                        window.location.href = '/subscription.html?source=beta';
+                    }, 1500);
+                    return;
+                }
+
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
-                
-                // Check beta period access
+
+                // Check beta period access (legacy check, kept for safety)
                 if (!data.hasAccess) {
                     this.showUpgradeMessage(data.accessMessage);
                     this.isAuthenticated = false; // Treat as not authenticated for UI purposes
-                    
+
                     // Clear data
                     if (app) {
                         app.taken = [];
                         app.renderTaken();
                     }
-                    
+
                     // Hide loading indicator
                     if (window.loading) {
                         loading.hideGlobal();
                     }
-                    
+
                     this.updateUI();
                     return;
                 }
