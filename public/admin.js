@@ -656,29 +656,6 @@ class AdminDashboard {
             </div>
         `;
 
-        // Show individual plan status toggles
-        html += '<div style="margin-top: 20px;"><h4 style="margin-bottom: 10px;">Abonnement Status</h4></div>';
-
-        configs.forEach(config => {
-            html += `
-                <div class="payment-config-item" style="padding: 15px;">
-                    <div class="payment-config-header">
-                        <span class="payment-config-title">${this.escapeHtml(config.plan_name)} (${config.plan_id})</span>
-                        <div class="config-status">
-                            <label class="toggle-switch">
-                                <input type="checkbox"
-                                       id="active-${config.plan_id}"
-                                       ${config.is_active ? 'checked' : ''}
-                                       onchange="togglePlanActive('${config.plan_id}', this.checked)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span>${config.is_active ? '✅ Actief' : '❌ Inactief'}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
         container.innerHTML = html;
     }
 }
