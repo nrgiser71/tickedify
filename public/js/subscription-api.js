@@ -116,9 +116,10 @@ const SubscriptionAPI = {
 
     /**
      * Select a subscription plan for the user
-     * @param {string} planId - Selected plan ID (e.g., 'monthly_7', 'yearly_70')
+     * Feature: 011-in-de-app payment system
+     * @param {string} planId - Selected plan ID (e.g., 'trial_14', 'monthly_7', 'yearly_70')
      * @param {string} source - Selection source ('beta', 'registration', 'upgrade')
-     * @returns {Promise<object>} - Selection response with success flag
+     * @returns {Promise<object>} - Selection response with success flag and redirect URL if paid plan
      */
     async selectPlan(planId, source = 'upgrade') {
         try {
@@ -133,9 +134,7 @@ const SubscriptionAPI = {
             }
 
             const requestBody = {
-                plan_id: planId,
-                source: source,
-                selected_at: new Date().toISOString()
+                planId: planId  // Backend expects 'planId' not 'plan_id'
             };
 
             const response = await this.request('/api/subscription/select', {
@@ -143,6 +142,28 @@ const SubscriptionAPI = {
                 body: requestBody
             });
 
+            // Handle trial vs paid plan response
+            if (response.trial) {
+                // Trial activated - no payment needed
+                return {
+                    success: true,
+                    trial: true,
+                    trialEndDate: response.trialEndDate,
+                    message: response.message || 'Trial geactiveerd!',
+                    plan_id: planId
+                };
+            } else if (response.paid && response.redirectUrl) {
+                // Paid plan - redirect to checkout
+                return {
+                    success: true,
+                    paid: true,
+                    redirectUrl: response.redirectUrl,
+                    message: 'Doorsturen naar betaling...',
+                    plan_id: planId
+                };
+            }
+
+            // Fallback response
             return {
                 success: true,
                 data: response,

@@ -221,6 +221,38 @@ async function confirmSelection() {
         if (response.success) {
             console.log('Plan selection confirmed:', response);
 
+            // Handle paid plan redirect
+            if (response.paid && response.redirectUrl) {
+                console.log('Redirecting to checkout:', response.redirectUrl);
+                showSuccessModal('Doorsturen naar betaling...');
+
+                // Redirect to Plug&Pay checkout after brief delay
+                setTimeout(() => {
+                    window.location.href = response.redirectUrl;
+                }, 1500);
+
+                return; // Exit early, redirect will happen
+            }
+
+            // Handle trial activation
+            if (response.trial) {
+                console.log('Trial activated until:', response.trialEndDate);
+                showSuccessModal(
+                    response.message || `Trial geactiveerd! Je hebt 14 dagen om Tickedify uit te proberen.`
+                );
+
+                // Store trial info
+                sessionStorage.setItem('subscription_selection', JSON.stringify({
+                    planId: subscriptionState.selectedPlanId,
+                    trial: true,
+                    trialEndDate: response.trialEndDate,
+                    timestamp: Date.now()
+                }));
+
+                return; // Exit, success modal will redirect
+            }
+
+            // Fallback for other success responses
             showSuccessModal(
                 `Je hebt succesvol het ${SUBSCRIPTION_VALIDATION.getPlanById(subscriptionState.selectedPlanId).name} abonnement geselecteerd. ` +
                 'Je selectie is opgeslagen en je kunt nu doorgaan met Tickedify.'
