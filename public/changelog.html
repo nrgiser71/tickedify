@@ -134,10 +134,60 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.36 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.36</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎉</span>
+                    <div class="change-content">
+                        <div class="change-title">Welcome Pagina - Post-Payment Experience</div>
+                        <div class="change-description">
+                            <strong>Nieuwe professionele welcome pagina:</strong> Na succesvolle betaling worden gebruikers verwelkomd met een dedicated pagina.
+                            <br><br>
+                            <strong>Features:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Duidelijke bevestiging van actief abonnement</li>
+                                <li>Overzicht van premium features</li>
+                                <li>Automatische redirect naar /app na 5 seconden</li>
+                                <li>"Ga direct naar de app" knop voor immediate access</li>
+                                <li>Smooth animaties en moderne design</li>
+                            </ul>
+                            <strong>URL:</strong> <code>/welcome</code> (in te stellen als Plug&Pay return URL)
+                            <br><strong>UX:</strong> Professionele post-payment flow met duidelijke feedback voor nieuwe abonnees.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.17.35 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.17.35</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Database Migratie Endpoint</div>
+                        <div class="change-description">
+                            Debug endpoint toegevoegd om subscription kolom migratie handmatig uit te voeren.
+                            <br><strong>Endpoint:</strong> <code>POST /api/debug/run-subscription-migration</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.34 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.34</span>
+                <span class="version-badge badge-fix">v0.17.34</span>
                 <span class="version-date">11 oktober 2025</span>
             </div>
             <div class="changes-list">
