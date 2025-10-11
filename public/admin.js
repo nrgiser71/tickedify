@@ -619,11 +619,49 @@ class AdminDashboard {
         if (errorDiv) errorDiv.style.display = 'none';
         console.log('✅ Rendering', configs.length, 'payment configurations');
 
-        let html = '';
+        // Find the first config with a checkout URL (or first config if none have URL)
+        const primaryConfig = configs.find(c => c.checkout_url) || configs[0];
+        const sharedCheckoutUrl = primaryConfig?.checkout_url || '';
+        const lastUpdated = primaryConfig?.updated_at;
+
+        let html = `
+            <div class="payment-config-item">
+                <div class="payment-config-header">
+                    <span class="payment-config-title">🔗 Checkout URL (beide abonnementen)</span>
+                </div>
+                <form class="payment-config-form" onsubmit="updateSharedCheckoutUrl(event)">
+                    <div class="form-group">
+                        <label for="shared-checkout-url">Plug&Pay Checkout URL</label>
+                        <input
+                            type="url"
+                            id="shared-checkout-url"
+                            name="checkout_url"
+                            value="${this.escapeHtml(sharedCheckoutUrl)}"
+                            placeholder="https://..."
+                            required>
+                        <small style="color: var(--macos-text-secondary); font-size: 12px;">
+                            Deze URL wordt gebruikt voor zowel maandelijks als jaarlijks abonnement.<br>
+                            Laatst bijgewerkt: ${lastUpdated ? this.formatDateTime(lastUpdated) : 'Nooit'}
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="admin-btn success">
+                            💾 Opslaan
+                        </button>
+                        <button type="button" class="admin-btn" onclick="testSharedCheckoutUrl()">
+                            🔗 Test URL
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        // Show individual plan status toggles
+        html += '<div style="margin-top: 20px;"><h4 style="margin-bottom: 10px;">Abonnement Status</h4></div>';
 
         configs.forEach(config => {
             html += `
-                <div class="payment-config-item">
+                <div class="payment-config-item" style="padding: 15px;">
                     <div class="payment-config-header">
                         <span class="payment-config-title">${this.escapeHtml(config.plan_name)} (${config.plan_id})</span>
                         <div class="config-status">
@@ -637,29 +675,6 @@ class AdminDashboard {
                             <span>${config.is_active ? '✅ Actief' : '❌ Inactief'}</span>
                         </div>
                     </div>
-                    <form class="payment-config-form" onsubmit="updateCheckoutUrl(event, '${config.plan_id}')">
-                        <div class="form-group">
-                            <label for="url-${config.plan_id}">Checkout URL (Plug&Pay)</label>
-                            <input
-                                type="url"
-                                id="url-${config.plan_id}"
-                                name="checkout_url"
-                                value="${this.escapeHtml(config.checkout_url || '')}"
-                                placeholder="https://..."
-                                required>
-                            <small style="color: var(--macos-text-secondary); font-size: 12px;">
-                                Laatst bijgewerkt: ${config.updated_at ? this.formatDateTime(config.updated_at) : 'Nooit'}
-                            </small>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="admin-btn success">
-                                💾 Opslaan
-                            </button>
-                            <button type="button" class="admin-btn" onclick="testCheckoutUrl('${config.plan_id}')">
-                                🔗 Test URL
-                            </button>
-                        </div>
-                    </form>
                 </div>
             `;
         });
@@ -994,6 +1009,74 @@ async function togglePlanActive(planId, isActive) {
 
 function testCheckoutUrl(planId) {
     const urlInput = document.getElementById(`url-${planId}`);
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        alert('Geen checkout URL ingesteld');
+        return;
+    }
+
+    // Open URL in new tab
+    window.open(url, '_blank');
+    adminDashboard.showSuccess(`🔗 Checkout URL geopend in nieuw tabblad`);
+}
+
+// Shared checkout URL functions (for single URL used by both plans)
+async function updateSharedCheckoutUrl(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const urlInput = form.querySelector('input[name="checkout_url"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const checkoutUrl = urlInput.value.trim();
+
+    if (!checkoutUrl) {
+        alert('Voer een checkout URL in');
+        return;
+    }
+
+    // Disable button during save
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '🔄 Bezig met opslaan...';
+    submitBtn.disabled = true;
+
+    try {
+        // Update BOTH plans with the same URL
+        const planIds = ['monthly_7', 'yearly_70'];
+        const updatePromises = planIds.map(planId =>
+            fetch('/api/admin/payment-configurations', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    checkout_url: checkoutUrl
+                })
+            }).then(r => r.json())
+        );
+
+        const results = await Promise.all(updatePromises);
+
+        // Check if all updates succeeded
+        const allSuccess = results.every(result => result.success);
+
+        if (allSuccess) {
+            adminDashboard.showSuccess(`✅ Checkout URL bijgewerkt voor beide abonnementen`);
+            // Refresh data to show updated timestamp
+            await adminDashboard.refreshData();
+        } else {
+            throw new Error('Een of meer updates zijn mislukt');
+        }
+    } catch (error) {
+        console.error('Error updating shared checkout URL:', error);
+        adminDashboard.showError('❌ Fout bij opslaan: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+function testSharedCheckoutUrl() {
+    const urlInput = document.getElementById('shared-checkout-url');
     const url = urlInput.value.trim();
 
     if (!url) {

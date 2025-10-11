@@ -115,9 +115,25 @@ function renderSubscriptionPlans() {
     }
 
     // Render each plan
-    plansToRender.forEach(plan => {
+    plansToRender.forEach((plan, index) => {
         const planElement = createPlanElement(plan);
         plansGrid.appendChild(planElement);
+
+        // Add disclaimer after the last paid plan
+        const isPaidPlan = plan.id === 'monthly_7' || plan.id === 'yearly_70';
+        const isLastPaidPlan = (plan.id === 'yearly_70') || (plan.id === 'monthly_7' && index === plansToRender.length - 1);
+
+        if (isPaidPlan && isLastPaidPlan) {
+            const disclaimerElement = document.createElement('div');
+            disclaimerElement.className = 'payment-disclaimer';
+            disclaimerElement.innerHTML = `
+                <p style="text-align: center; color: var(--text-secondary, #6b7280); font-size: 14px; margin-top: 20px; padding: 15px; background: var(--bg-secondary, #f9fafb); border-radius: 8px;">
+                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                    Bij het afrekenen kun je je definitieve keuze maken tussen maandelijks en jaarlijks betalen
+                </p>
+            `;
+            plansGrid.appendChild(disclaimerElement);
+        }
     });
 
     // Update selection state
