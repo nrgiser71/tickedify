@@ -1623,6 +1623,39 @@ app.post('/api/debug/reset-subscription', async (req, res) => {
     }
 });
 
+// Debug endpoint to manually run subscription column migration
+app.post('/api/debug/run-subscription-migration', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log('🔄 Running subscription column migration...');
+
+        // Add subscription-related columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255)
+        `);
+
+        console.log('✅ Users table subscription columns added');
+
+        res.json({
+            success: true,
+            message: 'Migration completed successfully',
+            columns_added: ['plugandpay_subscription_id']
+        });
+
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            detail: error.detail
+        });
+    }
+});
+
 // API endpoint voor huidige gebruiker info inclusief import code
 app.get('/api/user/info', async (req, res) => {
     try {
