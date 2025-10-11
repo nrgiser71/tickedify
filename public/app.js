@@ -12242,29 +12242,32 @@ class AuthManager {
             const data = await response.json();
 
             if (response.ok) {
+                // Check if upgrade is required (beta period ended)
+                if (data.requiresUpgrade) {
+                    toast.warning('Beta periode beëindigd. Kies een abonnement om door te gaan.');
+                    // Redirect to subscription selection page
+                    setTimeout(() => {
+                        window.location.href = '/subscription.html?source=beta';
+                    }, 1500);
+                    return;
+                }
+
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 this.updateUI();
                 this.hideLoginModal();
-                
+
                 toast.success(`Welkom terug, ${data.user.naam}!`);
-                
+
                 // Check auth status immediately after login (includes beta access check)
                 await this.checkAuthStatus();
-                
+
                 // Load user-specific data (only if still authenticated after checkAuthStatus)
                 if (this.isAuthenticated && app) {
                     await app.loadUserData();
                 }
             } else {
-                // Handle beta upgrade requirement
-                if (data.requiresUpgrade) {
-                    toast.error(data.error);
-                    // Could redirect to upgrade page here if available
-                    // window.location.href = '/upgrade';
-                } else {
-                    toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
-                }
+                toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
             }
         } catch (error) {
             console.error('Login error:', error);
