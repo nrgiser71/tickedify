@@ -118,7 +118,11 @@ class AdminDashboard {
         ];
 
         const results = await Promise.allSettled(
-            endpoints.map(endpoint => fetch(endpoint).then(r => r.json()))
+            endpoints.map(endpoint =>
+                fetch(endpoint, {
+                    credentials: 'include'  // Ensure cookies are sent
+                }).then(r => r.json())
+            )
         );
 
         // Debug logging for failed endpoints
