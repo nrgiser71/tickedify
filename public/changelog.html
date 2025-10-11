@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.39 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.39</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔐</span>
+                    <div class="change-content">
+                        <div class="change-title">Email Bevestigingspagina Vóór Betaling</div>
+                        <div class="change-description">
+                            <strong>KRITIEKE UX VERBETERING:</strong> Tussenpagina toegevoegd die gebruikers waarschuwt het juiste emailadres te gebruiken bij betaling.
+                            <br><br>
+                            <strong>Waarom belangrijk?</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Voorkomt gefrustreerde gebruikers die wel betaald hebben maar geen toegang krijgen</li>
+                                <li>Webhook kan betaling alleen matchen als emailadres overeenkomt</li>
+                                <li>Duidelijke instructies VOORDAT gebruiker naar betaalpagina gaat</li>
+                            </ul>
+                            <strong>Features:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>⚠️ Prominente waarschuwing met email display</li>
+                                <li>📋 Copy-to-clipboard knop voor gemak</li>
+                                <li>💡 Niet-technische uitleg waarom email belangrijk is</li>
+                                <li>✅ Bewuste bevestiging: "Ik begrijp het, ga door naar betaling"</li>
+                                <li>⬅️ Terug knop naar abonnement selectie</li>
+                            </ul>
+                            <strong>Flow:</strong> Subscription selectie → Email bevestiging → Plug&Pay betaling
+                            <br><strong>URL:</strong> <code>/subscription-confirm</code>
+                            <br><strong>Impact:</strong> Vermindert support tickets en verhoogt conversie door duidelijke communicatie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.38 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.38</span>
+                <span class="version-badge badge-feature">v0.17.38</span>
                 <span class="version-date">11 oktober 2025</span>
             </div>
             <div class="changes-list">

@@ -32,6 +32,10 @@
       "dest": "/public/welcome.html"
     },
     {
+      "src": "/subscription-confirm",
+      "dest": "/public/subscription-confirm.html"
+    },
+    {
       "src": "/register(.html)?",
       "dest": "/public/waitlist.html"
     },

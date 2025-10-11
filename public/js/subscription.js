@@ -332,13 +332,18 @@ async function confirmSelection() {
 
             // Handle paid plan redirect
             if (response.paid && response.redirectUrl) {
-                console.log('Redirecting to checkout:', response.redirectUrl);
-                showSuccessModal('Doorsturen naar betaling...');
+                console.log('Redirecting to email confirmation page first');
 
-                // Redirect to Plug&Pay checkout after brief delay
-                setTimeout(() => {
-                    window.location.href = response.redirectUrl;
-                }, 1500);
+                // Store payment data in session storage for confirmation page
+                sessionStorage.setItem('payment_data', JSON.stringify({
+                    redirectUrl: response.redirectUrl,
+                    email: response.email || subscriptionState.userStatus?.email || 'onbekend@email.com',
+                    planId: subscriptionState.selectedPlanId,
+                    timestamp: Date.now()
+                }));
+
+                // Redirect to email confirmation page (NOT directly to Plug&Pay)
+                window.location.href = '/subscription-confirm';
 
                 return; // Exit early, redirect will happen
             }
