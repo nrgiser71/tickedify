@@ -158,6 +158,7 @@ const SubscriptionAPI = {
                     success: true,
                     paid: true,
                     redirectUrl: response.redirectUrl,
+                    email: response.email,
                     message: 'Doorsturen naar betaling...',
                     plan_id: planId
                 };

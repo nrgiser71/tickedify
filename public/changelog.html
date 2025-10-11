@@ -134,10 +134,43 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.42 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.42</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Frontend Email Passthrough Fix</div>
+                        <div class="change-description">
+                            <strong>BUGFIX:</strong> Email veld wordt nu correct doorgestuurd van backend naar email bevestigingspagina.
+                            <br><br>
+                            <strong>Probleem:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Backend stuurde email correct mee in response</li>
+                                <li>Frontend API wrapper (<code>subscription-api.js</code>) gaf email field niet door</li>
+                                <li>Bevestigingspagina toonde fallback "onbekend@email.com"</li>
+                            </ul>
+                            <strong>Oplossing:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ Toegevoegd: <code>email: response.email</code> in paid plan response handler</li>
+                                <li>✅ Email wordt nu correct doorgegeven aan sessionStorage</li>
+                                <li>✅ Bevestigingspagina toont nu correct emailadres</li>
+                            </ul>
+                            <strong>Impact:</strong> Gebruikers zien nu hun echte emailadres op de bevestigingspagina, wat de UX van de betaalflow completeert.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.39 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.39</span>
+                <span class="version-badge badge-feature">v0.17.39</span>
                 <span class="version-date">11 oktober 2025</span>
             </div>
             <div class="changes-list">
