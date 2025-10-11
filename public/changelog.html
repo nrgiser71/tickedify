@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.0 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.0</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎉</span>
+                    <div class="change-content">
+                        <div class="change-title">Feature 011 COMPLEET - In-App Betaalsysteem</div>
+                        <div class="change-description">
+                            <strong>MILESTONE:</strong> Volledige Plug&Pay integratie voor beta-naar-betaald conversie is gereed voor productie!
+                            <br><br>
+                            <strong>Complete Feature Stack:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ Plug&Pay webhook integratie (v0.17.39)</li>
+                                <li>✅ Email bevestigingspagina vóór betaling (v0.17.39)</li>
+                                <li>✅ Frontend email passthrough fix (v0.17.42)</li>
+                                <li>✅ Beta expired pagina met trial optie (v0.17.43)</li>
+                            </ul>
+                            <strong>User Flow:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>1️⃣ Beta periode verloopt → Vriendelijke beta-expired pagina</li>
+                                <li>2️⃣ Gebruiker kiest trial OF betaald → Subscription selectie</li>
+                                <li>3️⃣ Bij betaald plan → Email bevestigingspagina</li>
+                                <li>4️⃣ Redirect naar Plug&Pay checkout</li>
+                                <li>5️⃣ Webhook verwerkt betaling → Account geactiveerd</li>
+                            </ul>
+                            <strong>Beveiligingen:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🔐 Email verificatie voorkomt verkeerde emailadressen</li>
+                                <li>🔐 Webhook signature validatie</li>
+                                <li>🔐 Database constraints voorkomen dubbele betalingen</li>
+                                <li>🔐 Trial kan maar 1x per gebruiker geactiveerd worden</li>
+                            </ul>
+                            <strong>Impact:</strong> Tickedify heeft nu een complete, professionele betaalflow die gebruikers vriendelijk begeleidt van beta naar betaald abonnement of trial. Ready voor bèta launch september 2025! 🚀
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.43 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.43</span>
+                <span class="version-badge badge-feature">v0.17.43</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">
