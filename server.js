@@ -2643,16 +2643,22 @@ app.get('/api/subscription/status', async (req, res) => {
 // T014: GET /api/admin/payment-configurations - Admin: Get all payment configurations
 app.get('/api/admin/payment-configurations', async (req, res) => {
   try {
+    // Check for admin authentication (either password-based or user-based)
+    const isAdminPasswordAuth = req.session.isAdmin === true;
     const userId = req.session.userId;
 
-    if (!userId) {
+    // Allow access if admin password authenticated
+    if (isAdminPasswordAuth) {
+      console.log('✅ Admin password authentication confirmed for payment-configurations');
+    } else if (userId) {
+      // Check admin role for user-based authentication
+      const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+      if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+        return res.status(403).json({ error: 'Admin rechten vereist' });
+      }
+      console.log('✅ User-based admin authentication confirmed for payment-configurations');
+    } else {
       return res.status(401).json({ error: 'Niet ingelogd' });
-    }
-
-    // Check admin role
-    const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
-      return res.status(403).json({ error: 'Admin rechten vereist' });
     }
 
     // Get all configurations
@@ -2673,21 +2679,27 @@ app.get('/api/admin/payment-configurations', async (req, res) => {
   }
 });
 
-// T015: PUT /api/admin/payment-configurations/:plan_id - Admin: Update checkout URL
-app.put('/api/admin/payment-configurations/:plan_id', async (req, res) => {
+// T015: PUT /api/admin/payment-configurations - Admin: Update checkout URL
+app.put('/api/admin/payment-configurations', async (req, res) => {
   try {
-    const { plan_id } = req.params;
-    const { checkout_url, is_active } = req.body;
+    const { plan_id, checkout_url, is_active } = req.body;
+
+    // Check for admin authentication (either password-based or user-based)
+    const isAdminPasswordAuth = req.session.isAdmin === true;
     const userId = req.session.userId;
 
-    if (!userId) {
+    // Allow access if admin password authenticated
+    if (isAdminPasswordAuth) {
+      console.log('✅ Admin password authentication confirmed for PUT payment-configurations');
+    } else if (userId) {
+      // Check admin role for user-based authentication
+      const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+      if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+        return res.status(403).json({ error: 'Admin rechten vereist' });
+      }
+      console.log('✅ User-based admin authentication confirmed for PUT payment-configurations');
+    } else {
       return res.status(401).json({ error: 'Niet ingelogd' });
-    }
-
-    // Check admin role
-    const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
-      return res.status(403).json({ error: 'Admin rechten vereist' });
     }
 
     // Validate checkout URL
@@ -2709,7 +2721,8 @@ app.put('/api/admin/payment-configurations/:plan_id', async (req, res) => {
       return res.status(404).json({ error: 'Plan niet gevonden' });
     }
 
-    console.log(`✅ Admin ${userId} updated payment config for plan ${plan_id}`);
+    const adminIdentifier = userId || 'password-auth';
+    console.log(`✅ Admin ${adminIdentifier} updated payment config for plan ${plan_id}`);
 
     res.json({
       success: true,
