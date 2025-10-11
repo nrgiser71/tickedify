@@ -2338,16 +2338,24 @@ app.post('/api/auth/login', async (req, res) => {
         
         // Check beta access before creating session
         const betaConfig = await db.getBetaConfig();
-        
+
         // Get user's account details for beta check
         const userDetailsResult = await pool.query(`
-            SELECT account_type, subscription_status 
-            FROM users 
+            SELECT account_type, subscription_status
+            FROM users
             WHERE id = $1
         `, [user.id]);
-        
+
         const userDetails = userDetailsResult.rows[0];
-        
+
+        console.log(`🔍 Login beta check for ${email}:`, {
+            betaPeriodActive: betaConfig.beta_period_active,
+            accountType: userDetails.account_type,
+            subscriptionStatus: userDetails.subscription_status,
+            isPaid: userDetails.subscription_status === 'paid',
+            isActive: userDetails.subscription_status === 'active'
+        });
+
         // If beta period is not active and user is beta type without paid subscription
         if (!betaConfig.beta_period_active &&
             userDetails.account_type === 'beta' &&
@@ -2385,19 +2393,21 @@ app.post('/api/auth/login', async (req, res) => {
             });
         }
         
+        console.log(`📝 Normal login flow for ${email} - beta check passed or not applicable`);
+
         // Update last login
         await pool.query(
             'UPDATE users SET laatste_login = CURRENT_TIMESTAMP WHERE id = $1',
             [user.id]
         );
-        
+
         // Start session
         req.session.userId = user.id;
         req.session.userEmail = user.email;
         req.session.userNaam = user.naam;
-        
+
         console.log(`✅ User logged in: ${email} (${user.id})`);
-        
+
         res.json({
             success: true,
             message: 'Succesvol ingelogd',
