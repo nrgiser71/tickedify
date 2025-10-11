@@ -1489,6 +1489,31 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
     }
 });
 
+// Debug endpoint to check payment configurations
+app.get('/api/debug/payment-configs', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const configs = await pool.query(`
+            SELECT plan_id, checkout_url, is_active, updated_at
+            FROM payment_configurations
+            ORDER BY plan_id
+        `);
+
+        res.json({
+            success: true,
+            configs: configs.rows,
+            count: configs.rows.length
+        });
+
+    } catch (error) {
+        console.error('Payment configs check error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to reset user subscription status (for testing)
 // Debug endpoint to check beta config and user status
 app.get('/api/debug/beta-status', async (req, res) => {
