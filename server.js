@@ -1436,30 +1436,30 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { email } = req.body;
         const targetEmail = email || 'info@BaasOverJeTijd.be';
-        
+
         // Find the actual user (not default-user-001)
         const result = await pool.query(`
-            SELECT id, email, naam, email_import_code 
-            FROM users 
-            WHERE email = $1 
+            SELECT id, email, naam, email_import_code
+            FROM users
+            WHERE email = $1
             AND id != 'default-user-001'
         `, [targetEmail]);
-        
+
         if (result.rows.length === 0) {
             return res.json({
                 success: false,
                 message: `No actual user found with email ${targetEmail}`
             });
         }
-        
+
         const actualUser = result.rows[0];
-        
+
         // Generate new import code for actual user
         const newCode = await db.generateEmailImportCode(actualUser.id);
-        
+
         res.json({
             success: true,
             user: {
@@ -1472,9 +1472,59 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
             importEmail: `import+${newCode}@mg.tickedify.com`,
             message: 'Import code updated for actual user'
         });
-        
+
     } catch (error) {
         console.error('Fix import code error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to reset user subscription status (for testing)
+app.post('/api/debug/reset-subscription', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        // Get user before update
+        const beforeResult = await pool.query(`
+            SELECT email, subscription_status, selected_plan, plan_selected_at
+            FROM users
+            WHERE email = $1
+        `, [email]);
+
+        if (beforeResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const before = beforeResult.rows[0];
+
+        // Reset subscription fields
+        const afterResult = await pool.query(`
+            UPDATE users
+            SET subscription_status = 'beta_expired',
+                selected_plan = NULL,
+                plan_selected_at = NULL
+            WHERE email = $1
+            RETURNING email, subscription_status, selected_plan, plan_selected_at
+        `, [email]);
+
+        const after = afterResult.rows[0];
+
+        res.json({
+            success: true,
+            message: `Subscription reset for ${email}`,
+            before: before,
+            after: after
+        });
+
+    } catch (error) {
+        console.error('Reset subscription error:', error);
         res.status(500).json({ error: error.message });
     }
 });
