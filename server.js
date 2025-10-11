@@ -2379,6 +2379,13 @@ app.post('/api/auth/login', async (req, res) => {
                     success: true,
                     requiresUpgrade: true,
                     message: 'Login succesvol, upgrade vereist voor volledige toegang',
+                    _debug: {
+                        flow: 'LIMITED_LOGIN',
+                        betaPeriodActive: betaConfig.beta_period_active,
+                        accountType: userDetails.account_type,
+                        subscriptionStatus: userDetails.subscription_status,
+                        codeVersion: '0.17.25'
+                    },
                     user: {
                         id: user.id,
                         email: user.email,
@@ -2407,6 +2414,13 @@ app.post('/api/auth/login', async (req, res) => {
         res.json({
             success: true,
             message: 'Succesvol ingelogd',
+            _debug: {
+                flow: 'NORMAL_LOGIN',
+                betaPeriodActive: betaConfig.beta_period_active,
+                accountType: userDetails.account_type,
+                subscriptionStatus: userDetails.subscription_status,
+                codeVersion: '0.17.25'
+            },
             user: {
                 id: user.id,
                 email: user.email,
