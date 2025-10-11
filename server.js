@@ -1514,6 +1514,35 @@ app.get('/api/debug/payment-configs', async (req, res) => {
     }
 });
 
+// Debug endpoint to activate all payment configurations
+app.post('/api/debug/activate-payment-configs', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Activate all payment configurations
+        const result = await pool.query(`
+            UPDATE payment_configurations
+            SET is_active = true, updated_at = CURRENT_TIMESTAMP
+            WHERE is_active = false
+            RETURNING plan_id, checkout_url, is_active
+        `);
+
+        console.log(`✅ Activated ${result.rows.length} payment configurations`);
+
+        res.json({
+            success: true,
+            message: `Activated ${result.rows.length} payment configurations`,
+            configs: result.rows
+        });
+
+    } catch (error) {
+        console.error('Activate payment configs error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to reset user subscription status (for testing)
 // Debug endpoint to check beta config and user status
 app.get('/api/debug/beta-status', async (req, res) => {
