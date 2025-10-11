@@ -429,6 +429,119 @@
         .status-bekeken { background: var(--macos-blue); color: white; }
         .status-in_behandeling { background: var(--macos-orange); color: white; }
         .status-opgelost { background: var(--macos-green); color: white; }
+
+        /* Payment Configuration styling */
+        .payment-config-item {
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-medium);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--macos-blue);
+        }
+
+        .payment-config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .payment-config-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--macos-text-primary);
+        }
+
+        .payment-config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--macos-text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"] {
+            padding: 10px 14px;
+            border: 1px solid var(--macos-gray-4);
+            border-radius: var(--macos-radius-button);
+            background: var(--macos-bg-primary);
+            color: var(--macos-text-primary);
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--macos-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--macos-gray-4);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--macos-green);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .config-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -641,6 +754,21 @@
             </div>
             <div class="table-content" id="feedbackTable">
                 <div class="loading">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Payment Configurations -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">💳</span>
+                <span>Payment Configurations</span>
+            </div>
+            <div class="table-content">
+                <div id="paymentConfigsLoading" class="loading">Laden...</div>
+                <div id="paymentConfigsError" class="error" style="display: none;"></div>
+                <div id="paymentConfigsTable" style="padding: 20px;">
+                    <!-- Payment configs will be rendered here -->
+                </div>
             </div>
         </div>
     </div>

@@ -113,7 +113,8 @@ class AdminDashboard {
             '/api/admin/feedback',
             '/api/admin/beta/status',
             '/api/admin/beta/users',
-            '/api/admin/all-users'
+            '/api/admin/all-users',
+            '/api/admin/payment-configurations'
         ];
 
         const results = await Promise.allSettled(
@@ -135,7 +136,8 @@ class AdminDashboard {
             feedback: results[11].status === 'fulfilled' ? results[11].value : {},
             betaStatus: results[12].status === 'fulfilled' ? results[12].value : {},
             betaUsers: results[13].status === 'fulfilled' ? results[13].value : {},
-            allUsers: results[14].status === 'fulfilled' ? results[14].value : {}
+            allUsers: results[14].status === 'fulfilled' ? results[14].value : {},
+            paymentConfigurations: results[15].status === 'fulfilled' ? results[15].value : {}
         };
     }
 
@@ -269,12 +271,15 @@ class AdminDashboard {
 
         // Beta users tabel
         this.renderBetaUsersTable();
-        
+
         // All users tabel
         this.renderAllUsersTable();
 
         // Feedback tabel
         this.renderFeedbackTable();
+
+        // Payment Configurations
+        this.renderPaymentConfigurations();
     }
 
     renderBetaUsersTable() {
@@ -571,6 +576,70 @@ class AdminDashboard {
             html: `<span class="status-badge" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">${text}</span>`
         };
     }
+
+    renderPaymentConfigurations() {
+        const loadingDiv = document.getElementById('paymentConfigsLoading');
+        const errorDiv = document.getElementById('paymentConfigsError');
+        const container = document.getElementById('paymentConfigsTable');
+
+        const configs = this.data.paymentConfigurations?.configurations || [];
+
+        if (configs.length === 0) {
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            container.innerHTML = '<p style="color: var(--macos-text-secondary);">Geen payment configuraties beschikbaar</p>';
+            return;
+        }
+
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        if (errorDiv) errorDiv.style.display = 'none';
+
+        let html = '';
+
+        configs.forEach(config => {
+            html += `
+                <div class="payment-config-item">
+                    <div class="payment-config-header">
+                        <span class="payment-config-title">${this.escapeHtml(config.plan_name)} (${config.plan_id})</span>
+                        <div class="config-status">
+                            <label class="toggle-switch">
+                                <input type="checkbox"
+                                       id="active-${config.plan_id}"
+                                       ${config.is_active ? 'checked' : ''}
+                                       onchange="togglePlanActive('${config.plan_id}', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span>${config.is_active ? '✅ Actief' : '❌ Inactief'}</span>
+                        </div>
+                    </div>
+                    <form class="payment-config-form" onsubmit="updateCheckoutUrl(event, '${config.plan_id}')">
+                        <div class="form-group">
+                            <label for="url-${config.plan_id}">Checkout URL (Plug&Pay)</label>
+                            <input
+                                type="url"
+                                id="url-${config.plan_id}"
+                                name="checkout_url"
+                                value="${this.escapeHtml(config.checkout_url || '')}"
+                                placeholder="https://..."
+                                required>
+                            <small style="color: var(--macos-text-secondary); font-size: 12px;">
+                                Laatst bijgewerkt: ${config.updated_at ? this.formatDateTime(config.updated_at) : 'Nooit'}
+                            </small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="admin-btn success">
+                                💾 Opslaan
+                            </button>
+                            <button type="button" class="admin-btn" onclick="testCheckoutUrl('${config.plan_id}')">
+                                🔗 Test URL
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
 }
 
 // Global functions for button clicks
@@ -817,4 +886,96 @@ window.onclick = function(event) {
     if (event.target === modal) {
         closeFeedbackModal();
     }
+}
+
+// Payment Configuration Functions
+async function updateCheckoutUrl(event, planId) {
+    event.preventDefault();
+
+    const form = event.target;
+    const urlInput = form.querySelector('input[name="checkout_url"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const checkoutUrl = urlInput.value.trim();
+
+    if (!checkoutUrl) {
+        alert('Voer een checkout URL in');
+        return;
+    }
+
+    // Disable button during save
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '🔄 Bezig met opslaan...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/admin/payment-configurations', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: planId,
+                checkout_url: checkoutUrl
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            adminDashboard.showSuccess(`✅ Checkout URL bijgewerkt voor ${planId}`);
+            // Refresh data to show updated timestamp
+            await adminDashboard.refreshData();
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error updating checkout URL:', error);
+        adminDashboard.showError('❌ Fout bij opslaan: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+async function togglePlanActive(planId, isActive) {
+    try {
+        const response = await fetch('/api/admin/payment-configurations', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: planId,
+                is_active: isActive
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            adminDashboard.showSuccess(`✅ ${planId} is nu ${isActive ? 'actief' : 'inactief'}`);
+            await adminDashboard.refreshData();
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error toggling plan active:', error);
+        adminDashboard.showError('❌ Fout bij wijzigen status: ' + error.message);
+        // Reset checkbox on error
+        document.getElementById(`active-${planId}`).checked = !isActive;
+    }
+}
+
+function testCheckoutUrl(planId) {
+    const urlInput = document.getElementById(`url-${planId}`);
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        alert('Geen checkout URL ingesteld');
+        return;
+    }
+
+    // Open URL in new tab
+    window.open(url, '_blank');
+    adminDashboard.showSuccess(`🔗 Checkout URL geopend in nieuw tabblad`);
 }
