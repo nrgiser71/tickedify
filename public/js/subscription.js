@@ -165,7 +165,11 @@ function createPlanElement(plan, clickable = true) {
 
     // Add click event listener
     if (clickable) {
-        planDiv.addEventListener('click', () => selectPlan(plan.id));
+        planDiv.addEventListener('click', async () => {
+            selectPlan(plan.id);
+            // Immediately confirm selection
+            await confirmSelection();
+        });
     }
 
     return planDiv;
@@ -222,10 +226,12 @@ function createCombinedPaidPlanElement(paidPlans) {
 
     // Add click event listener to button
     const button = planDiv.querySelector('#select-paid-plan');
-    button.addEventListener('click', (e) => {
+    button.addEventListener('click', async (e) => {
         e.stopPropagation();
         // Select monthly_7 as default, but user will choose on Plug&Pay page
         selectPlan('monthly_7');
+        // Immediately confirm selection to trigger payment redirect
+        await confirmSelection();
     });
 
     return planDiv;
