@@ -148,6 +148,11 @@ function createPlanElement(plan, clickable = true) {
         planDiv.classList.add('plan-recommended');
     }
 
+    // Determine button text and icon based on plan type
+    const isTrial = plan.id === 'trial_14_days';
+    const buttonText = isTrial ? 'Start Gratis Proefperiode' : 'Kies dit plan';
+    const buttonIcon = isTrial ? 'fa-rocket' : 'fa-check';
+
     planDiv.innerHTML = `
         <div class="plan-header">
             <h3 class="plan-name">${plan.name}</h3>
@@ -158,14 +163,30 @@ function createPlanElement(plan, clickable = true) {
         <ul class="plan-features">
             ${SUBSCRIPTION_VALIDATION.getFeaturesHtml(plan.id)}
         </ul>
-        <div class="plan-selection-indicator">
-            <i class="fas fa-check-circle"></i>
-        </div>
+        <button class="plan-action-button" id="select-${plan.id}" style="
+            width: 100%;
+            padding: 14px 24px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(102, 126, 234, 0.4)';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <i class="fas ${buttonIcon}"></i>
+            ${buttonText}
+        </button>
     `;
 
-    // Add click event listener
+    // Add click event listener to button only
     if (clickable) {
-        planDiv.addEventListener('click', async () => {
+        const button = planDiv.querySelector(`#select-${plan.id}`);
+        button.addEventListener('click', async (e) => {
+            e.stopPropagation();
             selectPlan(plan.id);
             // Immediately confirm selection
             await confirmSelection();
