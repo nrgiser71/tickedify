@@ -106,35 +106,30 @@ function renderSubscriptionPlans() {
     plansGrid.innerHTML = '';
 
     // Filter plans based on user status
-    let plansToRender = subscriptionState.plans;
+    let allPlans = subscriptionState.plans;
 
     // Hide trial plan if user already had trial
-    if (subscriptionState.userStatus && subscriptionState.userStatus.had_trial) {
-        plansToRender = subscriptionState.plans.filter(plan => plan.id !== 'trial_14_days');
+    const showTrial = !(subscriptionState.userStatus && subscriptionState.userStatus.had_trial);
+
+    if (!showTrial) {
         console.log('Trial plan hidden - user already had trial');
     }
 
-    // Render each plan
-    plansToRender.forEach((plan, index) => {
-        const planElement = createPlanElement(plan);
-        plansGrid.appendChild(planElement);
+    // Separate trial and paid plans
+    const trialPlan = allPlans.find(p => p.id === 'trial_14_days');
+    const paidPlans = allPlans.filter(p => p.id === 'monthly_7' || p.id === 'yearly_70');
 
-        // Add disclaimer after the last paid plan
-        const isPaidPlan = plan.id === 'monthly_7' || plan.id === 'yearly_70';
-        const isLastPaidPlan = (plan.id === 'yearly_70') || (plan.id === 'monthly_7' && index === plansToRender.length - 1);
+    // Render trial option if available
+    if (showTrial && trialPlan) {
+        const trialElement = createPlanElement(trialPlan, true); // true = clickable
+        plansGrid.appendChild(trialElement);
+    }
 
-        if (isPaidPlan && isLastPaidPlan) {
-            const disclaimerElement = document.createElement('div');
-            disclaimerElement.className = 'payment-disclaimer';
-            disclaimerElement.innerHTML = `
-                <p style="text-align: center; color: var(--text-secondary, #6b7280); font-size: 14px; margin-top: 20px; padding: 15px; background: var(--bg-secondary, #f9fafb); border-radius: 8px;">
-                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-                    Bij het afrekenen kun je je definitieve keuze maken tussen maandelijks en jaarlijks betalen
-                </p>
-            `;
-            plansGrid.appendChild(disclaimerElement);
-        }
-    });
+    // Render combined paid plan option
+    if (paidPlans.length > 0) {
+        const paidElement = createCombinedPaidPlanElement(paidPlans);
+        plansGrid.appendChild(paidElement);
+    }
 
     // Update selection state
     updateSelectionUI();
@@ -143,7 +138,7 @@ function renderSubscriptionPlans() {
 /**
  * Create a plan element
  */
-function createPlanElement(plan) {
+function createPlanElement(plan, clickable = true) {
     const planDiv = document.createElement('div');
     planDiv.className = 'plan-option';
     planDiv.setAttribute('data-plan-id', plan.id);
@@ -169,7 +164,69 @@ function createPlanElement(plan) {
     `;
 
     // Add click event listener
-    planDiv.addEventListener('click', () => selectPlan(plan.id));
+    if (clickable) {
+        planDiv.addEventListener('click', () => selectPlan(plan.id));
+    }
+
+    return planDiv;
+}
+
+/**
+ * Create combined paid plan element showing both monthly and yearly options
+ */
+function createCombinedPaidPlanElement(paidPlans) {
+    const planDiv = document.createElement('div');
+    planDiv.className = 'plan-option plan-recommended';
+    planDiv.setAttribute('data-plan-id', 'paid');
+
+    // Find monthly and yearly plans
+    const monthlyPlan = paidPlans.find(p => p.id === 'monthly_7');
+    const yearlyPlan = paidPlans.find(p => p.id === 'yearly_70');
+
+    planDiv.innerHTML = `
+        <div class="plan-header">
+            <h3 class="plan-name">Betaald Abonnement</h3>
+            <div class="plan-price">€7/maand of €70/jaar</div>
+        </div>
+        <div class="plan-description">Kies bij het afrekenen tussen maandelijks of jaarlijks</div>
+        <div class="plan-highlight">💡 Bespaar €14 per jaar met het jaarlijkse abonnement</div>
+        <ul class="plan-features">
+            <li><strong>Maandelijks:</strong> €7/maand - Stop wanneer je wilt</li>
+            <li><strong>Jaarlijks:</strong> €70/jaar - 2 maanden gratis</li>
+            <li>Alle functies</li>
+            <li>Onbeperkte taken</li>
+            <li>Email import</li>
+            <li>Premium support</li>
+        </ul>
+        <button class="plan-action-button" id="select-paid-plan" style="
+            width: 100%;
+            padding: 14px 24px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(102, 126, 234, 0.4)';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <i class="fas fa-credit-card"></i>
+            Kies Betaald Abonnement
+        </button>
+        <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
+            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze op de betaalpagina
+        </small>
+    `;
+
+    // Add click event listener to button
+    const button = planDiv.querySelector('#select-paid-plan');
+    button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Select monthly_7 as default, but user will choose on Plug&Pay page
+        selectPlan('monthly_7');
+    });
 
     return planDiv;
 }
