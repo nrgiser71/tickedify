@@ -2590,15 +2590,13 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     console.log('🔔 Plug&Pay webhook received:', {
-      event: webhookData.event,
-      status: webhookData.status,
+      webhook_event: webhookData.webhook_event,
+      contract_id: webhookData.contract_id,
       email: webhookData.email,
-      order_id: webhookData.order_id,
-      plan_id: webhookData.plan_id,
-      product_id: webhookData.product_id,
-      subscription_id: webhookData.subscription_id,
-      amount: webhookData.amount,
-      interval: webhookData.interval,
+      billing_cycle: webhookData.billing_cycle,
+      product: webhookData.product,
+      sku: webhookData.sku,
+      signup_token: webhookData.signup_token,
       full_payload: JSON.stringify(webhookData, null, 2)
     });
 
@@ -2617,22 +2615,24 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       console.log('⚠️ No API key in webhook (expected behavior for Plug&Pay)');
     }
 
-    // Check event type - support both subscription and one-time payment events
+    // Check event type - Plug&Pay uses "webhook_event" field with "contracts.new" value
     const isSubscriptionActive =
-      webhookData.event === 'subscription_started' ||
-      webhookData.event === 'subscription_activated' ||
+      webhookData.webhook_event === 'contracts.new' ||
+      webhookData.webhook_event === 'contracts.renewed' ||
+      webhookData.webhook_event === 'subscription_started' ||
+      webhookData.webhook_event === 'subscription_activated' ||
       webhookData.event === 'subscription_active' ||
       webhookData.event === 'order_payment_completed' ||
       webhookData.status === 'active' ||
       webhookData.status === 'paid';
 
     if (!isSubscriptionActive) {
-      console.log(`ℹ️ Non-subscription webhook: ${webhookData.event || webhookData.status}`);
+      console.log(`ℹ️ Non-subscription webhook: ${webhookData.webhook_event || webhookData.event || webhookData.status}`);
       await logWebhookEvent({
-        event_type: webhookData.event || webhookData.status,
-        order_id: webhookData.order_id,
+        event_type: webhookData.webhook_event || webhookData.event || webhookData.status,
+        order_id: webhookData.signup_token || webhookData.contract_id,
         email: webhookData.email || webhookData.customer_email,
-        amount_cents: webhookData.amount ? parseInt(webhookData.amount) : null,
+        amount_cents: null,
         payload: webhookData,
         signature_valid: true,
         ip_address: ipAddress
@@ -2640,30 +2640,43 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       return res.json({ success: true, message: 'Webhook received but not processed' });
     }
 
-    // Extract data
-    const orderId = webhookData.order_id;
+    // Extract data - Plug&Pay uses different field names
+    const orderId = webhookData.signup_token || webhookData.contract_id; // Plug&Pay uses signup_token as order reference
     const email = webhookData.email || webhookData.customer_email;
-    const amountCents = webhookData.amount ? parseInt(webhookData.amount) : null;
 
-    // Extract subscription plan information
-    const selectedPlan = webhookData.plan_id ||
-                        webhookData.product_id ||
-                        webhookData.subscription_plan ||
-                        null;
+    // Parse the raw JSON to extract amount
+    let amountCents = null;
+    if (webhookData.raw) {
+      try {
+        const rawData = JSON.parse(webhookData.raw);
+        amountCents = rawData.total ? Math.round(rawData.total * 100) : null;
+      } catch (e) {
+        console.error('❌ Failed to parse raw data:', e);
+      }
+    }
 
-    const subscriptionId = webhookData.subscription_id || null;
+    // Map billing_cycle to our plan IDs
+    let selectedPlan = null;
+    if (webhookData.billing_cycle === 'monthly') {
+      selectedPlan = 'monthly_7';
+    } else if (webhookData.billing_cycle === 'yearly') {
+      selectedPlan = 'yearly_70';
+    }
+
+    const subscriptionId = webhookData.contract_id || null; // Plug&Pay uses contract_id as subscription ID
 
     console.log('📦 Subscription details extracted:', {
       selected_plan: selectedPlan,
       subscription_id: subscriptionId,
-      interval: webhookData.interval,
-      amount_cents: amountCents
+      billing_cycle: webhookData.billing_cycle,
+      amount_cents: amountCents,
+      sku: webhookData.sku
     });
 
     if (!orderId || !email) {
-      console.error('❌ Missing order_id or email in webhook');
+      console.error('❌ Missing signup_token/contract_id or email in webhook');
       await logWebhookEvent({
-        event_type: webhookData.event,
+        event_type: webhookData.webhook_event,
         order_id: orderId,
         email: email,
         amount_cents: amountCents,
@@ -2697,7 +2710,7 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     if (userResult.rows.length === 0) {
       console.error(`❌ User not found for email ${email}`);
       await logWebhookEvent({
-        event_type: webhookData.event,
+        event_type: webhookData.webhook_event || webhookData.event,
         order_id: orderId,
         email: email,
         amount_cents: amountCents,
@@ -2727,7 +2740,7 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     // Log successful webhook
     await logWebhookEvent({
       user_id: user.id,
-      event_type: webhookData.event,
+      event_type: webhookData.webhook_event || webhookData.event,
       order_id: orderId,
       email: email,
       amount_cents: amountCents,

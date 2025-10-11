@@ -134,10 +134,40 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.34 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.34</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Plug&Pay Webhook - Correcte Veldnamen Fix</div>
+                        <div class="change-description">
+                            <strong>KRITIEKE FIX:</strong> Webhook parser aangepast voor de werkelijke Plug&Pay veldnamen.
+                            <br><br>
+                            <strong>Aangepaste veldnamen:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li><code>webhook_event</code> → "contracts.new" voor nieuwe abonnementen</li>
+                                <li><code>contract_id</code> → Subscription ID (was: subscription_id)</li>
+                                <li><code>signup_token</code> → Order reference (was: order_id)</li>
+                                <li><code>billing_cycle</code> → "monthly" of "yearly" mapping naar monthly_7/yearly_70</li>
+                                <li><code>raw</code> → Bevat volledige order data inclusief bedrag</li>
+                            </ul>
+                            <strong>Verbeterde detectie:</strong> Plan wordt nu automatisch herkend uit billing_cycle veld.
+                            <br><strong>Status:</strong> Webhook nu volledig functioneel met live Plug&Pay data.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.33 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.33</span>
+                <span class="version-badge badge-fix">v0.17.33</span>
                 <span class="version-date">11 oktober 2025</span>
             </div>
             <div class="changes-list">
