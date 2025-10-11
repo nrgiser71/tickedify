@@ -1480,6 +1480,64 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
 });
 
 // Debug endpoint to reset user subscription status (for testing)
+// Debug endpoint to check beta config and user status
+app.get('/api/debug/beta-status', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ error: 'Email parameter required' });
+        }
+
+        // Get beta config
+        const betaConfig = await db.getBetaConfig();
+
+        // Get user details
+        const userResult = await pool.query(`
+            SELECT id, email, naam, account_type, subscription_status,
+                   selected_plan, plan_selected_at, had_trial,
+                   trial_start_date, trial_end_date
+            FROM users
+            WHERE email = $1
+        `, [email]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+
+        // Check if requiresUpgrade would be true
+        const requiresUpgrade = !betaConfig.beta_period_active &&
+            user.account_type === 'beta' &&
+            user.subscription_status !== 'paid' &&
+            user.subscription_status !== 'active';
+
+        res.json({
+            betaConfig: {
+                beta_period_active: betaConfig.beta_period_active,
+                beta_ended_at: betaConfig.beta_ended_at
+            },
+            user: user,
+            requiresUpgrade: requiresUpgrade,
+            checkDetails: {
+                betaPeriodActive: betaConfig.beta_period_active,
+                accountType: user.account_type,
+                subscriptionStatus: user.subscription_status,
+                isPaid: user.subscription_status === 'paid',
+                isActive: user.subscription_status === 'active'
+            }
+        });
+
+    } catch (error) {
+        console.error('Beta status check error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/debug/reset-subscription', async (req, res) => {
     try {
         if (!pool) {
