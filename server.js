@@ -2306,7 +2306,7 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, wachtwoord } = req.body;
 
-        console.log(`🔐 Login attempt for: ${email} [v0.17.22]`);
+        console.log(`[LOGIN-START] Login attempt for: ${email} [v0.17.24]`);
 
         if (!email || !wachtwoord) {
             return res.status(400).json({ error: 'Email en wachtwoord zijn verplicht' });
@@ -2350,13 +2350,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         const userDetails = userDetailsResult.rows[0];
 
-        console.log(`🔍 Login beta check for ${email}:`, {
-            betaPeriodActive: betaConfig.beta_period_active,
-            accountType: userDetails.account_type,
-            subscriptionStatus: userDetails.subscription_status,
-            isPaid: userDetails.subscription_status === 'paid',
-            isActive: userDetails.subscription_status === 'active'
-        });
+        console.log(`[BETA-CHECK] Login beta check for ${email}: betaPeriodActive=${betaConfig.beta_period_active}, accountType=${userDetails.account_type}, subscriptionStatus=${userDetails.subscription_status}`);
 
         // If beta period is not active and user is beta type without paid subscription
         if (!betaConfig.beta_period_active &&
@@ -2364,7 +2358,7 @@ app.post('/api/auth/login', async (req, res) => {
             userDetails.subscription_status !== 'paid' &&
             userDetails.subscription_status !== 'active') {
 
-            console.log(`⚠️ Limited login for user ${email} - beta period ended, upgrade required`);
+            console.log(`[LIMITED-LOGIN] Limited login for user ${email} - beta period ended, upgrade required`);
 
             // Create session for subscription selection (limited access)
             req.session.userId = user.id;
@@ -2395,7 +2389,7 @@ app.post('/api/auth/login', async (req, res) => {
             });
         }
         
-        console.log(`📝 Normal login flow for ${email} - beta check passed or not applicable`);
+        console.log(`[NORMAL-LOGIN] Normal login flow for ${email} - beta check passed or not applicable`);
 
         // Update last login
         await pool.query(
