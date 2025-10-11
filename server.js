@@ -137,6 +137,188 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
     }
 }
 
+// ========================================
+// SUBSCRIPTION & PAYMENT HELPER FUNCTIONS
+// Feature: 011-in-de-app
+// ========================================
+
+// Subscription State Machine Constants
+const SUBSCRIPTION_STATES = {
+  BETA: 'beta',
+  TRIALING: 'trialing',
+  TRIAL_EXPIRED: 'trial_expired',
+  ACTIVE: 'active',
+  CANCELLED: 'cancelled',
+  EXPIRED: 'expired'
+};
+
+const PLAN_IDS = {
+  TRIAL_14: 'trial_14',
+  MONTHLY_7: 'monthly_7',
+  YEARLY_70: 'yearly_70'
+};
+
+// Check if user can access the app based on subscription status
+function canAccessApp(user) {
+  if (!user || !user.subscription_status) {
+    return false;
+  }
+
+  const allowedStates = [
+    SUBSCRIPTION_STATES.BETA,
+    SUBSCRIPTION_STATES.TRIALING,
+    SUBSCRIPTION_STATES.ACTIVE
+  ];
+
+  return allowedStates.includes(user.subscription_status);
+}
+
+// Check if trial has expired
+function isTrialExpired(user) {
+  if (user.subscription_status !== SUBSCRIPTION_STATES.TRIALING) {
+    return false;
+  }
+
+  if (!user.trial_end_date) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const trialEnd = new Date(user.trial_end_date);
+  trialEnd.setHours(0, 0, 0, 0);
+
+  return today > trialEnd;
+}
+
+// Validate plan selection
+function validatePlanSelection(planId, currentStatus) {
+  // Beta users can select trial or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.BETA) {
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+  }
+
+  // Trial expired users can only select paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.TRIAL_EXPIRED) {
+    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+  }
+
+  // Trialing users can upgrade to paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.TRIALING) {
+    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+  }
+
+  return false;
+}
+
+// Calculate trial end date (14 days from today)
+function calculateTrialEndDate() {
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 14);
+  return endDate;
+}
+
+// Generate cryptographically random login token
+function generateLoginToken() {
+  const crypto = require('crypto');
+  return crypto.randomBytes(30).toString('hex'); // 60 character hex string
+}
+
+// Calculate token expiry (10 minutes from now)
+function calculateTokenExpiry() {
+  const expiry = new Date();
+  expiry.setMinutes(expiry.getMinutes() + 10);
+  return expiry;
+}
+
+// Validate login token
+async function validateLoginToken(token, pool) {
+  if (!token) {
+    return { valid: false, error: 'Geen token opgegeven' };
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT id, email, login_token_expires, login_token_used
+       FROM users
+       WHERE login_token = $1`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return { valid: false, error: 'Ongeldig token' };
+    }
+
+    const user = result.rows[0];
+
+    // Check if token already used
+    if (user.login_token_used) {
+      return { valid: false, error: 'Token al gebruikt' };
+    }
+
+    // Check if token expired
+    const now = new Date();
+    const expiry = new Date(user.login_token_expires);
+    if (now > expiry) {
+      return { valid: false, error: 'Token verlopen' };
+    }
+
+    // Mark token as used
+    await pool.query(
+      'UPDATE users SET login_token_used = TRUE WHERE id = $1',
+      [user.id]
+    );
+
+    return { valid: true, userId: user.id, email: user.email };
+
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return { valid: false, error: 'Fout bij token validatie' };
+  }
+}
+
+// Check webhook idempotency (prevent duplicate processing)
+async function checkWebhookIdempotency(orderId, pool) {
+  try {
+    const result = await pool.query(
+      'SELECT id FROM users WHERE plugandpay_order_id = $1',
+      [orderId]
+    );
+
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Idempotency check error:', error);
+    return false;
+  }
+}
+
+// Log webhook event for audit trail
+async function logWebhookEvent(webhookData, pool) {
+  try {
+    await pool.query(
+      `INSERT INTO payment_webhook_logs
+       (user_id, event_type, order_id, email, amount_cents, payload, signature_valid, ip_address, error_message)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        webhookData.user_id || null,
+        webhookData.event_type,
+        webhookData.order_id,
+        webhookData.email,
+        webhookData.amount_cents,
+        JSON.stringify(webhookData.payload),
+        webhookData.signature_valid,
+        webhookData.ip_address,
+        webhookData.error_message || null
+      ]
+    );
+  } catch (error) {
+    console.error('Webhook logging error:', error);
+    // Non-critical error, don't throw
+  }
+}
+
 // Debug: Check forensic logger status at startup
 console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
 console.log('🔍 DEBUG: Forensic logger enabled status:', forensicLogger.enabled);
@@ -2106,6 +2288,413 @@ app.post('/api/auth/logout', (req, res) => {
         console.log(`✅ User logged out: ${userEmail}`);
         res.json({ success: true, message: 'Succesvol uitgelogd' });
     });
+});
+
+// ========================================
+// SUBSCRIPTION & PAYMENT API ENDPOINTS
+// Feature: 011-in-de-app
+// ========================================
+
+// T009: POST /api/subscription/select - User selects subscription plan
+app.post('/api/subscription/select', async (req, res) => {
+  try {
+    const { planId } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    if (!planId) {
+      return res.status(400).json({ error: 'Plan ID is verplicht' });
+    }
+
+    // Get user info
+    const userResult = await pool.query('SELECT subscription_status FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Validate plan selection
+    if (!validatePlanSelection(planId, user.subscription_status)) {
+      return res.status(400).json({ error: 'Ongeldige plan selectie voor huidige status' });
+    }
+
+    // Handle trial selection (no payment needed)
+    if (planId === PLAN_IDS.TRIAL_14) {
+      const trialEndDate = calculateTrialEndDate();
+
+      await pool.query(
+        `UPDATE users
+         SET subscription_status = $1, trial_start_date = CURRENT_DATE, trial_end_date = $2, had_trial = TRUE
+         WHERE id = $3`,
+        [SUBSCRIPTION_STATES.TRIALING, trialEndDate, userId]
+      );
+
+      console.log(`✅ Trial activated for user ${userId} - expires ${trialEndDate.toISOString().split('T')[0]}`);
+
+      return res.json({
+        success: true,
+        trial: true,
+        trialEndDate: trialEndDate.toISOString().split('T')[0],
+        message: 'Trial geactiveerd! Je hebt 14 dagen om Tickedify uit te proberen.'
+      });
+    }
+
+    // Handle paid plan selection - get checkout URL
+    const configResult = await pool.query(
+      'SELECT checkout_url, is_active FROM payment_configurations WHERE plan_id = $1',
+      [planId]
+    );
+
+    if (configResult.rows.length === 0 || !configResult.rows[0].is_active) {
+      return res.status(400).json({ error: 'Plan niet beschikbaar' });
+    }
+
+    const checkoutUrl = configResult.rows[0].checkout_url;
+    if (!checkoutUrl) {
+      return res.status(500).json({ error: 'Checkout URL niet geconfigureerd. Neem contact op met support.' });
+    }
+
+    // Generate auto-login token for return flow
+    const loginToken = generateLoginToken();
+    const tokenExpiry = calculateTokenExpiry();
+
+    await pool.query(
+      `UPDATE users
+       SET login_token = $1, login_token_expires = $2, login_token_used = FALSE
+       WHERE id = $3`,
+      [loginToken, tokenExpiry, userId]
+    );
+
+    // Build redirect URL with token
+    const redirectUrl = `${checkoutUrl}${checkoutUrl.includes('?') ? '&' : '?'}return_token=${loginToken}`;
+
+    console.log(`💳 User ${userId} selected plan ${planId} - redirecting to checkout`);
+
+    res.json({
+      success: true,
+      paid: true,
+      redirectUrl: redirectUrl
+    });
+
+  } catch (error) {
+    console.error('Subscription select error:', error);
+    res.status(500).json({ error: 'Fout bij plan selectie' });
+  }
+});
+
+// T010: POST /api/webhooks/plugandpay - Plug&Pay webhook for payment confirmation
+app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const webhookData = req.body;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    console.log('🔔 Plug&Pay webhook received:', JSON.stringify(webhookData));
+
+    // Validate API key
+    const apiKeyValid = webhookData.api_key === process.env.PLUGANDPAY_API_KEY;
+    if (!apiKeyValid) {
+      console.error('❌ Invalid API key in webhook');
+      await logWebhookEvent({
+        event_type: webhookData.event || 'unknown',
+        order_id: webhookData.order_id || null,
+        email: webhookData.email || webhookData.customer_email || null,
+        amount_cents: null,
+        payload: webhookData,
+        signature_valid: false,
+        ip_address: ipAddress,
+        error_message: 'Invalid API key'
+      }, pool);
+      return res.status(401).json({ error: 'Invalid API key' });
+    }
+
+    // Check event type
+    const isPaid = webhookData.event === 'order_payment_completed' || webhookData.status === 'paid';
+    if (!isPaid) {
+      console.log(`ℹ️ Non-payment webhook: ${webhookData.event || webhookData.status}`);
+      await logWebhookEvent({
+        event_type: webhookData.event || webhookData.status,
+        order_id: webhookData.order_id,
+        email: webhookData.email || webhookData.customer_email,
+        amount_cents: webhookData.amount ? parseInt(webhookData.amount) : null,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress
+      }, pool);
+      return res.json({ success: true, message: 'Webhook received but not processed' });
+    }
+
+    // Extract data
+    const orderId = webhookData.order_id;
+    const email = webhookData.email || webhookData.customer_email;
+    const amountCents = webhookData.amount ? parseInt(webhookData.amount) : null;
+
+    if (!orderId || !email) {
+      console.error('❌ Missing order_id or email in webhook');
+      await logWebhookEvent({
+        event_type: webhookData.event,
+        order_id: orderId,
+        email: email,
+        amount_cents: amountCents,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress,
+        error_message: 'Missing required fields'
+      }, pool);
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check idempotency
+    const alreadyProcessed = await checkWebhookIdempotency(orderId, pool);
+    if (alreadyProcessed) {
+      console.log(`⚠️ Webhook already processed for order ${orderId}`);
+      await logWebhookEvent({
+        event_type: webhookData.event,
+        order_id: orderId,
+        email: email,
+        amount_cents: amountCents,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress,
+        error_message: 'Already processed (idempotent)'
+      }, pool);
+      return res.json({ success: true, message: 'Already processed' });
+    }
+
+    // Find user by email
+    const userResult = await pool.query('SELECT id, email FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+    if (userResult.rows.length === 0) {
+      console.error(`❌ User not found for email ${email}`);
+      await logWebhookEvent({
+        event_type: webhookData.event,
+        order_id: orderId,
+        email: email,
+        amount_cents: amountCents,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress,
+        error_message: 'User not found'
+      }, pool);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Update user to active subscription
+    await pool.query(
+      `UPDATE users
+       SET subscription_status = $1, payment_confirmed_at = NOW(),
+           plugandpay_order_id = $2, amount_paid_cents = $3
+       WHERE id = $4`,
+      [SUBSCRIPTION_STATES.ACTIVE, orderId, amountCents, user.id]
+    );
+
+    // Log successful webhook
+    await logWebhookEvent({
+      user_id: user.id,
+      event_type: webhookData.event,
+      order_id: orderId,
+      email: email,
+      amount_cents: amountCents,
+      payload: webhookData,
+      signature_valid: true,
+      ip_address: ipAddress
+    }, pool);
+
+    // Sync to GoHighLevel
+    try {
+      await addContactToGHL(email, user.email, ['tickedify-paid-customer']);
+      console.log(`✅ GHL: Tagged user as paid customer: ${email}`);
+    } catch (ghlError) {
+      console.error('⚠️ GHL sync failed:', ghlError.message);
+      // Don't fail webhook if GHL sync fails
+    }
+
+    console.log(`✅ Payment confirmed for user ${user.id} - order ${orderId} - amount ${amountCents} cents`);
+
+    res.json({ success: true, message: 'Payment processed successfully' });
+
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// T011: GET /api/payment/success - User returns from successful payment
+app.get('/api/payment/success', async (req, res) => {
+  try {
+    const { return_token } = req.query;
+
+    if (!return_token) {
+      // No token - show generic success page and redirect to login
+      return res.redirect('/payment-success.html?no_token=true');
+    }
+
+    // Validate token
+    const tokenValidation = await validateLoginToken(return_token, pool);
+    if (!tokenValidation.valid) {
+      console.log(`⚠️ Invalid/expired return token: ${tokenValidation.error}`);
+      return res.redirect('/payment-success.html?token_error=true');
+    }
+
+    // Token valid - auto-login user
+    req.session.userId = tokenValidation.userId;
+    req.session.userEmail = tokenValidation.email;
+
+    console.log(`✅ Auto-login successful for user ${tokenValidation.email}`);
+    res.redirect('/app?payment_success=true');
+
+  } catch (error) {
+    console.error('Payment success handler error:', error);
+    res.redirect('/payment-success.html?error=true');
+  }
+});
+
+// T012: GET /api/payment/cancelled - User cancelled payment
+app.get('/api/payment/cancelled', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    if (userId) {
+      // Logged in - redirect to subscription page
+      console.log(`ℹ️ User ${userId} cancelled payment`);
+      res.redirect('/subscription.html?cancelled=true');
+    } else {
+      // Not logged in - redirect to generic cancelled page
+      res.redirect('/payment-cancelled.html');
+    }
+
+  } catch (error) {
+    console.error('Payment cancelled handler error:', error);
+    res.redirect('/payment-cancelled.html?error=true');
+  }
+});
+
+// T013: GET /api/subscription/status - Get current subscription status
+app.get('/api/subscription/status', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    const userResult = await pool.query(
+      `SELECT subscription_status, trial_start_date, trial_end_date,
+              payment_confirmed_at, had_trial, account_type
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden' });
+    }
+
+    const user = userResult.rows[0];
+    const hasAccess = canAccessApp(user);
+    const trialExpired = isTrialExpired(user);
+
+    res.json({
+      success: true,
+      subscription_status: user.subscription_status,
+      account_type: user.account_type,
+      has_access: hasAccess,
+      trial_expired: trialExpired,
+      trial_start_date: user.trial_start_date,
+      trial_end_date: user.trial_end_date,
+      payment_confirmed_at: user.payment_confirmed_at,
+      had_trial: user.had_trial
+    });
+
+  } catch (error) {
+    console.error('Subscription status error:', error);
+    res.status(500).json({ error: 'Fout bij ophalen status' });
+  }
+});
+
+// T014: GET /api/admin/payment-configurations - Admin: Get all payment configurations
+app.get('/api/admin/payment-configurations', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    // Check admin role
+    const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+      return res.status(403).json({ error: 'Admin rechten vereist' });
+    }
+
+    // Get all configurations
+    const configsResult = await pool.query(
+      `SELECT plan_id, plan_name, checkout_url, is_active, created_at, updated_at
+       FROM payment_configurations
+       ORDER BY plan_id`
+    );
+
+    res.json({
+      success: true,
+      configurations: configsResult.rows
+    });
+
+  } catch (error) {
+    console.error('Get payment configurations error:', error);
+    res.status(500).json({ error: 'Fout bij ophalen configuraties' });
+  }
+});
+
+// T015: PUT /api/admin/payment-configurations/:plan_id - Admin: Update checkout URL
+app.put('/api/admin/payment-configurations/:plan_id', async (req, res) => {
+  try {
+    const { plan_id } = req.params;
+    const { checkout_url, is_active } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    // Check admin role
+    const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+      return res.status(403).json({ error: 'Admin rechten vereist' });
+    }
+
+    // Validate checkout URL
+    if (checkout_url && !checkout_url.startsWith('https://')) {
+      return res.status(400).json({ error: 'Checkout URL moet beginnen met https://' });
+    }
+
+    // Update configuration
+    const updateResult = await pool.query(
+      `UPDATE payment_configurations
+       SET checkout_url = COALESCE($1, checkout_url),
+           is_active = COALESCE($2, is_active)
+       WHERE plan_id = $3
+       RETURNING *`,
+      [checkout_url, is_active, plan_id]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan niet gevonden' });
+    }
+
+    console.log(`✅ Admin ${userId} updated payment config for plan ${plan_id}`);
+
+    res.json({
+      success: true,
+      configuration: updateResult.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Update payment configuration error:', error);
+    res.status(500).json({ error: 'Fout bij updaten configuratie' });
+  }
 });
 
 // Waitlist API endpoint
