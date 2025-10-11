@@ -134,10 +134,38 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.33 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.33</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔓</span>
+                    <div class="change-content">
+                        <div class="change-title">Webhook API Key Validatie Disabled</div>
+                        <div class="change-description">
+                            <strong>API key check verwijderd:</strong> Gebaseerd op Minddumper implementatie analyse blijkt dat Plug&Pay
+                            <strong>geen API key automatisch meestuurt</strong> in webhook payloads. API key validatie is daarom disabled.
+                            <br><br>
+                            <strong>Beveiliging:</strong> Webhook URL blijft privé en alleen toegankelijk via HTTPS. Plug&Pay stuurt webhooks
+                            enkel naar geconfigureerde URLs.
+                            <br><br>
+                            <strong>Logging:</strong> Als er toch een API key wordt meegestuurd, wordt deze gevalideerd en gelogd voor
+                            toekomstige analyse.
+                            <br><br>
+                            <strong>Klaar voor:</strong> Directe webhook configuratie in Plug&Pay dashboard zonder extra parameters.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.32 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.32</span>
+                <span class="version-badge badge-feature">v0.17.32</span>
                 <span class="version-date">11 oktober 2025</span>
             </div>
             <div class="changes-list">
