@@ -28,6 +28,10 @@
       "dest": "/public/index.html"
     },
     {
+      "src": "/welcome",
+      "dest": "/public/welcome.html"
+    },
+    {
       "src": "/register(.html)?",
       "dest": "/public/waitlist.html"
     },
