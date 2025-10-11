@@ -121,6 +121,15 @@ class AdminDashboard {
             endpoints.map(endpoint => fetch(endpoint).then(r => r.json()))
         );
 
+        // Debug logging for failed endpoints
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.error(`❌ Failed to fetch ${endpoints[index]}:`, result.reason);
+            } else if (endpoints[index] === '/api/admin/payment-configurations') {
+                console.log('💳 Payment configs response:', result.value);
+            }
+        });
+
         this.data = {
             users: results[0].status === 'fulfilled' ? results[0].value : {},
             tasks: results[1].status === 'fulfilled' ? results[1].value : {},
@@ -582,16 +591,29 @@ class AdminDashboard {
         const errorDiv = document.getElementById('paymentConfigsError');
         const container = document.getElementById('paymentConfigsTable');
 
+        console.log('🔍 DEBUG paymentConfigurations full data:', this.data.paymentConfigurations);
         const configs = this.data.paymentConfigurations?.configurations || [];
+        console.log('🔍 DEBUG configs array:', configs, 'length:', configs.length);
+
+        // Check if API call had an error
+        if (this.data.paymentConfigurations?.error) {
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            errorDiv.textContent = `API Error: ${this.data.paymentConfigurations.error}`;
+            errorDiv.style.display = 'block';
+            console.error('❌ Payment configs API error:', this.data.paymentConfigurations.error);
+            return;
+        }
 
         if (configs.length === 0) {
             if (loadingDiv) loadingDiv.style.display = 'none';
-            container.innerHTML = '<p style="color: var(--macos-text-secondary);">Geen payment configuraties beschikbaar</p>';
+            container.innerHTML = '<p style="color: var(--macos-text-secondary);">Geen payment configuraties beschikbaar (configs.length = 0)</p>';
+            console.warn('⚠️ No payment configs found');
             return;
         }
 
         if (loadingDiv) loadingDiv.style.display = 'none';
         if (errorDiv) errorDiv.style.display = 'none';
+        console.log('✅ Rendering', configs.length, 'payment configurations');
 
         let html = '';
 
