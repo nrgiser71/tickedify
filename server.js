@@ -145,6 +145,7 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
 // Subscription State Machine Constants
 const SUBSCRIPTION_STATES = {
   BETA: 'beta',
+  BETA_EXPIRED: 'beta_expired',
   TRIALING: 'trialing',
   TRIAL_EXPIRED: 'trial_expired',
   ACTIVE: 'active',
@@ -196,6 +197,15 @@ function isTrialExpired(user) {
 function validatePlanSelection(planId, currentStatus, hadTrial = false) {
   // Beta users can select trial (only if they never had trial) or paid plans
   if (currentStatus === SUBSCRIPTION_STATES.BETA) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+  }
+
+  // Beta-expired users can select trial (if never had trial) or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.BETA_EXPIRED) {
     // If trying to select trial, check if user already had trial
     if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
       return false; // User already had trial, cannot select again
