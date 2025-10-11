@@ -2304,16 +2304,26 @@ app.post('/api/auth/login', async (req, res) => {
             req.session.userNaam = user.naam;
             req.session.requiresUpgrade = true; // Flag for limited access
 
-            return res.json({
-                success: true,
-                requiresUpgrade: true,
-                message: 'Login succesvol, upgrade vereist voor volledige toegang',
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    naam: user.naam,
-                    rol: user.rol
+            // Explicitly save session before sending response
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ error: 'Fout bij opslaan sessie' });
                 }
+
+                console.log(`✅ Session saved for beta user ${email} (userId: ${user.id})`);
+
+                return res.json({
+                    success: true,
+                    requiresUpgrade: true,
+                    message: 'Login succesvol, upgrade vereist voor volledige toegang',
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        naam: user.naam,
+                        rol: user.rol
+                    }
+                });
             });
         }
         
@@ -2372,11 +2382,20 @@ app.post('/api/subscription/select', async (req, res) => {
     const { planId } = req.body;
     const userId = req.session.userId;
 
+    console.log(`📋 Subscription select request - planId: ${planId}, userId: ${userId}, session:`, {
+      userId: req.session.userId,
+      userEmail: req.session.userEmail,
+      requiresUpgrade: req.session.requiresUpgrade,
+      sessionID: req.sessionID
+    });
+
     if (!userId) {
+      console.error('❌ Subscription select failed - no userId in session');
       return res.status(401).json({ error: 'Niet ingelogd' });
     }
 
     if (!planId) {
+      console.error('❌ Subscription select failed - no planId provided');
       return res.status(400).json({ error: 'Plan ID is verplicht' });
     }
 
