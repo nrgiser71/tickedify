@@ -193,9 +193,13 @@ function isTrialExpired(user) {
 }
 
 // Validate plan selection
-function validatePlanSelection(planId, currentStatus) {
-  // Beta users can select trial or paid plans
+function validatePlanSelection(planId, currentStatus, hadTrial = false) {
+  // Beta users can select trial (only if they never had trial) or paid plans
   if (currentStatus === SUBSCRIPTION_STATES.BETA) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
     return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
   }
 
@@ -2327,7 +2331,7 @@ app.post('/api/subscription/select', async (req, res) => {
     }
 
     // Get user info
-    const userResult = await pool.query('SELECT subscription_status FROM users WHERE id = $1', [userId]);
+    const userResult = await pool.query('SELECT subscription_status, had_trial FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: 'Gebruiker niet gevonden' });
     }
@@ -2335,7 +2339,11 @@ app.post('/api/subscription/select', async (req, res) => {
     const user = userResult.rows[0];
 
     // Validate plan selection
-    if (!validatePlanSelection(planId, user.subscription_status)) {
+    if (!validatePlanSelection(planId, user.subscription_status, user.had_trial)) {
+      // Provide specific error message for trial rejection
+      if (planId === PLAN_IDS.TRIAL_14 && user.had_trial) {
+        return res.status(400).json({ error: 'Je hebt al eerder een trial gehad. Kies een betaald abonnement.' });
+      }
       return res.status(400).json({ error: 'Ongeldige plan selectie voor huidige status' });
     }
 

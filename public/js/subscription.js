@@ -105,8 +105,17 @@ function renderSubscriptionPlans() {
     // Clear existing content
     plansGrid.innerHTML = '';
 
+    // Filter plans based on user status
+    let plansToRender = subscriptionState.plans;
+
+    // Hide trial plan if user already had trial
+    if (subscriptionState.userStatus && subscriptionState.userStatus.had_trial) {
+        plansToRender = subscriptionState.plans.filter(plan => plan.id !== 'trial_14_days');
+        console.log('Trial plan hidden - user already had trial');
+    }
+
     // Render each plan
-    subscriptionState.plans.forEach(plan => {
+    plansToRender.forEach(plan => {
         const planElement = createPlanElement(plan);
         plansGrid.appendChild(planElement);
     });
