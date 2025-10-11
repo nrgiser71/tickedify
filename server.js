@@ -2384,7 +2384,7 @@ app.post('/api/auth/login', async (req, res) => {
                         betaPeriodActive: betaConfig.beta_period_active,
                         accountType: userDetails.account_type,
                         subscriptionStatus: userDetails.subscription_status,
-                        codeVersion: '0.17.25'
+                        codeVersion: '0.17.26'
                     },
                     user: {
                         id: user.id,
@@ -2394,8 +2394,11 @@ app.post('/api/auth/login', async (req, res) => {
                     }
                 });
             });
+
+            // CRITICAL: Return here to prevent continuing to normal login flow
+            return;
         }
-        
+
         console.log(`[NORMAL-LOGIN] Normal login flow for ${email} - beta check passed or not applicable`);
 
         // Update last login
