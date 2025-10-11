@@ -12241,25 +12241,18 @@ class AuthManager {
 
             const data = await response.json();
 
-            console.log('🔍 Login response data:', data);
-
             if (response.ok) {
                 // Check if upgrade is required (beta period ended)
-                console.log('🔍 Checking requiresUpgrade:', data.requiresUpgrade, typeof data.requiresUpgrade);
-
                 if (data.requiresUpgrade) {
-                    console.log('✅ requiresUpgrade is TRUE - showing toast and redirecting');
                     toast.warning('Beta periode beëindigd. Kies een abonnement om door te gaan.');
 
                     // Redirect to subscription selection page
                     setTimeout(() => {
-                        console.log('🔄 Redirecting to subscription page...');
                         window.location.href = '/subscription.html?source=beta';
                     }, 1500);
                     return;
                 }
 
-                console.log('📝 Normal login flow - no requiresUpgrade');
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 this.updateUI();
@@ -12381,7 +12374,6 @@ class AuthManager {
 
                 // Check if upgrade is required (beta period ended)
                 if (data.requiresUpgrade) {
-                    console.log('⚠️ checkAuthStatus detected requiresUpgrade - redirecting to subscription');
                     toast.warning('Beta periode beëindigd. Kies een abonnement om door te gaan.');
 
                     // Redirect to subscription selection page

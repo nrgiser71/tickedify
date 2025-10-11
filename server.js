@@ -1515,135 +1515,6 @@ app.get('/api/debug/payment-configs', async (req, res) => {
 });
 
 // Debug endpoint to activate all payment configurations
-app.post('/api/debug/activate-payment-configs', async (req, res) => {
-    try {
-        if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-
-        // Activate all payment configurations
-        const result = await pool.query(`
-            UPDATE payment_configurations
-            SET is_active = true, updated_at = CURRENT_TIMESTAMP
-            WHERE is_active = false
-            RETURNING plan_id, checkout_url, is_active
-        `);
-
-        console.log(`✅ Activated ${result.rows.length} payment configurations`);
-
-        res.json({
-            success: true,
-            message: `Activated ${result.rows.length} payment configurations`,
-            configs: result.rows
-        });
-
-    } catch (error) {
-        console.error('Activate payment configs error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Debug endpoint to simulate successful payment (for testing without real payments)
-app.post('/api/debug/simulate-payment-success', async (req, res) => {
-    try {
-        if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-
-        const { email, planId, orderId, amountCents } = req.body;
-
-        console.log(`🧪 [TEST] Simulating payment success for ${email}, plan ${planId}`);
-
-        // Validate inputs
-        if (!email) {
-            return res.status(400).json({ error: 'Email is required' });
-        }
-
-        // Generate test order ID if not provided
-        const testOrderId = orderId || `test_order_${Date.now()}`;
-        const testAmount = amountCents || (planId === 'yearly_70' ? 7000 : 700);
-
-        // Find user by email
-        const userResult = await pool.query(
-            'SELECT id, email, naam FROM users WHERE LOWER(email) = LOWER($1)',
-            [email]
-        );
-
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: `User not found: ${email}` });
-        }
-
-        const user = userResult.rows[0];
-
-        console.log(`🧪 [TEST] Found user: ${user.id} (${user.email})`);
-
-        // Update user to active subscription (same as webhook)
-        await pool.query(
-            `UPDATE users
-             SET subscription_status = $1,
-                 payment_confirmed_at = NOW(),
-                 plugandpay_order_id = $2,
-                 amount_paid_cents = $3,
-                 selected_plan = $4
-             WHERE id = $5`,
-            [SUBSCRIPTION_STATES.ACTIVE, testOrderId, testAmount, planId, user.id]
-        );
-
-        console.log(`🧪 [TEST] Updated user subscription_status to 'active'`);
-
-        // Generate auto-login token (same as subscription select)
-        const loginToken = generateLoginToken();
-        const tokenExpiry = calculateTokenExpiry();
-
-        await pool.query(
-            `UPDATE users
-             SET login_token = $1, login_token_expires = $2, login_token_used = FALSE
-             WHERE id = $3`,
-            [loginToken, tokenExpiry, user.id]
-        );
-
-        console.log(`🧪 [TEST] Generated auto-login token: ${loginToken.substring(0, 10)}...`);
-
-        // Build return URL (same as real payment flow)
-        const returnUrl = `${req.protocol}://${req.get('host')}/api/payment/success?return_token=${loginToken}`;
-
-        console.log(`🧪 [TEST] Payment simulation complete for ${email}`);
-
-        res.json({
-            success: true,
-            message: 'Payment simulated successfully',
-            testMode: true,
-            user: {
-                id: user.id,
-                email: user.email,
-                naam: user.naam,
-                subscription_status: 'active',
-                selected_plan: planId
-            },
-            payment: {
-                orderId: testOrderId,
-                amountCents: testAmount,
-                planId: planId
-            },
-            autoLogin: {
-                token: loginToken,
-                expires: tokenExpiry,
-                returnUrl: returnUrl
-            },
-            nextSteps: [
-                `1. User subscription is now 'active'`,
-                `2. Auto-login token generated (expires in 10 minutes)`,
-                `3. Visit return URL to auto-login: ${returnUrl}`,
-                `4. Or manually test auto-login flow with token`
-            ]
-        });
-
-    } catch (error) {
-        console.error('🧪 [TEST] Payment simulation error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Debug endpoint to reset user subscription status (for testing)
 // Debug endpoint to check beta config and user status
 app.get('/api/debug/beta-status', async (req, res) => {
@@ -2544,13 +2415,6 @@ app.post('/api/auth/login', async (req, res) => {
                     success: true,
                     requiresUpgrade: true,
                     message: 'Login succesvol, upgrade vereist voor volledige toegang',
-                    _debug: {
-                        flow: 'LIMITED_LOGIN',
-                        betaPeriodActive: betaConfig.beta_period_active,
-                        accountType: userDetails.account_type,
-                        subscriptionStatus: userDetails.subscription_status,
-                        codeVersion: '0.17.26'
-                    },
                     user: {
                         id: user.id,
                         email: user.email,
@@ -2582,13 +2446,6 @@ app.post('/api/auth/login', async (req, res) => {
         res.json({
             success: true,
             message: 'Succesvol ingelogd',
-            _debug: {
-                flow: 'NORMAL_LOGIN',
-                betaPeriodActive: betaConfig.beta_period_active,
-                accountType: userDetails.account_type,
-                subscriptionStatus: userDetails.subscription_status,
-                codeVersion: '0.17.25'
-            },
             user: {
                 id: user.id,
                 email: user.email,

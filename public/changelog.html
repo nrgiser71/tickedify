@@ -134,10 +134,36 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.31 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.31</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🧹</span>
+                    <div class="change-content">
+                        <div class="change-title">Code Cleanup - Productie Gereedmaken</div>
+                        <div class="change-description">
+                            <strong>Opgeschoond voor productie:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Verwijderd: Test endpoints (<code>/api/debug/simulate-payment-success</code>, <code>/api/debug/activate-payment-configs</code>)</li>
+                                <li>Verwijderd: <code>_debug</code> objecten uit login responses voor schonere API output</li>
+                                <li>Verwijderd: Verbose console logging uit frontend (app.js requiresUpgrade debug statements)</li>
+                                <li>Behouden: Essentiële debug endpoints voor admin gebruik (<code>/api/debug/beta-status</code>, <code>/api/debug/payment-configs</code>)</li>
+                            </ul>
+                            <strong>Resultaat:</strong> Schonere codebase, minder noise in logs, productie-ready code zonder test artifacts.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.0 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.0</span>
+                <span class="version-badge badge-feature">v0.17.0</span>
                 <span class="version-date">10 oktober 2025</span>
             </div>
             <div class="changes-list">
