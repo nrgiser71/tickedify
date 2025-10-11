@@ -4899,10 +4899,14 @@ app.get('/api/version', (req, res) => {
     // Clear require cache for package.json to get fresh version
     delete require.cache[require.resolve('./package.json')];
     const packageJson = require('./package.json');
+
+    console.log(`📋 Version check - code version: 0.17.23-FINAL`);
+
     res.json({
         version: packageJson.version,
         commit_hash: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'unknown',
         deployed_at: new Date().toISOString(),
+        code_marker: '0.17.23-FINAL',
         features: ['toast-notifications', 'recurring-tasks', 'test-dashboard', 'smart-date-filtering'],
         environment: process.env.NODE_ENV || 'development'
     });
