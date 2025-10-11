@@ -353,7 +353,7 @@ const initDatabase = async () => {
     // Update bestaande taken die nog geen prioriteit hebben naar 'gemiddeld'
     try {
       const updateResult = await pool.query(`
-        UPDATE taken SET prioriteit = 'gemiddeld' 
+        UPDATE taken SET prioriteit = 'gemiddeld'
         WHERE prioriteit IS NULL OR prioriteit = ''
       `);
       if (updateResult.rowCount > 0) {
@@ -361,6 +361,128 @@ const initDatabase = async () => {
       }
     } catch (error) {
       console.log('⚠️ Could not update existing tasks priority (might not have prioriteit column yet):', error.message);
+    }
+
+    // Feature 011: Payment System - Extend users table
+    try {
+      await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS payment_confirmed_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS trial_start_date DATE,
+        ADD COLUMN IF NOT EXISTS trial_end_date DATE,
+        ADD COLUMN IF NOT EXISTS had_trial BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS plugandpay_order_id VARCHAR(255) UNIQUE,
+        ADD COLUMN IF NOT EXISTS amount_paid_cents INTEGER,
+        ADD COLUMN IF NOT EXISTS login_token VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS login_token_expires TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS login_token_used BOOLEAN DEFAULT FALSE
+      `);
+      console.log('✅ Feature 011: Payment tracking columns added to users table');
+    } catch (paymentMigrateError) {
+      console.log('⚠️ Could not add payment columns, trying individually:', paymentMigrateError.message);
+      const paymentColumns = [
+        { name: 'payment_confirmed_at', type: 'TIMESTAMP' },
+        { name: 'trial_start_date', type: 'DATE' },
+        { name: 'trial_end_date', type: 'DATE' },
+        { name: 'had_trial', type: 'BOOLEAN DEFAULT FALSE' },
+        { name: 'plugandpay_order_id', type: 'VARCHAR(255) UNIQUE' },
+        { name: 'amount_paid_cents', type: 'INTEGER' },
+        { name: 'login_token', type: 'VARCHAR(255)' },
+        { name: 'login_token_expires', type: 'TIMESTAMP' },
+        { name: 'login_token_used', type: 'BOOLEAN DEFAULT FALSE' }
+      ];
+
+      for (const col of paymentColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added payment column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Payment column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    // Feature 011: Create payment_configurations table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payment_configurations (
+        id SERIAL PRIMARY KEY,
+        plan_id VARCHAR(50) UNIQUE NOT NULL,
+        plan_name VARCHAR(100) NOT NULL,
+        checkout_url TEXT NOT NULL DEFAULT '',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Feature 011: Insert initial payment configurations
+    try {
+      await pool.query(`
+        INSERT INTO payment_configurations (plan_id, plan_name, checkout_url, is_active) VALUES
+          ('monthly_7', 'Maandelijks €7', '', FALSE),
+          ('yearly_70', 'Jaarlijks €70', '', FALSE)
+        ON CONFLICT (plan_id) DO NOTHING
+      `);
+      console.log('✅ Feature 011: Payment configurations initialized');
+    } catch (error) {
+      console.log('⚠️ Could not insert payment configurations:', error.message);
+    }
+
+    // Feature 011: Create payment_webhook_logs table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payment_webhook_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        event_type VARCHAR(100),
+        order_id VARCHAR(255),
+        email VARCHAR(255),
+        amount_cents INTEGER,
+        payload JSONB,
+        signature_valid BOOLEAN,
+        processed_at TIMESTAMP DEFAULT NOW(),
+        error_message TEXT,
+        ip_address VARCHAR(45)
+      )
+    `);
+
+    // Feature 011: Add payment indexes
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_subscription_status ON users(subscription_status);
+        CREATE INDEX IF NOT EXISTS idx_users_plugandpay_order_id ON users(plugandpay_order_id);
+        CREATE INDEX IF NOT EXISTS idx_users_login_token ON users(login_token) WHERE login_token_used = FALSE;
+        CREATE INDEX IF NOT EXISTS idx_users_trial_end_date ON users(trial_end_date) WHERE subscription_status = 'trialing';
+        CREATE INDEX IF NOT EXISTS idx_payment_configs_plan_id ON payment_configurations(plan_id);
+        CREATE INDEX IF NOT EXISTS idx_payment_configs_active ON payment_configurations(is_active);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_user_id ON payment_webhook_logs(user_id);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_order_id ON payment_webhook_logs(order_id);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_processed_at ON payment_webhook_logs(processed_at);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_event_type ON payment_webhook_logs(event_type);
+      `);
+      console.log('✅ Feature 011: Payment system indexes created');
+    } catch (indexError) {
+      console.log('⚠️ Could not create payment indexes:', indexError.message);
+    }
+
+    // Feature 011: Create updated_at trigger for payment_configurations
+    try {
+      await pool.query(`
+        CREATE OR REPLACE FUNCTION update_payment_config_updated_at()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.updated_at = NOW();
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER payment_config_updated_at
+          BEFORE UPDATE ON payment_configurations
+          FOR EACH ROW
+          EXECUTE FUNCTION update_payment_config_updated_at();
+      `);
+      console.log('✅ Feature 011: Payment configuration trigger created');
+    } catch (triggerError) {
+      console.log('⚠️ Payment configuration trigger might already exist:', triggerError.message);
     }
 
     // Create indexes for performance
