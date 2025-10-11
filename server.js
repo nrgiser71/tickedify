@@ -2305,7 +2305,9 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, wachtwoord } = req.body;
-        
+
+        console.log(`🔐 Login attempt for: ${email} [v0.17.22]`);
+
         if (!email || !wachtwoord) {
             return res.status(400).json({ error: 'Email en wachtwoord zijn verplicht' });
         }
