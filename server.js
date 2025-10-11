@@ -755,6 +755,23 @@ app.post('/api/admin/init-database', async (req, res) => {
     }
 });
 
+// TEMP: Make jan@buskens.be admin for Feature 011 testing
+app.post('/api/admin/make-jan-admin', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        await pool.query(`UPDATE users SET rol = 'admin' WHERE email = 'jan@buskens.be'`);
+
+        console.log('✅ jan@buskens.be is now admin');
+        res.json({ success: true, message: 'jan@buskens.be is now admin' });
+    } catch (error) {
+        console.error('❌ Failed to make jan admin:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Database reset endpoint - DANGER: Deletes ALL data
 app.post('/api/admin/reset-database', async (req, res) => {
     try {
