@@ -12244,12 +12244,8 @@ class AuthManager {
             if (response.ok) {
                 // Check if upgrade is required (beta period ended)
                 if (data.requiresUpgrade) {
-                    toast.warning('Beta periode beëindigd. Kies een abonnement om door te gaan.');
-
-                    // Redirect to subscription selection page
-                    setTimeout(() => {
-                        window.location.href = '/subscription.html?source=beta';
-                    }, 1500);
+                    // Redirect to beta expired page
+                    window.location.href = '/beta-expired';
                     return;
                 }
 
@@ -12374,12 +12370,8 @@ class AuthManager {
 
                 // Check if upgrade is required (beta period ended)
                 if (data.requiresUpgrade) {
-                    toast.warning('Beta periode beëindigd. Kies een abonnement om door te gaan.');
-
-                    // Redirect to subscription selection page
-                    setTimeout(() => {
-                        window.location.href = '/subscription.html?source=beta';
-                    }, 1500);
+                    // Redirect to beta expired page
+                    window.location.href = '/beta-expired';
                     return;
                 }
 
