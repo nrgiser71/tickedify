@@ -2535,8 +2535,8 @@ app.post('/api/subscription/select', async (req, res) => {
       return res.status(400).json({ error: 'Plan ID is verplicht' });
     }
 
-    // Get user info
-    const userResult = await pool.query('SELECT subscription_status, had_trial FROM users WHERE id = $1', [userId]);
+    // Get user info (including email for confirmation page)
+    const userResult = await pool.query('SELECT email, subscription_status, had_trial FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: 'Gebruiker niet gevonden' });
     }
@@ -2602,12 +2602,13 @@ app.post('/api/subscription/select', async (req, res) => {
     // Build redirect URL with token
     const redirectUrl = `${checkoutUrl}${checkoutUrl.includes('?') ? '&' : '?'}return_token=${loginToken}`;
 
-    console.log(`💳 User ${userId} selected plan ${planId} - redirecting to checkout`);
+    console.log(`💳 User ${userId} (${user.email}) selected plan ${planId} - redirecting to checkout`);
 
     res.json({
       success: true,
       paid: true,
-      redirectUrl: redirectUrl
+      redirectUrl: redirectUrl,
+      email: user.email  // Include email for confirmation page
     });
 
   } catch (error) {
