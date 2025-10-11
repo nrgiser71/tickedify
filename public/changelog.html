@@ -134,10 +134,39 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.17.32 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.17.32</span>
+                <span class="version-date">11 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">💳</span>
+                    <div class="change-content">
+                        <div class="change-title">Plug&Pay Webhook - Abonnement Support</div>
+                        <div class="change-description">
+                            <strong>Uitgebreid voor recurring subscriptions:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li><strong>Event Support:</strong> Webhook ondersteunt nu "Abonnement ingegaan" trigger naast "Bestelling betaald"</li>
+                                <li><strong>Plan Identificatie:</strong> Automatische detectie van monthly_7 vs yearly_70 uit webhook data</li>
+                                <li><strong>Subscription Tracking:</strong> <code>plugandpay_subscription_id</code> wordt opgeslagen voor toekomstige reference</li>
+                                <li><strong>Database Migratie:</strong> Nieuwe kolom <code>plugandpay_subscription_id</code> toegevoegd aan users tabel</li>
+                                <li><strong>Verbeterde Logging:</strong> Uitgebreide debugging output voor alle webhook velden (event, plan_id, subscription_id, interval)</li>
+                            </ul>
+                            <strong>Event Types Supported:</strong> <code>subscription_started</code>, <code>subscription_activated</code>, <code>subscription_active</code>, <code>order_payment_completed</code>
+                            <br><strong>Backwards Compatible:</strong> Oude "Bestelling betaald" events blijven werken.
+                            <br><strong>Klaar voor:</strong> Plug&Pay configuratie met "Abonnement ingegaan" trigger voor maandelijkse/jaarlijkse abonnementen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.17.31 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.17.31</span>
+                <span class="version-badge badge-fix">v0.17.31</span>
                 <span class="version-date">11 oktober 2025</span>
             </div>
             <div class="changes-list">

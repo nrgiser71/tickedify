@@ -2589,7 +2589,18 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     const webhookData = req.body;
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    console.log('🔔 Plug&Pay webhook received:', JSON.stringify(webhookData));
+    console.log('🔔 Plug&Pay webhook received:', {
+      event: webhookData.event,
+      status: webhookData.status,
+      email: webhookData.email,
+      order_id: webhookData.order_id,
+      plan_id: webhookData.plan_id,
+      product_id: webhookData.product_id,
+      subscription_id: webhookData.subscription_id,
+      amount: webhookData.amount,
+      interval: webhookData.interval,
+      full_payload: JSON.stringify(webhookData, null, 2)
+    });
 
     // Validate API key
     const apiKeyValid = webhookData.api_key === process.env.PLUGANDPAY_API_KEY;
@@ -2608,10 +2619,17 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       return res.status(401).json({ error: 'Invalid API key' });
     }
 
-    // Check event type
-    const isPaid = webhookData.event === 'order_payment_completed' || webhookData.status === 'paid';
-    if (!isPaid) {
-      console.log(`ℹ️ Non-payment webhook: ${webhookData.event || webhookData.status}`);
+    // Check event type - support both subscription and one-time payment events
+    const isSubscriptionActive =
+      webhookData.event === 'subscription_started' ||
+      webhookData.event === 'subscription_activated' ||
+      webhookData.event === 'subscription_active' ||
+      webhookData.event === 'order_payment_completed' ||
+      webhookData.status === 'active' ||
+      webhookData.status === 'paid';
+
+    if (!isSubscriptionActive) {
+      console.log(`ℹ️ Non-subscription webhook: ${webhookData.event || webhookData.status}`);
       await logWebhookEvent({
         event_type: webhookData.event || webhookData.status,
         order_id: webhookData.order_id,
@@ -2628,6 +2646,21 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     const orderId = webhookData.order_id;
     const email = webhookData.email || webhookData.customer_email;
     const amountCents = webhookData.amount ? parseInt(webhookData.amount) : null;
+
+    // Extract subscription plan information
+    const selectedPlan = webhookData.plan_id ||
+                        webhookData.product_id ||
+                        webhookData.subscription_plan ||
+                        null;
+
+    const subscriptionId = webhookData.subscription_id || null;
+
+    console.log('📦 Subscription details extracted:', {
+      selected_plan: selectedPlan,
+      subscription_id: subscriptionId,
+      interval: webhookData.interval,
+      amount_cents: amountCents
+    });
 
     if (!orderId || !email) {
       console.error('❌ Missing order_id or email in webhook');
@@ -2683,10 +2716,14 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     // Update user to active subscription
     await pool.query(
       `UPDATE users
-       SET subscription_status = $1, payment_confirmed_at = NOW(),
-           plugandpay_order_id = $2, amount_paid_cents = $3
-       WHERE id = $4`,
-      [SUBSCRIPTION_STATES.ACTIVE, orderId, amountCents, user.id]
+       SET subscription_status = $1,
+           payment_confirmed_at = NOW(),
+           plugandpay_order_id = $2,
+           amount_paid_cents = $3,
+           selected_plan = $4,
+           plugandpay_subscription_id = $5
+       WHERE id = $6`,
+      [SUBSCRIPTION_STATES.ACTIVE, orderId, amountCents, selectedPlan, subscriptionId, user.id]
     );
 
     // Log successful webhook
@@ -2710,7 +2747,12 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       // Don't fail webhook if GHL sync fails
     }
 
-    console.log(`✅ Payment confirmed for user ${user.id} - order ${orderId} - amount ${amountCents} cents`);
+    console.log(`✅ Payment confirmed for user ${user.id}:`, {
+      order_id: orderId,
+      amount_cents: amountCents,
+      selected_plan: selectedPlan,
+      subscription_id: subscriptionId
+    });
 
     res.json({ success: true, message: 'Payment processed successfully' });
 
@@ -8305,7 +8347,14 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
             ON CONFLICT (id) DO NOTHING
         `);
         console.log('✅ Default beta config inserted');
-        
+
+        // Add subscription-related columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255)
+        `);
+        console.log('✅ Users table subscription columns added');
+
         // Set existing users to beta type if they were created recently (assuming they are beta testers)
         await pool.query(`
             UPDATE users 
