@@ -415,17 +415,17 @@ const initDatabase = async () => {
       )
     `);
 
-    // Feature 011: Insert initial payment configurations
+    // Feature 011: Insert initial payment configurations (all active by default)
     try {
       await pool.query(`
         INSERT INTO payment_configurations (plan_id, plan_name, checkout_url, is_active) VALUES
-          ('monthly_7', 'Maandelijks €7', '', FALSE),
-          ('yearly_70', 'Jaarlijks €70', '', FALSE),
-          ('monthly_8', 'Premium Plus Maandelijks €8', '', FALSE),
-          ('yearly_80', 'Premium Plus Jaarlijks €80', '', FALSE)
+          ('monthly_7', 'Maandelijks €7', '', TRUE),
+          ('yearly_70', 'Jaarlijks €70', '', TRUE),
+          ('monthly_8', 'No Limit Maandelijks €8', '', TRUE),
+          ('yearly_80', 'No Limit Jaarlijks €80', '', TRUE)
         ON CONFLICT (plan_id) DO NOTHING
       `);
-      console.log('✅ Feature 011 & 013: Payment configurations initialized (Standard + Premium Plus)');
+      console.log('✅ Feature 011 & 013: Payment configurations initialized (all plans active)');
     } catch (error) {
       console.log('⚠️ Could not insert payment configurations:', error.message);
     }
