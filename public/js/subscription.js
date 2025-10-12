@@ -208,7 +208,7 @@ function createPlanElement(plan, clickable = true) {
  */
 function createCombinedStandardPlanElement(standardPlans) {
     const planDiv = document.createElement('div');
-    planDiv.className = 'plan-option plan-recommended';
+    planDiv.className = 'plan-option';
     planDiv.setAttribute('data-plan-id', 'standard');
 
     // Find monthly and yearly plans
@@ -249,7 +249,7 @@ function createCombinedStandardPlanElement(standardPlans) {
             Kies Standard Abonnement
         </button>
         <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
-            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze op de betaalpagina
+            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina
         </small>
     `;
 
@@ -314,7 +314,7 @@ function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
             Kies Premium Plus
         </button>
         <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
-            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze op de betaalpagina
+            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina
         </small>
     `;
 

@@ -134,10 +134,58 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.4 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.4</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎨</span>
+                    <div class="change-content">
+                        <div class="change-title">Subscription Page UI Refinements - 3 Cards Layout & Badge Optimalisatie</div>
+                        <div class="change-description">
+                            <strong>UX VERBETERINGEN:</strong> Subscription page heeft nu een verbeterde layout en duidelijkere 'Aanbevolen' badge positioning.
+                            <br><br>
+                            <strong>Layout Wijzigingen:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ 3 cards naast elkaar op desktop (Trial | Standard | Premium Plus)</li>
+                                <li>✅ Grid layout gewijzigd van auto-fit naar fixed 3-kolommen (subscription.css regel 100)</li>
+                                <li>✅ Max-width verhoogd van 1000px naar 1200px voor betere weergave (subscription.css regel 102)</li>
+                                <li>✅ Responsive blijft werken: mobile devices tonen cards verticaal (1 kolom)</li>
+                            </ul>
+                            <strong>'Aanbevolen' Badge:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>⭐ Badge verschijnt nu ALLEEN bij Premium Plus card (€8/€80)</li>
+                                <li>❌ VERWIJDERD van Standard card (€7/€70)</li>
+                                <li>🎯 Duidelijkere focus op Premium Plus als aanbevolen optie</li>
+                                <li>🔧 subscription.js regel 211: plan-recommended class verwijderd uit Standard</li>
+                                <li>🔧 subscription.js regel 274: plan-recommended class behouden bij Premium Plus</li>
+                            </ul>
+                            <strong>Tekst Verbeteringen:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>📝 Standard card (regel 252): "Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina"</li>
+                                <li>📝 Premium Plus card (regel 317): "Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina"</li>
+                                <li>🎯 Duidelijker communicatie dat monthly/yearly keuze op betaalpagina plaatsvindt</li>
+                            </ul>
+                            <strong>Visual Impact:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>💎 Premium Plus card valt meer op met exclusieve groene 'Aanbevolen' badge</li>
+                                <li>🎨 Cards hebben meer ruimte en betere spacing met 1200px max-width</li>
+                                <li>📱 Mobile-first responsive design blijft intact</li>
+                            </ul>
+                            <strong>Impact:</strong> Betere visuele hiërarchie en duidelijkere subscription keuze voor gebruikers - Premium Plus wordt nu effectiever gepromoot! 🎯
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.3 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.3</span>
+                <span class="version-badge badge-fix">v0.18.3</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">
