@@ -4,8 +4,44 @@ class AdminDashboard {
         this.isAuthenticated = false;
         this.data = {};
         this.refreshInterval = null;
-        
+
         this.initializeEventListeners();
+
+        // Check for existing session on page load (FR-001, FR-002, FR-003)
+        this.checkExistingSession();
+    }
+
+    async checkExistingSession() {
+        try {
+            const response = await fetch('/api/admin/session', {
+                credentials: 'include'  // Required for cookies
+            });
+
+            if (response.ok) {
+                const session = await response.json();
+                console.log('✅ Valid session found:', session.loginTime);
+
+                // Session is valid - skip login form
+                this.isAuthenticated = true;
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+
+                await this.loadDashboard();
+                this.startAutoRefresh();
+
+                return true;
+            } else {
+                // No valid session - show login form
+                console.log('❌ No valid session - showing login form');
+                this.isAuthenticated = false;
+                return false;
+            }
+        } catch (error) {
+            console.error('Session check failed:', error);
+            // On error, default to showing login form (safe fallback)
+            this.isAuthenticated = false;
+            return false;
+        }
     }
 
     initializeEventListeners() {

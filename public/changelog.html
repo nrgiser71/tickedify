@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.1 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.1</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔐</span>
+                    <div class="change-content">
+                        <div class="change-title">Admin Login Persistence - Sessie blijft behouden</div>
+                        <div class="change-description">
+                            <strong>FEATURE:</strong> Admin dashboard login wordt nu onthouden bij page refresh en browser restart - geen herhaaldelijke wachtwoord invoer meer nodig!
+                            <br><br>
+                            <strong>Wat is nieuw:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ Sessie blijft behouden bij page refresh (F5/Cmd+R)</li>
+                                <li>✅ Sessie blijft behouden na browser restart</li>
+                                <li>✅ Automatische session check bij page load</li>
+                                <li>✅ 24-uurs sessie duur (was 7 dagen)</li>
+                                <li>✅ Graceful fallback naar login bij verlopen sessie</li>
+                            </ul>
+                            <strong>Technische Implementatie:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li><code>server.js</code>: Cookie maxAge aangepast naar 24 uur (regel 461, 487)</li>
+                                <li><code>server.js</code>: GET /api/admin/session endpoint response format verbeterd (regel 7977-7994)</li>
+                                <li><code>public/admin.js</code>: checkExistingSession() methode toegevoegd (regel 14-42)</li>
+                                <li><code>public/admin.js</code>: Session check in constructor bij page load (regel 11)</li>
+                            </ul>
+                            <strong>User Experience:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Voor: Elke refresh = wachtwoord opnieuw invoeren 😩</li>
+                                <li>Nu: Eén keer inloggen = 24 uur geen herhaalde logins 🎉</li>
+                                <li>Sessie persistence via server-side sessie + persistent cookie</li>
+                                <li>Veilig: HttpOnly, Secure, SameSite cookie attributes</li>
+                            </ul>
+                            <strong>Impact:</strong> Enorme productiviteit verbetering voor admin werkflow - geen frustratie meer door herhaalde logins. Feature 012 voltooid!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.0 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.0</span>
+                <span class="version-badge badge-feature">v0.18.0</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">

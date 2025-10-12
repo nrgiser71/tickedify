@@ -458,7 +458,7 @@ try {
         cookie: {
             secure: 'auto', // Let express-session auto-detect HTTPS
             httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours (FR-006 requirement)
             sameSite: 'lax' // Better compatibility with modern browsers
         },
         name: 'tickedify.sid' // Custom session name for better identification
@@ -484,7 +484,7 @@ try {
         cookie: {
             secure: 'auto',
             httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours (FR-006 requirement)
             sameSite: 'lax'
         },
         name: 'tickedify.sid'
@@ -7975,10 +7975,22 @@ app.post('/api/admin/auth', async (req, res) => {
 
 // Admin Session Check Endpoint
 app.get('/api/admin/session', (req, res) => {
-    res.json({ 
-        isAuthenticated: !!req.session.isAdmin,
-        loginTime: req.session.adminLoginTime || null
-    });
+    if (req.session && req.session.isAdmin) {
+        const loginTime = req.session.adminLoginTime;
+        const sessionAge = new Date() - new Date(loginTime);
+
+        res.json({
+            authenticated: true,
+            isAdmin: true,
+            loginTime: loginTime,
+            sessionAge: sessionAge
+        });
+    } else {
+        res.status(401).json({
+            authenticated: false,
+            message: 'No active admin session'
+        });
+    }
 });
 
 // Admin Logout Endpoint
