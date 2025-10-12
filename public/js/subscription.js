@@ -173,7 +173,6 @@ function createPlanElement(plan, clickable = true) {
         <button class="plan-action-button" id="select-${plan.id}" style="
             width: 100%;
             padding: 14px 24px;
-            margin-top: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -234,7 +233,6 @@ function createCombinedStandardPlanElement(standardPlans) {
         <button class="plan-action-button" id="select-standard-plan" style="
             width: 100%;
             padding: 14px 24px;
-            margin-top: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -299,7 +297,6 @@ function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
         <button class="plan-action-button" id="select-premium-plus-plan" style="
             width: 100%;
             padding: 14px 24px;
-            margin-top: 20px;
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
             border: none;

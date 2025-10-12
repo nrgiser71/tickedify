@@ -655,37 +655,48 @@ class AdminDashboard {
         if (errorDiv) errorDiv.style.display = 'none';
         console.log('✅ Rendering', configs.length, 'payment configurations');
 
-        // Find the first config with a checkout URL (or first config if none have URL)
-        const primaryConfig = configs.find(c => c.checkout_url) || configs[0];
-        const sharedCheckoutUrl = primaryConfig?.checkout_url || '';
-        const lastUpdated = primaryConfig?.updated_at;
+        // Find Standard and No Limit configs
+        const standardConfig = configs.find(c => c.plan_id === 'monthly_7') || configs.find(c => c.plan_id === 'yearly_70') || {};
+        const noLimitConfig = configs.find(c => c.plan_id === 'monthly_8') || configs.find(c => c.plan_id === 'yearly_80') || {};
+
+        const standardUrl = standardConfig.checkout_url || '';
+        const noLimitUrl = noLimitConfig.checkout_url || '';
 
         let html = `
             <div class="payment-config-item">
                 <div class="payment-config-header">
-                    <span class="payment-config-title">🔗 Checkout URL (beide abonnementen)</span>
+                    <span class="payment-config-title">💳 Checkout URLs (2 tiers)</span>
                 </div>
-                <form class="payment-config-form" onsubmit="updateSharedCheckoutUrl(event)">
+                <form class="payment-config-form" onsubmit="updateTierCheckoutUrls(event)">
                     <div class="form-group">
-                        <label for="shared-checkout-url">Plug&Pay Checkout URL</label>
+                        <label for="standard-checkout-url">🔵 Standard Abonnement (€7/€70)</label>
                         <input
                             type="url"
-                            id="shared-checkout-url"
-                            name="checkout_url"
-                            value="${this.escapeHtml(sharedCheckoutUrl)}"
+                            id="standard-checkout-url"
+                            name="standard_url"
+                            value="${this.escapeHtml(standardUrl)}"
                             placeholder="https://..."
                             required>
                         <small style="color: var(--macos-text-secondary); font-size: 12px;">
-                            Deze URL wordt gebruikt voor zowel maandelijks als jaarlijks abonnement.<br>
-                            Laatst bijgewerkt: ${lastUpdated ? this.formatDateTime(lastUpdated) : 'Nooit'}
+                            Voor monthly_7 en yearly_70 plans
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="nolimit-checkout-url">⭐ No Limit Abonnement (€8/€80)</label>
+                        <input
+                            type="url"
+                            id="nolimit-checkout-url"
+                            name="nolimit_url"
+                            value="${this.escapeHtml(noLimitUrl)}"
+                            placeholder="https://..."
+                            required>
+                        <small style="color: var(--macos-text-secondary); font-size: 12px;">
+                            Voor monthly_8 en yearly_80 plans
                         </small>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="admin-btn success">
                             💾 Opslaan
-                        </button>
-                        <button type="button" class="admin-btn" onclick="testSharedCheckoutUrl()">
-                            🔗 Test URL
                         </button>
                     </div>
                 </form>
@@ -1100,4 +1111,62 @@ function testSharedCheckoutUrl() {
     // Open URL in new tab
     window.open(url, '_blank');
     adminDashboard.showSuccess(`🔗 Checkout URL geopend in nieuw tabblad`);
+}
+
+// Update tier checkout URLs (2 URLs for 4 plans: Standard and No Limit)
+async function updateTierCheckoutUrls(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const standardUrl = form.querySelector('#standard-checkout-url').value.trim();
+    const noLimitUrl = form.querySelector('#nolimit-checkout-url').value.trim();
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    if (!standardUrl || !noLimitUrl) {
+        alert('Voer beide checkout URLs in');
+        return;
+    }
+
+    // Disable button during save
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '🔄 Bezig met opslaan...';
+    submitBtn.disabled = true;
+
+    try {
+        // Update all 4 plans: Standard (monthly_7, yearly_70) and No Limit (monthly_8, yearly_80)
+        const updates = [
+            { plan_id: 'monthly_7', checkout_url: standardUrl },
+            { plan_id: 'yearly_70', checkout_url: standardUrl },
+            { plan_id: 'monthly_8', checkout_url: noLimitUrl },
+            { plan_id: 'yearly_80', checkout_url: noLimitUrl }
+        ];
+
+        const updatePromises = updates.map(update =>
+            fetch('/api/admin/payment-configurations', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(update)
+            }).then(r => r.json())
+        );
+
+        const results = await Promise.all(updatePromises);
+
+        // Check if all updates succeeded
+        const allSuccess = results.every(result => result.success);
+
+        if (allSuccess) {
+            adminDashboard.showSuccess(`✅ Checkout URLs bijgewerkt voor beide tiers (4 plans)`);
+            // Refresh data to show updated timestamps
+            await adminDashboard.refreshData();
+        } else {
+            const failedUpdates = results.filter(r => !r.success);
+            throw new Error(`${failedUpdates.length} update(s) mislukt`);
+        }
+    } catch (error) {
+        console.error('Error updating tier checkout URLs:', error);
+        adminDashboard.showError('❌ Fout bij opslaan: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
 }

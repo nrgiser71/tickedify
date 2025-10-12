@@ -2922,7 +2922,7 @@ app.get('/api/admin/payment-configurations', async (req, res) => {
 
     // Get all configurations
     const configsResult = await pool.query(
-      `SELECT plan_id, plan_name, checkout_url, landing_page_url, is_active, created_at, updated_at
+      `SELECT plan_id, plan_name, checkout_url, is_active, created_at, updated_at
        FROM payment_configurations
        ORDER BY plan_id`
     );
@@ -2938,10 +2938,10 @@ app.get('/api/admin/payment-configurations', async (req, res) => {
   }
 });
 
-// T015: PUT /api/admin/payment-configurations - Admin: Update checkout URL and landing page URL
+// T015: PUT /api/admin/payment-configurations - Admin: Update checkout URL
 app.put('/api/admin/payment-configurations', async (req, res) => {
   try {
-    const { plan_id, checkout_url, landing_page_url, is_active } = req.body;
+    const { plan_id, checkout_url, is_active } = req.body;
 
     // Check for admin authentication (either password-based or user-based)
     const isAdminPasswordAuth = req.session.isAdmin === true;
@@ -2966,20 +2966,14 @@ app.put('/api/admin/payment-configurations', async (req, res) => {
       return res.status(400).json({ error: 'Checkout URL moet beginnen met https://' });
     }
 
-    // Validate landing page URL
-    if (landing_page_url && !landing_page_url.startsWith('https://')) {
-      return res.status(400).json({ error: 'Landing Page URL moet beginnen met https://' });
-    }
-
     // Update configuration
     const updateResult = await pool.query(
       `UPDATE payment_configurations
        SET checkout_url = COALESCE($1, checkout_url),
-           landing_page_url = $2,
-           is_active = COALESCE($3, is_active)
-       WHERE plan_id = $4
+           is_active = COALESCE($2, is_active)
+       WHERE plan_id = $3
        RETURNING *`,
-      [checkout_url, landing_page_url || null, is_active, plan_id]
+      [checkout_url, is_active, plan_id]
     );
 
     if (updateResult.rows.length === 0) {
@@ -2996,69 +2990,6 @@ app.put('/api/admin/payment-configurations', async (req, res) => {
 
   } catch (error) {
     console.error('Update payment configuration error:', error);
-    res.status(500).json({ error: 'Fout bij updaten configuratie' });
-  }
-});
-
-// T015b: PUT /api/admin/payment-configurations/:planId - Admin: Update with path parameter
-app.put('/api/admin/payment-configurations/:planId', async (req, res) => {
-  try {
-    const plan_id = req.params.planId;
-    const { checkout_url, landing_page_url, is_active } = req.body;
-
-    // Check for admin authentication (either password-based or user-based)
-    const isAdminPasswordAuth = req.session.isAdmin === true;
-    const userId = req.session.userId;
-
-    // Allow access if admin password authenticated
-    if (isAdminPasswordAuth) {
-      console.log('✅ Admin password authentication confirmed for PUT payment-configurations/:planId');
-    } else if (userId) {
-      // Check admin role for user-based authentication
-      const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
-      if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
-        return res.status(403).json({ error: 'Admin rechten vereist' });
-      }
-      console.log('✅ User-based admin authentication confirmed for PUT payment-configurations/:planId');
-    } else {
-      return res.status(401).json({ error: 'Niet ingelogd' });
-    }
-
-    // Validate checkout URL
-    if (checkout_url && !checkout_url.startsWith('https://')) {
-      return res.status(400).json({ error: 'Checkout URL moet beginnen met https://' });
-    }
-
-    // Validate landing page URL
-    if (landing_page_url && !landing_page_url.startsWith('https://')) {
-      return res.status(400).json({ error: 'Landing Page URL moet beginnen met https://' });
-    }
-
-    // Update configuration
-    const updateResult = await pool.query(
-      `UPDATE payment_configurations
-       SET checkout_url = COALESCE($1, checkout_url),
-           landing_page_url = $2,
-           is_active = COALESCE($3, is_active)
-       WHERE plan_id = $4
-       RETURNING *`,
-      [checkout_url, landing_page_url || null, is_active, plan_id]
-    );
-
-    if (updateResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Plan niet gevonden' });
-    }
-
-    const adminIdentifier = userId || 'password-auth';
-    console.log(`✅ Admin ${adminIdentifier} updated payment config for plan ${plan_id}`);
-
-    res.json({
-      success: true,
-      configuration: updateResult.rows[0]
-    });
-
-  } catch (error) {
-    console.error('Update payment configuration error (path param):', error);
     res.status(500).json({ error: 'Fout bij updaten configuratie' });
   }
 });
