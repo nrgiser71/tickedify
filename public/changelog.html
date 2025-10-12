@@ -134,10 +134,64 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.2 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.2</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">⭐</span>
+                    <div class="change-content">
+                        <div class="change-title">Premium Plus Subscription Tier - Ongelimiteerde Bijlagen</div>
+                        <div class="change-description">
+                            <strong>NIEUWE FEATURE:</strong> Premium Plus tier geïntroduceerd met ongelimiteerde attachment opslag naast de bestaande Standard tier.
+                            <br><br>
+                            <strong>Nieuwe Subscription Plans:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ <strong>Premium Plus Maandelijks</strong>: €8/maand - Ongelimiteerde bijlagen, geen bestandsgrootte limiet</li>
+                                <li>✅ <strong>Premium Plus Jaarlijks</strong>: €80/jaar - Bespaar €16 per jaar + ongelimiteerde opslag</li>
+                                <li>📋 <strong>Standard Maandelijks</strong>: €7/maand - 100MB totale opslag, max 5MB per bestand (unchanged)</li>
+                                <li>📋 <strong>Standard Jaarlijks</strong>: €70/jaar - Bespaar €14 per jaar (unchanged)</li>
+                            </ul>
+                            <strong>Feature Differentiation:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🆓 <strong>Free/Trial</strong>: Max 5MB per bestand, 1 bijlage per taak, 100MB totaal</li>
+                                <li>📦 <strong>Standard</strong>: Max 5MB per bestand, 1 bijlage per taak, 100MB totaal</li>
+                                <li>⭐ <strong>Premium Plus</strong>: Onbeperkte bestandsgrootte, onbeperkt aantal bijlagen per taak, onbeperkte totale opslag</li>
+                            </ul>
+                            <strong>UI Updates:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🎨 Subscription page toont nu 5 plannen (was 3)</li>
+                                <li>🎨 Upload limits display toont "Premium Plus: onbeperkte bijlagen" voor Premium Plus users</li>
+                                <li>🎨 Upgrade prompt vermeldt beide Standard EN Premium Plus opties met prijzen</li>
+                                <li>🎨 Admin payment config page auto-genereert configs voor Premium Plus plans</li>
+                            </ul>
+                            <strong>Backend Changes:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li><code>database.js</code>: checkUserPremiumStatus() ondersteunt monthly_8 & yearly_80 (regel 2173-2233)</li>
+                                <li><code>database.js</code>: payment_configurations auto-init voor Premium Plus (regel 418-431)</li>
+                                <li><code>server.js</code>: SUBSCRIPTION_PLANS array uitgebreid met Premium Plus (regel ~9741)</li>
+                                <li><code>server.js</code>: /api/user/storage-stats retourneert plan_type (premium_plus/premium_standard/free) (regel 3789-3833)</li>
+                                <li><code>subscription-data.js</code>: Frontend SUBSCRIPTION_PLANS array uitgebreid (regel 38-54)</li>
+                            </ul>
+                            <strong>Frontend Changes:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li><code>index.html</code>: Upgrade prompt text updated (regel 460-469)</li>
+                                <li><code>app.js</code>: Upload limits display logic met plan_type support (regel 14161-14172)</li>
+                            </ul>
+                            <strong>Impact:</strong> Gebruikers kunnen nu kiezen tussen Standard tier (budget-vriendelijk) en Premium Plus tier (power users met grote bestanden/veel bijlagen). Feature 013 voltooid! 🎉
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.1 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.1</span>
+                <span class="version-badge badge-feature">v0.18.1</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">

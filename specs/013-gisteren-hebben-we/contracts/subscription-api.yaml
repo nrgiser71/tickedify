@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Subscription API - Premium Plus Extension
+  version: 0.18.2
+  description: |
+    API contracts for Premium Plus subscription tier (monthly_8, yearly_80).
+    Extends existing subscription endpoints to support unlimited attachment storage plans.
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production
+  - url: https://dev.tickedify.com/api
+    description: Staging
+
+paths:
+  /subscription/plans:
+    get:
+      summary: Get all available subscription plans
+      description: Returns array of 5 subscription plans (1 trial + 2 standard + 2 premium plus)
+      operationId: getSubscriptionPlans
+      tags:
+        - Subscription
+      responses:
+        '200':
+          description: Successful response with 5 plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  plans:
+                    type: array
+                    minItems: 5
+                    maxItems: 5
+                    items:
+                      $ref: '#/components/schemas/SubscriptionPlan'
+              example:
+                success: true
+                plans:
+                  - id: trial_14_days
+                    name: "14 dagen gratis"
+                    description: "Probeer alle functies gratis uit"
+                    price: 0
+                    billing_cycle: trial
+                    trial_days: 14
+                    features:
+                      - "Alle functies"
+                      - "Onbeperkte taken"
+                      - "Email import"
+                  - id: monthly_7
+                    name: "Maandelijks"
+                    description: "Per maand, stop wanneer je wilt"
+                    price: 7
+                    billing_cycle: monthly
+                    trial_days: 0
+                    features:
+                      - "Alle functies"
+                      - "Onbeperkte taken"
+                      - "Email import"
+                      - "Premium support"
+                  - id: yearly_70
+                    name: "Jaarlijks"
+                    description: "Bespaar €14 per jaar"
+                    price: 70
+                    billing_cycle: yearly
+                    trial_days: 0
+                    features:
+                      - "Alle functies"
+                      - "Onbeperkte taken"
+                      - "Email import"
+                      - "Premium support"
+                      - "2 maanden gratis"
+                  - id: monthly_8
+                    name: "Premium Plus Maandelijks"
+                    description: "Ongelimiteerde bijlages per maand"
+                    price: 8
+                    billing_cycle: monthly
+                    trial_days: 0
+                    features:
+                      - "Alle functies"
+                      - "Onbeperkte taken"
+                      - "Email import"
+                      - "Premium support"
+                      - "Ongelimiteerde bijlages"
+                      - "Geen limiet op bestandsgrootte"
+                  - id: yearly_80
+                    name: "Premium Plus Jaarlijks"
+                    description: "Ongelimiteerde bijlages - bespaar €16 per jaar"
+                    price: 80
+                    billing_cycle: yearly
+                    trial_days: 0
+                    features:
+                      - "Alle functies"
+                      - "Onbeperkte taken"
+                      - "Email import"
+                      - "Premium support"
+                      - "Ongelimiteerde bijlages"
+                      - "Geen limiet op bestandsgrootte"
+                      - "2 maanden gratis"
+
+  /subscription/select:
+    post:
+      summary: Select and initiate subscription plan
+      description: |
+        Accepts plan selection and returns Plug&Pay checkout URL.
+        Now accepts monthly_8 and yearly_80 for Premium Plus plans.
+      operationId: selectSubscriptionPlan
+      tags:
+        - Subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - plan_id
+                - source
+              properties:
+                plan_id:
+                  type: string
+                  enum:
+                    - trial_14_days
+                    - monthly_7
+                    - yearly_70
+                    - monthly_8
+                    - yearly_80
+                  description: Selected subscription plan ID
+                source:
+                  type: string
+                  enum:
+                    - beta
+                    - upgrade
+                    - registration
+                  description: Source of subscription selection
+            examples:
+              premium_plus_monthly:
+                value:
+                  plan_id: monthly_8
+                  source: beta
+              premium_plus_yearly:
+                value:
+                  plan_id: yearly_80
+                  source: beta
+      responses:
+        '200':
+          description: Plan selection successful, checkout URL returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  checkout_url:
+                    type: string
+                    format: uri
+                    description: Plug&Pay checkout URL for selected plan
+                    example: "https://checkout.plugandpay.nl/..."
+        '400':
+          description: Invalid plan_id or payment configuration not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_plan:
+                  value:
+                    success: false
+                    error: "Invalid plan_id"
+                no_checkout:
+                  value:
+                    success: false
+                    error: "Payment configuration not available for this plan"
+        '401':
+          description: User not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/payment-configurations:
+    get:
+      summary: Get payment configurations for all plans (Admin only)
+      description: Returns Plug&Pay checkout URLs and status for all 5 subscription plans
+      operationId: getPaymentConfigurations
+      tags:
+        - Admin
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Array of 5 payment configurations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  configurations:
+                    type: array
+                    minItems: 5
+                    maxItems: 5
+                    items:
+                      $ref: '#/components/schemas/PaymentConfiguration'
+              example:
+                success: true
+                configurations:
+                  - plan_id: trial_14_days
+                    plan_name: "14 dagen gratis"
+                    checkout_url: null
+                    is_active: true
+                    updated_at: "2025-10-12T10:00:00Z"
+                  - plan_id: monthly_7
+                    plan_name: "Maandelijks"
+                    checkout_url: "https://checkout.plugandpay.nl/..."
+                    is_active: true
+                    updated_at: "2025-10-01T15:30:00Z"
+                  - plan_id: yearly_70
+                    plan_name: "Jaarlijks"
+                    checkout_url: "https://checkout.plugandpay.nl/..."
+                    is_active: true
+                    updated_at: "2025-10-01T15:30:00Z"
+                  - plan_id: monthly_8
+                    plan_name: "Premium Plus Maandelijks"
+                    checkout_url: null
+                    is_active: false
+                    updated_at: "2025-10-12T10:00:00Z"
+                  - plan_id: yearly_80
+                    plan_name: "Premium Plus Jaarlijks"
+                    checkout_url: null
+                    is_active: false
+                    updated_at: "2025-10-12T10:00:00Z"
+
+  /admin/payment-configurations/{planId}:
+    put:
+      summary: Update payment configuration for a plan (Admin only)
+      description: Set Plug&Pay checkout URL and activation status for a subscription plan
+      operationId: updatePaymentConfiguration
+      tags:
+        - Admin
+      security:
+        - adminAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - trial_14_days
+              - monthly_7
+              - yearly_70
+              - monthly_8
+              - yearly_80
+          description: Subscription plan ID to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - checkout_url
+                - is_active
+              properties:
+                checkout_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  description: Plug&Pay checkout URL (null for trial)
+                is_active:
+                  type: boolean
+                  description: Whether plan is available for selection
+            examples:
+              activate_premium_plus:
+                value:
+                  checkout_url: "https://checkout.plugandpay.nl/order/premium-plus-monthly"
+                  is_active: true
+      responses:
+        '200':
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  configuration:
+                    $ref: '#/components/schemas/PaymentConfiguration'
+        '400':
+          description: Invalid input or plan ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    SubscriptionPlan:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - price
+        - billing_cycle
+        - trial_days
+        - features
+      properties:
+        id:
+          type: string
+          enum:
+            - trial_14_days
+            - monthly_7
+            - yearly_70
+            - monthly_8
+            - yearly_80
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+          minimum: 0
+        billing_cycle:
+          type: string
+          enum:
+            - trial
+            - monthly
+            - yearly
+        trial_days:
+          type: integer
+          minimum: 0
+        features:
+          type: array
+          items:
+            type: string
+          minItems: 1
+
+    PaymentConfiguration:
+      type: object
+      required:
+        - plan_id
+        - plan_name
+        - is_active
+        - updated_at
+      properties:
+        plan_id:
+          type: string
+          enum:
+            - trial_14_days
+            - monthly_7
+            - yearly_70
+            - monthly_8
+            - yearly_80
+        plan_name:
+          type: string
+        checkout_url:
+          type: string
+          format: uri
+          nullable: true
+        is_active:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+  securitySchemes:
+    adminAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Admin session cookie
+
+tags:
+  - name: Subscription
+    description: Subscription plan selection and management
+  - name: Admin
+    description: Admin-only payment configuration endpoints

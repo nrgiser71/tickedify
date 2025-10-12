@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Storage API - Premium Plus Validation
+  version: 0.18.2
+  description: |
+    Storage validation API for Premium Plus tier with unlimited attachments.
+    Premium Plus users (monthly_8, yearly_80) bypass all size/count/total limits.
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production
+  - url: https://dev.tickedify.com/api
+    description: Staging
+
+paths:
+  /taak/{taakId}/bijlagen:
+    post:
+      summary: Upload attachment to task
+      description: |
+        Upload file attachment with subscription-tier-based validation:
+        - Standard tier (trial, monthly_7, yearly_70): 5MB max, 1 per task, 100MB total
+        - Premium Plus tier (monthly_8, yearly_80): No limits (unlimited size/count/total)
+      operationId: uploadAttachment
+      tags:
+        - Attachments
+      parameters:
+        - name: taakId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Task ID to attach file to
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+      responses:
+        '200':
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  bijlage:
+                    $ref: '#/components/schemas/Attachment'
+              examples:
+                premium_plus_10mb:
+                  value:
+                    success: true
+                    bijlage:
+                      id: "abc123xyz"
+                      taak_id: 456
+                      bestandsnaam: "large-document.pdf"
+                      bestandsgrootte: 10485760
+                      mimetype: "application/pdf"
+                      storage_type: "backblaze"
+                      created_at: "2025-10-12T14:30:00Z"
+        '400':
+          description: Validation error (Standard tier limits exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                file_too_large_standard:
+                  value:
+                    success: false
+                    error: "Maximum 5MB per bijlage voor Standard plan. Upgrade naar Premium Plus voor ongelimiteerde bijlages"
+                too_many_attachments_standard:
+                  value:
+                    success: false
+                    error: "Maximum 1 bijlage per taak voor Standard plan. Upgrade naar Premium Plus voor ongelimiteerde bijlages"
+                storage_quota_exceeded_standard:
+                  value:
+                    success: false
+                    error: "Onvoldoende opslag. Nog 2.3 MB beschikbaar van 100 MB. Upgrade naar Premium Plus voor ongelimiteerde bijlages."
+                invalid_mimetype:
+                  value:
+                    success: false
+                    error: "Bestandstype 'application/x-executable' niet toegestaan"
+        '401':
+          description: User not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found or user doesn't own task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /bijlagen/storage-stats:
+    get:
+      summary: Get user storage statistics
+      description: |
+        Returns storage usage and limits based on subscription tier.
+        Premium Plus users see unlimited limits (null values).
+      operationId: getStorageStats
+      tags:
+        - Attachments
+      responses:
+        '200':
+          description: Storage statistics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  stats:
+                    oneOf:
+                      - $ref: '#/components/schemas/StandardStorageStats'
+                      - $ref: '#/components/schemas/PremiumPlusStorageStats'
+              examples:
+                standard_user:
+                  value:
+                    success: true
+                    stats:
+                      used_bytes: 45678901
+                      used_formatted: "43.6 MB"
+                      bijlagen_count: 12
+                      is_premium: false
+                      limits:
+                        total_bytes: 104857600
+                        total_formatted: "100 MB"
+                        max_file_size: 5242880
+                        max_file_formatted: "5 MB"
+                        max_attachments_per_task: 1
+                premium_plus_user:
+                  value:
+                    success: true
+                    stats:
+                      used_bytes: 524288000
+                      used_formatted: "500 MB"
+                      bijlagen_count: 87
+                      is_premium: true
+                      limits:
+                        total_bytes: null
+                        total_formatted: "Onbeperkt"
+                        max_file_size: null
+                        max_file_formatted: "Onbeperkt"
+                        max_attachments_per_task: null
+
+components:
+  schemas:
+    Attachment:
+      type: object
+      required:
+        - id
+        - taak_id
+        - bestandsnaam
+        - bestandsgrootte
+        - mimetype
+        - storage_type
+        - created_at
+      properties:
+        id:
+          type: string
+          description: Unique attachment ID
+        taak_id:
+          type: integer
+          description: Parent task ID
+        bestandsnaam:
+          type: string
+          description: Original filename
+        bestandsgrootte:
+          type: integer
+          description: File size in bytes
+          minimum: 0
+        mimetype:
+          type: string
+          description: MIME type of file
+        storage_type:
+          type: string
+          enum:
+            - backblaze
+          description: Storage backend
+        created_at:
+          type: string
+          format: date-time
+
+    StandardStorageStats:
+      type: object
+      description: Storage stats for Standard tier users (with limits)
+      required:
+        - used_bytes
+        - used_formatted
+        - bijlagen_count
+        - is_premium
+        - limits
+      properties:
+        used_bytes:
+          type: integer
+          minimum: 0
+        used_formatted:
+          type: string
+          example: "45.6 MB"
+        bijlagen_count:
+          type: integer
+          minimum: 0
+        is_premium:
+          type: boolean
+          enum: [false]
+        limits:
+          type: object
+          required:
+            - total_bytes
+            - total_formatted
+            - max_file_size
+            - max_file_formatted
+            - max_attachments_per_task
+          properties:
+            total_bytes:
+              type: integer
+              example: 104857600
+              description: 100MB in bytes
+            total_formatted:
+              type: string
+              example: "100 MB"
+            max_file_size:
+              type: integer
+              example: 5242880
+              description: 5MB in bytes
+            max_file_formatted:
+              type: string
+              example: "5 MB"
+            max_attachments_per_task:
+              type: integer
+              example: 1
+
+    PremiumPlusStorageStats:
+      type: object
+      description: Storage stats for Premium Plus users (unlimited)
+      required:
+        - used_bytes
+        - used_formatted
+        - bijlagen_count
+        - is_premium
+        - limits
+      properties:
+        used_bytes:
+          type: integer
+          minimum: 0
+          description: Still tracked for analytics
+        used_formatted:
+          type: string
+          example: "500 MB"
+        bijlagen_count:
+          type: integer
+          minimum: 0
+        is_premium:
+          type: boolean
+          enum: [true]
+        limits:
+          type: object
+          required:
+            - total_bytes
+            - total_formatted
+            - max_file_size
+            - max_file_formatted
+            - max_attachments_per_task
+          properties:
+            total_bytes:
+              type: "null"
+              nullable: true
+            total_formatted:
+              type: string
+              enum: ["Onbeperkt"]
+            max_file_size:
+              type: "null"
+              nullable: true
+            max_file_formatted:
+              type: string
+              enum: ["Onbeperkt"]
+            max_attachments_per_task:
+              type: "null"
+              nullable: true
+
+    ValidationError:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+          description: Human-readable validation error message
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: string
+
+tags:
+  - name: Attachments
+    description: File attachment upload and storage management

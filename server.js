@@ -3793,9 +3793,19 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
         }
 
         const userId = req.session.userId;
-        
+
         const stats = await db.getUserStorageStats(userId);
         const isPremium = await db.checkUserPremiumStatus(userId);
+
+        // Get user's plan_id to determine plan type
+        const userResult = await pool.query('SELECT selected_plan FROM users WHERE id = $1', [userId]);
+        const planId = userResult.rows[0]?.selected_plan || null;
+
+        // Determine plan type
+        const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
+        const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
+        const isPremiumPlus = PREMIUM_PLUS_PLAN_IDS.includes(planId);
+        const isPremiumStandard = PREMIUM_STANDARD_PLAN_IDS.includes(planId);
 
         res.json({
             success: true,
@@ -3804,12 +3814,14 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
                 used_formatted: storageManager.formatBytes(stats.used_bytes),
                 bijlagen_count: stats.bijlagen_count,
                 is_premium: isPremium,
+                plan_id: planId,
+                plan_type: isPremiumPlus ? 'premium_plus' : (isPremiumStandard ? 'premium_standard' : 'free'),
                 limits: {
-                    total_bytes: isPremium ? null : STORAGE_CONFIG.FREE_TIER_LIMIT,
-                    total_formatted: isPremium ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT),
-                    max_file_size: isPremium ? null : STORAGE_CONFIG.MAX_FILE_SIZE_FREE,
-                    max_file_formatted: isPremium ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE),
-                    max_attachments_per_task: isPremium ? null : STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE
+                    total_bytes: isPremiumPlus ? null : (isPremiumStandard ? STORAGE_CONFIG.FREE_TIER_LIMIT : STORAGE_CONFIG.FREE_TIER_LIMIT),
+                    total_formatted: isPremiumPlus ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT),
+                    max_file_size: isPremiumPlus ? null : STORAGE_CONFIG.MAX_FILE_SIZE_FREE,
+                    max_file_formatted: isPremiumPlus ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE),
+                    max_attachments_per_task: isPremiumPlus ? null : STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE
                 }
             }
         });
@@ -9765,6 +9777,24 @@ app.get('/api/subscription/plans', (req, res) => {
                 billing_cycle: 'yearly',
                 trial_days: 0,
                 features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', '2 maanden gratis']
+            },
+            {
+                id: 'monthly_8',
+                name: 'Premium Plus Maandelijks',
+                description: 'Ongelimiteerde bijlages per maand',
+                price: 8,
+                billing_cycle: 'monthly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte']
+            },
+            {
+                id: 'yearly_80',
+                name: 'Premium Plus Jaarlijks',
+                description: 'Ongelimiteerde bijlages - bespaar €16 per jaar',
+                price: 80,
+                billing_cycle: 'yearly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte', '2 maanden gratis']
             }
         ];
 
