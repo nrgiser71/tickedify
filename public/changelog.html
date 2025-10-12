@@ -134,10 +134,42 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.11 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.11</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎨</span>
+                    <div class="change-content">
+                        <div class="change-title">Visual Fix - Trial Button Alignment</div>
+                        <div class="change-description">
+                            <strong>PROBLEEM:</strong> Trial card button stond hoger dan Standard en No Limit buttons.
+                            <br><br>
+                            <strong>OORZAAK:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Standard en No Limit cards hebben info tekst onder de button</li>
+                                <li>Trial card had geen tekst → button stond hoger</li>
+                            </ul>
+                            <strong>OPLOSSING:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ subscription.js regel 189: Info tekst toegevoegd onder Trial button</li>
+                                <li>✅ Tekst: "14 dagen gratis - geen creditcard vereist"</li>
+                                <li>✅ Alle 3 buttons nu op exact dezelfde hoogte</li>
+                            </ul>
+                            <strong>IMPACT:</strong> Visueel consistente subscription pagina - alle buttons perfect uitgelijnd! 🎯
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.10 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.10</span>
+                <span class="version-badge badge-fix">v0.18.10</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">
