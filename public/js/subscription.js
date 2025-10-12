@@ -384,6 +384,11 @@ async function confirmSelection() {
     try {
         subscriptionState.isLoading = true;
 
+        // 🧹 CRITICAL: Clear old payment_data before new selection
+        // This prevents stale/cached redirectUrl from being used
+        console.log('🧹 Clearing old payment_data from sessionStorage');
+        sessionStorage.removeItem('payment_data');
+
         // Show loading on confirm button
         const confirmButton = document.getElementById('confirm-selection');
         if (confirmButton) {

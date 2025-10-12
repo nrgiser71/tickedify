@@ -134,10 +134,78 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.10 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.10</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔍</span>
+                    <div class="change-content">
+                        <div class="change-title">Debug & Cache Fix - Verkeerde Redirect URL Oplossen</div>
+                        <div class="change-description">
+                            <strong>PROBLEEM:</strong> Gebruiker werd doorgestuurd naar minddumper.com in plaats van correcte Plug&Pay checkout URL.
+                            <br><br>
+                            <strong>ROOT CAUSE HYPOTHESEN:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🐛 Oude sessionStorage data met gecachte minddumper URL</li>
+                                <li>💾 Browser JavaScript cache van oude subscription files</li>
+                                <li>🔄 Geen timestamp validatie op payment_data</li>
+                            </ul>
+                            <strong>MULTI-LAYERED FIX - 5 Defensive Measures:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li><strong>Fix 1: SessionStorage Validatie</strong></li>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ subscription-confirm.js: Timestamp validatie (max 5 minuten)</li>
+                                    <li>✅ Automatisch clearen van expired payment_data</li>
+                                    <li>✅ URL domain validatie (moet pay.baasoverjetijd.be zijn)</li>
+                                    <li>✅ Warning modal bij suspicious redirect URL</li>
+                                    <li>✅ Extra console logging van redirectUrl</li>
+                                </ul>
+                                <li><strong>Fix 2: SessionStorage Clear</strong></li>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ subscription.js regel 389: Clear payment_data VOOR nieuwe selectie</li>
+                                    <li>✅ Voorkomt dat oude cached data ooit wordt gebruikt</li>
+                                </ul>
+                                <li><strong>Fix 3: Cache Busting</strong></li>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ subscription.html: ?v=0.18.10 aan alle script tags</li>
+                                    <li>✅ subscription-confirm.html: ?v=0.18.10 cache buster</li>
+                                    <li>✅ Browser MOET nieuwe JavaScript files laden</li>
+                                </ul>
+                                <li><strong>Fix 4: API Response Logging</strong></li>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ subscription-api.js: Log volledige API response</li>
+                                    <li>✅ Log exact redirectUrl van server</li>
+                                    <li>✅ Gebruiker kan console screenshot sturen</li>
+                                </ul>
+                                <li><strong>Fix 5: Extra Safety Checks</strong></li>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ proceedToPayment(): Verificatie van URL domain</li>
+                                    <li>✅ Alert modal bij invalid/missing redirectUrl</li>
+                                    <li>✅ Automatic redirect terug naar subscription page bij fout</li>
+                                </ul>
+                            </ul>
+                            <strong>DEBUG INFORMATIE:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🔍 Console logs tonen nu EXACT welke URL wordt gebruikt</li>
+                                <li>📊 Timestamp van payment_data wordt gelogd + age in minuten</li>
+                                <li>⚠️ Warnings bij suspicious URLs (niet pay.baasoverjetijd.be)</li>
+                                <li>💡 Gebruiker kan screenshot van console sturen voor support</li>
+                            </ul>
+                            <strong>IMPACT:</strong> Als het probleem blijft, hebben we nu gedetailleerde debug info om de exacte oorzaak te vinden! 🔍
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.9 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.9</span>
+                <span class="version-badge badge-fix">v0.18.9</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">

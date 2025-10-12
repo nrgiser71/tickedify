@@ -142,9 +142,21 @@ const SubscriptionAPI = {
                 body: requestBody
             });
 
+            // 🔍 DEBUG: Log full API response
+            console.log('📡 API Response from /api/subscription/select:', {
+                success: response.success,
+                trial: response.trial,
+                paid: response.paid,
+                redirectUrl: response.redirectUrl,
+                email: response.email,
+                planId: planId,
+                fullResponse: response
+            });
+
             // Handle trial vs paid plan response
             if (response.trial) {
                 // Trial activated - no payment needed
+                console.log('✅ Trial plan selected - no payment needed');
                 return {
                     success: true,
                     trial: true,
@@ -154,6 +166,7 @@ const SubscriptionAPI = {
                 };
             } else if (response.paid && response.redirectUrl) {
                 // Paid plan - redirect to checkout
+                console.log('💳 Paid plan selected - redirectUrl:', response.redirectUrl);
                 return {
                     success: true,
                     paid: true,

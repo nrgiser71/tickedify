@@ -27,11 +27,37 @@ function initConfirmPage() {
 
     try {
         paymentData = JSON.parse(paymentDataStr);
-        console.log('Payment data loaded:', {
+
+        // 🔍 DEBUG: Log complete payment data to console
+        console.log('💳 Payment data loaded from sessionStorage:', {
             email: paymentData.email,
             planId: paymentData.planId,
-            hasRedirectUrl: !!paymentData.redirectUrl
+            redirectUrl: paymentData.redirectUrl,
+            timestamp: paymentData.timestamp,
+            ageMinutes: ((Date.now() - paymentData.timestamp) / 60000).toFixed(2)
         });
+
+        // ⚠️ Validate timestamp - reject data older than 5 minutes
+        const dataAgeMs = Date.now() - (paymentData.timestamp || 0);
+        const maxAgeMs = 5 * 60 * 1000; // 5 minutes
+
+        if (dataAgeMs > maxAgeMs) {
+            console.error('❌ Payment data expired (older than 5 minutes) - clearing and redirecting');
+            sessionStorage.removeItem('payment_data');
+            window.location.href = '/subscription.html';
+            return;
+        }
+
+        // ⚠️ Validate redirectUrl exists and is valid
+        if (!paymentData.redirectUrl || !paymentData.redirectUrl.startsWith('https://')) {
+            console.error('❌ Invalid or missing redirectUrl:', paymentData.redirectUrl);
+            alert(`FOUT: Ongeldige betaallink gevonden!\n\nURL: ${paymentData.redirectUrl || 'GEEN URL'}\n\nNeem screenshot van deze melding en stuur naar support.`);
+            sessionStorage.removeItem('payment_data');
+            window.location.href = '/subscription.html';
+            return;
+        }
+
+        console.log('✅ Payment data validation passed - redirectUrl:', paymentData.redirectUrl);
 
         // Display the email
         displayEmail(paymentData.email);
@@ -41,6 +67,7 @@ function initConfirmPage() {
 
     } catch (error) {
         console.error('Error parsing payment data:', error);
+        sessionStorage.removeItem('payment_data');
         window.location.href = '/subscription.html';
     }
 }
@@ -122,7 +149,35 @@ function proceedToPayment() {
         return;
     }
 
-    console.log('Proceeding to payment:', paymentData.redirectUrl);
+    // 🔍 DEBUG: Log exact redirect URL
+    console.log('🚀 Proceeding to payment:', {
+        redirectUrl: paymentData.redirectUrl,
+        planId: paymentData.planId,
+        email: paymentData.email,
+        fullPaymentData: paymentData
+    });
+
+    // ⚠️ Extra safety check - verify URL domain
+    const isValidDomain = paymentData.redirectUrl.includes('pay.baasoverjetijd.be') ||
+                          paymentData.redirectUrl.includes('plugandpay') ||
+                          paymentData.redirectUrl.includes('localhost');
+
+    if (!isValidDomain) {
+        console.error('⚠️ WARNING: Suspicious redirect URL detected!', paymentData.redirectUrl);
+        const confirmRedirect = confirm(
+            `WAARSCHUWING: Ongeldige betaallink!\n\n` +
+            `URL: ${paymentData.redirectUrl}\n\n` +
+            `Deze URL lijkt niet juist. Wil je toch doorgaan?\n\n` +
+            `(Klik ANNULEREN om terug te gaan)`
+        );
+
+        if (!confirmRedirect) {
+            console.log('User cancelled suspicious redirect');
+            sessionStorage.removeItem('payment_data');
+            window.location.href = '/subscription.html';
+            return;
+        }
+    }
 
     // Show loading state on button
     const proceedButton = document.getElementById('proceed-button');
@@ -131,6 +186,7 @@ function proceedToPayment() {
 
     // Redirect to Plug&Pay after brief delay
     setTimeout(() => {
+        console.log('✅ Executing redirect to:', paymentData.redirectUrl);
         window.location.href = paymentData.redirectUrl;
     }, 800);
 }
