@@ -9831,8 +9831,8 @@ app.post('/api/subscription/select', requireAuth, async (req, res) => {
             });
         }
 
-        // Validate plan_id
-        const validPlanIds = ['trial_14_days', 'monthly_7', 'yearly_70'];
+        // Validate plan_id (includes No Limit plans: monthly_8 and yearly_80)
+        const validPlanIds = ['trial_14_days', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
         if (!validPlanIds.includes(plan_id)) {
             return res.status(400).json({
                 success: false,

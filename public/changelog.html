@@ -134,10 +134,46 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.7 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.7</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🔧</span>
+                    <div class="change-content">
+                        <div class="change-title">Button Alignment Fix + No Limit Button Fix</div>
+                        <div class="change-description">
+                            <strong>CRITICAL FIXES:</strong> Button alignment definitief gefixed en No Limit button werkt nu correct.
+                            <br><br>
+                            <strong>1. Button Alignment Fix (Echt Definitief Nu):</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🔧 subscription.css: margin-bottom verwijderd van .plan-features (regel 217)</li>
+                                <li>✅ CSS margin-top: auto op button werkt nu perfect met flexbox</li>
+                                <li>🎯 Alle 3 knoppen staan nu exact op dezelfde hoogte!</li>
+                                <li>💡 Root cause: feature lijst had 24px margin-bottom wat spacing verstoorde</li>
+                            </ul>
+                            <strong>2. No Limit Button Fix:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🐛 Bug gevonden: validPlanIds array miste monthly_8 en yearly_80</li>
+                                <li>✅ server.js: monthly_8 en yearly_80 toegevoegd aan validPlanIds (regel 9835)</li>
+                                <li>🔄 No Limit button werkt nu hetzelfde als Standard button</li>
+                                <li>✉️ Beide buttons gaan eerst naar email confirmation pagina</li>
+                                <li>💳 Daarna redirect naar Plug&Pay checkout pagina</li>
+                            </ul>
+                            <strong>Impact:</strong> Subscription pagina werkt nu volledig correct - beide visual en functional! 🎯
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.6 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.6</span>
+                <span class="version-badge badge-fix">v0.18.6</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">
