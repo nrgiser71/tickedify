@@ -134,10 +134,56 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.8 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.8</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">✅</span>
+                    <div class="change-content">
+                        <div class="change-title">DEFINITIEVE FIX - No Limit Button Validatie</div>
+                        <div class="change-description">
+                            <strong>ROOT CAUSE GEVONDEN & OPGELOST:</strong> No Limit plans ontbraken in server-side validatie logica.
+                            <br><br>
+                            <strong>Het Echte Probleem:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🐛 <strong>Bug:</strong> PLAN_IDS constant miste monthly_8 en yearly_80</li>
+                                <li>🐛 <strong>Bug:</strong> validatePlanSelection() functie kende alleen monthly_7 en yearly_70</li>
+                                <li>❌ <strong>Gevolg:</strong> API weigerde No Limit plan selectie met error "Ongeldige plan selectie voor huidige status"</li>
+                                <li>✅ <strong>Waarom Standard WEL werkte:</strong> monthly_7 en yearly_70 zaten WEL in validatie</li>
+                            </ul>
+                            <strong>De Oplossing (2 fixes):</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ server.js regel 156-162: PLAN_IDS constant uitgebreid met MONTHLY_8 en YEARLY_80</li>
+                                <li>✅ server.js regel 198-229: validatePlanSelection() geüpdatet op 4 plekken:</li>
+                                <ul style="margin-left: 20px;">
+                                    <li>Regel 206: BETA status - accepteert nu alle 5 plans</li>
+                                    <li>Regel 215: BETA_EXPIRED status - accepteert nu alle 5 plans</li>
+                                    <li>Regel 220: TRIAL_EXPIRED status - accepteert nu alle 4 paid plans</li>
+                                    <li>Regel 225: TRIALING status - accepteert nu alle 4 paid plans</li>
+                                </ul>
+                            </ul>
+                            <strong>Verificatie:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🔍 2 duplicaat endpoints gevonden (regel ~2516 en ~9815)</li>
+                                <li>✅ Eerste endpoint (regel 2516) wordt gebruikt - nu gefixed</li>
+                                <li>✅ Checkout URL logica werkt generiek (haalt URL uit database per plan_id)</li>
+                                <li>✅ Beide plan IDs worden nu door ALLE subscription states geaccepteerd</li>
+                            </ul>
+                            <strong>Impact:</strong> No Limit button werkt nu EXACT hetzelfde als Standard button - email confirmation → Plug&Pay checkout! 🎉
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.7 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.7</span>
+                <span class="version-badge badge-fix">v0.18.7</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">

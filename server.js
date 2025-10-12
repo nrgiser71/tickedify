@@ -156,7 +156,9 @@ const SUBSCRIPTION_STATES = {
 const PLAN_IDS = {
   TRIAL_14: 'trial_14',
   MONTHLY_7: 'monthly_7',
-  YEARLY_70: 'yearly_70'
+  YEARLY_70: 'yearly_70',
+  MONTHLY_8: 'monthly_8',
+  YEARLY_80: 'yearly_80'
 };
 
 // Check if user can access the app based on subscription status
@@ -193,7 +195,7 @@ function isTrialExpired(user) {
   return today > trialEnd;
 }
 
-// Validate plan selection
+// Validate plan selection (includes No Limit plans: MONTHLY_8 and YEARLY_80)
 function validatePlanSelection(planId, currentStatus, hadTrial = false) {
   // Beta users can select trial (only if they never had trial) or paid plans
   if (currentStatus === SUBSCRIPTION_STATES.BETA) {
@@ -201,7 +203,7 @@ function validatePlanSelection(planId, currentStatus, hadTrial = false) {
     if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
       return false; // User already had trial, cannot select again
     }
-    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
   }
 
   // Beta-expired users can select trial (if never had trial) or paid plans
@@ -210,17 +212,17 @@ function validatePlanSelection(planId, currentStatus, hadTrial = false) {
     if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
       return false; // User already had trial, cannot select again
     }
-    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
   }
 
   // Trial expired users can only select paid plans
   if (currentStatus === SUBSCRIPTION_STATES.TRIAL_EXPIRED) {
-    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
   }
 
   // Trialing users can upgrade to paid plans
   if (currentStatus === SUBSCRIPTION_STATES.TRIALING) {
-    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70].includes(planId);
+    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
   }
 
   return false;
