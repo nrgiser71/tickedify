@@ -115,9 +115,10 @@ function renderSubscriptionPlans() {
         console.log('Trial plan hidden - user already had trial');
     }
 
-    // Separate trial and paid plans
+    // Separate trial, standard paid, and premium plus plans
     const trialPlan = allPlans.find(p => p.id === 'trial_14_days');
-    const paidPlans = allPlans.filter(p => p.id === 'monthly_7' || p.id === 'yearly_70');
+    const standardPlans = allPlans.filter(p => p.id === 'monthly_7' || p.id === 'yearly_70');
+    const premiumPlusPlans = allPlans.filter(p => p.id === 'monthly_8' || p.id === 'yearly_80');
 
     // Render trial option if available
     if (showTrial && trialPlan) {
@@ -125,10 +126,16 @@ function renderSubscriptionPlans() {
         plansGrid.appendChild(trialElement);
     }
 
-    // Render combined paid plan option
-    if (paidPlans.length > 0) {
-        const paidElement = createCombinedPaidPlanElement(paidPlans);
-        plansGrid.appendChild(paidElement);
+    // Render combined Standard plan option (€7/€70)
+    if (standardPlans.length > 0) {
+        const standardElement = createCombinedStandardPlanElement(standardPlans);
+        plansGrid.appendChild(standardElement);
+    }
+
+    // Render combined Premium Plus plan option (€8/€80)
+    if (premiumPlusPlans.length > 0) {
+        const premiumPlusElement = createCombinedPremiumPlusPlanElement(premiumPlusPlans);
+        plansGrid.appendChild(premiumPlusElement);
     }
 
     // Update selection state
@@ -197,20 +204,20 @@ function createPlanElement(plan, clickable = true) {
 }
 
 /**
- * Create combined paid plan element showing both monthly and yearly options
+ * Create combined Standard plan element showing both monthly and yearly options
  */
-function createCombinedPaidPlanElement(paidPlans) {
+function createCombinedStandardPlanElement(standardPlans) {
     const planDiv = document.createElement('div');
     planDiv.className = 'plan-option plan-recommended';
-    planDiv.setAttribute('data-plan-id', 'paid');
+    planDiv.setAttribute('data-plan-id', 'standard');
 
     // Find monthly and yearly plans
-    const monthlyPlan = paidPlans.find(p => p.id === 'monthly_7');
-    const yearlyPlan = paidPlans.find(p => p.id === 'yearly_70');
+    const monthlyPlan = standardPlans.find(p => p.id === 'monthly_7');
+    const yearlyPlan = standardPlans.find(p => p.id === 'yearly_70');
 
     planDiv.innerHTML = `
         <div class="plan-header">
-            <h3 class="plan-name">Betaald Abonnement</h3>
+            <h3 class="plan-name">Standard Abonnement</h3>
             <div class="plan-price">€7/maand of €70/jaar</div>
         </div>
         <div class="plan-description">Kies bij het afrekenen tussen maandelijks of jaarlijks</div>
@@ -222,8 +229,9 @@ function createCombinedPaidPlanElement(paidPlans) {
             <li>Onbeperkte taken</li>
             <li>Email import</li>
             <li>Premium support</li>
+            <li>100MB opslag, 5MB per bestand, 1 bijlage per taak</li>
         </ul>
-        <button class="plan-action-button" id="select-paid-plan" style="
+        <button class="plan-action-button" id="select-standard-plan" style="
             width: 100%;
             padding: 14px 24px;
             margin-top: 20px;
@@ -238,7 +246,7 @@ function createCombinedPaidPlanElement(paidPlans) {
         " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(102, 126, 234, 0.4)';"
            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
             <i class="fas fa-credit-card"></i>
-            Kies Betaald Abonnement
+            Kies Standard Abonnement
         </button>
         <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
             <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze op de betaalpagina
@@ -246,11 +254,76 @@ function createCombinedPaidPlanElement(paidPlans) {
     `;
 
     // Add click event listener to button
-    const button = planDiv.querySelector('#select-paid-plan');
+    const button = planDiv.querySelector('#select-standard-plan');
     button.addEventListener('click', async (e) => {
         e.stopPropagation();
         // Select monthly_7 as default, but user will choose on Plug&Pay page
         selectPlan('monthly_7');
+        // Immediately confirm selection to trigger payment redirect
+        await confirmSelection();
+    });
+
+    return planDiv;
+}
+
+/**
+ * Create combined Premium Plus plan element showing both monthly and yearly options
+ */
+function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
+    const planDiv = document.createElement('div');
+    planDiv.className = 'plan-option plan-recommended';
+    planDiv.setAttribute('data-plan-id', 'premium_plus');
+
+    // Find monthly and yearly plans
+    const monthlyPlan = premiumPlusPlans.find(p => p.id === 'monthly_8');
+    const yearlyPlan = premiumPlusPlans.find(p => p.id === 'yearly_80');
+
+    planDiv.innerHTML = `
+        <div class="plan-header">
+            <h3 class="plan-name">Premium Plus Abonnement</h3>
+            <div class="plan-price">€8/maand of €80/jaar</div>
+        </div>
+        <div class="plan-description">Ongelimiteerde bijlagen - kies bij het afrekenen tussen maandelijks of jaarlijks</div>
+        <div class="plan-highlight">⭐ Ongelimiteerde bijlagen - geen limieten op grootte of aantal!</div>
+        <ul class="plan-features">
+            <li><strong>Maandelijks:</strong> €8/maand - Stop wanneer je wilt</li>
+            <li><strong>Jaarlijks:</strong> €80/jaar - 2 maanden gratis</li>
+            <li>Alle functies</li>
+            <li>Onbeperkte taken</li>
+            <li>Email import</li>
+            <li>Premium support</li>
+            <li><strong>Ongelimiteerde bijlagen</strong> - Upload zoveel als je wilt</li>
+            <li><strong>Geen limiet op bestandsgrootte</strong> - Ook grote bestanden</li>
+            <li><strong>Meerdere bijlagen per taak</strong> - Geen beperkingen</li>
+        </ul>
+        <button class="plan-action-button" id="select-premium-plus-plan" style="
+            width: 100%;
+            padding: 14px 24px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245, 158, 11, 0.4)';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <i class="fas fa-star"></i>
+            Kies Premium Plus
+        </button>
+        <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
+            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze op de betaalpagina
+        </small>
+    `;
+
+    // Add click event listener to button
+    const button = planDiv.querySelector('#select-premium-plus-plan');
+    button.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        // Select monthly_8 as default, but user will choose on Plug&Pay page
+        selectPlan('monthly_8');
         // Immediately confirm selection to trigger payment redirect
         await confirmSelection();
     });
