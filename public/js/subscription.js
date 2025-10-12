@@ -186,7 +186,7 @@ function createPlanElement(plan, clickable = true) {
             <i class="fas ${buttonIcon}"></i>
             ${buttonText}
         </button>
-        ${isTrial ? '<small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;"><i class="fas fa-info-circle"></i> 14 dagen gratis - geen creditcard vereist</small>' : ''}
+        ${isTrial ? '<small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;"><i class="fas fa-info-circle"></i> Probeer 14 dagen gratis alle functies - geen creditcard nodig bij aanmelding</small>' : ''}
     `;
 
     // Add click event listener to button only
