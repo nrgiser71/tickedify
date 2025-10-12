@@ -115,6 +115,8 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .plan-option::before {
@@ -231,6 +233,11 @@
     color: #10b981;
     font-weight: 700;
     font-size: 16px;
+}
+
+/* Plan Action Button - Aligned at bottom of flex container */
+.plan-action-button {
+    margin-top: auto;
 }
 
 /* Selection Indicator */

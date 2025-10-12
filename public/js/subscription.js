@@ -132,7 +132,7 @@ function renderSubscriptionPlans() {
         plansGrid.appendChild(standardElement);
     }
 
-    // Render combined Premium Plus plan option (€8/€80)
+    // Render combined No Limit plan option (€8/€80)
     if (premiumPlusPlans.length > 0) {
         const premiumPlusElement = createCombinedPremiumPlusPlanElement(premiumPlusPlans);
         plansGrid.appendChild(premiumPlusElement);
@@ -267,7 +267,7 @@ function createCombinedStandardPlanElement(standardPlans) {
 }
 
 /**
- * Create combined Premium Plus plan element showing both monthly and yearly options
+ * Create combined No Limit plan element showing both monthly and yearly options
  */
 function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
     const planDiv = document.createElement('div');
@@ -280,7 +280,7 @@ function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
 
     planDiv.innerHTML = `
         <div class="plan-header">
-            <h3 class="plan-name">Premium Plus Abonnement</h3>
+            <h3 class="plan-name">No Limit Abonnement</h3>
             <div class="plan-price">€8/maand of €80/jaar</div>
         </div>
         <div class="plan-description">Ongelimiteerde bijlagen - kies bij het afrekenen tussen maandelijks of jaarlijks</div>
@@ -311,7 +311,7 @@ function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
         " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245, 158, 11, 0.4)';"
            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
             <i class="fas fa-star"></i>
-            Kies Premium Plus
+            Kies No Limit
         </button>
         <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
             <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina

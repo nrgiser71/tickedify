@@ -87,6 +87,20 @@ function createConfigCard(config) {
         </div>
 
         <div class="form-group">
+            <label for="landing-url-${config.plan_id}">
+                <i class="fas fa-home"></i>
+                Landing Page URL (na betaling)
+            </label>
+            <input
+                type="url"
+                id="landing-url-${config.plan_id}"
+                value="${config.landing_page_url || ''}"
+                placeholder="https://..."
+                class="landing-page-url"
+            />
+        </div>
+
+        <div class="form-group">
             <div class="checkbox-group">
                 <input
                     type="checkbox"
@@ -132,11 +146,17 @@ async function saveConfiguration(planId) {
 
     const card = document.querySelector(`[data-plan-id="${planId}"]`);
     const checkoutUrl = card.querySelector('.checkout-url').value.trim();
+    const landingPageUrl = card.querySelector('.landing-page-url').value.trim();
     const isActive = card.querySelector('.is-active').checked;
 
     // Validation
     if (checkoutUrl && !checkoutUrl.startsWith('https://')) {
         showAlert('Checkout URL moet beginnen met https://', 'error');
+        return;
+    }
+
+    if (landingPageUrl && !landingPageUrl.startsWith('https://')) {
+        showAlert('Landing Page URL moet beginnen met https://', 'error');
         return;
     }
 
@@ -156,6 +176,7 @@ async function saveConfiguration(planId) {
             credentials: 'include',
             body: JSON.stringify({
                 checkout_url: checkoutUrl,
+                landing_page_url: landingPageUrl || null,
                 is_active: isActive
             })
         });

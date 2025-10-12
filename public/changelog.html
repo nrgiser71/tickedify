@@ -134,10 +134,60 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.5 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.5</span>
+                <span class="version-date">12 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎨</span>
+                    <div class="change-content">
+                        <div class="change-title">Subscription Refinements - No Limit Branding + UI Verbeteringen</div>
+                        <div class="change-description">
+                            <strong>BRANDING UPDATE:</strong> Premium Plus wordt herbenoemd naar "No Limit Abonnement" en krijgt UI verbeteringen.
+                            <br><br>
+                            <strong>1. No Limit Rebranding:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🏷️ "Premium Plus" → "No Limit Abonnement" overal in de app</li>
+                                <li>📝 subscription-data.js: Namen geüpdatet (regel 39, 48)</li>
+                                <li>📝 subscription.js: Card titel en button text geüpdatet (regel 270, 283, 314)</li>
+                                <li>📝 server.js: Backend plan namen geüpdatet (regel 9783, 9792)</li>
+                                <li>💡 Highlights: "No Limit - Ongelimiteerde opslag" (subscription-data.js regel 140-142)</li>
+                            </ul>
+                            <strong>2. Button Alignment Fix:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✨ Alle knoppen nu op dezelfde hoogte ongeacht card content</li>
+                                <li>🔧 subscription.css: Flexbox layout toegevoegd aan .plan-option (regel 118-119)</li>
+                                <li>🔧 subscription.css: margin-top: auto op .plan-action-button (regel 239-241)</li>
+                                <li>🎯 Verbeterde visuele consistentie tussen alle 3 cards</li>
+                            </ul>
+                            <strong>3. Admin Panel: Dual URL Configuration:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>🔧 Admin kan nu 2 URLs configureren per plan:</li>
+                                <ul style="margin-left: 20px;">
+                                    <li>1️⃣ Plug&Pay Checkout URL (bestaand)</li>
+                                    <li>2️⃣ Landing Page URL (nieuw) - waar gebruikers na betaling naartoe gaan</li>
+                                </ul>
+                                <li>💾 database.js: landing_page_url kolom toegevoegd aan payment_configurations (regel 433-442)</li>
+                                <li>🎨 admin-subscription-config.js: Tweede URL input veld in UI (regel 89-101)</li>
+                                <li>✅ admin-subscription-config.js: Validatie voor beide URLs (regel 153-161)</li>
+                                <li>🔧 server.js: GET endpoint haalt landing_page_url op (regel 2925)</li>
+                                <li>🔧 server.js: PUT endpoints slaan landing_page_url op met validatie (regel 2969-2972, 3032-3035)</li>
+                                <li>🔧 server.js: Nieuwe PUT route met path parameter /:planId (regel 3003-3064)</li>
+                            </ul>
+                            <strong>Impact:</strong> Professionelere branding, betere UI consistentie, en flexibelere admin configuratie voor post-payment gebruiker flows! 🎯
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.4 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.4</span>
+                <span class="version-badge badge-feature">v0.18.4</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">

@@ -36,7 +36,7 @@ const SUBSCRIPTION_PLANS = [
     },
     {
         id: 'monthly_8',
-        name: 'Premium Plus Maandelijks',
+        name: 'No Limit Maandelijks',
         description: 'Ongelimiteerde bijlages per maand',
         price: 8,
         billing_cycle: 'monthly',
@@ -45,7 +45,7 @@ const SUBSCRIPTION_PLANS = [
     },
     {
         id: 'yearly_80',
-        name: 'Premium Plus Jaarlijks',
+        name: 'No Limit Jaarlijks',
         description: 'Ongelimiteerde bijlages - bespaar €16 per jaar',
         price: 80,
         billing_cycle: 'yearly',
@@ -137,9 +137,9 @@ const SUBSCRIPTION_VALIDATION = {
             case 'yearly_70':
                 return 'Beste waarde - bespaar €14 per jaar';
             case 'monthly_8':
-                return 'Premium Plus - Ongelimiteerde opslag';
+                return 'No Limit - Ongelimiteerde opslag';
             case 'yearly_80':
-                return 'Premium Plus - Beste waarde met ongelimiteerde opslag';
+                return 'No Limit - Beste waarde met ongelimiteerde opslag';
             default:
                 return '';
         }

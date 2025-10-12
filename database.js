@@ -430,6 +430,17 @@ const initDatabase = async () => {
       console.log('⚠️ Could not insert payment configurations:', error.message);
     }
 
+    // Feature v0.18.5: Add landing_page_url column for post-payment redirects
+    try {
+      await pool.query(`
+        ALTER TABLE payment_configurations
+        ADD COLUMN IF NOT EXISTS landing_page_url TEXT DEFAULT NULL
+      `);
+      console.log('✅ Feature v0.18.5: Added landing_page_url column to payment_configurations');
+    } catch (error) {
+      console.log('⚠️ Could not add landing_page_url column:', error.message);
+    }
+
     // Feature 011: Create payment_webhook_logs table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS payment_webhook_logs (
