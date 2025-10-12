@@ -420,10 +420,12 @@ const initDatabase = async () => {
       await pool.query(`
         INSERT INTO payment_configurations (plan_id, plan_name, checkout_url, is_active) VALUES
           ('monthly_7', 'Maandelijks €7', '', FALSE),
-          ('yearly_70', 'Jaarlijks €70', '', FALSE)
+          ('yearly_70', 'Jaarlijks €70', '', FALSE),
+          ('monthly_8', 'Premium Plus Maandelijks €8', '', FALSE),
+          ('yearly_80', 'Premium Plus Jaarlijks €80', '', FALSE)
         ON CONFLICT (plan_id) DO NOTHING
       `);
-      console.log('✅ Feature 011: Payment configurations initialized');
+      console.log('✅ Feature 011 & 013: Payment configurations initialized (Standard + Premium Plus)');
     } catch (error) {
       console.log('⚠️ Could not insert payment configurations:', error.message);
     }
@@ -2172,22 +2174,57 @@ const db = {
 
   async checkUserPremiumStatus(userId) {
     try {
-      const result = await pool.query(`
-        SELECT premium_expires 
-        FROM user_storage_usage 
+      // Check for Premium Plus subscription (monthly_8 or yearly_80) in users table
+      const userResult = await pool.query(`
+        SELECT selected_plan, trial_end_date
+        FROM users
+        WHERE id = $1
+      `, [userId]);
+
+      if (userResult.rows.length === 0) {
+        return false; // User not found
+      }
+
+      const { selected_plan, trial_end_date } = userResult.rows[0];
+
+      // Define Premium Plus plan IDs
+      const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
+      const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
+      const ALL_PREMIUM_PLAN_IDS = [...PREMIUM_PLUS_PLAN_IDS, ...PREMIUM_STANDARD_PLAN_IDS];
+
+      // Check if user has an active paid subscription (Standard or Premium Plus)
+      if (selected_plan && ALL_PREMIUM_PLAN_IDS.includes(selected_plan)) {
+        // Check if trial hasn't expired (for trial users)
+        if (trial_end_date) {
+          const now = new Date();
+          const trialEnds = new Date(trial_end_date);
+          if (trialEnds > now) {
+            return true; // Trial still active
+          }
+          // Trial expired, check if they have a paid plan
+          return selected_plan && ALL_PREMIUM_PLAN_IDS.includes(selected_plan);
+        }
+        // No trial_end_date means paid subscription
+        return true;
+      }
+
+      // Fallback: Check legacy premium_expires in user_storage_usage table
+      const storageResult = await pool.query(`
+        SELECT premium_expires
+        FROM user_storage_usage
         WHERE user_id = $1
       `, [userId]);
 
-      if (result.rows.length === 0) {
+      if (storageResult.rows.length === 0) {
         return false; // No record = free user
       }
 
-      const premiumExpires = result.rows[0].premium_expires;
+      const premiumExpires = storageResult.rows[0].premium_expires;
       if (!premiumExpires) {
         return false; // NULL = free user
       }
 
-      // Check if premium is still valid
+      // Check if legacy premium is still valid
       const now = new Date();
       const expires = new Date(premiumExpires);
       return expires > now;

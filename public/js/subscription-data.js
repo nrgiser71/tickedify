@@ -33,6 +33,24 @@ const SUBSCRIPTION_PLANS = [
         billing_cycle: 'yearly',
         trial_days: 0,
         features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', '2 maanden gratis']
+    },
+    {
+        id: 'monthly_8',
+        name: 'Premium Plus Maandelijks',
+        description: 'Ongelimiteerde bijlages per maand',
+        price: 8,
+        billing_cycle: 'monthly',
+        trial_days: 0,
+        features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte']
+    },
+    {
+        id: 'yearly_80',
+        name: 'Premium Plus Jaarlijks',
+        description: 'Ongelimiteerde bijlages - bespaar €16 per jaar',
+        price: 80,
+        billing_cycle: 'yearly',
+        trial_days: 0,
+        features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte', '2 maanden gratis']
     }
 ];
 
@@ -118,6 +136,10 @@ const SUBSCRIPTION_VALIDATION = {
                 return 'Flexibel maandelijks abonnement';
             case 'yearly_70':
                 return 'Beste waarde - bespaar €14 per jaar';
+            case 'monthly_8':
+                return 'Premium Plus - Ongelimiteerde opslag';
+            case 'yearly_80':
+                return 'Premium Plus - Beste waarde met ongelimiteerde opslag';
             default:
                 return '';
         }
