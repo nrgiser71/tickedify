@@ -353,6 +353,145 @@ const inputModal = new InputModal();
 const confirmModal = new ConfirmModal();
 const projectModal = new ProjectModal();
 
+// Feature 014: Onboarding Video Manager
+class OnboardingVideoManager {
+    constructor() {
+        this.popup = document.getElementById('onboardingVideoPopup');
+        this.iframe = document.getElementById('onboardingVideoIframe');
+        this.videoContainer = this.popup.querySelector('.video-container');
+        this.fallback = this.popup.querySelector('.fallback-message');
+        this.closeBtn = this.popup.querySelector('.close-video-btn');
+        this.hasSeenThisSession = false;
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.popup.style.display === 'flex') {
+                this.closeVideo();
+            }
+        });
+
+        // Overlay click to close
+        this.popup.addEventListener('click', (e) => {
+            if (e.target === this.popup) {
+                this.closeVideo();
+            }
+        });
+
+        // Close button click
+        if (this.closeBtn) {
+            this.closeBtn.addEventListener('click', () => {
+                this.closeVideo();
+            });
+        }
+
+        // Sidebar link click
+        const sidebarLink = document.getElementById('openOnboardingVideoLink');
+        if (sidebarLink) {
+            sidebarLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showVideo();
+            });
+        }
+    }
+
+    async showVideo() {
+        try {
+            // Fetch video URL from API
+            const response = await fetch('/api/settings/onboarding-video');
+            if (!response.ok) {
+                console.error('Fout bij ophalen video URL');
+                return;
+            }
+
+            const data = await response.json();
+            const videoUrl = data.url;
+
+            if (!videoUrl || videoUrl.trim() === '') {
+                // No video configured - show fallback
+                this.videoContainer.style.display = 'none';
+                this.fallback.style.display = 'block';
+            } else {
+                // Extract YouTube ID and set iframe src
+                const videoId = this.extractYouTubeId(videoUrl);
+                if (videoId) {
+                    this.iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+                    this.videoContainer.style.display = 'block';
+                    this.fallback.style.display = 'none';
+                } else {
+                    // Invalid URL - show fallback
+                    this.videoContainer.style.display = 'none';
+                    this.fallback.style.display = 'block';
+                }
+            }
+
+            // Display popup
+            this.popup.style.display = 'flex';
+        } catch (error) {
+            console.error('Fout bij tonen video:', error);
+        }
+    }
+
+    async closeVideo() {
+        // Hide popup
+        this.popup.style.display = 'none';
+
+        // Clear iframe src to stop video
+        if (this.iframe) {
+            this.iframe.src = '';
+        }
+
+        // Call API to mark as seen (only if not already marked in this session)
+        if (!this.hasSeenThisSession) {
+            try {
+                const response = await fetch('/api/user/onboarding-video-seen', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    this.hasSeenThisSession = true;
+                }
+            } catch (error) {
+                console.error('Fout bij markeren video als gezien:', error);
+            }
+        }
+    }
+
+    extractYouTubeId(url) {
+        // Parse YouTube URL patterns
+        // Supports:
+        // - https://youtube.com/watch?v=VIDEO_ID
+        // - https://www.youtube.com/watch?v=VIDEO_ID
+        // - https://youtu.be/VIDEO_ID
+        // - https://youtube-nocookie.com/embed/VIDEO_ID
+
+        if (!url) return null;
+
+        // Pattern 1: youtube.com/watch?v=VIDEO_ID
+        let match = url.match(/[?&]v=([^&]+)/);
+        if (match) return match[1];
+
+        // Pattern 2: youtu.be/VIDEO_ID
+        match = url.match(/youtu\.be\/([^?]+)/);
+        if (match) return match[1];
+
+        // Pattern 3: youtube-nocookie.com/embed/VIDEO_ID
+        match = url.match(/youtube-nocookie\.com\/embed\/([^?]+)/);
+        if (match) return match[1];
+
+        // Pattern 4: youtube.com/embed/VIDEO_ID
+        match = url.match(/youtube\.com\/embed\/([^?]+)/);
+        if (match) return match[1];
+
+        return null;
+    }
+}
+
 // Loading Manager System
 class LoadingManager {
     constructor() {
@@ -639,6 +778,9 @@ class Taakbeheer {
         // Fix: Reset eventsAlreadyBound to ensure bindEvents runs
         this.eventsAlreadyBound = false;
 
+        // Feature 014: Onboarding Video Manager
+        this.onboardingVideo = new OnboardingVideoManager();
+
         this.init();
     }
 
@@ -750,19 +892,34 @@ class Taakbeheer {
     async loadUserData() {
         // Called by AuthManager after successful login
         // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-        
+
         // Restore the correct list without showing intermediate states
         const targetList = this.huidigeLijst;
-        
+
         // Immediately set the correct sidebar state to prevent flashing
         this.updateSidebarState(targetList);
-        
+
         // Navigate directly to the restored current list (includes sidebar update)
         await this.navigeerNaarLijst(targetList);
-        
+
         await this.laadProjecten();
         await this.laadContexten();
-        
+
+        // Feature 014: Check if user needs to see onboarding video (first login)
+        try {
+            const response = await fetch('/api/user/onboarding-status');
+            if (response.ok) {
+                const { seen } = await response.json();
+                if (!seen) {
+                    // User has not seen the onboarding video yet - show it
+                    await this.onboardingVideo.showVideo();
+                }
+            }
+        } catch (error) {
+            console.error('Fout bij controleren onboarding status:', error);
+            // Continue loading app even if onboarding check fails
+        }
+
         // Hide loading indicator after app is fully loaded
         if (window.loading) {
             loading.hideGlobal();

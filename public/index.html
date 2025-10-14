@@ -149,6 +149,10 @@
                             <div class="lijst-icon"><i class="fas fa-lightbulb"></i></div>
                             <span class="lijst-naam">Feature Request</span>
                         </div>
+                        <a href="#" id="openOnboardingVideoLink" class="lijst-item">
+                            <div class="lijst-icon"><i class="fas fa-video"></i></div>
+                            <span class="lijst-naam">Welkomstvideo</span>
+                        </a>
                     </div>
                 </div>
             </aside>
@@ -845,6 +849,25 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Video Popup (Feature 014) -->
+    <div id="onboardingVideoPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content onboarding-video-content">
+            <button class="close-video-btn" aria-label="Sluiten">&times;</button>
+            <h2>Welkom bij Tickedify</h2>
+            <div class="video-container">
+                <iframe id="onboardingVideoIframe"
+                        width="560" height="315"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                        allowfullscreen>
+                </iframe>
+            </div>
+            <p class="fallback-message" style="display: none;">
+                Nog geen welkomstvideo beschikbaar
+            </p>
         </div>
     </div>
 

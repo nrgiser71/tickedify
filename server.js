@@ -1705,6 +1705,109 @@ app.get('/api/user/info', async (req, res) => {
     }
 });
 
+// Feature 014: Onboarding video endpoints
+
+// GET /api/user/onboarding-status - Check if user has seen onboarding video
+app.get('/api/user/onboarding-status', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        const seen = await db.hasSeenOnboardingVideo(userId);
+
+        res.json({ seen });
+    } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        res.status(500).json({ error: 'Fout bij ophalen onboarding status' });
+    }
+});
+
+// PUT /api/user/onboarding-video-seen - Mark onboarding video as seen
+app.put('/api/user/onboarding-video-seen', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        await db.markOnboardingVideoSeen(userId);
+
+        res.json({ success: true, message: 'Onboarding video gemarkeerd als gezien' });
+    } catch (error) {
+        console.error('Error marking onboarding video as seen:', error);
+        res.status(500).json({ error: 'Fout bij markeren onboarding video' });
+    }
+});
+
+// GET /api/settings/onboarding-video - Get onboarding video URL (any authenticated user)
+app.get('/api/settings/onboarding-video', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        const url = await db.getSystemSetting('onboarding_video_url');
+
+        res.json({ url });
+    } catch (error) {
+        console.error('Error getting onboarding video URL:', error);
+        res.status(500).json({ error: 'Fout bij ophalen video URL' });
+    }
+});
+
+// PUT /api/settings/onboarding-video - Update onboarding video URL (admin only)
+app.put('/api/settings/onboarding-video', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        // Check if user is admin
+        const userResult = await pool.query(
+            'SELECT rol FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+            return res.status(403).json({ error: 'Geen admin rechten' });
+        }
+
+        const { url } = req.body;
+
+        // Validate YouTube URL format (if URL is provided)
+        if (url && url.trim() !== '') {
+            const youtubePatterns = [
+                /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+                /^https?:\/\/youtu\.be\/[\w-]+/,
+                /^https?:\/\/(www\.)?youtube-nocookie\.com\/embed\/[\w-]+/
+            ];
+
+            const isValid = youtubePatterns.some(pattern => pattern.test(url));
+
+            if (!isValid) {
+                return res.status(400).json({ error: 'Ongeldige YouTube URL' });
+            }
+        }
+
+        // Update setting (null if empty string)
+        const finalUrl = (url && url.trim() !== '') ? url : null;
+        await db.updateSystemSetting('onboarding_video_url', finalUrl, userId);
+
+        res.json({ success: true, message: 'Onboarding video URL bijgewerkt', url: finalUrl });
+    } catch (error) {
+        console.error('Error updating onboarding video URL:', error);
+        res.status(500).json({ error: 'Fout bij bijwerken video URL' });
+    }
+});
+
 // API endpoint voor alle gebruikers (voor test dashboard)
 app.get('/api/users', async (req, res) => {
     try {

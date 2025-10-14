@@ -1777,6 +1777,83 @@ mark {
     z-index: 1500;
 }
 
+/* Onboarding Video Popup (Feature 014) - Between standard popup (1000) and keyboard help (1500) */
+#onboardingVideoPopup {
+    z-index: 1200;
+}
+
+.onboarding-video-content {
+    max-width: 700px;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--macos-radius-medium);
+}
+
+.close-video-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    color: var(--macos-text-secondary);
+    z-index: 10;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.close-video-btn:hover {
+    color: var(--macos-text-primary);
+    transform: scale(1.1);
+}
+
+.fallback-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--macos-text-secondary);
+    font-size: 14px;
+}
+
+/* Mobile responsive styles for onboarding video */
+@media (max-width: 768px) {
+    .onboarding-video-content {
+        width: 95%;
+        max-width: 95%;
+        padding: 16px;
+    }
+
+    .onboarding-video-content h2 {
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    .close-video-btn {
+        top: 8px;
+        right: 8px;
+        font-size: 28px;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

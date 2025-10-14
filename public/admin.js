@@ -1170,3 +1170,199 @@ async function updateTierCheckoutUrls(event) {
         submitBtn.disabled = false;
     }
 }
+
+// Feature 014: Onboarding Video Settings Functions
+async function loadOnboardingSettings() {
+    try {
+        const response = await fetch('/api/settings/onboarding-video');
+        if (!response.ok) {
+            throw new Error('Fout bij ophalen video instellingen');
+        }
+
+        const data = await response.json();
+        const urlInput = document.getElementById('onboardingVideoUrl');
+
+        if (urlInput && data.url) {
+            urlInput.value = data.url;
+        }
+    } catch (error) {
+        console.error('Error loading onboarding settings:', error);
+        showVideoStatus('Fout bij laden van instellingen', 'error');
+    }
+}
+
+async function saveOnboardingVideo() {
+    const urlInput = document.getElementById('onboardingVideoUrl');
+    const url = urlInput.value.trim();
+
+    // Validate URL
+    if (url && !isValidYouTubeUrl(url)) {
+        showVideoStatus('Ongeldige YouTube URL. Ondersteunde formaten: youtube.com, youtu.be, youtube-nocookie.com', 'error');
+        return;
+    }
+
+    // Show loading state
+    const saveBtn = document.getElementById('saveVideoUrl');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '🔄 Bezig met opslaan...';
+    saveBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/settings/onboarding-video', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: url || null })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showVideoStatus('✅ Onboarding video URL succesvol opgeslagen', 'success');
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error saving onboarding video:', error);
+        showVideoStatus('❌ Fout bij opslaan: ' + error.message, 'error');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
+function isValidYouTubeUrl(url) {
+    // Validate YouTube URL patterns
+    const youtubePatterns = [
+        /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+        /^https?:\/\/youtu\.be\/[\w-]+/,
+        /^https?:\/\/(www\.)?youtube-nocookie\.com\/embed\/[\w-]+/
+    ];
+
+    return youtubePatterns.some(pattern => pattern.test(url));
+}
+
+function extractYouTubeId(url) {
+    if (!url) return null;
+
+    // Pattern 1: youtube.com/watch?v=VIDEO_ID
+    let match = url.match(/[?&]v=([^&]+)/);
+    if (match) return match[1];
+
+    // Pattern 2: youtu.be/VIDEO_ID
+    match = url.match(/youtu\.be\/([^?]+)/);
+    if (match) return match[1];
+
+    // Pattern 3: youtube-nocookie.com/embed/VIDEO_ID
+    match = url.match(/youtube-nocookie\.com\/embed\/([^?]+)/);
+    if (match) return match[1];
+
+    // Pattern 4: youtube.com/embed/VIDEO_ID
+    match = url.match(/youtube\.com\/embed\/([^?]+)/);
+    if (match) return match[1];
+
+    return null;
+}
+
+function showVideoPreview() {
+    const urlInput = document.getElementById('onboardingVideoUrl');
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        showVideoStatus('Voer eerst een YouTube URL in', 'error');
+        return;
+    }
+
+    if (!isValidYouTubeUrl(url)) {
+        showVideoStatus('Ongeldige YouTube URL', 'error');
+        return;
+    }
+
+    const videoId = extractYouTubeId(url);
+    if (!videoId) {
+        showVideoStatus('Kan video ID niet extraheren uit URL', 'error');
+        return;
+    }
+
+    // Show preview section
+    const previewSection = document.getElementById('videoPreview');
+    const previewIframe = document.getElementById('previewIframe');
+
+    previewIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+    previewSection.style.display = 'block';
+
+    showVideoStatus('Preview geladen', 'success');
+}
+
+async function clearOnboardingVideo() {
+    if (!confirm('Weet je zeker dat je de onboarding video wilt verwijderen?')) {
+        return;
+    }
+
+    const clearBtn = document.getElementById('clearVideoUrl');
+    const originalText = clearBtn.innerHTML;
+    clearBtn.innerHTML = '🔄 Bezig...';
+    clearBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/settings/onboarding-video', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: null })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            document.getElementById('onboardingVideoUrl').value = '';
+            document.getElementById('videoPreview').style.display = 'none';
+            document.getElementById('previewIframe').src = '';
+            showVideoStatus('✅ Onboarding video verwijderd', 'success');
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error clearing onboarding video:', error);
+        showVideoStatus('❌ Fout bij verwijderen: ' + error.message, 'error');
+    } finally {
+        clearBtn.innerHTML = originalText;
+        clearBtn.disabled = false;
+    }
+}
+
+function showVideoStatus(message, type) {
+    const statusDiv = document.getElementById('videoUrlStatus');
+    statusDiv.textContent = message;
+    statusDiv.style.display = 'block';
+
+    if (type === 'success') {
+        statusDiv.style.backgroundColor = 'var(--toast-success-bg)';
+        statusDiv.style.color = 'var(--toast-success)';
+        statusDiv.style.borderLeft = '4px solid var(--toast-success)';
+    } else {
+        statusDiv.style.backgroundColor = 'var(--toast-error-bg)';
+        statusDiv.style.color = 'var(--toast-error)';
+        statusDiv.style.borderLeft = '4px solid var(--toast-error)';
+    }
+
+    // Hide after 5 seconds
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Load onboarding settings when dashboard loads
+// Add this call to the AdminDashboard.loadDashboard() method
+if (window.addEventListener) {
+    window.addEventListener('load', () => {
+        // Wait for dashboard to authenticate before loading settings
+        setTimeout(() => {
+            if (adminDashboard && adminDashboard.isAuthenticated) {
+                loadOnboardingSettings();
+            }
+        }, 1000);
+    });
+}

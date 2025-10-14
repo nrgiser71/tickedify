@@ -771,6 +771,59 @@
                 </div>
             </div>
         </div>
+
+        <!-- Onboarding Video Settings (Feature 014) -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">📹</span>
+                <span>Welkomstvideo Instellingen</span>
+            </div>
+            <div class="table-content">
+                <div class="payment-config-item">
+                    <div class="payment-config-header">
+                        <span class="payment-config-title">YouTube Video Configuratie</span>
+                    </div>
+                    <div class="payment-config-form">
+                        <div class="form-group">
+                            <label for="onboardingVideoUrl">YouTube Video URL</label>
+                            <input type="url"
+                                   id="onboardingVideoUrl"
+                                   placeholder="https://youtube.com/watch?v=..."
+                                   class="form-group">
+                            <small style="color: var(--macos-text-secondary); font-size: 12px; margin-top: 4px;">
+                                Ondersteunt: youtube.com, youtu.be, youtube-nocookie.com
+                            </small>
+                        </div>
+
+                        <div id="videoPreview" style="display: none; margin-top: 15px;">
+                            <h4 style="margin-bottom: 10px; color: var(--macos-text-primary);">Preview</h4>
+                            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--macos-radius-medium);">
+                                <iframe id="previewIframe"
+                                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button id="saveVideoUrl" class="admin-btn success" onclick="saveOnboardingVideo()">
+                                💾 Opslaan
+                            </button>
+                            <button id="previewVideo" class="admin-btn" onclick="showVideoPreview()">
+                                👁️ Preview
+                            </button>
+                            <button id="clearVideoUrl" class="admin-btn danger" onclick="clearOnboardingVideo()">
+                                🗑️ Verwijderen
+                            </button>
+                        </div>
+
+                        <div id="videoUrlStatus" style="margin-top: 15px; padding: 10px; border-radius: var(--macos-radius-medium); display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Feedback Detail Modal -->

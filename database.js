@@ -2269,7 +2269,7 @@ const db = {
         INSERT INTO user_storage_usage (user_id, premium_expires, updated)
         VALUES ($1, $2, CURRENT_TIMESTAMP)
         ON CONFLICT (user_id)
-        DO UPDATE SET 
+        DO UPDATE SET
           premium_expires = $2,
           updated = CURRENT_TIMESTAMP
       `, [userId, expiresDate]);
@@ -2277,6 +2277,78 @@ const db = {
       return true;
     } catch (error) {
       console.error('Error setting premium status:', error);
+      return false;
+    }
+  },
+
+  // Onboarding Video functions (Feature 014)
+  async hasSeenOnboardingVideo(userId) {
+    try {
+      const result = await pool.query(
+        'SELECT onboarding_video_seen FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        return false;
+      }
+
+      return result.rows[0].onboarding_video_seen || false;
+    } catch (error) {
+      console.error('Error checking onboarding video seen status:', error);
+      return false;
+    }
+  },
+
+  async markOnboardingVideoSeen(userId) {
+    try {
+      await pool.query(
+        'UPDATE users SET onboarding_video_seen = TRUE, onboarding_video_seen_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [userId]
+      );
+
+      console.log(`✅ Marked onboarding video as seen for user ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('Error marking onboarding video as seen:', error);
+      return false;
+    }
+  },
+
+  async getSystemSetting(key) {
+    try {
+      const result = await pool.query(
+        'SELECT value FROM system_settings WHERE key = $1',
+        [key]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0].value;
+    } catch (error) {
+      console.error(`Error getting system setting ${key}:`, error);
+      return null;
+    }
+  },
+
+  async updateSystemSetting(key, value, adminUserId) {
+    try {
+      await pool.query(`
+        INSERT INTO system_settings (key, value, updated_at, updated_by)
+        VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+        ON CONFLICT (key)
+        DO UPDATE SET
+          value = $2,
+          updated_at = CURRENT_TIMESTAMP,
+          updated_by = $3
+      `, [key, value, adminUserId]);
+
+      console.log(`✅ Updated system setting ${key}`);
+      return true;
+    } catch (error) {
+      console.error(`Error updating system setting ${key}:`, error);
       return false;
     }
   }
