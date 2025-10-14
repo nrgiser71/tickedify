@@ -3434,12 +3434,22 @@ class Taakbeheer {
             console.log('🔍 DEBUG renderActiesLijst: Team building taak details:', teamBuildingTaak);
         }
 
-        // Sort actions by date (ascending) - tasks without date go to bottom
+        // Sort actions by date (ascending), then alphabetically by text
         const sortedTaken = [...this.taken].sort((a, b) => {
-            if (!a.verschijndatum && !b.verschijndatum) return 0;
-            if (!a.verschijndatum) return 1; // Tasks without date go to bottom
-            if (!b.verschijndatum) return -1;
-            return new Date(a.verschijndatum) - new Date(b.verschijndatum);
+            // Taken zonder datum naar beneden
+            if (!a.verschijndatum && !b.verschijndatum) {
+                // Beide zonder datum: alfabetisch sorteren op tekst
+                return a.tekst.localeCompare(b.tekst, 'nl');
+            }
+            if (!a.verschijndatum) return 1; // a naar beneden
+            if (!b.verschijndatum) return -1; // b naar beneden
+
+            // Primaire sortering: datum (oplopend)
+            const datumVergelijk = new Date(a.verschijndatum) - new Date(b.verschijndatum);
+            if (datumVergelijk !== 0) return datumVergelijk;
+
+            // Secundaire sortering: alfabetisch op tekst (voor taken met zelfde datum)
+            return a.tekst.localeCompare(b.tekst, 'nl');
         });
 
         sortedTaken.forEach(taak => {

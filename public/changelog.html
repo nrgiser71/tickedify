@@ -134,10 +134,44 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.18.13 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.18.13</span>
+                <span class="version-date">14 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">🎯</span>
+                    <div class="change-content">
+                        <div class="change-title">Alfabetische Sortering Acties - Stabiele Volgorde</div>
+                        <div class="change-description">
+                            <strong>PROBLEEM:</strong> Taken met dezelfde datum hadden willekeurige volgorde in acties scherm - bij datum wijziging schoven taken onvoorspelbaar.
+                            <br><br>
+                            <strong>OORZAAK:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Sortering alleen op verschijndatum</li>
+                                <li>Meerdere taken met zelfde datum → unstable sort</li>
+                                <li>Onderlinge volgorde willekeurig bij elke render</li>
+                            </ul>
+                            <strong>OPLOSSING - Twee-niveau Sortering:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ <strong>Primaire sortering:</strong> Verschijndatum (oplopend) - oudste eerst</li>
+                                <li>✅ <strong>Secundaire sortering:</strong> Alfabetisch op taak omschrijving</li>
+                                <li>✅ Taken zonder datum: Alfabetisch onderaan</li>
+                                <li>✅ Nederlandse locale sortering (è, é, ë correct)</li>
+                            </ul>
+                            <strong>IMPACT:</strong> Stabiele, voorspelbare sortering - taken blijven op consistente plek! 📋
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.12 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.12</span>
+                <span class="version-badge badge-fix">v0.18.12</span>
                 <span class="version-date">12 oktober 2025</span>
             </div>
             <div class="changes-list">
