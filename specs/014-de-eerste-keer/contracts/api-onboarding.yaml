@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Onboarding Video API
+  description: User endpoints for onboarding video feature
+  version: 0.19.0
+  contact:
+    name: Jan Buskens
+    email: jan@tickedify.com
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production
+  - url: https://dev.tickedify.com/api
+    description: Staging
+
+tags:
+  - name: onboarding
+    description: Onboarding video operations
+
+paths:
+  /settings/onboarding-video:
+    get:
+      summary: Get onboarding video URL
+      description: |
+        Retrieves the configured onboarding video URL for display in the popup.
+        Returns null if no video is configured. Available to all authenticated users.
+      tags:
+        - onboarding
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Video URL retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    nullable: true
+                    description: YouTube video URL (null if not configured)
+                    example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+              examples:
+                withVideo:
+                  summary: Video configured
+                  value:
+                    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                noVideo:
+                  summary: No video configured
+                  value:
+                    url: null
+        '401':
+          description: Unauthorized - user not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+
+  /user/onboarding-video-seen:
+    put:
+      summary: Mark onboarding video as seen
+      description: |
+        Updates the authenticated user's profile to mark the onboarding video as seen.
+        Sets onboarding_video_seen=TRUE and onboarding_video_seen_at=NOW().
+        Called when user closes the onboarding popup.
+      tags:
+        - onboarding
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Video marked as seen successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Onboarding video marked as seen"
+        '401':
+          description: Unauthorized - user not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error during update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error
