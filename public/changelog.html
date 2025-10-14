@@ -134,10 +134,100 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.1 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.1</span>
+                <span class="version-date">14 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">📝</span>
+                    <div class="change-content">
+                        <div class="change-title">Sidebar Link Tekst Update - Instructievideo</div>
+                        <div class="change-description">
+                            <strong>WIJZIGING:</strong> Sidebar link tekst aangepast voor betere duidelijkheid.
+                            <br><br>
+                            <strong>UPDATE:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ "Welkomstvideo" → "Instructievideo"</li>
+                                <li>✅ Accuratere benaming voor de functie</li>
+                                <li>✅ Video is instructief, niet alleen voor welkom</li>
+                            </ul>
+                            <strong>LOCATIE:</strong> Linker sidebar, onderaan navigatie menu
+                            <br>
+                            <strong>IMPACT:</strong> Verbeterde gebruikerservaring - duidelijkere communicatie! 📋
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.0 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.0</span>
+                <span class="version-date">14 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-item">
+                    <span class="change-icon">📹</span>
+                    <div class="change-content">
+                        <div class="change-title">YouTube Onboarding Video Feature - Nieuwe Gebruikers Ondersteuning</div>
+                        <div class="change-description">
+                            <strong>NIEUWE FEATURE:</strong> Automatische welkomstvideo popup bij eerste login om nieuwe gebruikers te helpen de app snel te begrijpen.
+                            <br><br>
+                            <strong>FUNCTIONALITEIT:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ Automatische popup bij eerste login (video staat klaar, start niet automatisch)</li>
+                                <li>✅ Sluitbare popup - verschijnt slechts 1x per account</li>
+                                <li>✅ Database tracking: onboarding_video_seen veld in users tabel</li>
+                                <li>✅ Sidebar link "Instructievideo" om video later opnieuw te bekijken</li>
+                                <li>✅ Admin configureerbare video URL via admin.html dashboard</li>
+                                <li>✅ YouTube-nocookie.com embeds voor GDPR compliance</li>
+                                <li>✅ Fullscreen ondersteuning + standaard YouTube controls</li>
+                                <li>✅ Fallback bericht wanneer geen video geconfigureerd</li>
+                            </ul>
+                            <strong>ADMIN FUNCTIONALITEIT:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ Video URL configuratie in admin.html</li>
+                                <li>✅ YouTube URL validatie (youtube.com, youtu.be, youtube-nocookie.com)</li>
+                                <li>✅ Live preview functionaliteit</li>
+                                <li>✅ System settings tabel voor configuraties</li>
+                            </ul>
+                            <strong>DATABASE MIGRATIE 014:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ users.onboarding_video_seen BOOLEAN + TIMESTAMP</li>
+                                <li>✅ system_settings tabel voor admin configuraties</li>
+                                <li>✅ Idempotente migratie met transaction wrapping</li>
+                                <li>✅ Rollback script beschikbaar</li>
+                            </ul>
+                            <strong>API ENDPOINTS:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ GET /api/user/onboarding-status - Check of gebruiker video heeft gezien</li>
+                                <li>✅ PUT /api/user/onboarding-video-seen - Markeer video als gezien</li>
+                                <li>✅ GET /api/settings/onboarding-video - Haal video URL op</li>
+                                <li>✅ PUT /api/settings/onboarding-video - Update video URL (admin)</li>
+                            </ul>
+                            <strong>FRONTEND COMPONENTEN:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>✅ OnboardingVideoManager class in app.js</li>
+                                <li>✅ Modal popup met YouTube iframe embed</li>
+                                <li>✅ Z-index 1200 layering (tussen standard popups en keyboard help)</li>
+                                <li>✅ ESC key support + overlay click om te sluiten</li>
+                                <li>✅ Responsive design met mobile support</li>
+                            </ul>
+                            <strong>IMPACT:</strong> Betere onboarding voor nieuwe gebruikers - snellere adoptie van Tickedify functionaliteit! 🚀
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.18.13 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.18.13</span>
+                <span class="version-badge badge-fix">v0.18.13</span>
                 <span class="version-date">14 oktober 2025</span>
             </div>
             <div class="changes-list">
