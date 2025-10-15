@@ -8344,11 +8344,11 @@ app.post('/api/admin/beta/toggle', async (req, res) => {
         // Update beta config
         const updatedConfig = await db.updateBetaConfig(active);
         
-        // If ending beta period, update all active beta users to expired
+        // If ending beta period, update all active beta users to beta_expired
         if (!active) {
             await pool.query(`
-                UPDATE users 
-                SET subscription_status = 'expired' 
+                UPDATE users
+                SET subscription_status = 'beta_expired'
                 WHERE account_type = 'beta' AND subscription_status = 'beta_active'
             `);
         }
@@ -8457,7 +8457,7 @@ app.put('/api/admin/user/:id/account-type', async (req, res) => {
         } else if (account_type === 'beta') {
             // Check if beta period is active to set correct status
             const betaConfig = await db.getBetaConfig();
-            newSubscriptionStatus = betaConfig.beta_period_active ? 'beta_active' : 'expired';
+            newSubscriptionStatus = betaConfig.beta_period_active ? 'beta_active' : 'beta_expired';
         }
         
         // Update user account type and subscription status
@@ -8542,9 +8542,9 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
         const betaConfig = await db.getBetaConfig();
         if (betaConfig.beta_period_active) {
             await pool.query(`
-                UPDATE users 
+                UPDATE users
                 SET subscription_status = 'beta_active'
-                WHERE account_type = 'beta' AND subscription_status = 'expired'
+                WHERE account_type = 'beta' AND (subscription_status = 'expired' OR subscription_status = 'beta_expired')
             `);
             console.log('✅ Expired beta users reactivated');
         }
@@ -8561,6 +8561,37 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
             success: false,
             error: error.message,
             timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Migration endpoint: Fix expired status to beta_expired
+app.get('/api/admin/migrate-expired-to-beta-expired', async (req, res) => {
+    try {
+        console.log('🔄 Starting migration: expired → beta_expired for beta users');
+
+        // Update all beta users with 'expired' status to 'beta_expired'
+        const result = await pool.query(`
+            UPDATE users
+            SET subscription_status = 'beta_expired'
+            WHERE account_type = 'beta' AND subscription_status = 'expired'
+            RETURNING id, email, subscription_status
+        `);
+
+        console.log(`✅ Migrated ${result.rows.length} beta users from 'expired' to 'beta_expired'`);
+
+        res.json({
+            success: true,
+            message: `Successfully migrated ${result.rows.length} users`,
+            updated_users: result.rows,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('❌ Migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 });

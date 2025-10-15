@@ -134,10 +134,58 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.6 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.6</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Kritieke Bugfix - Subscription Status Mismatch</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause Bevestigd</strong>: Grondige analyse via debug endpoint toonde aan dat beta gebruikers met verlopen periode status <code>'expired'</code> kregen toegewezen, maar de validatie checkt op <code>'beta_expired'</code>. Status werd NERGENS herkend → alle plan selecties faalden met 400 error.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Updates Gefixt</strong>:
+                            <ul>
+                                <li>Beta toggle functie: 'expired' → 'beta_expired' (regel 8351)</li>
+                                <li>Nieuwe gebruiker registratie: 'expired' → 'beta_expired' (regel 8460)</li>
+                                <li>Migratie functie: nu ook 'beta_expired' ondersteuning (regel 8547)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Migration Endpoint</strong>: Toegevoegd <code>/api/admin/migrate-expired-to-beta-expired</code> om bestaande beta gebruikers met 'expired' status te migreren naar 'beta_expired' zodat ze plans kunnen selecteren.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Debug Tool</strong>: Toegevoegd <code>/api/debug/user-subscription-status?email=xxx</code> endpoint voor toekomstige diagnostiek van subscription status issues.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Alle beta gebruikers (nieuw en bestaand) met verlopen periode kunnen nu abonnementen selecteren: trial_14_days, monthly_7, monthly_8, yearly_70, yearly_80.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.5 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.5</span>
+                <span class="version-badge badge-fix">v0.19.5</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">
