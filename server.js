@@ -8619,6 +8619,39 @@ app.get('/api/admin/migrate-expired-to-beta-expired', async (req, res) => {
     }
 });
 
+// Debug endpoint to update trial end date (for testing expired trials)
+app.post('/api/debug/update-trial-end-date', async (req, res) => {
+    try {
+        const { email, trial_end_date } = req.body;
+
+        if (!email || !trial_end_date) {
+            return res.status(400).json({ error: 'Email and trial_end_date are required' });
+        }
+
+        const result = await pool.query(`
+            UPDATE users
+            SET trial_end_date = $1
+            WHERE email = $2
+            RETURNING id, email, subscription_status, trial_start_date, trial_end_date
+        `, [trial_end_date, email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Trial end date updated',
+            user: result.rows[0],
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error updating trial end date:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to check user subscription status
 app.get('/api/debug/user-subscription-status', async (req, res) => {
     try {
