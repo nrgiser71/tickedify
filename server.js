@@ -8565,6 +8565,60 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
     }
 });
 
+// Debug endpoint to check user subscription status
+app.get('/api/debug/user-subscription-status', async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email parameter required' });
+        }
+
+        const result = await pool.query(`
+            SELECT
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_status,
+                had_trial,
+                trial_start_date,
+                trial_end_date,
+                beta_end_date,
+                created_at,
+                laatste_login
+            FROM users
+            WHERE email = $1
+        `, [email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = result.rows[0];
+
+        // Check what validatePlanSelection would return
+        const validationResults = {
+            trial_14_days: validatePlanSelection('trial_14_days', user.subscription_status, user.had_trial),
+            monthly_7: validatePlanSelection('monthly_7', user.subscription_status, user.had_trial),
+            monthly_8: validatePlanSelection('monthly_8', user.subscription_status, user.had_trial),
+            yearly_70: validatePlanSelection('yearly_70', user.subscription_status, user.had_trial),
+            yearly_80: validatePlanSelection('yearly_80', user.subscription_status, user.had_trial)
+        };
+
+        res.json({
+            user: user,
+            validation: validationResults,
+            subscription_states_enum: SUBSCRIPTION_STATES,
+            plan_ids_enum: PLAN_IDS
+        });
+
+    } catch (error) {
+        console.error('Error checking user subscription status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test users cleanup endpoints
 app.get('/api/admin/test-users', async (req, res) => {
     try {
