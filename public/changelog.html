@@ -134,37 +134,68 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.9 -->
+        <!-- Version 0.19.10 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.9</span>
+                <span class="version-badge badge-latest">v0.19.10</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">
                 <div class="change-category">
-                    <div class="change-category-title">🔧 Kritieke Fix - Trial Optie Getoond Na Trial Expiry</div>
+                    <div class="change-category-title">🔧 Kritieke Fix - Backend Trial Expired Check</div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Bug</strong>: Gebruikers met een verlopen trial zagen nog steeds de optie om een gratis proefperiode te nemen op de subscription pagina. Dit was incorrect - alleen betalende abonnementen zouden getoond moeten worden.
+                            <strong>Bug</strong>: Backend <code>isTrialExpired()</code> functie retourneerde altijd <code>false</code> voor gebruikers met een verlopen trial maar <code>subscription_status</code> anders dan <code>'trialing'</code> (bijvoorbeeld <code>'beta_expired'</code>).
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Root Cause</strong>: Frontend <code>subscription.js</code> regel 112 checkte alleen de <code>had_trial</code> vlag, maar niet de <code>trial_expired</code> vlag die de backend via <code>/api/subscription/status</code> al correct teruggeeft.
+                            <strong>Root Cause</strong>: De functie checkte eerst of <code>subscription_status === 'trialing'</code> en retourneerde <code>false</code> als dit niet het geval was. Gebruikers met verlopen trials maar een andere status kregen altijd <code>trial_expired: false</code> van de API.
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Oplossing</strong>: Regel 112 aangepast om te checken op <code>had_trial</code> OF <code>trial_expired</code>. Trial optie wordt nu correct verborgen in beide scenario's.
+                            <strong>Oplossing</strong>: Status check verwijderd. De functie checkt nu alleen of <code>trial_end_date</code> in het verleden ligt, ongeacht huidige <code>subscription_status</code>.
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Impact</strong>: Gebruikers met verlopen trials zien nu alleen betalende abonnementen (Standard en No Limit), zoals bedoeld. Complete trial expiry flow werkt nu correct.
+                            <strong>Impact</strong>: API endpoint <code>/api/subscription/status</code> geeft nu correct <code>trial_expired: true</code> terug. Frontend v0.19.9 kan nu correct de trial optie verbergen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.9 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.9</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Poging Fix - Trial Optie Verbergen (Incomplete)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Bug</strong>: Gebruikers met een verlopen trial zagen nog steeds de optie om een gratis proefperiode te nemen op de subscription pagina.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Poging</strong>: Frontend <code>subscription.js</code> regel 112 aangepast om te checken op <code>had_trial</code> OF <code>trial_expired</code>.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Resultaat</strong>: Fix werkte niet volledig omdat backend API <code>trial_expired: false</code> terug gaf. Backend bug gefixt in v0.19.10.
                         </div>
                     </div>
                 </div>

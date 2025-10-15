@@ -180,10 +180,7 @@ function canAccessApp(user) {
 
 // Check if trial has expired
 function isTrialExpired(user) {
-  if (user.subscription_status !== SUBSCRIPTION_STATES.TRIALING) {
-    return false;
-  }
-
+  // If user has no trial_end_date, they never had a trial
   if (!user.trial_end_date) {
     return false;
   }
@@ -194,6 +191,7 @@ function isTrialExpired(user) {
   const trialEnd = new Date(user.trial_end_date);
   trialEnd.setHours(0, 0, 0, 0);
 
+  // Return true if trial end date is in the past
   return today > trialEnd;
 }
 
