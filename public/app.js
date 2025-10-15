@@ -5903,19 +5903,22 @@ class Taakbeheer {
             const today = new Date().toISOString().split('T')[0];
 
             if (isChecked) {
-                // Check current count of top priorities
-                const response = await fetch(`/api/prioriteiten/${today}`);
-                const currentPriorities = response.ok ? await response.json() : [];
+                // Count MIT's from already loaded topPrioriteiten array
+                // This includes MIT's from previous days still in planning
+                const currentMITCount = (this.topPrioriteiten || []).filter(t =>
+                    t.top_prioriteit !== null &&
+                    t.top_prioriteit !== undefined
+                ).length;
 
-                if (currentPriorities.length >= 3) {
+                if (currentMITCount >= 3) {
                     // Maximum 3 priorities - show error and uncheck
                     checkbox.checked = false;
-                    toast.error('Maximum 3 top prioriteiten - verwijder eerst een andere prioriteit');
+                    toast.error('Maximum 3 Most Important Tasks bereikt');
                     return;
                 }
 
                 // Find next available position (1, 2, or 3)
-                const usedPositions = currentPriorities.map(p => p.top_prioriteit);
+                const usedPositions = (this.topPrioriteiten || []).map(p => p.top_prioriteit);
                 let nextPosition = 1;
                 while (usedPositions.includes(nextPosition) && nextPosition <= 3) {
                     nextPosition++;
