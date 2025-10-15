@@ -134,10 +134,52 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.5 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.5</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix - Subscription Plan Validatie</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Fix Plan ID Mismatch</strong>: Opgelost bug waarbij bèta gebruikers met verlopen bèta periode geen abonnement konden selecteren. De PLAN_IDS constante voor trial abonnement was inconsistent (<code>trial_14</code> vs <code>trial_14_days</code>) met de rest van de applicatie, waardoor alle plan selecties werden geweigerd met 400 error "Ongeldige plan selectie voor huidige status".
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: PLAN_IDS.TRIAL_14 was ingesteld op 'trial_14' maar overal in de codebase (frontend, database, specificaties) wordt 'trial_14_days' gebruikt. De validatePlanSelection functie faalde omdat de waarden niet overeenkwamen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Gefixt</strong>: PLAN_IDS.TRIAL_14 gewijzigd van 'trial_14' naar 'trial_14_days' voor consistentie met de volledige applicatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Status Transitions Nu Werkend</strong>:
+                            <ul>
+                                <li>Beta expired → trial_14_days ✅</li>
+                                <li>Beta expired → monthly_7 ✅</li>
+                                <li>Beta expired → monthly_8 ✅</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.4 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.4</span>
+                <span class="version-badge badge-fix">v0.19.4</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">

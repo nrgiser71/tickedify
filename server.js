@@ -154,7 +154,7 @@ const SUBSCRIPTION_STATES = {
 };
 
 const PLAN_IDS = {
-  TRIAL_14: 'trial_14',
+  TRIAL_14: 'trial_14_days',
   MONTHLY_7: 'monthly_7',
   YEARLY_70: 'yearly_70',
   MONTHLY_8: 'monthly_8',
