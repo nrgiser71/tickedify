@@ -2264,8 +2264,10 @@ function optionalAuth(req, res, next) {
 
 // Get current user ID from session or fallback to default
 function getCurrentUserId(req) {
-    // Return user from session if authenticated, otherwise Jan's actual user ID
-    return req.session.userId || 'user_1750513625687_5458i79dj';
+    if (!req.session.userId) {
+        throw new Error('Niet ingelogd - geen geldige sessie');
+    }
+    return req.session.userId;
 }
 
 // Beta subscription middleware - checks if user has access during/after beta period
