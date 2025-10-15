@@ -5903,9 +5903,9 @@ class Taakbeheer {
             const today = new Date().toISOString().split('T')[0];
 
             if (isChecked) {
-                // Count MIT's from already loaded topPrioriteiten array
-                // This includes MIT's from previous days still in planning
-                const currentMITCount = (this.topPrioriteiten || []).filter(t =>
+                // Count MIT's from planningActies array which contains ALL actions
+                // This correctly includes MIT's from previous days still in the list
+                const currentMITCount = (this.planningActies || []).filter(t =>
                     t.top_prioriteit !== null &&
                     t.top_prioriteit !== undefined
                 ).length;
@@ -5918,7 +5918,9 @@ class Taakbeheer {
                 }
 
                 // Find next available position (1, 2, or 3)
-                const usedPositions = (this.topPrioriteiten || []).map(p => p.top_prioriteit);
+                const usedPositions = (this.planningActies || [])
+                    .filter(t => t.top_prioriteit !== null && t.top_prioriteit !== undefined)
+                    .map(p => p.top_prioriteit);
                 let nextPosition = 1;
                 while (usedPositions.includes(nextPosition) && nextPosition <= 3) {
                     nextPosition++;

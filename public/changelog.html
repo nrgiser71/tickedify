@@ -134,10 +134,38 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.3 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.3</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bug Fixes</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>MIT Maximum Telling - Correcte Fix</strong>: Fixed de fix van v0.19.2 die niet werkte. Het systeem gebruikt nu <code>planningActies</code> array in plaats van <code>topPrioriteiten</code> voor MIT counting. Dit telt nu echt ALLE MIT's correct, inclusief die van vorige dagen.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">📝 Technical Details</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: <code>topPrioriteiten</code> array bevatte alleen MIT's van vandaag (API filtert op <code>prioriteit_datum</code>). <code>planningActies</code> bevat alle acties ongeacht datum.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.2 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.2</span>
+                <span class="version-badge badge-fix">v0.19.2</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">
