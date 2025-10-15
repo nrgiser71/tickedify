@@ -108,8 +108,10 @@ function renderSubscriptionPlans() {
     // Filter plans based on user status
     let allPlans = subscriptionState.plans;
 
-    // Hide trial plan if user already had trial
-    const showTrial = !(subscriptionState.userStatus && subscriptionState.userStatus.had_trial);
+    // Hide trial plan if user already had trial OR if trial is expired
+    const showTrial = !(subscriptionState.userStatus &&
+                        (subscriptionState.userStatus.had_trial ||
+                         subscriptionState.userStatus.trial_expired));
 
     if (!showTrial) {
         console.log('Trial plan hidden - user already had trial');
