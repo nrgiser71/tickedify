@@ -2471,23 +2471,31 @@ app.post('/api/auth/register', async (req, res) => {
         req.session.userId = userId;
         req.session.userEmail = email;
         req.session.userNaam = naam;
-        
-        console.log(`✅ Beta user registered: ${email} (${userId}) with import code: ${importCode}`);
-        
-        res.json({
-            success: true,
-            message: 'Welkom als beta tester! Account succesvol aangemaakt.',
-            redirect: '/app',
-            user: {
-                id: userId,
-                email,
-                naam,
-                rol: 'user',
-                account_type: accountType,
-                subscription_status: subscriptionStatus,
-                importCode: importCode,
-                importEmail: `import+${importCode}@mg.tickedify.com`
+
+        // Explicitly save session before sending response
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error during registration:', err);
+                return res.status(500).json({ error: 'Fout bij opslaan sessie' });
             }
+
+            console.log(`✅ Beta user registered with session: ${email} (${userId}) with import code: ${importCode}`);
+
+            res.json({
+                success: true,
+                message: 'Welkom als beta tester! Account succesvol aangemaakt.',
+                redirect: '/app',
+                user: {
+                    id: userId,
+                    email,
+                    naam,
+                    rol: 'user',
+                    account_type: accountType,
+                    subscription_status: subscriptionStatus,
+                    importCode: importCode,
+                    importEmail: `import+${importCode}@mg.tickedify.com`
+                }
+            });
         });
         
     } catch (error) {

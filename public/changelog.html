@@ -134,10 +134,68 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.14 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.14</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Kritieke Bug Fix - Sessie Management Bij Registratie</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Sessie persistence probleem opgelost</strong>: Nieuwe gebruikers leken ingelogd na registratie maar sessie was niet persistent. Bij page refresh werden ze terug naar login pagina gestuurd.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backend fix</strong>: Toegevoegd <code>req.session.save()</code> in <code>/api/auth/register</code> endpoint om sessie expliciet op te slaan voordat response wordt verzonden (identiek aan login flow).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Frontend fix</strong>: Toegevoegd <code>await this.checkAuthStatus()</code> in <code>handleRegister()</code> na succesvolle registratie (identiek aan login flow).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Onboarding video fix</strong>: De onboarding video popup verscheen niet bij nieuwe gebruikers omdat <code>checkAuthStatus()</code> ontbrak - nu gefixed.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">📊 Technische Details</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Files Changed</strong>: server.js (registratie endpoint + session.save), app.js (handleRegister + checkAuthStatus)
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Nieuwe gebruikers hebben nu identieke auth flow als bestaande gebruikers bij login
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backwards Compatible</strong>: Geen breaking changes, alleen bugfixes
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.13 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.13</span>
+                <span class="version-badge badge-fix">v0.19.13</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">
