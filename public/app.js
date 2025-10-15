@@ -12486,11 +12486,14 @@ class AuthManager {
                 this.isAuthenticated = true;
                 this.updateUI();
                 this.hideRegisterModal();
-                
+
                 toast.success(`Account aangemaakt! Welkom ${data.user.naam}!`);
-                
-                // Load user-specific data
-                if (app) {
+
+                // Check auth status immediately after registration (includes onboarding video trigger)
+                await this.checkAuthStatus();
+
+                // Load user-specific data (only if still authenticated after checkAuthStatus)
+                if (this.isAuthenticated && app) {
                     await app.loadUserData();
                 }
             } else {
