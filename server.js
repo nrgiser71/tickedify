@@ -8584,7 +8584,6 @@ app.get('/api/debug/user-subscription-status', async (req, res) => {
                 had_trial,
                 trial_start_date,
                 trial_end_date,
-                beta_end_date,
                 created_at,
                 laatste_login
             FROM users
