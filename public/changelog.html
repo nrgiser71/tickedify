@@ -134,10 +134,51 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.8 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.8</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Kritieke Fix - Trial Access Geblokkeerd</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Bug</strong>: Users met actieve trial (<code>'trialing'</code> status) werden na trial activatie teruggestuurd naar subscription scherm in plaats van toegang te krijgen tot de app.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: Twee access control checks accepteerden alleen <code>'paid'</code> en <code>'active'</code> statussen, maar niet <code>'trialing'</code>:
+                            <ul>
+                                <li>Login flow (regel 2552-2554)</li>
+                                <li>/api/auth/me endpoint (regel 4156-4158)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Oplossing</strong>: Beide checks aangepast om ook <code>'trialing'</code> status te accepteren. Trial users krijgen nu direct toegang tot de app na trial activatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Trial flow werkt nu volledig - van selectie tot app toegang. Users kunnen de 14-dagen gratis trial periode direct gebruiken.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.7 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.7</span>
+                <span class="version-badge badge-fix">v0.19.7</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">

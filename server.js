@@ -2546,11 +2546,12 @@ app.post('/api/auth/login', async (req, res) => {
 
         console.log(`[BETA-CHECK] Login beta check for ${email}: betaPeriodActive=${betaConfig.beta_period_active}, accountType=${userDetails.account_type}, subscriptionStatus=${userDetails.subscription_status}`);
 
-        // If beta period is not active and user is beta type without paid subscription
+        // If beta period is not active and user is beta type without paid/active/trial subscription
         if (!betaConfig.beta_period_active &&
             userDetails.account_type === 'beta' &&
             userDetails.subscription_status !== 'paid' &&
-            userDetails.subscription_status !== 'active') {
+            userDetails.subscription_status !== 'active' &&
+            userDetails.subscription_status !== 'trialing') {
 
             console.log(`[LIMITED-LOGIN] Limited login for user ${email} - beta period ended, upgrade required`);
 
@@ -4152,7 +4153,9 @@ app.get('/api/auth/me', async (req, res) => {
 
         // If beta period is not active and user is beta type
         if (!betaConfig.beta_period_active && user.account_type === 'beta') {
-            if (user.subscription_status !== 'paid' && user.subscription_status !== 'active') {
+            if (user.subscription_status !== 'paid' &&
+                user.subscription_status !== 'active' &&
+                user.subscription_status !== 'trialing') {
                 hasAccess = false;
                 requiresUpgrade = true;
                 accessMessage = 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
