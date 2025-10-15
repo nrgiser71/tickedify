@@ -134,10 +134,57 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.11 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.11</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🚨 KRITIEKE Security Fix - Access Controle Voor Verlopen Trials</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>KRITIEKE BUG</strong>: Gebruikers met verlopen trials konden TOCH de app blijven gebruiken! De access controle checks keken alleen naar <code>subscription_status</code>, maar niet naar <code>trial_end_date</code>.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: Twee access controle locaties misten de check op verlopen trials:
+                            <ul>
+                                <li>Login flow (regel 2545-2557): Checkte niet of trial expired voor 'trialing' status</li>
+                                <li>/api/auth/me endpoint (regel 4153-4167): Checkte niet of trial expired voor 'trialing' status</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Security Impact</strong>: Gebruikers met <code>subscription_status = 'trialing'</code> en <code>trial_end_date</code> in het verleden kregen ongeldige toegang tot volledige app functionaliteit zonder betaling.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Oplossing</strong>: Beide access controle checks aangepast om <code>isTrialExpired(user)</code> functie te gebruiken. Check is nu: <code>(subscription_status !== 'trialing' || trialIsExpired)</code>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Resultaat</strong>: Gebruikers met verlopen trials worden nu correct geblokkeerd en doorgestuurd naar beta-expired pagina met upgrade opties. Access controle is nu waterdicht.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.10 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.10</span>
+                <span class="version-badge badge-fix">v0.19.10</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">

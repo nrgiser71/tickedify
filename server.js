@@ -2544,14 +2544,17 @@ app.post('/api/auth/login', async (req, res) => {
 
         console.log(`[BETA-CHECK] Login beta check for ${email}: betaPeriodActive=${betaConfig.beta_period_active}, accountType=${userDetails.account_type}, subscriptionStatus=${userDetails.subscription_status}`);
 
-        // If beta period is not active and user is beta type without paid/active/trial subscription
+        // Check if trial is expired
+        const trialIsExpired = isTrialExpired(userDetails);
+
+        // If beta period is not active and user is beta type without paid/active subscription (or expired trial)
         if (!betaConfig.beta_period_active &&
             userDetails.account_type === 'beta' &&
             userDetails.subscription_status !== 'paid' &&
             userDetails.subscription_status !== 'active' &&
-            userDetails.subscription_status !== 'trialing') {
+            (userDetails.subscription_status !== 'trialing' || trialIsExpired)) {
 
-            console.log(`[LIMITED-LOGIN] Limited login for user ${email} - beta period ended, upgrade required`);
+            console.log(`[LIMITED-LOGIN] Limited login for user ${email} - ${trialIsExpired ? 'trial expired' : 'beta period ended'}, upgrade required`);
 
             // Create session for subscription selection (limited access)
             req.session.userId = user.id;
@@ -4151,14 +4154,19 @@ app.get('/api/auth/me', async (req, res) => {
 
         // If beta period is not active and user is beta type
         if (!betaConfig.beta_period_active && user.account_type === 'beta') {
+            // Check if trial is expired
+            const trialIsExpired = isTrialExpired(user);
+
             if (user.subscription_status !== 'paid' &&
                 user.subscription_status !== 'active' &&
-                user.subscription_status !== 'trialing') {
+                (user.subscription_status !== 'trialing' || trialIsExpired)) {
                 hasAccess = false;
                 requiresUpgrade = true;
-                accessMessage = 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
+                accessMessage = trialIsExpired
+                    ? 'Je gratis proefperiode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.'
+                    : 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
 
-                console.log(`⚠️ /api/auth/me - User ${user.email} requires upgrade (beta expired)`);
+                console.log(`⚠️ /api/auth/me - User ${user.email} requires upgrade (${trialIsExpired ? 'trial expired' : 'beta expired'})`);
             }
         }
 
