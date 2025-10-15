@@ -2535,7 +2535,7 @@ app.post('/api/auth/login', async (req, res) => {
 
         // Get user's account details for beta check
         const userDetailsResult = await pool.query(`
-            SELECT account_type, subscription_status
+            SELECT account_type, subscription_status, trial_end_date
             FROM users
             WHERE id = $1
         `, [user.id]);
@@ -2574,6 +2574,7 @@ app.post('/api/auth/login', async (req, res) => {
                 return res.json({
                     success: true,
                     requiresUpgrade: true,
+                    expiryType: trialIsExpired ? 'trial' : 'beta',
                     message: 'Login succesvol, upgrade vereist voor volledige toegang',
                     user: {
                         id: user.id,
@@ -4130,11 +4131,11 @@ app.get('/api/auth/me', async (req, res) => {
     try {
         // Get user information including beta status
         const userResult = await pool.query(`
-            SELECT 
-                id, email, naam, 
-                account_type, subscription_status,
+            SELECT
+                id, email, naam,
+                account_type, subscription_status, trial_end_date,
                 created_at
-            FROM users 
+            FROM users
             WHERE id = $1
         `, [req.session.userId]);
         
@@ -4151,6 +4152,7 @@ app.get('/api/auth/me', async (req, res) => {
         let hasAccess = true;
         let accessMessage = null;
         let requiresUpgrade = false;
+        let expiryType = null;
 
         // If beta period is not active and user is beta type
         if (!betaConfig.beta_period_active && user.account_type === 'beta') {
@@ -4162,6 +4164,7 @@ app.get('/api/auth/me', async (req, res) => {
                 (user.subscription_status !== 'trialing' || trialIsExpired)) {
                 hasAccess = false;
                 requiresUpgrade = true;
+                expiryType = trialIsExpired ? 'trial' : 'beta';
                 accessMessage = trialIsExpired
                     ? 'Je gratis proefperiode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.'
                     : 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
@@ -4174,6 +4177,7 @@ app.get('/api/auth/me', async (req, res) => {
             authenticated: true,
             hasAccess: hasAccess,
             requiresUpgrade: requiresUpgrade,
+            expiryType: expiryType,
             accessMessage: accessMessage,
             user: {
                 id: req.session.userId,

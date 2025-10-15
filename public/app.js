@@ -12414,10 +12414,13 @@ class AuthManager {
             const data = await response.json();
 
             if (response.ok) {
-                // Check if upgrade is required (beta period ended)
+                // Check if upgrade is required (beta/trial period ended)
                 if (data.requiresUpgrade) {
-                    // Redirect to beta expired page
-                    window.location.href = '/beta-expired';
+                    // Redirect based on expiry type
+                    const redirectPage = data.expiryType === 'trial'
+                        ? '/trial-expired.html'
+                        : '/beta-expired.html';
+                    window.location.href = redirectPage;
                     return;
                 }
 
@@ -12540,10 +12543,13 @@ class AuthManager {
             if (response.ok) {
                 const data = await response.json();
 
-                // Check if upgrade is required (beta period ended)
+                // Check if upgrade is required (beta/trial period ended)
                 if (data.requiresUpgrade) {
-                    // Redirect to beta expired page
-                    window.location.href = '/beta-expired';
+                    // Redirect based on expiry type
+                    const redirectPage = data.expiryType === 'trial'
+                        ? '/trial-expired.html'
+                        : '/beta-expired.html';
+                    window.location.href = redirectPage;
                     return;
                 }
 
