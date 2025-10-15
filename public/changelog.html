@@ -134,10 +134,60 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.7 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.7</span>
+                <span class="version-date">15 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Completeness Fix - Alle Subscription Statussen Gedekt</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Ontdekte Gaps</strong>: Tijdens review ontdekt dat <code>'beta_active'</code> (nieuwe gebruiker tijdens actieve beta) en <code>'pending_payment'</code> (nieuwe gebruiker tijdens gestopte beta) ook niet werden herkend door de validatie. Nieuwe gebruikers zouden dezelfde 400 errors krijgen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Validatie Uitbreiding</strong>:
+                            <ul>
+                                <li><code>'beta_active'</code> case toegevoegd (regel 212-218): Trial + alle paid plans</li>
+                                <li><code>'pending_payment'</code> case toegevoegd (regel 230-236): Trial + alle paid plans</li>
+                                <li>SUBSCRIPTION_STATES enum uitgebreid met beide statussen</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Volledige Dekking Nu Actief</strong>:
+                            <ul>
+                                <li>✅ <code>'beta'</code> - oude beta users</li>
+                                <li>✅ <code>'beta_active'</code> - nieuwe users tijdens actieve beta</li>
+                                <li>✅ <code>'beta_expired'</code> - verlopen beta users</li>
+                                <li>✅ <code>'pending_payment'</code> - nieuwe users tijdens gestopte beta</li>
+                                <li>✅ <code>'trialing'</code> - users in trial</li>
+                                <li>✅ <code>'trial_expired'</code> - users met verlopen trial</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Alle mogelijke subscription flows zijn nu gedekt - nieuwe gebruikers kunnen in alle scenario's direct een abonnement selecteren.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.6 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.6</span>
+                <span class="version-badge badge-fix">v0.19.6</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">

@@ -145,7 +145,9 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
 // Subscription State Machine Constants
 const SUBSCRIPTION_STATES = {
   BETA: 'beta',
+  BETA_ACTIVE: 'beta_active',
   BETA_EXPIRED: 'beta_expired',
+  PENDING_PAYMENT: 'pending_payment',
   TRIALING: 'trialing',
   TRIAL_EXPIRED: 'trial_expired',
   ACTIVE: 'active',
@@ -206,8 +208,26 @@ function validatePlanSelection(planId, currentStatus, hadTrial = false) {
     return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
   }
 
+  // Beta-active users (new registration during active beta) can select trial or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.BETA_ACTIVE) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
   // Beta-expired users can select trial (if never had trial) or paid plans
   if (currentStatus === SUBSCRIPTION_STATES.BETA_EXPIRED) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  // Pending payment users (new registration during stopped beta) can select trial or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.PENDING_PAYMENT) {
     // If trying to select trial, check if user already had trial
     if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
       return false; // User already had trial, cannot select again
