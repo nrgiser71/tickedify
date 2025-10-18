@@ -134,10 +134,89 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.18 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.18</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🚨 KRITIEKE Bug Fix - Bijlagen Verdwijnen Bij Inbox→Acties</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause Opgelost</strong>: Bijlagen verdwenen wanneer taken van inbox naar acties werden geconverteerd. Oorzaak: DELETE+INSERT patroon triggerde CASCADE DELETE op foreign key constraint, waardoor alle bijlagen automatisch werden verwijderd.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Permanente Fix</strong>: Vervangen DELETE+INSERT door UPDATE query in <code>/api/debug/add-single-action</code> endpoint. De UPDATE wijzigt alleen de lijst van 'inbox' naar 'acties' zonder de taak te verwijderen, waardoor bijlagen behouden blijven.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Prioriteit Field</strong>: Toegevoegd aan zowel UPDATE als INSERT queries voor consistente data transfer tijdens inbox→acties conversie.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">📋 Feature 016: Bijlage Limiet Enforcement</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Standard Limiet</strong>: €7 abonnement correct beperkt tot 1 bijlage per taak (was onbeperkt, nu gefixed).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Plus Onbeperkt</strong>: €8 abonnement behoudt onbeperkte bijlagen per taak.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Layer</strong>: Nieuwe <code>getUserPlanType()</code> functie differentieert tussen 'free', 'premium_standard', en 'premium_plus' tiers (database.js:2237-2280).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Upload Endpoint</strong>: Bijlage limiet check voorafgaand aan upload, met duidelijke upgrade melding voor Standard gebruikers (server.js:3306-3340).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Storage Stats API</strong>: Correcte max_attachments_per_task waarde op basis van plan type (null voor Plus, 1 voor Standard/Free).
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">🎯 Testing & Verification</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Test User</strong>: jbs.jan.buskens+tickedify202510181@gmail.com met Premium Standard (€7) abonnement voor volledige beta→trial→paid flow verificatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Pending Tests</strong>: Premium Standard limiet (1 bijlage), Premium Plus onbeperkt, bijlagen persistent na inbox→acties conversie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.14 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.14</span>
+                <span class="version-badge badge-fix">v0.19.14</span>
                 <span class="version-date">15 oktober 2025</span>
             </div>
             <div class="changes-list">

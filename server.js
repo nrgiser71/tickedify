@@ -6182,38 +6182,79 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         
         // First check if task already exists for this user
         const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
+
+        let result;
         if (existingCheck.rows.length > 0) {
-            console.log('🔧 SINGLE ACTION: Task already exists, updating instead');
-            
-            // Delete the existing task first
-            await pool.query('DELETE FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
-            console.log('🔧 SINGLE ACTION: Deleted existing task');
+            console.log('🔧 SINGLE ACTION: Task already exists, UPDATE to preserve bijlagen');
+
+            // UPDATE existing task instead of DELETE+INSERT
+            // This preserves bijlagen due to CASCADE DELETE on foreign key
+            result = await pool.query(`
+                UPDATE taken
+                SET
+                    lijst = $1,
+                    tekst = $2,
+                    opmerkingen = $3,
+                    project_id = $4,
+                    verschijndatum = $5,
+                    context_id = $6,
+                    duur = $7,
+                    type = $8,
+                    herhaling_type = $9,
+                    herhaling_waarde = $10,
+                    herhaling_actief = $11,
+                    prioriteit = $12
+                WHERE id = $13 AND user_id = $14
+                RETURNING id
+            `, [
+                'acties',
+                actionData.tekst,
+                actionData.opmerkingen || null,
+                actionData.projectId || null,
+                actionData.verschijndatum || null,
+                actionData.contextId || null,
+                actionData.duur || null,
+                actionData.type || null,
+                actionData.herhalingType || null,
+                actionData.herhalingWaarde || null,
+                actionData.herhalingActief === true || actionData.herhalingActief === 'true',
+                actionData.prioriteit || null,
+                actionData.id,
+                userId
+            ]);
+
+            console.log('🔧 SINGLE ACTION: Successfully updated to acties, bijlagen preserved');
+        } else {
+            console.log('🔧 SINGLE ACTION: New task, inserting');
+
+            // Insert new action (direct action creation, not from inbox)
+            result = await pool.query(`
+                INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, prioriteit, afgewerkt, user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                RETURNING id
+            `, [
+                actionData.id,
+                actionData.tekst,
+                actionData.opmerkingen || null,
+                actionData.aangemaakt,
+                'acties',
+                actionData.projectId || null,
+                actionData.verschijndatum || null,
+                actionData.contextId || null,
+                actionData.duur || null,
+                actionData.type || null,
+                actionData.herhalingType || null,
+                actionData.herhalingWaarde || null,
+                actionData.herhalingActief === true || actionData.herhalingActief === 'true',
+                actionData.prioriteit || null,
+                null,
+                userId
+            ]);
+
+            console.log('🔧 SINGLE ACTION: Successfully inserted new action');
         }
-        
-        // Insert directly without touching existing data - WITH user_id
-        const result = await pool.query(`
-            INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-            RETURNING id
-        `, [
-            actionData.id,
-            actionData.tekst,
-            actionData.opmerkingen || null,
-            actionData.aangemaakt,
-            'acties',
-            actionData.projectId || null,
-            actionData.verschijndatum || null,
-            actionData.contextId || null,
-            actionData.duur || null,
-            actionData.type || null,
-            actionData.herhalingType || null,
-            actionData.herhalingWaarde || null,
-            actionData.herhalingActief === true || actionData.herhalingActief === 'true',
-            null,
-            userId  // Add user_id
-        ]);
-        
-        console.log('🔧 SINGLE ACTION: Successfully inserted with ID:', result.rows[0].id);
+
+        console.log('🔧 SINGLE ACTION: Result ID:', result.rows[0].id);
         
         res.json({ 
             success: true, 
