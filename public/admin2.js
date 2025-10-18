@@ -63,7 +63,9 @@ const API = {
             method: 'PUT',
             body: JSON.stringify({ blocked })
         }),
-        forceLogout: (id) => API.request(`/users/${id}/logout`, { method: 'POST' })
+        forceLogout: (id) => API.request(`/users/${id}/logout`, { method: 'POST' }),
+        deleteUser: (id) => API.request(`/users/${id}`, { method: 'DELETE' }),
+        resetPassword: (id) => API.request(`/users/${id}/reset-password`, { method: 'POST' })
     },
 
     // System configuration endpoints
@@ -1033,6 +1035,116 @@ const UserActions = {
         } catch (error) {
             alert(`❌ Failed to force logout: ${error.message}`);
         }
+    },
+
+    /**
+     * Show Delete User Modal (T036)
+     */
+    showDeleteUserModal() {
+        if (!window.currentUserData) {
+            alert('No user selected');
+            return;
+        }
+
+        document.getElementById('delete-user-email').textContent = window.currentUserData.user.email;
+        document.getElementById('delete-confirm-checkbox').checked = false;
+        document.getElementById('delete-confirm-btn').disabled = true;
+
+        // Enable delete button only when checkbox is checked
+        const checkbox = document.getElementById('delete-confirm-checkbox');
+        const deleteBtn = document.getElementById('delete-confirm-btn');
+
+        // Remove existing event listener by replacing element
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+
+        newCheckbox.addEventListener('change', (e) => {
+            deleteBtn.disabled = !e.target.checked;
+        });
+
+        document.getElementById('delete-user-modal').style.display = 'flex';
+    },
+
+    /**
+     * Delete user account (T036)
+     */
+    async deleteUser() {
+        try {
+            const userId = window.currentUserId;
+            const email = window.currentUserData.user.email;
+
+            // Final confirmation
+            if (!confirm(`FINAL CONFIRMATION: Delete ${email}?`)) {
+                return;
+            }
+
+            const result = await API.users.deleteUser(userId);
+
+            alert(`✅ User deleted successfully\n\nCascade deleted:\n- ${result.cascade_deleted.tasks} tasks\n- ${result.cascade_deleted.email_imports} email imports\n- ${result.cascade_deleted.sessions} sessions`);
+
+            this.closeModal('delete-user-modal');
+
+            // Go back to search
+            Screens.closeUserDetails();
+
+        } catch (error) {
+            alert(`❌ Failed to delete user: ${error.message}`);
+        }
+    },
+
+    /**
+     * Show Reset Password Modal (T036)
+     */
+    showResetPasswordModal() {
+        if (!window.currentUserData) {
+            alert('No user selected');
+            return;
+        }
+
+        document.getElementById('reset-user-email').textContent = window.currentUserData.user.email;
+        document.getElementById('new-password-display').style.display = 'none';
+        document.getElementById('reset-password-btn').disabled = false;
+        document.getElementById('reset-password-btn').style.display = '';
+        document.getElementById('reset-password-btn').textContent = 'Generate New Password';
+        document.getElementById('reset-password-modal').style.display = 'flex';
+    },
+
+    /**
+     * Reset user password (T036)
+     */
+    async resetPassword() {
+        try {
+            const userId = window.currentUserId;
+
+            document.getElementById('reset-password-btn').disabled = true;
+            document.getElementById('reset-password-btn').textContent = 'Generating...';
+
+            const result = await API.users.resetPassword(userId);
+
+            // Display new password
+            document.getElementById('new-password-value').textContent = result.new_password;
+            document.getElementById('new-password-display').style.display = 'block';
+            document.getElementById('reset-password-btn').style.display = 'none';
+
+            alert(`✅ Password reset successful\n\nNew password: ${result.new_password}\n\nPlease provide this password to the user securely.`);
+
+        } catch (error) {
+            alert(`❌ Failed to reset password: ${error.message}`);
+            document.getElementById('reset-password-btn').disabled = false;
+            document.getElementById('reset-password-btn').textContent = 'Generate New Password';
+        }
+    },
+
+    /**
+     * Copy password to clipboard (T036)
+     */
+    copyPassword() {
+        const password = document.getElementById('new-password-value').textContent;
+        navigator.clipboard.writeText(password).then(() => {
+            alert('✅ Password copied to clipboard');
+        }).catch(() => {
+            alert('❌ Failed to copy password. Please copy manually.');
+        });
     },
 
     /**

@@ -834,6 +834,11 @@
                                     🎯 Extend Trial Date
                                 </button>
 
+                                <!-- Reset Password (T036) -->
+                                <button class="btn btn-primary" onclick="UserActions.showResetPasswordModal()">
+                                    🔑 Reset Password
+                                </button>
+
                                 <!-- Block/Unblock -->
                                 <button class="btn btn-danger" id="block-user-btn" onclick="UserActions.toggleBlockUser()">
                                     🔒 Block User
@@ -842,6 +847,11 @@
                                 <!-- Force Logout -->
                                 <button class="btn btn-primary" onclick="UserActions.forceLogout()">
                                     🚪 Force Logout
+                                </button>
+
+                                <!-- Delete User (T036) -->
+                                <button class="btn btn-danger" onclick="UserActions.showDeleteUserModal()">
+                                    🗑️ Delete User Account
                                 </button>
                             </div>
                         </div>
@@ -917,6 +927,71 @@
             <div class="modal-buttons">
                 <button class="btn btn-primary" onclick="UserActions.extendTrial()">Extend Trial</button>
                 <button class="btn btn-secondary" onclick="UserActions.closeModal('extend-trial-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Modal (T036) -->
+    <div id="delete-user-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #FF3B30;">⚠️ Delete User Account</h3>
+            <p>Are you absolutely sure you want to delete <strong id="delete-user-email">--</strong>?</p>
+
+            <div style="background: #FEE; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <strong>Warning:</strong> This action cannot be undone.
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>All tasks will be deleted</li>
+                    <li>All email imports will be deleted</li>
+                    <li>All sessions will be invalidated</li>
+                    <li>User will be immediately logged out</li>
+                </ul>
+            </div>
+
+            <label style="display: block; margin: 15px 0;">
+                <input type="checkbox" id="delete-confirm-checkbox" />
+                I understand this action is permanent
+            </label>
+
+            <div class="modal-buttons">
+                <button class="btn btn-danger" onclick="UserActions.deleteUser()" id="delete-confirm-btn" disabled>
+                    Delete Account
+                </button>
+                <button class="btn btn-secondary" onclick="UserActions.closeModal('delete-user-modal')">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal (T036) -->
+    <div id="reset-password-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>🔑 Reset User Password</h3>
+            <p>Generate new password for <strong id="reset-user-email">--</strong></p>
+
+            <div style="background: #FFF8E1; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <strong>Note:</strong> A random 12-character password will be generated.
+                You must securely provide it to the user.
+            </div>
+
+            <!-- New password display (hidden initially) -->
+            <div id="new-password-display" style="display: none; background: #E8F5E9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <strong>New Password:</strong>
+                <div style="font-family: monospace; font-size: 18px; padding: 10px; background: white; border-radius: 4px; margin-top: 10px;">
+                    <span id="new-password-value">--</span>
+                    <button onclick="UserActions.copyPassword()" style="margin-left: 10px; padding: 5px 10px; border: none; background: var(--macos-blue); color: white; border-radius: 4px; cursor: pointer;">
+                        📋 Copy
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="UserActions.resetPassword()" id="reset-password-btn">
+                    Generate New Password
+                </button>
+                <button class="btn btn-secondary" onclick="UserActions.closeModal('reset-password-modal')">
+                    Close
+                </button>
             </div>
         </div>
     </div>

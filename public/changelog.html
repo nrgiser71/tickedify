@@ -134,10 +134,59 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.47 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.47</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🗑️🔑 Delete User & Reset Password UI (T036)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Delete User Modal</strong>: Professional warning modal met red color scheme (#FF3B30), displays user email, red warning box (#FEE background) met cascade delete details (tasks, email imports, sessions), required checkbox confirmation "I understand this action is permanent", delete button disabled until checkbox checked, double confirmation dialog, DELETE /api/admin2/users/:id endpoint, success message toont cascade deleted counts, navigeert terug naar search na delete.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Reset Password Modal</strong>: Password generation modal met 🔑 icon, displays user email, yellow info box (#FFF8E1) warns about secure password delivery, "Generate New Password" button triggers API call, generates random 12-character password, new password display area (hidden until generated) met green background (#E8F5E9), monospace font display voor password readability, copy to clipboard button (📋 Copy) met navigator.clipboard API, generate button hidden after success, success alert displays password.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Action Buttons</strong>: 2 nieuwe buttons toegevoegd aan action-buttons-grid - 🔑 Reset Password (btn-primary), 🗑️ Delete User Account (btn-danger) - responsive grid blijft auto-fit minmax 200px, full width buttons, consistent spacing (15px gap).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Security Features</strong>: Delete requires checkbox confirmation + double confirm dialog, reset password toont warning over secure delivery, copy to clipboard functionaliteit voorkomt manual typing errors, delete button disabled by default (requires explicit checkbox check), checkbox event listener removal via clone to prevent duplicates.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Client Methods</strong>: API.users.deleteUser(id) - DELETE endpoint, API.users.resetPassword(id) - POST endpoint, consistent error handling via API.request wrapper, JSON response parsing voor cascade_deleted details en new_password.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>UserActions Methods</strong>: showDeleteUserModal() - setup checkbox logic + modal display, deleteUser() - double confirmation + cascade delete reporting, showResetPasswordModal() - reset modal state, resetPassword() - generate + display password, copyPassword() - clipboard API wrapper met fallback error handling.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.46 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.46</span>
+                <span class="version-badge badge-feature">v0.19.46</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
