@@ -10449,6 +10449,254 @@ app.put('/api/admin2/system/settings/:key', requireAdmin, async (req, res) => {
 });
 
 // ========================================
+// ADMIN DASHBOARD V2 - DEBUG TOOLS
+// ========================================
+
+// GET /api/admin2/debug/user-data/:id - Complete user data inspector
+app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id, 10);
+
+        // Validate userId
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive integer'
+            });
+        }
+
+        console.log(`🔍 Fetching complete user data for user ID: ${userId} (requested by admin ID: ${req.session.userId})`);
+
+        // Parallel queries voor performance - gebruik Promise.all
+        const [
+            userResult,
+            taskSummary,
+            tasksByProject,
+            tasksByContext,
+            emailSummary,
+            recentEmails,
+            sessionInfo,
+            planningCount,
+            recurringCount
+        ] = await Promise.all([
+            // 1. User details - ALLE velden
+            pool.query(`
+                SELECT
+                    id,
+                    email,
+                    naam,
+                    LENGTH(wachtwoord_hash) as password_hash_length,
+                    account_type,
+                    subscription_tier,
+                    subscription_status,
+                    trial_end_date,
+                    actief,
+                    created_at,
+                    last_login,
+                    onboarding_video_seen,
+                    onboarding_video_seen_at
+                FROM users
+                WHERE id = $1
+            `, [userId]),
+
+            // 2. Task summary
+            pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE voltooid = true) as completed,
+                    COUNT(*) FILTER (WHERE voltooid = false) as pending,
+                    COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring,
+                    COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked,
+                    CASE
+                        WHEN COUNT(*) > 0 THEN
+                            ROUND((COUNT(*) FILTER (WHERE voltooid = true)::numeric / COUNT(*)::numeric) * 100, 1)
+                        ELSE 0
+                    END as completion_rate
+                FROM taken
+                WHERE user_id = $1
+            `, [userId]),
+
+            // 3. Tasks by project
+            pool.query(`
+                SELECT
+                    COALESCE(project, '(geen project)') as project,
+                    COUNT(*) as count
+                FROM taken
+                WHERE user_id = $1
+                GROUP BY project
+                ORDER BY count DESC
+                LIMIT 20
+            `, [userId]),
+
+            // 4. Tasks by context
+            pool.query(`
+                SELECT
+                    COALESCE(context, '(geen context)') as context,
+                    COUNT(*) as count
+                FROM taken
+                WHERE user_id = $1
+                GROUP BY context
+                ORDER BY count DESC
+                LIMIT 20
+            `, [userId]),
+
+            // 5. Email imports summary
+            pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE imported_at >= NOW() - INTERVAL '30 days') as recent_30d,
+                    MIN(imported_at) as oldest_import,
+                    MAX(imported_at) as newest_import,
+                    COUNT(*) FILTER (WHERE processed = true) as processed,
+                    COUNT(*) FILTER (WHERE task_id IS NOT NULL) as converted_to_task
+                FROM email_imports
+                WHERE user_id = $1
+            `, [userId]),
+
+            // 6. Recent email imports (last 10)
+            pool.query(`
+                SELECT
+                    from_email,
+                    subject,
+                    imported_at,
+                    processed,
+                    task_id
+                FROM email_imports
+                WHERE user_id = $1
+                ORDER BY imported_at DESC
+                LIMIT 10
+            `, [userId]),
+
+            // 7. Session info
+            pool.query(`
+                SELECT
+                    COUNT(*) as active_sessions,
+                    MAX(expire) as last_activity
+                FROM session
+                WHERE sess::text LIKE $1
+                AND expire > NOW()
+            `, [`%"userId":${userId}%`]),
+
+            // 8. Dagelijkse planning entries count
+            pool.query(`
+                SELECT COUNT(*) as total
+                FROM dagelijkse_planning
+                WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)
+            `, [userId]),
+
+            // 9. Herhalende taken count (actief)
+            pool.query(`
+                SELECT COUNT(*) as total
+                FROM taken
+                WHERE user_id = $1
+                AND herhaling_actief = true
+            `, [userId])
+        ]);
+
+        // Check if user exists
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const user = userResult.rows[0];
+        const tasks = taskSummary.rows[0];
+        const emails = emailSummary.rows[0];
+        const sessions = sessionInfo.rows[0];
+
+        // Build comprehensive response
+        const responseData = {
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                password_hash_length: user.password_hash_length, // Voor debugging
+                account_type: user.account_type,
+                subscription_tier: user.subscription_tier,
+                subscription_status: user.subscription_status,
+                trial_end_date: user.trial_end_date,
+                actief: user.actief,
+                created_at: user.created_at,
+                last_login: user.last_login,
+                onboarding_video_seen: user.onboarding_video_seen,
+                onboarding_video_seen_at: user.onboarding_video_seen_at
+            },
+            tasks: {
+                summary: {
+                    total: parseInt(tasks.total),
+                    completed: parseInt(tasks.completed),
+                    pending: parseInt(tasks.pending),
+                    recurring: parseInt(tasks.recurring),
+                    blocked: parseInt(tasks.blocked),
+                    completion_rate: parseFloat(tasks.completion_rate)
+                },
+                by_project: tasksByProject.rows.map(row => ({
+                    project: row.project,
+                    count: parseInt(row.count)
+                })),
+                by_context: tasksByContext.rows.map(row => ({
+                    context: row.context,
+                    count: parseInt(row.count)
+                }))
+            },
+            emails: {
+                summary: {
+                    total: parseInt(emails.total),
+                    recent_30d: parseInt(emails.recent_30d),
+                    oldest_import: emails.oldest_import,
+                    newest_import: emails.newest_import,
+                    processed: parseInt(emails.processed),
+                    converted_to_task: parseInt(emails.converted_to_task)
+                },
+                recent: recentEmails.rows.map(email => ({
+                    from_email: email.from_email,
+                    subject: email.subject,
+                    imported_at: email.imported_at,
+                    processed: email.processed,
+                    task_id: email.task_id
+                }))
+            },
+            subscription: {
+                status: user.subscription_status,
+                tier: user.subscription_tier,
+                trial_end_date: user.trial_end_date
+            },
+            sessions: {
+                active_count: parseInt(sessions.active_sessions),
+                last_activity: sessions.last_activity
+            },
+            planning: {
+                total_entries: parseInt(planningCount.rows[0].total)
+            },
+            recurring: {
+                total_active: parseInt(recurringCount.rows[0].total)
+            }
+        };
+
+        console.log(`✅ User data inspector completed for user ${userId}`);
+        console.log(`   Tasks: ${tasks.total} total, ${tasks.completed} completed (${tasks.completion_rate}%)`);
+        console.log(`   Emails: ${emails.total} total, ${emails.recent_30d} last 30 days`);
+        console.log(`   Sessions: ${sessions.active_sessions} active`);
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.error('❌ Error in user data inspector:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to fetch user data',
+            details: error.message
+        });
+    }
+});
+
+// ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================
 // Admin Dashboard V2 - User-based authentication with account_type='admin'
@@ -11849,10 +12097,155 @@ app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req
 });
 
 // ============================================================================
+// T024: POST /api/admin2/debug/database-backup - Database backup metadata
+// ============================================================================
+
+app.post('/api/admin2/debug/database-backup', requireAdmin, async (req, res) => {
+    try {
+        console.log('💾 Collecting database backup metadata...');
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Collect database size
+        const sizeResult = await pool.query(`
+            SELECT pg_database_size(current_database()) / 1024 / 1024 AS size_mb
+        `);
+        const database_size_mb = Math.round(sizeResult.rows[0].size_mb);
+
+        // Collect table info with row counts
+        const tablesResult = await pool.query(`
+            SELECT
+                tablename
+            FROM pg_catalog.pg_tables
+            WHERE schemaname = 'public'
+            ORDER BY tablename
+        `);
+
+        const tables = [];
+        let total_rows = 0;
+
+        // Get row count for each table
+        for (const table of tablesResult.rows) {
+            try {
+                const countResult = await pool.query(`SELECT COUNT(*) as count FROM ${table.tablename}`);
+                const row_count = parseInt(countResult.rows[0].count);
+                tables.push({
+                    name: table.tablename,
+                    rows: row_count
+                });
+                total_rows += row_count;
+            } catch (error) {
+                console.error(`❌ Error counting rows in ${table.tablename}:`, error.message);
+                tables.push({
+                    name: table.tablename,
+                    rows: 0,
+                    error: 'Failed to count rows'
+                });
+            }
+        }
+
+        // Get last backup timestamp from system_settings or use NOW()
+        let last_backup_timestamp;
+        try {
+            const backupSettingResult = await pool.query(`
+                SELECT value FROM system_settings WHERE key = 'last_backup_timestamp'
+            `);
+            if (backupSettingResult.rows.length > 0) {
+                last_backup_timestamp = backupSettingResult.rows[0].value;
+            } else {
+                last_backup_timestamp = new Date().toISOString();
+            }
+        } catch (error) {
+            // Fallback als system_settings tabel niet bestaat
+            last_backup_timestamp = new Date().toISOString();
+        }
+
+        // Collect database name from connection
+        const dbNameResult = await pool.query(`SELECT current_database() as db_name`);
+        const database_name = dbNameResult.rows[0].db_name;
+
+        // Generate Neon dashboard URL (from env vars if available)
+        const neon_project_id = process.env.NEON_PROJECT_ID || 'your-project-id';
+        const neon_dashboard_url = `https://console.neon.tech/app/projects/${neon_project_id}`;
+
+        // Build response with backup metadata
+        const backup_info = {
+            database_name,
+            database_size_mb,
+            table_count: tables.length,
+            total_rows,
+            tables,
+            backup_timestamp: last_backup_timestamp
+        };
+
+        const instructions = {
+            automatic_backups: 'Neon automatically backs up your database daily with point-in-time restore capability',
+            manual_backup_via_branch: 'Create a new branch in Neon dashboard for instant backup snapshot',
+            sql_export: `Use pg_dump for manual SQL export: pg_dump -h ${process.env.DB_HOST || 'your-neon-host'} -U ${process.env.DB_USER || 'your-user'} -d ${database_name} > backup.sql`,
+            neon_documentation: 'https://neon.tech/docs/manage/backups'
+        };
+
+        // Audit logging met graceful fallback
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    old_value,
+                    new_value,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                'DATABASE_BACKUP_REQUEST',
+                'database',
+                database_name,
+                null,
+                JSON.stringify({ size_mb: database_size_mb, tables: tables.length, rows: total_rows }),
+                req.ip,
+                req.get('User-Agent')
+            ]);
+            console.log('✅ Audit log created for backup request');
+        } catch (auditError) {
+            // Graceful fallback - log to console als audit tabel niet bestaat
+            console.log('[AUDIT] Admin', req.session.userId, 'requested database backup metadata for', database_name);
+        }
+
+        console.log('✅ Backup metadata collected:', {
+            database: database_name,
+            size_mb: database_size_mb,
+            tables: tables.length,
+            total_rows
+        });
+
+        res.json({
+            success: true,
+            backup_info,
+            neon_dashboard_url,
+            instructions,
+            message: 'Backup metadata collected. Use Neon dashboard or pg_dump for actual backups.'
+        });
+
+    } catch (error) {
+        console.error('❌ Error collecting backup metadata:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to collect backup metadata',
+            details: error.message
+        });
+    }
+});
+
+// ============================================================================
 
     try {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
-        
+
         // Check if forensic_logs table exists
         const tableExists = await pool.query(`
             SELECT EXISTS (

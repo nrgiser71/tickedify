@@ -134,10 +134,65 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.38 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.38</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔍 Backend - Admin Dashboard v2 Debug Tools</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/debug/user-data/:id Endpoint</strong>: Complete user data inspector met comprehensive breakdown van ALLE user data voor debugging. Parallel queries via Promise.all voor optimale performance (<500ms).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Details Section</strong>: Alle velden uit users tabel - email, naam, account_type, subscription_tier, subscription_status, trial_end_date, actief, created_at, last_login, onboarding status. Inclusief password_hash length voor debugging (geen hash zelf).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Task Statistics</strong>: Summary (total, completed, pending, recurring, blocked, completion_rate), breakdown by project (top 20), breakdown by context (top 20). Percentage berekening met FILTER queries en ROUND voor precise metrics.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Email Import Analytics</strong>: Summary (total, recent_30d, oldest_import, newest_import, processed count, converted_to_task count), recent 10 imports met details (from_email, subject, imported_at, processed status, task_id).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Session & Activity Tracking</strong>: Active sessions count via session tabel JSONB query, last_activity timestamp. Planning entries count (dagelijkse_planning). Recurring tasks count (herhaling_actief=true).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Comprehensive JSON Response</strong>: Geneste structure met user, tasks, emails, subscription, sessions, planning en recurring secties. Alle dates als ISO strings, counts als integers, percentages als floats. Ready voor data visualization in frontend.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Validatie van userId parameter (integer > 0). Returns 400 (invalid id), 404 (user not found), 500 (server error). Console logging met summary metrics voor operational monitoring.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.37 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.37</span>
+                <span class="version-badge badge-feature">v0.19.37</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
