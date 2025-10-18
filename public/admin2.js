@@ -1096,8 +1096,7 @@ const Screens = {
      * Debug Tools Screen
      */
     async loadDebug() {
-        const container = document.getElementById('debug-content');
-        container.innerHTML = '<p>Debug tools will be loaded here</p>';
+        console.log('Debug tools loaded');
     },
 
     /**
@@ -1383,6 +1382,128 @@ const UserActions = {
      */
     closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
+    }
+};
+
+// ============================================================================
+// Debug Tools (T040)
+// ============================================================================
+
+const DebugTools = {
+    /**
+     * Inspect user data for debugging
+     */
+    async inspectUser() {
+        try {
+            const userId = document.getElementById('debug-user-id').value.trim();
+
+            if (!userId) {
+                alert('❌ Please enter a user ID');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('debug-user-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>Loading user data...</p>';
+
+            const data = await API.debug.getUserData(userId);
+
+            resultsDiv.innerHTML = `
+                <h4>👤 User Information</h4>
+                <table>
+                    <tr><th>ID</th><td>${data.user.id}</td></tr>
+                    <tr><th>Email</th><td>${data.user.email}</td></tr>
+                    <tr><th>Naam</th><td>${data.user.naam || '-'}</td></tr>
+                    <tr><th>Account Type</th><td>${data.user.account_type}</td></tr>
+                    <tr><th>Subscription Tier</th><td>${data.user.subscription_tier}</td></tr>
+                    <tr><th>Status</th><td><span class="${data.user.actief ? 'status-active' : 'status-inactive'}">${data.user.actief ? 'Active' : 'Blocked'}</span></td></tr>
+                    <tr><th>Created At</th><td>${Helpers.formatDate(data.user.created_at)}</td></tr>
+                    <tr><th>Last Login</th><td>${data.user.last_login ? Helpers.formatRelativeTime(data.user.last_login) : 'Never'}</td></tr>
+                </table>
+
+                <h4 style="margin-top: 30px;">📋 Task Summary</h4>
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.tasks.summary.total)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.tasks.summary.completed)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(data.tasks.summary.completion_rate)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.tasks.summary.pending)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Recurring</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.tasks.summary.recurring || 0)}</div>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 30px;">📊 Tasks by Project</h4>
+                <table>
+                    <thead><tr><th>Project</th><th>Count</th></tr></thead>
+                    <tbody>
+                        ${data.tasks.by_project.map(p => `
+                            <tr><td>${p.project || '(No project)'}</td><td>${p.count}</td></tr>
+                        `).join('') || '<tr><td colspan="2">No projects</td></tr>'}
+                    </tbody>
+                </table>
+
+                <h4 style="margin-top: 30px;">🏷️ Tasks by Context</h4>
+                <table>
+                    <thead><tr><th>Context</th><th>Count</th></tr></thead>
+                    <tbody>
+                        ${data.tasks.by_context.map(c => `
+                            <tr><td>${c.context || '(No context)'}</td><td>${c.count}</td></tr>
+                        `).join('') || '<tr><td colspan="2">No contexts</td></tr>'}
+                    </tbody>
+                </table>
+
+                <h4 style="margin-top: 30px;">📧 Email Import Summary</h4>
+                <table>
+                    <tr><th>Total Imports</th><td>${Helpers.formatNumber(data.emails.summary.total)}</td></tr>
+                    <tr><th>Recent (30d)</th><td>${Helpers.formatNumber(data.emails.summary.recent_30d)}</td></tr>
+                    <tr><th>Oldest Import</th><td>${data.emails.summary.oldest_import ? Helpers.formatDate(data.emails.summary.oldest_import) : 'N/A'}</td></tr>
+                    <tr><th>Newest Import</th><td>${data.emails.summary.newest_import ? Helpers.formatDate(data.emails.summary.newest_import) : 'N/A'}</td></tr>
+                </table>
+
+                <h4 style="margin-top: 30px;">💳 Subscription Details</h4>
+                <table>
+                    <tr><th>Status</th><td>${data.subscription.status || 'N/A'}</td></tr>
+                    <tr><th>Trial End Date</th><td>${data.user.trial_end_date ? Helpers.formatDate(data.user.trial_end_date) : 'N/A'}</td></tr>
+                    <tr><th>Subscription Tier</th><td>${data.subscription.tier || data.user.subscription_tier}</td></tr>
+                </table>
+
+                <h4 style="margin-top: 30px;">🔐 Session Information</h4>
+                <table>
+                    <tr><th>Active Sessions</th><td>${data.sessions.active_count}</td></tr>
+                    <tr><th>Last Activity</th><td>${data.sessions.last_activity ? Helpers.formatDate(data.sessions.last_activity) : 'N/A'}</td></tr>
+                </table>
+
+                <h4 style="margin-top: 30px;">📅 Planning & Recurring</h4>
+                <table>
+                    <tr><th>Planning Entries</th><td>${Helpers.formatNumber(data.planning.total_entries)}</td></tr>
+                    <tr><th>Active Recurring Tasks</th><td>${Helpers.formatNumber(data.recurring.total_active)}</td></tr>
+                </table>
+
+                <h4 style="margin-top: 30px;">🔧 Raw JSON Data</h4>
+                <details>
+                    <summary style="cursor: pointer; padding: 10px; background: var(--macos-bg-tertiary); border-radius: 8px;">
+                        Click to view raw JSON
+                    </summary>
+                    <pre style="background: var(--macos-bg-tertiary); padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 10px;">
+${JSON.stringify(data, null, 2)}
+                    </pre>
+                </details>
+            `;
+
+        } catch (error) {
+            const resultsDiv = document.getElementById('debug-user-results');
+            resultsDiv.innerHTML = `<p style="color: red;"><strong>❌ Error:</strong> ${error.message}</p>`;
+        }
     }
 };
 

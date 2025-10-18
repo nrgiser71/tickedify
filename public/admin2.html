@@ -417,6 +417,20 @@
             color: #dc3545;
             font-weight: 500;
         }
+
+        details summary {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        details[open] summary {
+            margin-bottom: 10px;
+        }
+
+        pre {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -953,7 +967,28 @@
                     <h1 class="admin-header-title">Debug Tools</h1>
                     <p class="admin-header-subtitle">User data inspection and diagnostic tools</p>
                 </div>
-                <div id="debug-content"></div>
+                <div id="debug-content">
+                    <div class="admin-table">
+                        <h3>🔍 User Data Inspector</h3>
+                        <p>Deep inspection of user data for debugging purposes. Shows complete data breakdown.</p>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <input
+                                type="number"
+                                id="debug-user-id"
+                                placeholder="Enter User ID..."
+                                style="flex: 1; padding: 10px; border: 1px solid var(--macos-border); border-radius: 8px;"
+                            />
+                            <button class="btn btn-primary" onclick="DebugTools.inspectUser()">
+                                🔍 Inspect User
+                            </button>
+                        </div>
+
+                        <div id="debug-user-results" style="display: none;">
+                            <!-- Results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Security Screen -->

@@ -137,7 +137,73 @@
         <!-- Version 0.19.48 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.49</span>
+                <span class="version-badge badge-latest">v0.19.50</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔍 Debug User Data Inspector Screen (T040)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Data Inspector UI</strong>: HTML implementatie in screen-debug sectie met user ID input field (type number, placeholder "Enter User ID..."), "🔍 Inspect User" button, flex layout met gap 10px, results div (id="debug-user-results") initially hidden, admin-table wrapper met beschrijving "Deep inspection of user data for debugging purposes", input styling met macOS border en border-radius 8px.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>DebugTools.inspectUser() Method</strong>: JavaScript implementatie met validation check voor empty user ID, loading state display "Loading user data...", API call naar API.debug.getUserData(userId), comprehensive HTML template generation voor results display, error handling met red error message display, try-catch block voor alle API calls.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Information Display</strong>: Tabel met 8 user fields - ID, Email, Naam (met '-' fallback), Account Type, Subscription Tier, Status (met .status-active/.status-inactive class voor color coding), Created At (formatted via Helpers.formatDate()), Last Login (formatted via Helpers.formatRelativeTime() of 'Never'), alle data via data.user object van API response.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Task Summary Stats Grid</strong>: 4-column stats-grid met Total Tasks, Completed Tasks (met completion_rate percentage in subtext), Pending Tasks, Recurring Tasks (met || 0 fallback), alle counts formatted via Helpers.formatNumber(), percentage via Helpers.formatPercentage(), data via data.tasks.summary object.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Tasks by Project/Context Tables</strong>: 2 tabellen met Project/Context breakdown - beide met thead (Project/Context + Count columns), tbody met map over data.tasks.by_project/by_context arrays, fallback "(No project)" / "(No context)" voor null values, empty state "No projects/contexts" row als array leeg, .join('') voor HTML concatenation.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Email, Subscription, Session, Planning Tables</strong>: 4 detail tabellen - Email Import Summary (Total Imports, Recent 30d, Oldest/Newest Import met Helpers.formatDate()), Subscription Details (Status, Trial End Date, Subscription Tier), Session Information (Active Sessions, Last Activity), Planning & Recurring (Planning Entries, Active Recurring Tasks) - alle tables met consistent th/td structuur, 'N/A' fallback voor missing data, formatNumber voor counts.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Raw JSON Data Collapsible</strong>: HTML details/summary element voor raw JSON display - summary met cursor pointer styling, padding 10px, background var(--macos-bg-tertiary), border-radius 8px, "Click to view raw JSON" text, pre tag met monospace font (SF Mono, Monaco), font-size 12px, JSON.stringify(data, null, 2) voor formatted output, overflow-x auto voor long lines.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>CSS Additions</strong>: 3 nieuwe CSS rules - details summary met cursor pointer en user-select none, details[open] summary met margin-bottom 10px, pre tag met SF Mono font-family en font-size 12px, toegevoegd aan admin2.html style block voor collapsible JSON display.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Integration & Error Handling</strong>: Screens.loadDebug() update naar console.log (geen loading message meer), DebugTools object toegevoegd na UserActions en voor DbTools (regel ~1388-1508), onclick="DebugTools.inspectUser()" in HTML button, API.debug.getUserData() al beschikbaar sinds T022, error display met ❌ icon en error.message in red color.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.49</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
