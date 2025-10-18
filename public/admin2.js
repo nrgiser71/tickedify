@@ -158,8 +158,34 @@ const ScreenManager = {
                 navLink.classList.add('active');
             }
 
+            // Update breadcrumb (T042)
+            this.updateBreadcrumb(screenName);
+
             // Load screen content
             this.loadScreen(screenName);
+        }
+    },
+
+    /**
+     * Update breadcrumb navigation (T042)
+     */
+    updateBreadcrumb(screenName) {
+        const breadcrumbMap = {
+            'home': '🏠 Home Dashboard',
+            'tasks': '📊 Task Analytics',
+            'emails': '📧 Email Analytics',
+            'database': '💾 Database Monitor',
+            'revenue': '💰 Revenue Dashboard',
+            'users': '👥 User Management',
+            'system': '⚙️ System Settings',
+            'dbtools': '🔧 Database Tools',
+            'debug': '🔍 Debug Tools',
+            'security': '🔒 Security'
+        };
+
+        const breadcrumbText = document.getElementById('breadcrumb-text');
+        if (breadcrumbText) {
+            breadcrumbText.textContent = breadcrumbMap[screenName] || screenName;
         }
     },
 
@@ -192,24 +218,42 @@ const ScreenManager = {
     },
 
     /**
-     * Show loading state
+     * Show loading state (T043)
      */
     showLoading(containerId) {
-        const container = document.getElementById(containerId);
+        const container = document.getElementById(containerId.replace('#', ''));
         if (container) {
-            container.innerHTML = '<div class="loading-spinner"></div> <span>Loading...</span>';
+            container.innerHTML = `
+                <div style="text-align: center; padding: 60px;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 20px; color: var(--macos-text-secondary);">Loading...</p>
+                </div>
+            `;
         }
     },
 
     /**
-     * Show error message
+     * Hide loading state (T043)
      */
-    showError(screenName, message) {
-        const container = document.getElementById(`${screenName}-content`);
+    hideLoading(containerId) {
+        // Loading wordt verborgen door het renderen van echte content
+    },
+
+    /**
+     * Show error message (T043)
+     */
+    showError(containerId, message, error) {
+        const container = document.getElementById(containerId.replace('#', ''));
         if (container) {
+            console.error(message, error);
             container.innerHTML = `
                 <div class="error-message">
-                    <strong>Error:</strong> ${message}
+                    <strong>❌ Error:</strong> ${message}
+                    ${error ? `<br><small>${error.message || error}</small>` : ''}
+                    <br><br>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        🔄 Reload Page
+                    </button>
                 </div>
             `;
         }
@@ -464,10 +508,9 @@ const Screens = {
      * Home Dashboard Screen
      */
     async loadHome() {
-        const container = document.getElementById('home-content');
-        ScreenManager.showLoading('home-content');
-
         try {
+            ScreenManager.showLoading('home-content');
+
             // Parallel API calls voor performance
             const [homeData, growthData] = await Promise.all([
                 API.stats.home(),
@@ -475,6 +518,7 @@ const Screens = {
             ]);
 
             // Render complete dashboard
+            const container = document.getElementById('home-content');
             container.innerHTML = `
                 <h2>User Statistics</h2>
                 <div class="stats-grid">
@@ -556,13 +600,7 @@ const Screens = {
             this.renderGrowthChart(growthData);
 
         } catch (error) {
-            console.error('Error loading home dashboard:', error);
-            container.innerHTML = `
-                <div class="error-message">
-                    <strong>Failed to load home dashboard</strong>
-                    <p>${error.message}</p>
-                </div>
-            `;
+            ScreenManager.showError('home-content', 'Failed to load home dashboard', error);
         }
     },
 
@@ -738,7 +776,7 @@ const Screens = {
      */
     async loadEmails() {
         try {
-            ScreenManager.showLoading('#emails-content');
+            ScreenManager.showLoading('emails-content');
 
             const data = await API.stats.emails();
 
@@ -768,10 +806,8 @@ const Screens = {
                 </div>
             `;
 
-            ScreenManager.hideLoading('#emails-content');
-
         } catch (error) {
-            ScreenManager.showError('#emails-content', 'Failed to load email analytics', error);
+            ScreenManager.showError('emails-content', 'Failed to load email analytics', error);
         }
     },
 
@@ -780,7 +816,7 @@ const Screens = {
      */
     async loadDatabase() {
         try {
-            ScreenManager.showLoading('#database-content');
+            ScreenManager.showLoading('database-content');
 
             const data = await API.stats.database();
 
@@ -801,10 +837,8 @@ const Screens = {
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No table data available</td></tr>';
             }
 
-            ScreenManager.hideLoading('#database-content');
-
         } catch (error) {
-            ScreenManager.showError('#database-content', 'Failed to load database monitor', error);
+            ScreenManager.showError('database-content', 'Failed to load database monitor', error);
         }
     },
 
@@ -1871,6 +1905,29 @@ const DbTools = {
         `;
     }
 };
+
+// ============================================================================
+// Keyboard Shortcuts (T042)
+// ============================================================================
+
+document.addEventListener('keydown', (e) => {
+    // Alt+1 through Alt+9 for screen shortcuts
+    if (e.altKey && e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        const screens = ['home', 'tasks', 'emails', 'database', 'revenue', 'users', 'system', 'dbtools', 'debug'];
+        const index = parseInt(e.key) - 1;
+        if (screens[index]) {
+            window.location.hash = screens[index];
+        }
+    }
+
+    // Escape to close modals
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal[style*="display: flex"]').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+});
 
 // ============================================================================
 // Initialize Application

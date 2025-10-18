@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.53 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.53</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">✨ Frontend Polish: Navigation, Loading & Responsive (T042-T044)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Enhanced Navigation States (T042)</strong>: Active nav link styling met font-weight 600, white text en inverted icons via filter: brightness(0) invert(1), hover states alleen op inactive links, breadcrumb navigation boven content area met emoji icons (🏠 Home Dashboard, 📊 Task Analytics, etc.), keyboard shortcuts Alt+1 t/m Alt+9 voor snelle screen switching, Escape key sluit alle open modals.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Consistent Loading States (T043)</strong>: Upgraded ScreenManager methods - showLoading() met centered 40px spinner, 60px padding en "Loading..." text, showError() met reload button, error details en console logging, hideLoading() placeholder method, alle screens gebruiken nieuwe pattern: try-catch met ScreenManager.showLoading() start, ScreenManager.showError() in catch block.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Full Responsive Design (T044)</strong>: Mobile navigation bij max-width 768px - sidebar full width met grid layout, nav icons centered met flex-direction column, breadcrumb padding 8px/15px, stats-grid single column, modal-content 95% width, touch-friendly min-height 44px voor buttons/nav, horizontal scroll voor tables met min-width 600px, 480px breakpoint voor kleinere text en buttons, viewport meta tag met maximum-scale 5.0.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.52 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.52</span>
+                <span class="version-badge badge-fix">v0.19.52</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
