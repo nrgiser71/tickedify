@@ -758,8 +758,8 @@
                     <label for="registerPassword">Wachtwoord:</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="registerPassword" required>
-                        <button type="button" id="toggle-password-visibility" aria-label="Toon/verberg wachtwoord" title="Toon/verberg wachtwoord">
-                            <span id="toggle-icon">👁️</span>
+                        <button type="button" id="toggle-password-visibility" aria-label="Toon wachtwoord" title="Toon wachtwoord">
+                            <i class="fas fa-eye" id="toggle-icon"></i>
                         </button>
                     </div>
                     <div class="password-requirements">
@@ -1123,13 +1123,19 @@
             if (toggleButton && passwordInput && toggleIcon) {
                 toggleButton.addEventListener('click', function() {
                     if (passwordInput.type === 'password') {
+                        // Show password
                         passwordInput.type = 'text';
-                        toggleIcon.textContent = '🙈'; // Closed eye
+                        toggleIcon.classList.remove('fa-eye');
+                        toggleIcon.classList.add('fa-eye-slash');
                         this.setAttribute('aria-label', 'Verberg wachtwoord');
+                        this.setAttribute('title', 'Verberg wachtwoord');
                     } else {
+                        // Hide password
                         passwordInput.type = 'password';
-                        toggleIcon.textContent = '👁️'; // Open eye
+                        toggleIcon.classList.remove('fa-eye-slash');
+                        toggleIcon.classList.add('fa-eye');
                         this.setAttribute('aria-label', 'Toon wachtwoord');
+                        this.setAttribute('title', 'Toon wachtwoord');
                     }
                 });
             }

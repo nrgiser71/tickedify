@@ -9065,17 +9065,18 @@ body.dagkalender-focus-active {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 5px;
+    padding: 5px 8px;
     color: #666;
-    font-size: 1.2em;
+    font-size: 1.1em;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 #toggle-password-visibility:hover {
-    color: #333;
+    color: var(--macos-blue);
+    transform: scale(1.1);
 }
 
 #toggle-password-visibility:focus {
