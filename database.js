@@ -2234,6 +2234,51 @@ const db = {
     }
   },
 
+  async getUserPlanType(userId) {
+    try {
+      const userResult = await pool.query(`
+        SELECT selected_plan, trial_end_date
+        FROM users
+        WHERE id = $1
+      `, [userId]);
+
+      if (userResult.rows.length === 0) {
+        return 'free'; // User not found, default to free
+      }
+
+      const { selected_plan, trial_end_date } = userResult.rows[0];
+
+      // Define plan tier constants
+      const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
+      const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
+
+      // Check for active trial or paid subscription
+      if (selected_plan) {
+        // Check if trial is active or if it's a paid plan
+        if (trial_end_date) {
+          const now = new Date();
+          const trialEnds = new Date(trial_end_date);
+          if (trialEnds < now) {
+            // Trial expired without payment
+            return 'free';
+          }
+        }
+
+        // Determine tier based on selected_plan
+        if (PREMIUM_PLUS_PLAN_IDS.includes(selected_plan)) {
+          return 'premium_plus';
+        } else if (PREMIUM_STANDARD_PLAN_IDS.includes(selected_plan)) {
+          return 'premium_standard';
+        }
+      }
+
+      return 'free'; // Default to free
+    } catch (error) {
+      console.error('Error getting user plan type:', error);
+      return 'free'; // Default to free on error
+    }
+  },
+
   // Beta configuration functions
   async getBetaConfig() {
     try {

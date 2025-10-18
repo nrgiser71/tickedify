@@ -4910,9 +4910,9 @@ class Taakbeheer {
         document.getElementById('opmerkingen').value = '';
         document.getElementById('herhalingSelect').value = '';
         document.getElementById('herhalingDisplay').value = 'Geen herhaling';
-        
+
         this.zetVandaagDatum();
-        
+
         // Reset touched fields en remove invalid classes
         this.touchedFields.clear();
         ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur', 'opmerkingen'].forEach(fieldId => {
@@ -4922,7 +4922,19 @@ class Taakbeheer {
                 field.removeAttribute('data-touched');
             }
         });
-        
+
+        // Reset bijlagen lijst
+        const bijlagenLijst = document.getElementById('bijlagen-lijst');
+        if (bijlagenLijst) {
+            bijlagenLijst.innerHTML = '';
+            bijlagenLijst.style.display = 'none';
+        }
+
+        // Reset bijlagenManager current task
+        if (bijlagenManager) {
+            bijlagenManager.currentTaakId = null;
+        }
+
         this.updateButtonState();
     }
 

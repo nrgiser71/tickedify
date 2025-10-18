@@ -3303,16 +3303,17 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             return res.status(400).json({ error: 'Geen bestand geüpload' });
         }
 
-        // Get user premium status and storage stats
-        const isPremium = await db.checkUserPremiumStatus(userId);
+        // Get user plan type and storage stats
+        const planType = await db.getUserPlanType(userId);
+        const isPremium = planType !== 'free'; // Backward compatibility for validateFile
         const userStats = await db.getUserStorageStats(userId);
 
         // Validate file upload
         const validation = storageManager.validateFile(file, isPremium, userStats);
         if (!validation.valid) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Bestand niet toegestaan',
-                details: validation.errors 
+                details: validation.errors
             });
         }
 
@@ -3322,12 +3323,18 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             return res.status(404).json({ error: 'Taak niet gevonden' });
         }
 
-        // Check attachment limit for free users
-        if (!isPremium) {
+        // Check attachment limit based on plan type
+        // Premium Plus: unlimited attachments
+        // Premium Standard & Free: max 1 attachment per task
+        if (planType !== 'premium_plus') {
             const existingBijlagen = await db.getBijlagenForTaak(taakId);
             if (existingBijlagen.length >= STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE) {
-                return res.status(400).json({ 
-                    error: `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.` 
+                const upgradeMessage = planType === 'premium_standard'
+                    ? 'Maximum 1 bijlage per taak voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bijlagen.'
+                    : `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.`;
+
+                return res.status(400).json({
+                    error: upgradeMessage
                 });
             }
         }
@@ -3933,17 +3940,15 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
         const userId = req.session.userId;
 
         const stats = await db.getUserStorageStats(userId);
-        const isPremium = await db.checkUserPremiumStatus(userId);
+        const planType = await db.getUserPlanType(userId);
+        const isPremium = planType !== 'free';
 
-        // Get user's plan_id to determine plan type
+        // Get user's plan_id for reference
         const userResult = await pool.query('SELECT selected_plan FROM users WHERE id = $1', [userId]);
         const planId = userResult.rows[0]?.selected_plan || null;
 
-        // Determine plan type
-        const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
-        const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
-        const isPremiumPlus = PREMIUM_PLUS_PLAN_IDS.includes(planId);
-        const isPremiumStandard = PREMIUM_STANDARD_PLAN_IDS.includes(planId);
+        const isPremiumPlus = planType === 'premium_plus';
+        const isPremiumStandard = planType === 'premium_standard';
 
         res.json({
             success: true,
@@ -3953,9 +3958,9 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
                 bijlagen_count: stats.bijlagen_count,
                 is_premium: isPremium,
                 plan_id: planId,
-                plan_type: isPremiumPlus ? 'premium_plus' : (isPremiumStandard ? 'premium_standard' : 'free'),
+                plan_type: planType,
                 limits: {
-                    total_bytes: isPremiumPlus ? null : (isPremiumStandard ? STORAGE_CONFIG.FREE_TIER_LIMIT : STORAGE_CONFIG.FREE_TIER_LIMIT),
+                    total_bytes: isPremiumPlus ? null : STORAGE_CONFIG.FREE_TIER_LIMIT,
                     total_formatted: isPremiumPlus ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT),
                     max_file_size: isPremiumPlus ? null : STORAGE_CONFIG.MAX_FILE_SIZE_FREE,
                     max_file_formatted: isPremiumPlus ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE),
