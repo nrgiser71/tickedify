@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.25 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.25</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📊 Backend - Admin Dashboard v2 Revenue Statistics API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/stats/revenue Endpoint</strong>: Nieuwe API endpoint voor het ophalen van payment en revenue statistieken. Berekent Monthly Recurring Revenue (MRR) door users te joinen met payment_configurations op basis van subscription_tier.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>MRR Berekening</strong>: Automatische berekening van totale Monthly Recurring Revenue gebaseerd op actieve gebruikers per tier en hun maandelijkse prijs.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Per Tier</strong>: Gedetailleerde breakdown van revenue per subscription tier (premium, enterprise) met user counts en maandelijkse prijzen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Payment Configurations</strong>: Overzicht van alle actieve payment configuraties met plan details, checkout URLs en prijzen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Admin Security</strong>: Endpoint beveiligd met requireAdmin middleware - vereist admin account_type voor toegang (401/403 bij unauthorized).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.24 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.24</span>
+                <span class="version-badge badge-feature">v0.19.24</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

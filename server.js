@@ -2262,6 +2262,58 @@ function optionalAuth(req, res, next) {
     next();
 }
 
+// Admin middleware - requires auth + admin account
+async function requireAdmin(req, res, next) {
+    console.log('🔍 requireAdmin check:', {
+        url: req.url,
+        method: req.method,
+        userId: req.session?.userId
+    });
+
+    // First check if authenticated
+    if (!req.session.userId) {
+        console.log('❌ Admin check failed - not authenticated');
+        return res.status(401).json({
+            error: 'Not authenticated',
+            message: 'Please login as admin'
+        });
+    }
+
+    // Then check if user is admin
+    try {
+        const result = await pool.query(
+            'SELECT account_type FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+
+        if (result.rows.length === 0) {
+            console.log('❌ Admin check failed - user not found');
+            return res.status(401).json({
+                error: 'Not authenticated',
+                message: 'User not found'
+            });
+        }
+
+        if (result.rows[0].account_type !== 'admin') {
+            console.log('❌ Admin check failed - not admin account:', result.rows[0].account_type);
+            return res.status(403).json({
+                error: 'Not authorized',
+                message: 'Admin access required'
+            });
+        }
+
+        console.log('✅ Admin check passed for user:', req.session.userId);
+        next();
+
+    } catch (error) {
+        console.error('❌ Admin check error:', error);
+        return res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to verify admin status'
+        });
+    }
+}
+
 // Get current user ID from session or fallback to default
 function getCurrentUserId(req) {
     if (!req.session.userId) {
@@ -8446,6 +8498,64 @@ app.get('/api/debug/feedback-test', async (req, res) => {
     }
 });
 
+// ===== ADMIN DASHBOARD V2 STATISTICS ENDPOINTS =====
+
+// GET /api/admin2/stats/growth - User growth data for chart (last 30 days)
+app.get('/api/admin2/stats/growth', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Query voor user growth per dag (laatste 30 dagen)
+        const growthQuery = `
+            SELECT
+                DATE(created_at) as date,
+                COUNT(*) as new_users
+            FROM users
+            WHERE created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        `;
+
+        const result = await pool.query(growthQuery);
+
+        // Bereken cumulative count
+        let cumulative = 0;
+
+        // Haal eerst het totaal aantal users vóór de 30-dagen periode
+        const baseCountQuery = `
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE created_at < NOW() - INTERVAL '30 days'
+        `;
+        const baseResult = await pool.query(baseCountQuery);
+        cumulative = parseInt(baseResult.rows[0].count || 0);
+
+        // Map de resultaten en voeg cumulative toe
+        const data = result.rows.map(row => {
+            cumulative += parseInt(row.new_users);
+            return {
+                date: row.date,
+                new_users: parseInt(row.new_users),
+                cumulative: cumulative
+            };
+        });
+
+        res.json({
+            period: '30d',
+            data: data
+        });
+
+    } catch (error) {
+        console.error('Error fetching growth statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
 // ===== BETA MANAGEMENT ADMIN ENDPOINTS =====
 
 app.get('/api/admin/beta/status', async (req, res) => {
@@ -9154,6 +9264,97 @@ app.get('/api/admin/migrate-cascade-delete', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message
+        });
+    }
+});
+
+// ===== Admin Dashboard v2 Statistics Endpoints =====
+
+// GET /api/admin2/stats/revenue - Payment and revenue statistics
+app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log('📊 Fetching revenue statistics...');
+
+        // Calculate MRR (Monthly Recurring Revenue) by tier
+        const mrrQuery = await pool.query(`
+            SELECT
+                u.subscription_tier,
+                COUNT(*) as user_count,
+                pc.price_monthly,
+                (COUNT(*) * pc.price_monthly) as revenue
+            FROM users u
+            LEFT JOIN payment_configurations pc
+                ON pc.tier = u.subscription_tier
+                AND pc.is_active = true
+            WHERE u.subscription_status = 'active'
+                AND u.subscription_tier != 'free'
+            GROUP BY u.subscription_tier, pc.price_monthly
+            ORDER BY revenue DESC
+        `);
+
+        // Calculate total MRR
+        const totalMrr = mrrQuery.rows.reduce((sum, row) => {
+            return sum + parseFloat(row.revenue || 0);
+        }, 0);
+
+        // Format by_tier array
+        const byTier = mrrQuery.rows.map(row => ({
+            tier: row.subscription_tier,
+            user_count: parseInt(row.user_count),
+            price_monthly: parseFloat(row.price_monthly || 0),
+            revenue: parseFloat(row.revenue || 0)
+        }));
+
+        // Get all active payment configurations
+        const configsQuery = await pool.query(`
+            SELECT
+                plan_id,
+                plan_name,
+                tier,
+                checkout_url,
+                price_monthly,
+                is_active
+            FROM payment_configurations
+            WHERE is_active = true
+            ORDER BY
+                CASE tier
+                    WHEN 'enterprise' THEN 1
+                    WHEN 'premium' THEN 2
+                    WHEN 'free' THEN 3
+                    ELSE 4
+                END
+        `);
+
+        const paymentConfigs = configsQuery.rows.map(row => ({
+            plan_id: row.plan_id,
+            plan_name: row.plan_name,
+            tier: row.tier,
+            checkout_url: row.checkout_url,
+            price_monthly: parseFloat(row.price_monthly || 0),
+            is_active: row.is_active
+        }));
+
+        console.log('✅ Revenue statistics calculated:', {
+            mrr: totalMrr,
+            tiers: byTier.length,
+            configs: paymentConfigs.length
+        });
+
+        res.json({
+            mrr: totalMrr,
+            by_tier: byTier,
+            payment_configs: paymentConfigs
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching revenue statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
         });
     }
 });
