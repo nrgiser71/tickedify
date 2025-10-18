@@ -142,6 +142,51 @@
             </div>
             <div class="changes-list">
                 <div class="change-category">
+                    <div class="change-category-title">📊 Admin Dashboard v2 - Home Dashboard JavaScript Implementation (T028)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete loadHome() Implementation</strong>: Volledige JavaScript implementatie van home dashboard met parallel API calls (Promise.all) voor optimale performance. Laadt homeData + growthData tegelijk via API.stats endpoints.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Helper Functions Library</strong>: Nieuwe Helpers object met 6 utility functies - formatNumber() (thousands separator nl-NL), formatPercentage() (1 decimal), formatDate() (nl-NL short format), formatRelativeTime() ("2 hours ago"), getTierBadgeClass() + getTierDisplayName() voor tier badges.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Enhanced Statistics Rendering</strong>: User statistics met contextual subtexts (percentage of total, time ranges), Trial statistics display (active trials + conversion rate %), automatic percentage calculations voor alle tier distributions.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Improved Chart.js Implementation</strong>: Dual-line chart met Cumulative Users (blauw #007AFF) én New Users (groen #34C759), chart instance destruction voor memory management, enhanced tooltips met custom styling, 45° rotated labels voor readability.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Recent Registrations Table</strong>: Dedicated renderRecentRegistrations() method met tier badges (badge-primary/secondary/gold), relative time tooltips met absolute date fallback, empty state handling, proper null checks voor naam field.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Badge System</strong>: CSS classes toegevoegd voor tier badges - badge-primary (Premium blauw), badge-secondary (Free grijs), badge-gold (Enterprise gradient goud), plus badge-success/danger/warning voor toekomstige use cases.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling & UX</strong>: Comprehensive try-catch met user-friendly error messages, console.warn voor chart canvas missing, graceful degradation bij null/undefined values, loading states via ScreenManager.showLoading().
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
                     <div class="change-category-title">🏠 Admin Dashboard v2 - Home Dashboard HTML Structure (T027)</div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
