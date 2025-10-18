@@ -2393,23 +2393,73 @@ async function cleanupB2Files(bijlagen, taskId = 'unknown') {
     return result;
 }
 
+// T010: Password Strength Validation Function - Feature 017
+function validatePasswordStrength(password) {
+    const errors = [];
+
+    // Rule 1: Minimum length
+    if (!password || password.length < 8) {
+        errors.push('Wachtwoord moet minimaal 8 tekens bevatten');
+    }
+
+    // Rule 2: Uppercase letter
+    if (!/[A-Z]/.test(password)) {
+        errors.push('Wachtwoord moet minimaal 1 hoofdletter bevatten');
+    }
+
+    // Rule 3: Digit
+    if (!/[0-9]/.test(password)) {
+        errors.push('Wachtwoord moet minimaal 1 cijfer bevatten');
+    }
+
+    // Rule 4: Special character
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        errors.push('Wachtwoord moet minimaal 1 speciaal teken bevatten');
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors: errors
+    };
+}
+
 // Authentication API endpoints
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, naam, wachtwoord } = req.body;
-        
+
+        // T011: Required fields check
         if (!email || !naam || !wachtwoord) {
-            return res.status(400).json({ error: 'Email, naam en wachtwoord zijn verplicht' });
+            return res.status(400).json({
+                success: false,
+                error: 'Email, naam en wachtwoord zijn verplicht'
+            });
         }
-        
+
         if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
+            return res.status(503).json({
+                success: false,
+                error: 'Database not available'
+            });
         }
-        
-        // Check if user already exists
+
+        // T011 & T013: Password strength validation BEFORE email check (prevent timing attacks)
+        const passwordValidation = validatePasswordStrength(wachtwoord);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({
+                success: false,
+                error: 'Wachtwoord voldoet niet aan de beveiligingseisen',
+                passwordErrors: passwordValidation.errors
+            });
+        }
+
+        // T013: Email uniqueness check AFTER password validation
         const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existingUser.rows.length > 0) {
-            return res.status(409).json({ error: 'Email adres al in gebruik' });
+            return res.status(409).json({
+                success: false,
+                error: 'Email adres al in gebruik'
+            });
         }
         
         // Check beta status
@@ -2476,7 +2526,10 @@ app.post('/api/auth/register', async (req, res) => {
         req.session.save((err) => {
             if (err) {
                 console.error('Session save error during registration:', err);
-                return res.status(500).json({ error: 'Fout bij opslaan sessie' });
+                return res.status(500).json({
+                    success: false,
+                    error: 'Fout bij opslaan sessie'
+                });
             }
 
             console.log(`✅ Beta user registered with session: ${email} (${userId}) with import code: ${importCode}`);
@@ -2497,10 +2550,13 @@ app.post('/api/auth/register', async (req, res) => {
                 }
             });
         });
-        
+
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ error: 'Fout bij aanmaken account' });
+        res.status(500).json({
+            success: false,
+            error: 'Fout bij aanmaken account'
+        });
     }
 });
 
