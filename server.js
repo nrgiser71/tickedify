@@ -9359,6 +9359,186 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
     }
 });
 
+// ========================================
+// ADMIN DASHBOARD V2 API ENDPOINTS
+// ========================================
+// Admin Dashboard V2 - User-based authentication with account_type='admin'
+// All endpoints require valid session + account_type='admin' check
+
+// Middleware: Check if user is authenticated admin
+async function requireAdminAuth(req, res, next) {
+    try {
+        // Check if user is logged in
+        if (!req.session.userId) {
+            return res.status(401).json({
+                error: 'Not authenticated',
+                message: 'Please login as admin'
+            });
+        }
+
+        // Check if user has admin account_type
+        const userResult = await pool.query(
+            'SELECT account_type FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({
+                error: 'Not authenticated',
+                message: 'User not found'
+            });
+        }
+
+        if (userResult.rows[0].account_type !== 'admin') {
+            return res.status(403).json({
+                error: 'Not authorized',
+                message: 'Admin access required'
+            });
+        }
+
+        next();
+    } catch (error) {
+        console.error('Admin auth middleware error:', error);
+        res.status(500).json({
+            error: 'Authentication error',
+            message: 'Failed to verify admin status'
+        });
+    }
+}
+
+// GET /api/admin2/stats/tasks - Task statistics
+app.get('/api/admin2/stats/tasks', requireAdminAuth, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Total taken count
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
+        const total = parseInt(totalResult.rows[0].count);
+
+        // Completion rate
+        const completionResult = await pool.query(`
+            SELECT
+                (COUNT(*) FILTER (WHERE voltooid = true) * 100.0 / COUNT(*))::DECIMAL(5,2) as completion_rate
+            FROM taken
+        `);
+        const completionRate = parseFloat(completionResult.rows[0].completion_rate || 0);
+
+        // Tasks created today
+        const todayResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE DATE(aangemaakt_op) = CURRENT_DATE
+        `);
+        const createdToday = parseInt(todayResult.rows[0].count);
+
+        // Tasks created this week
+        const weekResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE aangemaakt_op >= DATE_TRUNC('week', NOW())
+        `);
+        const createdWeek = parseInt(weekResult.rows[0].count);
+
+        // Tasks created this month
+        const monthResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE aangemaakt_op >= DATE_TRUNC('month', NOW())
+        `);
+        const createdMonth = parseInt(monthResult.rows[0].count);
+
+        res.json({
+            total,
+            completion_rate: completionRate,
+            created: {
+                today: createdToday,
+                week: createdWeek,
+                month: createdMonth
+            }
+        });
+    } catch (error) {
+        console.error('Admin2 tasks stats error:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
+// GET /api/admin2/stats/emails - Email import statistics
+app.get('/api/admin2/stats/emails', requireAdminAuth, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Total emails imported
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM email_imports');
+        const totalImports = parseInt(totalResult.rows[0].count);
+
+        // Emails imported today
+        const todayResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE DATE(imported_at) = CURRENT_DATE
+        `);
+        const importedToday = parseInt(todayResult.rows[0].count);
+
+        // Emails imported this week
+        const weekResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE imported_at >= DATE_TRUNC('week', NOW())
+        `);
+        const importedWeek = parseInt(weekResult.rows[0].count);
+
+        // Emails imported this month
+        const monthResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE imported_at >= DATE_TRUNC('month', NOW())
+        `);
+        const importedMonth = parseInt(monthResult.rows[0].count);
+
+        // Users with email imports (count and percentage)
+        const usersWithImportResult = await pool.query(`
+            SELECT COUNT(DISTINCT user_id) as count
+            FROM email_imports
+        `);
+        const usersWithImportCount = parseInt(usersWithImportResult.rows[0].count);
+
+        // Total users for percentage calculation
+        const totalUsersResult = await pool.query('SELECT COUNT(*) as count FROM users');
+        const totalUsers = parseInt(totalUsersResult.rows[0].count);
+
+        // Calculate percentage (users with imports / total users * 100)
+        const usersWithImportPercentage = totalUsers > 0
+            ? parseFloat(((usersWithImportCount / totalUsers) * 100).toFixed(2))
+            : 0;
+
+        res.json({
+            total_imports: totalImports,
+            imported: {
+                today: importedToday,
+                week: importedWeek,
+                month: importedMonth
+            },
+            users_with_import: {
+                count: usersWithImportCount,
+                percentage: usersWithImportPercentage
+            }
+        });
+    } catch (error) {
+        console.error('Admin2 email stats error:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 

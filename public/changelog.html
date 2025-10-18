@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.26 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.26</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📈 Backend - Admin Dashboard v2 Growth Statistics API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/stats/growth Endpoint</strong>: Nieuwe API endpoint voor het ophalen van user growth data voor de laatste 30 dagen. Toont nieuwe gebruikers per dag en cumulatief totaal.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dagelijkse Groei Tracking</strong>: GROUP BY DATE(created_at) voor nauwkeurige tracking van nieuwe registraties per dag.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Cumulatieve Berekening</strong>: Automatische berekening van cumulatief gebruikersaantal inclusief users van vóór de 30-dagen periode.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Admin Security</strong>: Endpoint beveiligd met requireAdmin middleware - vereist admin account_type voor toegang (401/403 bij unauthorized).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Chart-Ready Data</strong>: JSON response geoptimaliseerd voor directe gebruik in growth charts met period='30d' en data array van {date, new_users, cumulative}.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.25 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.25</span>
+                <span class="version-badge badge-feature">v0.19.25</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
