@@ -10702,46 +10702,6 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
 // Admin Dashboard V2 - User-based authentication with account_type='admin'
 // All endpoints require valid session + account_type='admin' check
 
-// Middleware: Check if user is authenticated admin
-async function requireAdmin(req, res, next) {
-    try {
-        // Check if user is logged in
-        if (!req.session.userId) {
-            return res.status(401).json({
-                error: 'Not authenticated',
-                message: 'Please login as admin'
-            });
-        }
-
-        // Check if user has admin account_type
-        const userResult = await pool.query(
-            'SELECT account_type FROM users WHERE id = $1',
-            [req.session.userId]
-        );
-
-        if (userResult.rows.length === 0) {
-            return res.status(401).json({
-                error: 'Not authenticated',
-                message: 'User not found'
-            });
-        }
-
-        if (userResult.rows[0].account_type !== 'admin') {
-            return res.status(403).json({
-                error: 'Not authorized',
-                message: 'Admin access required'
-            });
-        }
-
-        next();
-    } catch (error) {
-        console.error('Admin auth middleware error:', error);
-        res.status(500).json({
-            error: 'Authentication error',
-            message: 'Failed to verify admin status'
-        });
-    }
-}
 
 // GET /api/admin2/stats/tasks - Task statistics
 app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
