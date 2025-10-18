@@ -546,35 +546,33 @@ const Screens = {
      * Task Analytics Screen
      */
     async loadTasks() {
-        const container = document.getElementById('tasks-content');
-        ScreenManager.showLoading('tasks-content');
+        try {
+            ScreenManager.showLoading('#tasks-content');
 
-        const data = await API.stats.tasks();
+            const data = await API.stats.tasks();
 
-        container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Tasks</div>
-                    <div class="stat-value">${data.total}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Completion Rate</div>
-                    <div class="stat-value">${data.completion_rate}%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Created Today</div>
-                    <div class="stat-value">${data.created.today}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Created This Week</div>
-                    <div class="stat-value">${data.created.week}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Created This Month</div>
-                    <div class="stat-value">${data.created.month}</div>
-                </div>
-            </div>
-        `;
+            // Populate stat cards
+            document.getElementById('tasks-total').textContent = Helpers.formatNumber(data.total_tasks);
+            document.getElementById('tasks-completed').textContent = Helpers.formatNumber(data.completed);
+            document.getElementById('tasks-completed-subtext').textContent =
+                `${Helpers.formatPercentage((data.completed / data.total_tasks) * 100)} of total`;
+
+            document.getElementById('tasks-pending').textContent = Helpers.formatNumber(data.pending);
+            document.getElementById('tasks-pending-subtext').textContent =
+                `${Helpers.formatPercentage((data.pending / data.total_tasks) * 100)} of total`;
+
+            document.getElementById('tasks-completion-rate').textContent =
+                Helpers.formatPercentage(data.completion_rate);
+
+            document.getElementById('tasks-today').textContent = Helpers.formatNumber(data.created_today);
+            document.getElementById('tasks-week').textContent = Helpers.formatNumber(data.created_week);
+            document.getElementById('tasks-month').textContent = Helpers.formatNumber(data.created_month);
+
+            ScreenManager.hideLoading('#tasks-content');
+
+        } catch (error) {
+            ScreenManager.showError('#tasks-content', 'Failed to load task analytics', error);
+        }
     },
 
     /**

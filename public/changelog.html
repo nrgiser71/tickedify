@@ -134,10 +134,90 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.43 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.43</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📊 Task Analytics Screen - HTML + JavaScript Implementation (T029)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>HTML Structuur</strong>: Volledige HTML implementatie in admin2.html met twee stats-grids - eerste grid met Total Tasks (📋), Completed (✅), Pending (⏳), en Completion Rate (📈), tweede grid met Creation Stats (🆕 Today, 📅 Week, 📆 Month).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>JavaScript Implementation</strong>: Complete loadTasks() functie met try-catch error handling, loading states via ScreenManager.showLoading/hideLoading, en dynamic population van stat cards met document.getElementById updates.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Integration</strong>: Connectie met GET /api/admin2/stats/tasks endpoint, verwerking van total_tasks, completed, pending, completion_rate, created_today, created_week, en created_month fields.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Data Formatting</strong>: Gebruik van Helpers.formatNumber() voor numerieke weergave met duizend-separator, Helpers.formatPercentage() voor completion rate en percentages bij Completed/Pending subteksten met "of total" labels.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Robuuste error handling met ScreenManager.showError voor gebruiksvriendelijke error messaging bij API failures.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.42 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.42</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📧 Email Analytics Screen - JavaScript Implementation (T030)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>JavaScript Refactor</strong>: Volledige herimplementatie van loadEmails() functie met moderne error handling (try-catch), loading states via ScreenManager.showLoading/hideLoading, en emoji indicators (📧 🆕 👥 📊) voor betere visualisatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Integration</strong>: Verwerking van nieuwe API response fields (total_imports, recent_30d, users_with_imports, percentage_with_imports) met formatNumber en formatPercentage helpers voor consistente data formatting.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>UI Enhancement</strong>: 4-kaart stats-grid layout met duidelijke labels en subteksten - Total Imports (all time), Recent Imports (30d), Users with Imports (met totaal count), en Adoption Rate (percentage gebruikers die email import gebruiken).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Robuuste error handling met ScreenManager.showError voor gebruiksvriendelijke error messaging bij API failures.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.41 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.41</span>
+                <span class="version-badge badge-feature">v0.19.41</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
