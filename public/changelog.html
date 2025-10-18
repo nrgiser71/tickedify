@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.37 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.37</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚙️ Backend - Admin Dashboard v2 System Settings API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/system/settings Endpoint</strong>: Read-only endpoint om alle system configuratie settings op te halen. Retourneert array met key, value, description en updated_at voor elke setting, gesorteerd op key ASC.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>System Settings Integratie</strong>: Gebruikt bestaande system_settings tabel voor globale applicatie configuratie zoals onboarding_video_url en trial_duration_days. Basis voor toekomstige system configuration management UI.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Admin Authentication</strong>: Vereist requireAdmin middleware - alleen admins kunnen system settings ophalen. Retourneert 401 (not authenticated) of 403 (not admin) bij unauthorized access.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Response Format</strong>: JSON response met settings array en count veld. Elke setting bevat volledige metadata voor transparent system configuration management.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.36 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.36</span>
+                <span class="version-badge badge-feature">v0.19.36</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

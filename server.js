@@ -10298,6 +10298,42 @@ app.post('/api/admin2/users/:id/logout', requireAdmin, async (req, res) => {
 });
 
 // ========================================
+// ADMIN DASHBOARD V2 - SYSTEM CONFIGURATION
+// ========================================
+
+// GET /api/admin2/system/settings - Get all system settings
+app.get('/api/admin2/system/settings', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log(`⚙️ Fetching system settings (requested by admin ID: ${req.session.userId})`);
+
+        // Query all settings from system_settings table
+        const result = await pool.query(`
+            SELECT key, value, description, updated_at
+            FROM system_settings
+            ORDER BY key ASC
+        `);
+
+        console.log(`✅ Retrieved ${result.rows.length} system settings`);
+
+        res.json({
+            settings: result.rows,
+            count: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching system settings:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to fetch system settings'
+        });
+    }
+});
+
+// ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================
 // Admin Dashboard V2 - User-based authentication with account_type='admin'
