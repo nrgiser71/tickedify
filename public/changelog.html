@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.52 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.52</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Critical Bugfix: Route Ordering in server.js</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Fixed 404 Handler Position</strong>: Verplaatst 404 handler naar EINDE van alle routes - debug endpoints (sql-query, database-backup, cleanup-orphaned-data, find-task, fix-user, migrate-to-pure-b2) stonden NA de 404 handler waardoor Express ze nooit kon matchen, resulteerde in "Route not found" errors voor alle admin2 debug endpoints, nu staat 404 handler op regel 12986 (was 12487) met alle 6 debug routes ervoor (regels 12485-12985).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Security Screen Nu Functioneel</strong>: Met gefixte route ordering werken nu alle Security screen features - SecurityTools.refreshAuditLog() kan admin_audit_log query uitvoeren, SecurityTools.refreshSessions() kan session tabel parsen, SecurityTools.updateSecurityStats() kan statistics berekenen, alle 3 parallel loaded bij screen init zonder 404 errors.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.51 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.51</span>
+                <span class="version-badge badge-fix">v0.19.51</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
