@@ -798,23 +798,44 @@ const Screens = {
     },
 
     /**
-     * Load User Details (T034 - placeholder for now)
+     * Load User Details (T034)
      */
     async loadUserDetails(userId) {
-        const container = document.getElementById('user-details-panel');
-        container.style.display = 'block';
-        container.innerHTML = '<div class="loading-spinner"></div> Loading user details...';
-
         try {
-            const user = await API.users.get(userId);
-            container.innerHTML = `
-                <h3>User Details: ${user.user.email}</h3>
-                <p>Full user details will be implemented in T034</p>
-                <pre>${JSON.stringify(user, null, 2)}</pre>
-            `;
+            document.getElementById('user-search-results').style.display = 'none';
+            document.getElementById('user-details-panel').style.display = 'block';
+            document.getElementById('detail-email').textContent = 'Loading...';
+            const data = await API.users.get(userId);
+            document.getElementById('detail-email').textContent = data.user.email;
+            document.getElementById('detail-naam').textContent = data.user.naam || '-';
+            document.getElementById('detail-account-type').textContent = data.user.account_type === 'admin' ? '👑 Admin' : '👤 User';
+            document.getElementById('detail-tier').innerHTML = `<span class="badge ${Helpers.getTierBadgeClass(data.user.subscription_tier)}">${Helpers.getTierDisplayName(data.user.subscription_tier)}</span>`;
+            document.getElementById('detail-tasks-total').textContent = Helpers.formatNumber(data.tasks.summary.total);
+            document.getElementById('detail-tasks-completed').textContent = Helpers.formatNumber(data.tasks.summary.completed);
+            document.getElementById('detail-tasks-rate').textContent = `${Helpers.formatPercentage(data.tasks.summary.completion_rate)} completion`;
+            document.getElementById('detail-tasks-pending').textContent = Helpers.formatNumber(data.tasks.summary.pending);
+            document.getElementById('detail-tasks-recurring').textContent = Helpers.formatNumber(data.tasks.summary.recurring || 0);
+            document.getElementById('detail-emails-total').textContent = Helpers.formatNumber(data.emails.summary.total);
+            document.getElementById('detail-emails-recent').textContent = Helpers.formatNumber(data.emails.summary.recent_30d);
+            document.getElementById('detail-sub-status').textContent = data.subscription.status || 'N/A';
+            document.getElementById('detail-trial-end').textContent = data.user.trial_end_date ? Helpers.formatDate(data.user.trial_end_date) : 'N/A';
+            document.getElementById('detail-created').textContent = Helpers.formatDate(data.user.created_at);
+            document.getElementById('detail-last-login').textContent = data.user.last_login ? Helpers.formatRelativeTime(data.user.last_login) : 'Never';
+            window.currentUserId = userId;
+            window.currentUserData = data;
         } catch (error) {
-            container.innerHTML = `<div class="error-message">Failed to load user: ${error.message}</div>`;
+            console.error('Failed to load user details:', error);
+            const panel = document.getElementById('user-details-panel');
+            panel.innerHTML = `<div class="error-message"><strong>Failed to load user details</strong><p>${error.message}</p></div><button class="btn btn-secondary" onclick="Screens.closeUserDetails()">← Back to Search</button>`;
         }
+    },
+
+    /**
+     * Close User Details and return to search
+     */
+    closeUserDetails() {
+        document.getElementById('user-details-panel').style.display = 'none';
+        document.getElementById('user-search-results').style.display = 'block';
     },
 
     /**
