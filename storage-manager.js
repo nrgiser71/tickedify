@@ -143,16 +143,25 @@ class StorageManager {
   }
 
   // Validate file before upload
-  validateFile(file, isPremium, userStats) {
+  validateFile(file, planType, userStats) {
     const errors = [];
 
     // Check file size limits
-    if (!isPremium && file.size > STORAGE_CONFIG.MAX_FILE_SIZE_FREE) {
-      errors.push(`Bestand te groot. Maximum ${this.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE)} voor gratis gebruikers.`);
+    // Premium Plus: unlimited file size
+    // Premium Standard & Free: 5MB max per file
+    if (planType !== 'premium_plus' && file.size > STORAGE_CONFIG.MAX_FILE_SIZE_FREE) {
+      const maxSizeFormatted = this.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE);
+
+      if (planType === 'premium_standard') {
+        errors.push(`Bestand te groot. Maximum ${maxSizeFormatted} voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bestandsgrootte.`);
+      } else {
+        errors.push(`Bestand te groot. Maximum ${maxSizeFormatted} voor gratis gebruikers. Upgrade naar Premium voor meer mogelijkheden.`);
+      }
     }
 
-    // Check total storage limit for free users
-    if (!isPremium) {
+    // Check total storage limit (only for free users)
+    // Premium users (Standard & Plus) have unlimited total storage
+    if (planType === 'free') {
       const totalAfterUpload = userStats.used_bytes + file.size;
       if (totalAfterUpload > STORAGE_CONFIG.FREE_TIER_LIMIT) {
         const remaining = STORAGE_CONFIG.FREE_TIER_LIMIT - userStats.used_bytes;

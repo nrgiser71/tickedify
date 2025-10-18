@@ -3305,14 +3305,13 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
 
         // Get user plan type and storage stats
         const planType = await db.getUserPlanType(userId);
-        const isPremium = planType !== 'free'; // Backward compatibility for validateFile
         const userStats = await db.getUserStorageStats(userId);
 
         // Validate file upload
-        const validation = storageManager.validateFile(file, isPremium, userStats);
+        const validation = storageManager.validateFile(file, planType, userStats);
         if (!validation.valid) {
             return res.status(400).json({
-                error: 'Bestand niet toegestaan',
+                error: validation.errors[0] || 'Bestand niet toegestaan',
                 details: validation.errors
             });
         }

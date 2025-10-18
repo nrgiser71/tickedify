@@ -134,10 +134,62 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.19 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.19</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bug Fix - File Size Limiet Premium Standard</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Standard 5MB Limiet Toegevoegd</strong>: Premium Standard (€7) gebruikers hadden geen file size limiet, waardoor ze onbeperkt grote bestanden konden uploaden. Nu correct beperkt tot 5MB per bestand.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Duidelijke Error Messages</strong>: Bij uploaden van te grote bestanden krijgen gebruikers nu een specifieke melding: "Bestand te groot. Maximum 5MB voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bestandsgrootte."
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>validateFile() Refactor</strong>: Functie accepteert nu <code>planType</code> parameter ('free', 'premium_standard', 'premium_plus') i.p.v. boolean <code>isPremium</code> voor granulaire limiet checks.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">📊 Subscription Tier Limieten</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Free</strong>: 5MB max per bestand, 100MB totale opslag, 1 bijlage per taak
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Standard (€7)</strong>: 5MB max per bestand, onbeperkte totale opslag, 1 bijlage per taak
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Plus (€8)</strong>: Onbeperkte bestandsgrootte, onbeperkte opslag, onbeperkte bijlagen per taak
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.18 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.18</span>
+                <span class="version-badge badge-fix">v0.19.18</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
