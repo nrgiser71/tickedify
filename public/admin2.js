@@ -690,83 +690,126 @@ const Screens = {
     async loadUsers() {
         const container = document.getElementById('users-content');
         container.innerHTML = `
+            <!-- Search Box -->
             <div class="search-box">
-                <input type="text" id="user-search" placeholder="Search users by email, name, or ID..." />
+                <input
+                    type="text"
+                    id="user-search-input"
+                    placeholder="Search users by email, name, or ID..."
+                    autocomplete="off"
+                />
+                <div class="search-help">Min 2 characters</div>
             </div>
-            <div id="user-results"></div>
-            <div id="user-details"></div>
+
+            <!-- Search Results -->
+            <div id="user-search-results" style="display: none;">
+                <h3>Search Results (<span id="search-result-count">0</span>)</h3>
+                <div class="admin-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Naam</th>
+                                <th>Tier</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-search-table">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Details (initially hidden, populated by T034) -->
+            <div id="user-details-panel" style="display: none;">
+                <!-- Details content hier (T034) -->
+            </div>
         `;
 
-        // Setup search with debounce
-        let searchTimeout;
-        document.getElementById('user-search').addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
+        // Setup search with debounce (500ms)
+        let searchTimeout = null;
+        const input = document.getElementById('user-search-input');
+        const resultsDiv = document.getElementById('user-search-results');
+        const resultsTable = document.getElementById('user-search-table');
+        const resultCount = document.getElementById('search-result-count');
+
+        input.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
 
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+
+            // Hide results if query too short
             if (query.length < 2) {
-                document.getElementById('user-results').innerHTML = '';
+                resultsDiv.style.display = 'none';
                 return;
             }
 
+            // Debounce search (500ms)
             searchTimeout = setTimeout(async () => {
                 try {
-                    const results = await API.users.search(query);
-                    this.displayUserResults(results);
+                    // Show loading state
+                    resultsTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
+                    resultsDiv.style.display = 'block';
+
+                    // Execute search
+                    const data = await API.users.search(query);
+
+                    // Update result count
+                    resultCount.textContent = data.count;
+
+                    // Empty state
+                    if (data.results.length === 0) {
+                        resultsTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">No users found</td></tr>';
+                        return;
+                    }
+
+                    // Render results
+                    resultsTable.innerHTML = data.results.map(user => `
+                        <tr class="user-search-row" data-user-id="${user.id}">
+                            <td>${user.email}</td>
+                            <td>${user.naam || '-'}</td>
+                            <td><span class="badge ${Helpers.getTierBadgeClass(user.subscription_tier)}">
+                                ${Helpers.getTierDisplayName(user.subscription_tier)}
+                            </span></td>
+                            <td><span class="${user.actief ? 'status-active' : 'status-inactive'}">
+                                ${user.actief ? 'Active' : 'Blocked'}
+                            </span></td>
+                            <td>${Helpers.formatDate(user.created_at)}</td>
+                        </tr>
+                    `).join('');
+
+                    // Add click handlers voor user details (T034)
+                    document.querySelectorAll('.user-search-row').forEach(row => {
+                        row.addEventListener('click', () => {
+                            const userId = row.dataset.userId;
+                            Screens.loadUserDetails(userId);
+                        });
+                    });
+
                 } catch (error) {
-                    document.getElementById('user-results').innerHTML = `
-                        <div class="error-message">Search failed: ${error.message}</div>
-                    `;
+                    console.error('Search failed:', error);
+                    resultsTable.innerHTML = '<tr><td colspan="5" style="text-align:center; color: red;">Search failed</td></tr>';
                 }
-            }, 300);
+            }, 500); // 500ms debounce
         });
     },
 
-    displayUserResults(results) {
-        const container = document.getElementById('user-results');
-        if (results.count === 0) {
-            container.innerHTML = '<p>No users found</p>';
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="admin-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Name</th>
-                            <th>Tier</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${results.results.map(user => `
-                            <tr>
-                                <td>${user.email}</td>
-                                <td>${user.naam || '-'}</td>
-                                <td>${user.subscription_tier}</td>
-                                <td>${user.actief ? 'Active' : 'Blocked'}</td>
-                                <td>
-                                    <button class="btn btn-primary" onclick="Screens.viewUserDetails(${user.id})">View</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    },
-
-    async viewUserDetails(userId) {
-        const container = document.getElementById('user-details');
+    /**
+     * Load User Details (T034 - placeholder for now)
+     */
+    async loadUserDetails(userId) {
+        const container = document.getElementById('user-details-panel');
+        container.style.display = 'block';
         container.innerHTML = '<div class="loading-spinner"></div> Loading user details...';
 
         try {
             const user = await API.users.get(userId);
             container.innerHTML = `
                 <h3>User Details: ${user.user.email}</h3>
-                <p>Full user details will be implemented in next phase</p>
+                <p>Full user details will be implemented in T034</p>
                 <pre>${JSON.stringify(user, null, 2)}</pre>
             `;
         } catch (error) {

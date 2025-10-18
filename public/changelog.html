@@ -134,10 +134,134 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.45 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.45</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">👤 User Details View - Complete Implementation (T034)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>HTML Structure</strong>: Complete user-details-panel implementatie in admin2.html met Back to Search button, 4 stats-grids (User Info: Email/Naam/Account Type/Tier, Task Summary: Total/Completed/Pending/Recurring, Email Summary: Total/Recent 30d), en Subscription Details table (Status/Trial End/Created/Last Login).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Info Grid</strong>: Email display met font-size 16px voor readability, Naam (of '-' als leeg), Account Type met 👑 Admin of 👤 User indicator, Subscription Tier met colored badge (Free/Premium/Enterprise) via getTierBadgeClass/getTierDisplayName helpers.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Task Summary Grid</strong>: Total Tasks formatted met Helpers.formatNumber, Completed tasks met completion rate percentage in subtext, Pending tasks counter, Recurring tasks count (default 0 als undefined via || operator).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Email Summary Grid</strong>: Total Email Imports counter via data.emails.summary.total, Recent (30d) imports via data.emails.summary.recent_30d, formatNumber voor beide metrics voor thousands separator.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Subscription Details Table</strong>: Status row (data.subscription.status of 'N/A'), Trial End Date formatted via Helpers.formatDate (of 'N/A' als null), Created At date formatted, Last Login via formatRelativeTime ('Never' als null) - table met th width 200px left-aligned.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>loadUserDetails() Function</strong>: Complete implementatie - hide user-search-results + show user-details-panel, loading state ('Loading...') tijdens fetch, API.users.get(userId) call, data destructuring (user, tasks.summary, emails.summary, subscription), populate alle detail fields via getElementById, window globals (currentUserId, currentUserData) voor T035.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>closeUserDetails() Function</strong>: Toggle functie - hide user-details-panel + show user-search-results, smooth transition terug naar search view, geen data cleanup (behoud search results).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>CSS Styling</strong>: .btn-secondary met macos-bg-tertiary background + hover state, #user-details-panel h3 styling (margin-bottom 15px), .admin-table th/td left-align en width constraints, consistent met macOS design language.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Try-catch wrapper rondom loadUserDetails, display error message met red border bij failed fetch, error panel met Back to Search button voor recovery, console.error logging voor debugging.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>T035 Preparatie</strong>: Window globals window.currentUserId en window.currentUserData opgeslagen na successful load, user-actions div (leeg) ready voor action buttons, data accessible voor tier changes/trial extensions/blocking/deletion in T035.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">🔍 User Search Interface - HTML + JavaScript Implementation (T033)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>HTML Structuur</strong>: Complete search interface in admin2.html users-content sectie met search-box (input field + search-help tekst "Min 2 characters"), user-search-results container (tabel met Email, Naam, Tier, Status, Created kolommen), en user-details-panel voor toekomstige user details (T034).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Live Search met Debounce</strong>: JavaScript implementatie met 500ms debounce - gebruiker kan typen zonder overload van API calls, minimum 2 characters required, automatic hide/show van results based on query length, clearTimeout logic voor smooth user experience.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Search Results Rendering</strong>: Dynamic table population met user data - email, naam (of '-' als leeg), tier badge (Free/Premium/Enterprise met color coding via getTierBadgeClass/getTierDisplayName helpers), status indicator (Active groen/Blocked rood met .status-active/.status-inactive CSS classes), created date via Helpers.formatDate.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Interactive Features</strong>: Hover effects op search rows via .user-search-row:hover CSS, click handlers met data-user-id attribute voor row selection, automatic redirect naar loadUserDetails(userId) functie bij click (preparatie voor T034), result count display met search-result-count span update.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Loading & Empty States</strong>: Loading indicator tijdens search ("Searching..." in table center), empty state message ("No users found") wanneer geen resultaten, error handling met red text bij search failure, smooth transitions tussen states zonder UI jumps.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>CSS Styling</strong>: Nieuwe CSS classes - .search-box input:focus met macOS blue border + box-shadow, .search-help voor subtle help text, .user-search-row met cursor pointer + hover background, .status-active (groen #34C759) en .status-inactive (rood #FF3B30) voor status indicators.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Integration</strong>: Connectie met GET /api/admin2/users/search?q={query} endpoint, response parsing met data.count en data.results array, data mapping naar table rows met destructured user objects (id, email, naam, subscription_tier, actief, created_at).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>T034 Preparatie</strong>: loadUserDetails() placeholder functie geïmplementeerd - toont loading state, fetches user data via API.users.get(userId), displays JSON preview (wordt volledig uitgewerkt in T034), error handling bij failed user fetch, user-details-panel show/hide logic.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.44 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.44</span>
+                <span class="version-badge badge-feature">v0.19.44</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
