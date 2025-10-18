@@ -213,6 +213,61 @@
             </div>
         </div>
 
+        <!-- Version 0.19.38 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.38</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚠️ Backend - SQL Query Execution Endpoint met Safety Features</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>POST /api/admin2/debug/sql-query Endpoint (T023)</strong>: Execute arbitrary SQL queries via admin dashboard met multi-layer safety checks. Gebruikt voor database debugging, analytics en operational queries met bescherming tegen destructieve operaties.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Three-Level Safety System</strong>: BLOCKED operations (DROP, TRUNCATE, ALTER) - geweigerd met 400 error. DESTRUCTIVE operations (DELETE, UPDATE) - vereisen confirm_destructive=true flag. SAFE operations (SELECT, EXPLAIN, ANALYZE) - direct toegestaan zonder confirmation.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Query Execution Controls</strong>: 10 seconden statement_timeout voor alle queries. Uppercase keyword detection voor safety checks. Query truncation naar 500 chars voor audit logging. Result limiting tot 1000 rows met warning in response.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Comprehensive Response Format</strong>: Success response bevat query text, rows array (limited to 1000), row_count (totaal), execution_time_ms (performance), warnings array (indien applicable). Alle metadata voor debugging en analysis.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Audit Logging</strong>: Logs SQL_QUERY_SAFE (SELECT), SQL_QUERY_DESTRUCTIVE (UPDATE/DELETE) en SQL_QUERY_BLOCKED (DROP/TRUNCATE/ALTER) naar admin_audit_log. Bevat query preview, row count en execution time voor compliance en security monitoring.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: PostgreSQL error code detection - 57014 (query timeout), 42601 (syntax error), 42501 (permission denied). Returns detailed error messages met postgres_code voor debugging. Validation errors voor empty/invalid queries.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Security Implementation</strong>: requireAdmin middleware - alleen admins kunnen queries uitvoeren. IP tracking en User-Agent logging in audit. Blocked keywords worden gelogd zelfs bij rejection voor security monitoring. Database bescherming via statement_timeout en result limiting.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.37 -->
         <div class="version-block">
             <div class="version-header">

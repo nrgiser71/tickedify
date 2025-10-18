@@ -12599,5 +12599,231 @@ app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
     }
 });
 
+// ============================================================================
+// T023: POST /api/admin2/debug/sql-query - Execute SQL queries with safety checks
+// ============================================================================
+
+app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
+    try {
+        console.log('🔍 SQL query execution request:', {
+            admin_user_id: req.session.userId,
+            has_query: !!req.body.query,
+            confirm_destructive: req.body.confirm_destructive
+        });
+
+        const { query, confirm_destructive } = req.body;
+
+        // Validatie: query is verplicht
+        if (!query) {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'SQL query is required',
+                field: 'query'
+            });
+        }
+
+        // Validatie: query moet een string zijn
+        if (typeof query !== 'string') {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'Query must be a string',
+                field: 'query'
+            });
+        }
+
+        // Parse en trim query
+        const trimmedQuery = query.trim();
+
+        if (trimmedQuery.length === 0) {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'Query cannot be empty',
+                field: 'query'
+            });
+        }
+
+        // Uppercase check voor keywords
+        const upperQuery = trimmedQuery.toUpperCase();
+
+        // BLOCKING CHECK: Dangerous operations die NOOIT toegestaan zijn
+        const blockedKeywords = ['DROP', 'TRUNCATE', 'ALTER'];
+
+        for (const keyword of blockedKeywords) {
+            if (upperQuery.includes(keyword)) {
+                console.log('🚫 BLOCKED query attempt:', {
+                    keyword,
+                    admin_user_id: req.session.userId,
+                    query_preview: trimmedQuery.substring(0, 100)
+                });
+
+                // Log blocked attempt to audit
+                try {
+                    await pool.query(`
+                        INSERT INTO admin_audit_log (
+                            admin_user_id,
+                            action,
+                            target_type,
+                            target_id,
+                            old_value,
+                            new_value,
+                            ip_address,
+                            user_agent
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    `, [
+                        req.session.userId,
+                        'SQL_QUERY_BLOCKED',
+                        'database',
+                        null,
+                        null,
+                        JSON.stringify({ keyword, query_preview: trimmedQuery.substring(0, 200) }),
+                        req.ip,
+                        req.get('User-Agent')
+                    ]);
+                } catch (auditError) {
+                    console.log('[AUDIT] Blocked SQL query attempt:', keyword, 'by admin', req.session.userId);
+                }
+
+                return res.status(400).json({
+                    error: `${keyword} operations are blocked for safety`,
+                    blocked_keyword: keyword,
+                    message: 'This operation is permanently blocked to protect the database'
+                });
+            }
+        }
+
+        // DESTRUCTIVE CHECK: Operations die confirmation vereisen
+        const destructiveKeywords = ['DELETE', 'UPDATE'];
+
+        for (const keyword of destructiveKeywords) {
+            if (upperQuery.includes(keyword) && !confirm_destructive) {
+                console.log('⚠️ Destructive query requires confirmation:', {
+                    keyword,
+                    admin_user_id: req.session.userId,
+                    query_preview: trimmedQuery.substring(0, 100)
+                });
+
+                return res.status(400).json({
+                    error: `${keyword} operations require explicit confirmation`,
+                    destructive_keyword: keyword,
+                    required_body: { confirm_destructive: true },
+                    message: 'Add "confirm_destructive": true to execute this query'
+                });
+            }
+        }
+
+        // Execute query met timeout en timing
+        console.log('⏱️ Executing SQL query:', {
+            query_length: trimmedQuery.length,
+            query_preview: trimmedQuery.substring(0, 100),
+            is_destructive: confirm_destructive
+        });
+
+        // Set statement timeout to 10 seconds
+        await pool.query('SET statement_timeout = 10000');
+
+        const startTime = Date.now();
+        let result;
+
+        try {
+            result = await pool.query(trimmedQuery);
+        } finally {
+            // Always reset timeout
+            await pool.query('RESET statement_timeout');
+        }
+
+        const executionTime = Date.now() - startTime;
+
+        // Prepare response
+        const rows = result.rows || [];
+        const rowCount = rows.length;
+        const warnings = [];
+
+        // Limit results to 1000 rows
+        const limitedRows = rows.slice(0, 1000);
+        if (rowCount > 1000) {
+            warnings.push('Results limited to 1000 rows');
+        }
+
+        // Log to audit
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    old_value,
+                    new_value,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                confirm_destructive ? 'SQL_QUERY_DESTRUCTIVE' : 'SQL_QUERY_SAFE',
+                'database',
+                null,
+                null,
+                JSON.stringify({
+                    query: trimmedQuery.substring(0, 500), // Truncate long queries
+                    row_count: rowCount,
+                    execution_time_ms: executionTime
+                }),
+                req.ip,
+                req.get('User-Agent')
+            ]);
+            console.log('✅ Audit log created for SQL query execution');
+        } catch (auditError) {
+            console.log('[AUDIT] Admin', req.session.userId, 'executed SQL query:', trimmedQuery.substring(0, 100), '| Rows:', rowCount);
+        }
+
+        // Build response
+        const response = {
+            success: true,
+            query: trimmedQuery,
+            rows: limitedRows,
+            row_count: rowCount,
+            execution_time_ms: executionTime,
+            warnings: warnings.length > 0 ? warnings : undefined
+        };
+
+        console.log('✅ SQL query executed successfully:', {
+            row_count: rowCount,
+            execution_time_ms: executionTime,
+            had_warnings: warnings.length > 0
+        });
+
+        res.json(response);
+
+    } catch (error) {
+        console.error('❌ Error executing SQL query:', error);
+
+        // Check for specific PostgreSQL errors
+        if (error.code === '57014') {
+            // Query timeout
+            return res.status(500).json({
+                error: 'Query timeout',
+                message: 'Query execution exceeded 10 second timeout',
+                postgres_code: error.code
+            });
+        }
+
+        if (error.code === '42601' || error.code === '42501') {
+            // Syntax error or permission denied
+            return res.status(400).json({
+                error: 'Query error',
+                message: error.message,
+                postgres_code: error.code
+            });
+        }
+
+        // Generic error
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to execute SQL query',
+            details: error.message
+        });
+    }
+});
+
 
 // Force deploy Thu Jun 26 11:21:42 CEST 2025
