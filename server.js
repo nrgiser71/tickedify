@@ -10333,6 +10333,121 @@ app.get('/api/admin2/system/settings', requireAdmin, async (req, res) => {
     }
 });
 
+// PUT /api/admin2/system/settings/:key - Update a system setting
+app.put('/api/admin2/system/settings/:key', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { key } = req.params;
+        const { value } = req.body;
+
+        console.log(`⚙️ Updating system setting: ${key} (requested by admin ID: ${req.session.userId})`);
+
+        // Validation: value must be non-empty string
+        if (!value || typeof value !== 'string' || value.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Invalid value',
+                message: 'Value is required and must be a non-empty string'
+            });
+        }
+
+        // Special validation for onboarding_video_url
+        if (key === 'onboarding_video_url') {
+            const youtubePattern = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/)[a-zA-Z0-9_-]+/;
+            const vimeoPattern = /^https:\/\/(www\.)?vimeo\.com\/\d+/;
+
+            const isValidUrl = youtubePattern.test(value) || vimeoPattern.test(value);
+
+            if (!isValidUrl) {
+                return res.status(400).json({
+                    error: 'Invalid value',
+                    message: 'onboarding_video_url must be a valid YouTube or Vimeo URL',
+                    field: 'value'
+                });
+            }
+        }
+
+        // 1. Get old value first for audit trail
+        const existingSetting = await pool.query(
+            'SELECT value FROM system_settings WHERE key = $1',
+            [key]
+        );
+
+        if (existingSetting.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Setting not found',
+                message: `No setting with key '${key}'`
+            });
+        }
+
+        const oldValue = existingSetting.rows[0].value;
+
+        // 2. Update with new value
+        const updateResult = await pool.query(
+            `UPDATE system_settings
+             SET value = $1, updated_at = NOW()
+             WHERE key = $2
+             RETURNING updated_at`,
+            [value, key]
+        );
+
+        const updatedAt = updateResult.rows[0].updated_at;
+
+        // 3. Insert audit log with graceful fallback
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_identifier,
+                    details,
+                    ip_address,
+                    user_agent,
+                    created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            `, [
+                req.session.userId,
+                'SETTING_UPDATE',
+                'system_setting',
+                key,
+                JSON.stringify({
+                    setting_key: key,
+                    old_value: oldValue,
+                    new_value: value
+                }),
+                req.ip,
+                req.get('User-Agent') || 'Unknown'
+            ]);
+            console.log(`✅ Audit log created for setting update: ${key}`);
+        } catch (auditError) {
+            // Graceful fallback - don't fail the entire operation
+            console.error('⚠️ Failed to create audit log (non-critical):', auditError.message);
+        }
+
+        console.log(`✅ System setting updated: ${key}`);
+        console.log(`   Old value: ${oldValue}`);
+        console.log(`   New value: ${value}`);
+
+        res.json({
+            success: true,
+            key,
+            old_value: oldValue,
+            new_value: value,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating system setting:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to update system setting'
+        });
+    }
+});
+
 // ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================
@@ -11545,6 +11660,47 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
         });
     }
 });
+
+// ============================================================================
+// T020: GET /api/admin2/system/payments - Get all payment configurations
+// ============================================================================
+
+app.get('/api/admin2/system/payments', requireAdmin, async (req, res) => {
+    try {
+        console.log('💰 Fetching payment configurations...');
+
+        // Simple SELECT van payment_configurations tabel
+        const result = await pool.query(`
+            SELECT
+                id,
+                plan_id,
+                plan_name,
+                plan_description,
+                checkout_url,
+                is_active,
+                created_at,
+                updated_at
+            FROM payment_configurations
+            ORDER BY plan_id ASC
+        `);
+
+        console.log(`✅ Fetched ${result.rows.length} payment configurations`);
+
+        res.json({
+            payment_configs: result.rows,
+            count: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching payment configurations:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch payment configurations'
+        });
+    }
+});
+
+// ============================================================================
 
     try {
         if (!pool) return res.status(503).json({ error: 'Database not available' });

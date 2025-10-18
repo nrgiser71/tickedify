@@ -167,6 +167,18 @@
                             <strong>Response Format</strong>: JSON response met settings array en count veld. Elke setting bevat volledige metadata voor transparent system configuration management.
                         </div>
                     </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/system/payments Endpoint</strong>: Read-only endpoint om alle payment configuraties op te halen. Retourneert array met id, plan_id, plan_name, plan_description, checkout_url, is_active, created_at en updated_at voor elke payment config, gesorteerd op plan_id ASC.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Payment Configurations Integratie</strong>: Gebruikt payment_configurations tabel voor centralized payment plan management. Response format: { payment_configs: [...], count: number }. Basis voor toekomstige payment management UI in Admin Dashboard v2.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
