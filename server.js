@@ -4670,7 +4670,7 @@ app.get('/api/debug/user-by-email/:email', async (req, res) => {
         const { email } = req.params;
         
         // Find user by email
-        const result = await pool.query('SELECT id, email, name FROM users WHERE email = $1', [email]);
+        const result = await pool.query('SELECT id, email, naam, created_at, trial_end_date, subscription_tier, subscription_status FROM users WHERE email = $1', [email]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
