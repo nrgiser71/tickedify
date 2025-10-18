@@ -12825,5 +12825,200 @@ app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
     }
 });
 
+// ============================================================================
+// T025: POST /api/admin2/debug/cleanup-orphaned-data - Multi-level cleanup van orphaned data
+// ============================================================================
+
+app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, res) => {
+    const startTime = Date.now();
+
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { preview = true, targets } = req.body;
+        const adminUserId = req.session.userId;
+
+        // Validation: preview must be boolean if provided
+        if (typeof preview !== 'boolean') {
+            return res.status(400).json({
+                error: 'Invalid preview value',
+                message: 'preview must be a boolean (true/false)'
+            });
+        }
+
+        // Validation: targets must be array if provided
+        if (targets !== undefined && !Array.isArray(targets)) {
+            return res.status(400).json({
+                error: 'Invalid targets value',
+                message: 'targets must be an array of strings'
+            });
+        }
+
+        console.log(`🧹 Admin ${adminUserId} initiating cleanup (preview=${preview}, targets=${targets ? targets.join(',') : 'all'})`);
+
+        // Definieer alle cleanup targets met queries
+        const allTargets = [
+            {
+                name: 'orphaned_tasks',
+                description: 'Tasks with non-existent user_id',
+                countQuery: 'SELECT COUNT(*) as count FROM taken WHERE user_id NOT IN (SELECT id FROM users)',
+                deleteQuery: 'DELETE FROM taken WHERE user_id NOT IN (SELECT id FROM users)',
+                enabled: !targets || targets.includes('orphaned_tasks')
+            },
+            {
+                name: 'orphaned_email_imports',
+                description: 'Email imports with non-existent user_id',
+                countQuery: 'SELECT COUNT(*) as count FROM email_imports WHERE user_id NOT IN (SELECT id FROM users)',
+                deleteQuery: 'DELETE FROM email_imports WHERE user_id NOT IN (SELECT id FROM users)',
+                enabled: !targets || targets.includes('orphaned_email_imports')
+            },
+            {
+                name: 'orphaned_planning_entries',
+                description: 'Planning entries with non-existent user_id or taak_id',
+                countQuery: `SELECT COUNT(*) as count FROM dagelijkse_planning
+                             WHERE user_id NOT IN (SELECT id FROM users)
+                             OR taak_id NOT IN (SELECT id FROM taken)`,
+                deleteQuery: `DELETE FROM dagelijkse_planning
+                              WHERE user_id NOT IN (SELECT id FROM users)
+                              OR taak_id NOT IN (SELECT id FROM taken)`,
+                enabled: !targets || targets.includes('orphaned_planning_entries')
+            },
+            {
+                name: 'expired_sessions',
+                description: 'Session records older than 30 days',
+                countQuery: "SELECT COUNT(*) as count FROM session WHERE expire < NOW() - INTERVAL '30 days'",
+                deleteQuery: "DELETE FROM session WHERE expire < NOW() - INTERVAL '30 days'",
+                enabled: !targets || targets.includes('expired_sessions')
+            },
+            {
+                name: 'orphaned_audit_logs',
+                description: 'Audit logs with non-existent admin_user_id (optional)',
+                countQuery: `SELECT COUNT(*) as count FROM admin_audit_log
+                             WHERE admin_user_id NOT IN (SELECT id FROM users WHERE account_type = 'admin')`,
+                deleteQuery: `DELETE FROM admin_audit_log
+                              WHERE admin_user_id NOT IN (SELECT id FROM users WHERE account_type = 'admin')`,
+                enabled: (!targets || targets.includes('orphaned_audit_logs')) && false // disabled by default, table might not exist
+            }
+        ];
+
+        const cleanupResults = [];
+        let totalDeleted = 0;
+
+        // PREVIEW MODE - alleen tellen, niet verwijderen
+        if (preview) {
+            console.log('📊 Running in PREVIEW mode - no data will be deleted');
+
+            for (const target of allTargets.filter(t => t.enabled)) {
+                try {
+                    const countResult = await pool.query(target.countQuery);
+                    const count = parseInt(countResult.rows[0].count);
+
+                    cleanupResults.push({
+                        target: target.name,
+                        description: target.description,
+                        found: count,
+                        deleted: 0,
+                        query: target.deleteQuery
+                    });
+
+                    console.log(`  ${target.name}: ${count} records found`);
+                } catch (error) {
+                    // Graceful skip voor targets die niet bestaan (bijv. admin_audit_log)
+                    console.log(`  ${target.name}: skipped (table might not exist)`);
+                }
+            }
+        }
+        // EXECUTE MODE - daadwerkelijk verwijderen
+        else {
+            console.log('🗑️ Running in EXECUTE mode - data will be deleted');
+
+            await pool.query('BEGIN');
+
+            try {
+                for (const target of allTargets.filter(t => t.enabled)) {
+                    try {
+                        // Eerst tellen
+                        const countResult = await pool.query(target.countQuery);
+                        const count = parseInt(countResult.rows[0].count);
+
+                        // Dan verwijderen
+                        const deleteResult = await pool.query(target.deleteQuery);
+                        const deleted = deleteResult.rowCount || 0;
+
+                        cleanupResults.push({
+                            target: target.name,
+                            description: target.description,
+                            found: count,
+                            deleted: deleted,
+                            query: target.deleteQuery
+                        });
+
+                        totalDeleted += deleted;
+                        console.log(`  ${target.name}: ${deleted} records deleted`);
+                    } catch (error) {
+                        // Graceful skip voor targets die niet bestaan
+                        console.log(`  ${target.name}: skipped (${error.message})`);
+                    }
+                }
+
+                await pool.query('COMMIT');
+                console.log(`✅ Cleanup committed: ${totalDeleted} total records deleted`);
+
+                // Audit log voor execute mode
+                const cleanupTimestamp = new Date().toISOString();
+                await pool.query(`
+                    INSERT INTO admin_audit_log (
+                        admin_user_id,
+                        action,
+                        target_user_id,
+                        old_value,
+                        new_value,
+                        timestamp,
+                        ip_address,
+                        user_agent
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                `, [
+                    adminUserId,
+                    'DATA_CLEANUP',
+                    null,
+                    JSON.stringify({ targets: targets || 'all' }),
+                    JSON.stringify({
+                        cleanup_results: cleanupResults,
+                        total_deleted: totalDeleted
+                    }),
+                    cleanupTimestamp,
+                    req.ip || req.connection.remoteAddress,
+                    req.headers['user-agent'] || 'Unknown'
+                ]).catch(err => {
+                    console.log('⚠️ Audit log failed (table might not exist):', err.message);
+                });
+
+            } catch (error) {
+                await pool.query('ROLLBACK');
+                throw error;
+            }
+        }
+
+        const executionTime = Date.now() - startTime;
+
+        res.json({
+            success: true,
+            preview: preview,
+            cleanup_results: cleanupResults,
+            total_records_deleted: preview ? 0 : totalDeleted,
+            execution_time_ms: executionTime
+        });
+
+    } catch (error) {
+        console.error('❌ Error during cleanup:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to cleanup orphaned data'
+        });
+    }
+});
+
 
 // Force deploy Thu Jun 26 11:21:42 CEST 2025

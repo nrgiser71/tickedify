@@ -209,6 +209,42 @@
                             <strong>Audit Logging</strong>: Logs DATABASE_BACKUP_REQUEST action naar admin_audit_log met metadata (size_mb, tables count, total rows). Graceful fallback naar console log als audit tabel niet bestaat. Admin user tracking voor compliance en debugging.
                         </div>
                     </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>POST /api/admin2/debug/cleanup-orphaned-data Endpoint (T025)</strong>: Multi-level cleanup van orphaned database records met veilige preview mode als default. Ondersteunt 5 cleanup targets: orphaned_tasks, orphaned_email_imports, orphaned_planning_entries, expired_sessions (30+ dagen oud), en orphaned_audit_logs (optioneel).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Preview Mode Safety</strong>: Default preview=true mode telt records zonder te verwijderen. Retourneert exact welke records zouden worden verwijderd inclusief DELETE query voor review. Safe voor exploratie en impact assessment. Zero-risk operatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Execute Mode met Transaction Safety</strong>: preview=false mode voert DELETE queries uit binnen PostgreSQL transaction. Automatic ROLLBACK bij errors. COMMIT alleen als alle enabled targets succesvol zijn. Return actual deletion counts per target. Audit logging van cleanup operaties met volledige details.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Selective Cleanup via Targets Array</strong>: Optionele targets parameter om specifieke cleanup operations te kiezen (bijv. ["expired_sessions", "orphaned_tasks"]). Geen targets = alle enabled targets. Flexible voor granular cleanup control.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Comprehensive Response Format</strong>: Returns cleanup_results array met per target: name, description, found count, deleted count, en query. Totaal records deleted, execution time in milliseconds, preview boolean. Perfect voor frontend visualization en audit trails.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Graceful Table Detection</strong>: Try-catch per target met graceful skip voor non-existent tabellen (bijv. admin_audit_log). Orphaned_audit_logs disabled by default. Prevents crashes bij incomplete schema. Production-safe execution.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
