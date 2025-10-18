@@ -9710,6 +9710,123 @@ app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
     }
 });
 
+// PUT /api/admin2/users/:id/trial - Extend user's trial period
+app.put('/api/admin2/users/:id/trial', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const { trial_end_date } = req.body;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        // Validation: trial_end_date is required
+        if (!trial_end_date) {
+            return res.status(400).json({
+                error: 'Invalid input',
+                message: 'trial_end_date is required'
+            });
+        }
+
+        // Validation: trial_end_date must be a valid date
+        const trialDate = new Date(trial_end_date);
+        if (isNaN(trialDate.getTime())) {
+            return res.status(400).json({
+                error: 'Invalid date',
+                message: 'trial_end_date must be a valid ISO date (YYYY-MM-DD)'
+            });
+        }
+
+        // Validation: trial_end_date must be in the future
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset to start of today
+        trialDate.setHours(0, 0, 0, 0);
+
+        if (trialDate <= today) {
+            return res.status(400).json({
+                error: 'Invalid date',
+                message: 'Trial end date must be in the future'
+            });
+        }
+
+        console.log(`🔄 Updating trial for user ID: ${userId} to ${trial_end_date}`);
+
+        // Check if user exists and get old value
+        const userQuery = await pool.query(
+            'SELECT id, email, trial_end_date FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const oldTrialEnd = userQuery.rows[0].trial_end_date;
+
+        // Update trial_end_date
+        await pool.query(
+            'UPDATE users SET trial_end_date = $1 WHERE id = $2',
+            [trial_end_date, userId]
+        );
+
+        const updatedAt = new Date().toISOString();
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'TRIAL_EXTEND',
+            userId,
+            oldTrialEnd ? oldTrialEnd.toISOString().split('T')[0] : null,
+            trial_end_date,
+            updatedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Trial extended for user ${userId}: ${oldTrialEnd} → ${trial_end_date}`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            old_trial_end: oldTrialEnd ? oldTrialEnd.toISOString().split('T')[0] : null,
+            new_trial_end: trial_end_date,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating trial:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to update trial'
+        });
+    }
+});
+
 // DELETE /api/admin2/users/:id - Delete user account and all associated data
 app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
     try {
@@ -9870,6 +9987,90 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         res.status(500).json({
             error: 'Server error',
             message: 'Failed to delete user'
+        });
+    }
+});
+
+// POST /api/admin2/users/:id/logout - Force logout user (invalidate all sessions)
+app.post('/api/admin2/users/:id/logout', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        console.log(`🚪 Force logout for user ID: ${userId} (requested by admin ID: ${req.session.userId})`);
+
+        // Check if user exists
+        const userCheck = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        // Delete all sessions for this user
+        // PostgreSQL session store: sess->'passport'->>'user' bevat user_id als string
+        const deleteResult = await pool.query(`
+            DELETE FROM session
+            WHERE sess->>'passport' IS NOT NULL
+                AND sess->'passport'->>'user' = $1::text
+            RETURNING sid
+        `, [userId]);
+
+        const sessionsInvalidated = deleteResult.rows.length;
+
+        // Log audit entry
+        const timestamp = new Date().toISOString();
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'FORCE_LOGOUT',
+            userId,
+            null,
+            JSON.stringify({ sessions_invalidated: sessionsInvalidated }),
+            timestamp,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Force logout completed: ${sessionsInvalidated} session(s) invalidated for user ${userId}`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            sessions_invalidated: sessionsInvalidated,
+            timestamp: timestamp
+        });
+
+    } catch (error) {
+        console.error('❌ Error forcing logout:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to force logout'
         });
     }
 });
