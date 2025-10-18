@@ -9432,6 +9432,183 @@ app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin2/users/:id - Get detailed information about a specific user
+app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        console.log(`🔍 Getting details for user ID: ${userId}`);
+
+        // 1. Get user details
+        const userQuery = await pool.query(`
+            SELECT
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_tier,
+                subscription_status,
+                trial_end_date,
+                actief,
+                created_at,
+                last_login,
+                onboarding_video_seen,
+                onboarding_video_seen_at
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const user = userQuery.rows[0];
+
+        // 2. Get task summary
+        const taskSummaryQuery = await pool.query(`
+            SELECT
+                COUNT(*) as total_tasks,
+                COUNT(*) FILTER (WHERE voltooid = true) as completed_tasks,
+                COUNT(*) FILTER (WHERE voltooid = false) as active_tasks,
+                COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring_tasks,
+                COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked_tasks
+            FROM taken
+            WHERE user_id = $1
+        `, [userId]);
+
+        const taskSummary = taskSummaryQuery.rows[0];
+
+        // 3. Get tasks by project (top 10)
+        const tasksByProjectQuery = await pool.query(`
+            SELECT project, COUNT(*) as count
+            FROM taken
+            WHERE user_id = $1 AND project IS NOT NULL
+            GROUP BY project
+            ORDER BY count DESC
+            LIMIT 10
+        `, [userId]);
+
+        // 4. Get tasks by context (top 10)
+        const tasksByContextQuery = await pool.query(`
+            SELECT context, COUNT(*) as count
+            FROM taken
+            WHERE user_id = $1 AND context IS NOT NULL
+            GROUP BY context
+            ORDER BY count DESC
+            LIMIT 10
+        `, [userId]);
+
+        // 5. Get email import summary
+        const emailSummaryQuery = await pool.query(`
+            SELECT
+                COUNT(*) as total_imports,
+                COUNT(*) FILTER (WHERE processed = true) as processed_imports,
+                MIN(imported_at) as first_import,
+                MAX(imported_at) as last_import
+            FROM email_imports
+            WHERE user_id = $1
+        `, [userId]);
+
+        const emailSummary = emailSummaryQuery.rows[0];
+
+        // 6. Get recent email imports (last 10)
+        const recentEmailsQuery = await pool.query(`
+            SELECT from_email, subject, imported_at
+            FROM email_imports
+            WHERE user_id = $1
+            ORDER BY imported_at DESC
+            LIMIT 10
+        `, [userId]);
+
+        // 7. Get subscription details with payment configuration
+        const subscriptionQuery = await pool.query(`
+            SELECT
+                u.subscription_status,
+                u.subscription_tier,
+                u.trial_end_date,
+                pc.plan_name,
+                pc.price_monthly
+            FROM users u
+            LEFT JOIN payment_configurations pc
+                ON pc.tier = u.subscription_tier AND pc.is_active = true
+            WHERE u.id = $1
+        `, [userId]);
+
+        const subscription = subscriptionQuery.rows[0] || {
+            subscription_status: user.subscription_status,
+            subscription_tier: user.subscription_tier,
+            trial_end_date: user.trial_end_date,
+            plan_name: null,
+            price_monthly: null
+        };
+
+        console.log(`✅ User details retrieved for ID ${userId}`);
+
+        // Build response according to contract
+        res.json({
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                account_type: user.account_type,
+                subscription_tier: user.subscription_tier,
+                subscription_status: user.subscription_status,
+                trial_end_date: user.trial_end_date,
+                actief: user.actief,
+                created_at: user.created_at,
+                last_login: user.last_login,
+                onboarding_video_seen: user.onboarding_video_seen,
+                onboarding_video_seen_at: user.onboarding_video_seen_at
+            },
+            tasks: {
+                total: parseInt(taskSummary.total_tasks) || 0,
+                completed: parseInt(taskSummary.completed_tasks) || 0,
+                active: parseInt(taskSummary.active_tasks) || 0,
+                recurring: parseInt(taskSummary.recurring_tasks) || 0,
+                blocked: parseInt(taskSummary.blocked_tasks) || 0,
+                by_project: tasksByProjectQuery.rows,
+                by_context: tasksByContextQuery.rows
+            },
+            emails: {
+                total_imports: parseInt(emailSummary.total_imports) || 0,
+                processed: parseInt(emailSummary.processed_imports) || 0,
+                first_import: emailSummary.first_import,
+                last_import: emailSummary.last_import,
+                recent: recentEmailsQuery.rows
+            },
+            subscription: {
+                status: subscription.subscription_status,
+                tier: subscription.subscription_tier,
+                trial_end_date: subscription.trial_end_date,
+                plan_name: subscription.plan_name,
+                price_monthly: subscription.price_monthly
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting user details:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to get user details'
+        });
+    }
+});
+
 // ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================

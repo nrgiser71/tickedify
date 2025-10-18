@@ -134,10 +134,59 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.27 -->
+        <!-- Version 0.19.30 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.29</span>
+                <span class="version-badge badge-latest">v0.19.30</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">👤 Backend - Admin Dashboard v2 User Details API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/users/:id Endpoint</strong>: Gedetailleerde user inspector endpoint geïmplementeerd volgens API contract. Retourneert complete user data met 4 secties: user details, task statistics, email imports en subscription info.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Section</strong>: Volledige user data inclusief id, email, naam, account_type, subscription_tier, subscription_status, trial_end_date, actief, created_at, last_login, onboarding_video_seen en onboarding_video_seen_at.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Task Statistics</strong>: Uitgebreide task metrics met summary counts (total, completed, active, recurring, blocked) en top 10 breakdown by_project en by_context arrays met task counts.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Email Import History</strong>: Email section met total_imports, processed counts, first_import en last_import timestamps, plus recent array met laatste 10 emails (from, subject, imported_at).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Subscription Details</strong>: Subscription section met status, tier, trial_end_date en payment config JOIN voor plan_name en price_monthly van active payment configurations.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Proper 404 response voor non-existent user IDs, 400 voor invalide ID formats, en admin middleware beveiliging via requireAdmin.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.29 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.29</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
