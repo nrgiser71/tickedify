@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.22 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.22</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">✨ Feature - Subscription Flow Verbetering</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Naadloze Beta-naar-Productie Transitie</strong>: Wanneer de beta periode voorbij is, komt de gebruiker op een pagina om te kiezen voor een trial van 14 dagen of een betalend abonnement. Alle achtergrond processing (database updates, trial activatie, payment setup) gebeurt transparant terwijl de gebruiker op de pagina blijft.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Experience Flow</strong>: Na selectie van trial of betaald abonnement blijft de gebruiker op de subscription pagina, ziet een succes melding wanneer alle achtergrond taken voltooid zijn, en wordt daarna automatisch doorgestuurd naar /app. Geen extra clicks of pagina reloads tijdens processing.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Technical Implementation</strong>: Backend processing (trial activatie, database updates, payment URL generatie) gebeurt asynchroon via <code>confirmSelection()</code> in subscription.js. Frontend toont loading states en success modals met automatische redirect naar /app na voltooiing.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.21 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.21</span>
+                <span class="version-badge badge-fix">v0.19.21</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

@@ -294,6 +294,27 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Execute**: `executeBulkAction()` in app.js:7000
 - **UI**: `renderBulkToolbar()` in app.js:7300
 
+### Subscription & Beta-naar-Productie Flow (v0.19.21+)
+- **Beta Expired Page**: `/public/beta-expired.html` - Toon wanneer beta periode afgelopen is
+- **Trial Expired Page**: `/public/trial-expired.html` - Toon wanneer 14-dagen trial afgelopen is
+- **Subscription Selection**: `/public/subscription.html` - Keuze tussen trial en betaald abonnement
+- **Subscription Confirm**: `/public/subscription-confirm.html` - Email verificatie voor betaling
+- **JavaScript Files**:
+  - `public/js/subscription.js` - Hoofdlogica voor subscription flow
+  - `public/js/subscription-data.js` - Plan data en validatie functies
+  - `public/js/subscription-api.js` - API calls voor subscription endpoints
+  - `public/js/subscription-confirm.js` - Email confirmatie logica
+- **Key Functions**:
+  - `confirmSelection()` - regel ~379 - Verwerkt trial/betaald selectie, slaat redirectTarget op
+  - `closeSuccessModal()` - regel ~565 - Checkt trial redirect en stuurt door naar /app
+  - `initializeSubscriptionPage()` - regel ~20 - Laadt plans en user status
+- **User Flow**: Beta expired → Subscription page → Trial/Betaald keuze → Success modal → Auto-redirect naar /app
+- **Backend Endpoints**:
+  - `POST /api/subscription/select` - Trial activatie of betaald plan selectie (server.js:~2690)
+  - `GET /api/subscription/status` - Gebruiker subscription status (server.js:~3000)
+  - `GET /api/subscription/plans` - Beschikbare abonnementen ophalen
+- **Database Schema**: `users` tabel bevat subscription kolommen (trial_start_date, trial_end_date, subscription_status, selected_plan)
+
 ### Email Import (Mailgun Subdomein Architectuur)
 - **Domain Setup**: mg.tickedify.com subdomein voor Mailgun routing
 - **Webhook**: `/api/email/import` in server.js:4600 (unchanged endpoint)
@@ -596,12 +617,13 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-**LAATSTE UPDATE**: Augustus 24, 2025 - Tablet Resize Functionaliteit Voltooid
+**LAATSTE UPDATE**: Oktober 18, 2025 - Subscription Flow Verbetering (v0.19.22)
 **BELANGRIJKSTE UPDATES**:
+- Oktober 18: Subscription Flow - Naadloze beta-naar-productie transitie met automatische redirect naar /app (v0.19.21-0.19.22)
 - Augustus 24: Tablet Resize Functionaliteit - Complete touch-friendly resize implementatie voor dagelijkse planning (v0.12.21-0.12.22)
 - Augustus 2: Uitklapbare Taken Fix - Hersteld expandable functionaliteit in dag-kalender planning
 - Juli 24: Highlighted Context Menu - Complete implementation met DOM cloning en consistent UX
 - Juli 18: Focus Mode - Volledige CSS overrides voor perfect fullscreen gedrag
 - Juli 13: Scroll Indicators - Intelligente scroll feedback voor uitgesteld lijsten
-- Juli 13: Floating Drop Panel - Moderne drag & drop interface 
+- Juli 13: Floating Drop Panel - Moderne drag & drop interface
 **BELANGRIJK**: Update dit document bij ELKE wijziging aan de codebase structuur!
