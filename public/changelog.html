@@ -137,7 +137,49 @@
         <!-- Version 0.19.27 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.27</span>
+                <span class="version-badge badge-latest">v0.19.28</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📊 Backend - Admin Dashboard v2 Home Statistics API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>GET /api/admin2/stats/home Endpoint</strong>: Centrale dashboard statistics endpoint geïmplementeerd - alle statistieken voor het home dashboard scherm in één API call. Bevat user counts, subscription tier distribution, trial statistics en recente registraties.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Admin Middleware</strong>: Nieuwe requireAdmin() middleware functie die eerst authenticatie checkt en daarna account_type='admin' verifieert. Gebruikt proper HTTP status codes: 401 voor unauthenticated, 403 voor unauthorized (non-admin).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Statistics</strong>: Uitgebreide user metrics - total users, active (7d/30d), new (today/week/month), inactive (30d/60d/90d). Alle queries parallel uitgevoerd met Promise.all() voor optimale performance.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Subscription & Trial Data</strong>: Subscription tier counts (free/premium/enterprise), active trials count en trial conversion rate percentage. Conversion rate berekend als active users / (active + expired + cancelled).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Recent Registrations</strong>: Laatste 10 nieuwe gebruikers met id, email, naam, created_at en subscription_tier voor quick overview van nieuwe signups.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.27</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
