@@ -756,7 +756,21 @@
                 </div>
                 <div class="form-group">
                     <label for="registerPassword">Wachtwoord:</label>
-                    <input type="password" id="registerPassword" required>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="registerPassword" required>
+                        <button type="button" id="toggle-password-visibility" aria-label="Toon/verberg wachtwoord" title="Toon/verberg wachtwoord">
+                            <span id="toggle-icon">👁️</span>
+                        </button>
+                    </div>
+                    <div class="password-requirements">
+                        <p>Wachtwoord moet voldoen aan:</p>
+                        <ul>
+                            <li id="req-length" class="password-requirement neutral">Minimaal 8 tekens</li>
+                            <li id="req-uppercase" class="password-requirement neutral">Minimaal 1 hoofdletter</li>
+                            <li id="req-digit" class="password-requirement neutral">Minimaal 1 cijfer</li>
+                            <li id="req-special" class="password-requirement neutral">Minimaal 1 speciaal teken</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="registerPasswordConfirm">Wachtwoord bevestigen:</label>
@@ -1024,6 +1038,103 @@
             </div>
         </div>
     </div>
+
+    <!-- Password Validation Script - Feature 017 -->
+    <script>
+        // T005: Password Validation Rules Object
+        const passwordValidationRules = {
+            minLength: {
+                test: (password) => password.length >= 8,
+                message: 'Minimaal 8 tekens',
+                element: 'req-length'
+            },
+            hasUppercase: {
+                test: (password) => /[A-Z]/.test(password),
+                message: 'Minimaal 1 hoofdletter',
+                element: 'req-uppercase'
+            },
+            hasDigit: {
+                test: (password) => /[0-9]/.test(password),
+                message: 'Minimaal 1 cijfer',
+                element: 'req-digit'
+            },
+            hasSpecialChar: {
+                test: (password) => /[^A-Za-z0-9]/.test(password),
+                message: 'Minimaal 1 speciaal teken',
+                element: 'req-special'
+            }
+        };
+
+        // T006: Real-Time Validation Function
+        function validatePasswordStrength(password) {
+            const results = {};
+            let allValid = true;
+
+            for (const [ruleName, rule] of Object.entries(passwordValidationRules)) {
+                const isValid = rule.test(password);
+                results[ruleName] = isValid;
+                if (!isValid) allValid = false;
+            }
+
+            results.isValid = allValid;
+            return results;
+        }
+
+        // T007: Visual Feedback Update Function
+        function updatePasswordFeedback(validationResults) {
+            for (const [ruleName, rule] of Object.entries(passwordValidationRules)) {
+                const element = document.getElementById(rule.element);
+                if (!element) continue; // Skip if element doesn't exist
+
+                const isValid = validationResults[ruleName];
+
+                // Remove all state classes
+                element.classList.remove('neutral', 'valid', 'invalid');
+
+                // Add appropriate state class
+                if (isValid) {
+                    element.classList.add('valid');
+                } else {
+                    element.classList.add('invalid');
+                }
+            }
+        }
+
+        // T008 & T009: Event Listeners Setup
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('registerPassword');
+            const submitButton = document.getElementById('registerSubmit');
+            const toggleButton = document.getElementById('toggle-password-visibility');
+            const toggleIcon = document.getElementById('toggle-icon');
+
+            // T008: Input Event Listener for Real-Time Validation
+            if (passwordInput && submitButton) {
+                passwordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    const validationResults = validatePasswordStrength(password);
+                    updatePasswordFeedback(validationResults);
+
+                    // Enable/disable submit button based on validation
+                    submitButton.disabled = !validationResults.isValid;
+                });
+            }
+
+            // T009: Show/Hide Password Toggle Function
+            if (toggleButton && passwordInput && toggleIcon) {
+                toggleButton.addEventListener('click', function() {
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        toggleIcon.textContent = '🙈'; // Closed eye
+                        this.setAttribute('aria-label', 'Verberg wachtwoord');
+                    } else {
+                        passwordInput.type = 'password';
+                        toggleIcon.textContent = '👁️'; // Open eye
+                        this.setAttribute('aria-label', 'Toon wachtwoord');
+                    }
+                });
+            }
+        });
+    </script>
 
     <script src="app.js"></script>
 </body>

@@ -9046,3 +9046,95 @@ body.dagkalender-focus-active {
     margin: 10px 0;
 }
 
+/* Password Validation Styles - Feature 017 */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+    padding-right: 40px;
+}
+
+#toggle-password-visibility {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #666;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+#toggle-password-visibility:hover {
+    color: #333;
+}
+
+#toggle-password-visibility:focus {
+    outline: 2px solid var(--macos-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.password-requirements {
+    margin-top: 10px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+.password-requirements p {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    color: var(--macos-text-secondary);
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.password-requirement {
+    font-size: 0.9em;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirement.neutral {
+    color: #666;
+}
+
+.password-requirement.valid {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.password-requirement.valid::before {
+    content: "✓ ";
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+.password-requirement.invalid {
+    color: #dc3545;
+}
+
+.password-requirement.invalid::before {
+    content: "✗ ";
+    font-weight: bold;
+    margin-right: 4px;
+}
+
