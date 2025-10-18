@@ -10107,6 +10107,112 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// POST /api/admin2/users/:id/reset-password - Reset user's password (admin-initiated)
+app.post('/api/admin2/users/:id/reset-password', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        console.log(`🔑 Resetting password for user ID: ${userId}`);
+
+        // 1. Check if user exists
+        const userQuery = await pool.query(`
+            SELECT id, email, naam
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const user = userQuery.rows[0];
+
+        // 2. Generate random 12-character alphanumeric password
+        const generatePassword = () => {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        };
+
+        const newPassword = generatePassword();
+
+        // 3. Hash the new password with bcrypt
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // 4. Update user's password in database
+        await pool.query(`
+            UPDATE users
+            SET wachtwoord_hash = $1
+            WHERE id = $2
+        `, [hashedPassword, userId]);
+
+        const timestamp = new Date().toISOString();
+
+        // 5. Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'PASSWORD_RESET',
+            userId,
+            null,  // old_value: niet opslaan voor security
+            null,  // new_value: niet opslaan voor security
+            timestamp,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Password reset for user ${userId} (${user.email}) by admin ${req.session.userId}`);
+
+        // 6. Return success with new password
+        res.json({
+            success: true,
+            user_id: userId,
+            email: user.email,
+            new_password: newPassword,
+            message: 'Provide this password to the user securely'
+        });
+
+    } catch (error) {
+        console.error('❌ Error resetting password:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to reset password'
+        });
+    }
+});
+
 // POST /api/admin2/users/:id/logout - Force logout user (invalidate all sessions)
 app.post('/api/admin2/users/:id/logout', requireAdmin, async (req, res) => {
     try {
