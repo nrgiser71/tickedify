@@ -134,61 +134,37 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.33 -->
+        <!-- Version 0.19.34 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.33</span>
+                <span class="version-badge badge-latest">v0.19.34</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
                 <div class="change-category">
-                    <div class="change-category-title">🗑️ Backend - Admin Dashboard v2 User Delete API</div>
+                    <div class="change-category-title">⏱️ Backend - Admin Dashboard v2 Trial Extension API</div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>DELETE /api/admin2/users/:id Endpoint</strong>: Implementatie van user deletion endpoint volgens API contract. Admins kunnen nu via API gebruikers volledig verwijderen inclusief alle geassocieerde data (cascade delete van tasks, emails, sessions).
+                            <strong>PUT /api/admin2/users/:id/trial Endpoint</strong>: Implementatie van trial extension endpoint volgens API contract. Admins kunnen nu via API de trial period van gebruikers verlengen door een nieuwe trial_end_date op te geven.
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Security Check: Self-Delete Prevention</strong>: Admins kunnen hun eigen account niet verwijderen - retourneert 403 Forbidden met error "Cannot delete self" om te voorkomen dat admins zichzelf per ongeluk uitloggen.
+                            <strong>Future Date Validation</strong>: Strict validatie dat trial_end_date een geldige ISO date (YYYY-MM-DD) is én in de toekomst ligt. Retourneert 400 Bad Request met "Trial end date must be in the future" bij past dates.
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Security Check: Last Admin Protection</strong>: Verhindert verwijdering van de laatste admin account - checkt COUNT van admin users en retourneert 403 Forbidden als dit het laatste admin account is om platform lockout te voorkomen.
+                            <strong>Audit Logging</strong>: Volledige audit trail logging in admin_audit_log tabel - logged admin_user_id, action='TRIAL_EXTEND', target_user_id, old_value, new_value, timestamp, ip_address en user_agent.
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Cascade Delete</strong>: Volledig opruimen van gebruiker data - DELETE van user triggert cascade deletion van alle taken en email imports via foreign key constraints. Sessions worden manueel verwijderd (JSON column zonder FK).
-                        </div>
-                    </div>
-                    <div class="change-item">
-                        <div class="change-icon">•</div>
-                        <div class="change-content">
-                            <strong>Cascade Counts Response</strong>: Response bevat exacte counts van cascade deleted items - tasks, email_imports en sessions counts voor audit trail en admin transparency.
-                        </div>
-                    </div>
-                    <div class="change-item">
-                        <div class="change-icon">•</div>
-                        <div class="change-content">
-                            <strong>Transaction Safety</strong>: Gebruik van BEGIN/COMMIT/ROLLBACK transactie om atomic deletion te garanderen - bij error wordt rollback uitgevoerd zodat data consistent blijft.
-                        </div>
-                    </div>
-                    <div class="change-item">
-                        <div class="change-icon">•</div>
-                        <div class="change-content">
-                            <strong>Audit Logging</strong>: Volledige audit trail logging in admin_audit_log tabel - logged admin_user_id, action='USER_DELETE', target_user_id, old_value (email) en new_value (cascade counts JSON) voor elke user deletion.
-                        </div>
-                    </div>
-                    <div class="change-item">
-                        <div class="change-icon">•</div>
-                        <div class="change-content">
-                            <strong>Complete Response</strong>: Response bevat success status, user_id, email, deleted_at timestamp en cascade_deleted object met tasks/email_imports/sessions counts volgens API contract.
+                            <strong>Complete Response</strong>: Response bevat success status, user_id, old_trial_end (kan null zijn), new_trial_end en updated_at timestamp volgens API contract specificatie.
                         </div>
                     </div>
                 </div>

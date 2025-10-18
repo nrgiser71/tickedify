@@ -9827,6 +9827,122 @@ app.put('/api/admin2/users/:id/trial', requireAdmin, async (req, res) => {
     }
 });
 
+// PUT /api/admin2/users/:id/block - Block user account (prevent login)
+app.put('/api/admin2/users/:id/block', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const { blocked } = req.body;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        // Validation: blocked must be boolean
+        if (typeof blocked !== 'boolean') {
+            return res.status(400).json({
+                error: 'Invalid input',
+                message: 'Blocked must be a boolean value'
+            });
+        }
+
+        // Security: prevent self-block
+        if (userId === req.session.userId) {
+            return res.status(403).json({
+                error: 'Cannot block self',
+                message: 'Admins cannot block their own account'
+            });
+        }
+
+        console.log(`🔄 ${blocked ? 'Blocking' : 'Unblocking'} user ${userId}`);
+
+        // Check if user exists
+        const userQuery = await pool.query(
+            'SELECT id, email FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        // Update actief status (actief = !blocked)
+        await pool.query(
+            'UPDATE users SET actief = $1 WHERE id = $2',
+            [!blocked, userId]
+        );
+
+        const updatedAt = new Date().toISOString();
+
+        // Invalidate all sessions for this user (if blocking)
+        let sessionsInvalidated = 0;
+        if (blocked) {
+            // Delete sessions where user_id matches in the session data
+            const deleteResult = await pool.query(`
+                DELETE FROM session
+                WHERE sess::jsonb->'passport'->>'user' = $1
+                OR sess::jsonb->>'userId' = $1
+            `, [userId.toString()]);
+
+            sessionsInvalidated = deleteResult.rowCount || 0;
+            console.log(`🗑️ Invalidated ${sessionsInvalidated} session(s) for user ${userId}`);
+        }
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            blocked ? 'USER_BLOCK' : 'USER_UNBLOCK',
+            userId,
+            (!blocked).toString(),
+            blocked.toString(),
+            updatedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ User ${userId} ${blocked ? 'blocked' : 'unblocked'} successfully`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            blocked: blocked,
+            sessions_invalidated: sessionsInvalidated,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error blocking user:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to block user'
+        });
+    }
+});
+
 // DELETE /api/admin2/users/:id - Delete user account and all associated data
 app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
     try {
