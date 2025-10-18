@@ -51,7 +51,7 @@ const API = {
     users: {
         search: (query) => API.request(`/users/search?q=${encodeURIComponent(query)}`),
         get: (id) => API.request(`/users/${id}`),
-        updateTier: (id, tier) => API.request(`/users/${id}/tier`, {
+        changeTier: (id, tier) => API.request(`/users/${id}/tier`, {
             method: 'PUT',
             body: JSON.stringify({ tier })
         }),
@@ -59,13 +59,11 @@ const API = {
             method: 'PUT',
             body: JSON.stringify({ trial_end_date: trialEndDate })
         }),
-        block: (id, blocked) => API.request(`/users/${id}/block`, {
+        blockUser: (id, blocked) => API.request(`/users/${id}/block`, {
             method: 'PUT',
             body: JSON.stringify({ blocked })
         }),
-        delete: (id) => API.request(`/users/${id}`, { method: 'DELETE' }),
-        resetPassword: (id) => API.request(`/users/${id}/reset-password`, { method: 'POST' }),
-        logout: (id) => API.request(`/users/${id}/logout`, { method: 'POST' })
+        forceLogout: (id) => API.request(`/users/${id}/logout`, { method: 'POST' })
     },
 
     // System configuration endpoints
@@ -821,6 +819,13 @@ const Screens = {
             document.getElementById('detail-trial-end').textContent = data.user.trial_end_date ? Helpers.formatDate(data.user.trial_end_date) : 'N/A';
             document.getElementById('detail-created').textContent = Helpers.formatDate(data.user.created_at);
             document.getElementById('detail-last-login').textContent = data.user.last_login ? Helpers.formatRelativeTime(data.user.last_login) : 'Never';
+
+            // Update block button text based on user status (T035)
+            const blockBtn = document.getElementById('block-user-btn');
+            if (blockBtn) {
+                blockBtn.textContent = data.user.actief ? '🔒 Block User' : '✅ Unblock User';
+            }
+
             window.currentUserId = userId;
             window.currentUserData = data;
         } catch (error) {
@@ -868,6 +873,173 @@ const Screens = {
     async loadSecurity() {
         const container = document.getElementById('security-content');
         container.innerHTML = '<p>Security controls will be loaded here</p>';
+    }
+};
+
+// ============================================================================
+// User Actions (T035)
+// ============================================================================
+
+const UserActions = {
+    /**
+     * Show Change Tier Modal
+     */
+    showChangeTierModal() {
+        if (!window.currentUserData) {
+            alert('No user selected');
+            return;
+        }
+
+        document.getElementById('tier-user-email').textContent = window.currentUserData.user.email;
+        document.getElementById('tier-select').value = window.currentUserData.user.subscription_tier;
+        document.getElementById('change-tier-modal').style.display = 'flex';
+    },
+
+    /**
+     * Change user's subscription tier
+     */
+    async changeTier() {
+        try {
+            const newTier = document.getElementById('tier-select').value;
+            const userId = window.currentUserId;
+
+            if (!confirm(`Change tier to ${newTier}?`)) {
+                return;
+            }
+
+            const result = await API.users.changeTier(userId, newTier);
+
+            alert(`✅ Tier changed to ${newTier}`);
+            this.closeModal('change-tier-modal');
+
+            // Refresh user details
+            Screens.loadUserDetails(userId);
+
+        } catch (error) {
+            alert(`❌ Failed to change tier: ${error.message}`);
+        }
+    },
+
+    /**
+     * Show Extend Trial Modal
+     */
+    showExtendTrialModal() {
+        if (!window.currentUserData) {
+            alert('No user selected');
+            return;
+        }
+
+        document.getElementById('trial-user-email').textContent = window.currentUserData.user.email;
+
+        // Set min date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('trial-date-input').min = tomorrow.toISOString().split('T')[0];
+
+        // Set current value to trial end date or tomorrow
+        const currentTrialEnd = window.currentUserData.user.trial_end_date;
+        if (currentTrialEnd) {
+            document.getElementById('trial-date-input').value = currentTrialEnd;
+        } else {
+            document.getElementById('trial-date-input').value = tomorrow.toISOString().split('T')[0];
+        }
+
+        document.getElementById('extend-trial-modal').style.display = 'flex';
+    },
+
+    /**
+     * Extend user's trial period
+     */
+    async extendTrial() {
+        try {
+            const trialDate = document.getElementById('trial-date-input').value;
+            const userId = window.currentUserId;
+
+            if (!trialDate) {
+                alert('Please select a date');
+                return;
+            }
+
+            if (!confirm(`Extend trial to ${trialDate}?`)) {
+                return;
+            }
+
+            const result = await API.users.extendTrial(userId, trialDate);
+
+            alert(`✅ Trial extended to ${trialDate}`);
+            this.closeModal('extend-trial-modal');
+
+            // Refresh user details
+            Screens.loadUserDetails(userId);
+
+        } catch (error) {
+            alert(`❌ Failed to extend trial: ${error.message}`);
+        }
+    },
+
+    /**
+     * Toggle block/unblock user
+     */
+    async toggleBlockUser() {
+        if (!window.currentUserData) {
+            alert('No user selected');
+            return;
+        }
+
+        const isBlocked = !window.currentUserData.user.actief;
+        const action = isBlocked ? 'unblock' : 'block';
+
+        if (!confirm(`Are you sure you want to ${action} this user?`)) {
+            return;
+        }
+
+        try {
+            const userId = window.currentUserId;
+            const result = await API.users.blockUser(userId, !isBlocked);
+
+            alert(`✅ User ${action}ed successfully. ${result.sessions_invalidated} sessions invalidated.`);
+
+            // Update button text
+            document.getElementById('block-user-btn').textContent =
+                isBlocked ? '🔒 Block User' : '✅ Unblock User';
+
+            // Refresh user details
+            Screens.loadUserDetails(userId);
+
+        } catch (error) {
+            alert(`❌ Failed to ${action} user: ${error.message}`);
+        }
+    },
+
+    /**
+     * Force logout user (invalidate all sessions)
+     */
+    async forceLogout() {
+        if (!window.currentUserData) {
+            alert('No user selected');
+            return;
+        }
+
+        if (!confirm('Force logout this user? All active sessions will be terminated.')) {
+            return;
+        }
+
+        try {
+            const userId = window.currentUserId;
+            const result = await API.users.forceLogout(userId);
+
+            alert(`✅ User logged out. ${result.sessions_invalidated} sessions terminated.`);
+
+        } catch (error) {
+            alert(`❌ Failed to force logout: ${error.message}`);
+        }
+    },
+
+    /**
+     * Close modal by ID
+     */
+    closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
     }
 };
 

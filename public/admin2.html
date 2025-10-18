@@ -335,6 +335,65 @@
         .admin-table table tr td {
             text-align: left;
         }
+
+        /* Modal Styling (T035) */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--macos-bg-primary);
+            padding: 30px;
+            border-radius: var(--macos-radius-medium);
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--macos-text-primary);
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: var(--macos-text-secondary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--macos-border);
+            border-radius: var(--macos-radius-medium);
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--macos-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .action-buttons-grid button {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -760,9 +819,31 @@
                             </table>
                         </div>
 
-                        <!-- Action Buttons (T035) -->
+                        <!-- User Actions (T035) -->
                         <div id="user-actions" style="margin-top: 30px;">
-                            <!-- Action buttons komen in T035 -->
+                            <h3>User Actions</h3>
+
+                            <div class="action-buttons-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                                <!-- Change Tier -->
+                                <button class="btn btn-primary" onclick="UserActions.showChangeTierModal()">
+                                    ⭐ Change Subscription Tier
+                                </button>
+
+                                <!-- Extend Trial -->
+                                <button class="btn btn-primary" onclick="UserActions.showExtendTrialModal()">
+                                    🎯 Extend Trial Date
+                                </button>
+
+                                <!-- Block/Unblock -->
+                                <button class="btn btn-danger" id="block-user-btn" onclick="UserActions.toggleBlockUser()">
+                                    🔒 Block User
+                                </button>
+
+                                <!-- Force Logout -->
+                                <button class="btn btn-primary" onclick="UserActions.forceLogout()">
+                                    🚪 Force Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -804,6 +885,40 @@
                 <div id="security-content"></div>
             </section>
         </main>
+    </div>
+
+    <!-- Change Tier Modal (T035) -->
+    <div id="change-tier-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Change Subscription Tier</h3>
+            <p>Select new tier for <strong id="tier-user-email">--</strong></p>
+
+            <select id="tier-select" class="form-select">
+                <option value="free">Free</option>
+                <option value="premium">Premium</option>
+                <option value="enterprise">Enterprise</option>
+            </select>
+
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="UserActions.changeTier()">Change Tier</button>
+                <button class="btn btn-secondary" onclick="UserActions.closeModal('change-tier-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extend Trial Modal (T035) -->
+    <div id="extend-trial-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Extend Trial Date</h3>
+            <p>Set new trial end date for <strong id="trial-user-email">--</strong></p>
+
+            <input type="date" id="trial-date-input" class="form-input" />
+
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="UserActions.extendTrial()">Extend Trial</button>
+                <button class="btn btn-secondary" onclick="UserActions.closeModal('extend-trial-modal')">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script src="admin2.js"></script>

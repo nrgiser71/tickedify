@@ -134,10 +134,83 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.46 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.46</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚙️ User Management Actions UI (T035)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Action Buttons Grid</strong>: 4 action buttons in responsive grid (repeat auto-fit, minmax 200px) - Change Subscription Tier ⭐, Extend Trial Date 🎯, Block/Unblock User 🔒, Force Logout 🚪 - full-width buttons met consistent styling.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Change Tier Modal</strong>: Professional modal popup met dropdown select (Free/Premium/Enterprise), pre-populated met current tier, display user email in modal header, confirmation dialog voor tier change, PUT /api/admin2/users/:id/tier endpoint call, automatic user details refresh na succesvolle change.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Extend Trial Modal</strong>: Date picker modal met min date = tomorrow (prevents past dates), pre-populated met current trial_end_date of tomorrow, display user email, confirmation dialog, PUT /api/admin2/users/:id/trial endpoint, validation voor empty date, auto refresh user details.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Block/Unblock User</strong>: Dynamic button text (🔒 Block User / ✅ Unblock User) based on actief status, toggle functionaliteit, confirmation dialog, PUT /api/admin2/users/:id/block endpoint, displays sessions invalidated count in success message, button updates instantly na action.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Force Logout</strong>: POST /api/admin2/users/:id/logout endpoint call, invalidates all active sessions for user, displays sessions invalidated count, confirmation dialog warns about session termination, no user details refresh (sessions remain terminated).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Modal System</strong>: Professional modal styling - fixed position fullscreen overlay, centered modal-content (max-width 500px), rgba backdrop (0.5 opacity), box-shadow 10px 40px, keyboard-accessible form controls, ESC to close via closeModal(id) method.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Client Updates</strong>: API.users object extended met changeTier(id, tier), extendTrial(id, trialEndDate), blockUser(id, blocked), forceLogout(id) - consistent REST conventions, JSON body formatting, error handling via API.request wrapper.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>UserActions Object</strong>: Complete implementation in admin2.js - showChangeTierModal(), changeTier(), showExtendTrialModal(), extendTrial(), toggleBlockUser(), forceLogout(), closeModal(id) - window.currentUserData validation, confirmation dialogs, success/error alerts, auto refresh logic.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>CSS Form Styling</strong>: .form-select en .form-input styling - full width, 10px padding, border-radius medium, focus state met blue border + shadow glow, .modal-buttons flex layout met 10px gap, macOS design consistency.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dynamic Block Button</strong>: loadUserDetails() updates block button text based on user.actief status - automatic synchronization, prevents confusion about current state, visual feedback (🔒 vs ✅) voor admin user.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.45 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.45</span>
+                <span class="version-badge badge-feature">v0.19.45</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
