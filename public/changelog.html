@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.31 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.31</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Backend - Admin Dashboard v2 Tier Management API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>PUT /api/admin2/users/:id/tier Endpoint</strong>: Implementatie van subscription tier management endpoint. Admins kunnen nu via API de subscription tier van gebruikers wijzigen naar free, premium of enterprise.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Tier Validatie</strong>: Strict validation van tier parameter - alleen 'free', 'premium', of 'enterprise' toegestaan. Retourneert 400 Bad Request bij invalide tier met duidelijke error message.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Audit Logging</strong>: Volledige audit trail logging in admin_audit_log tabel - logged admin_user_id, action, target_user_id, old_value, new_value, timestamp, ip_address en user_agent voor elke tier wijziging.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Response</strong>: Response bevat success status, user_id, old_tier, new_tier en updated_at timestamp volgens API contract specificatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Proper 404 voor non-existent users, 400 voor invalide input, admin auth via requireAdmin middleware. Graceful fallback als audit log tabel nog niet bestaat.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.30 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.30</span>
+                <span class="version-badge badge-feature">v0.19.30</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

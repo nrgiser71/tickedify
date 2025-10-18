@@ -9609,6 +9609,271 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// PUT /api/admin2/users/:id/tier - Change user's subscription tier
+app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const { tier } = req.body;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        // Validation: tier must be provided and valid
+        const validTiers = ['free', 'premium', 'enterprise'];
+        if (!tier || !validTiers.includes(tier)) {
+            return res.status(400).json({
+                error: 'Invalid tier',
+                message: 'Tier must be one of: free, premium, enterprise'
+            });
+        }
+
+        console.log(`🔄 Changing tier for user ${userId} to ${tier}`);
+
+        // Get current user data before update
+        const currentUserQuery = await pool.query(`
+            SELECT id, email, subscription_tier
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        if (currentUserQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const currentUser = currentUserQuery.rows[0];
+        const oldTier = currentUser.subscription_tier;
+
+        // Update user's subscription tier
+        const updateQuery = await pool.query(`
+            UPDATE users
+            SET subscription_tier = $1
+            WHERE id = $2
+            RETURNING id, subscription_tier
+        `, [tier, userId]);
+
+        const updatedAt = new Date().toISOString();
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'TIER_CHANGE',
+            userId,
+            oldTier,
+            tier,
+            updatedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Tier changed for user ${userId}: ${oldTier} → ${tier}`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            old_tier: oldTier,
+            new_tier: tier,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error changing user tier:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to change tier'
+        });
+    }
+});
+
+// DELETE /api/admin2/users/:id - Delete user account and all associated data
+app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const adminUserId = req.session.userId;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        console.log(`🗑️ Admin ${adminUserId} attempting to delete user ${userId}`);
+
+        // Security Check 1: Prevent self-delete
+        if (userId === adminUserId) {
+            console.log(`❌ Self-delete prevented for admin ${adminUserId}`);
+            return res.status(403).json({
+                error: 'Cannot delete self',
+                message: 'Admins cannot delete their own account'
+            });
+        }
+
+        // Get user info before deletion (for audit log and response)
+        const userResult = await pool.query(
+            'SELECT id, email, account_type FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            console.log(`❌ User ${userId} not found`);
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const targetUser = userResult.rows[0];
+
+        // Security Check 2: Prevent deletion of last admin
+        if (targetUser.account_type === 'admin') {
+            const adminCountResult = await pool.query(
+                "SELECT COUNT(*) as count FROM users WHERE account_type = 'admin'"
+            );
+            const adminCount = parseInt(adminCountResult.rows[0].count);
+
+            if (adminCount <= 1) {
+                console.log(`❌ Cannot delete last admin account (user ${userId})`);
+                return res.status(403).json({
+                    error: 'Cannot delete last admin',
+                    message: 'At least one admin account must remain'
+                });
+            }
+        }
+
+        // Count cascade deletions before deletion (for audit log and response)
+        const tasksCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM taken WHERE gebruiker_id = $1',
+            [userId]
+        );
+        const tasksCount = parseInt(tasksCountResult.rows[0].count);
+
+        const emailsCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM email_imports WHERE user_id = $1',
+            [userId]
+        );
+        const emailsCount = parseInt(emailsCountResult.rows[0].count);
+
+        const sessionsCountResult = await pool.query(
+            "SELECT COUNT(*) as count FROM sessions WHERE sess::text LIKE $1",
+            [`%"userId":${userId}%`]
+        );
+        const sessionsCount = parseInt(sessionsCountResult.rows[0].count);
+
+        console.log(`📊 Preparing to delete user ${targetUser.email} with ${tasksCount} tasks, ${emailsCount} emails, ${sessionsCount} sessions`);
+
+        // Perform deletion (cascades handled by database foreign keys)
+        // Database schema has ON DELETE CASCADE for:
+        // - taken.gebruiker_id -> users.id
+        // - email_imports.user_id -> users.id
+        // Sessions need manual cleanup (JSON column, no foreign key)
+
+        await pool.query('BEGIN');
+
+        // Delete user's sessions manually (sessions table has JSON data, no FK constraint)
+        await pool.query(
+            "DELETE FROM sessions WHERE sess::text LIKE $1",
+            [`%"userId":${userId}%`]
+        );
+
+        // Delete user (cascades to tasks, email_imports via foreign keys)
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+        await pool.query('COMMIT');
+
+        const deletedAt = new Date().toISOString();
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'USER_DELETE',
+            userId,
+            targetUser.email,
+            JSON.stringify({
+                tasks: tasksCount,
+                email_imports: emailsCount,
+                sessions: sessionsCount
+            }),
+            deletedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ User ${targetUser.email} (ID ${userId}) deleted successfully by admin ${adminUserId}`);
+        console.log(`   Cascade deleted: ${tasksCount} tasks, ${emailsCount} email imports, ${sessionsCount} sessions`);
+
+        res.json({
+            success: true,
+            user_id: targetUser.id,
+            email: targetUser.email,
+            deleted_at: deletedAt,
+            cascade_deleted: {
+                tasks: tasksCount,
+                email_imports: emailsCount,
+                sessions: sessionsCount
+            }
+        });
+
+    } catch (error) {
+        // Rollback transaction on error
+        try {
+            await pool.query('ROLLBACK');
+        } catch (rollbackError) {
+            console.error('❌ Rollback error:', rollbackError);
+        }
+
+        console.error('❌ Error deleting user:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to delete user'
+        });
+    }
+});
+
 // ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================

@@ -76,7 +76,7 @@
 ## Phase 3.2: Backend - Statistics Endpoints (All [P])
 **CRITICAL: All statistics endpoints can be implemented in parallel - different route groups**
 
-- [ ] **T004** [P] Implement GET /api/admin2/stats/home
+- [X] **T004** [P] Implement GET /api/admin2/stats/home
   - File: `server.js`
   - Contract: `contracts/api-admin2-stats.md` (home endpoint)
   - Data model: `data-model.md` (User Statistics queries)
@@ -87,7 +87,7 @@
   - Dependencies: None (parallel with T005-T009)
   - Estimated: 45 min
 
-- [ ] **T005** [P] Implement GET /api/admin2/stats/growth
+- [X] **T005** [P] Implement GET /api/admin2/stats/growth
   - File: `server.js`
   - Contract: `contracts/api-admin2-stats.md` (growth endpoint)
   - Data model: `data-model.md` (User growth query)
@@ -98,7 +98,7 @@
   - Dependencies: None (parallel with T004, T006-T009)
   - Estimated: 30 min
 
-- [ ] **T006** [P] Implement GET /api/admin2/stats/tasks
+- [X] **T006** [P] Implement GET /api/admin2/stats/tasks
   - File: `server.js`
   - Contract: `contracts/api-admin2-stats.md` (tasks endpoint)
   - Data model: `data-model.md` (Task Statistics queries)
@@ -109,7 +109,7 @@
   - Dependencies: None (parallel with T004-T005, T007-T009)
   - Estimated: 30 min
 
-- [ ] **T007** [P] Implement GET /api/admin2/stats/emails
+- [X] **T007** [P] Implement GET /api/admin2/stats/emails
   - File: `server.js`
   - Contract: `contracts/api-admin2-stats.md` (emails endpoint)
   - Data model: `data-model.md` (Email Statistics queries)
@@ -120,7 +120,7 @@
   - Dependencies: None (parallel with T004-T006, T008-T009)
   - Estimated: 30 min
 
-- [ ] **T008** [P] Implement GET /api/admin2/stats/database
+- [X] **T008** [P] Implement GET /api/admin2/stats/database
   - File: `server.js`
   - Contract: `contracts/api-admin2-stats.md` (database endpoint)
   - Data model: `data-model.md` (Database Statistics queries)
@@ -131,7 +131,7 @@
   - Dependencies: None (parallel with T004-T007, T009)
   - Estimated: 30 min
 
-- [ ] **T009** [P] Implement GET /api/admin2/stats/revenue
+- [X] **T009** [P] Implement GET /api/admin2/stats/revenue
   - File: `server.js`
   - Contract: `contracts/api-admin2-stats.md` (revenue endpoint)
   - Data model: `data-model.md` (Revenue Statistics queries)
@@ -147,7 +147,7 @@
 ## Phase 3.3: Backend - User Management Endpoints (Sequential)
 **NOTE: These modify server.js sequentially - NOT parallel**
 
-- [ ] **T010** Implement GET /api/admin2/users/search
+- [X] **T010** Implement GET /api/admin2/users/search
   - File: `server.js`
   - Contract: `contracts/api-admin2-users.md` (search endpoint)
   - Data model: `data-model.md` (User search query)
@@ -159,7 +159,7 @@
   - Dependencies: None
   - Estimated: 30 min
 
-- [ ] **T011** Implement GET /api/admin2/users/:id
+- [X] **T011** Implement GET /api/admin2/users/:id
   - File: `server.js`
   - Contract: `contracts/api-admin2-users.md` (details endpoint)
   - Data model: `data-model.md` (User Data Inspector query)
