@@ -3,7 +3,7 @@ const B2 = require('backblaze-b2');
 // Storage configuration
 const STORAGE_CONFIG = {
   FREE_TIER_LIMIT: 100 * 1024 * 1024, // 100MB total for free users
-  MAX_FILE_SIZE_FREE: 5 * 1024 * 1024, // 5MB max file size for free users
+  MAX_FILE_SIZE_FREE: 4.5 * 1024 * 1024, // 4.5MB max file size (Vercel serverless limit: 4.5MB payload)
   MAX_ATTACHMENTS_PER_TASK_FREE: 1, // 1 attachment per task for free users
   ALLOWED_MIMETYPES: [
     // Documents

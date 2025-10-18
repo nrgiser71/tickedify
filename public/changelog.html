@@ -134,10 +134,62 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.20 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.20</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Aanpassing - File Size Limiet 5MB → 4.5MB</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Vercel Serverless Limiet</strong>: Alle file size limieten verlaagd van 5MB naar 4.5MB vanwege Vercel's serverless function payload limiet van 4.5MB. Dit voorkomt cryptische 413 errors bij grote uploads.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Tijdelijke Beta Maatregel</strong>: Voor de live launch wordt presigned URL upload geïmplementeerd zodat bestanden direct naar Backblaze B2 kunnen worden geüpload zonder via Vercel te gaan (dan weer onbeperkte grootte voor Premium Plus).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Aangepaste Bestanden</strong>: storage-manager.js, changelog.html, index.html, subscription.js - alle UI teksten en error messages nu consistent met 4.5MB limiet.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">📊 Nieuwe Limieten (Beta)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Free</strong>: 4.5MB max per bestand, 100MB totale opslag, 1 bijlage per taak
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Standard (€7)</strong>: 4.5MB max per bestand, onbeperkte opslag, 1 bijlage per taak
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Premium Plus (€8)</strong>: 4.5MB max per bestand (tijdelijk), onbeperkte opslag, onbeperkte bijlagen per taak
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.19 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.19</span>
+                <span class="version-badge badge-fix">v0.19.19</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
@@ -146,13 +198,13 @@
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Premium Standard 5MB Limiet Toegevoegd</strong>: Premium Standard (€7) gebruikers hadden geen file size limiet, waardoor ze onbeperkt grote bestanden konden uploaden. Nu correct beperkt tot 5MB per bestand.
+                            <strong>Premium Standard 4.5MB Limiet Toegevoegd</strong>: Premium Standard (€7) gebruikers hadden geen file size limiet, waardoor ze onbeperkt grote bestanden konden uploaden. Nu correct beperkt tot 4.5MB per bestand (Vercel serverless limiet).
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Duidelijke Error Messages</strong>: Bij uploaden van te grote bestanden krijgen gebruikers nu een specifieke melding: "Bestand te groot. Maximum 5MB voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bestandsgrootte."
+                            <strong>Duidelijke Error Messages</strong>: Bij uploaden van te grote bestanden krijgen gebruikers nu een specifieke melding: "Bestand te groot. Maximum 4.5MB voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bestandsgrootte."
                         </div>
                     </div>
                     <div class="change-item">
@@ -167,13 +219,13 @@
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Free</strong>: 5MB max per bestand, 100MB totale opslag, 1 bijlage per taak
+                            <strong>Free</strong>: 4.5MB max per bestand, 100MB totale opslag, 1 bijlage per taak
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Premium Standard (€7)</strong>: 5MB max per bestand, onbeperkte totale opslag, 1 bijlage per taak
+                            <strong>Premium Standard (€7)</strong>: 4.5MB max per bestand, onbeperkte totale opslag, 1 bijlage per taak
                         </div>
                     </div>
                     <div class="change-item">
@@ -1364,7 +1416,7 @@
                                 <li>🔧 <code>subscription.js</code> renderSubscriptionPlans() splitst nu standardPlans en premiumPlusPlans (regel 118-142)</li>
                                 <li>🔧 <code>subscription.js</code> createCombinedPaidPlanElement hernoemt naar createCombinedStandardPlanElement (regel 209-267)</li>
                                 <li>🔧 <code>subscription.js</code> NIEUWE functie createCombinedPremiumPlusPlanElement toegevoegd (regel 272-332)</li>
-                                <li>🎨 Standard card toont: "Standard Abonnement" met "100MB opslag, 5MB per bestand, 1 bijlage per taak"</li>
+                                <li>🎨 Standard card toont: "Standard Abonnement" met "100MB opslag, 4.5MB per bestand, 1 bijlage per taak"</li>
                                 <li>🎨 Premium Plus card toont: "Premium Plus Abonnement" met oranje gradient en ⭐ icoon</li>
                                 <li>🎨 Premium Plus features: "Ongelimiteerde bijlagen", "Geen limiet op bestandsgrootte", "Meerdere bijlagen per taak"</li>
                             </ul>
@@ -1400,13 +1452,13 @@
                             <ul style="margin-top: 8px; padding-left: 20px;">
                                 <li>✅ <strong>Premium Plus Maandelijks</strong>: €8/maand - Ongelimiteerde bijlagen, geen bestandsgrootte limiet</li>
                                 <li>✅ <strong>Premium Plus Jaarlijks</strong>: €80/jaar - Bespaar €16 per jaar + ongelimiteerde opslag</li>
-                                <li>📋 <strong>Standard Maandelijks</strong>: €7/maand - 100MB totale opslag, max 5MB per bestand (unchanged)</li>
+                                <li>📋 <strong>Standard Maandelijks</strong>: €7/maand - 100MB totale opslag, max 4.5MB per bestand (unchanged)</li>
                                 <li>📋 <strong>Standard Jaarlijks</strong>: €70/jaar - Bespaar €14 per jaar (unchanged)</li>
                             </ul>
                             <strong>Feature Differentiation:</strong>
                             <ul style="margin-top: 8px; padding-left: 20px;">
-                                <li>🆓 <strong>Free/Trial</strong>: Max 5MB per bestand, 1 bijlage per taak, 100MB totaal</li>
-                                <li>📦 <strong>Standard</strong>: Max 5MB per bestand, 1 bijlage per taak, 100MB totaal</li>
+                                <li>🆓 <strong>Free/Trial</strong>: Max 4.5MB per bestand, 1 bijlage per taak, 100MB totaal</li>
+                                <li>📦 <strong>Standard</strong>: Max 4.5MB per bestand, 1 bijlage per taak, 100MB totaal</li>
                                 <li>⭐ <strong>Premium Plus</strong>: Onbeperkte bestandsgrootte, onbeperkt aantal bijlagen per taak, onbeperkte totale opslag</li>
                             </ul>
                             <strong>UI Updates:</strong>
@@ -2669,7 +2721,7 @@
             <div class="changes-list">
                 <div class="change-item">
                     <span class="change-icon">📎</span>
-                    <strong>Bijlagen Systeem Geïmplementeerd:</strong> Volledige bijlagen functionaliteit voor taken. Upload bestanden tot 5MB (gratis) of onbeperkt (premium €10/jaar).
+                    <strong>Bijlagen Systeem Geïmplementeerd:</strong> Volledige bijlagen functionaliteit voor taken. Upload bestanden tot 4.5MB (gratis) of onbeperkt (premium €10/jaar).
                 </div>
                 <div class="change-item">
                     <span class="change-icon">☁️</span>
@@ -2681,7 +2733,7 @@
                 </div>
                 <div class="change-item">
                     <span class="change-icon">💎</span>
-                    <strong>Freemium Model:</strong> Gratis tier (1 bijlage/taak, 5MB max, 100MB totaal) vs Premium (onbeperkte bijlagen, grootte en opslag voor €10/jaar).
+                    <strong>Freemium Model:</strong> Gratis tier (1 bijlage/taak, 4.5MB max, 100MB totaal) vs Premium (onbeperkte bijlagen, grootte en opslag voor €10/jaar).
                 </div>
                 <div class="change-item">
                     <span class="change-icon">🛡️</span>

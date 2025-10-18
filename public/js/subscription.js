@@ -231,7 +231,7 @@ function createCombinedStandardPlanElement(standardPlans) {
             <li>Onbeperkte taken</li>
             <li>Email import</li>
             <li>Premium support</li>
-            <li>100MB opslag, 5MB per bestand, 1 bijlage per taak</li>
+            <li>100MB opslag, 4.5MB per bestand, 1 bijlage per taak</li>
         </ul>
         <button class="plan-action-button" id="select-standard-plan" style="
             width: 100%;
