@@ -9359,6 +9359,79 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
     }
 });
 
+// ===== Admin Dashboard v2 User Management Endpoints =====
+
+// GET /api/admin2/users/search - Search for users by email, name, or ID
+app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get query parameter
+        const query = req.query.q;
+        const limit = parseInt(req.query.limit) || 50;
+
+        // Validation: minimum 2 characters
+        if (!query || query.trim().length < 2) {
+            return res.status(400).json({
+                error: 'Invalid query',
+                message: 'Search term must be at least 2 characters'
+            });
+        }
+
+        console.log(`🔍 Searching users with query: "${query}"`);
+
+        // Search in email, naam, and id (cast to text)
+        const searchPattern = `%${query}%`;
+        const searchQuery = await pool.query(`
+            SELECT
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_tier,
+                subscription_status,
+                trial_end_date,
+                actief,
+                created_at,
+                last_login
+            FROM users
+            WHERE email ILIKE $1
+                OR naam ILIKE $1
+                OR id::text ILIKE $1
+            ORDER BY
+                CASE
+                    WHEN email ILIKE $1 THEN 1
+                    WHEN naam ILIKE $1 THEN 2
+                    ELSE 3
+                END,
+                created_at DESC
+            LIMIT $2
+        `, [searchPattern, limit]);
+
+        // Get total users count for context
+        const totalQuery = await pool.query('SELECT COUNT(*) as total FROM users');
+        const totalUsers = parseInt(totalQuery.rows[0].total);
+
+        console.log(`✅ Found ${searchQuery.rows.length} users (total: ${totalUsers})`);
+
+        res.json({
+            query: query,
+            results: searchQuery.rows,
+            count: searchQuery.rows.length,
+            total_users: totalUsers
+        });
+
+    } catch (error) {
+        console.error('❌ Error searching users:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to search users'
+        });
+    }
+});
+
 // ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================

@@ -137,7 +137,49 @@
         <!-- Version 0.19.27 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.28</span>
+                <span class="version-badge badge-latest">v0.19.29</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔍 Backend - Admin Dashboard v2 User Search API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Search Endpoint</strong>: Nieuwe GET /api/admin2/users/search endpoint geïmplementeerd volgens API contract specificatie. Zoekt gebruikers op email, naam én user ID met ILIKE pattern matching.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Query Validatie</strong>: Minimum 2 karakters vereist voor search query. Retourneert 400 Bad Request met clear error message bij invalide input.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Smart Ranking</strong>: Resultaten gesorteerd op relevantie - email matches eerst, dan naam matches, dan ID matches. Binnen elke categorie gesorteerd op created_at DESC.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Flexible Limits</strong>: Optionele limit parameter (default 50) en retourneert total_users count voor context in de UI.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete User Data</strong>: Retourneert id, email, naam, account_type, subscription_tier, subscription_status, trial_end_date, actief, created_at en last_login voor elk resultaat.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.28</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
