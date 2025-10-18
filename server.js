@@ -10703,7 +10703,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
 // All endpoints require valid session + account_type='admin' check
 
 // Middleware: Check if user is authenticated admin
-async function requireAdminAuth(req, res, next) {
+async function requireAdmin(req, res, next) {
     try {
         // Check if user is logged in
         if (!req.session.userId) {
@@ -10744,7 +10744,7 @@ async function requireAdminAuth(req, res, next) {
 }
 
 // GET /api/admin2/stats/tasks - Task statistics
-app.get('/api/admin2/stats/tasks', requireAdminAuth, async (req, res) => {
+app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -10805,7 +10805,7 @@ app.get('/api/admin2/stats/tasks', requireAdminAuth, async (req, res) => {
 });
 
 // GET /api/admin2/stats/emails - Email import statistics
-app.get('/api/admin2/stats/emails', requireAdminAuth, async (req, res) => {
+app.get('/api/admin2/stats/emails', requireAdmin, async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -10877,7 +10877,7 @@ app.get('/api/admin2/stats/emails', requireAdminAuth, async (req, res) => {
 });
 
 // GET /api/admin2/stats/database - Database size and table statistics
-app.get('/api/admin2/stats/database', requireAdminAuth, async (req, res) => {
+app.get('/api/admin2/stats/database', requireAdmin, async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
