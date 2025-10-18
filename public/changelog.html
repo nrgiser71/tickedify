@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.44 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.44</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">💰 Revenue Dashboard Screen - HTML + JavaScript Implementation (T032)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>HTML Structuur</strong>: Complete HTML implementatie in admin2.html met twee stats-grids - MRR Stats (💰 Monthly Recurring Revenue + 👥 Active Subscriptions) en Revenue by Tier (🆓 Free / ⭐ Premium / 💎 Enterprise breakdown met subteksten).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>JavaScript Implementation</strong>: Volledig herschreven loadRevenue() functie met try-catch error handling, formatEUR helper voor currency formatting (€ + formatNumber), en dynamic updates via getElementById voor alle stat cards.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Integration</strong>: Connectie met GET /api/admin2/stats/revenue endpoint, verwerking van mrr_total, active_subscriptions en revenue_by_tier object (free/premium/enterprise breakdown met individuele revenue values).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Metrics</strong>: Automatische percentage berekening voor elke tier (% of MRR), EUR currency formatting met Helpers.formatNumber voor thousands separator, subtext displays met dynamische percentages per tier voor Premium en Enterprise.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>UI Features</strong>: Emoji indicators (💰 MRR, 👥 Active Subscriptions, 🆓/⭐/💎 voor tier breakdown), loading states via ScreenManager.showLoading/hideLoading, error handling met user-friendly messages, stat-subtext voor contextual information.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.43 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.43</span>
+                <span class="version-badge badge-feature">v0.19.43</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
@@ -524,7 +567,7 @@
         <!-- Version 0.19.38 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.38</span>
+                <span class="version-badge badge-feature">v0.19.38</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
