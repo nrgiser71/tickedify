@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.27 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.27</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">💾 Backend - Admin Dashboard v2 Database Statistics API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Size Monitoring</strong>: Nieuwe GET /api/admin2/stats/database endpoint geïmplementeerd voor realtime database grootte monitoring met pg_database_size query.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Table Statistics</strong>: Gedetailleerde table statistieken met pg_class query - toont naam, grootte (pretty + bytes), en row counts voor alle public schema tabellen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Sorted by Size</strong>: Tables array automatisch gesorteerd van groot naar klein met pg_total_relation_size voor efficiënte database capacity planning.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Admin Authentication</strong>: Endpoint beveiligd met requireAdminAuth middleware - vereist valid session + account_type='admin' voor toegang.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>JSON Response Format</strong>: Gestructureerde response met database_size (pretty), database_size_bytes (integer), en tables array voor dashboard visualisatie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.26 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.26</span>
+                <span class="version-badge badge-feature">v0.19.26</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

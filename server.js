@@ -9539,6 +9539,66 @@ app.get('/api/admin2/stats/emails', requireAdminAuth, async (req, res) => {
     }
 });
 
+// GET /api/admin2/stats/database - Database size and table statistics
+app.get('/api/admin2/stats/database', requireAdminAuth, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log('📊 Fetching database statistics...');
+
+        // Get database size (pretty format)
+        const dbSizeResult = await pool.query(`
+            SELECT pg_size_pretty(pg_database_size(current_database())) as database_size
+        `);
+
+        // Get database size in bytes
+        const dbSizeBytesResult = await pool.query(`
+            SELECT pg_database_size(current_database()) as database_size_bytes
+        `);
+
+        // Get table sizes and row counts
+        const tablesResult = await pool.query(`
+            SELECT
+                relname as name,
+                pg_size_pretty(pg_total_relation_size(oid)) as size,
+                pg_total_relation_size(oid) as size_bytes,
+                n_live_tup as row_count
+            FROM pg_class
+            WHERE relkind = 'r'
+                AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+            ORDER BY pg_total_relation_size(oid) DESC
+        `);
+
+        const tables = tablesResult.rows.map(row => ({
+            name: row.name,
+            size: row.size,
+            size_bytes: parseInt(row.size_bytes),
+            row_count: parseInt(row.row_count)
+        }));
+
+        console.log('✅ Database statistics calculated:', {
+            database_size: dbSizeResult.rows[0].database_size,
+            tables_count: tables.length,
+            total_rows: tables.reduce((sum, t) => sum + t.row_count, 0)
+        });
+
+        res.json({
+            database_size: dbSizeResult.rows[0].database_size,
+            database_size_bytes: parseInt(dbSizeBytesResult.rows[0].database_size_bytes),
+            tables: tables
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching database statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
 // ===== V1 API - URL-based endpoints for external integrations =====
 // These endpoints use import codes for authentication instead of sessions
 
@@ -10391,6 +10451,127 @@ app.post('/api/debug/switch-test-user', async (req, res) => {
 
 // Direct database query for forensic logs (bypass logger)
 app.get('/api/debug/forensic/raw-database', async (req, res) => {
+
+// ============================================================================
+// ADMIN DASHBOARD V2 STATISTICS ENDPOINTS
+// ============================================================================
+
+// GET /api/admin2/stats/home - All statistics for home dashboard
+app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
+    try {
+        console.log('📊 Fetching admin home statistics...');
+
+        // User statistics - all counts in parallel
+        const [
+            totalUsers,
+            active7d,
+            active30d,
+            newToday,
+            newWeek,
+            newMonth,
+            inactive30d,
+            inactive60d,
+            inactive90d
+        ] = await Promise.all([
+            // Total users
+            pool.query('SELECT COUNT(*) FROM users'),
+            // Active last 7 days
+            pool.query("SELECT COUNT(*) FROM users WHERE last_login >= NOW() - INTERVAL '7 days'"),
+            // Active last 30 days
+            pool.query("SELECT COUNT(*) FROM users WHERE last_login >= NOW() - INTERVAL '30 days'"),
+            // New today
+            pool.query('SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURRENT_DATE'),
+            // New this week
+            pool.query("SELECT COUNT(*) FROM users WHERE created_at >= DATE_TRUNC('week', NOW())"),
+            // New this month
+            pool.query("SELECT COUNT(*) FROM users WHERE created_at >= DATE_TRUNC('month', NOW())"),
+            // Inactive >30 days
+            pool.query("SELECT COUNT(*) FROM users WHERE last_login < NOW() - INTERVAL '30 days' OR last_login IS NULL"),
+            // Inactive >60 days
+            pool.query("SELECT COUNT(*) FROM users WHERE last_login < NOW() - INTERVAL '60 days' OR last_login IS NULL"),
+            // Inactive >90 days
+            pool.query("SELECT COUNT(*) FROM users WHERE last_login < NOW() - INTERVAL '90 days' OR last_login IS NULL")
+        ]);
+
+        // Subscription tier distribution
+        const subscriptionTiers = await pool.query(`
+            SELECT subscription_tier, COUNT(*) as count
+            FROM users
+            GROUP BY subscription_tier
+        `);
+
+        const tierCounts = {
+            free: 0,
+            premium: 0,
+            enterprise: 0
+        };
+
+        subscriptionTiers.rows.forEach(row => {
+            const tier = row.subscription_tier || 'free';
+            tierCounts[tier] = parseInt(row.count);
+        });
+
+        // Trial statistics
+        const activeTrials = await pool.query(`
+            SELECT COUNT(*) FROM users
+            WHERE subscription_status = 'trial' AND trial_end_date >= CURRENT_DATE
+        `);
+
+        const conversionRate = await pool.query(`
+            SELECT
+                (COUNT(*) FILTER (WHERE subscription_status = 'active') * 100.0 /
+                 NULLIF(COUNT(*) FILTER (WHERE subscription_status IN ('active', 'expired', 'cancelled')), 0))::DECIMAL(5,2) as conversion_rate
+            FROM users
+            WHERE trial_end_date IS NOT NULL
+        `);
+
+        // Recent registrations (last 10)
+        const recentRegistrations = await pool.query(`
+            SELECT id, email, naam, created_at, subscription_tier
+            FROM users
+            ORDER BY created_at DESC
+            LIMIT 10
+        `);
+
+        // Build response
+        const response = {
+            users: {
+                total: parseInt(totalUsers.rows[0].count),
+                active_7d: parseInt(active7d.rows[0].count),
+                active_30d: parseInt(active30d.rows[0].count),
+                new_today: parseInt(newToday.rows[0].count),
+                new_week: parseInt(newWeek.rows[0].count),
+                new_month: parseInt(newMonth.rows[0].count),
+                inactive_30d: parseInt(inactive30d.rows[0].count),
+                inactive_60d: parseInt(inactive60d.rows[0].count),
+                inactive_90d: parseInt(inactive90d.rows[0].count)
+            },
+            subscriptions: tierCounts,
+            trials: {
+                active: parseInt(activeTrials.rows[0].count),
+                conversion_rate: parseFloat(conversionRate.rows[0].conversion_rate) || 0
+            },
+            recent_registrations: recentRegistrations.rows.map(user => ({
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                created_at: user.created_at,
+                subscription_tier: user.subscription_tier || 'free'
+            }))
+        };
+
+        console.log('✅ Admin home statistics fetched successfully');
+        res.json(response);
+
+    } catch (error) {
+        console.error('❌ Error fetching admin home statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
     try {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
         
