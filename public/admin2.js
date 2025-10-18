@@ -1103,8 +1103,199 @@ const Screens = {
      * Security Screen
      */
     async loadSecurity() {
-        const container = document.getElementById('security-content');
-        container.innerHTML = '<p>Security controls will be loaded here</p>';
+        SecurityTools.updateSecurityStats();
+        SecurityTools.refreshAuditLog();
+        SecurityTools.refreshSessions();
+    }
+};
+
+// ============================================================================
+// Security Tools (T041)
+// ============================================================================
+
+const SecurityTools = {
+    /**
+     * Refresh audit log table
+     */
+    async refreshAuditLog() {
+        try {
+            const tbody = document.getElementById('audit-log-table');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
+
+            // Query admin_audit_log via SQL query endpoint
+            const result = await API.debug.sqlQuery(
+                'SELECT created_at, admin_user_id, action, target_type, target_id, details FROM admin_audit_log ORDER BY created_at DESC LIMIT 50',
+                false
+            );
+
+            if (!result.rows || result.rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit log entries found</td></tr>';
+                return;
+            }
+
+            // Get admin emails for display
+            const adminIds = [...new Set(result.rows.map(r => r.admin_user_id))];
+            const adminEmails = {};
+
+            for (const adminId of adminIds) {
+                try {
+                    const userData = await API.users.get(adminId);
+                    adminEmails[adminId] = userData.user.email;
+                } catch {
+                    adminEmails[adminId] = `User ${adminId}`;
+                }
+            }
+
+            tbody.innerHTML = result.rows.map(row => {
+                const details = typeof row.details === 'string' ? JSON.parse(row.details) : row.details;
+                const detailsText = details ? Object.entries(details).map(([k, v]) => `${k}: ${v}`).join(', ') : '-';
+
+                return `
+                    <tr>
+                        <td>${Helpers.formatDate(row.created_at)}</td>
+                        <td>${adminEmails[row.admin_user_id] || row.admin_user_id}</td>
+                        <td><code>${row.action}</code></td>
+                        <td>${row.target_type || '-'} ${row.target_id ? `#${row.target_id}` : ''}</td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;" title="${detailsText}">
+                            ${detailsText.substring(0, 50)}${detailsText.length > 50 ? '...' : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Failed to load audit log:', error);
+            document.getElementById('audit-log-table').innerHTML =
+                '<tr><td colspan="5" style="text-align:center; color: red;">Failed to load audit log</td></tr>';
+        }
+    },
+
+    /**
+     * Refresh active sessions table
+     */
+    async refreshSessions() {
+        try {
+            const tbody = document.getElementById('sessions-table');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+
+            // Query active sessions
+            const result = await API.debug.sqlQuery(
+                `SELECT sid, sess, expire FROM session
+                 WHERE expire > NOW()
+                 ORDER BY expire DESC
+                 LIMIT 100`,
+                false
+            );
+
+            if (!result.rows || result.rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No active sessions</td></tr>';
+                return;
+            }
+
+            // Parse sessions and get user info
+            const sessionData = [];
+            for (const row of result.rows) {
+                try {
+                    const sess = typeof row.sess === 'string' ? JSON.parse(row.sess) : row.sess;
+                    const userId = sess?.passport?.user;
+
+                    if (userId) {
+                        let userEmail = 'Unknown';
+                        try {
+                            const userData = await API.users.get(userId);
+                            userEmail = userData.user.email;
+                        } catch {
+                            userEmail = `User ${userId}`;
+                        }
+
+                        sessionData.push({
+                            sid: row.sid,
+                            userEmail,
+                            userId,
+                            created: sess.cookie?.originalMaxAge ? new Date(Date.now() - sess.cookie.originalMaxAge) : null,
+                            expires: row.expire
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to parse session:', e);
+                }
+            }
+
+            if (sessionData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No parseable sessions</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sessionData.map(session => `
+                <tr>
+                    <td>${session.userEmail}</td>
+                    <td>${session.created ? Helpers.formatRelativeTime(session.created) : 'Unknown'}</td>
+                    <td>${Helpers.formatRelativeTime(session.expires)}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="SecurityTools.terminateSession(${session.userId}, '${session.userEmail}')">
+                            🚪 Logout
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            console.error('Failed to load sessions:', error);
+            document.getElementById('sessions-table').innerHTML =
+                '<tr><td colspan="4" style="text-align:center; color: red;">Failed to load sessions</td></tr>';
+        }
+    },
+
+    /**
+     * Terminate user session (force logout)
+     */
+    async terminateSession(userId, userEmail) {
+        if (!confirm(`Force logout ${userEmail}?`)) {
+            return;
+        }
+
+        try {
+            const result = await API.users.forceLogout(userId);
+            alert(`✅ ${result.sessions_invalidated} session(s) terminated for ${userEmail}`);
+            this.refreshSessions();
+            this.updateSecurityStats();
+        } catch (error) {
+            alert(`❌ Failed to terminate session: ${error.message}`);
+        }
+    },
+
+    /**
+     * Update security statistics
+     */
+    async updateSecurityStats() {
+        try {
+            // Active sessions count
+            const sessionsResult = await API.debug.sqlQuery(
+                'SELECT COUNT(*) as count FROM session WHERE expire > NOW()',
+                false
+            );
+            document.getElementById('security-active-sessions').textContent =
+                Helpers.formatNumber(sessionsResult.rows[0].count);
+
+            // Blocked users count
+            const blockedResult = await API.debug.sqlQuery(
+                'SELECT COUNT(*) as count FROM users WHERE actief = false',
+                false
+            );
+            document.getElementById('security-blocked-users').textContent =
+                Helpers.formatNumber(blockedResult.rows[0].count);
+
+            // Total users count
+            const totalResult = await API.debug.sqlQuery(
+                'SELECT COUNT(*) as count FROM users',
+                false
+            );
+            document.getElementById('security-total-users').textContent =
+                Helpers.formatNumber(totalResult.rows[0].count);
+
+        } catch (error) {
+            console.error('Failed to update security stats:', error);
+        }
     }
 };
 

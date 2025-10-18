@@ -134,10 +134,59 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.48 -->
+        <!-- Version 0.19.51 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.50</span>
+                <span class="version-badge badge-latest">v0.19.51</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔐 Security & Session Management Screen (T041)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Security Statistics Cards</strong>: 3-column stats grid met real-time metrics - 🔐 Active Sessions (count van session tabel waar expire > NOW()), 🚫 Blocked Users (count users waar actief = false), 👥 Total Users (count all users), alle stats formatted via Helpers.formatNumber(), automatisch refresh bij screen load, live updates na session termination.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Admin Audit Log Viewer</strong>: Tabel met recent admin actions - query admin_audit_log tabel (LIMIT 50), columns: Timestamp (formatted via Helpers.formatDate()), Admin User (email via API.users.get()), Action (code element voor action string), Target (target_type + target_id met '#' prefix), Details (JSON.parse van details field, truncated na 50 chars met ellipsis, full text in title tooltip), refresh button voor manual updates.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Active Sessions Management</strong>: Session tabel met live data - query session tabel met expire > NOW() filter, parse JSON sess field voor passport.user extraction, resolve userId naar email via API.users.get(), columns: User Email, Session Created (calculated from cookie.originalMaxAge via Helpers.formatRelativeTime()), Expires (Helpers.formatRelativeTime()), Actions column met 🚪 Logout button per session.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Force Logout Functionaliteit</strong>: SecurityTools.terminateSession(userId, userEmail) method - confirmation dialog "Force logout {userEmail}?", API call naar API.users.forceLogout(userId), success alert met "✅ {N} session(s) terminated", automatic refresh van sessions table en security stats, error handling met "❌ Failed to terminate session" message.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>SecurityTools Object Architecture</strong>: Gestructureerde JavaScript object met 4 core methods - refreshAuditLog() voor audit log data loading met admin email resolution, refreshSessions() voor session parsing en user email lookup, terminateSession() voor force logout met confirmation, updateSecurityStats() voor real-time statistics via 3 separate SQL queries, alle methods gebruiken API.debug.sqlQuery() voor direct database access.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Screens.loadSecurity() Integration</strong>: Screen load method roept 3 parallel methods aan - SecurityTools.updateSecurityStats() voor statistics cards, SecurityTools.refreshAuditLog() voor audit log table, SecurityTools.refreshSessions() voor sessions table, alle methods asynchronous maar geen await (parallel execution), error handling per method met try-catch blocks, console.error logging voor debugging.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.50 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.50</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

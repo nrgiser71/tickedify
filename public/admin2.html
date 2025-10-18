@@ -997,7 +997,76 @@
                     <h1 class="admin-header-title">Security</h1>
                     <p class="admin-header-subtitle">Session management and security controls</p>
                 </div>
-                <div id="security-content"></div>
+                <div id="security-content">
+                    <!-- Security Statistics -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">🔐 Active Sessions</div>
+                            <div class="stat-value" id="security-active-sessions">--</div>
+                            <div class="stat-subtext">Currently logged in users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">🚫 Blocked Users</div>
+                            <div class="stat-value" id="security-blocked-users">--</div>
+                            <div class="stat-subtext">Accounts with actief=false</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">👥 Total Users</div>
+                            <div class="stat-value" id="security-total-users">--</div>
+                            <div class="stat-subtext">All registered accounts</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Admin Actions -->
+                    <div class="admin-table" style="margin-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>📜 Recent Admin Actions (Audit Log)</h3>
+                            <button class="btn btn-primary" onclick="SecurityTools.refreshAuditLog()">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Admin User</th>
+                                    <th>Action</th>
+                                    <th>Target</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-log-table">
+                                <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 10px; font-size: 12px; color: var(--macos-text-secondary);">
+                            Showing last 50 admin actions
+                        </div>
+                    </div>
+
+                    <!-- Session Management -->
+                    <div class="admin-table" style="margin-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>👤 Active Sessions</h3>
+                            <button class="btn btn-primary" onclick="SecurityTools.refreshSessions()">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User Email</th>
+                                    <th>Session Created</th>
+                                    <th>Expires</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessions-table">
+                                <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
