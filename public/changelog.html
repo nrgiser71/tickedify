@@ -185,6 +185,30 @@
                             <strong>Error Handling</strong>: Validatie van userId parameter (integer > 0). Returns 400 (invalid id), 404 (user not found), 500 (server error). Console logging met summary metrics voor operational monitoring.
                         </div>
                     </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>POST /api/admin2/debug/database-backup Endpoint (T024)</strong>: Database backup metadata collector voor Neon PostgreSQL. Verzamelt database size (MB), table count, row counts per tabel en backup timestamp. Returns metadata + instructies voor backup via Neon dashboard (automatic backups, branch creation, pg_dump export).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backup Metadata Collection</strong>: Queries pg_database_size voor totale database size in MB, pg_catalog.pg_tables voor alle public schema tabellen, COUNT(*) per tabel voor row statistics. Totaal rows berekening over alle tabellen. Last backup timestamp uit system_settings of NOW() als fallback.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Neon Integration Approach</strong>: Neon PostgreSQL heeft automatische daily backups met point-in-time restore. Endpoint retourneert metadata + instructies in plaats van daadwerkelijke backup file. Neon dashboard URL generatie voor manual branch creation (instant backup snapshot). pg_dump command template voor SQL export.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Audit Logging</strong>: Logs DATABASE_BACKUP_REQUEST action naar admin_audit_log met metadata (size_mb, tables count, total rows). Graceful fallback naar console log als audit tabel niet bestaat. Admin user tracking voor compliance en debugging.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
