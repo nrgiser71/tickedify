@@ -581,120 +581,109 @@ const Screens = {
      * Email Analytics Screen
      */
     async loadEmails() {
-        const container = document.getElementById('emails-content');
-        ScreenManager.showLoading('emails-content');
+        try {
+            ScreenManager.showLoading('#emails-content');
 
-        const data = await API.stats.emails();
+            const data = await API.stats.emails();
 
-        container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Imports</div>
-                    <div class="stat-value">${data.total_imports}</div>
+            const container = document.getElementById('emails-content');
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📧 Total Imports</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.total_imports)}</div>
+                        <div class="stat-subtext">All email imports</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🆕 Recent Imports (30d)</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.recent_30d)}</div>
+                        <div class="stat-subtext">Last 30 days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">👥 Users with Imports</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.users_with_imports)}</div>
+                        <div class="stat-subtext">${Helpers.formatNumber(data.total_imports)} total imports</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📊 Adoption Rate</div>
+                        <div class="stat-value">${Helpers.formatPercentage(data.percentage_with_imports)}</div>
+                        <div class="stat-subtext">Users using email import</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Imported Today</div>
-                    <div class="stat-value">${data.imported.today}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Imported This Week</div>
-                    <div class="stat-value">${data.imported.week}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Imported This Month</div>
-                    <div class="stat-value">${data.imported.month}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Users with Import</div>
-                    <div class="stat-value">${data.users_with_import.count}</div>
-                    <div class="stat-subtext">${data.users_with_import.percentage}% of all users</div>
-                </div>
-            </div>
-        `;
+            `;
+
+            ScreenManager.hideLoading('#emails-content');
+
+        } catch (error) {
+            ScreenManager.showError('#emails-content', 'Failed to load email analytics', error);
+        }
     },
 
     /**
      * Database Monitor Screen
      */
     async loadDatabase() {
-        const container = document.getElementById('database-content');
-        ScreenManager.showLoading('database-content');
+        try {
+            ScreenManager.showLoading('#database-content');
 
-        const data = await API.stats.database();
+            const data = await API.stats.database();
 
-        container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Database Size</div>
-                    <div class="stat-value">${data.database_size}</div>
-                </div>
-            </div>
+            document.getElementById('db-size').textContent = data.database_size_formatted;
+            document.getElementById('db-tables').textContent = data.table_count;
 
-            <h3>Table Statistics</h3>
-            <div class="admin-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Table Name</th>
-                            <th>Size</th>
-                            <th>Row Count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.tables.map(table => `
-                            <tr>
-                                <td>${table.name}</td>
-                                <td>${table.size}</td>
-                                <td>${table.row_count.toLocaleString()}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+            // Render tables list
+            const tbody = document.getElementById('db-tables-list');
+            if (data.tables && data.tables.length > 0) {
+                tbody.innerHTML = data.tables.map(table => `
+                    <tr>
+                        <td><strong>${table.name}</strong></td>
+                        <td>${Helpers.formatNumber(table.row_count)}</td>
+                        <td>${table.size_mb.toFixed(2)} MB</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No table data available</td></tr>';
+            }
+
+            ScreenManager.hideLoading('#database-content');
+
+        } catch (error) {
+            ScreenManager.showError('#database-content', 'Failed to load database monitor', error);
+        }
     },
 
     /**
      * Revenue Dashboard Screen
      */
     async loadRevenue() {
-        const container = document.getElementById('revenue-content');
-        ScreenManager.showLoading('revenue-content');
+        try {
+            ScreenManager.showLoading('revenue-content');
 
-        const data = await API.stats.revenue();
+            const data = await API.stats.revenue();
 
-        container.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Monthly Recurring Revenue</div>
-                    <div class="stat-value">€${data.mrr.toFixed(2)}</div>
-                </div>
-            </div>
+            // Format als EUR currency
+            const formatEUR = (amount) => `€${Helpers.formatNumber(amount)}`;
 
-            <h3>Revenue by Tier</h3>
-            <div class="admin-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tier</th>
-                            <th>Users</th>
-                            <th>Price/Month</th>
-                            <th>Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.by_tier.map(tier => `
-                            <tr>
-                                <td>${tier.tier}</td>
-                                <td>${tier.user_count}</td>
-                                <td>€${tier.price_monthly?.toFixed(2) || '0.00'}</td>
-                                <td>€${tier.revenue?.toFixed(2) || '0.00'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+            document.getElementById('revenue-mrr').textContent = formatEUR(data.mrr_total);
+            document.getElementById('revenue-active').textContent =
+                Helpers.formatNumber(data.active_subscriptions);
+
+            // Revenue by tier
+            document.getElementById('revenue-premium').textContent =
+                formatEUR(data.revenue_by_tier.premium);
+            document.getElementById('revenue-premium-subtext').textContent =
+                `${Helpers.formatPercentage((data.revenue_by_tier.premium / data.mrr_total) * 100)} of MRR`;
+
+            document.getElementById('revenue-enterprise').textContent =
+                formatEUR(data.revenue_by_tier.enterprise);
+            document.getElementById('revenue-enterprise-subtext').textContent =
+                `${Helpers.formatPercentage((data.revenue_by_tier.enterprise / data.mrr_total) * 100)} of MRR`;
+
+            ScreenManager.hideLoading('revenue-content');
+
+        } catch (error) {
+            ScreenManager.showError('revenue', 'Failed to load revenue dashboard', error);
+        }
     },
 
     /**

@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.41 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.41</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">💾 Database Monitor Screen - HTML + JavaScript Implementation (T031)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>HTML Structuur</strong>: Volledige HTML implementatie in admin2.html met stats-grid voor Database Size en Total Tables, inclusief Tables Breakdown tabel met thead/tbody structuur.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>JavaScript Implementation</strong>: Complete loadDatabase() functie met try-catch error handling, loading states via ScreenManager.showLoading/hideLoading, dynamic table rendering met formatNumber helper, en null-safe table data handling.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Integration</strong>: Connectie met GET /api/admin2/stats/database endpoint, verwerking van database_size_formatted, table_count en tables array met name/row_count/size_mb fields.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>UI Features</strong>: Emoji indicators (💾 Database Size, 📊 Total Tables), formatted numbers met duizend-separator, size in MB met 2 decimalen precision, empty state handling wanneer geen table data beschikbaar.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.40 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.40</span>
+                <span class="version-badge badge-feature">v0.19.40</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

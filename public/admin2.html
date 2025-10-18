@@ -475,7 +475,47 @@
                     <h1 class="admin-header-title">Task Analytics</h1>
                     <p class="admin-header-subtitle">Task statistics and completion metrics</p>
                 </div>
-                <div id="tasks-content"></div>
+                <div id="tasks-content">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">📋 Total Tasks</div>
+                            <div class="stat-value" id="tasks-total">--</div>
+                            <div class="stat-subtext">All tasks in system</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">✅ Completed</div>
+                            <div class="stat-value" id="tasks-completed">--</div>
+                            <div class="stat-subtext" id="tasks-completed-subtext">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">⏳ Pending</div>
+                            <div class="stat-value" id="tasks-pending">--</div>
+                            <div class="stat-subtext" id="tasks-pending-subtext">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">📈 Completion Rate</div>
+                            <div class="stat-value" id="tasks-completion-rate">--</div>
+                            <div class="stat-subtext">Overall completion</div>
+                        </div>
+                    </div>
+
+                    <!-- Creation Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">🆕 Created Today</div>
+                            <div class="stat-value" id="tasks-today">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">📅 Created This Week</div>
+                            <div class="stat-value" id="tasks-week">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">📆 Created This Month</div>
+                            <div class="stat-value" id="tasks-month">--</div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Email Analytics Screen -->
@@ -493,7 +533,38 @@
                     <h1 class="admin-header-title">Database Monitor</h1>
                     <p class="admin-header-subtitle">Database size and table statistics</p>
                 </div>
-                <div id="database-content"></div>
+                <div id="database-content">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">💾 Database Size</div>
+                            <div class="stat-value" id="db-size">--</div>
+                            <div class="stat-subtext">Total storage used</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">📊 Total Tables</div>
+                            <div class="stat-value" id="db-tables">--</div>
+                            <div class="stat-subtext">Database schema</div>
+                        </div>
+                    </div>
+
+                    <!-- Tables Breakdown -->
+                    <div class="admin-table">
+                        <h3>Tables Breakdown</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Table Name</th>
+                                    <th>Rows</th>
+                                    <th>Size (MB)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="db-tables-list">
+                                <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <!-- Revenue Dashboard Screen -->
@@ -502,7 +573,40 @@
                     <h1 class="admin-header-title">Revenue Dashboard</h1>
                     <p class="admin-header-subtitle">Payment configurations and MRR tracking</p>
                 </div>
-                <div id="revenue-content"></div>
+                <div id="revenue-content">
+                    <!-- MRR Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">💰 Monthly Recurring Revenue</div>
+                            <div class="stat-value" id="revenue-mrr">--</div>
+                            <div class="stat-subtext">Total MRR</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">👥 Active Subscriptions</div>
+                            <div class="stat-value" id="revenue-active">--</div>
+                            <div class="stat-subtext">Paying customers</div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue by Tier Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">🆓 Free Tier Revenue</div>
+                            <div class="stat-value" id="revenue-free">€0</div>
+                            <div class="stat-subtext">No revenue from free</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">⭐ Premium Revenue</div>
+                            <div class="stat-value" id="revenue-premium">--</div>
+                            <div class="stat-subtext" id="revenue-premium-subtext">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">💎 Enterprise Revenue</div>
+                            <div class="stat-value" id="revenue-enterprise">--</div>
+                            <div class="stat-subtext" id="revenue-enterprise-subtext">--</div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- User Management Screen -->
