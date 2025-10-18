@@ -298,6 +298,164 @@ const Helpers = {
 };
 
 // ============================================================================
+// System Actions (Settings & Payment Configs)
+// ============================================================================
+
+const SystemActions = {
+    currentSettingKey: null,
+    currentPaymentConfigId: null,
+
+    async refreshSettings() {
+        try {
+            const tbody = document.getElementById('system-settings-table');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+
+            const data = await API.system.getSettings();
+
+            if (data.settings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No settings found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.settings.map(setting => `
+                <tr>
+                    <td><code>${setting.key}</code></td>
+                    <td>${setting.value || '-'}</td>
+                    <td>${setting.description || '-'}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="SystemActions.showEditSettingModal('${setting.key}', '${setting.value || ''}', '${setting.description || ''}')">
+                            ✏️ Edit
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            const tbody = document.getElementById('system-settings-table');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: red;">Failed to load settings</td></tr>';
+        }
+    },
+
+    async refreshPayments() {
+        try {
+            const tbody = document.getElementById('payment-configs-table');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
+
+            const data = await API.system.getPayments();
+
+            if (data.payment_configs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No payment configs found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.payment_configs.map(config => `
+                <tr>
+                    <td><code>${config.plan_id}</code></td>
+                    <td>${config.plan_name}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                        ${config.checkout_url || '-'}
+                    </td>
+                    <td>
+                        <span class="${config.is_active ? 'status-active' : 'status-inactive'}">
+                            ${config.is_active ? '✅ Active' : '❌ Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="SystemActions.showEditCheckoutURLModal(${config.id}, '${config.plan_name}', '${config.checkout_url || ''}')">
+                            ✏️ Edit URL
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            console.error('Failed to load payment configs:', error);
+            const tbody = document.getElementById('payment-configs-table');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: red;">Failed to load payment configs</td></tr>';
+        }
+    },
+
+    showEditSettingModal(key, value, description) {
+        this.currentSettingKey = key;
+        document.getElementById('edit-setting-key').textContent = key;
+        document.getElementById('edit-setting-description').textContent = description;
+        document.getElementById('edit-setting-value').value = value;
+
+        // Show help text voor YouTube URL
+        const helpDiv = document.getElementById('setting-value-help');
+        if (key === 'onboarding_video_url') {
+            helpDiv.textContent = 'Must be a valid YouTube or Vimeo URL (https://youtube.com/watch?v=... or https://vimeo.com/...)';
+        } else {
+            helpDiv.textContent = '';
+        }
+
+        document.getElementById('edit-setting-modal').style.display = 'flex';
+    },
+
+    async updateSetting() {
+        try {
+            const key = this.currentSettingKey;
+            const value = document.getElementById('edit-setting-value').value.trim();
+
+            if (!value) {
+                alert('❌ Value cannot be empty');
+                return;
+            }
+
+            const result = await API.system.updateSetting(key, value);
+
+            alert(`✅ Setting updated: ${key}\n\nOld value: ${result.old_value}\nNew value: ${result.new_value}`);
+
+            this.closeModal('edit-setting-modal');
+            this.refreshSettings();
+
+        } catch (error) {
+            alert(`❌ Failed to update setting: ${error.message}`);
+        }
+    },
+
+    showEditCheckoutURLModal(configId, planName, currentURL) {
+        this.currentPaymentConfigId = configId;
+        document.getElementById('edit-plan-name').textContent = planName;
+        document.getElementById('edit-checkout-url').value = currentURL;
+        document.getElementById('edit-checkout-url-modal').style.display = 'flex';
+    },
+
+    async updateCheckoutURL() {
+        try {
+            const configId = this.currentPaymentConfigId;
+            const newURL = document.getElementById('edit-checkout-url').value.trim();
+
+            if (!newURL) {
+                alert('❌ URL cannot be empty');
+                return;
+            }
+
+            // Basic URL validation
+            if (!newURL.startsWith('https://')) {
+                alert('❌ URL must start with https://');
+                return;
+            }
+
+            const result = await API.system.updateCheckoutURL(configId, newURL);
+
+            alert(`✅ Checkout URL updated for ${result.plan_name}\n\nOld URL: ${result.old_url}\nNew URL: ${result.new_url}`);
+
+            this.closeModal('edit-checkout-url-modal');
+            this.refreshPayments();
+
+        } catch (error) {
+            alert(`❌ Failed to update checkout URL: ${error.message}`);
+        }
+    },
+
+    closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+};
+
+// ============================================================================
 // Screen Implementations
 // ============================================================================
 
@@ -849,8 +1007,8 @@ const Screens = {
      * System Settings Screen
      */
     async loadSystem() {
-        const container = document.getElementById('system-content');
-        container.innerHTML = '<p>System settings will be loaded here</p>';
+        SystemActions.refreshSettings();
+        SystemActions.refreshPayments();
     },
 
     /**

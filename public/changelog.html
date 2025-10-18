@@ -134,10 +134,65 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.48 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.48</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚙️ System Settings & Payment Config Screen (T037)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>System Settings Table</strong>: HTML table structure in screen-system sectie met 4 kolommen (Setting Key, Current Value, Description, Actions), tbody id="system-settings-table" voor dynamic loading, refresh button roept SystemActions.refreshSettings() aan, loading state toont "Loading...", lege state toont "No settings found", settings weergegeven met <code> tags voor keys, value/description met fallback naar '-', edit button per setting opent modal.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Payment Configurations Table</strong>: Separate table voor payment configs met 5 kolommen (Plan ID, Plan Name, Checkout URL, Status, Actions), tbody id="payment-configs-table" voor dynamic loading, checkout URLs weergegeven met text-overflow ellipsis (max-width 300px), status badges met conditional styling (✅ Active = green, ❌ Inactive = red), CSS classes .status-active en .status-inactive voor color coding.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Edit Setting Modal</strong>: Modal voor system settings editing met setting key/description display (read-only), form-input voor new value entry, dynamic help text div (id="setting-value-help") toont YouTube/Vimeo URL validation hint voor onboarding_video_url, Save Changes button roept SystemActions.updateSetting() aan, Cancel button sluit modal.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Edit Checkout URL Modal</strong>: Modal voor payment checkout URLs met plan name display, URL input type="url" voor browser validation, validation help text: "Must be valid HTTPS URL from trusted provider (Mollie, Stripe, PayPal, Paddle)", Update URL button roept SystemActions.updateCheckoutURL() aan, client-side validation check voor https:// prefix.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>SystemActions Object</strong>: refreshSettings() - GET /api/admin2/system/settings, map settings naar table rows, error handling toont red error message; refreshPayments() - GET /api/admin2/system/payments, map payment configs naar table rows; showEditSettingModal(key, value, description) - populate modal fields, conditional help text voor URL settings; updateSetting() - PUT endpoint met value validation (non-empty), success alert toont old/new values, refresh table na update; showEditCheckoutURLModal(configId, planName, currentURL) - populate checkout URL modal; updateCheckoutURL() - https:// prefix validation, PUT endpoint met URL validation, success alert toont old/new URLs; closeModal(modalId) - generic modal closer.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Screens.loadSystem Implementation</strong>: Replaced placeholder met parallel calls naar SystemActions.refreshSettings() en SystemActions.refreshPayments(), automatic data loading on screen activate, beide tables populeren simultaneous voor snelle UX.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>CSS Additions</strong>: .btn-sm class (padding: 6px 12px, font-size: 12px) voor compact table action buttons, code tag styling (background: tertiary, padding: 2px 6px, border-radius: 4px, monospace font 13px) voor setting keys en plan IDs, .status-active (#28a745 green, font-weight 500) en .status-inactive (#dc3545 red, font-weight 500) voor payment status badges.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.47 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.47</span>
+                <span class="version-badge badge-feature">v0.19.47</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

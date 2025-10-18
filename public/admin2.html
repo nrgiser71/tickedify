@@ -394,6 +394,29 @@
         .action-buttons-grid button {
             width: 100%;
         }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        code {
+            background: var(--macos-bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+        }
+
+        .status-active {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .status-inactive {
+            color: #dc3545;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -865,7 +888,54 @@
                     <h1 class="admin-header-title">System Settings</h1>
                     <p class="admin-header-subtitle">Configure system-wide settings</p>
                 </div>
-                <div id="system-content"></div>
+                <div id="system-content">
+                    <!-- System Settings Section -->
+                    <div class="admin-table">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>⚙️ System Settings</h3>
+                            <button class="btn btn-primary" onclick="SystemActions.refreshSettings()">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Setting Key</th>
+                                    <th>Current Value</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="system-settings-table">
+                                <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Payment Configurations Section -->
+                    <div class="admin-table" style="margin-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>💰 Payment Configurations</h3>
+                            <button class="btn btn-primary" onclick="SystemActions.refreshPayments()">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Plan ID</th>
+                                    <th>Plan Name</th>
+                                    <th>Checkout URL</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payment-configs-table">
+                                <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <!-- Database Tools Screen -->
@@ -992,6 +1062,47 @@
                 <button class="btn btn-secondary" onclick="UserActions.closeModal('reset-password-modal')">
                     Close
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Setting Modal -->
+    <div id="edit-setting-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Edit System Setting</h3>
+            <p><strong>Key:</strong> <span id="edit-setting-key">--</span></p>
+            <p><strong>Description:</strong> <span id="edit-setting-description">--</span></p>
+
+            <label>New Value:</label>
+            <input type="text" id="edit-setting-value" class="form-input" placeholder="Enter new value" />
+
+            <div id="setting-value-help" style="font-size: 12px; color: var(--macos-text-secondary); margin-top: 5px;">
+                <!-- Dynamic help text based on setting type -->
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="SystemActions.updateSetting()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="SystemActions.closeModal('edit-setting-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Checkout URL Modal -->
+    <div id="edit-checkout-url-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Edit Checkout URL</h3>
+            <p><strong>Plan:</strong> <span id="edit-plan-name">--</span></p>
+
+            <label>Checkout URL:</label>
+            <input type="url" id="edit-checkout-url" class="form-input" placeholder="https://pay.mollie.com/..." />
+
+            <div style="font-size: 12px; color: var(--macos-text-secondary); margin-top: 5px;">
+                Must be a valid HTTPS URL from a trusted payment provider (Mollie, Stripe, PayPal, Paddle)
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="SystemActions.updateCheckoutURL()">Update URL</button>
+                <button class="btn btn-secondary" onclick="SystemActions.closeModal('edit-checkout-url-modal')">Cancel</button>
             </div>
         </div>
     </div>
