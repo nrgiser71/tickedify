@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.36 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.36</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🚫 Backend - Admin Dashboard v2 User Block API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>PUT /api/admin2/users/:id/block Endpoint</strong>: Implementatie van user blocking endpoint volgens API contract. Admins kunnen nu gebruikers blokkeren (prevent login) of deblokkeren via blocked parameter (boolean true/false).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Self-Block Prevention</strong>: Security check verhindert dat admins hun eigen account blokkeren. Retourneert 403 Forbidden met error message "Admins cannot block their own account" bij self-block poging.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Session Invalidation</strong>: Bij blokkeren worden automatisch ALLE sessies van de gebruiker verwijderd uit de session tabel. Response bevat sessions_invalidated count voor audit transparency.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Audit Logging</strong>: Volledige audit trail in admin_audit_log tabel - logged admin_user_id, action='USER_BLOCK'/'USER_UNBLOCK', target_user_id, old_value, new_value, timestamp, IP en user agent.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Response</strong>: Response bevat success status, user_id, blocked (true/false), sessions_invalidated count en updated_at timestamp volgens API contract.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.35 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.35</span>
+                <span class="version-badge badge-feature">v0.19.35</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
