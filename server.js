@@ -11701,6 +11701,154 @@ app.get('/api/admin2/system/payments', requireAdmin, async (req, res) => {
 });
 
 // ============================================================================
+// T021: PUT /api/admin2/system/payments/:id/checkout-url - Update checkout URL
+// ============================================================================
+
+app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req, res) => {
+    try {
+        console.log('🔗 Updating checkout URL for payment config:', {
+            config_id: req.params.id,
+            admin_user_id: req.session.userId
+        });
+
+        const configId = parseInt(req.params.id);
+        const { checkout_url } = req.body;
+
+        // Validatie: config ID moet valid integer zijn
+        if (isNaN(configId)) {
+            return res.status(400).json({
+                error: 'Invalid config ID',
+                message: 'Config ID must be a valid number'
+            });
+        }
+
+        // Validatie: checkout_url is verplicht
+        if (!checkout_url) {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'checkout_url is required',
+                field: 'checkout_url'
+            });
+        }
+
+        // Validatie: moet HTTPS zijn
+        if (!checkout_url.startsWith('https://')) {
+            return res.status(400).json({
+                error: 'Invalid checkout URL',
+                message: 'Checkout URL must start with https://',
+                field: 'checkout_url'
+            });
+        }
+
+        // Validatie: URL format check
+        try {
+            new URL(checkout_url);
+        } catch (urlError) {
+            return res.status(400).json({
+                error: 'Invalid checkout URL',
+                message: 'Checkout URL is not a valid URL format',
+                field: 'checkout_url'
+            });
+        }
+
+        // Validatie: moet payment provider domain bevatten
+        const validProviders = ['mollie.com', 'stripe.com', 'paypal.com', 'paddle.com'];
+        const hasValidProvider = validProviders.some(provider => checkout_url.includes(provider));
+
+        if (!hasValidProvider) {
+            return res.status(400).json({
+                error: 'Invalid checkout URL',
+                message: `Checkout URL must contain one of: ${validProviders.join(', ')}`,
+                field: 'checkout_url'
+            });
+        }
+
+        // GET oude checkout_url en plan details eerst
+        const currentConfig = await pool.query(`
+            SELECT id, plan_id, plan_name, checkout_url
+            FROM payment_configurations
+            WHERE id = $1
+        `, [configId]);
+
+        if (currentConfig.rows.length === 0) {
+            console.log('❌ Payment configuration not found:', configId);
+            return res.status(404).json({
+                error: 'Payment configuration not found',
+                message: `No configuration with ID ${configId}`
+            });
+        }
+
+        const config = currentConfig.rows[0];
+        const oldUrl = config.checkout_url;
+
+        // UPDATE met nieuwe checkout_url
+        const updateResult = await pool.query(`
+            UPDATE payment_configurations
+            SET checkout_url = $1,
+                updated_at = NOW()
+            WHERE id = $2
+            RETURNING updated_at
+        `, [checkout_url, configId]);
+
+        const updatedAt = updateResult.rows[0].updated_at;
+
+        // INSERT audit log met graceful fallback
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    old_value,
+                    new_value,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                'PAYMENT_CHECKOUT_URL_UPDATE',
+                'payment_configuration',
+                configId,
+                oldUrl,
+                checkout_url,
+                req.ip,
+                req.get('User-Agent')
+            ]);
+            console.log('✅ Audit log created for checkout URL update');
+        } catch (auditError) {
+            // Graceful fallback - log to console als audit tabel niet bestaat
+            console.log('[AUDIT] Admin', req.session.userId, 'updated checkout URL for config', configId, ':', oldUrl, '→', checkout_url);
+        }
+
+        // Return plan context + old/new URL voor confirmation
+        const response = {
+            success: true,
+            config_id: configId,
+            plan_id: config.plan_id,
+            plan_name: config.plan_name,
+            old_url: oldUrl,
+            new_url: checkout_url,
+            updated_at: updatedAt
+        };
+
+        console.log('✅ Checkout URL updated successfully:', {
+            config_id: configId,
+            plan_id: config.plan_id
+        });
+
+        res.json(response);
+
+    } catch (error) {
+        console.error('❌ Error updating checkout URL:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to update checkout URL'
+        });
+    }
+});
+
+// ============================================================================
 
     try {
         if (!pool) return res.status(503).json({ error: 'Database not available' });

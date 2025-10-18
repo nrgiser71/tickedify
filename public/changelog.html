@@ -179,6 +179,30 @@
                             <strong>Payment Configurations Integratie</strong>: Gebruikt payment_configurations tabel voor centralized payment plan management. Response format: { payment_configs: [...], count: number }. Basis voor toekomstige payment management UI in Admin Dashboard v2.
                         </div>
                     </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>PUT /api/admin2/system/settings/:key Endpoint</strong>: Update endpoint voor system settings met volledige validatie. Accepteert JSON body met value field, valideert input, updated setting in database en retourneert oude en nieuwe waarde voor confirmation.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>YouTube/Vimeo URL Validatie</strong>: Speciale validatie voor onboarding_video_url setting - vereist geldige YouTube (youtube.com, youtu.be, youtube-nocookie.com) of Vimeo URL. Retourneert 400 Bad Request bij invalide URL format.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Audit Trail</strong>: Volledige audit logging in admin_audit_log tabel - logged admin_user_id, action='SETTING_UPDATE', old_value, new_value, timestamp, IP en user agent. Graceful fallback bij audit log failures.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Response</strong>: Response bevat success status, key, old_value, new_value en updated_at timestamp volgens API contract. Retourneert 404 Not Found als setting key niet bestaat.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
