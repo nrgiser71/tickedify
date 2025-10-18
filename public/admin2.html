@@ -323,7 +323,110 @@
                     <h1 class="admin-header-title">Home Dashboard</h1>
                     <p class="admin-header-subtitle">Overview of key metrics and system health</p>
                 </div>
-                <div id="home-content"></div>
+                <div id="home-content">
+                    <!-- Stats Grid 1: User Metrics -->
+                    <div class="stats-grid">
+                        <div class="stat-card" id="total-users-card">
+                            <div class="stat-label">👥 Total Users</div>
+                            <div class="stat-value" id="total-users">--</div>
+                            <div class="stat-subtext">All registered accounts</div>
+                        </div>
+                        <div class="stat-card" id="active-7d-card">
+                            <div class="stat-label">⚡ Active Users (7d)</div>
+                            <div class="stat-value" id="active-7d">--</div>
+                            <div class="stat-subtext">Active in last 7 days</div>
+                        </div>
+                        <div class="stat-card" id="active-30d-card">
+                            <div class="stat-label">📊 Active Users (30d)</div>
+                            <div class="stat-value" id="active-30d">--</div>
+                            <div class="stat-subtext">Active in last 30 days</div>
+                        </div>
+                        <div class="stat-card" id="new-registrations-card">
+                            <div class="stat-label">📝 New Registrations</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                                <div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--macos-text-primary);" id="new-today">--</div>
+                                    <div style="font-size: 11px; color: var(--macos-text-secondary);">Today</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--macos-text-primary);" id="new-week">--</div>
+                                    <div style="font-size: 11px; color: var(--macos-text-secondary);">Week</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--macos-text-primary);" id="new-month">--</div>
+                                    <div style="font-size: 11px; color: var(--macos-text-secondary);">Month</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid 2: Subscription Distribution -->
+                    <div class="stats-grid">
+                        <div class="stat-card" id="free-tier-card">
+                            <div class="stat-label">🆓 Free Tier</div>
+                            <div class="stat-value" id="free-tier">--</div>
+                            <div class="stat-subtext">Free plan users</div>
+                        </div>
+                        <div class="stat-card" id="premium-tier-card">
+                            <div class="stat-label">⭐ Premium Tier</div>
+                            <div class="stat-value" id="premium-tier">--</div>
+                            <div class="stat-subtext">Premium plan users</div>
+                        </div>
+                        <div class="stat-card" id="enterprise-tier-card">
+                            <div class="stat-label">💎 Enterprise Tier</div>
+                            <div class="stat-value" id="enterprise-tier">--</div>
+                            <div class="stat-subtext">Enterprise plan users</div>
+                        </div>
+                        <div class="stat-card" id="active-trials-card">
+                            <div class="stat-label">🎯 Active Trials</div>
+                            <div class="stat-value" id="active-trials">--</div>
+                            <div class="stat-subtext">Users in trial period</div>
+                        </div>
+                    </div>
+
+                    <!-- User Growth Chart -->
+                    <div class="chart-container">
+                        <h3>User Growth (30 days)</h3>
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+
+                    <!-- Recent Registrations Table -->
+                    <div class="admin-table">
+                        <h3>Recent Registrations (Last 10)</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Naam</th>
+                                    <th>Tier</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentRegistrationsTable">
+                                <tr><td colspan="4" style="text-align:center; padding: 40px;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Stats Grid 3: Inactive Users -->
+                    <div class="stats-grid">
+                        <div class="stat-card" id="inactive-30d-card">
+                            <div class="stat-label">💤 Inactive (30d)</div>
+                            <div class="stat-value" id="inactive-30d">--</div>
+                            <div class="stat-subtext">No activity in 30 days</div>
+                        </div>
+                        <div class="stat-card" id="inactive-60d-card">
+                            <div class="stat-label">😴 Inactive (60d)</div>
+                            <div class="stat-value" id="inactive-60d">--</div>
+                            <div class="stat-subtext">No activity in 60 days</div>
+                        </div>
+                        <div class="stat-card" id="inactive-90d-card">
+                            <div class="stat-label">⏰ Inactive (90d)</div>
+                            <div class="stat-value" id="inactive-90d">--</div>
+                            <div class="stat-subtext">No activity in 90 days</div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Task Analytics Screen -->

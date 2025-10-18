@@ -134,10 +134,65 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.40 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.40</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🏠 Admin Dashboard v2 - Home Dashboard HTML Structure (T027)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Home Dashboard Layout</strong>: Volledige HTML structuur geïmplementeerd voor alle home dashboard statistics volgens FR-001 t/m FR-011. Responsive grid layouts met macOS-style design patterns.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Statistics Grid</strong>: 4 stat cards - Total Users (👥), Active Users 7d (⚡), Active Users 30d (📊), New Registrations (📝) met Today/Week/Month sub-cards. Alle element IDs voor JavaScript integration (total-users, active-7d, active-30d, new-today, new-week, new-month).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Subscription Distribution</strong>: 3 tier stat cards - Free Tier (🆓), Premium Tier (⭐), Enterprise Tier (💎) plus Active Trials (🎯). Element IDs: free-tier, premium-tier, enterprise-tier, active-trials.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Growth Chart</strong>: Chart.js canvas element (userGrowthChart) met chart-container styling voor 30-day user growth line chart. Klaar voor JavaScript data binding in T028.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Recent Registrations Table</strong>: Admin-table met thead (Email, Naam, Tier, Created At) en tbody (recentRegistrationsTable ID). Loading state geïmplementeerd met centered placeholder text.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Inactive Users Grid</strong>: 3 stat cards voor inactivity tracking - Inactive 30d (💤), Inactive 60d (😴), Inactive 90d (⏰). Element IDs: inactive-30d, inactive-60d, inactive-90d.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Design System Compliance</strong>: Hergebruik van bestaande CSS classes (stats-grid, stat-card, stat-label, stat-value, stat-subtext, chart-container, admin-table). Responsive grid layout (minmax(280px, 1fr)) met emoji iconen voor visual interest.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.39 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.39</span>
+                <span class="version-badge badge-feature">v0.19.39</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

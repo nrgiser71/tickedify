@@ -217,6 +217,87 @@ const ScreenManager = {
 };
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+const Helpers = {
+    /**
+     * Format number with thousands separator
+     */
+    formatNumber(num) {
+        if (num === null || num === undefined) return '0';
+        return num.toLocaleString('nl-NL');
+    },
+
+    /**
+     * Format percentage with decimal places
+     */
+    formatPercentage(num, decimals = 1) {
+        if (num === null || num === undefined) return '0.0%';
+        return `${num.toFixed(decimals)}%`;
+    },
+
+    /**
+     * Format date to readable format
+     */
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('nl-NL', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    },
+
+    /**
+     * Format date as relative time
+     */
+    formatRelativeTime(dateString) {
+        if (!dateString) return '-';
+
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return 'Just now';
+        if (diffMins < 60) return `${diffMins} min ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+
+        return this.formatDate(dateString);
+    },
+
+    /**
+     * Get CSS class for tier badge
+     */
+    getTierBadgeClass(tier) {
+        const classes = {
+            'free': 'badge-secondary',
+            'premium': 'badge-primary',
+            'enterprise': 'badge-gold'
+        };
+        return classes[tier] || 'badge-secondary';
+    },
+
+    /**
+     * Get tier display name
+     */
+    getTierDisplayName(tier) {
+        const names = {
+            'free': 'Free',
+            'premium': 'Premium',
+            'enterprise': 'Enterprise'
+        };
+        return names[tier] || tier;
+    }
+};
+
+// ============================================================================
 // Screen Implementations
 // ============================================================================
 
@@ -229,123 +310,232 @@ const Screens = {
         ScreenManager.showLoading('home-content');
 
         try {
+            // Parallel API calls voor performance
             const [homeData, growthData] = await Promise.all([
                 API.stats.home(),
                 API.stats.growth()
             ]);
 
+            // Render complete dashboard
             container.innerHTML = `
+                <h2>User Statistics</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Total Users</div>
-                        <div class="stat-value">${homeData.users.total}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.users.total)}</div>
+                        <div class="stat-subtext">All time</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Active (7d)</div>
-                        <div class="stat-value">${homeData.users.active_7d}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.users.active_7d)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.users.active_7d / homeData.users.total) * 100)} of total</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Active (30d)</div>
-                        <div class="stat-value">${homeData.users.active_30d}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.users.active_30d)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.users.active_30d / homeData.users.total) * 100)} of total</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">New Today</div>
-                        <div class="stat-value">${homeData.users.new_today}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.users.new_today)}</div>
+                        <div class="stat-subtext">Last 24 hours</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">New This Week</div>
-                        <div class="stat-value">${homeData.users.new_week}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.users.new_week)}</div>
+                        <div class="stat-subtext">Last 7 days</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">New This Month</div>
-                        <div class="stat-value">${homeData.users.new_month}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.users.new_month)}</div>
+                        <div class="stat-subtext">Last 30 days</div>
                     </div>
                 </div>
 
+                <h2>User Growth Trend</h2>
                 <div class="chart-container">
-                    <h3>User Growth (Last 30 Days)</h3>
                     <canvas id="growth-chart"></canvas>
                 </div>
 
-                <h3>Subscription Distribution</h3>
+                <h2>Subscription Distribution</h2>
                 <div class="stats-grid" style="margin-bottom: 30px;">
                     <div class="stat-card">
                         <div class="stat-label">Free</div>
-                        <div class="stat-value">${homeData.subscriptions.free}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.free)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.free / homeData.users.total) * 100)} of total</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Premium</div>
-                        <div class="stat-value">${homeData.subscriptions.premium}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.premium)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.premium / homeData.users.total) * 100)} of total</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Enterprise</div>
-                        <div class="stat-value">${homeData.subscriptions.enterprise}</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.enterprise)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.enterprise / homeData.users.total) * 100)} of total</div>
                     </div>
                 </div>
 
-                <h3>Recent Registrations</h3>
-                <div class="admin-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Email</th>
-                                <th>Name</th>
-                                <th>Tier</th>
-                                <th>Registered</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${homeData.recent_registrations.map(user => `
-                                <tr>
-                                    <td>${user.email}</td>
-                                    <td>${user.naam || '-'}</td>
-                                    <td>${user.subscription_tier}</td>
-                                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <h2>Trial Statistics</h2>
+                <div class="stats-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-label">Active Trials</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.trials.active)}</div>
+                        <div class="stat-subtext">Currently in trial period</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Trial Conversion Rate</div>
+                        <div class="stat-value">${Helpers.formatPercentage(homeData.trials.conversion_rate)}</div>
+                        <div class="stat-subtext">Trials → Paid</div>
+                    </div>
                 </div>
+
+                <h2>Recent Registrations</h2>
+                ${this.renderRecentRegistrations(homeData.recent_registrations)}
             `;
 
-            // Render growth chart
+            // Render growth chart met Chart.js
             this.renderGrowthChart(growthData);
 
         } catch (error) {
-            throw error;
+            console.error('Error loading home dashboard:', error);
+            container.innerHTML = `
+                <div class="error-message">
+                    <strong>Failed to load home dashboard</strong>
+                    <p>${error.message}</p>
+                </div>
+            `;
         }
     },
 
     /**
-     * Render user growth chart
+     * Render recent registrations table
+     */
+    renderRecentRegistrations(registrations) {
+        if (!registrations || registrations.length === 0) {
+            return '<p>No recent registrations</p>';
+        }
+
+        return `
+            <div class="admin-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Tier</th>
+                            <th>Registered</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${registrations.map(user => `
+                            <tr>
+                                <td>${user.email}</td>
+                                <td>${user.naam || '-'}</td>
+                                <td>
+                                    <span class="badge ${Helpers.getTierBadgeClass(user.subscription_tier)}">
+                                        ${Helpers.getTierDisplayName(user.subscription_tier)}
+                                    </span>
+                                </td>
+                                <td title="${Helpers.formatDate(user.created_at)}">
+                                    ${Helpers.formatRelativeTime(user.created_at)}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    },
+
+    /**
+     * Render user growth chart met Chart.js
      */
     renderGrowthChart(growthData) {
         const ctx = document.getElementById('growth-chart');
-        if (!ctx) return;
+        if (!ctx) {
+            console.warn('Growth chart canvas not found');
+            return;
+        }
 
-        new Chart(ctx, {
+        // Destroy bestaande chart instance indien aanwezig
+        if (window.userGrowthChartInstance) {
+            window.userGrowthChartInstance.destroy();
+        }
+
+        // Create nieuwe chart instance
+        window.userGrowthChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: growthData.data.map(d => new Date(d.date).toLocaleDateString()),
-                datasets: [{
-                    label: 'New Users',
-                    data: growthData.data.map(d => d.new_users),
-                    borderColor: '#007AFF',
-                    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                    tension: 0.4
-                }]
+                labels: growthData.data.map(d => Helpers.formatDate(d.date)),
+                datasets: [
+                    {
+                        label: 'Cumulative Users',
+                        data: growthData.data.map(d => d.cumulative),
+                        borderColor: '#007AFF',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'New Users',
+                        data: growthData.data.map(d => d.new_users),
+                        borderColor: '#34C759',
+                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 plugins: {
                     legend: {
-                        display: true
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#007AFF',
+                        borderWidth: 1
                     }
                 },
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: false,
+                        ticks: {
+                            precision: 0,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
                     }
                 }
             }
