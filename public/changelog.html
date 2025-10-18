@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.21 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.21</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix - Trial Activatie Redirect naar /app</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Trial Redirect Fix</strong>: Na activatie van gratis trial (14 dagen) wordt de gebruiker nu correct doorgestuurd naar /app in plaats van naar de landing page. Dit zorgt voor een naadloze onboarding experience na beta periode.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Implementation</strong>: <code>closeSuccessModal()</code> in subscription.js checkt nu eerst of trial activatie een specifiek redirect target heeft via sessionStorage, voordat het terugvalt op source-based routing.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Flow Verbeterd</strong>: Beta gebruikers → Trial keuze → Activatie → Direct naar app (geen extra klik nodig).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.20 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.20</span>
+                <span class="version-badge badge-fix">v0.19.20</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">

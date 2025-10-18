@@ -433,11 +433,12 @@ async function confirmSelection() {
                     response.message || `Trial geactiveerd! Je hebt 14 dagen om Tickedify uit te proberen.`
                 );
 
-                // Store trial info
+                // Store trial info with redirect target
                 sessionStorage.setItem('subscription_selection', JSON.stringify({
                     planId: subscriptionState.selectedPlanId,
                     trial: true,
                     trialEndDate: response.trialEndDate,
+                    redirectTarget: '/app',
                     timestamp: Date.now()
                 }));
 
@@ -564,7 +565,24 @@ function hideLoadingOverlay() {
 function closeSuccessModal() {
     document.getElementById('success-modal').style.display = 'none';
 
-    // Redirect based on selection source
+    // Check if trial was activated with specific redirect target
+    const subscriptionData = sessionStorage.getItem('subscription_selection');
+    if (subscriptionData) {
+        try {
+            const data = JSON.parse(subscriptionData);
+            // If trial activation specified redirect target, use that
+            if (data.trial && data.redirectTarget) {
+                setTimeout(() => {
+                    window.location.href = data.redirectTarget;
+                }, 500);
+                return;
+            }
+        } catch (e) {
+            console.error('Error parsing subscription data:', e);
+        }
+    }
+
+    // Redirect based on selection source (fallback for non-trial flows)
     setTimeout(() => {
         switch (subscriptionState.selectionSource) {
             case 'beta':
