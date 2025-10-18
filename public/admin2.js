@@ -1016,7 +1016,80 @@ const Screens = {
      */
     async loadDBTools() {
         const container = document.getElementById('dbtools-content');
-        container.innerHTML = '<p>Database tools will be loaded here</p>';
+        container.innerHTML = `
+            <!-- SQL Query Execution -->
+            <div class="admin-table">
+                <h3>💻 SQL Query Execution</h3>
+                <div style="background: #FFF3CD; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>⚠️ Warning:</strong> Be careful with UPDATE/DELETE queries. DROP/TRUNCATE/ALTER are blocked for safety.
+                </div>
+
+                <label>SQL Query:</label>
+                <textarea
+                    id="sql-query-input"
+                    rows="6"
+                    style="width: 100%; padding: 10px; font-family: monospace; border: 1px solid var(--macos-border); border-radius: 8px;"
+                    placeholder="SELECT * FROM users LIMIT 10;"
+                ></textarea>
+
+                <div style="margin: 15px 0;">
+                    <label>
+                        <input type="checkbox" id="sql-confirm-destructive" />
+                        I confirm this is a destructive query (required for UPDATE/DELETE)
+                    </label>
+                </div>
+
+                <button class="btn btn-primary" onclick="DbTools.executeSQLQuery()">
+                    ▶️ Execute Query
+                </button>
+
+                <!-- Results -->
+                <div id="sql-results" style="margin-top: 20px; display: none;">
+                    <h4>Query Results</h4>
+                    <div id="sql-results-content"></div>
+                </div>
+            </div>
+
+            <!-- Database Backup -->
+            <div class="admin-table" style="margin-top: 30px;">
+                <h3>💾 Database Backup</h3>
+                <p>Generate backup metadata and get backup instructions for Neon PostgreSQL.</p>
+
+                <button class="btn btn-primary" onclick="DbTools.generateBackup()">
+                    💾 Generate Backup Metadata
+                </button>
+
+                <div id="backup-results" style="margin-top: 20px; display: none;">
+                    <!-- Backup metadata will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Orphaned Data Cleanup -->
+            <div class="admin-table" style="margin-top: 30px;">
+                <h3>🧹 Database Cleanup</h3>
+                <p>Preview or clean up orphaned data (tasks, emails, sessions without valid users).</p>
+
+                <div style="margin: 15px 0;">
+                    <label>
+                        <input type="radio" name="cleanup-mode" value="preview" checked />
+                        Preview Mode (safe, no deletions)
+                    </label>
+                    <br />
+                    <label>
+                        <input type="radio" name="cleanup-mode" value="execute" />
+                        Execute Mode (permanent deletions)
+                    </label>
+                </div>
+
+                <button class="btn btn-primary" onclick="DbTools.runCleanup()">
+                    🧹 Run Cleanup
+                </button>
+
+                <div id="cleanup-results" style="margin-top: 20px; display: none;">
+                    <!-- Cleanup results will be displayed here -->
+                </div>
+            </div>
+        `;
     },
 
     /**
@@ -1310,6 +1383,180 @@ const UserActions = {
      */
     closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
+    }
+};
+
+// ============================================================================
+// Database Tools
+// ============================================================================
+
+const DbTools = {
+    /**
+     * Execute SQL query via API
+     */
+    async executeSQLQuery() {
+        try {
+            const query = document.getElementById('sql-query-input').value.trim();
+            const confirmDestructive = document.getElementById('sql-confirm-destructive').checked;
+
+            if (!query) {
+                alert('❌ Please enter a SQL query');
+                return;
+            }
+
+            // Show loading
+            const resultsDiv = document.getElementById('sql-results');
+            const resultsContent = document.getElementById('sql-results-content');
+            resultsDiv.style.display = 'block';
+            resultsContent.innerHTML = '<p>Executing query...</p>';
+
+            const result = await API.debug.sqlQuery(query, confirmDestructive);
+
+            // Display results
+            if (result.rows && result.rows.length > 0) {
+                const table = this.renderTable(result.rows);
+                resultsContent.innerHTML = `
+                    <p><strong>✅ Success</strong> - ${result.row_count} rows returned in ${result.execution_time_ms}ms</p>
+                    ${result.warnings ? `<p style="color: orange;">⚠️ ${result.warnings.join(', ')}</p>` : ''}
+                    ${table}
+                `;
+            } else {
+                resultsContent.innerHTML = `
+                    <p><strong>✅ Success</strong> - Query executed in ${result.execution_time_ms}ms</p>
+                    <p>${result.row_count} rows affected</p>
+                `;
+            }
+
+        } catch (error) {
+            const resultsContent = document.getElementById('sql-results-content');
+            resultsContent.innerHTML = `<p style="color: red;"><strong>❌ Error:</strong> ${error.message}</p>`;
+        }
+    },
+
+    /**
+     * Generate database backup metadata
+     */
+    async generateBackup() {
+        try {
+            const resultsDiv = document.getElementById('backup-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>Generating backup metadata...</p>';
+
+            const result = await API.debug.databaseBackup();
+
+            // Display backup info
+            resultsDiv.innerHTML = `
+                <h4>Backup Information</h4>
+                <table>
+                    <tr><th>Database Size</th><td>${result.backup_info.database_size_mb} MB</td></tr>
+                    <tr><th>Table Count</th><td>${result.backup_info.table_count}</td></tr>
+                    <tr><th>Total Rows</th><td>${Helpers.formatNumber(result.backup_info.total_rows)}</td></tr>
+                    <tr><th>Backup Timestamp</th><td>${Helpers.formatDate(result.backup_info.backup_timestamp)}</td></tr>
+                </table>
+
+                <h4 style="margin-top: 20px;">Tables</h4>
+                <table>
+                    <thead><tr><th>Table Name</th><th>Rows</th></tr></thead>
+                    <tbody>
+                        ${result.backup_info.tables.map(t => `
+                            <tr><td>${t.name}</td><td>${Helpers.formatNumber(t.rows)}</td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <h4 style="margin-top: 20px;">Backup Instructions</h4>
+                <ul>
+                    <li><strong>Automatic Backups:</strong> ${result.instructions.automatic_backups}</li>
+                    <li><strong>Manual Backup:</strong> ${result.instructions.manual_backup_via_branch}</li>
+                    <li><strong>SQL Export:</strong> <code>${result.instructions.sql_export}</code></li>
+                </ul>
+
+                <a href="${result.neon_dashboard_url}" target="_blank" class="btn btn-primary" style="margin-top: 15px;">
+                    Open Neon Dashboard →
+                </a>
+            `;
+
+        } catch (error) {
+            document.getElementById('backup-results').innerHTML =
+                `<p style="color: red;"><strong>❌ Error:</strong> ${error.message}</p>`;
+        }
+    },
+
+    /**
+     * Run orphaned data cleanup
+     */
+    async runCleanup() {
+        try {
+            const mode = document.querySelector('input[name="cleanup-mode"]:checked').value;
+            const preview = mode === 'preview';
+
+            if (!preview && !confirm('⚠️ Are you sure? This will permanently delete orphaned data.')) {
+                return;
+            }
+
+            const resultsDiv = document.getElementById('cleanup-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = `<p>${preview ? 'Previewing' : 'Executing'} cleanup...</p>`;
+
+            const result = await API.debug.cleanupData(preview);
+
+            // Display cleanup results
+            const totalDeleted = result.total_records_deleted || result.cleanup_results.reduce((sum, r) => sum + r.found, 0);
+
+            resultsDiv.innerHTML = `
+                <h4>${preview ? '👁️ Preview Results' : '✅ Cleanup Complete'}</h4>
+                <p><strong>Total records ${preview ? 'found' : 'deleted'}:</strong> ${totalDeleted}</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>Description</th>
+                            <th>Found</th>
+                            <th>${preview ? 'Would Delete' : 'Deleted'}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${result.cleanup_results.map(r => `
+                            <tr>
+                                <td><code>${r.target}</code></td>
+                                <td>${r.description}</td>
+                                <td>${r.found}</td>
+                                <td>${r.deleted || r.found}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                ${preview ? '<p style="color: orange;">⚠️ This was a preview. Switch to Execute Mode to perform deletions.</p>' : ''}
+            `;
+
+        } catch (error) {
+            document.getElementById('cleanup-results').innerHTML =
+                `<p style="color: red;"><strong>❌ Error:</strong> ${error.message}</p>`;
+        }
+    },
+
+    /**
+     * Render table from query results
+     */
+    renderTable(rows) {
+        if (!rows || rows.length === 0) return '<p>No data</p>';
+
+        const columns = Object.keys(rows[0]);
+
+        return `
+            <table>
+                <thead>
+                    <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${rows.map(row => `
+                        <tr>${columns.map(col => `<td>${row[col]}</td>`).join('')}</tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
     }
 };
 

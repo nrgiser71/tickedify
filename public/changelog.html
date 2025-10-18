@@ -137,7 +137,49 @@
         <!-- Version 0.19.48 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.48</span>
+                <span class="version-badge badge-latest">v0.19.49</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">💻 Database Tools Screen - SQL Query Execution (T039)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>SQL Query Interface</strong>: Volledig geïmplementeerd SQL query execution tool met textarea voor query input (6 rows, monospace font), safety warning banner (gele achtergrond) voor destructive queries, checkbox confirmatie vereist voor UPDATE/DELETE operations, execute button roept DbTools.executeSQLQuery() aan, results div toont query execution time en row count, dynamic table rendering voor SELECT results met alle kolommen, error messages in rood met duidelijke foutbeschrijvingen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Backup Tool</strong>: Backup metadata generator met "Generate Backup Metadata" button, roept DbTools.generateBackup() aan, toont database size in MB, table count en total rows via Helpers.formatNumber(), detailed table breakdown met row counts per tabel, backup instructions met automatic backups info, manual backup via branch method, SQL export command voorbeeld, link naar Neon Dashboard opent in nieuwe tab, loading states tijdens backup generatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Orphaned Data Cleanup</strong>: Database cleanup tool met preview/execute mode radio buttons, preview mode standaard geselecteerd (safe), execute mode vraagt confirmatie via browser confirm(), DbTools.runCleanup() method roept API.debug.cleanupData(preview), results table toont per target (orphaned tasks, emails, sessions), description kolom met duidelijke uitleg wat wordt opgeschoond, "found" en "would delete/deleted" kolommen voor preview vs execute mode, orange warning message bij preview mode, totals berekend via reduce() over cleanup_results array.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>DbTools Object Implementation</strong>: Nieuw DbTools object met 4 methods: executeSQLQuery() voor query execution via API.debug.sqlQuery(), generateBackup() voor backup metadata via API.debug.databaseBackup(), runCleanup() voor orphaned data cleanup via API.debug.cleanupData(), renderTable() utility method voor dynamic HTML table generation uit query results, alle methods hebben proper error handling met try-catch blocks, loading states tijdens API calls, success/error messages met duidelijke emoji indicators (✅/❌/⚠️).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>API Integration</strong>: Gebruikt bestaande API.debug methods (sqlQuery, databaseBackup, cleanupData), API calls met proper JSON body formatting voor POST requests, confirm_destructive parameter wordt correct doorgegeven, preview boolean parameter voor cleanup mode, response handling met row_count, execution_time_ms, warnings array, backup_info object met database_size_mb, table_count, total_rows, tables array, cleanup_results array met target, description, found, deleted fields, error responses worden opgevangen en getoond aan gebruiker.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.48</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
