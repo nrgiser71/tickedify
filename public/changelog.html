@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.35 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.35</span>
+                <span class="version-date">18 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔑 Backend - Admin Dashboard v2 Password Reset API</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>POST /api/admin2/users/:id/reset-password Endpoint</strong>: Admin-initiated password reset functionaliteit. Genereert automatisch een random 12-character alphanumeric wachtwoord, hashed met bcrypt en updated in database.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Secure Password Generation</strong>: 12-character random wachtwoorden met alleen alphanumeric characters (geen verwarrende chars zoals 0/O of 1/l/I). Elke reset genereert een uniek, sterk wachtwoord.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Audit Logging</strong>: Volledige audit trail in admin_audit_log tabel - logged admin_user_id, action='PASSWORD_RESET', target_user_id, timestamp, IP en user agent. Wachtwoord zelf wordt NIET gelogd voor security.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Response</strong>: Response bevat success status, user_id, email, new_password (plain text voor admin om door te geven aan user) en security message volgens API contract.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.34 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.34</span>
+                <span class="version-badge badge-feature">v0.19.34</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
