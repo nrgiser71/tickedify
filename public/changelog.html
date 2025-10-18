@@ -203,6 +203,30 @@
                             <strong>Complete Response</strong>: Response bevat success status, key, old_value, new_value en updated_at timestamp volgens API contract. Retourneert 404 Not Found als setting key niet bestaat.
                         </div>
                     </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>PUT /api/admin2/system/payments/:id/checkout-url Endpoint</strong>: Update endpoint voor payment checkout URLs met volledige validatie. Accepteert JSON body met checkout_url field, valideert HTTPS URL format en trusted payment provider domain (Mollie, Stripe, PayPal, Paddle), updated checkout URL in database en retourneert plan context met oude en nieuwe URL voor confirmation.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Payment Provider Validatie</strong>: URL moet HTTPS zijn en een bekende payment provider domain bevatten (mollie.com, stripe.com, paypal.com, paddle.com). Retourneert 400 Bad Request bij invalide URL format of untrusted provider.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Configuration Context</strong>: Response bevat volledige plan context - config_id, plan_id, plan_name, tier, old_url, new_url en updated_at timestamp. Retourneert 404 Not Found als payment configuration niet bestaat.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Checkout URL Audit Logging</strong>: Volledige audit trail in admin_audit_log tabel - logged admin_user_id, action='PAYMENT_CHECKOUT_URL_UPDATE', target_type='payment_configuration', target_id, old_value, new_value, timestamp, IP en user agent. Graceful console fallback bij audit log failures.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
