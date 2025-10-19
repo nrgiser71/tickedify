@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.91 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.91</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix SQL Column Namen - voltooid → afgewerkt</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Kolom Mismatch Opgelost</strong>: Admin2 user details endpoint gebruikte verkeerde kolomnaam 'voltooid' terwijl de taken tabel 'afgewerkt' heeft. Dit veroorzaakte "column voltooid does not exist" SQL errors voor ALLE users.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>SQL Query Gecorrigeerd</strong>: Task summary query aangepast naar correcte kolomnamen: afgewerkt (was: voltooid). Geblokkeerd kolom verwijderd want bestaat niet in database schema.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Alle Queries Nu Werkend</strong>: User details, task statistics en email statistics worden nu succesvol opgehaald zonder 500 errors.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.90 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.90</span>
+                <span class="version-badge badge-fix">v0.19.90</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

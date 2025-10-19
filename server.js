@@ -9611,10 +9611,9 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         const taskSummaryQuery = await pool.query(`
             SELECT
                 COUNT(*) as total_tasks,
-                COUNT(*) FILTER (WHERE voltooid = true) as completed_tasks,
-                COUNT(*) FILTER (WHERE voltooid = false) as active_tasks,
-                COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring_tasks,
-                COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked_tasks
+                COUNT(*) FILTER (WHERE afgewerkt = true) as completed_tasks,
+                COUNT(*) FILTER (WHERE afgewerkt = false) as active_tasks,
+                COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring_tasks
             FROM taken
             WHERE user_id = $1
         `, [userId]);
