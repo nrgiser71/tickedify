@@ -11746,9 +11746,6 @@ app.post('/api/debug/switch-test-user', async (req, res) => {
     }
 });
 
-// Direct database query for forensic logs (bypass logger)
-app.get('/api/debug/forensic/raw-database', async (req, res) => {
-
 // ============================================================================
 // ADMIN DASHBOARD V2 STATISTICS ENDPOINTS
 // ============================================================================
@@ -12197,50 +12194,6 @@ app.post('/api/admin2/debug/database-backup', requireAdmin, async (req, res) => 
             error: 'Server error',
             message: 'Failed to collect backup metadata',
             details: error.message
-        });
-    }
-});
-
-// ============================================================================
-
-    try {
-        if (!pool) return res.status(503).json({ error: 'Database not available' });
-
-        // Check if forensic_logs table exists
-        const tableExists = await pool.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.tables 
-                WHERE table_name = 'forensic_logs'
-            ) as exists
-        `);
-        
-        if (!tableExists.rows[0].exists) {
-            return res.json({
-                status: 'forensic_logs table does not exist',
-                forensic_debug: process.env.FORENSIC_DEBUG,
-                logger_enabled: forensicLogger.enabled
-            });
-        }
-        
-        // Get recent logs directly from database
-        const logs = await pool.query(`
-            SELECT * FROM forensic_logs 
-            ORDER BY timestamp DESC 
-            LIMIT 20
-        `);
-        
-        res.json({
-            status: 'forensic_logs table exists',
-            forensic_debug: process.env.FORENSIC_DEBUG,
-            logger_enabled: forensicLogger.enabled,
-            total_logs: logs.rows.length,
-            recent_logs: logs.rows
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            error: error.message,
-            forensic_debug: process.env.FORENSIC_DEBUG,
-            logger_enabled: forensicLogger.enabled
         });
     }
 });
