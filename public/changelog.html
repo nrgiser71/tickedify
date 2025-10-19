@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.77 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.77</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 User Search - Database Kolom Bug</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Search Gefixed</strong>: Zoekfunctie in admin2 user management werkte niet omdat SQL queries een niet-bestaande kolom 'subscription_tier' probeerden te selecteren. Database heeft alleen 'selected_plan'.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>SQL Query Fixes</strong>: Alle admin2 endpoints gebruiken nu COALESCE(selected_plan, 'free') as subscription_tier voor correcte data ophaling. Gefixte endpoints: user search, change tier, user details.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Admin dashboard kan nu gebruikers zoeken op email, naam en ID zonder database errors. User management functionaliteit volledig hersteld.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.73 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.73</span>
+                <span class="version-badge badge-fix">v0.19.73</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
