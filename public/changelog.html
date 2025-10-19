@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.94 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.94</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 User Details - SQL Column Name Mismatch</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Column Mismatch Opgelost</strong>: Tasks by Project en Tasks by Context queries gebruikten verkeerde kolomnamen 'project' en 'context', maar database heeft 'project_id' en 'context_id'. Dit veroorzaakte "column does not exist" SQL errors voor ALLE user details requests.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>SQL AS Aliasing Toegepast</strong>: Query 3 (Tasks by Project) nu: SELECT project_id AS project. Query 4 (Tasks by Context) nu: SELECT context_id AS context. AS aliasing behoudt backwards compatibility met frontend verwachtingen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Details Volledig Werkend</strong>: Admin kan nu user details bekijken zonder 500 errors. Project en context breakdowns laden correct met juiste database kolomnamen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.93 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.93</span>
+                <span class="version-badge badge-fix">v0.19.93</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

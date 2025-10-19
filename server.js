@@ -9621,21 +9621,23 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         const taskSummary = taskSummaryQuery.rows[0];
 
         // 3. Get tasks by project (top 10)
+        // Fix: Use project_id with AS aliasing for frontend compatibility
         const tasksByProjectQuery = await pool.query(`
-            SELECT project, COUNT(*) as count
+            SELECT project_id AS project, COUNT(*) as count
             FROM taken
-            WHERE user_id = $1 AND project IS NOT NULL
-            GROUP BY project
+            WHERE user_id = $1 AND project_id IS NOT NULL
+            GROUP BY project_id
             ORDER BY count DESC
             LIMIT 10
         `, [userId]);
 
         // 4. Get tasks by context (top 10)
+        // Fix: Use context_id with AS aliasing for frontend compatibility
         const tasksByContextQuery = await pool.query(`
-            SELECT context, COUNT(*) as count
+            SELECT context_id AS context, COUNT(*) as count
             FROM taken
-            WHERE user_id = $1 AND context IS NOT NULL
-            GROUP BY context
+            WHERE user_id = $1 AND context_id IS NOT NULL
+            GROUP BY context_id
             ORDER BY count DESC
             LIMIT 10
         `, [userId]);
