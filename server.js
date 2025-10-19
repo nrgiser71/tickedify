@@ -9433,7 +9433,7 @@ app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
                 email,
                 naam,
                 account_type,
-                subscription_tier,
+                COALESCE(subscription_tier, selected_plan, 'free') as subscription_tier,
                 subscription_status,
                 trial_end_date,
                 actief,
@@ -9501,7 +9501,7 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
                 email,
                 naam,
                 account_type,
-                subscription_tier,
+                COALESCE(subscription_tier, selected_plan, 'free') as subscription_tier,
                 subscription_status,
                 trial_end_date,
                 actief,
@@ -9582,13 +9582,13 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         const subscriptionQuery = await pool.query(`
             SELECT
                 u.subscription_status,
-                u.subscription_tier,
+                COALESCE(u.subscription_tier, u.selected_plan, 'free') as subscription_tier,
                 u.trial_end_date,
                 pc.plan_name,
                 pc.price_monthly
             FROM users u
             LEFT JOIN payment_configurations pc
-                ON pc.tier = u.subscription_tier AND pc.is_active = true
+                ON pc.tier = COALESCE(u.subscription_tier, u.selected_plan, 'free') AND pc.is_active = true
             WHERE u.id = $1
         `, [userId]);
 
@@ -11872,12 +11872,12 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '90 days' OR laatste_login IS NULL")
         ]);
 
-        // Subscription tier distribution (using selected_plan instead of subscription_tier)
-        // NOTE: Plug&Pay webhook sets selected_plan but not subscription_tier
+        // Subscription tier distribution (check both subscription_tier and selected_plan)
+        // NOTE: Newer users use subscription_tier, legacy users use selected_plan
         const subscriptionTiers = await pool.query(`
-            SELECT COALESCE(selected_plan, 'free') as tier, COUNT(*) as count
+            SELECT COALESCE(subscription_tier, selected_plan, 'free') as tier, COUNT(*) as count
             FROM users
-            GROUP BY COALESCE(selected_plan, 'free')
+            GROUP BY COALESCE(subscription_tier, selected_plan, 'free')
         `);
 
         const tierCounts = {
@@ -11917,9 +11917,9 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
               AND trial_end_date < CURRENT_DATE
         `);
 
-        // Recent registrations (last 10) - using subscription_tier directly
+        // Recent registrations (last 10) - using selected_plan for consistency
         const recentRegistrations = await pool.query(`
-            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, subscription_tier
+            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, COALESCE(subscription_tier, selected_plan, 'free') as subscription_tier
             FROM users
             ORDER BY COALESCE(created_at, aangemaakt) DESC
             LIMIT 10

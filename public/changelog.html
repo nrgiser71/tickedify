@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.81 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.81</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 Tier Kolom - Gebruik Correcte Data Bron</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Tier Data Hersteld</strong>: Tier kolom was leeg in admin2 user search en home screen omdat queries alleen subscription_tier checkten, maar de echte data staat in selected_plan kolom voor bestaande gebruikers.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>COALESCE Pattern</strong>: Alle admin2 queries gebruiken nu COALESCE(subscription_tier, selected_plan, 'free') om beide kolommen te checken met fallback naar 'free'. Dit werkt voor zowel nieuwe als legacy gebruikers.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Gefixte Endpoints</strong>: user search (regel 9436), user details (regel 9504, 9585), home stats recent registrations (regel 11922), tier counts (regel 11878). Tier informatie nu correct zichtbaar in alle admin2 schermen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.77 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.77</span>
+                <span class="version-badge badge-fix">v0.19.77</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
