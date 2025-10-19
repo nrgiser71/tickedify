@@ -747,24 +747,55 @@ const Screens = {
 
             const data = await API.stats.tasks();
 
-            // Populate stat cards
-            document.getElementById('tasks-total').textContent = Helpers.formatNumber(data.total_tasks);
-            document.getElementById('tasks-completed').textContent = Helpers.formatNumber(data.completed);
-            document.getElementById('tasks-completed-subtext').textContent =
-                `${Helpers.formatPercentage((data.completed / data.total_tasks) * 100)} of total`;
+            // Calculate percentages
+            const completedPct = data.total_tasks > 0 ? (data.completed / data.total_tasks) * 100 : 0;
+            const pendingPct = data.total_tasks > 0 ? (data.pending / data.total_tasks) * 100 : 0;
 
-            document.getElementById('tasks-pending').textContent = Helpers.formatNumber(data.pending);
-            document.getElementById('tasks-pending-subtext').textContent =
-                `${Helpers.formatPercentage((data.pending / data.total_tasks) * 100)} of total`;
+            // Render complete HTML (pattern from loadEmails)
+            const container = document.getElementById('tasks-content');
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📊 Total Tasks</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.total_tasks)}</div>
+                        <div class="stat-subtext">All time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">✅ Completed</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.completed)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(completedPct)} of total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⏳ Pending</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.pending)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(pendingPct)} of total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🎯 Completion Rate</div>
+                        <div class="stat-value">${Helpers.formatPercentage(data.completion_rate)}</div>
+                        <div class="stat-subtext">Tasks completed</div>
+                    </div>
+                </div>
 
-            document.getElementById('tasks-completion-rate').textContent =
-                Helpers.formatPercentage(data.completion_rate);
-
-            document.getElementById('tasks-today').textContent = Helpers.formatNumber(data.created_today);
-            document.getElementById('tasks-week').textContent = Helpers.formatNumber(data.created_week);
-            document.getElementById('tasks-month').textContent = Helpers.formatNumber(data.created_month);
-
-            ScreenManager.hideLoading('#tasks-content');
+                <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--macos-text-primary);">Task Creation Trends</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📅 Today</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.created_today)}</div>
+                        <div class="stat-subtext">Tasks created today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📅 This Week</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.created_week)}</div>
+                        <div class="stat-subtext">Last 7 days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📅 This Month</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.created_month)}</div>
+                        <div class="stat-subtext">Last 30 days</div>
+                    </div>
+                </div>
+            `;
 
         } catch (error) {
             ScreenManager.showError('#tasks-content', 'Failed to load task analytics', error);
@@ -820,22 +851,56 @@ const Screens = {
 
             const data = await API.stats.database();
 
-            document.getElementById('db-size').textContent = data.database_size_formatted;
-            document.getElementById('db-tables').textContent = data.table_count;
+            // Render complete HTML (pattern from loadEmails)
+            const container = document.getElementById('database-content');
 
-            // Render tables list
-            const tbody = document.getElementById('db-tables-list');
+            // Build tables list HTML
+            let tablesHTML = '';
             if (data.tables && data.tables.length > 0) {
-                tbody.innerHTML = data.tables.map(table => `
+                tablesHTML = data.tables.map(table => `
                     <tr>
                         <td><strong>${table.name}</strong></td>
-                        <td>${Helpers.formatNumber(table.row_count)}</td>
-                        <td>${table.size_mb.toFixed(2)} MB</td>
+                        <td>${table.size}</td>
                     </tr>
                 `).join('');
             } else {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No table data available</td></tr>';
+                tablesHTML = '<tr><td colspan="2" style="text-align:center;">No table data available</td></tr>';
             }
+
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">💾 Database Size</div>
+                        <div class="stat-value">${data.database_size_formatted}</div>
+                        <div class="stat-subtext">Total storage used</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📊 Tables</div>
+                        <div class="stat-value">${data.table_count}</div>
+                        <div class="stat-subtext">Database tables</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🔢 Total Rows</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.total_rows || 0)}</div>
+                        <div class="stat-subtext">Across all tables</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--macos-text-primary);">Tables by Size</h3>
+                <div style="background: var(--macos-bg-secondary); border-radius: var(--macos-radius-medium); overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: var(--macos-bg-tertiary);">
+                            <tr>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--macos-gray-4);">Table Name</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--macos-gray-4);">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-tables-list">
+                            ${tablesHTML}
+                        </tbody>
+                    </table>
+                </div>
+            `;
 
         } catch (error) {
             ScreenManager.showError('database-content', 'Failed to load database monitor', error);
@@ -854,25 +919,55 @@ const Screens = {
             // Format als EUR currency
             const formatEUR = (amount) => `€${Helpers.formatNumber(amount)}`;
 
-            document.getElementById('revenue-mrr').textContent = formatEUR(data.mrr_total);
-            document.getElementById('revenue-active').textContent =
-                Helpers.formatNumber(data.active_subscriptions);
+            // Calculate totals from by_tier array
+            const totalSubscriptions = data.by_tier.reduce((sum, tier) => sum + tier.user_count, 0);
 
-            // Revenue by tier
-            document.getElementById('revenue-premium').textContent =
-                formatEUR(data.revenue_by_tier.premium);
-            document.getElementById('revenue-premium-subtext').textContent =
-                `${Helpers.formatPercentage((data.revenue_by_tier.premium / data.mrr_total) * 100)} of MRR`;
+            // Find specific tier data
+            const premiumTier = data.by_tier.find(t => t.tier === 'premium') || {revenue: 0, user_count: 0};
+            const enterpriseTier = data.by_tier.find(t => t.tier === 'enterprise') || {revenue: 0, user_count: 0};
 
-            document.getElementById('revenue-enterprise').textContent =
-                formatEUR(data.revenue_by_tier.enterprise);
-            document.getElementById('revenue-enterprise-subtext').textContent =
-                `${Helpers.formatPercentage((data.revenue_by_tier.enterprise / data.mrr_total) * 100)} of MRR`;
+            // Calculate percentages
+            const premiumPct = data.mrr > 0 ? (premiumTier.revenue / data.mrr) * 100 : 0;
+            const enterprisePct = data.mrr > 0 ? (enterpriseTier.revenue / data.mrr) * 100 : 0;
 
-            ScreenManager.hideLoading('revenue-content');
+            // Render complete HTML (pattern from loadEmails)
+            const container = document.getElementById('revenue-content');
+            container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">💰 MRR</div>
+                        <div class="stat-value">${formatEUR(data.mrr)}</div>
+                        <div class="stat-subtext">Monthly Recurring Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📅 ARR</div>
+                        <div class="stat-value">${formatEUR(data.arr)}</div>
+                        <div class="stat-subtext">Annual Recurring Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">👥 Active Subscriptions</div>
+                        <div class="stat-value">${Helpers.formatNumber(totalSubscriptions)}</div>
+                        <div class="stat-subtext">Paying customers</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--macos-text-primary);">Revenue by Tier</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">⭐ Premium</div>
+                        <div class="stat-value">${formatEUR(premiumTier.revenue)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(premiumPct)} of MRR • ${premiumTier.user_count} users @ €${premiumTier.price_monthly || 15}/mo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🏢 Enterprise</div>
+                        <div class="stat-value">${formatEUR(enterpriseTier.revenue)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(enterprisePct)} of MRR • ${enterpriseTier.user_count} users @ €${enterpriseTier.price_monthly || 30}/mo</div>
+                    </div>
+                </div>
+            `;
 
         } catch (error) {
-            ScreenManager.showError('revenue', 'Failed to load revenue dashboard', error);
+            ScreenManager.showError('revenue-content', 'Failed to load revenue dashboard', error);
         }
     },
 

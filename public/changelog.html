@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.67 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.67</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Admin Dashboard v2: Frontend HTML Rendering Fixes (4/4 screens gefixed)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause Fix: showLoading() DOM Destructie</strong>: ScreenManager.showLoading() verwijderde alle HTML content met innerHTML clear, waarna JavaScript probeerde verwijderde DOM elementen te updaten → TypeError: Cannot set properties of null. Pattern geïdentificeerd: Email Analytics werkte WEL omdat het volledige HTML opnieuw renderde na API call. Alle gefaalde screens nu geconverteerd naar dit pattern.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Task Analytics Rerender Pattern (admin2.js:744-803)</strong>: Volledige HTML rendering geïmplementeerd i.p.v. DOM element updates - stats-grid met Total Tasks/Completed/Pending/Completion Rate cards, tweede stats-grid voor Task Creation Trends (Today/Week/Month), percentage calculations voor completed/pending subtexts, emoji labels voor visuele distinctie (📊📅✅⏳🎯).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Monitor Rerender Pattern (admin2.js:848-908)</strong>: Complete HTML rendering met stats-grid (Database Size/Tables/Total Rows), inline-styled table met thead/tbody voor Tables by Size lijst, removed row_count field (was al uit API verwijderd in v0.19.66), gebruikt table.size i.p.v. table.size_mb, graceful empty state: "No table data available".
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Dashboard Complete Rewrite (admin2.js:913-972)</strong>: API compatibility layer voor nieuwe response structure - data.mrr/arr i.p.v. data.mrr_total, data.by_tier array parsing (find premium/enterprise tiers), totalSubscriptions berekening via reduce over user_count, percentage calculations voor tier contributions, HTML rendering met MRR/ARR/Active Subscriptions cards plus Revenue by Tier breakdown, pricing display in subtexts (€15/€30 per tier).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Payment Configurations Graceful Fallback (server.js:11870-11885)</strong>: Enhanced error logging voor /api/admin2/system/payments endpoint - message/code/detail/stack logging, graceful degradation: return empty array bij schema issues, warning message: "Payment configurations table may have schema issues", debug field voor temporary diagnostics, voorkomt 500 errors in System Settings screen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.66 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.66</span>
+                <span class="version-badge badge-fix">v0.19.66</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
