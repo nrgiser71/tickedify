@@ -9678,7 +9678,8 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
                 END as subscription_tier,
                 u.trial_end_date,
                 pc.plan_name,
-                pc.checkout_url
+                pc.checkout_url,
+                pc.price_monthly
             FROM users u
             LEFT JOIN subscriptions s ON s.user_id = u.id
             LEFT JOIN payment_configurations pc
@@ -9699,7 +9700,8 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             subscription_tier: user.subscription_tier,
             trial_end_date: user.trial_end_date,
             plan_name: null,
-            checkout_url: null
+            checkout_url: null,
+            price_monthly: null
         };
 
         console.log(`✅ User details retrieved for ID ${userId}`);
@@ -9747,9 +9749,12 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error getting user details:', error);
+        console.error('❌ Error stack:', error.stack);
+        console.error('❌ User ID that failed:', req.params.id);
         res.status(500).json({
             error: 'Server error',
-            message: 'Failed to get user details'
+            message: 'Failed to get user details',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
