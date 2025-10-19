@@ -10714,10 +10714,10 @@ app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
         const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
         const total = parseInt(totalResult.rows[0].count);
 
-        // Completion rate (gebruik "afgewerkt" niet "voltooid")
+        // Completion rate (afgewerkt is TIMESTAMP, not boolean - check IS NOT NULL)
         const completionResult = await pool.query(`
             SELECT
-                (COUNT(*) FILTER (WHERE afgewerkt = true) * 100.0 / COUNT(*))::DECIMAL(5,2) as completion_rate
+                (COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL) * 100.0 / COUNT(*))::DECIMAL(5,2) as completion_rate
             FROM taken
         `);
         const completionRate = parseFloat(completionResult.rows[0].completion_rate || 0);
