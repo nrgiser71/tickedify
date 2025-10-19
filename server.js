@@ -1864,7 +1864,7 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/debug/current-user', (req, res) => {
     const userId = getCurrentUserId(req);
     const sessionData = req.session || {};
-    
+
     res.json({
         currentUserId: userId,
         sessionData: {
@@ -1875,6 +1875,55 @@ app.get('/api/debug/current-user', (req, res) => {
         isAuthenticated: !!sessionData.userId,
         message: 'Current user info based on session'
     });
+});
+
+// Debug endpoint to inspect database tables and subscription data
+app.get('/api/debug/database-tables', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get all database tables
+        const tablesQuery = await pool.query(`
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        `);
+
+        const tables = tablesQuery.rows.map(r => r.table_name);
+
+        // Get jan@buskens.be user data
+        const janUserQuery = await pool.query(`
+            SELECT * FROM users WHERE email = 'jan@buskens.be'
+        `);
+
+        // Check if subscriptions table exists and query it
+        let subscriptionsData = null;
+        if (tables.includes('subscriptions')) {
+            const subscriptionsQuery = await pool.query(`
+                SELECT * FROM subscriptions WHERE user_id = $1
+            `, [janUserQuery.rows[0]?.id]);
+            subscriptionsData = subscriptionsQuery.rows;
+        }
+
+        res.json({
+            tables: tables,
+            tables_count: tables.length,
+            has_subscriptions_table: tables.includes('subscriptions'),
+            jan_user_data: janUserQuery.rows[0] || null,
+            jan_subscriptions: subscriptionsData,
+            message: 'Database inspection complete'
+        });
+
+    } catch (error) {
+        console.error('❌ Error inspecting database:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: error.message
+        });
+    }
 });
 
 // Debug endpoint to check all inbox tasks
