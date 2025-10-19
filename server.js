@@ -9290,8 +9290,10 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
 
         // Hardcoded pricing (TODO: migrate to payment_configurations table with pricing)
         const pricing = {
-            'premium': 15.00,
-            'enterprise': 30.00,
+            'monthly_7': 7.00,
+            'yearly_70': 70.00,
+            'monthly_8': 8.00,
+            'yearly_80': 80.00,
             'free': 0
         };
 
@@ -9636,11 +9638,11 @@ app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
         }
 
         // Validation: tier must be provided and valid
-        const validTiers = ['free', 'premium', 'enterprise'];
+        const validTiers = ['free', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
         if (!tier || !validTiers.includes(tier)) {
             return res.status(400).json({
                 error: 'Invalid tier',
-                message: 'Tier must be one of: free, premium, enterprise'
+                message: 'Tier must be one of: free, monthly_7, yearly_70, monthly_8, yearly_80'
             });
         }
 
@@ -11770,13 +11772,22 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
 
         const tierCounts = {
             free: 0,
-            premium: 0,
-            enterprise: 0
+            standard: 0,
+            no_limit: 0
         };
 
         subscriptionTiers.rows.forEach(row => {
             const tier = row.tier || 'free';
-            tierCounts[tier] = parseInt(row.count);
+            const count = parseInt(row.count);
+
+            // Map actual tier IDs to display groups
+            if (tier === 'monthly_7' || tier === 'yearly_70') {
+                tierCounts.standard += count;
+            } else if (tier === 'monthly_8' || tier === 'yearly_80') {
+                tierCounts.no_limit += count;
+            } else if (tier === 'free') {
+                tierCounts.free = count;
+            }
         });
 
         // Trial statistics

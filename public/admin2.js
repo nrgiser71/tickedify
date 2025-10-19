@@ -567,14 +567,14 @@ const Screens = {
                         <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.free / homeData.users.total) * 100)} of total</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Premium</div>
-                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.premium)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.premium / homeData.users.total) * 100)} of total</div>
+                        <div class="stat-label">Standard</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.standard)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.standard / homeData.users.total) * 100)} of total</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Enterprise</div>
-                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.enterprise)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.enterprise / homeData.users.total) * 100)} of total</div>
+                        <div class="stat-label">No Limit</div>
+                        <div class="stat-value">${Helpers.formatNumber(homeData.subscriptions.no_limit)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage((homeData.subscriptions.no_limit / homeData.users.total) * 100)} of total</div>
                     </div>
                 </div>
 
@@ -922,13 +922,17 @@ const Screens = {
             // Calculate totals from by_tier array
             const totalSubscriptions = data.by_tier.reduce((sum, tier) => sum + tier.user_count, 0);
 
-            // Find specific tier data
-            const premiumTier = data.by_tier.find(t => t.tier === 'premium') || {revenue: 0, user_count: 0};
-            const enterpriseTier = data.by_tier.find(t => t.tier === 'enterprise') || {revenue: 0, user_count: 0};
+            // Find specific tier data - separate monthly and yearly
+            const standardMonthly = data.by_tier.find(t => t.tier === 'monthly_7') || {revenue: 0, user_count: 0, price_monthly: 7};
+            const standardYearly = data.by_tier.find(t => t.tier === 'yearly_70') || {revenue: 0, user_count: 0, price_monthly: 70};
+            const noLimitMonthly = data.by_tier.find(t => t.tier === 'monthly_8') || {revenue: 0, user_count: 0, price_monthly: 8};
+            const noLimitYearly = data.by_tier.find(t => t.tier === 'yearly_80') || {revenue: 0, user_count: 0, price_monthly: 80};
 
             // Calculate percentages
-            const premiumPct = data.mrr > 0 ? (premiumTier.revenue / data.mrr) * 100 : 0;
-            const enterprisePct = data.mrr > 0 ? (enterpriseTier.revenue / data.mrr) * 100 : 0;
+            const stdMonthlyPct = data.mrr > 0 ? (standardMonthly.revenue / data.mrr) * 100 : 0;
+            const stdYearlyPct = data.mrr > 0 ? (standardYearly.revenue / data.mrr) * 100 : 0;
+            const noLimitMonthlyPct = data.mrr > 0 ? (noLimitMonthly.revenue / data.mrr) * 100 : 0;
+            const noLimitYearlyPct = data.mrr > 0 ? (noLimitYearly.revenue / data.mrr) * 100 : 0;
 
             // Render complete HTML (pattern from loadEmails)
             const container = document.getElementById('revenue-content');
@@ -954,14 +958,24 @@ const Screens = {
                 <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--macos-text-primary);">Revenue by Tier</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-label">⭐ Premium</div>
-                        <div class="stat-value">${formatEUR(premiumTier.revenue)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage(premiumPct)} of MRR • ${premiumTier.user_count} users @ €${premiumTier.price_monthly || 15}/mo</div>
+                        <div class="stat-label">⭐ Standard Maandelijks</div>
+                        <div class="stat-value">${formatEUR(standardMonthly.revenue)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(stdMonthlyPct)} of MRR • ${standardMonthly.user_count} users @ €${standardMonthly.price_monthly}/mo</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">🏢 Enterprise</div>
-                        <div class="stat-value">${formatEUR(enterpriseTier.revenue)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage(enterprisePct)} of MRR • ${enterpriseTier.user_count} users @ €${enterpriseTier.price_monthly || 30}/mo</div>
+                        <div class="stat-label">⭐ Standard Jaarlijks</div>
+                        <div class="stat-value">${formatEUR(standardYearly.revenue)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(stdYearlyPct)} of MRR • ${standardYearly.user_count} users @ €${standardYearly.price_monthly}/yr</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🏢 No Limit Maandelijks</div>
+                        <div class="stat-value">${formatEUR(noLimitMonthly.revenue)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(noLimitMonthlyPct)} of MRR • ${noLimitMonthly.user_count} users @ €${noLimitMonthly.price_monthly}/mo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🏢 No Limit Jaarlijks</div>
+                        <div class="stat-value">${formatEUR(noLimitYearly.revenue)}</div>
+                        <div class="stat-subtext">${Helpers.formatPercentage(noLimitYearlyPct)} of MRR • ${noLimitYearly.user_count} users @ €${noLimitYearly.price_monthly}/yr</div>
                     </div>
                 </div>
             `;

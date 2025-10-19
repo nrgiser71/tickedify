@@ -134,10 +134,59 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.70 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.70</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 Subscription Tier Update - Standard & No Limit</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Oude Tier Namen Vervangen</strong>: Premium (€15) en Enterprise (€30) tiers waren niet-bestaande placeholders - vervangen met echte subscription tiers: Standard (monthly_7 €7/maand, yearly_70 €70/jaar) en No Limit (monthly_8 €8/maand, yearly_80 €80/jaar).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Dashboard Pricing (server.js:9292-9298)</strong>: Pricing object geüpdatet van {'premium': 15, 'enterprise': 30} naar {'monthly_7': 7, 'yearly_70': 70, 'monthly_8': 8, 'yearly_80': 80, 'free': 0} - MRR berekening nu gebaseerd op correcte tier IDs en prijzen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Home Dashboard Tier Groepering (server.js:11773-11791)</strong>: Subscription distribution toont nu Standard (monthly_7 + yearly_70 gecombineerd) en No Limit (monthly_8 + yearly_80 gecombineerd) in plaats van premium/enterprise - map logica groept tier IDs naar display namen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Dashboard Separate Tiers (admin2.js:926-980)</strong>: Maandelijkse en jaarlijkse abonnementen apart getoond - 4 tier kaarten: Standard Maandelijks, Standard Jaarlijks, No Limit Maandelijks, No Limit Jaarlijks met correcte prijzen (€7/mo, €70/yr, €8/mo, €80/yr).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Frontend Labels Update (admin2.js:570-577)</strong>: Home Dashboard subscription distribution kaarten nu "Standard" en "No Limit" labels in plaats van "Premium" en "Enterprise" - consistent met echte abonnement structuur.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Tier Validation Update (server.js:9641)</strong>: validTiers array vervangen van ['free', 'premium', 'enterprise'] naar ['free', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'] - API wijzigingen accepteren alleen echte tier IDs.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.69 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.69</span>
+                <span class="version-badge badge-fix">v0.19.69</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
