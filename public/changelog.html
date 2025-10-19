@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.92 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.92</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix afgewerkt Kolom Data Type - TIMESTAMP ipv BOOLEAN</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Data Type Mismatch Opgelost</strong>: Task summary query gebruikte 'afgewerkt = true/false' maar afgewerkt is een TIMESTAMP kolom, geen BOOLEAN. Dit veroorzaakte "operator does not exist: timestamp = boolean" SQL errors.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Query Aangepast</strong>: Completed tasks nu: WHERE afgewerkt IS NOT NULL (was: = true). Active tasks: WHERE afgewerkt IS NULL (was: = false). Correct gebruik van TIMESTAMP NULL checking.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Details Nu Volledig Werkend</strong>: Alle SQL queries succesvol - user info, task statistics en email data laden correct zonder errors.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.91 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.91</span>
+                <span class="version-badge badge-fix">v0.19.91</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
