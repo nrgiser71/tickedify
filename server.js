@@ -9496,27 +9496,36 @@ app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
         const searchPattern = `%${query}%`;
         const searchQuery = await pool.query(`
             SELECT
-                id,
-                email,
-                naam,
-                account_type,
-                COALESCE(subscription_tier, selected_plan, 'free') as subscription_tier,
-                subscription_status,
-                trial_end_date,
-                actief,
-                created_at,
-                laatste_login
-            FROM users
-            WHERE email ILIKE $1
-                OR naam ILIKE $1
-                OR id::text ILIKE $1
+                u.id,
+                u.email,
+                u.naam,
+                u.account_type,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier,
+                u.subscription_status,
+                u.trial_end_date,
+                u.actief,
+                u.created_at,
+                u.laatste_login
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            WHERE u.email ILIKE $1
+                OR u.naam ILIKE $1
+                OR u.id::text ILIKE $1
             ORDER BY
                 CASE
-                    WHEN email ILIKE $1 THEN 1
-                    WHEN naam ILIKE $1 THEN 2
+                    WHEN u.email ILIKE $1 THEN 1
+                    WHEN u.naam ILIKE $1 THEN 2
                     ELSE 3
                 END,
-                created_at DESC
+                u.created_at DESC
             LIMIT $2
         `, [searchPattern, limit]);
 
@@ -9564,20 +9573,29 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         // 1. Get user details
         const userQuery = await pool.query(`
             SELECT
-                id,
-                email,
-                naam,
-                account_type,
-                COALESCE(subscription_tier, selected_plan, 'free') as subscription_tier,
-                subscription_status,
-                trial_end_date,
-                actief,
-                created_at,
-                laatste_login,
-                onboarding_video_seen,
-                onboarding_video_seen_at
-            FROM users
-            WHERE id = $1
+                u.id,
+                u.email,
+                u.naam,
+                u.account_type,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier,
+                u.subscription_status,
+                u.trial_end_date,
+                u.actief,
+                u.created_at,
+                u.laatste_login,
+                u.onboarding_video_seen,
+                u.onboarding_video_seen_at
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            WHERE u.id = $1
         `, [userId]);
 
         if (userQuery.rows.length === 0) {
@@ -9649,13 +9667,30 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         const subscriptionQuery = await pool.query(`
             SELECT
                 u.subscription_status,
-                COALESCE(u.subscription_tier, u.selected_plan, 'free') as subscription_tier,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier,
                 u.trial_end_date,
                 pc.plan_name,
-                pc.price_monthly
+                pc.checkout_url
             FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
             LEFT JOIN payment_configurations pc
-                ON pc.tier = COALESCE(u.subscription_tier, u.selected_plan, 'free') AND pc.is_active = true
+                ON pc.plan_id = CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END AND pc.is_active = true
             WHERE u.id = $1
         `, [userId]);
 
@@ -9664,7 +9699,7 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             subscription_tier: user.subscription_tier,
             trial_end_date: user.trial_end_date,
             plan_name: null,
-            price_monthly: null
+            checkout_url: null
         };
 
         console.log(`✅ User details retrieved for ID ${userId}`);
@@ -11939,12 +11974,22 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '90 days' OR laatste_login IS NULL")
         ]);
 
-        // Subscription tier distribution (check both subscription_tier and selected_plan)
-        // NOTE: Newer users use subscription_tier, legacy users use selected_plan
+        // Subscription tier distribution - JOIN to subscriptions table
         const subscriptionTiers = await pool.query(`
-            SELECT COALESCE(subscription_tier, selected_plan, 'free') as tier, COUNT(*) as count
-            FROM users
-            GROUP BY COALESCE(subscription_tier, selected_plan, 'free')
+            SELECT
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as tier,
+                COUNT(*) as count
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            GROUP BY tier
         `);
 
         const tierCounts = {
@@ -11984,11 +12029,25 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
               AND trial_end_date < CURRENT_DATE
         `);
 
-        // Recent registrations (last 10) - using selected_plan for consistency
+        // Recent registrations (last 10) - JOIN to subscriptions table
         const recentRegistrations = await pool.query(`
-            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, COALESCE(subscription_tier, selected_plan, 'free') as subscription_tier
-            FROM users
-            ORDER BY COALESCE(created_at, aangemaakt) DESC
+            SELECT
+                u.id,
+                u.email,
+                u.naam,
+                COALESCE(u.created_at, u.aangemaakt) as created_at,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            ORDER BY COALESCE(u.created_at, u.aangemaakt) DESC
             LIMIT 10
         `);
 

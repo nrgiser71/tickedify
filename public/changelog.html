@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.84 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.84</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 Tier Kolom - JOIN Subscriptions Tabel</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Juiste Data Bron</strong>: Alle admin2 queries gebruiken nu LEFT JOIN naar subscriptions tabel in plaats van users.subscription_tier kolom. Tier wordt berekend uit subscription.status + plan_type + addon_storage velden.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Tier Mapping Logic</strong>: CASE statement mappt active+monthly+basic→monthly_7, active+yearly+basic→yearly_70, active+monthly+(not basic)→monthly_8, active+yearly+(not basic)→yearly_80, trial→trial, anders→free.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Gefixte Endpoints</strong>: user search (regel 9497), user details 2 queries (regel 9574, 9667), home stats recent registrations (regel 12033), tier distribution (regel 11978). Correcte tier informatie nu voor alle gebruikers.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.81 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.81</span>
+                <span class="version-badge badge-fix">v0.19.81</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
