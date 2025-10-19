@@ -11770,21 +11770,21 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             // Total users
             pool.query('SELECT COUNT(*) FROM users'),
             // Active last 7 days
-            pool.query("SELECT COUNT(*) FROM users WHERE last_login >= NOW() - INTERVAL '7 days'"),
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login >= NOW() - INTERVAL '7 days'"),
             // Active last 30 days
-            pool.query("SELECT COUNT(*) FROM users WHERE last_login >= NOW() - INTERVAL '30 days'"),
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login >= NOW() - INTERVAL '30 days'"),
             // New today
-            pool.query('SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURRENT_DATE'),
+            pool.query('SELECT COUNT(*) FROM users WHERE DATE(COALESCE(created_at, aangemaakt)) = CURRENT_DATE'),
             // New this week
-            pool.query("SELECT COUNT(*) FROM users WHERE created_at >= DATE_TRUNC('week', NOW())"),
+            pool.query("SELECT COUNT(*) FROM users WHERE COALESCE(created_at, aangemaakt) >= DATE_TRUNC('week', NOW())"),
             // New this month
-            pool.query("SELECT COUNT(*) FROM users WHERE created_at >= DATE_TRUNC('month', NOW())"),
+            pool.query("SELECT COUNT(*) FROM users WHERE COALESCE(created_at, aangemaakt) >= DATE_TRUNC('month', NOW())"),
             // Inactive >30 days
-            pool.query("SELECT COUNT(*) FROM users WHERE last_login < NOW() - INTERVAL '30 days' OR last_login IS NULL"),
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '30 days' OR laatste_login IS NULL"),
             // Inactive >60 days
-            pool.query("SELECT COUNT(*) FROM users WHERE last_login < NOW() - INTERVAL '60 days' OR last_login IS NULL"),
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '60 days' OR laatste_login IS NULL"),
             // Inactive >90 days
-            pool.query("SELECT COUNT(*) FROM users WHERE last_login < NOW() - INTERVAL '90 days' OR last_login IS NULL")
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '90 days' OR laatste_login IS NULL")
         ]);
 
         // Subscription tier distribution
@@ -11821,9 +11821,9 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
 
         // Recent registrations (last 10)
         const recentRegistrations = await pool.query(`
-            SELECT id, email, naam, created_at, subscription_tier
+            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, subscription_tier
             FROM users
-            ORDER BY created_at DESC
+            ORDER BY COALESCE(created_at, aangemaakt) DESC
             LIMIT 10
         `);
 
