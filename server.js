@@ -11785,12 +11785,15 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             WHERE subscription_status = 'trial' AND trial_end_date >= CURRENT_DATE
         `);
 
+        // Trial conversion rate - only count COMPLETED trials (trial_end_date < today)
+        // NOTE: Old query only counted ('active', 'expired', 'cancelled') statuses, missing 'trialing' and 'beta_expired'
         const conversionRate = await pool.query(`
             SELECT
                 (COUNT(*) FILTER (WHERE subscription_status = 'active') * 100.0 /
-                 NULLIF(COUNT(*) FILTER (WHERE subscription_status IN ('active', 'expired', 'cancelled')), 0))::DECIMAL(5,2) as conversion_rate
+                 NULLIF(COUNT(*), 0))::DECIMAL(5,2) as conversion_rate
             FROM users
             WHERE trial_end_date IS NOT NULL
+              AND trial_end_date < CURRENT_DATE
         `);
 
         // Recent registrations (last 10) - using selected_plan for consistency
