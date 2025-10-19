@@ -9433,7 +9433,7 @@ app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
                 email,
                 naam,
                 account_type,
-                COALESCE(selected_plan, 'free') as subscription_tier,
+                subscription_tier,
                 subscription_status,
                 trial_end_date,
                 actief,
@@ -9501,7 +9501,7 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
                 email,
                 naam,
                 account_type,
-                COALESCE(selected_plan, 'free') as subscription_tier,
+                subscription_tier,
                 subscription_status,
                 trial_end_date,
                 actief,
@@ -9582,13 +9582,13 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         const subscriptionQuery = await pool.query(`
             SELECT
                 u.subscription_status,
-                COALESCE(u.selected_plan, 'free') as subscription_tier,
+                u.subscription_tier,
                 u.trial_end_date,
                 pc.plan_name,
                 pc.price_monthly
             FROM users u
             LEFT JOIN payment_configurations pc
-                ON pc.tier = COALESCE(u.selected_plan, 'free') AND pc.is_active = true
+                ON pc.tier = u.subscription_tier AND pc.is_active = true
             WHERE u.id = $1
         `, [userId]);
 
@@ -9683,7 +9683,7 @@ app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
 
         // Get current user data before update
         const currentUserQuery = await pool.query(`
-            SELECT id, email, COALESCE(selected_plan, 'free') as subscription_tier
+            SELECT id, email, subscription_tier
             FROM users
             WHERE id = $1
         `, [userId]);
@@ -9698,12 +9698,12 @@ app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
         const currentUser = currentUserQuery.rows[0];
         const oldTier = currentUser.subscription_tier;
 
-        // Update user's subscription tier (using selected_plan column)
+        // Update user's subscription tier (update subscription_tier column directly)
         const updateQuery = await pool.query(`
             UPDATE users
-            SET selected_plan = $1
+            SET subscription_tier = $1
             WHERE id = $2
-            RETURNING id, COALESCE(selected_plan, 'free') as subscription_tier
+            RETURNING id, subscription_tier
         `, [tier, userId]);
 
         const updatedAt = new Date().toISOString();
@@ -11917,9 +11917,9 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
               AND trial_end_date < CURRENT_DATE
         `);
 
-        // Recent registrations (last 10) - using selected_plan for consistency
+        // Recent registrations (last 10) - using subscription_tier directly
         const recentRegistrations = await pool.query(`
-            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, COALESCE(selected_plan, 'free') as subscription_tier
+            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, subscription_tier
             FROM users
             ORDER BY COALESCE(created_at, aangemaakt) DESC
             LIMIT 10
