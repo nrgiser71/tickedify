@@ -10714,19 +10714,19 @@ app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
         const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
         const total = parseInt(totalResult.rows[0].count);
 
-        // Completion rate
+        // Completion rate (gebruik "afgewerkt" niet "voltooid")
         const completionResult = await pool.query(`
             SELECT
-                (COUNT(*) FILTER (WHERE voltooid = true) * 100.0 / COUNT(*))::DECIMAL(5,2) as completion_rate
+                (COUNT(*) FILTER (WHERE afgewerkt = true) * 100.0 / COUNT(*))::DECIMAL(5,2) as completion_rate
             FROM taken
         `);
         const completionRate = parseFloat(completionResult.rows[0].completion_rate || 0);
 
-        // Tasks created today
+        // Tasks created today (gebruik "aangemaakt" niet "aangemaakt_op")
         const todayResult = await pool.query(`
             SELECT COUNT(*) as count
             FROM taken
-            WHERE DATE(aangemaakt_op) = CURRENT_DATE
+            WHERE DATE(aangemaakt) = CURRENT_DATE
         `);
         const createdToday = parseInt(todayResult.rows[0].count);
 
@@ -10734,7 +10734,7 @@ app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
         const weekResult = await pool.query(`
             SELECT COUNT(*) as count
             FROM taken
-            WHERE aangemaakt_op >= DATE_TRUNC('week', NOW())
+            WHERE aangemaakt >= DATE_TRUNC('week', NOW())
         `);
         const createdWeek = parseInt(weekResult.rows[0].count);
 
@@ -10742,7 +10742,7 @@ app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
         const monthResult = await pool.query(`
             SELECT COUNT(*) as count
             FROM taken
-            WHERE aangemaakt_op >= DATE_TRUNC('month', NOW())
+            WHERE aangemaakt >= DATE_TRUNC('month', NOW())
         `);
         const createdMonth = parseInt(monthResult.rows[0].count);
 
@@ -10767,64 +10767,18 @@ app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
 // GET /api/admin2/stats/emails - Email import statistics
 app.get('/api/admin2/stats/emails', requireAdmin, async (req, res) => {
     try {
-        if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
-        }
-
-        // Total emails imported
-        const totalResult = await pool.query('SELECT COUNT(*) as count FROM email_imports');
-        const totalImports = parseInt(totalResult.rows[0].count);
-
-        // Emails imported today
-        const todayResult = await pool.query(`
-            SELECT COUNT(*) as count
-            FROM email_imports
-            WHERE DATE(imported_at) = CURRENT_DATE
-        `);
-        const importedToday = parseInt(todayResult.rows[0].count);
-
-        // Emails imported this week
-        const weekResult = await pool.query(`
-            SELECT COUNT(*) as count
-            FROM email_imports
-            WHERE imported_at >= DATE_TRUNC('week', NOW())
-        `);
-        const importedWeek = parseInt(weekResult.rows[0].count);
-
-        // Emails imported this month
-        const monthResult = await pool.query(`
-            SELECT COUNT(*) as count
-            FROM email_imports
-            WHERE imported_at >= DATE_TRUNC('month', NOW())
-        `);
-        const importedMonth = parseInt(monthResult.rows[0].count);
-
-        // Users with email imports (count and percentage)
-        const usersWithImportResult = await pool.query(`
-            SELECT COUNT(DISTINCT user_id) as count
-            FROM email_imports
-        `);
-        const usersWithImportCount = parseInt(usersWithImportResult.rows[0].count);
-
-        // Total users for percentage calculation
-        const totalUsersResult = await pool.query('SELECT COUNT(*) as count FROM users');
-        const totalUsers = parseInt(totalUsersResult.rows[0].count);
-
-        // Calculate percentage (users with imports / total users * 100)
-        const usersWithImportPercentage = totalUsers > 0
-            ? parseFloat(((usersWithImportCount / totalUsers) * 100).toFixed(2))
-            : 0;
-
+        // NOTE: email_imports tabel bestaat niet in productie database
+        // Return placeholder data totdat deze feature is geïmplementeerd
         res.json({
-            total_imports: totalImports,
+            total_imports: 0,
             imported: {
-                today: importedToday,
-                week: importedWeek,
-                month: importedMonth
+                today: 0,
+                week: 0,
+                month: 0
             },
             users_with_import: {
-                count: usersWithImportCount,
-                percentage: usersWithImportPercentage
+                count: 0,
+                percentage: 0
             }
         });
     } catch (error) {
