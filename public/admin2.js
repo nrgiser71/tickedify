@@ -860,11 +860,12 @@ const Screens = {
                 tablesHTML = data.tables.map(table => `
                     <tr>
                         <td><strong>${table.name}</strong></td>
+                        <td>${Helpers.formatNumber(table.row_count || 0)}</td>
                         <td>${table.size}</td>
                     </tr>
                 `).join('');
             } else {
-                tablesHTML = '<tr><td colspan="2" style="text-align:center;">No table data available</td></tr>';
+                tablesHTML = '<tr><td colspan="3" style="text-align:center;">No table data available</td></tr>';
             }
 
             container.innerHTML = `
@@ -892,6 +893,7 @@ const Screens = {
                         <thead style="background: var(--macos-bg-tertiary);">
                             <tr>
                                 <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--macos-gray-4);">Table Name</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--macos-gray-4);">Rows</th>
                                 <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--macos-gray-4);">Size</th>
                             </tr>
                         </thead>
