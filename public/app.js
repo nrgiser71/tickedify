@@ -11242,7 +11242,10 @@ class Taakbeheer {
         const vandaag = new Date();
         const vandaagISO = vandaag.toISOString().split('T')[0]; // Voor vergelijking
         const huidigeWeekStart = new Date(vandaag);
-        huidigeWeekStart.setDate(vandaag.getDate() - vandaag.getDay() + 1); // Maandag van deze week
+        const dagVanWeek = vandaag.getDay();
+        // Zondag (0) is 6 dagen terug naar maandag, anders (dag - 1) dagen terug
+        const dagenNaarMaandag = dagVanWeek === 0 ? -6 : -(dagVanWeek - 1);
+        huidigeWeekStart.setDate(vandaag.getDate() + dagenNaarMaandag);
 
         // Bereken volgende week
         const volgendeWeekStart = new Date(huidigeWeekStart);

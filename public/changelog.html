@@ -137,7 +137,38 @@
         <!-- Version 0.19.94 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.94</span>
+                <span class="version-badge badge-latest">v0.19.96</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Drag & Drop Popup Week Display on Sunday</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Zondag Bug Opgelost</strong>: Op zondag toonde de planning popup volgende week + week erna, in plaats van huidige week + volgende week. Dit kwam doordat zondag (getDay()=0) verkeerd werd behandeld in de week berekening.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Correcte Week Berekening</strong>: Zondag wordt nu correct behandeld als laatste dag van de huidige week. De popup toont altijd de juiste twee weken: huidige week (inclusief zondag) + volgende week.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Consistente Weekweergave</strong>: Op elke dag van de week (maandag t/m zondag) toont de popup nu consequent dezelfde twee weken: de week waarin vandaag valt + de volgende week.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.94 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.94</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
