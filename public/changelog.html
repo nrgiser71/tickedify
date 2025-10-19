@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.86 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.86</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 User Details Panel Error</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>JavaScript Error Opgelost</strong>: "Cannot set properties of null (setting 'textContent')" error gefixt die optrad bij klikken op gebruiker in admin2 user management. De loadUsers() functie creëerde een leeg user-details-panel element zonder child elementen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Volledige Panel Structuur</strong>: user-details-panel nu met volledige HTML structuur in admin2.js (regel 1029-1149) inclusief alle detail velden (email, naam, tier, tasks, emails, subscription details) en user action buttons.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Werkend User Management</strong>: User details panel laadt nu correct met alle informatie. Alle user actions (Change Tier, Reset Password, Block User, etc.) zijn nu weer functioneel.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.85 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.85</span>
+                <span class="version-badge badge-fix">v0.19.85</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

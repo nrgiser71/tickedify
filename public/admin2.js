@@ -1025,9 +1025,127 @@ const Screens = {
                 </div>
             </div>
 
-            <!-- User Details (initially hidden, populated by T034) -->
+            <!-- User Details Panel (T034) -->
             <div id="user-details-panel" style="display: none;">
-                <!-- Details content hier (T034) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>User Details</h3>
+                    <button class="btn btn-secondary" onclick="Screens.closeUserDetails()">
+                        ← Back to Search
+                    </button>
+                </div>
+
+                <!-- User Info Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📧 Email</div>
+                        <div class="stat-value" id="detail-email" style="font-size: 16px;">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">👤 Naam</div>
+                        <div class="stat-value" id="detail-naam" style="font-size: 16px;">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🎯 Account Type</div>
+                        <div class="stat-value" id="detail-account-type" style="font-size: 16px;">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⭐ Subscription Tier</div>
+                        <div class="stat-value" id="detail-tier" style="font-size: 16px;">--</div>
+                    </div>
+                </div>
+
+                <!-- Task Summary -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📋 Total Tasks</div>
+                        <div class="stat-value" id="detail-tasks-total">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">✅ Completed</div>
+                        <div class="stat-value" id="detail-tasks-completed">--</div>
+                        <div class="stat-subtext" id="detail-tasks-rate">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">⏳ Pending</div>
+                        <div class="stat-value" id="detail-tasks-pending">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🔄 Recurring</div>
+                        <div class="stat-value" id="detail-tasks-recurring">--</div>
+                    </div>
+                </div>
+
+                <!-- Email Summary -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">📧 Total Email Imports</div>
+                        <div class="stat-value" id="detail-emails-total">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🆕 Recent (30d)</div>
+                        <div class="stat-value" id="detail-emails-recent">--</div>
+                    </div>
+                </div>
+
+                <!-- Subscription Details -->
+                <div class="admin-table" style="margin-bottom: 30px;">
+                    <h3>Subscription Details</h3>
+                    <table>
+                        <tr>
+                            <th>Status</th>
+                            <td id="detail-sub-status">--</td>
+                        </tr>
+                        <tr>
+                            <th>Trial End Date</th>
+                            <td id="detail-trial-end">--</td>
+                        </tr>
+                        <tr>
+                            <th>Created At</th>
+                            <td id="detail-created">--</td>
+                        </tr>
+                        <tr>
+                            <th>Last Login</th>
+                            <td id="detail-last-login">--</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- User Actions (T035) -->
+                <div id="user-actions" style="margin-top: 30px;">
+                    <h3>User Actions</h3>
+
+                    <div class="action-buttons-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <!-- Change Tier -->
+                        <button class="btn btn-primary" onclick="UserActions.showChangeTierModal()">
+                            ⭐ Change Subscription Tier
+                        </button>
+
+                        <!-- Extend Trial -->
+                        <button class="btn btn-primary" onclick="UserActions.showExtendTrialModal()">
+                            🎯 Extend Trial Date
+                        </button>
+
+                        <!-- Reset Password (T036) -->
+                        <button class="btn btn-primary" onclick="UserActions.showResetPasswordModal()">
+                            🔑 Reset Password
+                        </button>
+
+                        <!-- Block/Unblock -->
+                        <button class="btn btn-danger" id="block-user-btn" onclick="UserActions.toggleBlockUser()">
+                            🔒 Block User
+                        </button>
+
+                        <!-- Force Logout -->
+                        <button class="btn btn-primary" onclick="UserActions.forceLogout()">
+                            🚪 Force Logout
+                        </button>
+
+                        <!-- Delete User (T036) -->
+                        <button class="btn btn-danger" onclick="UserActions.showDeleteUserModal()">
+                            🗑️ Delete User Account
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
 
