@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.68 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.68</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Subscription Statistics Fix - Correcte Tier Tracking</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause: subscription_tier Kolom Niet Gezet Door Webhook</strong>: Plug&Pay webhook zette wel selected_plan maar NIET subscription_tier, waardoor alle Admin Dashboard subscription statistieken "free" toonden ondanks betaalde users. Dashboard queries keken naar verkeerde kolom (subscription_tier i.p.v. selected_plan).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Home Dashboard Query Fix (server.js:11763-11767)</strong>: Subscription distribution query gewijzigd van subscription_tier naar COALESCE(selected_plan, 'free') - gebruikt nu dezelfde kolom die Plug&Pay webhook vult, recent registrations tabel ook aangepast voor consistentie (regel 11796), premium/enterprise users nu correct zichtbaar in Subscription Distribution sectie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Dashboard MRR Query Fix (server.js:9299-9308)</strong>: MRR berekening gebruikt nu COALESCE(selected_plan, 'free') i.p.v. subscription_tier - voorkomt €0 MRR display ondanks actieve betalende users, WHERE clause aangepast: AND COALESCE(selected_plan, 'free') != 'free', GROUP BY en ORDER BY ook geüpdatet voor consistentie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Plug&Pay Webhook Uitgebreid (server.js:3023)</strong>: UPDATE query nu met subscription_tier = $4 (zelfde waarde als selected_plan) - voorkomt toekomstige inconsistenties, nieuwe payments zetten nu BEIDE velden correct, backwards compatible met oude queries die subscription_tier lezen, comment toegevoegd: "set both selected_plan AND subscription_tier for consistency".
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Home Dashboard toont nu correcte verdeling premium/enterprise/free users, Revenue Dashboard toont correcte MRR voor betaalde subscriptions, nieuwe Plug&Pay payments vullen beide velden, geen breaking changes - backwards compatible met bestaande data.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.67 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.67</span>
+                <span class="version-badge badge-fix">v0.19.67</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

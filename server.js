@@ -3012,7 +3012,7 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
 
     const user = userResult.rows[0];
 
-    // Update user to active subscription
+    // Update user to active subscription (set both selected_plan AND subscription_tier for consistency)
     await pool.query(
       `UPDATE users
        SET subscription_status = $1,
@@ -3020,6 +3020,7 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
            plugandpay_order_id = $2,
            amount_paid_cents = $3,
            selected_plan = $4,
+           subscription_tier = $4,
            plugandpay_subscription_id = $5
        WHERE id = $6`,
       [SUBSCRIPTION_STATES.ACTIVE, orderId, amountCents, selectedPlan, subscriptionId, user.id]
@@ -9295,20 +9296,21 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
         };
 
         // Calculate MRR (Monthly Recurring Revenue) by tier with hardcoded pricing
+        // NOTE: Using selected_plan because Plug&Pay webhook sets that field, not subscription_tier
         const mrrQuery = await pool.query(`
             SELECT
-                subscription_tier,
+                COALESCE(selected_plan, 'free') as tier,
                 COUNT(*) as user_count
             FROM users
             WHERE subscription_status = 'active'
-              AND subscription_tier != 'free'
-            GROUP BY subscription_tier
-            ORDER BY subscription_tier
+              AND COALESCE(selected_plan, 'free') != 'free'
+            GROUP BY COALESCE(selected_plan, 'free')
+            ORDER BY COALESCE(selected_plan, 'free')
         `);
 
         // Format by_tier array with calculated revenue
         const byTier = mrrQuery.rows.map(row => {
-            const tier = row.subscription_tier;
+            const tier = row.tier;
             const userCount = parseInt(row.user_count);
             const priceMonthly = pricing[tier] || 0;
             const revenue = userCount * priceMonthly;
@@ -11758,11 +11760,12 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '90 days' OR laatste_login IS NULL")
         ]);
 
-        // Subscription tier distribution
+        // Subscription tier distribution (using selected_plan instead of subscription_tier)
+        // NOTE: Plug&Pay webhook sets selected_plan but not subscription_tier
         const subscriptionTiers = await pool.query(`
-            SELECT subscription_tier, COUNT(*) as count
+            SELECT COALESCE(selected_plan, 'free') as tier, COUNT(*) as count
             FROM users
-            GROUP BY subscription_tier
+            GROUP BY COALESCE(selected_plan, 'free')
         `);
 
         const tierCounts = {
@@ -11772,7 +11775,7 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
         };
 
         subscriptionTiers.rows.forEach(row => {
-            const tier = row.subscription_tier || 'free';
+            const tier = row.tier || 'free';
             tierCounts[tier] = parseInt(row.count);
         });
 
@@ -11790,9 +11793,9 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             WHERE trial_end_date IS NOT NULL
         `);
 
-        // Recent registrations (last 10)
+        // Recent registrations (last 10) - using selected_plan for consistency
         const recentRegistrations = await pool.query(`
-            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, subscription_tier
+            SELECT id, email, naam, COALESCE(created_at, aangemaakt) as created_at, COALESCE(selected_plan, 'free') as subscription_tier
             FROM users
             ORDER BY COALESCE(created_at, aangemaakt) DESC
             LIMIT 10
