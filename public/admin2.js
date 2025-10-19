@@ -821,17 +821,17 @@ const Screens = {
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">🆕 Recent Imports (30d)</div>
-                        <div class="stat-value">${Helpers.formatNumber(data.recent_30d)}</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.imported?.month || 0)}</div>
                         <div class="stat-subtext">Last 30 days</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">👥 Users with Imports</div>
-                        <div class="stat-value">${Helpers.formatNumber(data.users_with_imports)}</div>
+                        <div class="stat-value">${Helpers.formatNumber(data.users_with_import?.count || 0)}</div>
                         <div class="stat-subtext">${Helpers.formatNumber(data.total_imports)} total imports</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">📊 Adoption Rate</div>
-                        <div class="stat-value">${Helpers.formatPercentage(data.percentage_with_imports)}</div>
+                        <div class="stat-value">${Helpers.formatPercentage(data.users_with_import?.percentage || 0)}</div>
                         <div class="stat-subtext">Users using email import</div>
                     </div>
                 </div>
