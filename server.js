@@ -8903,6 +8903,28 @@ app.post('/api/debug/update-trial-end-date', async (req, res) => {
     }
 });
 
+// Debug endpoint to check users table schema
+app.get('/api/debug/users-schema', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_name = 'users'
+            ORDER BY ordinal_position
+        `);
+
+        res.json({
+            table: 'users',
+            columns: result.rows,
+            column_count: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching users schema:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to check user subscription status
 app.get('/api/debug/user-subscription-status', async (req, res) => {
     try {
