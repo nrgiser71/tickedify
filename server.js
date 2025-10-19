@@ -10790,18 +10790,64 @@ app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
 // GET /api/admin2/stats/emails - Email import statistics
 app.get('/api/admin2/stats/emails', requireAdmin, async (req, res) => {
     try {
-        // NOTE: email_imports tabel bestaat niet in productie database
-        // Return placeholder data totdat deze feature is geïmplementeerd
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Total emails imported
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM email_imports');
+        const totalImports = parseInt(totalResult.rows[0].count);
+
+        // Emails imported today
+        const todayResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE DATE(imported_at) = CURRENT_DATE
+        `);
+        const importedToday = parseInt(todayResult.rows[0].count);
+
+        // Emails imported this week
+        const weekResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE imported_at >= DATE_TRUNC('week', NOW())
+        `);
+        const importedWeek = parseInt(weekResult.rows[0].count);
+
+        // Emails imported this month
+        const monthResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE imported_at >= DATE_TRUNC('month', NOW())
+        `);
+        const importedMonth = parseInt(monthResult.rows[0].count);
+
+        // Users with email imports (count and percentage)
+        const usersWithImportResult = await pool.query(`
+            SELECT COUNT(DISTINCT user_id) as count
+            FROM email_imports
+        `);
+        const usersWithImportCount = parseInt(usersWithImportResult.rows[0].count);
+
+        // Total users for percentage calculation
+        const totalUsersResult = await pool.query('SELECT COUNT(*) as count FROM users');
+        const totalUsers = parseInt(totalUsersResult.rows[0].count);
+
+        // Calculate percentage (users with imports / total users * 100)
+        const usersWithImportPercentage = totalUsers > 0
+            ? parseFloat(((usersWithImportCount / totalUsers) * 100).toFixed(2))
+            : 0;
+
         res.json({
-            total_imports: 0,
+            total_imports: totalImports,
             imported: {
-                today: 0,
-                week: 0,
-                month: 0
+                today: importedToday,
+                week: importedWeek,
+                month: importedMonth
             },
             users_with_import: {
-                count: 0,
-                percentage: 0
+                count: usersWithImportCount,
+                percentage: usersWithImportPercentage
             }
         });
     } catch (error) {
