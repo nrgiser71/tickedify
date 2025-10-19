@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.93 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.93</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 Error Handler - Niet-Destructieve Errors</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>KRITIEKE BUG OPGELOST</strong>: Error handler in loadUserDetails() overschreef volledige innerHTML van panel, waardoor alle detail-* elements PERMANENT verdwenen na eerste error. Dit veroorzaakte "Cannot set properties of null" cascade errors bij elke volgende klik.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Niet-Destructieve Error Overlay</strong>: Error wordt nu getoond als overlay BOVEN bestaande HTML via insertBefore(), zonder innerHTML te overschrijven. Panel blijft functioneel en kan opnieuw gebruikt worden na errors.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Details Panel Nu Robuust</strong>: Herhaaldelijke clicks op users werken correct, zelfs na API failures. HTML structuur blijft intact voor retry pogingen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.92 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.92</span>
+                <span class="version-badge badge-fix">v0.19.92</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

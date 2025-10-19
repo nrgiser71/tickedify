@@ -1253,8 +1253,33 @@ const Screens = {
             window.currentUserData = data;
         } catch (error) {
             console.error('Failed to load user details:', error);
+
+            // Non-destructive error handling: toon error overlay ZONDER innerHTML te overschrijven
+            // Dit voorkomt dat alle detail-* elements permanent verdwijnen na eerste error
             const panel = document.getElementById('user-details-panel');
-            panel.innerHTML = `<div class="error-message"><strong>Failed to load user details</strong><p>${error.message}</p></div><button class="btn btn-secondary" onclick="Screens.closeUserDetails()">← Back to Search</button>`;
+
+            // Verwijder eventuele oude error overlay
+            const existingError = panel.querySelector('.error-overlay');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // Maak error overlay die BOVENOP de HTML wordt getoond
+            const errorOverlay = document.createElement('div');
+            errorOverlay.className = 'error-overlay';
+            errorOverlay.style.cssText = 'background: #FEE; border: 2px solid #C00; border-radius: 8px; padding: 20px; margin-bottom: 20px;';
+            errorOverlay.innerHTML = `
+                <div class="error-message">
+                    <strong style="color: #C00;">❌ Failed to load user details</strong>
+                    <p style="margin: 10px 0; color: #666;">${error.message}</p>
+                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove(); Screens.closeUserDetails()">
+                        ← Back to Search
+                    </button>
+                </div>
+            `;
+
+            // Voeg error toe AAN HET BEGIN van het panel (boven alle detail elements)
+            panel.insertBefore(errorOverlay, panel.firstChild);
         }
     },
 
