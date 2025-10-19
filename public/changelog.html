@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.87 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.87</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 User ID Validation - Accept String IDs</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>500 API Error Opgelost</strong>: Backend accepteert nu string user IDs zoals 'user_1750513625687_5458i79dj' in plaats van alleen integer IDs. De parseInt() validatie die NaN produceerde voor string IDs is vervangen door een simple string empty check.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Details Nu Werkend</strong>: Klikken op een gebruiker in admin2 user search results laadt nu correct het user details panel zonder 500 errors. PostgreSQL matcht string user IDs correct via parameterized queries.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Code Wijziging</strong>: server.js regel 9561 - const userId = req.params.id (zonder parseInt). Validatie nu: if (!userId || userId.trim() === '') check.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.86 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.86</span>
+                <span class="version-badge badge-fix">v0.19.86</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
