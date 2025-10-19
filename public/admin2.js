@@ -209,7 +209,7 @@ const ScreenManager = {
         const loadFunction = loadFunctions[screenName];
         if (loadFunction) {
             try {
-                await loadFunction();
+                await loadFunction.call(Screens);
             } catch (error) {
                 console.error(`Error loading ${screenName} screen:`, error);
                 this.showError(screenName, error.message);
