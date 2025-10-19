@@ -142,7 +142,7 @@
             </div>
             <div class="changes-list">
                 <div class="change-category">
-                    <div class="change-category-title">🔧 Fix Admin2 User Details Panel Error</div>
+                    <div class="change-category-title">🔧 Fix Admin2 User Management - Complete Workflow Fix</div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
@@ -158,7 +158,13 @@
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Werkend User Management</strong>: User details panel laadt nu correct met alle informatie. Alle user actions (Change Tier, Reset Password, Block User, etc.) zijn nu weer functioneel.
+                            <strong>User ID Validation Fix</strong>: server.js user details endpoint (regel 9561-9569) accepteert nu string-based user IDs (zoals user_1750513625687_5458i79dj) in plaats van alleen numerieke IDs. parseInt() validatie vervangen door string validatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Workflow Werkend</strong>: User management workflow werkt nu end-to-end - zoeken → klikken → details tonen → user actions uitvoeren. Alle functionaliteit volledig hersteld.
                         </div>
                     </div>
                 </div>
