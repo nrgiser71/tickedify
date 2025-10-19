@@ -1899,21 +1899,39 @@ app.get('/api/debug/database-tables', async (req, res) => {
             SELECT * FROM users WHERE email = 'jan@buskens.be'
         `);
 
-        // Check if subscriptions table exists and query it
+        // Get subscriptions table schema if it exists
+        let subscriptionsSchema = null;
         let subscriptionsData = null;
+        let allSubscriptions = null;
         if (tables.includes('subscriptions')) {
+            // Get schema
+            const schemaQuery = await pool.query(`
+                SELECT column_name, data_type, column_default, is_nullable
+                FROM information_schema.columns
+                WHERE table_name = 'subscriptions'
+                ORDER BY ordinal_position
+            `);
+            subscriptionsSchema = schemaQuery.rows;
+
+            // Get data for jan
             const subscriptionsQuery = await pool.query(`
                 SELECT * FROM subscriptions WHERE user_id = $1
             `, [janUserQuery.rows[0]?.id]);
             subscriptionsData = subscriptionsQuery.rows;
+
+            // Get ALL subscriptions to see if table has any data at all
+            const allSubsQuery = await pool.query(`SELECT * FROM subscriptions LIMIT 10`);
+            allSubscriptions = allSubsQuery.rows;
         }
 
         res.json({
             tables: tables,
             tables_count: tables.length,
             has_subscriptions_table: tables.includes('subscriptions'),
+            subscriptions_schema: subscriptionsSchema,
             jan_user_data: janUserQuery.rows[0] || null,
             jan_subscriptions: subscriptionsData,
+            all_subscriptions_sample: allSubscriptions,
             message: 'Database inspection complete'
         });
 
