@@ -9646,7 +9646,7 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         const emailSummaryQuery = await pool.query(`
             SELECT
                 COUNT(*) as total_imports,
-                COUNT(*) FILTER (WHERE processed = true) as processed_imports,
+                COUNT(*) FILTER (WHERE task_id IS NOT NULL) as processed_imports,
                 MIN(imported_at) as first_import,
                 MAX(imported_at) as last_import
             FROM email_imports
@@ -10719,7 +10719,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
                     COUNT(*) FILTER (WHERE imported_at >= NOW() - INTERVAL '30 days') as recent_30d,
                     MIN(imported_at) as oldest_import,
                     MAX(imported_at) as newest_import,
-                    COUNT(*) FILTER (WHERE processed = true) as processed,
+                    COUNT(*) FILTER (WHERE task_id IS NOT NULL) as processed,
                     COUNT(*) FILTER (WHERE task_id IS NOT NULL) as converted_to_task
                 FROM email_imports
                 WHERE user_id = $1
@@ -10731,7 +10731,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
                     email_from,
                     email_subject,
                     imported_at,
-                    processed,
+                    CASE WHEN task_id IS NOT NULL THEN true ELSE false END as processed,
                     task_id
                 FROM email_imports
                 WHERE user_id = $1
