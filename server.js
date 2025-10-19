@@ -10889,7 +10889,7 @@ app.get('/api/admin2/stats/database', requireAdmin, async (req, res) => {
             SELECT pg_database_size(current_database()) as database_size_bytes
         `);
 
-        // Get table sizes (simplified query for Neon PostgreSQL compatibility)
+        // Get table sizes with row counts (Neon PostgreSQL compatible)
         const tablesResult = await pool.query(`
             SELECT
                 schemaname,
@@ -10902,20 +10902,51 @@ app.get('/api/admin2/stats/database', requireAdmin, async (req, res) => {
             LIMIT 50
         `);
 
-        const tables = tablesResult.rows.map(row => ({
-            name: row.name,
-            size: row.size,
-            size_bytes: parseInt(row.size_bytes)
-        }));
+        // Get row counts for each table via COUNT(*)
+        const tables = [];
+        let totalRows = 0;
+
+        for (const row of tablesResult.rows) {
+            try {
+                // Query row count for this specific table
+                const countResult = await pool.query(`SELECT COUNT(*) as row_count FROM ${row.name}`);
+                const rowCount = parseInt(countResult.rows[0].row_count);
+
+                tables.push({
+                    name: row.name,
+                    size: row.size,
+                    size_bytes: parseInt(row.size_bytes),
+                    row_count: rowCount
+                });
+
+                totalRows += rowCount;
+            } catch (countError) {
+                // If COUNT fails for a table, add it without row count
+                console.warn(`⚠️ Could not count rows for table ${row.name}:`, countError.message);
+                tables.push({
+                    name: row.name,
+                    size: row.size,
+                    size_bytes: parseInt(row.size_bytes),
+                    row_count: 0
+                });
+            }
+        }
+
+        const databaseSize = dbSizeResult.rows[0].database_size;
+        const tableCount = tables.length;
 
         console.log('✅ Database statistics calculated:', {
-            database_size: dbSizeResult.rows[0].database_size,
-            tables_count: tables.length
+            database_size: databaseSize,
+            table_count: tableCount,
+            total_rows: totalRows
         });
 
         res.json({
-            database_size: dbSizeResult.rows[0].database_size,
+            database_size: databaseSize,
+            database_size_formatted: databaseSize,  // Frontend verwacht deze naam
             database_size_bytes: parseInt(dbSizeBytesResult.rows[0].database_size_bytes),
+            table_count: tableCount,
+            total_rows: totalRows,
             tables: tables
         });
 
