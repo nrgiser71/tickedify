@@ -9706,7 +9706,13 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
 
         console.log(`✅ User details retrieved for ID ${userId}`);
 
-        // Build response according to contract
+        // Calculate completion rate and recent emails
+        const totalTasks = parseInt(taskSummary.total_tasks) || 0;
+        const completedTasks = parseInt(taskSummary.completed_tasks) || 0;
+        const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) : 0;
+        const pendingTasks = parseInt(taskSummary.active_tasks) || 0;
+
+        // Build response according to frontend contract
         res.json({
             user: {
                 id: user.id,
@@ -9723,19 +9729,21 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
                 onboarding_video_seen_at: user.onboarding_video_seen_at
             },
             tasks: {
-                total: parseInt(taskSummary.total_tasks) || 0,
-                completed: parseInt(taskSummary.completed_tasks) || 0,
-                active: parseInt(taskSummary.active_tasks) || 0,
-                recurring: parseInt(taskSummary.recurring_tasks) || 0,
-                blocked: parseInt(taskSummary.blocked_tasks) || 0,
+                summary: {
+                    total: totalTasks,
+                    completed: completedTasks,
+                    completion_rate: completionRate,
+                    pending: pendingTasks,
+                    recurring: parseInt(taskSummary.recurring_tasks) || 0
+                },
                 by_project: tasksByProjectQuery.rows,
                 by_context: tasksByContextQuery.rows
             },
             emails: {
-                total_imports: parseInt(emailSummary.total_imports) || 0,
-                processed: parseInt(emailSummary.processed_imports) || 0,
-                first_import: emailSummary.first_import,
-                last_import: emailSummary.last_import,
+                summary: {
+                    total: parseInt(emailSummary.total_imports) || 0,
+                    recent_30d: parseInt(emailSummary.processed_imports) || 0
+                },
                 recent: recentEmailsQuery.rows
             },
             subscription: {

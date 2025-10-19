@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.90 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.90</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix API Response Contract Mismatch</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Frontend/Backend Mismatch Opgelost</strong>: De backend API response structuur kwam niet overeen met wat de frontend verwachtte. Frontend verwachtte tasks.summary.total maar backend stuurde tasks.total, wat leidde tot "Cannot set properties of null" errors.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Response Structuur Aangepast</strong>: Backend response nu conform frontend contract met geneste summary objecten. tasks.summary bevat nu: total, completed, completion_rate, pending, recurring. emails.summary bevat: total, recent_30d.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Completion Rate Berekening</strong>: Server berekent nu automatisch completion_rate als completed/total tasks ratio voor consistente frontend weergave.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.89 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.89</span>
+                <span class="version-badge badge-fix">v0.19.89</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">
