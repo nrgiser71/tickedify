@@ -2267,10 +2267,18 @@ async function requireAdmin(req, res, next) {
     console.log('🔍 requireAdmin check:', {
         url: req.url,
         method: req.method,
-        userId: req.session?.userId
+        userId: req.session?.userId,
+        isAdmin: req.session?.isAdmin,
+        adminAuthenticated: req.session?.adminAuthenticated
     });
 
-    // First check if authenticated
+    // OPTION 1: Password-based admin authentication (for admin2.html)
+    if (req.session.isAdmin || req.session.adminAuthenticated) {
+        console.log('✅ Admin check passed - password-based auth');
+        return next();
+    }
+
+    // OPTION 2: User-based admin authentication (for user accounts with admin role)
     if (!req.session.userId) {
         console.log('❌ Admin check failed - not authenticated');
         return res.status(401).json({
@@ -2279,7 +2287,7 @@ async function requireAdmin(req, res, next) {
         });
     }
 
-    // Then check if user is admin
+    // Check if user account is admin type
     try {
         const result = await pool.query(
             'SELECT account_type FROM users WHERE id = $1',
