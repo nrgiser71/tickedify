@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.73 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.73</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Email Analytics Complete Fix - Database Schema & Kolomnamen</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Tabel Verificatie</strong>: email_imports tabel blijkt al te bestaan met 30 test records aangemaakt door testing agent. Migratie script gecreëerd en uitgevoerd om idempotentie te garanderen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Kolomnamen Consistentie Fix</strong>: Database gebruikt email_from/email_subject (niet from_email/subject) - alle INSERT en SELECT statements aangepast voor correcte mapping. API response blijft from_email/subject gebruiken voor backwards compatibility.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.71 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.71</span>
+                <span class="version-badge badge-fix">v0.19.71</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

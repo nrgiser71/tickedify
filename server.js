@@ -1179,9 +1179,9 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         // Track email import in analytics table
         try {
             await pool.query(`
-                INSERT INTO email_imports (user_id, email_subject, email_from, task_id)
+                INSERT INTO email_imports (user_id, email_from, email_subject, task_id)
                 VALUES ($1, $2, $3, $4)
-            `, [userId, subject, sender, createdTask.id]);
+            `, [userId, sender, subject, createdTask.id]);
             console.log('📊 Email import tracked for analytics');
         } catch (trackError) {
             console.error('⚠️ Failed to track email import (non-critical):', trackError.message);
@@ -9549,7 +9549,7 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
 
         // 6. Get recent email imports (last 10)
         const recentEmailsQuery = await pool.query(`
-            SELECT from_email, subject, imported_at
+            SELECT email_from, email_subject, imported_at
             FROM email_imports
             WHERE user_id = $1
             ORDER BY imported_at DESC
@@ -10590,8 +10590,8 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             // 6. Recent email imports (last 10)
             pool.query(`
                 SELECT
-                    from_email,
-                    subject,
+                    email_from,
+                    email_subject,
                     imported_at,
                     processed,
                     task_id
@@ -10685,8 +10685,8 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
                     converted_to_task: parseInt(emails.converted_to_task)
                 },
                 recent: recentEmails.rows.map(email => ({
-                    from_email: email.from_email,
-                    subject: email.subject,
+                    from_email: email.email_from,
+                    subject: email.email_subject,
                     imported_at: email.imported_at,
                     processed: email.processed,
                     task_id: email.task_id
