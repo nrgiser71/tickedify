@@ -1169,13 +1169,24 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         ]);
         
         const createdTask = result.rows[0];
-        
+
         console.log('✅ Task created successfully:', {
             id: createdTask.id,
             tekst: createdTask.tekst,
             lijst: createdTask.lijst
         });
-        
+
+        // Track email import in analytics table
+        try {
+            await pool.query(`
+                INSERT INTO email_imports (user_id, email_subject, email_from, task_id)
+                VALUES ($1, $2, $3, $4)
+            `, [userId, subject, sender, createdTask.id]);
+            console.log('📊 Email import tracked for analytics');
+        } catch (trackError) {
+            console.error('⚠️ Failed to track email import (non-critical):', trackError.message);
+        }
+
         // Send confirmation (would need Mailgun sending setup)
         console.log('📤 Would send confirmation email to:', sender);
         
