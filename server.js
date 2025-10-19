@@ -11994,6 +11994,7 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
 
         const tierCounts = {
             free: 0,
+            trial: 0,
             standard: 0,
             no_limit: 0
         };
@@ -12007,6 +12008,8 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
                 tierCounts.standard += count;
             } else if (tier === 'monthly_8' || tier === 'yearly_80') {
                 tierCounts.no_limit += count;
+            } else if (tier === 'trial') {
+                tierCounts.trial += count;
             } else if (tier === 'free') {
                 tierCounts.free = count;
             }
