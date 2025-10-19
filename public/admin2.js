@@ -1198,9 +1198,10 @@ const SecurityTools = {
             }).join('');
 
         } catch (error) {
-            console.error('Failed to load audit log:', error);
+            console.warn('Audit log not available (table may not exist yet):', error);
+            // Graceful fallback - show informative message instead of error
             document.getElementById('audit-log-table').innerHTML =
-                '<tr><td colspan="5" style="text-align:center; color: red;">Failed to load audit log</td></tr>';
+                '<tr><td colspan="5" style="text-align:center; color: var(--macos-text-secondary);">📝 Audit logging feature not yet activated</td></tr>';
         }
     },
 

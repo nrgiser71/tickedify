@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.66 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.66</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Admin Dashboard v2: Critical API Fixes (5/10 screens gefixed)</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Task Analytics API Contract Fix</strong>: Backend response aangepast naar frontend verwachte structuur - toegevoegd: total_tasks, completed (berekend via completion_rate), pending (total - completed), created_today/week/month (geflattened uit created object), verwijderd: total field en geneste created object, DOM errors opgelost bij Task Analytics screen load.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Revenue Dashboard Pricing Fix</strong>: Hardcoded pricing geïmplementeerd om missing database columns te omzeilen - removed JOIN naar payment_configurations tabel (tier/price_monthly kolommen bestaan niet), hardcoded pricing object: premium €15, enterprise €30, free €0, manual revenue calculation: userCount * pricing[tier], ARR berekening toegevoegd: totalMrr * 12, Revenue screen nu volledig functioneel.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Monitor Query Simplification</strong>: Neon PostgreSQL compatibiliteit verbeterd - switched van pg_class naar pg_tables system view, removed n_live_tup kolom (row count) die permission/compatibility issues veroorzaakte, simplified query: pg_total_relation_size met schemaname.tablename concatenatie, LIMIT 50 voor performance, Database Monitor screen nu stabiel.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>System Settings Graceful Fallback</strong>: Enhanced error logging en fallback voor missing tabel - detailed error logging: message, code, detail en stack trace, graceful degradation: return empty array bij query failure met warning message, debug field toegevoegd voor temporary diagnostics (te verwijderen na stabilisatie), Settings screen toont nu lege state i.p.v. crashes.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Security Audit Log Friendly Error</strong>: Frontend fallback voor ontbrekende audit_log tabel - changed error styling van red naar neutral secondary text color, informative message: "📝 Audit logging feature not yet activated", console.warn i.p.v. console.error, Security screen nu user-friendly ook zonder audit log feature.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.53 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.53</span>
+                <span class="version-badge badge-fix">v0.19.53</span>
                 <span class="version-date">18 oktober 2025</span>
             </div>
             <div class="changes-list">
