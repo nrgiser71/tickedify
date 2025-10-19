@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.89 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.89</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Database Schema Fix - Add price_monthly Column</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Missing Column Toegevoegd</strong>: payment_configurations tabel miste de price_monthly kolom die de server.js query probeerde te selecteren. Dit veroorzaakte 500 errors bij het ophalen van user details.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Migratie</strong>: ALTER TABLE payment_configurations ADD COLUMN price_monthly DECIMAL(10,2). Automatische populatie met default prijzen: monthly_7 = €7.00, yearly_70 = €5.83, monthly_8 = €8.00, yearly_80 = €6.67.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Schema Update</strong>: database.js CREATE TABLE statement updated om price_monthly kolom te includeren. INSERT statements updated met price_monthly waarden. Migration file 015-add-price-monthly-to-payment-configurations.sql toegevoegd.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.88 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.88</span>
+                <span class="version-badge badge-fix">v0.19.88</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

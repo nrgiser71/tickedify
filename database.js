@@ -410,6 +410,7 @@ const initDatabase = async () => {
         plan_name VARCHAR(100) NOT NULL,
         checkout_url TEXT NOT NULL DEFAULT '',
         is_active BOOLEAN DEFAULT TRUE,
+        price_monthly DECIMAL(10,2),
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
@@ -418,11 +419,11 @@ const initDatabase = async () => {
     // Feature 011: Insert initial payment configurations (all active by default)
     try {
       await pool.query(`
-        INSERT INTO payment_configurations (plan_id, plan_name, checkout_url, is_active) VALUES
-          ('monthly_7', 'Maandelijks €7', '', TRUE),
-          ('yearly_70', 'Jaarlijks €70', '', TRUE),
-          ('monthly_8', 'No Limit Maandelijks €8', '', TRUE),
-          ('yearly_80', 'No Limit Jaarlijks €80', '', TRUE)
+        INSERT INTO payment_configurations (plan_id, plan_name, checkout_url, is_active, price_monthly) VALUES
+          ('monthly_7', 'Maandelijks €7', '', TRUE, 7.00),
+          ('yearly_70', 'Jaarlijks €70', '', TRUE, 5.83),
+          ('monthly_8', 'No Limit Maandelijks €8', '', TRUE, 8.00),
+          ('yearly_80', 'No Limit Jaarlijks €80', '', TRUE, 6.67)
         ON CONFLICT (plan_id) DO NOTHING
       `);
       console.log('✅ Feature 011 & 013: Payment configurations initialized (all plans active)');
@@ -485,6 +486,21 @@ const initDatabase = async () => {
       console.log('✅ Feature 011: Payment configuration trigger created');
     } catch (triggerError) {
       console.log('⚠️ Payment configuration trigger might already exist:', triggerError.message);
+    }
+
+    // Feature 015: Add price_monthly column to payment_configurations
+    try {
+      await pool.query('ALTER TABLE payment_configurations ADD COLUMN IF NOT EXISTS price_monthly DECIMAL(10,2)');
+      // Set default prices for existing plans
+      await pool.query(`
+        UPDATE payment_configurations SET price_monthly = 7.00 WHERE plan_id = 'monthly_7' AND price_monthly IS NULL;
+        UPDATE payment_configurations SET price_monthly = 5.83 WHERE plan_id = 'yearly_70' AND price_monthly IS NULL;
+        UPDATE payment_configurations SET price_monthly = 8.00 WHERE plan_id = 'monthly_8' AND price_monthly IS NULL;
+        UPDATE payment_configurations SET price_monthly = 6.67 WHERE plan_id = 'yearly_80' AND price_monthly IS NULL;
+      `);
+      console.log('✅ Feature 015: price_monthly column added to payment_configurations');
+    } catch (error) {
+      console.log('⚠️ price_monthly column might already exist:', error.message);
     }
 
     // Create indexes for performance
