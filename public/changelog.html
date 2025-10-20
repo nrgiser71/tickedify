@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.99 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.99</span>
+                <span class="version-date">20 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 Delete User - Sessions Query String ID Support</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>500 Error Opgelost</strong>: Na v0.19.98 validatie fix kreeg DELETE nog 500 Internal Server Error door sessions queries die geen quotes hadden rond userId in JSON LIKE pattern. Sessions queries op 3 locaties (10181, 10198, 10750) gefixed van `%"userId":${userId}%` naar `%"userId":"${userId}"%`.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Sessions Correcte Match</strong>: JSON pattern matching werkt nu correct voor string-format user IDs. Sessions COUNT, DELETE en query in user details endpoint accepteren nu string IDs.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Delete User Volledig Werkend</strong>: Admins kunnen nu users met string IDs verwijderen via Admin2 UI. Cascade deletion van tasks, email imports én sessions werkt correct met juiste counts in response.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.98 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.98</span>
+                <span class="version-badge badge-fix">v0.19.98</span>
                 <span class="version-date">20 oktober 2025</span>
             </div>
             <div class="changes-list">

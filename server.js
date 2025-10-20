@@ -10178,7 +10178,7 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
 
         const sessionsCountResult = await pool.query(
             "SELECT COUNT(*) as count FROM sessions WHERE sess::text LIKE $1",
-            [`%"userId":${userId}%`]
+            [`%"userId":"${userId}"%`]
         );
         const sessionsCount = parseInt(sessionsCountResult.rows[0].count);
 
@@ -10195,7 +10195,7 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         // Delete user's sessions manually (sessions table has JSON data, no FK constraint)
         await pool.query(
             "DELETE FROM sessions WHERE sess::text LIKE $1",
-            [`%"userId":${userId}%`]
+            [`%"userId":"${userId}"%`]
         );
 
         // Delete user (cascades to tasks, email_imports via foreign keys)
@@ -10747,7 +10747,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
                 FROM session
                 WHERE sess::text LIKE $1
                 AND expire > NOW()
-            `, [`%"userId":${userId}%`]),
+            `, [`%"userId":"${userId}"%`]),
 
             // 8. Dagelijkse planning entries count
             pool.query(`
