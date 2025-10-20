@@ -134,10 +134,60 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.94 -->
+        <!-- Version 0.19.98 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.96</span>
+                <span class="version-badge badge-latest">v0.19.98</span>
+                <span class="version-date">20 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Fix Admin2 Delete User - Accept String Format User IDs</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>String ID Support</strong>: DELETE /api/admin2/users/:id endpoint gebruikte parseInt() waardoor string-format user IDs (bijv. user_1760531416053_qwljhrwxp) foutief werden gevalideerd als "User ID must be a positive number". Nu accepteert endpoint correct string IDs.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Consistent met GET Endpoint</strong>: Validatie pattern nu aligned met GET /api/admin2/users/:id endpoint (regel 9561) die al correct string IDs accepteerde. DELETE endpoint gebruikt nu dezelfde string validatie: check op niet-lege string.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>User Deletion Werkend</strong>: Admins kunnen nu users verwijderen via Admin2 UI zonder 400 Bad Request error. Cascade deletion van tasks, email imports en sessions werkt correct.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.97 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.97</span>
+                <span class="version-date">19 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📋 Ready for Next Feature</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Version Bump</strong>: Versie verhoogd naar 0.19.97 ter voorbereiding op volgende feature of bugfix.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.96 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.96</span>
                 <span class="version-date">19 oktober 2025</span>
             </div>
             <div class="changes-list">

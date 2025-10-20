@@ -10109,14 +10109,14 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        const userId = parseInt(req.params.id);
+        const userId = req.params.id; // Accept string IDs like 'user_1750513625687_5458i79dj'
         const adminUserId = req.session.userId;
 
-        // Validation: user ID must be a valid number
-        if (isNaN(userId) || userId <= 0) {
+        // Validation: user ID must not be empty
+        if (!userId || userId.trim() === '') {
             return res.status(400).json({
                 error: 'Invalid user ID',
-                message: 'User ID must be a positive number'
+                message: 'User ID must not be empty'
             });
         }
 
