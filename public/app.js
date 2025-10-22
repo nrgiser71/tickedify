@@ -2250,7 +2250,7 @@ class Taakbeheer {
             
         } catch (error) {
             console.error('Fout bij laden project acties:', error);
-            container.innerHTML = '<div class="project-taken-error">Fout bij laden acties</div>';
+            container.innerHTML = '<div class="project-taken-error">Error loading actions</div>';
         }
     }
 
@@ -2325,7 +2325,7 @@ class Taakbeheer {
         }
         
         if (openActies.length === 0 && afgewerkteActies.length === 0) {
-            html += '<div class="project-geen-acties">Geen acties in dit project</div>';
+            html += '<div class="project-geen-acties">No actions in this project</div>';
         }
         
         html += '</div>';
@@ -3055,8 +3055,8 @@ class Taakbeheer {
         } else if (newUsage === 20) {
             setTimeout(() => {
                 tipToast.show(
-                    "⚡ Master tip: Combineer F-toetsen voor super snelle verwerking. " +
-                    "F2→Type→F4→F6→Type→F7→Enter. Geen muis nodig!",
+                    "⚡ Master tip: Combine F-keys for super fast processing. " +
+                    "F2→Type→F4→F6→Type→F7→Enter. No mouse needed!",
                     20000
                 );
             }, 2000);
@@ -3418,23 +3418,23 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
-                    <label>Taak:</label>
-                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
+                    <label>Task:</label>
+                    <input type="text" id="taakFilter" placeholder="Search in task text...">
                 </div>
                 <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
-                        <option value="">Alle projecten</option>
+                        <option value="">All projects</option>
                     </select>
                 </div>
                 <div class="filter-groep">
                     <label>Context:</label>
                     <select id="contextFilter">
-                        <option value="">Alle contexten</option>
+                        <option value="">All contexts</option>
                     </select>
                 </div>
                 <div class="filter-groep">
-                    <label>Datum:</label>
+                    <label>Date:</label>
                     <input type="date" id="datumFilter">
                 </div>
             </div>
@@ -3574,55 +3574,55 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
-                    <label>Taak:</label>
-                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
+                    <label>Task:</label>
+                    <input type="text" id="taakFilter" placeholder="Search in task text...">
                 </div>
                 <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
-                        <option value="">Alle projecten</option>
+                        <option value="">All projects</option>
                     </select>
                 </div>
                 <div class="filter-groep">
                     <label>Context:</label>
                     <select id="contextFilter">
-                        <option value="">Alle contexten</option>
+                        <option value="">All contexts</option>
                     </select>
                 </div>
                 <div class="filter-groep">
-                    <label>Datum:</label>
+                    <label>Date:</label>
                     <input type="date" id="datumFilter">
                 </div>
                 <div class="filter-groep">
-                    <label>Prioriteit:</label>
+                    <label>Priority:</label>
                     <select id="prioriteitFilter" class="prioriteit-filter">
-                        <option value="">Alle prioriteiten</option>
-                        <option value="hoog">🔴 Hoog</option>
-                        <option value="gemiddeld">🟠 Gemiddeld</option>
-                        <option value="laag">⚪ Laag</option>
+                        <option value="">All priorities</option>
+                        <option value="hoog">🔴 High</option>
+                        <option value="gemiddeld">🟠 Medium</option>
+                        <option value="laag">⚪ Low</option>
                     </select>
                 </div>
                 <label class="simple-checkbox">
                     <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                    Toon toekomstige taken
+                    Show future tasks
                 </label>
                 <div class="filter-groep" style="display: none;">
-                    <button onclick="deleteAllTasks()" 
+                    <button onclick="deleteAllTasks()"
                             style="background: #ff3b30; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">
-                        🗑️ Alles Wissen (Tijdelijk)
+                        🗑️ Delete All (Temporary)
                     </button>
                 </div>
             </div>
             <div class="bulk-controls-container">
                 <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
-                    Bulk bewerken
+                    Bulk edit
                 </button>
             </div>
             <ul id="acties-lijst" class="taak-lijst"></ul>
             <div id="bulk-toolbar" class="bulk-toolbar" style="display: none;">
                 <div class="bulk-toolbar-content">
                     <div class="bulk-selection-info">
-                        <span id="bulk-selection-count">0 taken geselecteerd</span>
+                        <span id="bulk-selection-count">0 tasks selected</span>
                     </div>
                     <div class="bulk-actions">
                         ${this.getBulkVerplaatsKnoppen()}
@@ -4335,7 +4335,7 @@ class Taakbeheer {
         const select = document.getElementById('projectSelect');
         if (!select) return;
         
-        select.innerHTML = '<option value="">Geen project</option>';
+        select.innerHTML = '<option value="">No project</option>';
         this.projecten.forEach(project => {
             const option = document.createElement('option');
             option.value = project.id;
@@ -5961,15 +5961,15 @@ class Taakbeheer {
     }
 
     getProjectNaam(projectId) {
-        if (!projectId || projectId === '') return 'Geen project';
+        if (!projectId || projectId === '') return 'No project';
         const project = this.projecten.find(p => p.id === projectId);
-        return project ? project.naam : 'Onbekend project';
+        return project ? project.naam : 'Unknown project';
     }
 
     getContextNaam(contextId) {
-        if (!contextId || contextId === '') return 'Geen context';
+        if (!contextId || contextId === '') return 'No context';
         const context = this.contexten.find(c => c.id === contextId);
-        return context ? context.naam : 'Onbekende context';
+        return context ? context.naam : 'Unknown context';
     }
 
     getPrioriteitIndicator(prioriteit) {
@@ -6314,7 +6314,7 @@ class Taakbeheer {
         // Project filter vullen
         const projectFilter = document.getElementById('projectFilter');
         if (projectFilter) {
-            // Clear existing options except first ("Alle projecten")
+            // Clear existing options except first ("All projects")
             while (projectFilter.children.length > 1) {
                 projectFilter.removeChild(projectFilter.lastChild);
             }
@@ -6331,7 +6331,7 @@ class Taakbeheer {
         // Context filter vullen
         const contextFilter = document.getElementById('contextFilter');
         if (contextFilter) {
-            // Clear existing options except first ("Alle contexten")
+            // Clear existing options except first ("All contexts")
             while (contextFilter.children.length > 1) {
                 contextFilter.removeChild(contextFilter.lastChild);
             }
@@ -7296,21 +7296,21 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="zoek-interface">
                 <div class="zoek-container">
-                    <h2><i class="ti ti-search"></i> Zoeken in Taken</h2>
-                    <p>Zoek door al je taken in alle lijsten</p>
-                    
+                    <h2><i class="ti ti-search"></i> Search in Tasks</h2>
+                    <p>Search through all your tasks in all lists</p>
+
                     <div class="zoek-form">
                         <div class="zoek-input-container">
-                            <input type="text" 
-                                   id="zoek-input" 
-                                   placeholder="Zoek in taaknamen, opmerkingen, projecten..."
+                            <input type="text"
+                                   id="zoek-input"
+                                   placeholder="Search in task names, notes, projects..."
                                    class="zoek-input">
-                            <button id="zoek-btn" class="zoek-btn">Zoeken</button>
+                            <button id="zoek-btn" class="zoek-btn">Search</button>
                         </div>
-                        
+
                         <div class="zoek-filters">
                             <div class="filter-group">
-                                <label>Zoek in:</label>
+                                <label>Search in:</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-inbox" checked>
@@ -7318,27 +7318,27 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-acties" checked>
-                                        <span>Acties</span>
+                                        <span>Actions</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-opvolgen" checked>
-                                        <span>Opvolgen</span>
+                                        <span>Follow-up</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-uitgesteld" checked>
-                                        <span>Uitgesteld</span>
+                                        <span>Deferred</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-afgewerkt">
-                                        <span>Afgewerkt</span>
+                                        <span>Completed</span>
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="zoek-resultaten" id="zoek-resultaten" style="display: none;">
-                        <h3>Zoekresultaten</h3>
+                        <h3>Search Results</h3>
                         <div id="resultaten-lijst"></div>
                     </div>
                 </div>
@@ -7393,7 +7393,7 @@ class Taakbeheer {
 
         try {
             // Show loading
-            resultatenLijst.innerHTML = '<div class="loading">Zoeken...</div>';
+            resultatenLijst.innerHTML = '<div class="loading">Searching...</div>';
             resultatenContainer.style.display = 'block';
 
             // Get all tasks from selected lists
@@ -7446,7 +7446,7 @@ class Taakbeheer {
 
         } catch (error) {
             console.error('Fout bij zoeken:', error);
-            resultatenLijst.innerHTML = '<div class="error">Er is een fout opgetreden bij het zoeken.</div>';
+            resultatenLijst.innerHTML = '<div class="error">An error occurred while searching.</div>';
         }
     }
 
@@ -7457,8 +7457,8 @@ class Taakbeheer {
         if (taken.length === 0) {
             resultatenLijst.innerHTML = `
                 <div class="geen-resultaten">
-                    <p>Geen taken gevonden voor "${zoekTerm}"</p>
-                    <p class="sub-text">Probeer een andere zoekterm of controleer je filters</p>
+                    <p>No tasks found for "${zoekTerm}"</p>
+                    <p class="sub-text">Try another search term or check your filters</p>
                 </div>
             `;
             return;
@@ -7474,7 +7474,7 @@ class Taakbeheer {
             groepen[lijstNaam].push(taak);
         });
 
-        let html = `<div class="resultaten-summary">Gevonden: ${taken.length} taken</div>`;
+        let html = `<div class="resultaten-summary">Found: ${taken.length} tasks</div>`;
 
         // Display results grouped by list
         Object.entries(groepen).forEach(([lijstNaam, taken]) => {
@@ -8292,23 +8292,23 @@ class Taakbeheer {
                     <div class="acties-sectie">
                         <h3><i class="fas fa-clipboard"></i> Acties</h3>
                         <div class="planning-acties-filters">
-                            <input type="text" id="planningTaakFilter" placeholder="Zoek taak..." class="filter-input">
+                            <input type="text" id="planningTaakFilter" placeholder="Search task..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
-                                <option value="">Alle projecten</option>
+                                <option value="">All projects</option>
                             </select>
                             <select id="planningContextFilter" class="filter-select">
-                                <option value="">Alle contexten</option>
+                                <option value="">All contexts</option>
                             </select>
                             <select id="planningPrioriteitFilter" class="filter-select prioriteit-filter">
-                                <option value="">Alle prioriteiten</option>
-                                <option value="hoog">🔴 Hoog</option>
-                                <option value="gemiddeld">🟠 Gemiddeld</option>
-                                <option value="laag">⚪ Laag</option>
+                                <option value="">All priorities</option>
+                                <option value="hoog">🔴 High</option>
+                                <option value="gemiddeld">🟠 Medium</option>
+                                <option value="laag">⚪ Low</option>
                             </select>
-                            <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
+                            <input type="number" id="planningDuurFilter" placeholder="Max duration (min)" class="filter-input-number" min="0" step="5">
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" id="planningToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                                <label for="planningToekomstToggle">Toon toekomstige taken</label>
+                                <label for="planningToekomstToggle">Show future tasks</label>
                             </div>
                         </div>
                         <div class="acties-container" id="planningActiesLijst">
@@ -8366,8 +8366,8 @@ class Taakbeheer {
             const contextNaam = this.getContextNaam(actie.contextId);
             
             // Format date for display
-            const datumString = actie.verschijndatum ? 
-                new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'Geen datum';
+            const datumString = actie.verschijndatum ?
+                new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'No date';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(actie.verschijndatum);
@@ -8401,7 +8401,7 @@ class Taakbeheer {
                         </div>
                         <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
-                            ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
+                            ${projectNaam && projectNaam !== 'No project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
                             ${contextNaam ? `<span class="meta-context">${contextNaam}</span>` : ''}
                             <span class="meta-datum">${datumString}</span>
                             <span class="meta-duur">${actie.duur || 60}min</span>
@@ -8519,10 +8519,10 @@ class Taakbeheer {
             
             // Line 1: Build extra info line (project/context/datum/duur)
             let extraInfo = [];
-            if (taskDetails.project && taskDetails.project !== 'Geen project') {
+            if (taskDetails.project && taskDetails.project !== 'No project') {
                 extraInfo.push(`<i class="ti ti-folder"></i> ${taskDetails.project}`);
             }
-            if (taskDetails.context && taskDetails.context !== 'Geen context') {
+            if (taskDetails.context && taskDetails.context !== 'No context') {
                 extraInfo.push(`🏷️ ${taskDetails.context}`);
             }
             if (taskDetails.deadline) {
@@ -10505,7 +10505,7 @@ class Taakbeheer {
                 
                 // Show success message with task name
                 const projectNaam = this.getProjectNaam(taak.projectId);
-                const taskDisplay = projectNaam !== 'Geen project' ? `${taak.tekst} (${projectNaam})` : taak.tekst;
+                const taskDisplay = projectNaam !== 'No project' ? `${taak.tekst} (${projectNaam})` : taak.tekst;
                 
                 // Handle recurring tasks
                 if (isRecurring && nextRecurringTaskId) {
@@ -10658,7 +10658,7 @@ class Taakbeheer {
         
         // Build extra info
         const extraInfo = [];
-        if (projectNaam !== 'Geen project') extraInfo.push(projectNaam);
+        if (projectNaam !== 'No project') extraInfo.push(projectNaam);
         if (contextNaam) extraInfo.push('@' + contextNaam);
         if (taak.verschijndatum) extraInfo.push(new Date(taak.verschijndatum).toLocaleDateString('nl-NL'));
         if (taak.duur) extraInfo.push(taak.duur + ' min');
@@ -10850,7 +10850,7 @@ class Taakbeheer {
             const taken = await response.json();
             
             if (taken.length === 0) {
-                content.innerHTML = '<div class="empty-state">Geen taken in deze categorie</div>';
+                content.innerHTML = '<div class="empty-state">No tasks in this category</div>';
                 return;
             }
 
@@ -10870,7 +10870,7 @@ class Taakbeheer {
 
         } catch (error) {
             console.error(`Error loading data for ${categoryKey}:`, error);
-            content.innerHTML = '<div class="error-state">Fout bij laden van taken</div>';
+            content.innerHTML = '<div class="error-state">Error loading tasks</div>';
         }
     }
 
@@ -11755,7 +11755,7 @@ class Taakbeheer {
         const projectFilter = document.getElementById('planningProjectFilter');
         if (projectFilter) {
             // Reset to default option first
-            projectFilter.innerHTML = '<option value="">Alle projecten</option>';
+            projectFilter.innerHTML = '<option value="">All projects</option>';
             this.projecten.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project.id;
@@ -11768,7 +11768,7 @@ class Taakbeheer {
         const contextFilter = document.getElementById('planningContextFilter');
         if (contextFilter) {
             // Reset to default option first
-            contextFilter.innerHTML = '<option value="">Alle contexten</option>';
+            contextFilter.innerHTML = '<option value="">All contexts</option>';
             this.contexten.forEach(context => {
                 const option = document.createElement('option');
                 option.value = context.id;
@@ -13212,7 +13212,7 @@ class UpdateManager {
     refreshApp() {
         // Final safety check
         if (this.hasUnsavedChanges) {
-            if (!confirm('Je hebt mogelijk onopgeslagen wijzigingen. Weet je zeker dat je wilt vernieuwen?')) {
+            if (!confirm('You may have unsaved changes. Are you sure you want to refresh?')) {
                 return;
             }
         }
@@ -14587,7 +14587,7 @@ class BijlagenManager {
     }
 
     async deleteBijlage(bijlageId) {
-        if (!confirm('Weet je zeker dat je deze bijlage wilt verwijderen?')) {
+        if (!confirm('Are you sure you want to delete this attachment?')) {
             return;
         }
 
