@@ -1952,6 +1952,12 @@ mark {
     letter-spacing: 0.5px;
 }
 
+.form-groep label .required {
+    color: var(--macos-red);
+    font-weight: bold;
+    margin-left: 2px;
+}
+
 .form-groep input,
 .form-groep select,
 .form-groep textarea {
