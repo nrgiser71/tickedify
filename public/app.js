@@ -1916,7 +1916,7 @@ class Taakbeheer {
             'opvolgen': 'Follow-up',
             'afgewerkte-taken': 'Completed',
             'dagelijkse-planning': 'Daily Planning',
-            'uitgesteld': 'Deferred',
+            'uitgesteld': 'Postponed',
             'uitgesteld-wekelijks': 'Weekly',
             'uitgesteld-maandelijks': 'Monthly',
             'uitgesteld-3maandelijks': 'Quarterly',
@@ -7326,7 +7326,7 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-uitgesteld" checked>
-                                        <span>Deferred</span>
+                                        <span>Postponed</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-afgewerkt">
@@ -10771,7 +10771,7 @@ class Taakbeheer {
                     <span></span>
                     <span></span>
                 </button>
-                <h1 id="page-title">Deferred</h1>
+                <h1 id="page-title">Postponed</h1>
             </header>
 
             <div class="content-area">
