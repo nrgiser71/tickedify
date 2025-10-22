@@ -741,6 +741,11 @@ class LoadingManager {
             }
         }
     }
+
+    // Check if an operation is currently active (Feature 023: Duplicate submit prevention)
+    isOperationActive(operationId) {
+        return this.activeOperations.has(operationId);
+    }
 }
 
 // Global loading instance
@@ -1277,7 +1282,10 @@ class Taakbeheer {
         if (toevoegBtn && !toevoegBtn.hasAttribute('data-listener-bound')) {
             toevoegBtn.addEventListener('click', () => {
                 if (this.huidigeLijst === 'inbox') {
-                    this.voegTaakToe();
+                    // Feature 023: Prevent duplicate submissions
+                    if (!loading.isOperationActive('add-task')) {
+                        this.voegTaakToe();
+                    }
                 }
             });
             toevoegBtn.setAttribute('data-listener-bound', 'true');
@@ -1286,7 +1294,10 @@ class Taakbeheer {
         if (taakInput && !taakInput.hasAttribute('data-listener-bound')) {
             taakInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && this.huidigeLijst === 'inbox') {
-                    this.voegTaakToe();
+                    // Feature 023: Prevent duplicate submissions
+                    if (!loading.isOperationActive('add-task')) {
+                        this.voegTaakToe();
+                    }
                 }
             });
             taakInput.setAttribute('data-listener-bound', 'true');
