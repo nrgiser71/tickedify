@@ -4810,23 +4810,32 @@ app.get('/api/counts/sidebar', async (req, res) => {
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
-        // Single efficient query to get all 5 counters
-        const query = `
+        // Query for taken counts
+        const takenQuery = `
             SELECT
                 COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
                 COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL
                     AND (verschijndatum IS NULL OR verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
-                (SELECT COUNT(*) FROM projecten WHERE user_id = $1 AND actief = true) as projecten,
                 COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
                 COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
             FROM taken
             WHERE user_id = $1
         `;
 
-        const result = await pool.query(query, [userId]);
+        // Separate query for projecten count
+        const projectenQuery = `
+            SELECT COUNT(*) as projecten
+            FROM projecten
+            WHERE user_id = $1 AND actief = true
+        `;
 
-        // Safety check for result
-        if (!result || !result.rows || result.rows.length === 0) {
+        const [takenResult, projectenResult] = await Promise.all([
+            pool.query(takenQuery, [userId]),
+            pool.query(projectenQuery, [userId])
+        ]);
+
+        // Safety check for results
+        if (!takenResult || !takenResult.rows || takenResult.rows.length === 0) {
             return res.json({
                 inbox: 0,
                 acties: 0,
@@ -4838,11 +4847,11 @@ app.get('/api/counts/sidebar', async (req, res) => {
 
         // Convert string counts to integers
         const counts = {
-            inbox: parseInt(result.rows[0].inbox) || 0,
-            acties: parseInt(result.rows[0].acties) || 0,
-            projecten: parseInt(result.rows[0].projecten) || 0,
-            opvolgen: parseInt(result.rows[0].opvolgen) || 0,
-            uitgesteld: parseInt(result.rows[0].uitgesteld) || 0
+            inbox: parseInt(takenResult.rows[0].inbox) || 0,
+            acties: parseInt(takenResult.rows[0].acties) || 0,
+            projecten: parseInt(projectenResult.rows[0]?.projecten) || 0,
+            opvolgen: parseInt(takenResult.rows[0].opvolgen) || 0,
+            uitgesteld: parseInt(takenResult.rows[0].uitgesteld) || 0
         };
 
         res.json(counts);
