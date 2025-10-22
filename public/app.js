@@ -14445,11 +14445,11 @@ class BijlagenManager {
             const planType = this.storageStats.plan_type || 'free';
 
             if (planType === 'premium_plus') {
-                uploadLimits.textContent = 'Premium Plus: onbeperkte bijlagen en grootte';
+                uploadLimits.textContent = 'Premium Plus: unlimited attachments and size';
             } else if (planType === 'premium_standard') {
-                uploadLimits.textContent = `Standard: Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} bijlage per taak`;
+                uploadLimits.textContent = `Standard: Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} attachment per task`;
             } else {
-                uploadLimits.textContent = `Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} bijlage per taak (gratis)`;
+                uploadLimits.textContent = `Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} attachment per task (free)`;
             }
         }
 
