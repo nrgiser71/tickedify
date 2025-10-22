@@ -5042,7 +5042,7 @@ class Taakbeheer {
     }
 
     async maakNieuweContext() {
-        const naam = await inputModal.show('Nieuwe Context', 'Naam voor de nieuwe context:');
+        const naam = await inputModal.show('New Context', 'Naam voor de nieuwe context:');
         if (naam && naam.trim()) {
             const nieuweContext = {
                 id: this.generateId(),
@@ -6851,7 +6851,7 @@ class Taakbeheer {
         // Update page title
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
-            pageTitle.textContent = 'Contexten Beheer';
+            pageTitle.textContent = 'Context Management';
         }
 
         // Hide input container
@@ -6905,7 +6905,7 @@ class Taakbeheer {
                     'opvolgen': 'Opvolgen',
                     'afgewerkte-taken': 'Afgewerkt',
                     'dagelijkse-planning': 'Daily Planning',
-                    'contextenbeheer': 'Contexten Beheer',
+                    'contextenbeheer': 'Context Management',
                     'uitgesteld-wekelijks': 'Wekelijks',
                     'uitgesteld-maandelijks': 'Maandelijks',
                     'uitgesteld-3maandelijks': '3-maandelijks',
@@ -6960,7 +6960,7 @@ class Taakbeheer {
                     'opvolgen': 'Opvolgen',
                     'afgewerkte-taken': 'Afgewerkt',
                     'dagelijkse-planning': 'Daily Planning',
-                    'contextenbeheer': 'Contexten Beheer',
+                    'contextenbeheer': 'Context Management',
                     'uitgesteld-wekelijks': 'Wekelijks',
                     'uitgesteld-maandelijks': 'Maandelijks',
                     'uitgesteld-3maandelijks': '3-maandelijks',
@@ -7063,24 +7063,24 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="contexten-beheer">
                 <div class="beheer-header">
-                    <h3>🏷️ Contexten Beheer</h3>
+                    <h3>🏷️ Context Management</h3>
                     <button onclick="app.voegContextToe()" class="primary-btn">
-                        ➕ Nieuwe Context
+                        ➕ New Context
                     </button>
                 </div>
                 
                 <div class="contexten-lijst" id="contextenLijst">
                     ${this.contexten.length === 0 ? 
-                        '<p class="geen-items">Nog geen contexten aangemaakt. Klik op "Nieuwe Context" om te beginnen.</p>' :
+                        '<p class="geen-items">No contexts created yet. Click on "New Context" to get started.</p>' :
                         this.contexten.map(context => `
                             <div class="context-item" data-id="${context.id}">
                                 <div class="context-content">
                                     <span class="context-naam">${context.naam}</span>
-                                    <small class="context-info">Aangemaakt: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
+                                    <small class="context-info">Created: ${new Date(context.aangemaakt).toLocaleDateString('en-US')}</small>
                                 </div>
                                 <div class="context-acties">
-                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Bewerken"><i class="fas fa-edit"></i></button>
-                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Verwijderen">×</button>
+                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Delete">×</button>
                                 </div>
                             </div>
                         `).join('')
@@ -7950,7 +7950,7 @@ class Taakbeheer {
     }
 
     async voegContextToe() {
-        const naam = await inputModal.show('Nieuwe Context', 'Contextnaam:', '');
+        const naam = await inputModal.show('New Context', 'Context name:', '');
         if (!naam || !naam.trim()) return;
 
         await loading.withLoading(async () => {
@@ -7971,7 +7971,7 @@ class Taakbeheer {
         }, {
             operationId: 'add-context',
             showGlobal: true,
-            message: 'Context toevoegen...'
+            message: 'Adding context...'
         });
     }
 
@@ -7979,7 +7979,7 @@ class Taakbeheer {
         const context = this.contexten.find(c => c.id === contextId);
         if (!context) return;
 
-        const nieuweNaam = await inputModal.show('Context Bewerken', 'Nieuwe naam:', context.naam);
+        const nieuweNaam = await inputModal.show('Edit Context', 'New name:', context.naam);
         if (!nieuweNaam || !nieuweNaam.trim() || nieuweNaam.trim() === context.naam) return;
 
         await loading.withLoading(async () => {
@@ -7992,11 +7992,11 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${oudeNaam}" hernoemd naar "${nieuweNaam}"`);
+            toast.success(`Context "${oudeNaam}" renamed to "${nieuweNaam}"`);
         }, {
             operationId: 'edit-context',
             showGlobal: true,
-            message: 'Context bewerken...'
+            message: 'Editing context...'
         });
     }
 
@@ -8022,7 +8022,7 @@ class Taakbeheer {
         }, {
             operationId: 'delete-context',
             showGlobal: true,
-            message: 'Context verwijderen...'
+            message: 'Removing context...'
         });
     }
 
