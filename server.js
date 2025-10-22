@@ -4813,11 +4813,11 @@ app.get('/api/counts/sidebar', async (req, res) => {
         // Single efficient query to get all 5 counters
         const query = `
             SELECT
-                COUNT(CASE WHEN lijst = 'inbox' AND status = 'actief' THEN 1 END) as inbox,
-                COUNT(CASE WHEN lijst = 'acties' AND status = 'actief' THEN 1 END) as acties,
-                COUNT(CASE WHEN project_id IS NOT NULL AND status = 'actief' THEN 1 END) as projecten,
-                COUNT(CASE WHEN lijst = 'opvolgen' AND status = 'actief' THEN 1 END) as opvolgen,
-                COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND status = 'actief' THEN 1 END) as uitgesteld
+                COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
+                COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL THEN 1 END) as acties,
+                COUNT(CASE WHEN project_id IS NOT NULL AND afgewerkt IS NULL THEN 1 END) as projecten,
+                COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
+                COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
             FROM taken
             WHERE user_id = $1
         `;
