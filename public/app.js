@@ -3708,7 +3708,7 @@ class Taakbeheer {
             if (datum) extraInfo.push(`${datumIndicator} ${datum}`);
             if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
             if (taak.bijlagenCount && taak.bijlagenCount > 0) {
-                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} bijlage${taak.bijlagenCount > 1 ? 'n' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
+                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} attachment${taak.bijlagenCount > 1 ? 's' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
             }
             
             const extraInfoHtml = extraInfo.length > 0 ? 
@@ -4395,7 +4395,7 @@ class Taakbeheer {
     setActionButtonText(isNewAction = true) {
         const button = document.getElementById('maakActieBtn');
         if (button) {
-            button.textContent = isNewAction ? 'Actie maken' : 'Aanpassingen opslaan';
+            button.textContent = isNewAction ? 'Create action' : 'Save changes';
         }
     }
 
@@ -6923,7 +6923,7 @@ class Taakbeheer {
                 if (isInbox) {
                     contentArea.innerHTML = `
                         <div class="taak-input-container" id="taak-input-container">
-                            <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                            <input type="text" id="taakInput" placeholder="New task..." autofocus>
                             <button id="toevoegBtn">Toevoegen</button>
                         </div>
                         <div class="taken-container">
@@ -6972,7 +6972,7 @@ class Taakbeheer {
                 // Only show input container for inbox
                 const inputContainerHTML = (targetLijst || this.huidigeLijst) === 'inbox' ? `
                     <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                        <input type="text" id="taakInput" placeholder="New task..." autofocus>
                         <button id="toevoegBtn">Toevoegen</button>
                     </div>
                 ` : '';
@@ -12871,7 +12871,7 @@ class AuthManager {
             
             if (taakInput) {
                 taakInput.disabled = false;
-                taakInput.placeholder = 'Nieuwe taak...';
+                taakInput.placeholder = 'New task...';
             }
             
             if (toevoegBtn) {
