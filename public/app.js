@@ -5972,6 +5972,34 @@ class Taakbeheer {
         return context ? context.naam : 'Unknown context';
     }
 
+    /**
+     * Formats a date for display in DD/MM/YYYY format
+     * @param {Date|string} dateInput - Date object or ISO string (YYYY-MM-DD)
+     * @param {Object} options - Optional formatting options
+     * @param {boolean} options.includeWeekday - Include weekday name (default: false)
+     * @returns {string} Formatted date string "DD/MM/YYYY"
+     * @throws {Error} If dateInput is invalid or results in NaN
+     */
+    formatDisplayDate(dateInput, options = {}) {
+        // Check for null/undefined first
+        if (dateInput === null || dateInput === undefined) {
+            throw new Error(`Invalid date: ${dateInput}`);
+        }
+
+        const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+        if (isNaN(date.getTime())) {
+            throw new Error(`Invalid date: ${dateInput}`);
+        }
+
+        const formatter = new Intl.DateTimeFormat('nl-NL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+        return formatter.format(date).replace(/-/g, '/');
+    }
+
     getPrioriteitIndicator(prioriteit) {
         if (!prioriteit) prioriteit = 'gemiddeld';
         
@@ -14669,34 +14697,6 @@ class BijlagenManager {
             hour: '2-digit',
             minute: '2-digit'
         });
-    }
-
-    /**
-     * Formats a date for display in DD/MM/YYYY format
-     * @param {Date|string} dateInput - Date object or ISO string (YYYY-MM-DD)
-     * @param {Object} options - Optional formatting options
-     * @param {boolean} options.includeWeekday - Include weekday name (default: false)
-     * @returns {string} Formatted date string "DD/MM/YYYY"
-     * @throws {Error} If dateInput is invalid or results in NaN
-     */
-    formatDisplayDate(dateInput, options = {}) {
-        // Check for null/undefined first
-        if (dateInput === null || dateInput === undefined) {
-            throw new Error(`Invalid date: ${dateInput}`);
-        }
-
-        const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-        if (isNaN(date.getTime())) {
-            throw new Error(`Invalid date: ${dateInput}`);
-        }
-
-        const formatter = new Intl.DateTimeFormat('nl-NL', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-
-        return formatter.format(date).replace(/-/g, '/');
     }
 
     escapeHtml(text) {
