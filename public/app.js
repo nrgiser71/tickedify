@@ -791,12 +791,7 @@ class Taakbeheer {
         // Add document click listener to close dropdowns
         document.addEventListener('click', (event) => this.handleDocumentClick(event));
         // Data loading happens after authentication check in AuthManager
-
-        // Initialize sidebar counters - Feature 022
-        // Update counters after a short delay to ensure authentication is complete
-        setTimeout(() => {
-            this.debouncedUpdateCounters();
-        }, 500);
+        // Sidebar counters are initialized in navigeerNaarLijst() - Feature 022
     }
 
     // LocalStorage helpers for remembering current list
@@ -1943,6 +1938,10 @@ class Taakbeheer {
         console.log('📋 huidigeLijst is now:', this.huidigeLijst);
         this.saveCurrentList(); // Remember the selected list
         await this.laadHuidigeLijst();
+
+        // Update sidebar counters after list is loaded - Feature 022
+        // This ensures counters update for ALL lists (dagelijkse-planning, uitgesteld, and normal lists)
+        this.debouncedUpdateCounters();
     }
 
     async laadTellingen() {
@@ -3257,23 +3256,20 @@ class Taakbeheer {
             message: 'Lijst laden...'
         });
 
-        // Update sidebar counters after list is loaded - Feature 022
-        this.debouncedUpdateCounters();
-
         // No need for button visibility updates - button is hardcoded in acties lijst
     }
 
     async loadPlanningData() {
         // Specialized loading function for dagelijkse planning
         // This directly renders the dagelijkse planning interface without loading tasks
-        
+
         try {
             // Don't load tasks data - dagelijkse planning has its own data loading
             this.taken = [];
-            
+
             // Render the dagelijkse planning interface (which handles its own data loading)
             await this.renderTaken();
-            
+
         } catch (error) {
             console.error('Fout bij laden dagelijkse planning:', error);
             this.taken = [];
@@ -3322,10 +3318,13 @@ class Taakbeheer {
                 if (response.ok) {
                     const responseData = await response.json();
                     console.log('✅ Server response data:', responseData);
-                    
+
                     // Refresh list from server to ensure consistency
                     await this.laadHuidigeLijst();
-                    
+
+                    // Update sidebar counters after task create - Feature 022
+                    this.debouncedUpdateCounters();
+
                     input.value = '';
                     input.focus();
                     toast.success('Taak toegevoegd!');
@@ -4019,7 +4018,10 @@ class Taakbeheer {
                 } else {
                     toast.success('Taak afgewerkt!');
                 }
-                
+
+                // Update sidebar counters after task complete - Feature 022
+                this.debouncedUpdateCounters();
+
                 // No need to re-render - DOM element already removed above
                 // Local array is correct, server background sync handles persistence
             } else {
@@ -4217,28 +4219,34 @@ class Taakbeheer {
                         if (taakElement) {
                             taakElement.remove();
                         }
-                        
+
                         // Update count in header
                         const header = document.querySelector(`[data-category="${categoryKey}"] .taken-count`);
                         if (header) {
                             const currentCount = parseInt(header.textContent.match(/\d+/)[0]);
                             header.textContent = `(${currentCount - 1})`;
                         }
-                        
+
+                        // Update sidebar counters after task delete - Feature 022
+                        this.debouncedUpdateCounters();
+
                         if (!hasB2Warning) {
                             toast.success(successMessage);
                         }
                     } else {
                         // Normal list interface
                         this.taken = this.taken.filter(taak => taak.id !== id);
-                        
+
                         // Re-render with preserved filters and scroll position for actions list
                         if (this.huidigeLijst === 'acties') {
                             await this.preserveActionsFilters(() => this.renderTaken());
                         } else {
                             this.renderTaken();
                         }
-                        
+
+                        // Update sidebar counters after task delete - Feature 022
+                        this.debouncedUpdateCounters();
+
                         if (!hasB2Warning) {
                             toast.success(successMessage);
                         }
@@ -5191,10 +5199,13 @@ class Taakbeheer {
             showGlobal: true,
             message: `Taak wordt verplaatst naar ${naarLijst}...`
         });
-        
+
+        // Update sidebar counters after task move - Feature 022
+        this.debouncedUpdateCounters();
+
         // Update counts in background (non-blocking)
         this.laadTellingen();
-        
+
         // Probeer automatisch volgende inbox taak te openen (net als bij opslaan)
         const volgendeGeopend = await this.openVolgendeInboxTaak();
         if (!volgendeGeopend) {
@@ -9599,8 +9610,12 @@ class Taakbeheer {
                 if (data.type === 'actie') {
                     this.removeActionFromList(data.actieId);
                 }
-                
+
                 this.updateTotaalTijd(); // Update total time
+
+                // Update sidebar counters after drag & drop - Feature 022
+                this.debouncedUpdateCounters();
+
                 toast.success('Planning item toegevoegd!');
             } else {
                 toast.error('Fout bij toevoegen planning item');
@@ -12228,7 +12243,10 @@ class Taakbeheer {
             // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
             await this.preserveActionsFilters(() => this.laadHuidigeLijst());
-            
+
+            // Update sidebar counters after bulk operation - Feature 022
+            this.debouncedUpdateCounters();
+
         } finally {
             loading.hide();
         }
@@ -12345,11 +12363,14 @@ class Taakbeheer {
             loading.show('Afronden...');
             
             toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
-            
+
             // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
             await this.preserveActionsFilters(() => this.laadHuidigeLijst());
-            
+
+            // Update sidebar counters after bulk operation - Feature 022
+            this.debouncedUpdateCounters();
+
         } finally {
             loading.hide();
         }
