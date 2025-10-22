@@ -1501,7 +1501,7 @@ class Taakbeheer {
         const currentValue = document.getElementById('herhalingSelect').value;
         if (!currentValue) {
             document.getElementById('herhalingSelect').value = '';
-            document.getElementById('herhalingDisplay').value = 'Geen herhaling';
+            document.getElementById('herhalingDisplay').value = 'No recurrence';
         }
         
         this.loadHerhalingFromValue();
@@ -1525,7 +1525,7 @@ class Taakbeheer {
         
         switch (selectedType) {
             case '':
-                return 'Geen herhaling';
+                return 'No recurrence';
             case 'daily':
                 const days = document.getElementById('dailyInterval').value;
                 return days === '1' ? 'Elke dag' : `Elke ${days} dagen`;
@@ -1570,7 +1570,7 @@ class Taakbeheer {
                 const directionText = eventDirection === 'voor' ? 'voor' : 'na';
                 return eventName ? `${eventDays} dagen ${directionText} ${eventName}` : `${eventDays} dagen ${directionText} event`;
             default:
-                return 'Geen herhaling';
+                return 'No recurrence';
         }
     }
 
@@ -1838,7 +1838,7 @@ class Taakbeheer {
 
     getHerhalingDisplayText(value) {
         const herhalingTexts = {
-            '': 'Geen herhaling',
+            '': 'No recurrence',
             'dagelijks': 'Dagelijks',
             'wekelijks': 'Wekelijks',
             'maandelijks': 'Maandelijks',
@@ -1879,7 +1879,7 @@ class Taakbeheer {
             '3-maanden': 'Elke 3 maanden',
             '6-maanden': 'Elke 6 maanden'
         };
-        return herhalingTexts[value] || 'Geen herhaling';
+        return herhalingTexts[value] || 'No recurrence';
     }
 
     async navigeerNaarLijst(lijst) {
@@ -4982,7 +4982,7 @@ class Taakbeheer {
         document.getElementById('duur').value = '';
         document.getElementById('opmerkingen').value = '';
         document.getElementById('herhalingSelect').value = '';
-        document.getElementById('herhalingDisplay').value = 'Geen herhaling';
+        document.getElementById('herhalingDisplay').value = 'No recurrence';
 
         this.zetVandaagDatum();
 
@@ -8105,7 +8105,7 @@ class Taakbeheer {
         document.getElementById('verschijndatum').value = new Date().toISOString().split('T')[0];
         document.getElementById('contextSelect').value = '';
         document.getElementById('duur').value = '';
-        document.getElementById('herhalingDisplay').value = 'Geen herhaling';
+        document.getElementById('herhalingDisplay').value = 'No recurrence';
         document.getElementById('herhalingSelect').value = '';
         document.getElementById('opmerkingen').value = '';
 
@@ -8161,7 +8161,7 @@ class Taakbeheer {
 
     generateHerhalingDisplayTextFromType(herhalingType) {
         // Simplified version for existing tasks - you can expand this
-        if (!herhalingType) return 'Geen herhaling';
+        if (!herhalingType) return 'No recurrence';
         
         if (herhalingType === 'dagelijks') return 'Elke dag';
         if (herhalingType === 'werkdagen') return 'Elke werkdag';
