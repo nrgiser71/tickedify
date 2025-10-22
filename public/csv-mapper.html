@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -292,107 +292,107 @@
     <div class="container">
         <h1>📊 CSV → Tickedify Mapper</h1>
         
-        <!-- Stap 1: CSV Data Invoeren -->
+        <!-- Step 1: CSV Data Input -->
         <div class="step active" id="step1">
-            <div class="step-title">🗂️ Stap 1: Plak je CSV data</div>
-            <textarea id="csvInput" placeholder="Plak hier je volledige CSV data (inclusief kolomkoppen)..."></textarea>
-            <button onclick="parseCsv()">Analyseer CSV</button>
+            <div class="step-title">🗂️ Step 1: Paste your CSV data</div>
+            <textarea id="csvInput" placeholder="Paste your complete CSV data here (including column headers)..."></textarea>
+            <button onclick="parseCsv()">Analyze CSV</button>
         </div>
 
-        <!-- Stap 2: Preview en Kolom Mapping -->
+        <!-- Step 2: Preview and Column Mapping -->
         <div class="step" id="step2">
-            <div class="step-title">🔍 Stap 2: Preview en Kolom Mapping</div>
+            <div class="step-title">🔍 Step 2: Preview and Column Mapping</div>
             
             <div id="previewSection">
-                <h4>Preview van je data:</h4>
+                <h4>Preview of your data:</h4>
                 <div class="preview-table" id="previewTable"></div>
             </div>
 
             <div class="mapping-container">
                 <div>
-                    <h4>📋 CSV Kolommen</h4>
+                    <h4>📋 CSV Columns</h4>
                     <div class="column-list" id="csvColumns"></div>
                 </div>
                 
                 <div>
-                    <h4>🎯 Tickedify Velden</h4>
-                    <div class="field-label">Taaknaam (verplicht)</div>
+                    <h4>🎯 Tickedify Fields</h4>
+                    <div class="field-label">Task name (required)</div>
                     <div class="tickedify-field" data-field="taaknaam" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('taaknaam')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('taaknaam')" title="Remove mapping">×</button>
                     </div>
-                    
+
                     <div class="field-label">Project</div>
                     <div class="tickedify-field" data-field="project" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('project')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('project')" title="Remove mapping">×</button>
                     </div>
-                    
+
                     <div class="field-label">Context</div>
                     <div class="tickedify-field" data-field="context" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('context')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('context')" title="Remove mapping">×</button>
                     </div>
-                    
+
                     <div class="field-label">Deadline</div>
                     <div class="tickedify-field" data-field="deadline" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('deadline')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('deadline')" title="Remove mapping">×</button>
                     </div>
-                    
-                    <div class="field-label">Duur (minuten)</div>
+
+                    <div class="field-label">Duration (minutes)</div>
                     <div class="tickedify-field" data-field="duur" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('duur')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('duur')" title="Remove mapping">×</button>
                     </div>
-                    
-                    <div class="field-label">Opmerkingen</div>
+
+                    <div class="field-label">Notes</div>
                     <div class="tickedify-field" data-field="opmerkingen" ondrop="drop(event)" ondragover="allowDrop(event)">
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('opmerkingen')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('opmerkingen')" title="Remove mapping">×</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Bestemmingslijst dropdown buiten mapping container voor betere zichtbaarheid -->
+            <!-- Destination list dropdown outside mapping container for better visibility -->
             <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-                <h4>🎯 Bestemmingslijst</h4>
+                <h4>🎯 Destination List</h4>
                 <div style="margin: 10px 0;">
-                    <label for="targetListSelect" style="display: block; margin-bottom: 5px; font-weight: 600;">Importeren naar:</label>
+                    <label for="targetListSelect" style="display: block; margin-bottom: 5px; font-weight: 600;">Import to:</label>
                     <select id="targetListSelect" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: white;">
                         <option value="inbox">📥 Inbox</option>
-                        <option value="uitgesteld-wekelijks">📅 Uitgesteld - Wekelijks</option>
-                        <option value="uitgesteld-maandelijks">📅 Uitgesteld - Maandelijks</option>
-                        <option value="uitgesteld-3maandelijks">📅 Uitgesteld - 3-maandelijks</option>
-                        <option value="uitgesteld-6maandelijks">📅 Uitgesteld - 6-maandelijks</option>
-                        <option value="uitgesteld-jaarlijks">📅 Uitgesteld - Jaarlijks</option>
+                        <option value="uitgesteld-wekelijks">📅 Postponed - Weekly</option>
+                        <option value="uitgesteld-maandelijks">📅 Postponed - Monthly</option>
+                        <option value="uitgesteld-3maandelijks">📅 Postponed - Quarterly</option>
+                        <option value="uitgesteld-6maandelijks">📅 Postponed - Bi-annual</option>
+                        <option value="uitgesteld-jaarlijks">📅 Postponed - Yearly</option>
                     </select>
                 </div>
             </div>
             
             <div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-                <h4>💾 Mapping Opslaan & Laden</h4>
+                <h4>💾 Save & Load Mapping</h4>
                 <div style="margin: 10px 0;">
-                    <input type="text" id="mappingName" placeholder="Naam voor mapping (bijv. Standaard-CSV)" style="width: 200px; margin-right: 10px;">
-                    <button onclick="saveMapping()" class="secondary-btn">💾 Opslaan</button>
-                    <button onclick="loadMapping()" class="secondary-btn">📂 Laden</button>
-                    <button onclick="showSavedMappings()" class="secondary-btn">📋 Lijst</button>
+                    <input type="text" id="mappingName" placeholder="Name for mapping (e.g. Standard-CSV)" style="width: 200px; margin-right: 10px;">
+                    <button onclick="saveMapping()" class="secondary-btn">💾 Save</button>
+                    <button onclick="loadMapping()" class="secondary-btn">📂 Load</button>
+                    <button onclick="showSavedMappings()" class="secondary-btn">📋 List</button>
                 </div>
                 <div id="savedMappingsList" style="margin-top: 10px; display: none;"></div>
             </div>
-            
-            <button onclick="importTasks()" id="importBtn" disabled>🚀 Importeer Taken</button>
+
+            <button onclick="importTasks()" id="importBtn" disabled>🚀 Import Tasks</button>
             <button onclick="resetMapping()" class="secondary-btn">🔄 Reset Mapping</button>
             <button onclick="autoSuggestMapping()" class="secondary-btn">🤖 Auto-Mapping</button>
         </div>
 
-        <!-- Stap 3: Import Progress -->
+        <!-- Step 3: Import Progress -->
         <div class="step" id="step3">
-            <div class="step-title">⏳ Stap 3: Import Voortgang</div>
+            <div class="step-title">⏳ Step 3: Import Progress</div>
             <div class="progress">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
-            <div id="progressText">Klaar om te importeren...</div>
+            <div id="progressText">Ready to import...</div>
         </div>
 
         <div id="result" class="result"></div>
@@ -407,13 +407,13 @@
             try {
                 const response = await fetch('/api/auth/me');
                 if (!response.ok) {
-                    showResult('❌ Je moet ingelogd zijn op Tickedify om taken te importeren. <a href="/" target="_blank">Log eerst in</a>', 'error');
+                    showResult('❌ You must be logged in to Tickedify to import tasks. <a href="/" target="_blank">Log in first</a>', 'error');
                     document.getElementById('importBtn').disabled = true;
                     return false;
                 }
                 return true;
             } catch (error) {
-                showResult('❌ Kan niet verbinden met Tickedify. Controleer je verbinding.', 'error');
+                showResult('❌ Cannot connect to Tickedify. Check your connection.', 'error');
                 return false;
             }
         }
@@ -421,40 +421,40 @@
         function parseCsv() {
             const csvText = document.getElementById('csvInput').value.trim();
             if (!csvText) {
-                showResult('❌ Voer eerst CSV data in', 'error');
+                showResult('❌ Please enter CSV data first', 'error');
                 return;
             }
-            
+
             // Parse CSV
             const lines = csvText.split('\n');
             headers = parseCSVLine(lines[0]);
             csvData = [];
-            
+
             for (let i = 1; i < lines.length && i < 51; i++) { // Max 50 rows for preview
                 if (lines[i].trim()) {
                     csvData.push(parseCSVLine(lines[i]));
                 }
             }
-            
+
             if (csvData.length === 0) {
-                showResult('❌ Geen data gevonden in CSV', 'error');
+                showResult('❌ No data found in CSV', 'error');
                 return;
             }
-            
+
             // Show preview
             showPreview();
             showCsvColumns();
-            
+
             // Activate step 2
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step2').classList.add('active');
-            
+
             // Try auto-mapping
             setTimeout(() => {
                 autoSuggestMapping();
             }, 500);
-            
-            showResult(`✅ CSV geanalyseerd: ${headers.length} kolommen, ${csvData.length} rijen preview. Auto-mapping proberen...`, 'success');
+
+            showResult(`✅ CSV analyzed: ${headers.length} columns, ${csvData.length} rows preview. Trying auto-mapping...`, 'success');
         }
         
         function parseCSVLine(line) {
@@ -556,7 +556,7 @@
             e.currentTarget.classList.add('mapped');
             e.currentTarget.innerHTML = `
                 <span class="mapped-column">${data.header}</span>
-                <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Remove mapping">×</button>
             `;
             
             // Check if we can enable import
@@ -585,15 +585,15 @@
                 if (fieldElement) {
                     fieldElement.classList.remove('mapped');
                     fieldElement.innerHTML = `
-                        <span>Sleep hier een kolom naartoe</span>
-                        <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                        <span>Drag a column here</span>
+                        <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Remove mapping">×</button>
                     `;
                 }
-                
+
                 // Update import button state
                 updateImportButton();
-                
-                showResult(`✅ Mapping voor "${field}" verwijderd`, 'success');
+
+                showResult(`✅ Mapping for "${field}" removed`, 'success');
             }
         }
         
@@ -603,8 +603,8 @@
                 const fieldName = field.dataset.field;
                 field.classList.remove('mapped');
                 field.innerHTML = `
-                    <span>Sleep hier een kolom naartoe</span>
-                    <button class="field-clear-btn" onclick="clearMapping('${fieldName}')" title="Mapping verwijderen">×</button>
+                    <span>Drag a column here</span>
+                    <button class="field-clear-btn" onclick="clearMapping('${fieldName}')" title="Remove mapping">×</button>
                 `;
             });
             updateImportButton();
@@ -614,9 +614,9 @@
             if (!await checkAuth()) {
                 return;
             }
-            
+
             if (!mapping.taaknaam) {
-                showResult('❌ Taaknaam is verplicht voor import', 'error');
+                showResult('❌ Task name is required for import', 'error');
                 return;
             }
             
@@ -641,20 +641,20 @@
             
             const targetList = document.getElementById('targetListSelect');
             const listName = targetList.options[targetList.selectedIndex].text;
-            document.getElementById('progressText').textContent = `Importeren van ${total} taken naar ${listName}...`;
-            
+            document.getElementById('progressText').textContent = `Importing ${total} tasks to ${listName}...`;
+
             for (let i = 0; i < allData.length; i++) {
                 const row = allData[i];
-                
+
                 try {
                     const task = buildTaskFromRow(row);
-                    
+
                     const response = await fetch('/api/email/import-real', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(task)
                     });
-                    
+
                     if (response.ok) {
                         imported++;
                     } else {
@@ -665,20 +665,20 @@
                     failed++;
                     console.error('Error importing row:', error);
                 }
-                
+
                 // Update progress
                 const progress = ((i + 1) / total) * 100;
                 document.getElementById('progressBar').style.width = progress + '%';
-                document.getElementById('progressText').textContent = 
-                    `${i + 1}/${total} taken verwerkt (${imported} succesvol, ${failed} gefaald)`;
-                
+                document.getElementById('progressText').textContent =
+                    `${i + 1}/${total} tasks processed (${imported} successful, ${failed} failed)`;
+
                 // Small delay to prevent overwhelming the server
                 if (i % 10 === 0) {
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
             }
-            
-            const message = `📊 Import voltooid naar ${listName}!<br>✅ ${imported} taken geïmporteerd<br>❌ ${failed} taken gefaald<br><br>Ga naar <a href="/" target="_blank">Tickedify</a> om je geïmporteerde taken te bekijken.`;
+
+            const message = `📊 Import completed to ${listName}!<br>✅ ${imported} tasks imported<br>❌ ${failed} tasks failed<br><br>Go to <a href="/" target="_blank">Tickedify</a> to view your imported tasks.`;
             showResult(message, failed === 0 ? 'success' : 'error');
         }
         
@@ -710,7 +710,7 @@
             
             const duur = getValueFromMapping('duur', row);
             if (duur && duur.trim() && !isNaN(duur)) {
-                body += `Duur: ${duur} minuten\n`;
+                body += `Duration: ${duur} minutes\n`;
             }
             
             const deadline = getValueFromMapping('deadline', row);
@@ -779,48 +779,48 @@
         function saveMapping() {
             const mappingName = document.getElementById('mappingName').value.trim();
             if (!mappingName) {
-                showResult('❌ Voer een naam in voor de mapping', 'error');
+                showResult('❌ Please enter a name for the mapping', 'error');
                 return;
             }
-            
+
             if (Object.keys(mapping).length === 0) {
-                showResult('❌ Geen mapping om op te slaan. Map eerst kolommen naar velden.', 'error');
+                showResult('❌ No mapping to save. Map columns to fields first.', 'error');
                 return;
             }
-            
+
             // Save to localStorage
             const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
             savedMappings[mappingName] = {
                 mapping: mapping,
                 savedAt: new Date().toISOString(),
-                description: `${Object.keys(mapping).length} velden gemapped`
+                description: `${Object.keys(mapping).length} fields mapped`
             };
-            
+
             localStorage.setItem('csvMappings', JSON.stringify(savedMappings));
-            
-            showResult(`✅ Mapping "${mappingName}" opgeslagen! Je kunt deze nu laden bij toekomstige imports.`, 'success');
+
+            showResult(`✅ Mapping "${mappingName}" saved! You can now load it for future imports.`, 'success');
             document.getElementById('mappingName').value = '';
         }
         
         function loadMapping() {
             const mappingName = document.getElementById('mappingName').value.trim();
             if (!mappingName) {
-                showResult('❌ Voer de naam van de mapping in om te laden', 'error');
+                showResult('❌ Please enter the mapping name to load', 'error');
                 return;
             }
-            
+
             const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
             if (!savedMappings[mappingName]) {
-                showResult(`❌ Mapping "${mappingName}" niet gevonden`, 'error');
+                showResult(`❌ Mapping "${mappingName}" not found`, 'error');
                 return;
             }
-            
+
             // Reset current mapping
             resetMapping();
-            
+
             // Load saved mapping
             mapping = savedMappings[mappingName].mapping;
-            
+
             // Update UI
             Object.keys(mapping).forEach(field => {
                 const fieldElement = document.querySelector(`[data-field="${field}"]`);
@@ -828,42 +828,42 @@
                     fieldElement.classList.add('mapped');
                     fieldElement.innerHTML = `
                         <span class="mapped-column">${mapping[field].header}</span>
-                        <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                        <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Remove mapping">×</button>
                     `;
                 }
             });
-            
+
             updateImportButton();
-            showResult(`✅ Mapping "${mappingName}" geladen! ${Object.keys(mapping).length} velden ingesteld.`, 'success');
+            showResult(`✅ Mapping "${mappingName}" loaded! ${Object.keys(mapping).length} fields configured.`, 'success');
         }
         
         function showSavedMappings() {
             const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
             const listDiv = document.getElementById('savedMappingsList');
-            
+
             if (Object.keys(savedMappings).length === 0) {
-                listDiv.innerHTML = '<p><em>Geen opgeslagen mappings gevonden</em></p>';
+                listDiv.innerHTML = '<p><em>No saved mappings found</em></p>';
             } else {
-                let html = '<h5>💾 Opgeslagen Mappings:</h5>';
+                let html = '<h5>💾 Saved Mappings:</h5>';
                 Object.keys(savedMappings).forEach(name => {
                     const mapping = savedMappings[name];
-                    const savedDate = new Date(mapping.savedAt).toLocaleDateString('nl-NL');
+                    const savedDate = new Date(mapping.savedAt).toLocaleDateString('en-US');
                     html += `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #eee; border-radius: 4px; margin: 5px 0; background: white;">
                             <div>
                                 <strong>${name}</strong><br>
-                                <small>${mapping.description} - Opgeslagen: ${savedDate}</small>
+                                <small>${mapping.description} - Saved: ${savedDate}</small>
                             </div>
                             <div>
-                                <button onclick="quickLoadMapping('${name}')" class="mapping-btn mapping-load-btn">📂 Laden</button>
-                                <button onclick="deleteMapping('${name}')" class="mapping-btn mapping-delete-btn" title="Mapping verwijderen">🗑️ Verwijder</button>
+                                <button onclick="quickLoadMapping('${name}')" class="mapping-btn mapping-load-btn">📂 Load</button>
+                                <button onclick="deleteMapping('${name}')" class="mapping-btn mapping-delete-btn" title="Remove mapping">🗑️ Delete</button>
                             </div>
                         </div>
                     `;
                 });
                 listDiv.innerHTML = html;
             }
-            
+
             listDiv.style.display = listDiv.style.display === 'none' ? 'block' : 'none';
         }
         
@@ -874,21 +874,21 @@
         }
         
         function deleteMapping(name) {
-            if (confirm(`⚠️ Weet je zeker dat je mapping "${name}" permanent wilt verwijderen?\n\nDeze actie kan niet ongedaan worden gemaakt.`)) {
+            if (confirm(`⚠️ Are you sure you want to permanently delete mapping "${name}"?\n\nThis action cannot be undone.`)) {
                 try {
                     const savedMappings = JSON.parse(localStorage.getItem('csvMappings') || '{}');
-                    
+
                     if (savedMappings[name]) {
                         delete savedMappings[name];
                         localStorage.setItem('csvMappings', JSON.stringify(savedMappings));
-                        showResult(`✅ Mapping "${name}" succesvol verwijderd`, 'success');
+                        showResult(`✅ Mapping "${name}" successfully deleted`, 'success');
                         showSavedMappings(); // Refresh list
                     } else {
-                        showResult(`❌ Mapping "${name}" niet gevonden`, 'error');
+                        showResult(`❌ Mapping "${name}" not found`, 'error');
                     }
                 } catch (error) {
                     console.error('Error deleting mapping:', error);
-                    showResult(`❌ Fout bij verwijderen van mapping "${name}"`, 'error');
+                    showResult(`❌ Error deleting mapping "${name}"`, 'error');
                 }
             }
         }
@@ -927,19 +927,19 @@
                             fieldElement.classList.add('mapped');
                             fieldElement.innerHTML = `
                                 <span class="mapped-column">${headers[index]}</span>
-                                <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Mapping verwijderen">×</button>
+                                <button class="field-clear-btn" onclick="clearMapping('${field}')" title="Remove mapping">×</button>
                             `;
                         }
-                        
+
                         autoMapped++;
                         break;
                     }
                 }
             });
-            
+
             if (autoMapped > 0) {
                 updateImportButton();
-                showResult(`🤖 Auto-mapping toegepast: ${autoMapped} velden automatisch gekoppeld. Controleer en pas aan indien nodig.`, 'success');
+                showResult(`🤖 Auto-mapping applied: ${autoMapped} fields automatically linked. Review and adjust if needed.`, 'success');
             }
         }
 
