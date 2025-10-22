@@ -143,6 +143,9 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 **Utility Functions (regels 9,000-10,507)**
 - `formatDuration()` - regel ~8,600
+- `formatDisplayDate()` - regel ~14687 - Centrale datum formatting DD/MM/YYYY
+  - Used by: 19+ UI locaties voor consistente datum weergave
+  - Future: User preference extensibility (FR-011)
 - `parseRecurringPattern()` - regel ~9,000
 - Email import functies - regels ~9,500-10,000
 - Keyboard shortcuts - regels ~10,000-10,500

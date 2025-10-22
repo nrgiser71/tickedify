@@ -2039,7 +2039,7 @@ class Taakbeheer {
             text = `Over ${diffDays} dagen`;
         } else {
             badgeClass += ' future';
-            text = due.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+            text = this.formatDisplayDate(due);
         }
         
         return `<span class="${badgeClass}">${text}</span>`;
@@ -2283,7 +2283,7 @@ class Taakbeheer {
             html += '<h4 class="project-taken-header">Open actions</h4>';
             openActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
-                const datum = new Date(actie.verschijndatum).toLocaleDateString('nl-NL');
+                const datum = this.formatDisplayDate(actie.verschijndatum);
                 
                 const recurringIndicator = actie.herhalingActief ? '<span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
                 html += `
@@ -2307,7 +2307,7 @@ class Taakbeheer {
             html += '<h4 class="project-taken-header">Afgewerkte acties</h4>';
             afgewerkteActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
-                const afgewerkDatum = new Date(actie.afgewerkt).toLocaleDateString('nl-NL');
+                const afgewerkDatum = this.formatDisplayDate(actie.afgewerkt);
                 
                 html += `
                     <div class="project-actie-item afgewerkt">
@@ -2395,7 +2395,7 @@ class Taakbeheer {
             
             // Show confirmation for recurring task and refresh lists
             if (nextRecurringTaskId) {
-                const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
+                const nextDateFormatted = this.formatDisplayDate(calculatedNextDate);
                 
                 // Refresh all lists to show the new recurring task
                 console.log('<i class="fas fa-redo"></i> Refreshing lists after recurring task creation...');
@@ -3468,7 +3468,7 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             const duurText = taak.duur ? `${taak.duur} min` : '';
             const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
@@ -3680,7 +3680,7 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Datum status indicator
@@ -3764,7 +3764,7 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+            const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Datum status indicator
@@ -4000,7 +4000,7 @@ class Taakbeheer {
                 
                 // Show success message and refresh UI with scroll preservation
                 if (isRecurring && nextRecurringTaskId) {
-                    const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
+                    const nextDateFormatted = this.formatDisplayDate(calculatedNextDate);
                     toast.success(`Task completed! Next recurrence scheduled for ${nextDateFormatted}`);
                     
                     // For recurring tasks, add new task to local arrays immediately
@@ -4900,7 +4900,7 @@ class Taakbeheer {
                 
                 const dagNaam = dagenVoorruit === 0 ? 'today' :
                                dagenVoorruit === 1 ? 'tomorrow' :
-                               `${nieuweDatum.toLocaleDateString('en-US', { weekday: 'long' })} ${nieuweDatum.toLocaleDateString('en-US')}`;
+                               this.formatDisplayDate(nieuweDatum);
 
                 toast.success(`Task scheduled for ${dagNaam}`);
             } else {
@@ -7076,7 +7076,7 @@ class Taakbeheer {
                             <div class="context-item" data-id="${context.id}">
                                 <div class="context-content">
                                     <span class="context-naam">${context.naam}</span>
-                                    <small class="context-info">Created: ${new Date(context.aangemaakt).toLocaleDateString('en-US')}</small>
+                                    <small class="context-info">Created: ${this.formatDisplayDate(context.aangemaakt)}</small>
                                 </div>
                                 <div class="context-acties">
                                     <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Edit"><i class="fas fa-edit"></i></button>
@@ -7488,9 +7488,9 @@ class Taakbeheer {
             taken.forEach(taak => {
                 const projectNaam = this.getProjectNaam(taak.projectId);
                 const contextNaam = this.getContextNaam(taak.contextId);
-                const datum = taak.verschijndatum ? 
-                    new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-                const recurringIndicator = taak.herhalingActief ? 
+                const datum = taak.verschijndatum ?
+                    this.formatDisplayDate(taak.verschijndatum) : '';
+                const recurringIndicator = taak.herhalingActief ?
                     ' <span class="recurring-indicator"><i class="fas fa-redo"></i></span>' : '';
 
                 // Highlight search term in task text
@@ -8325,7 +8325,7 @@ class Taakbeheer {
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
                     <div class="kalender-header">
-                        <h2>${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                        <h2>${this.formatDisplayDate(new Date())}</h2>
                         <div class="header-actions">
                             <span id="totaalGeplandeTijd" class="totaal-tijd">Total: 0 min</span>
                             <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus mode - show only day planning">
@@ -8367,7 +8367,7 @@ class Taakbeheer {
             
             // Format date for display
             const datumString = actie.verschijndatum ?
-                new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'No date';
+                this.formatDisplayDate(actie.verschijndatum) : 'No date';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(actie.verschijndatum);
@@ -8472,7 +8472,7 @@ class Taakbeheer {
                         taskDetails = {
                             project: this.getProjectNaam(actie.project_id || actie.projectId),
                             context: this.getContextNaam(actie.context_id || actie.contextId),
-                            deadline: actie.verschijndatum ? new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : null,
+                            deadline: actie.verschijndatum ? this.formatDisplayDate(actie.verschijndatum) : null,
                             duur: actie.duur,
                             opmerkingen: actie.opmerkingen
                         };
@@ -10509,7 +10509,7 @@ class Taakbeheer {
                 
                 // Handle recurring tasks
                 if (isRecurring && nextRecurringTaskId) {
-                    const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
+                    const nextDateFormatted = this.formatDisplayDate(calculatedNextDate);
                     toast.success(`${taskDisplay} completed! Next recurrence scheduled for ${nextDateFormatted}`);
                     
                     // Refresh all data to show the new recurring task
@@ -10620,7 +10620,7 @@ class Taakbeheer {
         const projectNaam = this.getProjectNaam(taak.projectId);
         const contextNaam = this.getContextNaam(taak.contextId);
         const herhalingIndicator = taak.herhalingActief ? ' 🔄' : '';
-        const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+        const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
         
         return `
             <td title="Taak afwerken">
@@ -10660,7 +10660,7 @@ class Taakbeheer {
         const extraInfo = [];
         if (projectNaam !== 'No project') extraInfo.push(projectNaam);
         if (contextNaam) extraInfo.push('@' + contextNaam);
-        if (taak.verschijndatum) extraInfo.push(new Date(taak.verschijndatum).toLocaleDateString('nl-NL'));
+        if (taak.verschijndatum) extraInfo.push(this.formatDisplayDate(taak.verschijndatum));
         if (taak.duur) extraInfo.push(taak.duur + ' min');
         
         const extraInfoHtml = extraInfo.length > 0 ? 
@@ -11627,12 +11627,7 @@ class Taakbeheer {
                     await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                     
                     // Format datum voor weergave
-                    const datumObj = new Date(targetDate);
-                    const dagNaam = datumObj.toLocaleDateString('nl-NL', { 
-                        weekday: 'long', 
-                        day: 'numeric', 
-                        month: 'long' 
-                    });
+                    const dagNaam = this.formatDisplayDate(targetDate);
                     
                     toast.success(`Task scheduled for ${dagNaam}`);
                     
@@ -11677,8 +11672,8 @@ class Taakbeheer {
         if (response.ok) {
             this.taken = this.taken.filter(t => t.id !== dragData.taakId);
             this.renderActiesLijst();
-            
-            const datumFormatted = new Date(datum).toLocaleDateString('nl-NL');
+
+            const datumFormatted = this.formatDisplayDate(datum);
             toast.success(`Task scheduled for ${datumFormatted}`);
         }
     }
@@ -14667,13 +14662,41 @@ class BijlagenManager {
 
     formatDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleDateString('nl-NL', { 
-            year: 'numeric', 
-            month: 'short', 
+        return date.toLocaleDateString('nl-NL', {
+            year: 'numeric',
+            month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    /**
+     * Formats a date for display in DD/MM/YYYY format
+     * @param {Date|string} dateInput - Date object or ISO string (YYYY-MM-DD)
+     * @param {Object} options - Optional formatting options
+     * @param {boolean} options.includeWeekday - Include weekday name (default: false)
+     * @returns {string} Formatted date string "DD/MM/YYYY"
+     * @throws {Error} If dateInput is invalid or results in NaN
+     */
+    formatDisplayDate(dateInput, options = {}) {
+        // Check for null/undefined first
+        if (dateInput === null || dateInput === undefined) {
+            throw new Error(`Invalid date: ${dateInput}`);
+        }
+
+        const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+        if (isNaN(date.getTime())) {
+            throw new Error(`Invalid date: ${dateInput}`);
+        }
+
+        const formatter = new Intl.DateTimeFormat('nl-NL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+        return formatter.format(date).replace(/-/g, '/');
     }
 
     escapeHtml(text) {
