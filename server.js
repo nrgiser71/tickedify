@@ -4798,11 +4798,17 @@ app.get('/api/tellingen', async (req, res) => {
 // Sidebar counters endpoint - Feature 022
 app.get('/api/counts/sidebar', async (req, res) => {
     try {
-        if (!db) {
+        if (!db || !pool) {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        const userId = getCurrentUserId(req);
+        // Get userId - throw error if not logged in
+        let userId;
+        try {
+            userId = getCurrentUserId(req);
+        } catch (error) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
 
         // Single efficient query to get all 5 counters
         const query = `
@@ -4817,6 +4823,17 @@ app.get('/api/counts/sidebar', async (req, res) => {
         `;
 
         const result = await pool.query(query, [userId]);
+
+        // Safety check for result
+        if (!result || !result.rows || result.rows.length === 0) {
+            return res.json({
+                inbox: 0,
+                acties: 0,
+                projecten: 0,
+                opvolgen: 0,
+                uitgesteld: 0
+            });
+        }
 
         // Convert string counts to integers
         const counts = {
