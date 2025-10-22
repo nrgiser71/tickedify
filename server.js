@@ -4814,8 +4814,9 @@ app.get('/api/counts/sidebar', async (req, res) => {
         const query = `
             SELECT
                 COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
-                COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL THEN 1 END) as acties,
-                COUNT(CASE WHEN project_id IS NOT NULL AND afgewerkt IS NULL THEN 1 END) as projecten,
+                COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL
+                    AND (verschijndatum IS NULL OR verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
+                (SELECT COUNT(*) FROM projecten WHERE user_id = $1 AND actief = true) as projecten,
                 COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
                 COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
             FROM taken
