@@ -6904,7 +6904,7 @@ class Taakbeheer {
                     'projecten': 'Projecten',
                     'opvolgen': 'Opvolgen',
                     'afgewerkte-taken': 'Afgewerkt',
-                    'dagelijkse-planning': 'Dagelijkse Planning',
+                    'dagelijkse-planning': 'Daily Planning',
                     'contextenbeheer': 'Contexten Beheer',
                     'uitgesteld-wekelijks': 'Wekelijks',
                     'uitgesteld-maandelijks': 'Maandelijks',
@@ -6959,7 +6959,7 @@ class Taakbeheer {
                     'projecten': 'Projecten',
                     'opvolgen': 'Opvolgen',
                     'afgewerkte-taken': 'Afgewerkt',
-                    'dagelijkse-planning': 'Dagelijkse Planning',
+                    'dagelijkse-planning': 'Daily Planning',
                     'contextenbeheer': 'Contexten Beheer',
                     'uitgesteld-wekelijks': 'Wekelijks',
                     'uitgesteld-maandelijks': 'Maandelijks',
@@ -8244,7 +8244,7 @@ class Taakbeheer {
                     <span></span>
                     <span></span>
                 </button>
-                <h1>Dagelijkse Planning</h1>
+                <h1>Daily Planning</h1>
             </header>
             
             <div class="dagelijkse-planning-layout">
@@ -8325,14 +8325,14 @@ class Taakbeheer {
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
                     <div class="kalender-header">
-                        <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                        <h2>${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="header-actions">
-                            <span id="totaalGeplandeTijd" class="totaal-tijd">Totaal: 0 min</span>
-                            <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus modus - alleen dagplanning tonen">
+                            <span id="totaalGeplandeTijd" class="totaal-tijd">Total: 0 min</span>
+                            <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus mode - show only day planning">
                                 📺 Focus
                             </button>
-                            <button class="btn-clear-planning" id="btnClearPlanning" title="Planning leegmaken">
-                                🗑️ Leegmaken
+                            <button class="btn-clear-planning" id="btnClearPlanning" title="Clear planning">
+                                🗑️ Clear
                             </button>
                         </div>
                     </div>
@@ -11796,9 +11796,9 @@ class Taakbeheer {
             const minuten = totaalMinuten % 60;
             
             if (uren > 0) {
-                totaalElement.textContent = `Totaal: ${uren}u ${minuten}min`;
+                totaalElement.textContent = `Total: ${uren}h ${minuten}min`;
             } else {
-                totaalElement.textContent = `Totaal: ${minuten}min`;
+                totaalElement.textContent = `Total: ${minuten}min`;
             }
         }
     }
