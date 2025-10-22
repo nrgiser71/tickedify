@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.111 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.111</span>
+                <span class="version-date">22 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔒 Voorkom Duplicate Taak Toevoegingen</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Duplicate Preventie</strong>: Bij snel meerdere keren op Enter drukken of de Toevoegen knop klikken wordt nu alleen de eerste submission uitgevoerd. Extra submissions worden automatisch geblokkeerd tijdens het opslaan.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Guard Check Mechanisme</strong>: De inbox taak toevoeg functie controleert nu of er al een actieve submission bezig is voordat een nieuwe wordt gestart. Dit voorkomt race conditions en duplicate database inserts.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Betere User Experience</strong>: Gebruikers die gewend zijn snel op Enter te drukken of ongeduldig op de knop klikken krijgen nu geen duplicate taken meer. De bescherming werkt voor zowel toetsenbord als muis input.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Visuele Feedback</strong>: De Toevoegen knop krijgt tijdens submission een disabled styling (grijzer, cursor not-allowed) zodat gebruikers duidelijk zien dat het systeem bezig is.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.110 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.110</span>
+                <span class="version-badge badge-feature">v0.19.110</span>
                 <span class="version-date">22 oktober 2025</span>
             </div>
             <div class="changes-list">
