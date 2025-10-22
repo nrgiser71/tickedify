@@ -4600,7 +4600,7 @@ class Taakbeheer {
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
                 
-                <h3>Acties</h3>
+                <h3>Actions</h3>
                 <div class="menu-section">
                     <button onclick="app.verwijderTaak('${taakId}'); app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
@@ -4639,7 +4639,7 @@ class Taakbeheer {
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
                 
-                <h3>Acties</h3>
+                <h3>Actions</h3>
                 <div class="menu-section">
                     <button onclick="app.verwijderTaak('${taakId}'); app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
@@ -7522,14 +7522,14 @@ class Taakbeheer {
     getLijstLabel(lijstNaam) {
         const labels = {
             'inbox': '<i class="ti ti-inbox"></i> Inbox',
-            'acties': '<i class="fas fa-clipboard"></i> Acties',
-            'opvolgen': '⏳ Opvolgen',
-            'afgewerkte-taken': '<i class="fas fa-check"></i> Afgewerkt',
-            'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Wekelijks',
-            'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Maandelijks',
-            'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> 3-maandelijks',
-            'uitgesteld-6maandelijks': '<i class="ti ti-calendar"></i> 6-maandelijks',
-            'uitgesteld-jaarlijks': '<i class="ti ti-calendar"></i> Jaarlijks'
+            'acties': '<i class="fas fa-clipboard"></i> Actions',
+            'opvolgen': '⏳ Follow-up',
+            'afgewerkte-taken': '<i class="fas fa-check"></i> Completed',
+            'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Weekly',
+            'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Monthly',
+            'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> Quarterly',
+            'uitgesteld-6maandelijks': '<i class="ti ti-calendar"></i> Bi-annual',
+            'uitgesteld-jaarlijks': '<i class="ti ti-calendar"></i> Yearly'
         };
         return labels[lijstNaam] || lijstNaam;
     }
@@ -8290,7 +8290,7 @@ class Taakbeheer {
 
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
-                        <h3><i class="fas fa-clipboard"></i> Acties</h3>
+                        <h3><i class="fas fa-clipboard"></i> Actions</h3>
                         <div class="planning-acties-filters">
                             <input type="text" id="planningTaakFilter" placeholder="Search task..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
