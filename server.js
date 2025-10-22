@@ -4785,13 +4785,52 @@ app.get('/api/tellingen', async (req, res) => {
         if (!db) {
             return res.json({}); // Return empty if database not available
         }
-        
+
         const userId = getCurrentUserId(req);
         const tellingen = await db.getCounts(userId);
         res.json(tellingen);
     } catch (error) {
         console.error('Error getting counts:', error);
         res.json({});
+    }
+});
+
+// Sidebar counters endpoint - Feature 022
+app.get('/api/counts/sidebar', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = getCurrentUserId(req);
+
+        // Single efficient query to get all 5 counters
+        const query = `
+            SELECT
+                COUNT(CASE WHEN lijst = 'inbox' AND status = 'actief' THEN 1 END) as inbox,
+                COUNT(CASE WHEN lijst = 'acties' AND status = 'actief' THEN 1 END) as acties,
+                COUNT(CASE WHEN project_id IS NOT NULL AND status = 'actief' THEN 1 END) as projecten,
+                COUNT(CASE WHEN lijst = 'opvolgen' AND status = 'actief' THEN 1 END) as opvolgen,
+                COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND status = 'actief' THEN 1 END) as uitgesteld
+            FROM taken
+            WHERE user_id = $1
+        `;
+
+        const result = await pool.query(query, [userId]);
+
+        // Convert string counts to integers
+        const counts = {
+            inbox: parseInt(result.rows[0].inbox) || 0,
+            acties: parseInt(result.rows[0].acties) || 0,
+            projecten: parseInt(result.rows[0].projecten) || 0,
+            opvolgen: parseInt(result.rows[0].opvolgen) || 0,
+            uitgesteld: parseInt(result.rows[0].uitgesteld) || 0
+        };
+
+        res.json(counts);
+    } catch (error) {
+        console.error('Error getting sidebar counts:', error);
+        res.status(500).json({ error: 'Failed to get sidebar counts' });
     }
 });
 

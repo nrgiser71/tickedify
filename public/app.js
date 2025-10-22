@@ -791,6 +791,12 @@ class Taakbeheer {
         // Add document click listener to close dropdowns
         document.addEventListener('click', (event) => this.handleDocumentClick(event));
         // Data loading happens after authentication check in AuthManager
+
+        // Initialize sidebar counters - Feature 022
+        // Update counters after a short delay to ensure authentication is complete
+        setTimeout(() => {
+            this.debouncedUpdateCounters();
+        }, 500);
     }
 
     // LocalStorage helpers for remembering current list
@@ -3102,6 +3108,51 @@ class Taakbeheer {
             }
         } catch (error) {
             console.error('Error refreshing inbox:', error);
+        }
+    }
+
+    // Sidebar task counters - Feature 022
+    counterUpdateTimer = null;
+
+    debouncedUpdateCounters() {
+        if (this.counterUpdateTimer) {
+            clearTimeout(this.counterUpdateTimer);
+        }
+        this.counterUpdateTimer = setTimeout(() => {
+            this.updateSidebarCounters();
+        }, 300);
+    }
+
+    async updateSidebarCounters() {
+        try {
+            const response = await fetch('/api/counts/sidebar');
+
+            if (!response.ok) {
+                throw new Error(`API failed with status ${response.status}`);
+            }
+
+            const counts = await response.json();
+
+            // Update DOM for all 5 counters
+            const inboxCounter = document.querySelector('[data-lijst="inbox"] .task-count');
+            const actiesCounter = document.querySelector('[data-lijst="acties"] .task-count');
+            const projectenCounter = document.querySelector('[data-lijst="projecten"] .task-count');
+            const opvolgenCounter = document.querySelector('[data-lijst="opvolgen"] .task-count');
+            const uitgesteldCounter = document.querySelector('[data-lijst="uitgesteld"] .task-count');
+
+            if (inboxCounter) inboxCounter.textContent = ` (${counts.inbox})`;
+            if (actiesCounter) actiesCounter.textContent = ` (${counts.acties})`;
+            if (projectenCounter) projectenCounter.textContent = ` (${counts.projecten})`;
+            if (opvolgenCounter) opvolgenCounter.textContent = ` (${counts.opvolgen})`;
+            if (uitgesteldCounter) uitgesteldCounter.textContent = ` (${counts.uitgesteld})`;
+
+        } catch (error) {
+            console.error('Failed to update sidebar counters:', error);
+
+            // Fallback: show (?) in all counters
+            document.querySelectorAll('.task-count').forEach(counter => {
+                counter.textContent = ' (?)';
+            });
         }
     }
 

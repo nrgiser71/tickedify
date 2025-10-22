@@ -3,6 +3,39 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🚨 BÈTA FREEZE - PRODUCTIE DEPLOYMENT ABSOLUTE BLOKKADE 🚨
+
+**KRITIEK - LEES DIT EERST**: Tickedify is IN BÈTA met ECHTE GEBRUIKERS sinds oktober 2025.
+
+### ABSOLUTE VERBODEN - GEEN ENKELE UITZONDERING
+- 🔒 **PRODUCTIE IS BEVROREN** - Main branch mag NIET worden gewijzigd
+- 🔒 **GEEN git push origin main** - ONDER GEEN ENKELE OMSTANDIGHEID
+- 🔒 **GEEN merge naar main** - Ook niet na staging tests
+- 🔒 **GEEN productie deployments** - tickedify.com blijft ongewijzigd
+- 🔒 **GEEN live database wijzigingen** - Productie data is heilig
+
+### WAT WEL MAG TIJDENS BÈTA FREEZE
+- ✅ Feature branches aanmaken en ontwikkelen
+- ✅ Staging deployments (dev.tickedify.com) testen
+- ✅ Pull Requests aanmaken (maar NOOIT mergen naar main)
+- ✅ Code reviews en documentatie
+- ✅ Changelog updates (voor toekomstige release)
+
+### WANNEER WORDT FREEZE OPGEHEVEN?
+- ALLEEN na expliciete gebruiker instructie: "BÈTA FREEZE IS OPGEHEVEN"
+- Tot die tijd: ALLE productie activiteit is GEBLOKKEERD
+- Bij twijfel: VRAAG ALTIJD bevestiging voordat je iets doet met main branch
+
+### WAAROM DEZE STRIKTE FREEZE?
+- Echte bèta gebruikers vertrouwen op stabiele productie
+- Elke productie bug schaadt gebruiker vertrouwen en productiviteit
+- Bèta fase = observatie en bug collecting, NIET nieuwe features pushen
+- Main branch beschermt live gebruiker workflows
+
+**Deze regel overschrijft ALLE andere deployment instructies in dit document.**
+
+---
+
 ## BELANGRIJKE URL VOOR TESTING: tickedify.com/app ⚠️
 
 **KRITIEK**: Voor alle testing en development moet je naar **tickedify.com/app** navigeren, NIET naar:
@@ -73,53 +106,58 @@ Task(subagent_type: "tickedify-feature-builder",
 - 📋 **Gestructureerde output**: Agents leveren gerichte resultaten
 - 🔄 **Herbruikbaarheid**: Workflows en patterns worden herbruikt
 
-## 🚨 KRITIEKE DEPLOYMENT REGELS - BÈTA BESCHERMING
+## 🚨 KRITIEKE DEPLOYMENT REGELS - BÈTA FREEZE ACTIEF
+
+**⚠️ BELANGRIJK: PRODUCTIE IS MOMENTEEL BEVROREN - ZIE BÈTA FREEZE SECTIE BOVENAAN**
 
 **ABSOLUTE VERBODEN ACTIES - GEEN UITZONDERINGEN:**
+- 🔒 **BÈTA FREEZE ACTIEF** - Main branch is VOLLEDIG GEBLOKKEERD
 - ❌ **NOOIT `git push origin main`** - Main branch is PRODUCTIE met BÈTA GEBRUIKERS
-- ❌ **NOOIT direct commits naar main branch** - Altijd via Pull Requests
-- ❌ **NOOIT merge naar main** zonder expliciete gebruiker approval "JA, DEPLOY NAAR PRODUCTIE"
-- ❌ **NOOIT productie deployment** zonder staging test eerst
+- ❌ **NOOIT direct commits naar main branch** - Zelfs niet via Pull Requests tijdens freeze
+- ❌ **NOOIT merge naar main** - GEBLOKKEERD tijdens bèta freeze periode
+- ❌ **NOOIT productie deployment** - tickedify.com blijft ongewijzigd tot freeze lift
 
-**VERPLICHTE WORKFLOW - ELKE ONTWIKKELING:**
-- ✅ **ALTIJD `git branch` controleren** voordat je commits
-- ✅ **ALTIJD werken op develop branch** voor alle features en bugfixes
-- ✅ **ALTIJD staging deployment testen** voordat je productie voorstelt
-- ✅ **ALTIJD expliciete toestemming vragen** voor productie deployment
+**TOEGESTANE WORKFLOW TIJDENS BÈTA FREEZE:**
+- ✅ **Feature branches aanmaken** - Ontwikkel vrijelijk op feature branches
+- ✅ **ALTIJD staging deployment testen** - dev.tickedify.com is de max
+- ✅ **Pull Requests aanmaken** - Voor code review, maar NIET mergen
+- ✅ **Changelog updates** - Voorbereiden voor toekomstige release
+- ❌ **GEEN productie deployment** - Wacht op "BÈTA FREEZE IS OPGEHEVEN" bericht
 
-**BRANCH WORKFLOW:**
+**BRANCH WORKFLOW (AANGEPAST VOOR BÈTA FREEZE):**
 ```
-develop branch → staging test (dev.tickedify.com) → PR naar main → productie (tickedify.com)
+feature branch → staging test (dev.tickedify.com) → PR aanmaken → WACHT OP FREEZE LIFT
+                                                                      ↓
+                                              (na freeze lift) → merge naar main → productie
 ```
 
-**EMERGENCY HOTFIX PROTOCOL:**
+**EMERGENCY HOTFIX PROTOCOL (AANGEPAST):**
 1. Meld kritieke bug: "🚨 Kritieke bug gevonden: [beschrijving]"
 2. Branch: `git checkout -b hotfix/bug-naam`
 3. Fix implementeren op hotfix branch
 4. Test op staging: Deploy naar dev.tickedify.com
-5. Vraag expliciet: "Hotfix getest op staging - klaar voor PRODUCTIE?"
-6. WACHT op expliciete bevestiging "JA, DEPLOY NAAR PRODUCTIE"
-7. Dan pas Pull Request naar main
+5. Documenteer hotfix in PR
+6. **WACHT OP BÈTA FREEZE LIFT** - Zelfs critical fixes wachten tijdens bèta freeze
+7. Na freeze lift: Merge naar main met expliciete approval
 
 **VEILIGHEIDSCHECK BIJ ELKE GIT ACTIE:**
 ```bash
 1. git branch  # Controleer huidige branch
-2. Als main → STOP! Switch naar develop
-3. Als develop → OK, ga door
-4. Bij twijfel → vraag user bevestiging
+2. Als main → STOP! BÈTA FREEZE ACTIEF - Switch naar feature branch
+3. Als feature branch → OK, ontwikkel en test op staging
+4. Bij twijfel → CHECK BÈTA FREEZE STATUS bovenaan CLAUDE.md
 ```
 
 **WAAROM DIT KRITIEK IS:**
-- Tickedify heeft vanaf september 2025 **echte bèta gebruikers**
-- Productie bugs = verlies van gebruiker vertrouwen
+- Tickedify heeft sinds oktober 2025 **echte bèta gebruikers**
+- Bèta freeze beschermt gebruiker workflows tijdens observatie periode
+- Productie bugs = verlies van gebruiker vertrouwen en data
 - Main branch = LIVE systeem met echte productiviteit workflows
-- Deze regels beschermen de bèta launch en gebruiker experience
+- Deze regels beschermen de bèta gebruikers en hun vertrouwen
 
 ## Claude Development & Testing Autonomie
 
-**KRITIEK BELANGRIJK**: Jan is momenteel de ENIGE gebruiker van Tickedify. Het systeem is NIET live voor publiek gebruik.
-
-**SYSTEEM ARCHITECTUUR**: Tickedify is technisch gezien een **multi-user systeem** met database schema en code ondersteuning voor meerdere gebruikers, maar wordt momenteel alleen door Jan gebruikt voor development en testing doeleinden.
+**SYSTEEM ARCHITECTUUR**: Tickedify is technisch gezien een **multi-user systeem** met database schema en code ondersteuning voor meerdere gebruikers.
 
 **AUTONOMIE TOEGESTAAN BINNEN STAGING ENVIRONMENT:**
 - ✅ **Code aanpassingen**: Vrijelijk alle bestanden bewerken op develop branch
@@ -138,12 +176,13 @@ develop branch → staging test (dev.tickedify.com) → PR naar main → product
 - Staging deployment en testing cycles
 - Changelog updates voor development features
 
-**PRODUCTIE APPROVAL VEREIST:**
-- ❌ **Alle wijzigingen naar main branch** - Altijd PR met approval
-- ❌ **Productie deployments** - Expliciete "JA, DEPLOY NAAR PRODUCTIE" vereist
-- ❌ **Live database wijzigingen** - Eerst staging test, dan approval
-- ❌ **Externe service wijzigingen** (DNS, Mailgun, GitHub settings)
-- ❌ **Grote architecturale beslissingen** die productie beïnvloeden
+**PRODUCTIE APPROVAL VEREIST (MOMENTEEL GEBLOKKEERD DOOR BÈTA FREEZE):**
+- 🔒 **BÈTA FREEZE ACTIEF** - Alle productie activiteit is geblokkeerd
+- ❌ **Alle wijzigingen naar main branch** - GEBLOKKEERD tot freeze lift
+- ❌ **Productie deployments** - GEBLOKKEERD tot "BÈTA FREEZE IS OPGEHEVEN"
+- ❌ **Live database wijzigingen** - GEBLOKKEERD tijdens bèta freeze
+- ❌ **Externe service wijzigingen** (DNS, Mailgun, GitHub settings) - GEBLOKKEERD
+- ❌ **Grote architecturale beslissingen** die productie beïnvloeden - Wacht op freeze lift
 
 **CHANGELOG ONDERHOUD VERPLICHT:**
 - ✅ **Bij elke code wijziging**: Automatisch changelog entry toevoegen
@@ -152,9 +191,9 @@ develop branch → staging test (dev.tickedify.com) → PR naar main → product
 - ✅ **Gebruiker feedback**: Changelog als communicatie tool naar gebruiker
 
 **WERK ZO ZELFSTANDIG MOGELIJK BINNEN STAGING:**
-Claude moet zo zelfstandig mogelijk werken op develop branch en staging environment. Voor productie deployments altijd expliciete approval vragen. De bèta launch vereist absolute zekerheid over productie stabiliteit.
+Claude moet zo zelfstandig mogelijk werken op feature branches en staging environment. Productie deployments zijn GEBLOKKEERD tijdens de bèta freeze periode. De bèta fase vereist absolute productie stabiliteit - nieuwe features worden ontwikkeld en getest op staging, maar NIET naar productie gepusht tot de freeze wordt opgeheven.
 
-**Deze staging autonomie geldt permanent voor veilige development cycles.**
+**Deze staging autonomie geldt permanent voor veilige development cycles. Productie blijft bevroren tot expliciete freeze lift.**
 
 ## ARCHITECTUUR DOCUMENTATIE VERPLICHT GEBRUIK 📋
 

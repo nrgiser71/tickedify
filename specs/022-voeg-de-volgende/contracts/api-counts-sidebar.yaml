@@ -1,0 +1,128 @@
+openapi: 3.0.0
+info:
+  title: Sidebar Task Counters API
+  version: 1.0.0
+  description: API endpoint voor het ophalen van taak tellers voor sidebar navigatie
+
+paths:
+  /api/counts/sidebar:
+    get:
+      summary: Haal taak tellers op voor sidebar categorieën
+      description: |
+        Retourneert het aantal actieve taken voor elk van de 5 sidebar categorieën:
+        Inbox, Acties, Projecten, Opvolgen, en Uitgesteld.
+        Alleen taken met status='actief' worden meegeteld.
+      tags:
+        - Counts
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Succesvolle response met alle taak tellers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SidebarCounts'
+              examples:
+                typical:
+                  summary: Typische werkvoorraad
+                  value:
+                    inbox: 12
+                    acties: 8
+                    projecten: 15
+                    opvolgen: 3
+                    uitgesteld: 5
+                empty:
+                  summary: Lege state (nieuwe user)
+                  value:
+                    inbox: 0
+                    acties: 0
+                    projecten: 0
+                    opvolgen: 0
+                    uitgesteld: 0
+                heavy:
+                  summary: Veel taken in één categorie
+                  value:
+                    inbox: 50
+                    acties: 2
+                    projecten: 1
+                    opvolgen: 0
+                    uitgesteld: 0
+        '401':
+          description: Niet geauthenticeerd - gebruiker moet ingelogd zijn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Niet geauthenticeerd"
+        '500':
+          description: Server error bij database query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Database query failed"
+
+components:
+  schemas:
+    SidebarCounts:
+      type: object
+      required:
+        - inbox
+        - acties
+        - projecten
+        - opvolgen
+        - uitgesteld
+      properties:
+        inbox:
+          type: integer
+          minimum: 0
+          description: Aantal taken in Inbox (lijst='inbox', status='actief')
+          example: 12
+        acties:
+          type: integer
+          minimum: 0
+          description: Aantal taken in Acties (lijst='acties', status='actief')
+          example: 8
+        projecten:
+          type: integer
+          minimum: 0
+          description: Aantal taken met project (project_id IS NOT NULL, status='actief')
+          example: 15
+        opvolgen:
+          type: integer
+          minimum: 0
+          description: Aantal taken in Opvolgen (lijst='opvolgen', status='actief')
+          example: 3
+        uitgesteld:
+          type: integer
+          minimum: 0
+          description: Aantal uitgestelde taken (lijst LIKE 'uitgesteld-%', status='actief')
+          example: 5
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Foutmelding
+          example: "Database query failed"
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie voor authenticatie
+
+# Contract Test Requirements
+# 1. Test 200 response met alle 5 velden aanwezig
+# 2. Test dat alle velden >= 0 zijn
+# 3. Test 401 response zonder session cookie
+# 4. Test dat counts correct zijn na create/delete/move operaties
+# 5. Test dat alleen status='actief' taken worden geteld
+# 6. Test performance (<200ms response tijd)
