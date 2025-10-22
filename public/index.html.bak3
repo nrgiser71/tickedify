@@ -188,7 +188,7 @@
             <div class="shortcuts-content">
                 <span class="shortcut-item"><kbd>Shift+F12</kbd> New task</span>
                 <span class="shortcut-item"><kbd>?</kbd> Help</span>
-                <span class="shortcut-item"><kbd>ESC</kbd> Close</span>
+                <span class="shortcut-item"><kbd>ESC</kbd> Sluiten</span>
             </div>
         </footer>
     </div>
@@ -213,7 +213,7 @@
             <h3><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h3>
             <div class="shortcuts-grid">
                 <div class="shortcuts-category">
-                    <h4>General</h4>
+                    <h4>Algemeen</h4>
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F12</kbd></span>
@@ -221,11 +221,11 @@
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F1</kbd></span>
-                            <span class="shortcut-desc">Show this help</span>
+                            <span class="shortcut-desc">Deze help tonen</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>ESC</kbd></span>
-                            <span class="shortcut-desc">Close modal</span>
+                            <span class="shortcut-desc">Modal sluiten</span>
                         </div>
                     </div>
                 </div>
@@ -234,11 +234,11 @@
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>Tab</kbd></span>
-                            <span class="shortcut-desc">Navigate between fields</span>
+                            <span class="shortcut-desc">Tussen velden navigeren</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>+</kbd></span>
-                            <span class="shortcut-desc">New project/context</span>
+                            <span class="shortcut-desc">Nieuw project/context</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>Enter</kbd></span>
@@ -247,7 +247,7 @@
                     </div>
                 </div>
                 <div class="shortcuts-category">
-                    <h4>F-keys (Planning Popup)</h4>
+                    <h4>F-toetsen (Planning Popup)</h4>
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F2</kbd></span>
@@ -271,11 +271,11 @@
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F8</kbd></span>
-                            <span class="shortcut-desc">Cycle duration (5→10→15...→120)</span>
+                            <span class="shortcut-desc">Cyclische duur (5→10→15...→120)</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F9</kbd></span>
-                            <span class="shortcut-desc">Focus notes</span>
+                            <span class="shortcut-desc">Focus opmerkingen</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F10</kbd></span>
@@ -288,31 +288,31 @@
                     </div>
                 </div>
                 <div class="shortcuts-category">
-                    <h4>Quick move (SHIFT+F)</h4>
+                    <h4>Snel verplaatsen (SHIFT+F)</h4>
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F1</kbd></span>
-                            <span class="shortcut-desc">Follow-up</span>
+                            <span class="shortcut-desc">Opvolgen</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F2</kbd></span>
-                            <span class="shortcut-desc">Weekly</span>
+                            <span class="shortcut-desc">Wekelijks</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F3</kbd></span>
-                            <span class="shortcut-desc">Monthly</span>
+                            <span class="shortcut-desc">Maandelijks</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F4</kbd></span>
-                            <span class="shortcut-desc">Quarterly</span>
+                            <span class="shortcut-desc">3-maandelijks</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F6</kbd></span>
-                            <span class="shortcut-desc">Bi-annual</span>
+                            <span class="shortcut-desc">6-maandelijks</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F7</kbd></span>
-                            <span class="shortcut-desc">Yearly</span>
+                            <span class="shortcut-desc">Jaarlijks</span>
                         </div>
                     </div>
                 </div>
@@ -421,7 +421,7 @@
                 <div class="subtaken-container" id="subtaken-container">
                     <div class="subtaken-empty" id="subtaken-empty">
                         <i class="fas fa-tasks"></i>
-                        <span>No subtasks - click + to add</span>
+                        <span>Geen subtaken - klik + om toe te voegen</span>
                     </div>
                     
                     <div class="subtaken-lijst" id="subtaken-lijst">
@@ -434,7 +434,7 @@
                             <button type="button" class="subtaak-save-btn" id="subtaak-save-btn" title="Save">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Cancel">
+                            <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Annuleren">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -465,10 +465,10 @@
                     <div class="upgrade-content">
                         <i class="fas fa-star"></i>
                         <div class="upgrade-text">
-                            <strong>Upgrade to Premium</strong>
-                            <p>Standard (€7/month, €70/year): 100MB storage | Premium Plus (€8/month, €80/year): Unlimited attachments</p>
+                            <strong>Upgrade naar Premium</strong>
+                            <p>Standard (€7/maand, €70/jaar): 100MB opslag | Premium Plus (€8/maand, €80/jaar): Ongelimiteerde bijlagen</p>
                         </div>
-                        <button class="upgrade-btn" id="upgrade-btn">View options</button>
+                        <button class="upgrade-btn" id="upgrade-btn">Bekijk opties</button>
                     </div>
                 </div>
             </div>
@@ -476,7 +476,7 @@
             <div class="popup-acties">
                 <button type="button" id="sluitPopupBtn">Cancel</button>
                 <button type="button" id="verwijderInboxTaakBtn" class="verwijder-btn" style="display: none;">Delete</button>
-                <button type="button" id="maakActieBtn" class="actie-btn">Create action</button>
+                <button type="button" id="maakActieBtn" class="actie-btn">Maak actie</button>
             </div>
         </div>
     </div>
@@ -489,74 +489,74 @@
             <div class="herhaling-configuratie">
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingNone" name="herhalingType" value="" checked>
-                    <label for="herhalingNone">No recurrence</label>
+                    <label for="herhalingNone">Geen herhaling</label>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingDaily" name="herhalingType" value="daily">
-                    <label for="herhalingDaily">Daily - Every</label>
+                    <label for="herhalingDaily">Dagelijks - Elke</label>
                     <input type="number" id="dailyInterval" min="1" max="30" value="1" disabled>
-                    <span>days</span>
+                    <span>dagen</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingWorkdays" name="herhalingType" value="workdays">
-                    <label for="herhalingWorkdays">Every weekday (Mon-Fri)</label>
+                    <label for="herhalingWorkdays">Elke werkdag (ma-vr)</label>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingWeekly" name="herhalingType" value="weekly">
-                    <label for="herhalingWeekly">Weekly - Every</label>
+                    <label for="herhalingWeekly">Wekelijks - Elke</label>
                     <input type="number" id="weeklyInterval" min="1" max="12" value="1" disabled>
-                    <span>weeks on:</span>
+                    <span>weken op:</span>
                     <div class="weekdag-checkboxes">
-                        <label><input type="checkbox" value="1" disabled> Mon</label>
-                        <label><input type="checkbox" value="2" disabled> Tue</label>
-                        <label><input type="checkbox" value="3" disabled> Wed</label>
-                        <label><input type="checkbox" value="4" disabled> Thu</label>
-                        <label><input type="checkbox" value="5" disabled> Fri</label>
-                        <label><input type="checkbox" value="6" disabled> Sat</label>
-                        <label><input type="checkbox" value="0" disabled> Sun</label>
+                        <label><input type="checkbox" value="1" disabled> Ma</label>
+                        <label><input type="checkbox" value="2" disabled> Di</label>
+                        <label><input type="checkbox" value="3" disabled> Wo</label>
+                        <label><input type="checkbox" value="4" disabled> Do</label>
+                        <label><input type="checkbox" value="5" disabled> Vr</label>
+                        <label><input type="checkbox" value="6" disabled> Za</label>
+                        <label><input type="checkbox" value="0" disabled> Zo</label>
                     </div>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingMonthly" name="herhalingType" value="monthly">
-                    <label for="herhalingMonthly">Monthly - Day</label>
+                    <label for="herhalingMonthly">Maandelijks - Dag</label>
                     <input type="number" id="monthlyDay" min="1" max="31" value="1" disabled>
-                    <span>of every</span>
+                    <span>van elke</span>
                     <input type="number" id="monthlyInterval" min="1" max="12" value="1" disabled>
-                    <span>months</span>
+                    <span>maanden</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingMonthlyWeekday" name="herhalingType" value="monthly-weekday">
-                    <label for="herhalingMonthlyWeekday">Monthly - The</label>
+                    <label for="herhalingMonthlyWeekday">Maandelijks - De</label>
                     <select id="monthlyWeekdayPosition" disabled>
-                        <option value="first">first</option>
-                        <option value="second">second</option>
-                        <option value="third">third</option>
-                        <option value="fourth">fourth</option>
-                        <option value="last">last</option>
+                        <option value="first">eerste</option>
+                        <option value="second">tweede</option>
+                        <option value="third">derde</option>
+                        <option value="fourth">vierde</option>
+                        <option value="last">laatste</option>
                     </select>
                     <select id="monthlyWeekdayDay" disabled>
-                        <option value="1">Monday</option>
-                        <option value="2">Tuesday</option>
-                        <option value="3">Wednesday</option>
-                        <option value="4">Thursday</option>
-                        <option value="5">Friday</option>
-                        <option value="6">Saturday</option>
-                        <option value="0">Sunday</option>
-                        <option value="workday">workday</option>
+                        <option value="1">maandag</option>
+                        <option value="2">dinsdag</option>
+                        <option value="3">woensdag</option>
+                        <option value="4">donderdag</option>
+                        <option value="5">vrijdag</option>
+                        <option value="6">zaterdag</option>
+                        <option value="0">zondag</option>
+                        <option value="workday">werkdag</option>
                     </select>
-                    <span>of every</span>
+                    <span>van elke</span>
                     <input type="number" id="monthlyWeekdayInterval" min="1" max="12" value="1" disabled>
-                    <span>months</span>
+                    <span>maanden</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingYearly" name="herhalingType" value="yearly">
-                    <label for="herhalingYearly">Yearly - Every</label>
+                    <label for="herhalingYearly">Jaarlijks - Elke</label>
                     <select id="yearlyDay" disabled>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -591,46 +591,46 @@
                         <option value="31">31</option>
                     </select>
                     <select id="yearlyMonth" disabled>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
+                        <option value="1">januari</option>
+                        <option value="2">februari</option>
+                        <option value="3">maart</option>
+                        <option value="4">april</option>
+                        <option value="5">mei</option>
+                        <option value="6">juni</option>
+                        <option value="7">juli</option>
+                        <option value="8">augustus</option>
+                        <option value="9">september</option>
+                        <option value="10">oktober</option>
+                        <option value="11">november</option>
+                        <option value="12">december</option>
                     </select>
-                    <span>of every</span>
+                    <span>van elke</span>
                     <input type="number" id="yearlyInterval" min="1" max="5" value="1" disabled>
-                    <span>year</span>
+                    <span>jaar</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingYearlySpecial" name="herhalingType" value="yearly-special">
-                    <label for="herhalingYearlySpecial">Yearly special - The</label>
+                    <label for="herhalingYearlySpecial">Jaarlijks speciaal - De</label>
                     <select id="yearlySpecialType" disabled>
-                        <option value="first-workday">first workday of the year</option>
-                        <option value="last-workday">last workday of the year</option>
+                        <option value="first-workday">eerste werkdag van het jaar</option>
+                        <option value="last-workday">laatste werkdag van het jaar</option>
                     </select>
-                    <span>of every</span>
+                    <span>van elke</span>
                     <input type="number" id="yearlySpecialInterval" min="1" max="5" value="1" disabled>
-                    <span>year</span>
+                    <span>jaar</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingEvent" name="herhalingType" value="gebeurtenis-gebaseerd">
                     <label for="herhalingEvent">Event-based -</label>
                     <input type="number" id="eventDays" min="1" max="365" value="1" disabled>
-                    <span>days</span>
+                    <span>dagen</span>
                     <select id="eventDirection" disabled>
-                        <option value="voor">before</option>
-                        <option value="na">after</option>
+                        <option value="voor">voor</option>
+                        <option value="na">na</option>
                     </select>
-                    <input type="text" id="eventName" placeholder="e.g. webinar, meeting..." disabled>
+                    <input type="text" id="eventName" placeholder="bijv. webinar, vergadering..." disabled>
                 </div>
             </div>
             
@@ -644,8 +644,8 @@
     <!-- Gebeurtenis Datum Popup -->
     <div id="eventDatePopup" class="popup-overlay" style="display: none;">
         <div class="popup-content">
-            <h3>Recurring task completed</h3>
-            <p id="eventPromptText">When is the next event?</p>
+            <h3>Herhalende taak afgevinkt</h3>
+            <p id="eventPromptText">Wanneer is de volgende gebeurtenis?</p>
             
             <div class="form-groep">
                 <label id="eventDateLabel">Event date:</label>
@@ -675,7 +675,7 @@
         <div class="popup-content">
             <h3 id="inputModalTitle">Input</h3>
             <div class="form-groep">
-                <label id="inputModalLabel">Enter value:</label>
+                <label id="inputModalLabel">Voer waarde in:</label>
                 <input type="text" id="inputModalInput" required>
             </div>
             <div class="popup-acties">
@@ -699,7 +699,7 @@
             </div>
             <div class="form-groep">
                 <label for="projectModalOpmerkingen">Notes:</label>
-                <textarea id="projectModalOpmerkingen" rows="4" placeholder="Optional notes about this project..."></textarea>
+                <textarea id="projectModalOpmerkingen" rows="4" placeholder="Optionele opmerkingen over dit project..."></textarea>
             </div>
             <div class="popup-acties">
                 <button id="projectModalCancel">Cancel</button>
@@ -711,8 +711,8 @@
     <!-- Custom Confirm Modal -->
     <div id="confirmModal" class="popup-overlay" style="display: none;">
         <div class="popup-content">
-            <h3 id="confirmModalTitle">Confirm</h3>
-            <p id="confirmModalMessage">Are you sure?</p>
+            <h3 id="confirmModalTitle">Bevestigen</h3>
+            <p id="confirmModalMessage">Weet je het zeker?</p>
             <div class="popup-acties">
                 <button id="confirmModalCancel">Cancel</button>
                 <button id="confirmModalOk" class="actie-btn">OK</button>
@@ -730,12 +730,12 @@
                     <input type="email" id="loginEmail" required>
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Password:</label>
+                    <label for="loginPassword">Wachtwoord:</label>
                     <input type="password" id="loginPassword" required>
                 </div>
                 <div class="popup-acties">
                     <button type="button" id="loginCancel">Cancel</button>
-                    <button type="submit" class="actie-btn" id="loginSubmit">Log in</button>
+                    <button type="submit" class="actie-btn" id="loginSubmit">Inloggen</button>
                 </div>
             </form>
         </div>
@@ -744,7 +744,7 @@
     <!-- Register Modal -->
     <div id="registerModal" class="popup-overlay" style="display: none;">
         <div class="popup-content auth-modal">
-            <h3>Create Account</h3>
+            <h3>Account Aanmaken</h3>
             <form id="registerForm">
                 <div class="form-group">
                     <label for="registerName">Name:</label>
@@ -755,7 +755,7 @@
                     <input type="email" id="registerEmail" required>
                 </div>
                 <div class="form-group">
-                    <label for="registerPassword">Password:</label>
+                    <label for="registerPassword">Wachtwoord:</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="registerPassword" required>
                         <button type="button" id="toggle-password-visibility" aria-label="Toon wachtwoord" title="Toon wachtwoord">
@@ -773,12 +773,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="registerPasswordConfirm">Confirm password:</label>
+                    <label for="registerPasswordConfirm">Wachtwoord bevestigen:</label>
                     <input type="password" id="registerPasswordConfirm" required>
                 </div>
                 <div class="popup-acties">
                     <button type="button" id="registerCancel">Cancel</button>
-                    <button type="submit" class="actie-btn" id="registerSubmit">Create Account</button>
+                    <button type="submit" class="actie-btn" id="registerSubmit">Account Aanmaken</button>
                 </div>
             </form>
         </div>
@@ -801,14 +801,14 @@
                 </div>
                 
                 <div class="form-groep" id="bugDetails" style="display: none;">
-                    <label for="feedbackStappen">Steps to reproduce</label>
+                    <label for="feedbackStappen">Stappen om te reproduceren</label>
                     <textarea id="feedbackStappen" rows="4" 
                         placeholder="1. Ga naar...&#10;2. Klik op...&#10;3. Het probleem is..."></textarea>
                 </div>
                 
                 <div class="popup-acties">
                     <button type="button" id="feedbackCancel">Cancel</button>
-                    <button type="submit" id="feedbackSubmit" class="actie-btn">Send</button>
+                    <button type="submit" id="feedbackSubmit" class="actie-btn">Verzenden</button>
                 </div>
             </form>
         </div>
@@ -826,16 +826,16 @@
                 </label>
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearPauzes" checked>
-                    <span>Remove breaks</span>
+                    <span>Pauzes verwijderen</span>
                 </label>
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearGeblokkeerd" checked>
-                    <span>Remove blocked time</span>
+                    <span>Geblokkeerde tijd verwijderen</span>
                 </label>
             </div>
             <div class="popup-acties clear-planning-actions">
                 <button type="button" id="clearPlanningCancel" class="btn-cancel">Cancel</button>
-                <button type="button" id="clearPlanningConfirm" class="btn-danger">Clear</button>
+                <button type="button" id="clearPlanningConfirm" class="btn-danger">Leegmaken</button>
             </div>
         </div>
     </div>
@@ -941,7 +941,7 @@
                 <div class="list-zones">
                     <div class="drop-zone-item" data-target="opvolgen" data-type="list">
                         <i class="fas fa-clock"></i>
-                        <span>Follow-up</span>
+                        <span>Opvolgen</span>
                     </div>
                     
                     <!-- Extra ruimte tussen Opvolgen en Uitgesteld lijsten -->
@@ -949,23 +949,23 @@
                     
                     <div class="drop-zone-item" data-target="uitgesteld-wekelijks" data-type="list">
                         <i class="fas fa-pause-circle"></i>
-                        <span>Weekly</span>
+                        <span>Wekelijks</span>
                     </div>
                     <div class="drop-zone-item" data-target="uitgesteld-maandelijks" data-type="list">
                         <i class="fas fa-pause-circle"></i>
-                        <span>Monthly</span>
+                        <span>Maandelijks</span>
                     </div>
                     <div class="drop-zone-item" data-target="uitgesteld-3maandelijks" data-type="list">
                         <i class="fas fa-pause-circle"></i>
-                        <span>Quarterly</span>
+                        <span>3-maandelijks</span>
                     </div>
                     <div class="drop-zone-item" data-target="uitgesteld-6maandelijks" data-type="list">
                         <i class="fas fa-pause-circle"></i>
-                        <span>Bi-annual</span>
+                        <span>6-maandelijks</span>
                     </div>
                     <div class="drop-zone-item" data-target="uitgesteld-jaarlijks" data-type="list">
                         <i class="fas fa-pause-circle"></i>
-                        <span>Yearly</span>
+                        <span>Jaarlijks</span>
                     </div>
                 </div>
             </div>
@@ -1000,27 +1000,27 @@
                 
                 <!-- Uitgesteld lijsten sectie - derde -->
                 <div class="drop-section uitgesteld-section">
-                    <h4>Deferred</h4>
+                    <h4>Uitgesteld</h4>
                     <div class="drop-zones-row">
                         <div class="drop-zone-item" data-target="uitgesteld-wekelijks">
                             <i class="fas fa-pause-circle"></i>
-                            <span>Weekly</span>
+                            <span>Wekelijks</span>
                         </div>
                         <div class="drop-zone-item" data-target="uitgesteld-maandelijks">
                             <i class="fas fa-pause-circle"></i>
-                            <span>Monthly</span>
+                            <span>Maandelijks</span>
                         </div>
                         <div class="drop-zone-item" data-target="uitgesteld-3maandelijks">
                             <i class="fas fa-pause-circle"></i>
-                            <span>Quarterly</span>
+                            <span>3-maandelijks</span>
                         </div>
                         <div class="drop-zone-item" data-target="uitgesteld-6maandelijks">
                             <i class="fas fa-pause-circle"></i>
-                            <span>Bi-annual</span>
+                            <span>6-maandelijks</span>
                         </div>
                         <div class="drop-zone-item" data-target="uitgesteld-jaarlijks">
                             <i class="fas fa-pause-circle"></i>
-                            <span>Yearly</span>
+                            <span>Jaarlijks</span>
                         </div>
                     </div>
                 </div>
@@ -1031,7 +1031,7 @@
                     <div class="drop-zones-row">
                         <div class="drop-zone-item" data-target="opvolgen">
                             <i class="fas fa-clock"></i>
-                            <span>Follow-up</span>
+                            <span>Opvolgen</span>
                         </div>
                     </div>
                 </div>

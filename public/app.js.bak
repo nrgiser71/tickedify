@@ -2185,13 +2185,13 @@ class Taakbeheer {
         
         const actiesInfo = await this.telActiesPerProject(id);
         const totaalActies = actiesInfo.open + actiesInfo.afgewerkt;
-        let bevestigingsTekst = `Are you sure you want to delete project "${project.naam}"?`;
-
+        let bevestigingsTekst = `Weet je zeker dat je project "${project.naam}" wilt verwijderen?`;
+        
         if (totaalActies > 0) {
-            bevestigingsTekst += `\n\nWarning: There are still ${totaalActies} ${totaalActies === 1 ? 'action' : 'actions'} linked to this project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed). They will lose their project connection.`;
+            bevestigingsTekst += `\n\nLet op: Er zijn nog ${totaalActies} ${totaalActies === 1 ? 'actie' : 'acties'} gekoppeld aan dit project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt). Deze zullen hun projectkoppeling verliezen.`;
         }
-
-        const bevestiging = await confirmModal.show('Delete Project', bevestigingsTekst);
+        
+        const bevestiging = await confirmModal.show('Project Verwijderen', bevestigingsTekst);
         if (!bevestiging) return;
         
         this.projecten = this.projecten.filter(p => p.id !== id);
@@ -4183,7 +4183,7 @@ class Taakbeheer {
             return;
         }
         
-        const bevestiging = await confirmModal.show('Delete Task', `Are you sure you want to delete "${taak.tekst}"?`);
+        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
         
         await loading.withLoading(async () => {
@@ -5263,7 +5263,7 @@ class Taakbeheer {
                 return false;
             }
         } catch (error) {
-            console.error(`Error moving to ${lijstNaam}:`, error);
+            console.error(`Fout bij verplaatsen naar ${lijstNaam}:`, error);
             return false;
         }
     }
@@ -7967,7 +7967,7 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${naam}" added`);
+            toast.success(`Context "${naam}" toegevoegd`);
         }, {
             operationId: 'add-context',
             showGlobal: true,
@@ -8005,8 +8005,8 @@ class Taakbeheer {
         if (!context) return;
 
         const bevestiging = await confirmModal.show(
-            'Delete Context',
-            `Are you sure you want to delete context "${context.naam}"?\n\nThis action cannot be undone.`
+            'Context Verwijderen', 
+            `Weet je zeker dat je context "${context.naam}" wilt verwijderen?\n\nDeze actie kan niet ongedaan worden gemaakt.`
         );
         if (!bevestiging) return;
 
@@ -8018,7 +8018,7 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${context.naam}" removed`);
+            toast.success(`Context "${context.naam}" verwijderd`);
         }, {
             operationId: 'delete-context',
             showGlobal: true,
@@ -8061,7 +8061,7 @@ class Taakbeheer {
                 this.eventDateResolver = null;
             }
         } else {
-            toast.warning('Please enter a valid date.');
+            toast.warning('Voer een geldige datum in.');
         }
     }
 
@@ -8682,14 +8682,14 @@ class Taakbeheer {
                 
                 // Refresh the current planning display
                 await this.renderDagelijksePlanning();
-
-                toast.success(`Subtask ${newStatus ? 'completed' : 'reopened'}`);
+                
+                toast.success(`Subtaak ${newStatus ? 'afgerond' : 'heropend'}`);
             } else {
-                toast.error('Error updating subtask');
+                toast.error('Fout bij bijwerken subtaak');
             }
         } catch (error) {
             console.error('Error toggling planning subtaak:', error);
-            toast.error('Error updating subtask');
+            toast.error('Fout bij bijwerken subtaak');
         }
     }
 
@@ -9627,9 +9627,9 @@ class Taakbeheer {
                 // Update sidebar counters after drag & drop - Feature 022
                 this.debouncedUpdateCounters();
 
-                toast.success('Planning item added!');
+                toast.success('Planning item toegevoegd!');
             } else {
-                toast.error('Error adding planning item');
+                toast.error('Fout bij toevoegen planning item');
             }
     }
 
@@ -10029,12 +10029,12 @@ class Taakbeheer {
                 this.updateTotaalTijd(); // Update total time
                 
                 if (data.currentUur !== targetUur) {
-                    toast.success(`Item moved to ${targetUur.toString().padStart(2, '0')}:00`);
+                    toast.success(`Item verplaatst naar ${targetUur.toString().padStart(2, '0')}:00`);
                 } else {
-                    toast.success('Item reordered!');
+                    toast.success('Item herordend!');
                 }
             } else {
-                toast.error('Error moving item');
+                toast.error('Fout bij verplaatsen item');
             }
             
             await loading.hideWithMinTime();
@@ -10105,20 +10105,20 @@ class Taakbeheer {
                     // Remove from local data and update only the affected area
                     this.removePlanningItemLocally(planningId);
                     this.updateTotaalTijd(); // Update total time
-                    toast.success('Planning item removed!');
+                    toast.success('Planning item verwijderd!');
                 } else {
                     console.error('❌ Server delete failed:', response.status);
                     // Restore the item visibility on error
                     planningItem.style.opacity = '1';
                     planningItem.style.pointerEvents = 'auto';
-                    toast.error('Error removing planning item');
+                    toast.error('Fout bij verwijderen planning item');
                 }
             } catch (error) {
                 console.error('Error deleting planning item:', error);
                 // Restore the item visibility on error
                 planningItem.style.opacity = '1';
                 planningItem.style.pointerEvents = 'auto';
-                toast.error('Error removing planning item');
+                toast.error('Fout bij verwijderen planning item');
             }
         }, {
             operationId: 'delete-planning-item',
@@ -10296,13 +10296,13 @@ class Taakbeheer {
                 if (item) {
                     item.naam = newName;
                 }
-                toast.success('Name updated!');
+                toast.success('Naam bijgewerkt!');
             } else {
-                toast.error('Error updating name');
+                toast.error('Fout bij bijwerken naam');
             }
         } catch (error) {
             console.error('Error updating planning item name:', error);
-            toast.error('Error updating name');
+            toast.error('Fout bij bijwerken naam');
         }
     }
 
@@ -10510,7 +10510,7 @@ class Taakbeheer {
                 // Handle recurring tasks
                 if (isRecurring && nextRecurringTaskId) {
                     const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
-                    toast.success(`${taskDisplay} completed! Next recurrence scheduled for ${nextDateFormatted}`);
+                    toast.success(`${taskDisplay} afgerond! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // Refresh all data to show the new recurring task
                     console.log('<i class="fas fa-redo"></i> Refreshing all data after recurring task creation...');
@@ -10538,9 +10538,9 @@ class Taakbeheer {
                         }
                     }
                 } else if (taak.herhalingActief && taak.herhalingType) {
-                    toast.success(`${taskDisplay} completed! Next recurrence will be scheduled.`);
+                    toast.success(`${taskDisplay} afgerond! Volgende herhaling wordt gepland.`);
                 } else {
-                    toast.success(`${taskDisplay} completed!`);
+                    toast.success(`${taskDisplay} afgerond!`);
                 }
             } else {
                 // Revert checkbox if completion failed
@@ -10552,7 +10552,7 @@ class Taakbeheer {
             console.error('Error completing planning task:', error);
             checkboxElement.checked = false;
             checkboxElement.disabled = false;
-            toast.error('Error completing task. Please try again.');
+            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
         } finally {
             // Hide loading with minimum time for smooth UX
             await loading.hideWithMinTime();
@@ -10721,7 +10721,7 @@ class Taakbeheer {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
 
-            toast.success('Test tasks successfully added!');
+            toast.success('Test taken succesvol toegevoegd!');
             
             // Refresh the current list if we're in inbox
             if (this.huidigeLijst === 'inbox') {
@@ -10730,7 +10730,7 @@ class Taakbeheer {
 
         } catch (error) {
             console.error('Error adding test tasks:', error);
-            toast.error('Error adding test tasks');
+            toast.error('Fout bij toevoegen van test taken');
         }
     }
 
@@ -10986,7 +10986,7 @@ class Taakbeheer {
                 }
             } catch (error) {
                 console.error('Error processing drop:', error);
-                toast.error('Error moving task');
+                toast.error('Fout bij verplaatsen van taak');
             }
         });
     }
@@ -11032,14 +11032,14 @@ class Taakbeheer {
                         await this.loadUitgesteldSectieData(doelLijst);
                     }
 
-                    toast.success(`Task moved to ${doelLijst.replace('uitgesteld-', '')}`);
+                    toast.success(`Taak verplaatst naar ${doelLijst.replace('uitgesteld-', '')}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
-                toast.error('Error moving task');
+                toast.error('Fout bij verplaatsen van taak');
             }
         }, {
             operationId: 'drag-drop-move',
@@ -11179,7 +11179,7 @@ class Taakbeheer {
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
-                    toast.error('Error moving task');
+                    toast.error('Fout bij verplaatsen van taak');
                 }
             });
         });
@@ -11216,14 +11216,14 @@ class Taakbeheer {
                     }
 
                     const targetName = targetList === 'inbox' ? 'Inbox' : 'Opvolgen';
-                    toast.success(`Task moved to ${targetName}`);
+                    toast.success(`Taak verplaatst naar ${targetName}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
-                toast.error('Error moving task');
+                toast.error('Fout bij verplaatsen van taak');
             }
         }, {
             operationId: 'floating-drop-move',
@@ -11315,8 +11315,8 @@ class Taakbeheer {
         // Reset setup flag zodat event listeners opnieuw worden toegevoegd na DOM wijzigingen
         this.actiesFloatingDropZonesSetup = false;
 
-        // Weekday abbreviations
-        const weekdagen = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        // Nederlandse weekdag afkortingen
+        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 
         // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
@@ -11519,7 +11519,7 @@ class Taakbeheer {
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
-                    toast.error('Error moving task');
+                    toast.error('Fout bij verplaatsen van taak');
                 }
             });
         });
@@ -11552,18 +11552,18 @@ class Taakbeheer {
                     this.taken = this.taken.filter(t => t.id !== taakId);
                     
                     const targetName = this.getListDisplayName(targetList);
-                    toast.success(`Task moved to ${targetName}`);
+                    toast.success(`Taak verplaatst naar ${targetName}`);
                     
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
                 } else {
-                    toast.error('Error moving to list');
+                    toast.error('Fout bij verplaatsen naar lijst');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error moving task to list:', error);
-                toast.error('Error moving to list');
+                toast.error('Fout bij verplaatsen naar lijst');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
@@ -11582,7 +11582,7 @@ class Taakbeheer {
             this.renderActiesLijst();
             
             const targetName = this.getListDisplayName(targetList);
-            toast.success(`Task moved to ${targetName}`);
+            toast.success(`Taak verplaatst naar ${targetName}`);
         }
     }
 
@@ -11634,7 +11634,7 @@ class Taakbeheer {
                         month: 'long' 
                     });
                     
-                    toast.success(`Task scheduled for ${dagNaam}`);
+                    toast.success(`Taak gepland voor ${dagNaam}`);
                     
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
@@ -11644,13 +11644,13 @@ class Taakbeheer {
                         await this.laadDagelijksePlanning();
                     }
                 } else {
-                    toast.error('Error updating date');
+                    toast.error('Fout bij updaten van datum');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error updating task date:', error);
-                toast.error('Error updating date');
+                toast.error('Fout bij updaten van datum');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
@@ -11679,7 +11679,7 @@ class Taakbeheer {
             this.renderActiesLijst();
             
             const datumFormatted = new Date(datum).toLocaleDateString('nl-NL');
-            toast.success(`Task scheduled for ${datumFormatted}`);
+            toast.success(`Taak gepland voor ${datumFormatted}`);
         }
     }
 
@@ -11842,7 +11842,7 @@ class Taakbeheer {
         const clearGeblokkeerd = document.getElementById('clearGeblokkeerd').checked;
         
         if (!clearTaken && !clearPauzes && !clearGeblokkeerd) {
-            toast.warning('Select at least one option to delete');
+            toast.warning('Selecteer minstens één optie om te verwijderen');
             return;
         }
         
@@ -11888,9 +11888,9 @@ class Taakbeheer {
             // Show success message
             const deletedCount = itemsToDelete.length;
             if (deletedCount > 0) {
-                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} removed from planning`);
+                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} verwijderd uit de planning`);
             } else {
-                toast.info('No items found to delete');
+                toast.info('Geen items gevonden om te verwijderen');
             }
         }, {
             operationId: 'clear-planning',
@@ -12171,7 +12171,7 @@ class Taakbeheer {
 
     async bulkDateAction(action) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Please select one or more tasks first.');
+            toast.warning('Selecteer eerst een of meer taken.');
             return;
         }
 
@@ -12244,7 +12244,7 @@ class Taakbeheer {
             // Show finishing message
             loading.show('Afronden...');
             
-            toast.success(`${successCount} tasks updated to ${newDate}`);
+            toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
 
             // Set flag if bulk update cleared inbox
             if (this.huidigeLijst === 'inbox' && successCount > 0) {
@@ -12321,7 +12321,7 @@ class Taakbeheer {
 
     async bulkVerplaatsNaar(lijstNaam) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Please select one or more tasks first.');
+            toast.warning('Selecteer eerst een of meer taken.');
             return;
         }
 
@@ -12373,7 +12373,7 @@ class Taakbeheer {
             // Show finishing message
             loading.show('Afronden...');
             
-            toast.success(`${successCount} tasks moved to ${lijstLabels[lijstNaam]}`);
+            toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
 
             // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
@@ -13387,7 +13387,7 @@ class QuickAddModal {
         const taakNaam = this.input.value.trim();
         
         if (!taakNaam) {
-            toast.warning('Please enter a task name');
+            toast.warning('Voer een taaknaam in');
             this.input.focus();
             return;
         }
@@ -13465,11 +13465,11 @@ class QuickAddModal {
                 const afterFailTasks = await afterFailResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
                 
-                toast.error('Error adding: ' + (response.status === 401 ? 'Please log in first' : 'Server error (500)'));
+                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout (500)'));
             }
         } catch (error) {
             console.error('Error adding task:', error);
-            toast.error('Error adding task: ' + error.message);
+            toast.error('Fout bij toevoegen van taak: ' + error.message);
         }
     }
 }
@@ -13844,7 +13844,7 @@ async function deleteAllTasks() {
         });
         
         if (response.ok) {
-            toast.success('All tasks successfully deleted');
+            toast.success('Alle taken succesvol verwijderd');
             // Refresh de lijst
             if (app && app.laadHuidigeLijst) {
                 await app.laadHuidigeLijst();
@@ -13854,10 +13854,10 @@ async function deleteAllTasks() {
             }
         } else {
             const error = await response.text();
-            toast.error('Error deleting: ' + error);
+            toast.error('Fout bij verwijderen: ' + error);
         }
     } catch (error) {
-        toast.error('Error deleting: ' + error.message);
+        toast.error('Fout bij verwijderen: ' + error.message);
     } finally {
         // Hide loading if it exists
         if (window.loading && loading.hideGlobal) {
@@ -14053,13 +14053,13 @@ class SubtakenManager {
         const titel = input.value.trim();
         
         if (!titel) {
-            toast.warning('Please enter a title for the subtask');
+            toast.warning('Voer een titel in voor de subtaak');
             return;
         }
 
         const parentTaakId = app.huidigeTaakId;
         if (!parentTaakId) {
-            toast.error('No parent task selected');
+            toast.error('Geen hoofdtaak geselecteerd');
             return;
         }
 
@@ -14102,10 +14102,10 @@ class SubtakenManager {
                 this.renderSubtaken();
             }
             
-            toast.success(this.editingSubtaak ? 'Subtask updated' : 'Subtask added');
+            toast.success(this.editingSubtaak ? 'Subtaak bijgewerkt' : 'Subtaak toegevoegd');
         } catch (error) {
             console.error('Error saving subtaak:', error);
-            toast.error('Error saving subtask');
+            toast.error('Fout bij opslaan subtaak');
         }
     }
 
@@ -14159,7 +14159,7 @@ class SubtakenManager {
             this.renderSubtaken();
         } catch (error) {
             console.error('Error toggling subtaak:', error);
-            toast.error('Error changing subtask status');
+            toast.error('Fout bij wijzigen subtaak status');
         }
     }
 
@@ -14190,10 +14190,10 @@ class SubtakenManager {
             }
 
             await this.loadSubtaken(app.huidigeTaakId);
-            toast.success('Subtask removed');
+            toast.success('Subtaak verwijderd');
         } catch (error) {
             console.error('Error deleting subtaak:', error);
-            toast.error('Error removing subtask');
+            toast.error('Fout bij verwijderen subtaak');
         }
     }
 
@@ -14470,7 +14470,7 @@ class BijlagenManager {
 
         if (!this.currentTaakId) {
             console.log('❌ DEBUG: No currentTaakId, showing error');
-            toast.error('No task selected for attachment upload');
+            toast.error('Geen taak geselecteerd voor bijlage upload');
             return;
         }
 
@@ -14600,7 +14600,7 @@ class BijlagenManager {
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Attachment removed');
+                toast.success('Bijlage verwijderd');
                 await this.loadStorageStats();
                 await this.loadBijlagen();
                 this.updateUI();
@@ -14610,7 +14610,7 @@ class BijlagenManager {
 
         } catch (error) {
             console.error('Delete error:', error);
-            toast.error('Deletion failed. Please try again.');
+            toast.error('Verwijderen gefaald. Probeer opnieuw.');
         }
     }
 
@@ -14719,7 +14719,7 @@ class BijlagenManager {
             
         } catch (error) {
             console.error('Preview error:', error);
-            toast.error('Error loading preview');
+            toast.error('Fout bij laden preview');
         }
     }
 

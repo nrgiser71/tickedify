@@ -2185,13 +2185,13 @@ class Taakbeheer {
         
         const actiesInfo = await this.telActiesPerProject(id);
         const totaalActies = actiesInfo.open + actiesInfo.afgewerkt;
-        let bevestigingsTekst = `Are you sure you want to delete project "${project.naam}"?`;
-
+        let bevestigingsTekst = `Weet je zeker dat je project "${project.naam}" wilt verwijderen?`;
+        
         if (totaalActies > 0) {
-            bevestigingsTekst += `\n\nWarning: There are still ${totaalActies} ${totaalActies === 1 ? 'action' : 'actions'} linked to this project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed). They will lose their project connection.`;
+            bevestigingsTekst += `\n\nLet op: Er zijn nog ${totaalActies} ${totaalActies === 1 ? 'actie' : 'acties'} gekoppeld aan dit project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt). Deze zullen hun projectkoppeling verliezen.`;
         }
-
-        const bevestiging = await confirmModal.show('Delete Project', bevestigingsTekst);
+        
+        const bevestiging = await confirmModal.show('Project Verwijderen', bevestigingsTekst);
         if (!bevestiging) return;
         
         this.projecten = this.projecten.filter(p => p.id !== id);
@@ -4183,7 +4183,7 @@ class Taakbeheer {
             return;
         }
         
-        const bevestiging = await confirmModal.show('Delete Task', `Are you sure you want to delete "${taak.tekst}"?`);
+        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
         
         await loading.withLoading(async () => {
@@ -8005,8 +8005,8 @@ class Taakbeheer {
         if (!context) return;
 
         const bevestiging = await confirmModal.show(
-            'Delete Context',
-            `Are you sure you want to delete context "${context.naam}"?\n\nThis action cannot be undone.`
+            'Context Verwijderen', 
+            `Weet je zeker dat je context "${context.naam}" wilt verwijderen?\n\nDeze actie kan niet ongedaan worden gemaakt.`
         );
         if (!bevestiging) return;
 
@@ -10552,7 +10552,7 @@ class Taakbeheer {
             console.error('Error completing planning task:', error);
             checkboxElement.checked = false;
             checkboxElement.disabled = false;
-            toast.error('Error completing task. Please try again.');
+            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
         } finally {
             // Hide loading with minimum time for smooth UX
             await loading.hideWithMinTime();
@@ -11035,7 +11035,7 @@ class Taakbeheer {
                     toast.success(`Task moved to ${doelLijst.replace('uitgesteld-', '')}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
@@ -11219,7 +11219,7 @@ class Taakbeheer {
                     toast.success(`Task moved to ${targetName}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
@@ -11315,8 +11315,8 @@ class Taakbeheer {
         // Reset setup flag zodat event listeners opnieuw worden toegevoegd na DOM wijzigingen
         this.actiesFloatingDropZonesSetup = false;
 
-        // Weekday abbreviations
-        const weekdagen = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        // Nederlandse weekdag afkortingen
+        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 
         // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
@@ -11644,13 +11644,13 @@ class Taakbeheer {
                         await this.laadDagelijksePlanning();
                     }
                 } else {
-                    toast.error('Error updating date');
+                    toast.error('Fout bij updaten van datum');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error updating task date:', error);
-                toast.error('Error updating date');
+                toast.error('Fout bij updaten van datum');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
@@ -11888,7 +11888,7 @@ class Taakbeheer {
             // Show success message
             const deletedCount = itemsToDelete.length;
             if (deletedCount > 0) {
-                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} removed from planning`);
+                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} verwijderd uit de planning`);
             } else {
                 toast.info('No items found to delete');
             }
@@ -13387,7 +13387,7 @@ class QuickAddModal {
         const taakNaam = this.input.value.trim();
         
         if (!taakNaam) {
-            toast.warning('Please enter a task name');
+            toast.warning('Voer een taaknaam in');
             this.input.focus();
             return;
         }
@@ -13465,11 +13465,11 @@ class QuickAddModal {
                 const afterFailTasks = await afterFailResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
                 
-                toast.error('Error adding: ' + (response.status === 401 ? 'Please log in first' : 'Server error (500)'));
+                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout (500)'));
             }
         } catch (error) {
             console.error('Error adding task:', error);
-            toast.error('Error adding task: ' + error.message);
+            toast.error('Error adding van taak: ' + error.message);
         }
     }
 }
@@ -14053,7 +14053,7 @@ class SubtakenManager {
         const titel = input.value.trim();
         
         if (!titel) {
-            toast.warning('Please enter a title for the subtask');
+            toast.warning('Voer een titel in voor de subtaak');
             return;
         }
 
@@ -14610,7 +14610,7 @@ class BijlagenManager {
 
         } catch (error) {
             console.error('Delete error:', error);
-            toast.error('Deletion failed. Please try again.');
+            toast.error('Verwijderen gefaald. Probeer opnieuw.');
         }
     }
 
