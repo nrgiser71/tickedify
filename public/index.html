@@ -19,7 +19,7 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <button class="sidebar-toggle" id="sidebar-toggle" title="Sidebar in-/uitklappen">
+                    <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse/expand sidebar">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <div class="app-logo">
@@ -28,8 +28,8 @@
                     <div class="user-section" id="user-section">
                         <!-- Will be populated by JavaScript based on auth state -->
                         <div class="auth-buttons" id="auth-buttons">
-                            <button class="btn-auth btn-login" id="btn-login">Inloggen</button>
-                            <button class="btn-auth btn-register" id="btn-register">Registreren</button>
+                            <button class="btn-auth btn-login" id="btn-login">Log in</button>
+                            <button class="btn-auth btn-register" id="btn-register">Register</button>
                         </div>
                         <div class="user-info" id="user-info" style="display: none;">
                             <div class="user-info-top">
@@ -38,20 +38,20 @@
                                     <span class="user-name" id="user-name"></span>
                                     <span class="user-email" id="user-email"></span>
                                 </div>
-                                <button class="btn-logout" id="btn-logout">Uitloggen</button>
+                                <button class="btn-logout" id="btn-logout">Log out</button>
                             </div>
                             <div class="user-import-email" id="user-import-email" style="display: none;">
                                 <div class="import-email-container">
                                     <span class="import-label">Email import:</span>
                                     <a href="#" class="import-email-link" id="import-email-link"></a>
-                                    <button class="btn-copy" id="btn-copy-import" title="Kopieer naar clipboard"><i class="fas fa-copy"></i></button>
+                                    <button class="btn-copy" id="btn-copy-import" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="version-info">
                         <span class="version-number" id="version-number">v0.18.2</span>
-                        <a href="changelog.html" target="_blank" class="changelog-link" title="Bekijk wat er nieuw is">(Changelog)</a>
+                        <a href="changelog.html" target="_blank" class="changelog-link" title="See what's new">(Changelog)</a>
                     </div>
                 </div>
                 
@@ -59,30 +59,30 @@
                 <!-- Welkomstbericht voor niet-ingelogde gebruikers -->
                 <div class="welcome-message" id="welcome-message" style="display: none;">
                     <div class="welcome-content">
-                        <h2>Welkom bij Tickedify</h2>
-                        <p>Smart task management volgens de "Baas Over Je Tijd" methodologie.</p>
+                        <h2>Welcome to Tickedify</h2>
+                        <p>Smart task management based on the "Master of Your Time" methodology.</p>
                         
                         <div class="features-list">
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-list-check"></i></span>
-                                <span>Gestructureerd takenbeheer</span>
+                                <span>Structured task management</span>
                             </div>
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-redo"></i></span>
-                                <span>Herhalende taken</span>
+                                <span>Recurring tasks</span>
                             </div>
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-calendar"></i></span>
-                                <span>Dagelijkse planning</span>
+                                <span>Daily planning</span>
                             </div>
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-folder"></i></span>
-                                <span>Projecten & contexten</span>
+                                <span>Projects & contexts</span>
                             </div>
                         </div>
                         
                         <p class="login-prompt">
-                            <strong>Log in of registreer</strong> om te beginnen met het organiseren van je taken.
+                            <strong>Log in or register</strong> to start organizing your tasks.
                         </p>
                     </div>
                 </div>
@@ -96,23 +96,23 @@
                         </div>
                         <div class="lijst-item" data-lijst="acties">
                             <div class="lijst-icon"><i class="fas fa-list-check"></i></div>
-                            <span class="lijst-naam">Acties<span class="task-count"></span></span>
+                            <span class="lijst-naam">Actions<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="projecten">
                             <div class="lijst-icon"><i class="fas fa-folder"></i></div>
-                            <span class="lijst-naam">Projecten<span class="task-count"></span></span>
+                            <span class="lijst-naam">Projects<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="opvolgen">
                             <div class="lijst-icon"><i class="fas fa-clock"></i></div>
-                            <span class="lijst-naam">Opvolgen<span class="task-count"></span></span>
+                            <span class="lijst-naam">Follow-up<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="uitgesteld">
                             <div class="lijst-icon"><i class="fas fa-pause-circle"></i></div>
-                            <span class="lijst-naam">Uitgesteld<span class="task-count"></span></span>
+                            <span class="lijst-naam">Deferred<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="afgewerkte-taken">
                             <div class="lijst-icon"><i class="fas fa-check"></i></div>
-                            <span class="lijst-naam">Afgewerkt</span>
+                            <span class="lijst-naam">Completed</span>
                         </div>
                     </div>
 
@@ -120,11 +120,11 @@
                     <div class="lijst-sectie">
                         <div class="lijst-item" data-lijst="dagelijkse-planning">
                             <div class="lijst-icon"><i class="fas fa-calendar"></i></div>
-                            <span class="lijst-naam">Dagelijkse Planning</span>
+                            <span class="lijst-naam">Daily Planning</span>
                         </div>
                         <div class="lijst-item" data-tool="contextenbeheer">
                             <div class="lijst-icon"><i class="fas fa-tag"></i></div>
-                            <span class="lijst-naam">Contexten Beheer</span>
+                            <span class="lijst-naam">Context Management</span>
                         </div>
                         <div class="lijst-item" data-tool="csv-import">
                             <div class="lijst-icon"><i class="fas fa-file-csv"></i></div>
@@ -132,7 +132,7 @@
                         </div>
                         <div class="lijst-item" data-tool="zoeken">
                             <div class="lijst-icon"><i class="fas fa-search"></i></div>
-                            <span class="lijst-naam">Zoeken</span>
+                            <span class="lijst-naam">Search</span>
                         </div>
                     </div>
 
@@ -143,7 +143,7 @@
                         </div>
                         <div class="lijst-item feedback-item" data-feedback="bug">
                             <div class="lijst-icon"><i class="fas fa-bug"></i></div>
-                            <span class="lijst-naam">Bug Melden</span>
+                            <span class="lijst-naam">Report Bug</span>
                         </div>
                         <div class="lijst-item feedback-item" data-feedback="feature">
                             <div class="lijst-icon"><i class="fas fa-lightbulb"></i></div>
@@ -170,9 +170,9 @@
 
                 <div class="content-area">
                     <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
-                        <button id="toevoegBtn">Toevoegen</button>
-                        <button id="testTakenBtn" class="test-button" style="display: none;">+ Test Taken</button>
+                        <input type="text" id="taakInput" placeholder="New task..." autofocus>
+                        <button id="toevoegBtn">Add</button>
+                        <button id="testTakenBtn" class="test-button" style="display: none;">+ Test Tasks</button>
                         <!-- Delete all knop wordt dynamisch toegevoegd door JavaScript -->
                     </div>
 
@@ -196,13 +196,13 @@
     <!-- Quick Add Modal -->
     <div id="quickAddModal" class="popup-overlay quick-add-overlay" style="display: none;">
         <div class="popup-content quick-add-content">
-            <h3>Nieuwe taak toevoegen</h3>
+            <h3>Add new task</h3>
             <div class="form-groep">
-                <input type="text" id="quickAddInput" placeholder="Taaknaam..." autofocus>
+                <input type="text" id="quickAddInput" placeholder="Task name..." autofocus>
             </div>
             <div class="quick-add-actions">
-                <button id="quickAddCancel" class="btn-cancel">Annuleren</button>
-                <button id="quickAddOk" class="btn-primary">Toevoegen</button>
+                <button id="quickAddCancel" class="btn-cancel">Cancel</button>
+                <button id="quickAddOk" class="btn-primary">Add</button>
             </div>
         </div>
     </div>
@@ -326,11 +326,11 @@
     <!-- Planning Popup -->
     <div id="planningPopup" class="popup-overlay" style="display: none;">
         <div class="popup-content">
-            <h3>Taak plannen</h3>
-            <p class="keyboard-help"><i class="fas fa-lightbulb"></i> Toetsenbord: Tab = navigeren, + = nieuw item, Esc = annuleren, Enter = opslaan</p>
-            
+            <h3>Plan task</h3>
+            <p class="keyboard-help"><i class="fas fa-lightbulb"></i> Keyboard: Tab = navigate, + = new item, Esc = cancel, Enter = save</p>
+
             <div class="form-groep">
-                <label>Taaknaam:</label>
+                <label>Task name:</label>
                 <div class="checkbox-input-wrapper">
                     <input type="checkbox" id="completeTaskCheckbox">
                     <input type="text" id="taakNaamInput" required>
@@ -339,82 +339,82 @@
 
             <div class="planning-opties">
                 <div class="optie-groep">
-                    <h4>Maak actie:</h4>
+                    <h4>Create action:</h4>
                     <div class="form-groep">
                         <label>Project:</label>
                         <div class="select-met-toevoeg">
                             <select id="projectSelect">
-                                <option value="">Geen project</option>
+                                <option value="">No project</option>
                             </select>
                             <button id="nieuwProjectBtn" type="button" tabindex="-1">+</button>
                         </div>
                     </div>
-                    
+
                     <div class="form-groep">
-                        <label>Verschijndatum: <span class="required">*</span></label>
+                        <label>Due date: <span class="required">*</span></label>
                         <input type="date" id="verschijndatum" required>
                     </div>
-                    
+
                     <div class="form-groep">
                         <label>Context: <span class="required">*</span></label>
                         <div class="select-met-toevoeg">
                             <select id="contextSelect" required>
-                                <option value="">Selecteer context...</option>
+                                <option value="">Select context...</option>
                             </select>
                             <button id="nieuweContextBtn" type="button" tabindex="-1">+</button>
                         </div>
                     </div>
-                    
+
                     <div class="form-groep" id="prioriteitFormGroep">
-                        <label>Prioriteit:</label>
+                        <label>Priority:</label>
                         <select id="prioriteitSelect" class="prioriteit-dropdown">
-                            <option value="laag">⚪ Laag</option>
-                            <option value="gemiddeld" selected>🟠 Gemiddeld</option>
-                            <option value="hoog">🔴 Hoog</option>
+                            <option value="laag">⚪ Low</option>
+                            <option value="gemiddeld" selected>🟠 Medium</option>
+                            <option value="hoog">🔴 High</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-groep">
-                        <label>Geschatte duur (minuten): <span class="required">*</span></label>
+                        <label>Estimated duration (minutes): <span class="required">*</span></label>
                         <input type="number" id="duur" min="1" step="1" required>
                     </div>
-                    
+
                     <div class="form-groep">
-                        <label>Herhaling:</label>
+                        <label>Recurrence:</label>
                         <div class="herhaling-selectie">
-                            <input type="text" id="herhalingDisplay" readonly placeholder="Geen herhaling" onclick="app.openHerhalingPopup()">
-                            <button type="button" id="herhalingBtn" onclick="app.openHerhalingPopup()">Instellen</button>
+                            <input type="text" id="herhalingDisplay" readonly placeholder="No recurrence" onclick="app.openHerhalingPopup()">
+                            <button type="button" id="herhalingBtn" onclick="app.openHerhalingPopup()">Configure</button>
                             <input type="hidden" id="herhalingSelect" value="">
                         </div>
                     </div>
                 </div>
                 
                 <div class="optie-groep">
-                    <h4>Of verplaats naar:</h4>
+                    <h4>Or defer to:</h4>
                     <div class="verplaats-knoppen">
-                        <button class="verplaats-btn" data-lijst="opvolgen">Opvolgen</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-wekelijks">Wekelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-maandelijks">Maandelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">3-maandelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">6-maandelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Jaarlijks</button>
+                        <button class="verplaats-btn" data-lijst="opvolgen">Follow-up</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-wekelijks">Weekly</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-maandelijks">Monthly</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">Quarterly</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">Bi-annual</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Yearly</button>
                     </div>
                 </div>
             </div>
             
             <!-- Volledige breedte velden -->
             <div class="form-groep">
-                <label>Opmerkingen:</label>
-                <textarea id="opmerkingen" rows="3" placeholder="Aanvullende informatie, notities of details..."></textarea>
+                <label>Notes:</label>
+                <textarea id="opmerkingen" rows="3" placeholder="Additional information, notes or details..."></textarea>
             </div>
-            
+
             <div class="form-groep" id="subtaken-sectie" style="display: none;">
                 <div class="subtaken-header">
-                    <label>Subtaken:</label>
+                    <label>Subtasks:</label>
                     <span class="subtaken-progress" id="subtaken-progress" style="display: none;"></span>
                     <div class="select-met-toevoeg">
                         <div style="flex: 1;"></div>
-                        <button type="button" id="subtaak-add-btn" title="Nieuwe subtaak toevoegen">+</button>
+                        <button type="button" id="subtaak-add-btn" title="Add new subtask">+</button>
                     </div>
                 </div>
                 

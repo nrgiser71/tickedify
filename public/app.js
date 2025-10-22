@@ -1908,20 +1908,20 @@ class Taakbeheer {
             listItem.classList.add('actief');
         }
 
-        // Update hoofdtitel
+        // Update main title
         const titles = {
             'inbox': 'Inbox',
-            'acties': 'Acties',
-            'projecten': 'Projecten',
-            'opvolgen': 'Opvolgen',
-            'afgewerkte-taken': 'Afgewerkt',
-            'dagelijkse-planning': 'Dagelijkse Planning',
-            'uitgesteld': 'Uitgesteld',
-            'uitgesteld-wekelijks': 'Wekelijks',
-            'uitgesteld-maandelijks': 'Maandelijks',
-            'uitgesteld-3maandelijks': '3-maandelijks',
-            'uitgesteld-6maandelijks': '6-maandelijks',
-            'uitgesteld-jaarlijks': 'Jaarlijks'
+            'acties': 'Actions',
+            'projecten': 'Projects',
+            'opvolgen': 'Follow-up',
+            'afgewerkte-taken': 'Completed',
+            'dagelijkse-planning': 'Daily Planning',
+            'uitgesteld': 'Deferred',
+            'uitgesteld-wekelijks': 'Weekly',
+            'uitgesteld-maandelijks': 'Monthly',
+            'uitgesteld-3maandelijks': 'Quarterly',
+            'uitgesteld-6maandelijks': 'Bi-annual',
+            'uitgesteld-jaarlijks': 'Yearly'
         };
         // Only update title if it wasn't already set by restoreNormalContainer
         if (!titleAlreadySet) {
@@ -2369,7 +2369,7 @@ class Taakbeheer {
             // Verplaats naar afgewerkte taken
             const success = await this.verplaatsTaakNaarAfgewerkt(actie);
             if (!success) {
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Error completing task. Try again.');
                 return;
             }
             
@@ -3299,7 +3299,7 @@ class Taakbeheer {
         const isLoggedIn = this.isLoggedIn();
         console.log('🔐 Login check - isLoggedIn:', isLoggedIn, 'auth exists:', !!auth, 'auth.isAuthenticated:', auth?.isAuthenticated);
         if (!isLoggedIn) {
-            toast.warning('Log in om taken toe te voegen.');
+            toast.warning('Log in to add tasks.');
             return;
         }
         
@@ -3338,11 +3338,11 @@ class Taakbeheer {
 
                     input.value = '';
                     input.focus();
-                    toast.success('Taak toegevoegd!');
+                    toast.success('Task added!');
                 } else {
                     const errorText = await response.text();
                     console.error('❌ Server error:', response.status, errorText);
-                    toast.error(`Fout bij toevoegen van taak (${response.status}): ${errorText}`);
+                    toast.error(`Error adding task (${response.status}): ${errorText}`);
                 }
             }, {
                 operationId: 'add-task',
@@ -3919,16 +3919,16 @@ class Taakbeheer {
         }
         
         // Instant toast voor directe feedback
-        toast.info('Taak wordt afgewerkt...');
+        toast.info('Task is being completed...');
         
         // Entertainment messages voor task completion in acties scherm
         const completionMessages = [
-            '✅ Taak wordt afgewerkt...',
-            '🎯 Voortgang wordt opgeslagen...',
-            '📊 Productiviteit wordt bijgewerkt...',
-            '⚡ Database wordt gesynchroniseerd...',
-            '🔄 Herhalende taken worden verwerkt...',
-            '🚀 Bijna klaar...'
+            '✅ Task is being completed...',
+            '🎯 Progress is being saved...',
+            '📊 Productivity is being updated...',
+            '⚡ Database is being synchronized...',
+            '🔄 Recurring tasks are being processed...',
+            '🚀 Almost done...'
         ];
         
         // Start entertainment loading
@@ -3994,7 +3994,7 @@ class Taakbeheer {
                 // Individual task updates are handled directly via API
                 if (isRecurring && !nextRecurringTaskId) {
                     console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed');
-                    toast.error('Let op: De herhalende taak kon niet worden aangemaakt. Controleer de herhaling-instellingen.');
+                    toast.error('Warning: The recurring task could not be created. Check the recurrence settings.');
                 }
                 // this.laadTellingen().catch(console.error); // Disabled - tellers removed from sidebar
                 
@@ -4027,7 +4027,7 @@ class Taakbeheer {
                         }
                     }
                 } else {
-                    toast.success('Taak afgewerkt!');
+                    toast.success('Task completed!');
                 }
 
                 // Update sidebar counters after task complete - Feature 022
@@ -4042,7 +4042,7 @@ class Taakbeheer {
                     checkbox.checked = false;
                     checkbox.disabled = false;
                 }
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Error completing task. Try again.');
             }
             
             // Always cleanup the completion tracking
@@ -4110,10 +4110,10 @@ class Taakbeheer {
                     this.renderTaken();
                 }
                 
-                toast.success('Taak teruggezet naar inbox');
+                toast.success('Task moved back to inbox');
                 return true;
             } else {
-                toast.error('Fout bij terugzetten van taak');
+                toast.error('Error moving task back');
                 return false;
             }
         }, {
@@ -4157,7 +4157,7 @@ class Taakbeheer {
         
         // Also show a toast for extra satisfaction
         setTimeout(() => {
-            toast.success('🎊 Geweldig! Je inbox is nu volledig leeg!', 5000);
+            toast.success('🎊 Great! Your inbox is now completely empty!', 5000);
         }, 1000);
     }
 
@@ -4179,7 +4179,7 @@ class Taakbeheer {
         }
         
         if (!taak) {
-            toast.error('Taak niet gevonden');
+            toast.error('Task not found');
             return;
         }
         
@@ -4197,30 +4197,30 @@ class Taakbeheer {
                     const result = await response.json();
                     
                     // Check B2 cleanup status and provide user feedback
-                    let successMessage = 'Taak verwijderd';
+                    let successMessage = 'Task deleted';
                     let hasB2Warning = false;
-                    
+
                     if (result.b2Cleanup) {
                         const cleanup = result.b2Cleanup;
-                        
+
                         if (cleanup.failed > 0) {
                             hasB2Warning = true;
                             if (cleanup.configError) {
-                                console.warn(`⚠️ B2 configuratie probleem voor taak ${id}`);
-                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering is niet geconfigureerd. Cloud storage cleanup overgeslagen.`);
+                                console.warn(`⚠️ B2 configuration problem for task ${id}`);
+                                toast.warning(`Task deleted, but attachment deletion is not configured. Cloud storage cleanup skipped.`);
                             } else if (cleanup.timeout) {
-                                console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${id}`);
-                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
+                                console.warn(`⚠️ B2 attachment cleanup timeout for task ${id}`);
+                                toast.warning(`Task deleted, but attachment deletion took too long. Some files may not have been deleted from cloud storage.`);
                             } else if (cleanup.deleted > 0) {
-                                console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${id}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
-                                toast.warning(`Taak verwijderd. ${cleanup.deleted} van de ${cleanup.deleted + cleanup.failed} bijlagen verwijderd uit cloud storage.`);
+                                console.warn(`⚠️ Partial B2 cleanup for task ${id}: ${cleanup.deleted} succeeded, ${cleanup.failed} failed`);
+                                toast.warning(`Task deleted. ${cleanup.deleted} of ${cleanup.deleted + cleanup.failed} attachments deleted from cloud storage.`);
                             } else {
-                                console.error(`❌ Volledige B2 cleanup failure voor taak ${id}`);
-                                toast.error(`Taak verwijderd, maar bijlagen konden niet verwijderd worden uit cloud storage. Controleer je internetverbinding.`);
+                                console.error(`❌ Complete B2 cleanup failure for task ${id}`);
+                                toast.error(`Task deleted, but attachments could not be deleted from cloud storage. Check your internet connection.`);
                             }
                         } else if (cleanup.deleted > 0) {
-                            console.log(`✅ B2 cleanup succesvol voor taak ${id}: ${cleanup.deleted} bestanden verwijderd`);
-                            successMessage = `Taak en ${cleanup.deleted} bijlagen verwijderd`;
+                            console.log(`✅ B2 cleanup successful for task ${id}: ${cleanup.deleted} files deleted`);
+                            successMessage = `Task and ${cleanup.deleted} attachments deleted`;
                         }
                     }
                     
@@ -4269,7 +4269,7 @@ class Taakbeheer {
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
-                toast.error('Fout bij verwijderen van taak');
+                toast.error('Error deleting task');
             }
         }, {
             operationId: `delete-task-${id}`,
@@ -4909,7 +4909,7 @@ class Taakbeheer {
         }, {
             operationId: 'update-datum',
             showGlobal: true,
-            message: 'Datum wordt bijgewerkt...'
+            message: 'Date is being updated...'
         });
 
         // Sluit menu
@@ -5154,7 +5154,7 @@ class Taakbeheer {
                 });
                 
                 if (response.ok) {
-                    console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
+                    console.log('<i class="fas fa-check"></i> Action successfully saved with recurrence:', herhalingType);
                     
                     // Save subtaken if any were created
                     if (subtakenManager) {
@@ -5931,7 +5931,7 @@ class Taakbeheer {
                         return result.taskId;
                     } else {
                         console.error('<i class="ti ti-x"></i> Task creation verification failed, status:', checkResponse.status);
-                        toast.error('Waarschuwing: Herhalende taak aangemaakt maar verificatie mislukt');
+                        toast.error('Warning: Recurring task created but verification failed');
                         return null;
                     }
                 } catch (verifyError) {
@@ -7753,7 +7753,7 @@ class Taakbeheer {
         if (text) {
             // Check if user is logged in
             if (!this.isLoggedIn()) {
-                toast.warning('Log in om taken toe te voegen.');
+                toast.warning('Log in to add tasks.');
                 return;
             }
             
@@ -10315,12 +10315,12 @@ class Taakbeheer {
         
         // Entertainment messages voor task completion
         const completionMessages = [
-            '✅ Taak wordt afgewerkt...',
-            '🎯 Voortgang wordt opgeslagen...',
-            '📊 Productiviteit wordt bijgewerkt...',
-            '⚡ Database wordt gesynchroniseerd...',
-            '🔄 Herhalende taken worden verwerkt...',
-            '🚀 Bijna klaar...'
+            '✅ Task is being completed...',
+            '🎯 Progress is being saved...',
+            '📊 Productivity is being updated...',
+            '⚡ Database is being synchronized...',
+            '🔄 Recurring tasks are being processed...',
+            '🚀 Almost done...'
         ];
         
         // Start entertainment loading
@@ -10348,7 +10348,7 @@ class Taakbeheer {
             
             if (!taak) {
                 console.error('<i class="ti ti-x"></i> Task not found anywhere:', actieId);
-                toast.error('Taak niet gevonden');
+                toast.error('Task not found');
                 checkboxElement.checked = false;
                 return;
             }
@@ -10546,7 +10546,7 @@ class Taakbeheer {
                 // Revert checkbox if completion failed
                 checkboxElement.checked = false;
                 checkboxElement.disabled = false;
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Error completing task. Try again.');
             }
         } catch (error) {
             console.error('Error completing planning task:', error);
@@ -11657,7 +11657,7 @@ class Taakbeheer {
         }, {
             operationId: 'update-datum',
             showGlobal: true,
-            message: 'Datum wordt bijgewerkt...'
+            message: 'Date is being updated...'
         });
     }
 
@@ -13395,7 +13395,7 @@ class QuickAddModal {
         try {
             // Check if user is logged in first
             if (app && !app.isLoggedIn()) {
-                toast.warning('Log in om taken toe te voegen.');
+                toast.warning('Log in to add tasks.');
                 return;
             }
             
@@ -13435,7 +13435,7 @@ class QuickAddModal {
                 const afterTasks = await afterResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
                 
-                toast.success('Taak toegevoegd aan inbox');
+                toast.success('Task added to inbox');
                 this.hide();
                 
                 // Update counts and refresh if in inbox
