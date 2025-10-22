@@ -1,0 +1,177 @@
+openapi: 3.0.0
+info:
+  title: Admin2 Delete User API Contract
+  version: 1.0.0
+  description: API contract for deleting user accounts in Admin2
+
+paths:
+  /api/admin2/users/{id}:
+    delete:
+      summary: Delete a user account and all associated data
+      description: |
+        Permanently deletes a user account including all related tasks, email imports, and sessions.
+        Requires admin authentication. Cannot delete own account.
+
+      operationId: deleteUser
+      tags:
+        - Admin2
+        - User Management
+
+      security:
+        - sessionAuth: []
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID in string format (e.g., user_1760531416053_qwljhrwxp)
+          schema:
+            type: string
+            pattern: '^user_[0-9]{13}_[a-z0-9]+$'
+            example: user_1760531416053_qwljhrwxp
+
+      responses:
+        '200':
+          description: User successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - user_id
+                  - cascade_deleted
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user_id:
+                    type: string
+                    example: user_1760531416053_qwljhrwxp
+                  cascade_deleted:
+                    type: object
+                    required:
+                      - tasks
+                      - email_imports
+                      - sessions
+                    properties:
+                      tasks:
+                        type: integer
+                        description: Number of tasks deleted
+                        example: 42
+                      email_imports:
+                        type: integer
+                        description: Number of email imports deleted
+                        example: 15
+                      sessions:
+                        type: integer
+                        description: Number of sessions invalidated
+                        example: 3
+
+        '400':
+          description: Invalid user ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                  - message
+                properties:
+                  error:
+                    type: string
+                    example: Invalid user ID
+                  message:
+                    type: string
+                    example: User ID must not be empty
+              examples:
+                emptyId:
+                  value:
+                    error: Invalid user ID
+                    message: User ID must not be empty
+                whitespaceId:
+                  value:
+                    error: Invalid user ID
+                    message: User ID must not be empty
+
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+                  message:
+                    type: string
+                    example: Authentication required
+
+        '403':
+          description: Forbidden - either not admin or attempting self-deletion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                notAdmin:
+                  value:
+                    error: Forbidden
+                    message: Admin access required
+                selfDelete:
+                  value:
+                    error: Forbidden
+                    message: Cannot delete your own account
+
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Not found
+                  message:
+                    type: string
+                    example: User not found
+
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Server error
+                  message:
+                    type: string
+                    example: Failed to delete user
+
+        '503':
+          description: Database not available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Database not available
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie with admin user authentication
