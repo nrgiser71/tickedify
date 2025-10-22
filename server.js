@@ -4810,17 +4810,18 @@ app.get('/api/counts/sidebar', async (req, res) => {
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
-        // Single query to get all 5 counters
+        // Single query to get all 5 counters using CROSS JOIN for projecten count
         const query = `
             SELECT
-                COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
-                COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL
-                    AND (verschijndatum IS NULL OR verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
-                COUNT(DISTINCT CASE WHEN project_id IS NOT NULL AND afgewerkt IS NULL THEN project_id END) as projecten,
-                COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
-                COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
-            FROM taken
-            WHERE user_id = $1
+                COUNT(CASE WHEN t.lijst = 'inbox' AND t.afgewerkt IS NULL THEN 1 END) as inbox,
+                COUNT(CASE WHEN t.lijst = 'acties' AND t.afgewerkt IS NULL
+                    AND (t.verschijndatum IS NULL OR t.verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
+                p.projecten_count as projecten,
+                COUNT(CASE WHEN t.lijst = 'opvolgen' AND t.afgewerkt IS NULL THEN 1 END) as opvolgen,
+                COUNT(CASE WHEN t.lijst LIKE 'uitgesteld-%' AND t.afgewerkt IS NULL THEN 1 END) as uitgesteld
+            FROM taken t
+            CROSS JOIN (SELECT COUNT(*) as projecten_count FROM projecten WHERE user_id = $1) p
+            WHERE t.user_id = $1
         `;
 
         const result = await pool.query(query, [userId]);
