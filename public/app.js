@@ -506,7 +506,7 @@ class LoadingManager {
     }
 
     // Global loading overlay
-    show(message = 'Laden...') {
+    show(message = 'Loading...') {
         this.overlay.classList.add('active');
         // Hide progress text when showing regular loading
         if (this.progressText) {
@@ -613,7 +613,7 @@ class LoadingManager {
     }
 
     // Operation-based loading (multiple concurrent operations)
-    startOperation(operationId, message = 'Laden...') {
+    startOperation(operationId, message = 'Loading...') {
         this.activeOperations.add(operationId);
         if (this.activeOperations.size === 1) {
             this.show(message);
@@ -646,7 +646,7 @@ class LoadingManager {
             if (!element.querySelector('.loading-inline')) {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'loading-inline';
-                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Laden...</span>';
+                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Loading...</span>';
                 element.appendChild(loadingDiv);
             }
         } else {
@@ -710,7 +710,7 @@ class LoadingManager {
             showGlobal = true,
             button = null,
             section = null,
-            message = 'Laden...'
+            message = 'Loading...'
         } = options;
 
         try {
@@ -2004,7 +2004,7 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="projecten-container">
                 <div class="projecten-header">
-                    <button id="nieuwProjectBtnLijst" class="nieuw-btn">+ Nieuw Project</button>
+                    <button id="nieuwProjectBtnLijst" class="nieuw-btn">+ New Project</button>
                 </div>
                 <div class="projecten-lijst" id="projecten-lijst"></div>
             </div>
@@ -2071,15 +2071,15 @@ class Taakbeheer {
                             <div class="project-naam" title="${this.escapeHtml(project.naam)}">${project.naam}</div>
                             ${dueDateBadge}
                         </div>
-                        <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt</div>
+                        <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed</div>
                     </div>
                     <div class="project-acties" onclick="event.stopPropagation()">
-                        <button onclick="app.bewerkProject('${project.id}')" class="bewerk-project-btn" title="Bewerk project">✏️</button>
-                        <button onclick="app.verwijderProject('${project.id}')" class="verwijder-btn" title="Verwijder project">×</button>
+                        <button onclick="app.bewerkProject('${project.id}')" class="bewerk-project-btn" title="Edit project">✏️</button>
+                        <button onclick="app.verwijderProject('${project.id}')" class="verwijder-btn" title="Delete project">×</button>
                     </div>
                 </div>
                 <div class="project-taken-container" id="taken-${project.id}" style="display: none;">
-                    <div class="project-taken-loading">Laden...</div>
+                    <div class="project-taken-loading">Loading...</div>
                 </div>
             `;
             container.appendChild(div);
@@ -2142,7 +2142,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProjectViaLijst() {
-        const projectData = await projectModal.show('Nieuw Project');
+        const projectData = await projectModal.show('New Project');
         if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -2280,7 +2280,7 @@ class Taakbeheer {
         // Open acties
         if (openActies.length > 0) {
             html += '<div class="project-taken-sectie">';
-            html += '<h4 class="project-taken-header">Open acties</h4>';
+            html += '<h4 class="project-taken-header">Open actions</h4>';
             openActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
                 const datum = new Date(actie.verschijndatum).toLocaleDateString('nl-NL');
@@ -5024,7 +5024,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProject() {
-        const projectData = await projectModal.show('Nieuw Project');
+        const projectData = await projectModal.show('New Project');
         if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -9264,7 +9264,7 @@ class Taakbeheer {
                 planningItem.actieTekst = actie.tekst;
             } else {
                 planningItem.naam = 'Taak wordt geladen...';
-                planningItem.actieTekst = 'Laden...';
+                planningItem.actieTekst = 'Loading...';
             }
         }
         
@@ -10839,7 +10839,7 @@ class Taakbeheer {
 
         try {
             // Show loading state
-            content.innerHTML = '<div class="loading-state">Laden...</div>';
+            content.innerHTML = '<div class="loading-state">Loading...</div>';
             
             // Load data from API
             const response = await fetch(`/api/lijst/${categoryKey}`);
