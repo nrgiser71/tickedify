@@ -1839,45 +1839,45 @@ class Taakbeheer {
     getHerhalingDisplayText(value) {
         const herhalingTexts = {
             '': 'No recurrence',
-            'dagelijks': 'Dagelijks',
-            'wekelijks': 'Wekelijks',
-            'maandelijks': 'Maandelijks',
-            'jaarlijks': 'Jaarlijks',
-            'maandag': 'Elke maandag',
-            'dinsdag': 'Elke dinsdag',
-            'woensdag': 'Elke woensdag',
-            'donderdag': 'Elke donderdag',
-            'vrijdag': 'Elke vrijdag',
-            'zaterdag': 'Elke zaterdag',
-            'zondag': 'Elke zondag',
-            'eerste-dag-maand': 'Eerste dag van de maand',
-            'laatste-dag-maand': 'Laatste dag van de maand',
-            'eerste-werkdag-maand': 'Eerste werkdag van de maand',
-            'laatste-werkdag-maand': 'Laatste werkdag van de maand',
-            'eerste-maandag-maand': 'Eerste maandag',
-            'eerste-dinsdag-maand': 'Eerste dinsdag',
-            'eerste-woensdag-maand': 'Eerste woensdag',
-            'eerste-donderdag-maand': 'Eerste donderdag',
-            'eerste-vrijdag-maand': 'Eerste vrijdag',
-            'eerste-zaterdag-maand': 'Eerste zaterdag',
-            'eerste-zondag-maand': 'Eerste zondag',
-            'laatste-maandag-maand': 'Laatste maandag',
-            'laatste-dinsdag-maand': 'Laatste dinsdag',
-            'laatste-woensdag-maand': 'Laatste woensdag',
-            'laatste-donderdag-maand': 'Laatste donderdag',
-            'laatste-vrijdag-maand': 'Laatste vrijdag',
-            'laatste-zaterdag-maand': 'Laatste zaterdag',
-            'laatste-zondag-maand': 'Laatste zondag',
-            'eerste-dag-jaar': 'Eerste dag van het jaar',
-            'laatste-dag-jaar': 'Laatste dag van het jaar',
-            'eerste-werkdag-jaar': 'Eerste werkdag van het jaar',
-            'laatste-werkdag-jaar': 'Laatste werkdag van het jaar',
-            'om-de-dag': 'Om de dag',
-            '2-weken': 'Elke 2 weken',
-            '3-weken': 'Elke 3 weken',
-            '2-maanden': 'Elke 2 maanden',
-            '3-maanden': 'Elke 3 maanden',
-            '6-maanden': 'Elke 6 maanden'
+            'dagelijks': 'Daily',
+            'wekelijks': 'Weekly',
+            'maandelijks': 'Monthly',
+            'jaarlijks': 'Yearly',
+            'maandag': 'Every Monday',
+            'dinsdag': 'Every Tuesday',
+            'woensdag': 'Every Wednesday',
+            'donderdag': 'Every Thursday',
+            'vrijdag': 'Every Friday',
+            'zaterdag': 'Every Saturday',
+            'zondag': 'Every Sunday',
+            'eerste-dag-maand': 'First day of the month',
+            'laatste-dag-maand': 'Last day of the month',
+            'eerste-werkdag-maand': 'First workday of the month',
+            'laatste-werkdag-maand': 'Last workday of the month',
+            'eerste-maandag-maand': 'First Monday',
+            'eerste-dinsdag-maand': 'First Tuesday',
+            'eerste-woensdag-maand': 'First Wednesday',
+            'eerste-donderdag-maand': 'First Thursday',
+            'eerste-vrijdag-maand': 'First Friday',
+            'eerste-zaterdag-maand': 'First Saturday',
+            'eerste-zondag-maand': 'First Sunday',
+            'laatste-maandag-maand': 'Last Monday',
+            'laatste-dinsdag-maand': 'Last Tuesday',
+            'laatste-woensdag-maand': 'Last Wednesday',
+            'laatste-donderdag-maand': 'Last Thursday',
+            'laatste-vrijdag-maand': 'Last Friday',
+            'laatste-zaterdag-maand': 'Last Saturday',
+            'laatste-zondag-maand': 'Last Sunday',
+            'eerste-dag-jaar': 'First day of the year',
+            'laatste-dag-jaar': 'Last day of the year',
+            'eerste-werkdag-jaar': 'First workday of the year',
+            'laatste-werkdag-jaar': 'Last workday of the year',
+            'om-de-dag': 'Every other day',
+            '2-weken': 'Every 2 weeks',
+            '3-weken': 'Every 3 weeks',
+            '2-maanden': 'Every 2 months',
+            '3-maanden': 'Every 3 months',
+            '6-maanden': 'Every 6 months'
         };
         return herhalingTexts[value] || 'No recurrence';
     }
@@ -10740,11 +10740,11 @@ class Taakbeheer {
 
         // Define the uitgesteld categories
         const uitgesteldCategories = [
-            { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-pause-circle' }
+            { key: 'uitgesteld-wekelijks', name: 'Weekly', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-maandelijks', name: 'Monthly', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-3maandelijks', name: 'Quarterly', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-6maandelijks', name: 'Bi-annual', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-jaarlijks', name: 'Yearly', icon: 'fas fa-pause-circle' }
         ];
 
         // Load counts for each category
@@ -10771,7 +10771,7 @@ class Taakbeheer {
                     <span></span>
                     <span></span>
                 </button>
-                <h1 id="page-title">Uitgesteld</h1>
+                <h1 id="page-title">Deferred</h1>
             </header>
 
             <div class="content-area">
@@ -10790,7 +10790,7 @@ class Taakbeheer {
                             </div>
                             <div class="sectie-content" id="content-${category.key}" style="display: none;">
                                 <div class="loading-placeholder">
-                                    Klik om taken te laden...
+                                    Click to load tasks...
                                 </div>
                             </div>
                         </div>
