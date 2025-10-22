@@ -4810,24 +4810,27 @@ app.get('/api/counts/sidebar', async (req, res) => {
             return res.status(401).json({ error: 'Not authenticated' });
         }
 
-        // Single query to get all 5 counters using CROSS JOIN for projecten count
-        const query = `
+        // Two separate sequential queries (simplest approach)
+
+        // Query 1: Taken counts
+        const takenResult = await pool.query(`
             SELECT
-                COUNT(CASE WHEN t.lijst = 'inbox' AND t.afgewerkt IS NULL THEN 1 END) as inbox,
-                COUNT(CASE WHEN t.lijst = 'acties' AND t.afgewerkt IS NULL
-                    AND (t.verschijndatum IS NULL OR t.verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
-                p.projecten_count as projecten,
-                COUNT(CASE WHEN t.lijst = 'opvolgen' AND t.afgewerkt IS NULL THEN 1 END) as opvolgen,
-                COUNT(CASE WHEN t.lijst LIKE 'uitgesteld-%' AND t.afgewerkt IS NULL THEN 1 END) as uitgesteld
-            FROM taken t
-            CROSS JOIN (SELECT COUNT(*) as projecten_count FROM projecten WHERE user_id = $1) p
-            WHERE t.user_id = $1
-        `;
+                COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
+                COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL
+                    AND (verschijndatum IS NULL OR verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
+                COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
+                COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
+            FROM taken
+            WHERE user_id = $1
+        `, [userId]);
 
-        const result = await pool.query(query, [userId]);
+        // Query 2: Projecten count
+        const projectenResult = await pool.query(`
+            SELECT COUNT(*) as count FROM projecten WHERE user_id = $1
+        `, [userId]);
 
-        // Safety check for result
-        if (!result || !result.rows || result.rows.length === 0) {
+        // Safety check for results
+        if (!takenResult || !takenResult.rows || takenResult.rows.length === 0) {
             return res.json({
                 inbox: 0,
                 acties: 0,
@@ -4839,11 +4842,11 @@ app.get('/api/counts/sidebar', async (req, res) => {
 
         // Convert string counts to integers
         const counts = {
-            inbox: parseInt(result.rows[0].inbox) || 0,
-            acties: parseInt(result.rows[0].acties) || 0,
-            projecten: parseInt(result.rows[0].projecten) || 0,
-            opvolgen: parseInt(result.rows[0].opvolgen) || 0,
-            uitgesteld: parseInt(result.rows[0].uitgesteld) || 0
+            inbox: parseInt(takenResult.rows[0].inbox) || 0,
+            acties: parseInt(takenResult.rows[0].acties) || 0,
+            projecten: parseInt(projectenResult.rows[0]?.count) || 0,
+            opvolgen: parseInt(takenResult.rows[0].opvolgen) || 0,
+            uitgesteld: parseInt(takenResult.rows[0].uitgesteld) || 0
         };
 
         res.json(counts);
