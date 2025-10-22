@@ -151,7 +151,7 @@
                         </div>
                         <a href="#" id="openOnboardingVideoLink" class="lijst-item">
                             <div class="lijst-icon"><i class="fas fa-video"></i></div>
-                            <span class="lijst-naam">Instructievideo</span>
+                            <span class="lijst-naam">Instruction Video</span>
                         </a>
                     </div>
                 </div>
@@ -255,11 +255,11 @@
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F3</kbd></span>
-                            <span class="shortcut-desc">Datum = vandaag</span>
+                            <span class="shortcut-desc">Date = today</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F4</kbd></span>
-                            <span class="shortcut-desc">Datum = morgen</span>
+                            <span class="shortcut-desc">Date = tomorrow</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F6</kbd></span>
@@ -723,7 +723,7 @@
     <!-- Login Modal -->
     <div id="loginModal" class="popup-overlay" style="display: none;">
         <div class="popup-content auth-modal">
-            <h3>Inloggen</h3>
+            <h3>Log in</h3>
             <form id="loginForm">
                 <div class="form-group">
                     <label for="loginEmail">Email:</label>
@@ -758,17 +758,17 @@
                     <label for="registerPassword">Password:</label>
                     <div class="password-input-wrapper">
                         <input type="password" id="registerPassword" required>
-                        <button type="button" id="toggle-password-visibility" aria-label="Toon wachtwoord" title="Toon wachtwoord">
+                        <button type="button" id="toggle-password-visibility" aria-label="Show password" title="Show password">
                             <i class="fas fa-eye" id="toggle-icon"></i>
                         </button>
                     </div>
                     <div class="password-requirements">
-                        <p>Wachtwoord moet voldoen aan:</p>
+                        <p>Password requirements:</p>
                         <ul>
-                            <li id="req-length" class="password-requirement neutral">Minimaal 8 tekens</li>
-                            <li id="req-uppercase" class="password-requirement neutral">Minimaal 1 hoofdletter</li>
-                            <li id="req-digit" class="password-requirement neutral">Minimaal 1 cijfer</li>
-                            <li id="req-special" class="password-requirement neutral">Minimaal 1 speciaal teken</li>
+                            <li id="req-length" class="password-requirement neutral">Minimum 8 characters</li>
+                            <li id="req-uppercase" class="password-requirement neutral">At least 1 uppercase letter</li>
+                            <li id="req-digit" class="password-requirement neutral">At least 1 digit</li>
+                            <li id="req-special" class="password-requirement neutral">At least 1 special character</li>
                         </ul>
                     </div>
                 </div>
@@ -787,17 +787,17 @@
     <!-- Feedback Modal -->
     <div id="feedbackModal" class="popup-overlay" style="display: none;">
         <div class="popup-content feedback-modal">
-            <h3 id="feedbackTitle">Bug Melden</h3>
+            <h3 id="feedbackTitle">Report Bug</h3>
             <form id="feedbackForm">
                 <div class="form-groep">
-                    <label for="feedbackTitel">Titel *</label>
-                    <input type="text" id="feedbackTitel" required placeholder="Korte omschrijving van het probleem">
+                    <label for="feedbackTitel">Title *</label>
+                    <input type="text" id="feedbackTitel" required placeholder="Brief description of the problem">
                 </div>
-                
+
                 <div class="form-groep">
-                    <label for="feedbackBeschrijving">Beschrijving *</label>
-                    <textarea id="feedbackBeschrijving" rows="6" required 
-                        placeholder="Beschrijf het probleem zo gedetailleerd mogelijk"></textarea>
+                    <label for="feedbackBeschrijving">Description *</label>
+                    <textarea id="feedbackBeschrijving" rows="6" required
+                        placeholder="Describe the problem in as much detail as possible"></textarea>
                 </div>
                 
                 <div class="form-groep" id="bugDetails" style="display: none;">
@@ -817,12 +817,12 @@
     <!-- Clear Planning Confirmation Modal -->
     <div class="popup-overlay" id="clearPlanningModal" style="display: none;">
         <div class="popup-content clear-planning-popup">
-            <h2>Planning leegmaken</h2>
-            <p>Weet je zeker dat je de planning wilt leegmaken?</p>
+            <h2>Clear Planning</h2>
+            <p>Are you sure you want to clear the planning?</p>
             <div class="clear-options">
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearTaken" checked>
-                    <span>Taken verwijderen</span>
+                    <span>Remove tasks</span>
                 </label>
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearPauzes" checked>
@@ -870,7 +870,7 @@
     <div id="onboardingVideoPopup" class="popup-overlay" style="display: none;">
         <div class="popup-content onboarding-video-content">
             <button class="close-video-btn" aria-label="Sluiten">&times;</button>
-            <h2>Welkom bij Tickedify</h2>
+            <h2>Welcome to Tickedify</h2>
             <div class="video-container">
                 <iframe id="onboardingVideoIframe"
                         width="560" height="315"
@@ -929,7 +929,7 @@
 
             <!-- Derde Week Sectie (Ctrl-toets activated) -->
             <div class="week-section" id="actiesDerdeWeekSection" style="display: none;">
-                <h5>Week daarna</h5>
+                <h5>Week after</h5>
                 <div class="week-days" id="actiesDerdeWeek">
                     <!-- Dynamisch gegenereerd via Ctrl-toets -->
                 </div>
@@ -1045,22 +1045,22 @@
         const passwordValidationRules = {
             minLength: {
                 test: (password) => password.length >= 8,
-                message: 'Minimaal 8 tekens',
+                message: 'Minimum 8 characters',
                 element: 'req-length'
             },
             hasUppercase: {
                 test: (password) => /[A-Z]/.test(password),
-                message: 'Minimaal 1 hoofdletter',
+                message: 'At least 1 uppercase letter',
                 element: 'req-uppercase'
             },
             hasDigit: {
                 test: (password) => /[0-9]/.test(password),
-                message: 'Minimaal 1 cijfer',
+                message: 'At least 1 digit',
                 element: 'req-digit'
             },
             hasSpecialChar: {
                 test: (password) => /[^A-Za-z0-9]/.test(password),
-                message: 'Minimaal 1 speciaal teken',
+                message: 'At least 1 special character',
                 element: 'req-special'
             }
         };
@@ -1127,15 +1127,15 @@
                         passwordInput.type = 'text';
                         toggleIcon.classList.remove('fa-eye');
                         toggleIcon.classList.add('fa-eye-slash');
-                        this.setAttribute('aria-label', 'Verberg wachtwoord');
-                        this.setAttribute('title', 'Verberg wachtwoord');
+                        this.setAttribute('aria-label', 'Hide password');
+                        this.setAttribute('title', 'Hide password');
                     } else {
                         // Hide password
                         passwordInput.type = 'password';
                         toggleIcon.classList.remove('fa-eye-slash');
                         toggleIcon.classList.add('fa-eye');
-                        this.setAttribute('aria-label', 'Toon wachtwoord');
-                        this.setAttribute('title', 'Toon wachtwoord');
+                        this.setAttribute('aria-label', 'Show password');
+                        this.setAttribute('title', 'Show password');
                     }
                 });
             }

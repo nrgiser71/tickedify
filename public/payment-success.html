@@ -120,7 +120,7 @@
         </div>
         <h1>Betaling Geslaagd!</h1>
         <p id="success-message">
-            Je betaling is succesvol verwerkt. Je account wordt nu geactiveerd...
+            Your payment has been successfully processed. Your account is being activated...
         </p>
         <div id="auto-login-section">
             <p class="loading-text">
@@ -146,7 +146,7 @@
         if (noToken || tokenError || error) {
             // Show manual login option
             document.getElementById('success-message').textContent =
-                'Je betaling is succesvol verwerkt! Log in om verder te gaan.';
+                'Your payment has been successfully processed! Log in to continue.';
             document.getElementById('auto-login-section').style.display = 'none';
             document.getElementById('manual-login-section').style.display = 'block';
 

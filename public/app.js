@@ -402,7 +402,7 @@ class OnboardingVideoManager {
             // Fetch video URL from API
             const response = await fetch('/api/settings/onboarding-video');
             if (!response.ok) {
-                console.error('Fout bij ophalen video URL');
+                console.error('Errorophalen video URL');
                 return;
             }
 
@@ -430,7 +430,7 @@ class OnboardingVideoManager {
             // Display popup
             this.popup.style.display = 'flex';
         } catch (error) {
-            console.error('Fout bij tonen video:', error);
+            console.error('Errortonen video:', error);
         }
     }
 
@@ -457,7 +457,7 @@ class OnboardingVideoManager {
                     this.hasSeenThisSession = true;
                 }
             } catch (error) {
-                console.error('Fout bij markeren video als gezien:', error);
+                console.error('Errormarkeren video als gezien:', error);
             }
         }
     }
@@ -922,7 +922,7 @@ class Taakbeheer {
                 }
             }
         } catch (error) {
-            console.error('Fout bij controleren onboarding status:', error);
+            console.error('Errorcontroleren onboarding status:', error);
             // Continue loading app even if onboarding check fails
         }
 
@@ -1992,7 +1992,7 @@ class Taakbeheer {
                 }
             }
         } catch (error) {
-            console.error('Fout bij laden tellingen:', error);
+            console.error('Errorladen tellingen:', error);
         }
     }
 
@@ -2123,7 +2123,7 @@ class Taakbeheer {
             
             return taskCounts;
         } catch (error) {
-            console.error('Fout bij batch laden project task counts:', error);
+            console.error('Errorbatch laden project task counts:', error);
             return {};
         }
     }
@@ -2169,7 +2169,7 @@ class Taakbeheer {
             opmerkingen: project.opmerkingen || ''
         };
         
-        const projectData = await projectModal.show('Project Bewerken', defaultValues);
+        const projectData = await projectModal.show('Edit Project', defaultValues);
         if (projectData) {
             project.naam = projectData.naam;
             project.dueDate = projectData.dueDate;
@@ -2249,7 +2249,7 @@ class Taakbeheer {
             this.renderProjectActies(container, openActies, afgewerkteActies, project);
             
         } catch (error) {
-            console.error('Fout bij laden project acties:', error);
+            console.error('Errorladen project acties:', error);
             container.innerHTML = '<div class="project-taken-error">Error loading actions</div>';
         }
     }
@@ -2412,7 +2412,7 @@ class Taakbeheer {
             }
             
         } catch (error) {
-            console.error('Fout bij afwerken taak vanuit project:', error);
+            console.error('Errorafwerken taak vanuit project:', error);
         }
     }
 
@@ -2462,7 +2462,7 @@ class Taakbeheer {
             await this.updateProjectTellingen();
             
         } catch (error) {
-            console.error('Fout bij heropenen taak vanuit project:', error);
+            console.error('Errorheropenen taak vanuit project:', error);
         }
     }
 
@@ -3009,12 +3009,12 @@ class Taakbeheer {
     quickMove(lijst) {
         this.verplaatsTaak(lijst);
         const lijstNamen = {
-            'opvolgen': 'Opvolgen',
-            'uitgesteld-wekelijks': 'Wekelijks',
-            'uitgesteld-maandelijks': 'Maandelijks',
-            'uitgesteld-3maandelijks': '3-maandelijks',
-            'uitgesteld-6maandelijks': '6-maandelijks',
-            'uitgesteld-jaarlijks': 'Jaarlijks'
+            'opvolgen': 'Follow-up',
+            'uitgesteld-wekelijks': 'Weekly',
+            'uitgesteld-maandelijks': 'Monthly',
+            'uitgesteld-3maandelijks': 'Quarterly',
+            'uitgesteld-6maandelijks': 'Bi-annual',
+            'uitgesteld-jaarlijks': 'Yearly'
         };
         this.showQuickTip(`Verplaatst naar ${lijstNamen[lijst]}`);
     }
@@ -3039,8 +3039,8 @@ class Taakbeheer {
         if (newUsage === 4) {
             setTimeout(() => {
                 tipToast.show(
-                    "💡 Wist je dat? F-toetsen maken inbox verwerking 3x sneller. " +
-                    "F3=vandaag, F4=morgen, F7=cyclische duur. Druk F1 voor volledig overzicht.",
+                    "💡 Did you know? F-keys make inbox processing 3x faster. " +
+                    "F3=today, F4=tomorrow, F7=cycle duration. Press F1 for full overview.",
                     20000
                 );
             }, 2000);
@@ -3258,7 +3258,7 @@ class Taakbeheer {
                 }
                 await this.renderTaken();
             } catch (error) {
-                console.error('Fout bij laden lijst:', error);
+                console.error('Errorladen lijst:', error);
                 this.taken = [];
                 await this.renderTaken();
             }
@@ -3282,7 +3282,7 @@ class Taakbeheer {
             await this.renderTaken();
 
         } catch (error) {
-            console.error('Fout bij laden dagelijkse planning:', error);
+            console.error('Errorladen dagelijkse planning:', error);
             this.taken = [];
             await this.renderTaken();
         }
@@ -3726,7 +3726,7 @@ class Taakbeheer {
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
-                <div class="taak-content" data-taak-id="${taak.id}" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
+                <div class="taak-content" data-taak-id="${taak.id}" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">
                     <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
                     ${extraInfoHtml}
                 </div>
@@ -3865,7 +3865,7 @@ class Taakbeheer {
             } else if (this.huidigeLijst === 'afgewerkte-taken') {
                 acties = `
                     <div class="taak-acties">
-                        <button onclick="app.terugzettenNaarInbox('${taak.id}')" class="terugzet-btn" title="Terug naar inbox">↩️</button>
+                        <button onclick="app.terugzettenNaarInbox('${taak.id}')" class="terugzet-btn" title="Back to inbox">↩️</button>
                         <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                     </div>
                 `;
@@ -3886,7 +3886,7 @@ class Taakbeheer {
                     <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
                 </div>
                 <div class="taak-content">
-                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
+                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">${taak.tekst}${recurringIndicator}</div>
                 </div>
                 ${acties}
             `;
@@ -4274,7 +4274,7 @@ class Taakbeheer {
         }, {
             operationId: `delete-task-${id}`,
             showGlobal: true,
-            message: 'Taak verwijderen...'
+            message: 'Deleting task...'
         });
     }
 
@@ -4309,7 +4309,7 @@ class Taakbeheer {
             }
             this.vulProjectSelect();
         } catch (error) {
-            console.error('Fout bij laden projecten:', error);
+            console.error('Errorladen projecten:', error);
         }
     }
 
@@ -4327,7 +4327,7 @@ class Taakbeheer {
             }
             this.vulContextSelect();
         } catch (error) {
-            console.error('Fout bij laden contexten:', error);
+            console.error('Errorladen contexten:', error);
         }
     }
 
@@ -4595,7 +4595,7 @@ class Taakbeheer {
                     <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
                 </div>
                 
-                <h3>Verplaats naar Opvolgen</h3>
+                <h3>Move to Follow-up</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
@@ -4608,11 +4608,11 @@ class Taakbeheer {
         } else if (menuType === 'uitgesteld') {
             // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten (exclusief huidige) + opvolgen
             const uitgesteldOpties = [
-                { id: 'uitgesteld-wekelijks', naam: 'Wekelijks' },
-                { id: 'uitgesteld-maandelijks', naam: 'Maandelijks' },
-                { id: 'uitgesteld-3maandelijks', naam: '3-maandelijks' },
-                { id: 'uitgesteld-6maandelijks', naam: '6-maandelijks' },
-                { id: 'uitgesteld-jaarlijks', naam: 'Jaarlijks' }
+                { id: 'uitgesteld-wekelijks', naam: 'Weekly' },
+                { id: 'uitgesteld-maandelijks', naam: 'Monthly' },
+                { id: 'uitgesteld-3maandelijks', naam: 'Quarterly' },
+                { id: 'uitgesteld-6maandelijks', naam: 'Bi-annual' },
+                { id: 'uitgesteld-jaarlijks', naam: 'Yearly' }
             ];
             
             // Filter uit de huidige lijst
@@ -4634,7 +4634,7 @@ class Taakbeheer {
                     ${uitgesteldButtonsHTML}
                 </div>
                 
-                <h3>Verplaats naar Opvolgen</h3>
+                <h3>Move to Follow-up</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
@@ -4971,7 +4971,7 @@ class Taakbeheer {
         }, {
             operationId: 'verplaats-opvolgen',
             showGlobal: true,
-            message: 'Taak wordt verplaatst naar Opvolgen...'
+            message: 'Moving task to Follow-up...'
         });
     }
 
@@ -5177,7 +5177,7 @@ class Taakbeheer {
                         this.sluitPopup();
                     }
                 } else {
-                    console.error('Fout bij opslaan actie:', response.status);
+                    console.error('Erroropslaan actie:', response.status);
                     toast.error('Error scheduling task. Please try again.');
                     return;
                 }
@@ -5285,7 +5285,7 @@ class Taakbeheer {
                 body: JSON.stringify(this.projecten)
             });
         } catch (error) {
-            console.error('Fout bij opslaan projecten:', error);
+            console.error('Erroropslaan projecten:', error);
         }
     }
 
@@ -5297,7 +5297,7 @@ class Taakbeheer {
                 body: JSON.stringify(this.contexten)
             });
         } catch (error) {
-            console.error('Fout bij opslaan contexten:', error);
+            console.error('Erroropslaan contexten:', error);
         }
     }
 
@@ -6902,15 +6902,15 @@ class Taakbeheer {
                     'inbox': 'Inbox',
                     'acties': 'Acties',
                     'projecten': 'Projecten',
-                    'opvolgen': 'Opvolgen',
+                    'opvolgen': 'Follow-up',
                     'afgewerkte-taken': 'Afgewerkt',
                     'dagelijkse-planning': 'Daily Planning',
                     'contextenbeheer': 'Context Management',
-                    'uitgesteld-wekelijks': 'Wekelijks',
-                    'uitgesteld-maandelijks': 'Maandelijks',
-                    'uitgesteld-3maandelijks': '3-maandelijks',
-                    'uitgesteld-6maandelijks': '6-maandelijks',
-                    'uitgesteld-jaarlijks': 'Jaarlijks'
+                    'uitgesteld-wekelijks': 'Weekly',
+                    'uitgesteld-maandelijks': 'Monthly',
+                    'uitgesteld-3maandelijks': 'Quarterly',
+                    'uitgesteld-6maandelijks': 'Bi-annual',
+                    'uitgesteld-jaarlijks': 'Yearly'
                 };
                 
                 const pageTitle = document.getElementById('page-title');
@@ -6957,15 +6957,15 @@ class Taakbeheer {
                     'inbox': 'Inbox',
                     'acties': 'Acties',
                     'projecten': 'Projecten',
-                    'opvolgen': 'Opvolgen',
+                    'opvolgen': 'Follow-up',
                     'afgewerkte-taken': 'Afgewerkt',
                     'dagelijkse-planning': 'Daily Planning',
                     'contextenbeheer': 'Context Management',
-                    'uitgesteld-wekelijks': 'Wekelijks',
-                    'uitgesteld-maandelijks': 'Maandelijks',
-                    'uitgesteld-3maandelijks': '3-maandelijks',
-                    'uitgesteld-6maandelijks': '6-maandelijks',
-                    'uitgesteld-jaarlijks': 'Jaarlijks'
+                    'uitgesteld-wekelijks': 'Weekly',
+                    'uitgesteld-maandelijks': 'Monthly',
+                    'uitgesteld-3maandelijks': 'Quarterly',
+                    'uitgesteld-6maandelijks': 'Bi-annual',
+                    'uitgesteld-jaarlijks': 'Yearly'
                 };
                 const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
                 
@@ -7107,7 +7107,7 @@ class Taakbeheer {
         // Update page title
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
-            pageTitle.textContent = 'Wekelijkse Optimalisatie';
+            pageTitle.textContent = 'Weekly Optimization';
         }
 
         // Hide input container
@@ -7200,7 +7200,7 @@ class Taakbeheer {
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="bekijk-opvolgen" class="optimalisatie-checkbox">
                             <label for="bekijk-opvolgen">Bekijk je opvolgen lijst</label>
-                            <button class="actie-knop" onclick="app.navigateToList('opvolgen')">Ga naar Opvolgen</button>
+                            <button class="actie-knop" onclick="app.navigateToList('opvolgen')">Go to Follow-up</button>
                         </div>
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="bekijk-projecten" class="optimalisatie-checkbox">
@@ -7445,7 +7445,7 @@ class Taakbeheer {
             this.displayZoekResultaten(gevondenTaken, zoekTerm);
 
         } catch (error) {
-            console.error('Fout bij zoeken:', error);
+            console.error('Errorzoeken:', error);
             resultatenLijst.innerHTML = '<div class="error">An error occurred while searching.</div>';
         }
     }
@@ -8165,9 +8165,9 @@ class Taakbeheer {
         
         if (herhalingType === 'dagelijks') return 'Elke dag';
         if (herhalingType === 'werkdagen') return 'Elke werkdag';
-        if (herhalingType.includes('weekly')) return 'Wekelijks';
-        if (herhalingType.includes('monthly')) return 'Maandelijks';
-        if (herhalingType.includes('yearly')) return 'Jaarlijks';
+        if (herhalingType.includes('weekly')) return 'Weekly';
+        if (herhalingType.includes('monthly')) return 'Monthly';
+        if (herhalingType.includes('yearly')) return 'Yearly';
         
         return herhalingType; // fallback
     }
@@ -8563,7 +8563,7 @@ class Taakbeheer {
         
         // Show name in header for all items
         const naamElement = isTemplateItem ? 
-            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
+            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Click to edit name">${naam}</span>` :
             `<span class="planning-naam">${naam}</span>`;
         
         const clickHandler = isExpandable ? `onclick="app.togglePlanningItemExpand('${planningItem.id}', event)"` : '';
@@ -10123,7 +10123,7 @@ class Taakbeheer {
         }, {
             operationId: 'delete-planning-item',
             showGlobal: true,
-            message: 'Planning item verwijderen...'
+            message: 'Deleting planning item...'
         });
     }
     
@@ -10670,7 +10670,7 @@ class Taakbeheer {
             <div class="taak-checkbox">
                 <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
             </div>
-            <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
+            <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">
                 <div class="taak-titel">${taak.tekst}${herhalingIndicator}</div>
                 ${extraInfoHtml}
             </div>
@@ -11685,7 +11685,7 @@ class Taakbeheer {
 
     getListDisplayName(lijst) {
         const names = {
-            'opvolgen': 'Opvolgen',
+            'opvolgen': 'Follow-up',
             'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks',
             'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks',
             'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks',
@@ -12237,7 +12237,7 @@ class Taakbeheer {
                         successCount++;
                     }
                 } catch (error) {
-                    console.error('Fout bij bulk update:', error);
+                    console.error('Errorbulk update:', error);
                 }
             }
             
@@ -12355,19 +12355,19 @@ class Taakbeheer {
                         successCount++;
                     }
                 } catch (error) {
-                    console.error('Fout bij bulk uitstellen:', error);
+                    console.error('Errorbulk uitstellen:', error);
                 }
             }
             
             const lijstLabels = {
                 'inbox': 'Inbox',
                 'acties': 'Acties',
-                'opvolgen': 'Opvolgen',
-                'uitgesteld-wekelijks': 'Wekelijks',
-                'uitgesteld-maandelijks': 'Maandelijks',
-                'uitgesteld-3maandelijks': '3-maandelijks',
-                'uitgesteld-6maandelijks': '6-maandelijks',
-                'uitgesteld-jaarlijks': 'Jaarlijks'
+                'opvolgen': 'Follow-up',
+                'uitgesteld-wekelijks': 'Weekly',
+                'uitgesteld-maandelijks': 'Monthly',
+                'uitgesteld-3maandelijks': 'Quarterly',
+                'uitgesteld-6maandelijks': 'Bi-annual',
+                'uitgesteld-jaarlijks': 'Yearly'
             };
             
             // Show finishing message
@@ -13750,7 +13750,7 @@ class FeedbackManager {
         
         // Show loading
         if (window.loading && window.loading.showGlobal) {
-            window.loading.showGlobal('Feedback verzenden...');
+            window.loading.showGlobal('Sending feedback...');
         }
         
         try {
@@ -13770,7 +13770,7 @@ class FeedbackManager {
             });
             
             if (response.ok) {
-                toast.success('Bedankt voor je feedback! We gaan er mee aan de slag.');
+                toast.success('Thanks for your feedback! We\'ll get to work on it.');
                 // Wacht even zodat gebruiker de success melding ziet
                 setTimeout(() => {
                     this.closeModal();
@@ -13820,21 +13820,21 @@ async function deleteAllTasks() {
     });
     
     if (!isActiesLijst) {
-        toast.error('Deze functie werkt alleen op de acties lijst');
+        toast.error('This function only works on the actions list');
         return;
     }
     
     // Vraag dubbele bevestiging
-    const confirmation = confirm('⚠️ WAARSCHUWING: Dit zal ALLE taken in je acties lijst permanent verwijderen!\n\nWeet je dit 100% zeker?');
+    const confirmation = confirm('⚠️ WARNING: This will permanently delete ALL tasks in your actions list!\n\nAre you 100% sure?');
     if (!confirmation) return;
-    
-    const secondConfirmation = confirm('🚨 LAATSTE WAARSCHUWING: Deze actie kan NIET ongedaan gemaakt worden!\n\nTyp mentaal "IK BEGRIJP HET RISICO" en klik OK om door te gaan.');
+
+    const secondConfirmation = confirm('🚨 FINAL WARNING: This action CANNOT be undone!\n\nMentally type "I UNDERSTAND THE RISK" and click OK to proceed.');
     if (!secondConfirmation) return;
     
     try {
         // Check if loading manager exists
         if (window.loading && loading.showGlobal) {
-            loading.showGlobal('Alle taken verwijderen...');
+            loading.showGlobal('Deleting all tasks...');
         }
         
         // Delete alle taken via API - werkt alleen voor aangelogde gebruiker
@@ -14032,7 +14032,7 @@ class SubtakenManager {
         } else {
             const completed = this.currentSubtaken.filter(s => s.voltooid).length;
             const total = this.currentSubtaken.length;
-            progressElement.textContent = `(${completed}/${total} voltooid)`;
+            progressElement.textContent = `(${completed}/${total} completed)`;
             progressElement.style.display = 'inline';
         }
     }
@@ -14176,7 +14176,7 @@ class SubtakenManager {
         const subtaak = this.currentSubtaken.find(s => s.id === subtaakId);
         if (!subtaak) return;
 
-        if (!confirm(`Subtaak "${subtaak.titel}" verwijderen?`)) {
+        if (!confirm(`Delete subtask "${subtaak.titel}"?`)) {
             return;
         }
 
@@ -14502,7 +14502,7 @@ class BijlagenManager {
 
             if (data.success) {
                 console.log('✅ DEBUG: Upload successful, updating UI');
-                toast.success(`Bijlage "${file.name}" succesvol geüpload`);
+                toast.success(`Attachment "${file.name}" successfully uploaded`);
                 await this.loadStorageStats();
                 await this.loadBijlagen();
                 this.updateUI();
@@ -14695,7 +14695,7 @@ class BijlagenManager {
             const currentIndex = allBijlagen.findIndex(b => b.id === bijlageId);
             
             if (currentIndex === -1) {
-                toast.error('Bijlage niet gevonden');
+                toast.error('Attachment not found');
                 return;
             }
 
