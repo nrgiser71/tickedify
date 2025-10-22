@@ -4847,7 +4847,16 @@ app.get('/api/counts/sidebar', async (req, res) => {
         res.json(counts);
     } catch (error) {
         console.error('Error getting sidebar counts:', error);
-        res.status(500).json({ error: 'Failed to get sidebar counts' });
+        // For debugging: include error details in response
+        res.status(500).json({
+            error: 'Failed to get sidebar counts',
+            debug: {
+                message: error.message,
+                stack: error.stack?.split('\n')[0],
+                poolExists: !!pool,
+                dbExists: !!db
+            }
+        });
     }
 });
 
