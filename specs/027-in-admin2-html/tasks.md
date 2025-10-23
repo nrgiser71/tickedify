@@ -43,14 +43,14 @@
 
 ## Phase 3.1: Setup & Dependencies
 
-- [ ] **T001** [P] Import message-modal.js in admin2.html
+- [x] **T001** [P] Import message-modal.js in admin2.html ✅ COMPLETED
   - **File**: `public/admin2.html`
   - **Action**: Add `<script src="js/message-modal.js"></script>` in `<head>` section
   - **Why**: Required for `showMessage()`, `parseMarkdownLinks()`, `getMessageIcon()` functions
   - **Dependencies**: None
   - **Can run in parallel with**: T002
 
-- [ ] **T002** [P] Bump version in package.json
+- [x] **T002** [P] Bump version in package.json ✅ COMPLETED
   - **File**: `package.json`
   - **Action**: Increment version from current to next patch (e.g., 0.19.162 → 0.19.163)
   - **Why**: Tickedify requires version bump for all features (per CLAUDE.md)
@@ -61,7 +61,7 @@
 
 ## Phase 3.2: Core Implementation - Preview Modal HTML
 
-- [ ] **T003** Add preview modal HTML structure to admin2.html
+- [x] **T003** ✅ COMPLETED Add preview modal HTML structure to admin2.html
   - **File**: `public/admin2.html`
   - **Location**: Before closing `</body>` tag, after existing modals
   - **Action**: Insert complete preview modal HTML (clone of message-modal structure)
@@ -90,7 +90,7 @@
 
 ## Phase 3.3: Core Implementation - List View Preview
 
-- [ ] **T004** Add preview button to message list table rows
+- [x] **T004** ✅ COMPLETED Add preview button to message list table rows
   - **File**: `public/admin2.html`
   - **Location**: `renderMessagesList()` function, around line 2316-2332
   - **Action**: Insert preview button in action buttons column BEFORE delete button
@@ -106,7 +106,7 @@
   - **Dependencies**: T003 (preview modal must exist)
   - **Testing**: Button appears in list but may not work yet
 
-- [ ] **T005** Implement previewMessageFromList() JavaScript function
+- [x] **T005** ✅ COMPLETED Implement previewMessageFromList() JavaScript function
   - **File**: `public/admin2.html`
   - **Location**: In `<script>` section, after existing message functions
   - **Action**: Add function to extract message from currentMessages array and show preview
@@ -134,7 +134,7 @@
 
 ## Phase 3.4: Core Implementation - Detail View Preview
 
-- [ ] **T006** Add preview button to message edit modal
+- [x] **T006** ✅ COMPLETED Add preview button to message edit modal
   - **File**: `public/admin2.html`
   - **Location**: Message edit modal footer, before submit button (search for `id="message-modal-submit"`)
   - **Action**: Insert preview button in modal footer
@@ -149,7 +149,7 @@
   - **Dependencies**: T003 (preview modal must exist)
   - **Testing**: Button appears in edit modal footer
 
-- [ ] **T007** Implement previewMessageFromForm() JavaScript function
+- [x] **T007** ✅ COMPLETED Implement previewMessageFromForm() JavaScript function
   - **File**: `public/admin2.html`
   - **Location**: In `<script>` section, after previewMessageFromList()
   - **Action**: Add function to extract form field values and show preview
@@ -180,7 +180,7 @@
 
 ## Phase 3.5: Core Implementation - Preview Rendering
 
-- [ ] **T008** Implement showPreview() core rendering function
+- [x] **T008** ✅ COMPLETED Implement showPreview() core rendering function
   - **File**: `public/admin2.html`
   - **Location**: In `<script>` section, before previewMessageFromList()
   - **Action**: Add main preview rendering function (reuses message-modal.js logic)
@@ -257,7 +257,7 @@
   - **Dependencies**: T001 (requires message-modal.js functions), T003 (modal HTML)
   - **Testing**: Preview should now render correctly
 
-- [ ] **T009** Implement closePreview() function
+- [x] **T009** ✅ COMPLETED Implement closePreview() function
   - **File**: `public/admin2.html`
   - **Location**: In `<script>` section, after showPreview()
   - **Action**: Add function to close preview modal
@@ -278,7 +278,7 @@
 
 ## Phase 3.6: Styling & Polish
 
-- [ ] **T010** Add preview-mode specific CSS styling
+- [x] **T010** ✅ COMPLETED Add preview-mode specific CSS styling
   - **File**: `public/admin2.html` (in `<style>` section) or `public/style.css`
   - **Action**: Add CSS for preview-mode indicator and overrides
   - **Code**:
@@ -319,7 +319,7 @@
 
 ## Phase 3.7: Testing & Validation
 
-- [ ] **T011** Update changelog with preview feature
+- [x] **T011** ✅ COMPLETED Update changelog with preview feature
   - **File**: `public/changelog.html`
   - **Action**: Add entry for message preview feature
   - **Content**:

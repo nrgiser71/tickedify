@@ -729,22 +729,7 @@
            Feature: 027-in-admin2-html
            ================================================================ */
 
-        /* Preview Mode Styling */
-        .message-modal.preview-mode {
-            border: 2px dashed var(--macos-blue);
-        }
-
-        .preview-indicator {
-            background: var(--macos-blue);
-            color: white;
-            padding: 8px 16px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 6px 6px 0 0;
-            margin-bottom: 10px;
-        }
-
+        /* Preview button styling */
         .btn-preview {
             background-color: var(--macos-blue) !important;
             color: white !important;
@@ -754,8 +739,27 @@
             opacity: 0.9;
         }
 
+        /* Preview modal stacking */
         #admin-preview-modal-overlay {
-            z-index: 10001 !important; /* Stack over edit modal */
+            z-index: 10001 !important; /* Stack over edit modal (which is 10000) */
+        }
+
+        /* Subtle preview mode indicator */
+        .message-modal.preview-mode {
+            position: relative;
+        }
+
+        .message-modal.preview-mode::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px dashed rgba(var(--macos-blue-rgb), 0.3);
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: 1;
         }
     </style>
 </head>
@@ -2552,7 +2556,7 @@
 
             // Update content
             const titleElement = modal.querySelector('.message-title');
-            const contentElement = modal.querySelector('.message-content');
+            const contentElement = modal.querySelector('.message-body .message-content');
 
             if (titleElement) titleElement.textContent = messageData.title || 'No Title';
             if (contentElement && typeof parseMarkdownLinks === 'function') {
@@ -2561,7 +2565,7 @@
                     : '<p style="color: var(--macos-text-secondary); font-style: italic;">No content</p>';
             }
 
-            // Apply type-specific styling
+            // Apply type-specific styling to modal (adds color header)
             const modalElement = modal.querySelector('.message-modal');
             if (modalElement) {
                 modalElement.className = `message-modal message-${messageData.message_type || 'information'} preview-mode`;
@@ -2594,6 +2598,16 @@
                 });
             } else if (snoozeContainer) {
                 snoozeContainer.style.display = 'none';
+            }
+
+            // Update dismiss button text - keep it functional to close preview
+            const dismissBtn = modal.querySelector('.btn-message-dismiss');
+            if (dismissBtn) {
+                dismissBtn.textContent = 'Close Preview';
+                dismissBtn.disabled = false;
+                dismissBtn.title = 'Sluit preview';
+                dismissBtn.style.opacity = '1';
+                dismissBtn.style.cursor = 'pointer';
             }
 
             // Show modal
@@ -2643,22 +2657,40 @@
         }
     </script>
 
-    <!-- Message Preview Modal -->
+    <!-- Message Preview Modal (matches structure from index.html) -->
     <div id="admin-preview-modal-overlay" class="modal-overlay" style="display: none; z-index: 10001;">
-        <div class="message-modal message-information preview-mode">
-            <div class="preview-indicator">👁️ PREVIEW MODE</div>
-            <button class="btn-close-modal" onclick="closePreview()">×</button>
-            <div class="message-icon fas fa-info-circle"></div>
-            <h2 class="message-title">Message Title</h2>
-            <div class="message-content">Message content here</div>
-            <div class="message-button" style="display: none;"></div>
-            <div class="snooze-options" style="display: none;">
-                <button class="btn-snooze" data-duration="3600" disabled>1 uur</button>
-                <button class="btn-snooze" data-duration="86400" disabled>1 dag</button>
-                <button class="btn-snooze" data-duration="259200" disabled>3 dagen</button>
+        <div class="message-modal preview-mode">
+            <div class="message-header">
+                <button class="btn-close-modal" onclick="closePreview()" aria-label="Sluit preview">
+                    <i class="fas fa-times"></i>
+                </button>
+                <i class="message-icon fas fa-info-circle"></i>
+                <h3 class="message-title">Message Title</h3>
+                <span class="carousel-indicator preview-indicator" style="display: block; background: var(--macos-blue); color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">👁️ PREVIEW</span>
             </div>
-            <div class="message-footer">
-                <button class="btn-message-dismiss" onclick="closePreview()">Close Preview</button>
+            <div class="message-body">
+                <div class="message-content">Message content here</div>
+            </div>
+
+            <!-- Optional action button -->
+            <div class="message-button" style="display: none;"></div>
+
+            <div class="message-actions">
+                <!-- Snooze options -->
+                <div class="snooze-options" style="display: none;">
+                    <button class="btn-snooze" data-duration="3600" disabled>Snooze 1h</button>
+                    <button class="btn-snooze" data-duration="14400" disabled>Snooze 4h</button>
+                    <button class="btn-snooze" data-duration="86400" disabled>Snooze 1d</button>
+                </div>
+
+                <!-- Dismiss -->
+                <button class="btn-message-dismiss" onclick="closePreview()">Got it</button>
+            </div>
+
+            <!-- Carousel navigation -->
+            <div class="message-navigation">
+                <button class="btn-prev" style="display: none;" disabled>◀ Previous</button>
+                <button class="btn-next" style="display: none;" disabled>Next ▶</button>
             </div>
         </div>
     </div>
