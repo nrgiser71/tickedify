@@ -536,6 +536,192 @@
                 font-size: 13px;
             }
         }
+
+        /* Dashboard Tabs Styling */
+        .dashboard-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--macos-border);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--macos-text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: var(--macos-blue);
+        }
+
+        .tab-btn.active {
+            color: var(--macos-blue);
+            border-bottom-color: var(--macos-blue);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Message Form Styling */
+        .admin-form {
+            background: var(--macos-bg-secondary);
+            padding: 30px;
+            border-radius: var(--macos-radius-medium);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid var(--macos-border);
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+        }
+
+        .form-section h3 {
+            color: var(--macos-text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--macos-text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--macos-border);
+            border-radius: var(--macos-radius-medium);
+            background: var(--macos-bg-primary);
+            color: var(--macos-text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--macos-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-radio-group, .form-checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .form-radio-label, .form-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: normal;
+            color: var(--macos-text-primary);
+        }
+
+        .form-radio-label input[type="radio"],
+        .form-checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            align-items: center;
+        }
+
+        .text-secondary {
+            color: var(--macos-text-secondary);
+        }
+
+        .text-help {
+            font-size: 12px;
+            color: var(--macos-text-secondary);
+            margin-top: 5px;
+        }
+
+        #targetPreview {
+            background: var(--macos-bg-tertiary);
+            padding: 15px;
+            border-radius: var(--macos-radius-medium);
+            border-left: 4px solid var(--macos-blue);
+        }
+
+        #userSearchResults {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--macos-border);
+            border-radius: var(--macos-radius-medium);
+            background: var(--macos-bg-primary);
+        }
+
+        .user-search-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--macos-border);
+        }
+
+        .user-search-item:hover {
+            background: var(--macos-bg-hover);
+        }
+
+        #selectedUsers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .selected-user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--macos-blue);
+            color: white;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+
+        .selected-user-remove {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -605,6 +791,12 @@
                     <a href="#security" class="admin-nav-link" data-screen="security">
                         <span class="admin-nav-icon">🔒</span>
                         <span>Security</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#messages" class="admin-nav-link" data-screen="messages">
+                        <span class="admin-nav-icon">📢</span>
+                        <span>Berichten</span>
                     </a>
                 </li>
             </ul>
@@ -1179,6 +1371,184 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Messages Screen -->
+            <section id="screen-messages" class="admin-screen" data-screen="messages">
+                <div class="admin-header">
+                    <h1 class="admin-header-title">📢 In-App Berichten Systeem</h1>
+                    <p class="admin-header-subtitle">Stuur gerichte berichten naar gebruikers</p>
+                </div>
+
+                <!-- Tabs: Create Message vs. All Messages -->
+                <div class="dashboard-tabs">
+                    <button class="tab-btn active" data-tab="create">Nieuw Bericht</button>
+                    <button class="tab-btn" data-tab="list">Alle Berichten</button>
+                </div>
+
+                <!-- Tab Content: Create Message -->
+                <div class="tab-content active" data-tab-content="create">
+                    <form id="message-creation-form" class="admin-form">
+                        <!-- Basic Info -->
+                        <div class="form-section">
+                            <h3>Bericht Content</h3>
+                            <div class="form-group">
+                                <label class="form-label">Titel *</label>
+                                <input type="text" class="form-input" id="msg-title" maxlength="255" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bericht *</label>
+                                <textarea class="form-textarea" id="msg-message" maxlength="10000" required></textarea>
+                                <div class="text-help">Markdown links ondersteund: [tekst](url)</div>
+                            </div>
+                        </div>
+
+                        <!-- Targeting Section -->
+                        <div class="form-section">
+                            <h3>Doelgroep</h3>
+                            <div class="form-group">
+                                <label class="form-label">Selecteer doelgroep *</label>
+                                <div class="form-radio-group">
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="targetType" value="all" checked>
+                                        <span>🌍 Alle gebruikers</span>
+                                    </label>
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="targetType" value="filtered">
+                                        <span>🎯 Gefilterd op abonnement</span>
+                                    </label>
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="targetType" value="specific_users">
+                                        <span>👤 Specifieke gebruikers</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Subscription Filter (hidden by default) -->
+                            <div id="subscriptionFilterSection" class="form-group" style="display: none; margin-left: 30px;">
+                                <label class="form-label">Abonnementen selecteren:</label>
+                                <div class="form-checkbox-group">
+                                    <label class="form-checkbox-label">
+                                        <input type="checkbox" name="subscription" value="free">
+                                        <span>Free</span>
+                                    </label>
+                                    <label class="form-checkbox-label">
+                                        <input type="checkbox" name="subscription" value="premium">
+                                        <span>Premium</span>
+                                    </label>
+                                    <label class="form-checkbox-label">
+                                        <input type="checkbox" name="subscription" value="trial">
+                                        <span>Trial</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- User Search (hidden by default) -->
+                            <div id="userSearchSection" class="form-group" style="display: none; margin-left: 30px;">
+                                <label class="form-label" for="userSearchInput">Zoek gebruikers (min 2 tekens):</label>
+                                <input type="text" class="form-input" id="userSearchInput" placeholder="Naam of email...">
+                                <div id="userSearchResults"></div>
+                                <div id="selectedUsers"></div>
+                            </div>
+
+                            <!-- Target Preview -->
+                            <div id="targetPreview" class="form-group" style="display: none; margin-top: 20px;">
+                                <label class="form-label">📊 Doelgroep preview:</label>
+                                <div id="targetPreviewContent"></div>
+                            </div>
+                        </div>
+
+                        <!-- Trigger Section -->
+                        <div class="form-section">
+                            <h3>Trigger</h3>
+                            <div class="form-group">
+                                <label class="form-label">Wanneer tonen? *</label>
+                                <div class="form-radio-group">
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="triggerType" value="immediate" checked>
+                                        <span>⚡ Direct (bij eerstvolgende page load)</span>
+                                    </label>
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="triggerType" value="days_after_signup">
+                                        <span>📅 X dagen na signup</span>
+                                    </label>
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="triggerType" value="first_page_visit">
+                                        <span>👁️ Eerste bezoek aan pagina</span>
+                                    </label>
+                                    <label class="form-radio-label">
+                                        <input type="radio" name="triggerType" value="nth_page_visit">
+                                        <span>🔢 Na N bezoeken aan pagina</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Days After Signup Input (hidden by default) -->
+                            <div id="daysAfterSignupSection" class="form-group" style="display: none; margin-left: 30px;">
+                                <label class="form-label" for="daysAfterSignup">Aantal dagen:</label>
+                                <input type="number" class="form-input" id="daysAfterSignup" min="1" max="365" placeholder="3">
+                            </div>
+
+                            <!-- First Page Visit Select (hidden by default) -->
+                            <div id="firstPageVisitSection" class="form-group" style="display: none; margin-left: 30px;">
+                                <label class="form-label" for="firstPageSelect">Selecteer pagina:</label>
+                                <select class="form-input" id="firstPageSelect">
+                                    <option value="dagelijkse-planning">Dagelijkse Planning</option>
+                                    <option value="actielijst">Actielijst</option>
+                                    <option value="inbox">Inbox</option>
+                                    <option value="edit-task-modal">Taak Bewerken Modal</option>
+                                    <option value="quick-add-modal">Quick Add Modal</option>
+                                    <option value="recurring-task-popup">Herhalende Taak Popup</option>
+                                    <option value="planning-popup">Planning Popup</option>
+                                </select>
+                            </div>
+
+                            <!-- Nth Page Visit Inputs (hidden by default) -->
+                            <div id="nthPageVisitSection" class="form-group" style="display: none; margin-left: 30px;">
+                                <label class="form-label" for="nthVisitCount">Na bezoek nummer:</label>
+                                <input type="number" class="form-input" id="nthVisitCount" min="1" max="100" placeholder="5">
+                                <label class="form-label" for="nthPageSelect" style="margin-top: 10px;">Aan pagina:</label>
+                                <select class="form-input" id="nthPageSelect">
+                                    <option value="dagelijkse-planning">Dagelijkse Planning</option>
+                                    <option value="actielijst">Actielijst</option>
+                                    <option value="inbox">Inbox</option>
+                                    <option value="edit-task-modal">Taak Bewerken Modal</option>
+                                    <option value="quick-add-modal">Quick Add Modal</option>
+                                    <option value="recurring-task-popup">Herhalende Taak Popup</option>
+                                    <option value="planning-popup">Planning Popup</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Scheduling Section -->
+                        <div class="form-section">
+                            <h3>Planning (Optioneel)</h3>
+                            <div class="form-group">
+                                <label class="form-label" for="publishAt">Publiceren op:</label>
+                                <input type="datetime-local" class="form-input" id="publishAt">
+                                <div class="text-help">Leeg laten voor direct publiceren</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="expiresAt">Verloopt op:</label>
+                                <input type="datetime-local" class="form-input" id="expiresAt">
+                                <div class="text-help">Leeg laten voor geen vervaldatum</div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">📢 Bericht Aanmaken</button>
+                            <div id="message-status"></div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab Content: Messages List -->
+                <div class="tab-content" data-tab-content="list">
+                    <div id="messages-list-container">
+                        <p class="text-secondary">Message lijst komt in Phase 4</p>
+                    </div>
+                </div>
+            </section>
         </main>
         </div><!-- Close breadcrumb wrapper -->
     </div><!-- Close admin-layout -->
@@ -1344,5 +1714,361 @@
         })();
     </script>
     <script src="admin2.js"></script>
+
+    <!-- Messaging System JavaScript -->
+    <script>
+        // ============================================================================
+        // MESSAGING SYSTEM - PHASE 2
+        // ============================================================================
+
+        // State voor user selection en debouncing
+        let selectedUserIds = [];
+        let searchDebounceTimer = null;
+        let previewDebounceTimer = null;
+
+        // Initialize messaging form event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+
+                    // Update buttons
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // Update content
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+                });
+            });
+
+            // Target type radio buttons
+            const targetTypeRadios = document.querySelectorAll('input[name="targetType"]');
+            targetTypeRadios.forEach(radio => {
+                radio.addEventListener('change', handleTargetTypeChange);
+            });
+
+            // Trigger type radio buttons
+            const triggerTypeRadios = document.querySelectorAll('input[name="triggerType"]');
+            triggerTypeRadios.forEach(radio => {
+                radio.addEventListener('change', handleTriggerTypeChange);
+            });
+
+            // User search input
+            const userSearchInput = document.getElementById('userSearchInput');
+            if (userSearchInput) {
+                userSearchInput.addEventListener('input', handleUserSearch);
+            }
+
+            // Subscription checkboxes
+            const subscriptionCheckboxes = document.querySelectorAll('input[name="subscription"]');
+            subscriptionCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateTargetPreview);
+            });
+
+            // Message form submit
+            const messageForm = document.getElementById('message-creation-form');
+            if (messageForm) {
+                messageForm.addEventListener('submit', handleMessageSubmit);
+            }
+        });
+
+        // Handle target type change
+        function handleTargetTypeChange(e) {
+            const targetType = e.target.value;
+            const subscriptionSection = document.getElementById('subscriptionFilterSection');
+            const userSearchSection = document.getElementById('userSearchSection');
+
+            // Reset visibility
+            subscriptionSection.style.display = 'none';
+            userSearchSection.style.display = 'none';
+
+            if (targetType === 'filtered') {
+                subscriptionSection.style.display = 'block';
+            } else if (targetType === 'specific_users') {
+                userSearchSection.style.display = 'block';
+            }
+
+            updateTargetPreview();
+        }
+
+        // Handle trigger type change
+        function handleTriggerTypeChange(e) {
+            const triggerType = e.target.value;
+            const daysSection = document.getElementById('daysAfterSignupSection');
+            const firstPageSection = document.getElementById('firstPageVisitSection');
+            const nthPageSection = document.getElementById('nthPageVisitSection');
+
+            // Reset visibility
+            daysSection.style.display = 'none';
+            firstPageSection.style.display = 'none';
+            nthPageSection.style.display = 'none';
+
+            if (triggerType === 'days_after_signup') {
+                daysSection.style.display = 'block';
+            } else if (triggerType === 'first_page_visit') {
+                firstPageSection.style.display = 'block';
+            } else if (triggerType === 'nth_page_visit') {
+                nthPageSection.style.display = 'block';
+            }
+        }
+
+        // Handle user search with debouncing
+        function handleUserSearch(e) {
+            const query = e.target.value.trim();
+
+            clearTimeout(searchDebounceTimer);
+
+            if (query.length < 2) {
+                document.getElementById('userSearchResults').innerHTML = '';
+                return;
+            }
+
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+
+                    const resultsDiv = document.getElementById('userSearchResults');
+                    if (data.users && data.users.length > 0) {
+                        resultsDiv.innerHTML = data.users
+                            .filter(u => !selectedUserIds.includes(u.id))
+                            .map(u => `
+                                <div class="user-search-item"
+                                     onclick="selectUser(${u.id}, '${escapeHtml(u.name || 'Unnamed')}', '${escapeHtml(u.email)}')">
+                                    <div>
+                                        <strong>${escapeHtml(u.name || 'Unnamed')}</strong>
+                                        <div style="font-size: 12px; color: var(--macos-text-secondary);">${escapeHtml(u.email)}</div>
+                                    </div>
+                                </div>
+                            `).join('');
+                    } else {
+                        resultsDiv.innerHTML = '<div style="padding: 8px; color: var(--macos-text-secondary);">Geen gebruikers gevonden</div>';
+                    }
+                } catch (error) {
+                    console.error('User search error:', error);
+                }
+            }, 500);
+        }
+
+        // Escape HTML helper
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Select user
+        function selectUser(userId, userName, userEmail) {
+            if (selectedUserIds.includes(userId)) return;
+
+            selectedUserIds.push(userId);
+            updateSelectedUsersDisplay();
+            updateTargetPreview();
+
+            // Clear search results
+            document.getElementById('userSearchInput').value = '';
+            document.getElementById('userSearchResults').innerHTML = '';
+        }
+
+        // Remove user
+        function removeUser(userId) {
+            selectedUserIds = selectedUserIds.filter(id => id !== userId);
+            updateSelectedUsersDisplay();
+            updateTargetPreview();
+        }
+
+        // Update selected users display
+        function updateSelectedUsersDisplay() {
+            const selectedDiv = document.getElementById('selectedUsers');
+            if (selectedUserIds.length === 0) {
+                selectedDiv.innerHTML = '<div style="color: var(--macos-text-secondary); font-size: 14px; margin-top: 10px;">Geen gebruikers geselecteerd</div>';
+                return;
+            }
+
+            selectedDiv.innerHTML = `
+                <div style="margin-top: 10px; margin-bottom: 8px; font-weight: 600; color: var(--macos-text-primary);">
+                    Geselecteerde gebruikers (${selectedUserIds.length}):
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${selectedUserIds.map(id => `
+                        <div class="selected-user-badge">
+                            <span>User ID: ${id}</span>
+                            <span class="selected-user-remove" onclick="removeUser(${id})">×</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Update target preview with debouncing
+        function updateTargetPreview() {
+            clearTimeout(previewDebounceTimer);
+
+            previewDebounceTimer = setTimeout(async () => {
+                try {
+                    const targetType = document.querySelector('input[name="targetType"]:checked').value;
+                    let targetSubscription = null;
+                    let targetUsers = null;
+
+                    if (targetType === 'filtered') {
+                        const checkedSubs = Array.from(document.querySelectorAll('input[name="subscription"]:checked'))
+                            .map(cb => cb.value);
+                        if (checkedSubs.length === 0) {
+                            document.getElementById('targetPreview').style.display = 'none';
+                            return;
+                        }
+                        targetSubscription = JSON.stringify(checkedSubs);
+                    } else if (targetType === 'specific_users') {
+                        if (selectedUserIds.length === 0) {
+                            document.getElementById('targetPreview').style.display = 'none';
+                            return;
+                        }
+                        targetUsers = JSON.stringify(selectedUserIds);
+                    }
+
+                    const params = new URLSearchParams({ target_type: targetType });
+                    if (targetSubscription) params.append('target_subscription', targetSubscription);
+                    if (targetUsers) params.append('target_users', targetUsers);
+
+                    const response = await fetch(`/api/admin/messages/preview-targets?${params}`);
+                    const data = await response.json();
+
+                    const previewDiv = document.getElementById('targetPreview');
+                    const contentDiv = document.getElementById('targetPreviewContent');
+
+                    previewDiv.style.display = 'block';
+                    contentDiv.innerHTML = `
+                        <div style="font-size: 16px; font-weight: 600; color: var(--macos-blue); margin-bottom: 8px;">
+                            ${data.count} gebruiker${data.count !== 1 ? 's' : ''} zullen dit bericht ontvangen
+                        </div>
+                        ${data.sample && data.sample.length > 0 ? `
+                            <div style="font-size: 14px; color: var(--macos-text-secondary); margin-top: 8px;">
+                                Voorbeelden: ${data.sample.map(u => escapeHtml(u.name || u.email)).join(', ')}
+                            </div>
+                        ` : ''}
+                    `;
+                } catch (error) {
+                    console.error('Preview error:', error);
+                }
+            }, 500);
+        }
+
+        // Get trigger value based on trigger type
+        function getTriggerValue() {
+            const triggerType = document.querySelector('input[name="triggerType"]:checked').value;
+
+            if (triggerType === 'immediate') {
+                return null;
+            } else if (triggerType === 'days_after_signup') {
+                const days = document.getElementById('daysAfterSignup').value;
+                return days ? days.toString() : null;
+            } else if (triggerType === 'first_page_visit') {
+                return document.getElementById('firstPageSelect').value;
+            } else if (triggerType === 'nth_page_visit') {
+                const count = document.getElementById('nthVisitCount').value;
+                const page = document.getElementById('nthPageSelect').value;
+                return count && page ? `${count}:${page}` : null;
+            }
+            return null;
+        }
+
+        // Handle message form submit
+        async function handleMessageSubmit(e) {
+            e.preventDefault();
+
+            const statusDiv = document.getElementById('message-status');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            try {
+                submitBtn.disabled = true;
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = 'var(--macos-blue)';
+                statusDiv.style.color = 'white';
+                statusDiv.style.padding = '10px';
+                statusDiv.style.borderRadius = 'var(--macos-radius-medium)';
+                statusDiv.textContent = '⏳ Bericht aanmaken...';
+
+                // Collect form data
+                const targetType = document.querySelector('input[name="targetType"]:checked').value;
+                const triggerType = document.querySelector('input[name="triggerType"]:checked').value;
+
+                let targetSubscription = null;
+                let targetUsers = null;
+
+                if (targetType === 'filtered') {
+                    const checkedSubs = Array.from(document.querySelectorAll('input[name="subscription"]:checked'))
+                        .map(cb => cb.value);
+                    targetSubscription = checkedSubs.length > 0 ? checkedSubs : null;
+                } else if (targetType === 'specific_users') {
+                    targetUsers = selectedUserIds.length > 0 ? selectedUserIds : null;
+                }
+
+                const triggerValue = getTriggerValue();
+
+                const publishAt = document.getElementById('publishAt').value;
+                const expiresAt = document.getElementById('expiresAt').value;
+
+                const messageData = {
+                    title: document.getElementById('msg-title').value,
+                    message: document.getElementById('msg-message').value,
+                    message_type: 'information',
+                    target_type: targetType,
+                    target_subscription: targetSubscription,
+                    target_users: targetUsers,
+                    trigger_type: triggerType,
+                    trigger_value: triggerValue,
+                    dismissible: true,
+                    snoozable: true,
+                    publish_at: publishAt ? new Date(publishAt).toISOString() : null,
+                    expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+                    button_label: null,
+                    button_action: null,
+                    button_target: null
+                };
+
+                const response = await fetch('/api/admin/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(messageData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.style.background = '#34C759';
+                    statusDiv.textContent = `✅ Bericht succesvol aangemaakt! (ID: ${result.messageId})`;
+
+                    // Reset form after 2 seconds
+                    setTimeout(() => {
+                        resetMessageForm();
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to create message');
+                }
+            } catch (error) {
+                console.error('Message submit error:', error);
+                statusDiv.style.background = '#FF3B30';
+                statusDiv.textContent = `❌ Fout: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Reset message form
+        function resetMessageForm() {
+            document.getElementById('message-creation-form').reset();
+            selectedUserIds = [];
+            updateSelectedUsersDisplay();
+            document.getElementById('message-status').style.display = 'none';
+            document.getElementById('targetPreview').style.display = 'none';
+            document.getElementById('subscriptionFilterSection').style.display = 'none';
+            document.getElementById('userSearchSection').style.display = 'none';
+            document.getElementById('daysAfterSignupSection').style.display = 'none';
+            document.getElementById('firstPageVisitSection').style.display = 'none';
+            document.getElementById('nthPageVisitSection').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
