@@ -145,10 +145,10 @@ function showMessage(message) {
 function getMessageIcon(type) {
   const icons = {
     information: 'fa-info-circle',
-    educational: 'fa-book',
+    educational: 'fa-graduation-cap',
     warning: 'fa-exclamation-triangle',
     important: 'fa-exclamation-circle',
-    feature: 'fa-star',
+    feature: 'fa-rocket',
     tip: 'fa-lightbulb'
   };
   return icons[type] || 'fa-info-circle';
