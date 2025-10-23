@@ -13512,9 +13512,9 @@ app.get('/api/admin/messages/preview-targets', requireAdmin, async (req, res) =>
       WHERE ${whereConditions.join(' AND ')}
     `;
     const sampleQuery = `
-      SELECT id, username as name, email FROM users
+      SELECT id, naam as name, email FROM users
       WHERE ${whereConditions.join(' AND ')}
-      ORDER BY username
+      ORDER BY naam
       LIMIT 5
     `;
 

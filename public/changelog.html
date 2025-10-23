@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.171 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.171</span>
+                <span class="version-date">24 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Admin Messages Preview Targets 500 Error</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Database Column Fix</strong>: Preview targets endpoint gebruikte niet-bestaande 'username' kolom - vervangen door 'naam' kolom die wel in users tabel bestaat.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>500 Error Opgelost</strong>: Admin berichten scherm toont nu correct preview van geselecteerde users zonder server error. Query: "SELECT id, naam as name, email FROM users".
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.170 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.170</span>
+                <span class="version-badge badge-fix">v0.19.170</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">
