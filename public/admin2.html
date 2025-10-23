@@ -2642,13 +2642,17 @@
          * Preview message from form fields (edit modal)
          */
         function previewMessageFromForm() {
+            // Helper function to convert empty strings to null
+            const emptyToNull = (value) => (value && value.trim() !== '') ? value : null;
+
             const messageData = {
                 title: document.getElementById('msg-title')?.value || 'No Title',
                 message: document.getElementById('msg-message')?.value || '',
                 message_type: document.getElementById('msg-type')?.value || 'information',
-                button_label: document.getElementById('msg-button-label')?.value || null,
-                button_action: document.getElementById('msg-button-action')?.value || null,
-                button_target: document.getElementById('msg-button-target')?.value || null,
+                // Convert empty strings to null to match cached message structure
+                button_label: emptyToNull(document.getElementById('msg-button-label')?.value),
+                button_action: emptyToNull(document.getElementById('msg-button-action')?.value),
+                button_target: emptyToNull(document.getElementById('msg-button-target')?.value),
                 dismissible: document.getElementById('msg-dismissible')?.checked ?? true,
                 snoozable: document.getElementById('msg-snoozable')?.checked ?? false
             };
