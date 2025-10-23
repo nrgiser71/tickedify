@@ -13240,6 +13240,10 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
+    // Set publish_at to NOW() if not provided and trigger is immediate
+    const finalTriggerType = trigger_type || 'immediate';
+    const finalPublishAt = publish_at || (finalTriggerType === 'immediate' ? new Date() : null);
+
     const result = await pool.query(`
       INSERT INTO admin_messages (
         title, message, message_type, target_type, target_subscription,
@@ -13249,9 +13253,9 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
       RETURNING id
     `, [
       title, message, message_type || 'information', target_type || 'all',
-      target_subscription, target_users, trigger_type || 'immediate',
+      target_subscription, target_users, finalTriggerType,
       trigger_value, dismissible !== false, snoozable !== false,
-      publish_at || null, expires_at || null, button_label || null,
+      finalPublishAt, expires_at || null, button_label || null,
       button_action || null, button_target || null
     ]);
 
