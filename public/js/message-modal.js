@@ -46,14 +46,6 @@ async function checkForMessages() {
 function isModalOpen() {
   // Check for planning/edit popup (planningPopup)
   const planningPopup = document.getElementById('planningPopup');
-
-  // DEBUG: Log current state
-  console.log('🔍 DEBUG isModalOpen:', {
-    planningPopupExists: !!planningPopup,
-    planningPopupDisplay: planningPopup ? planningPopup.style.display : 'N/A',
-    planningPopupComputedDisplay: planningPopup ? window.getComputedStyle(planningPopup).display : 'N/A'
-  });
-
   if (planningPopup && planningPopup.style.display === 'flex') {
     console.log('📢 Planning popup is open - skipping message check');
     return true;
@@ -66,7 +58,6 @@ function isModalOpen() {
     return true;
   }
 
-  console.log('✅ No modal open - message check allowed');
   return false;
 }
 
