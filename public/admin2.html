@@ -6,6 +6,7 @@
     <title>Admin Dashboard v2 - Tickedify</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script src="js/message-modal.js"></script>
     <style>
         /* Admin Dashboard v2 Specific Styles */
         .admin-layout {
@@ -721,6 +722,40 @@
             font-weight: bold;
             font-size: 16px;
             line-height: 1;
+        }
+
+        /* ===================================================================
+           MESSAGE PREVIEW STYLING
+           Feature: 027-in-admin2-html
+           ================================================================ */
+
+        /* Preview Mode Styling */
+        .message-modal.preview-mode {
+            border: 2px dashed var(--macos-blue);
+        }
+
+        .preview-indicator {
+            background: var(--macos-blue);
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: 10px;
+        }
+
+        .btn-preview {
+            background-color: var(--macos-blue) !important;
+            color: white !important;
+        }
+
+        .btn-preview:hover {
+            opacity: 0.9;
+        }
+
+        #admin-preview-modal-overlay {
+            z-index: 10001 !important; /* Stack over edit modal */
         }
     </style>
 </head>
@@ -1740,6 +1775,9 @@
 
                 <!-- Submit -->
                 <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="previewMessageFromForm()" style="margin-right: 10px;">
+                        👁️ Preview
+                    </button>
                     <button type="submit" class="btn btn-primary" id="message-modal-submit">📢 Bericht Aanmaken</button>
                     <button type="button" class="btn btn-secondary" onclick="closeMessageModal()">Annuleren</button>
                 </div>
@@ -2324,6 +2362,11 @@
                                     style="padding: 6px 10px; font-size: 12px; margin-right: 5px;">
                                 📋
                             </button>
+                            <button class="btn btn-sm btn-preview" onclick="previewMessageFromList(${msg.id})"
+                                    title="Preview bericht"
+                                    style="padding: 6px 10px; font-size: 12px; margin-right: 5px; background-color: var(--macos-blue); color: white;">
+                                👁️
+                            </button>
                             <button class="btn btn-sm btn-danger" onclick="deleteMessage(${msg.id}, '${escapeHtml(msg.title).replace(/'/g, "\\'")}')"
                                     title="Bericht verwijderen"
                                     style="padding: 6px 10px; font-size: 12px; background-color: #dc2626;">
@@ -2483,6 +2526,142 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // ===================================================================
+        // MESSAGE PREVIEW FUNCTIONALITY
+        // Feature: 027-in-admin2-html
+        // ===================================================================
+
+        /**
+         * Show preview modal with message data
+         * @param {Object} messageData - Message object to preview
+         */
+        function showPreview(messageData) {
+            const modal = document.getElementById('admin-preview-modal-overlay');
+            if (!modal) {
+                console.error('Preview modal not found');
+                return;
+            }
+
+            // Update icon based on message type
+            const iconElement = modal.querySelector('.message-icon');
+            if (iconElement && typeof getMessageIcon === 'function') {
+                const iconClass = getMessageIcon(messageData.message_type || 'information');
+                iconElement.className = `message-icon fas ${iconClass}`;
+            }
+
+            // Update content
+            const titleElement = modal.querySelector('.message-title');
+            const contentElement = modal.querySelector('.message-content');
+
+            if (titleElement) titleElement.textContent = messageData.title || 'No Title';
+            if (contentElement && typeof parseMarkdownLinks === 'function') {
+                contentElement.innerHTML = messageData.message
+                    ? parseMarkdownLinks(messageData.message)
+                    : '<p style="color: var(--macos-text-secondary); font-style: italic;">No content</p>';
+            }
+
+            // Apply type-specific styling
+            const modalElement = modal.querySelector('.message-modal');
+            if (modalElement) {
+                modalElement.className = `message-modal message-${messageData.message_type || 'information'} preview-mode`;
+            }
+
+            // Handle action button
+            const buttonContainer = modal.querySelector('.message-button');
+            if (messageData.button_label && buttonContainer) {
+                buttonContainer.innerHTML = `
+                    <button class="btn-message-action" disabled
+                            title="Preview mode - button disabled"
+                            style="opacity: 0.6; cursor: not-allowed;">
+                        ${messageData.button_label}
+                    </button>
+                `;
+                buttonContainer.style.display = 'block';
+            } else if (buttonContainer) {
+                buttonContainer.style.display = 'none';
+            }
+
+            // Handle snooze options
+            const snoozeContainer = modal.querySelector('.snooze-options');
+            if (messageData.snoozable && snoozeContainer) {
+                snoozeContainer.style.display = 'flex';
+                snoozeContainer.querySelectorAll('button').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                    btn.style.cursor = 'not-allowed';
+                    btn.title = 'Preview mode - snooze disabled';
+                });
+            } else if (snoozeContainer) {
+                snoozeContainer.style.display = 'none';
+            }
+
+            // Show modal
+            modal.style.display = 'flex';
+            console.log('👁️ Preview opened:', messageData.title);
+        }
+
+        /**
+         * Preview message from list view
+         * @param {number} messageId - ID of message to preview
+         */
+        function previewMessageFromList(messageId) {
+            const message = currentMessages.find(m => m.id === messageId);
+
+            if (!message) {
+                console.error('Message not found:', messageId);
+                return;
+            }
+
+            showPreview(message);
+        }
+
+        /**
+         * Preview message from form fields (edit modal)
+         */
+        function previewMessageFromForm() {
+            const messageData = {
+                title: document.getElementById('msg-title')?.value || 'No Title',
+                message: document.getElementById('msg-message')?.value || '',
+                message_type: document.getElementById('msg-type')?.value || 'information',
+                button_label: document.getElementById('msg-button-label')?.value || null,
+                button_action: document.getElementById('msg-button-action')?.value || null,
+                button_target: document.getElementById('msg-button-target')?.value || null,
+                dismissible: document.getElementById('msg-dismissible')?.checked ?? true,
+                snoozable: document.getElementById('msg-snoozable')?.checked ?? false
+            };
+
+            showPreview(messageData);
+        }
+
+        /**
+         * Close preview modal
+         */
+        function closePreview() {
+            const modal = document.getElementById('admin-preview-modal-overlay');
+            if (modal) modal.style.display = 'none';
+        }
     </script>
+
+    <!-- Message Preview Modal -->
+    <div id="admin-preview-modal-overlay" class="modal-overlay" style="display: none; z-index: 10001;">
+        <div class="message-modal message-information preview-mode">
+            <div class="preview-indicator">👁️ PREVIEW MODE</div>
+            <button class="btn-close-modal" onclick="closePreview()">×</button>
+            <div class="message-icon fas fa-info-circle"></div>
+            <h2 class="message-title">Message Title</h2>
+            <div class="message-content">Message content here</div>
+            <div class="message-button" style="display: none;"></div>
+            <div class="snooze-options" style="display: none;">
+                <button class="btn-snooze" data-duration="3600" disabled>1 uur</button>
+                <button class="btn-snooze" data-duration="86400" disabled>1 dag</button>
+                <button class="btn-snooze" data-duration="259200" disabled>3 dagen</button>
+            </div>
+            <div class="message-footer">
+                <button class="btn-message-dismiss" onclick="closePreview()">Close Preview</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
