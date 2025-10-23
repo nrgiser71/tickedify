@@ -13482,28 +13482,9 @@ app.post('/api/admin/messages/:id/duplicate', requireAdmin, async (req, res) => 
   }
 });
 
-// GET /api/admin/users/search - Search users
-app.get('/api/admin/users/search', requireAdmin, async (req, res) => {
-  try {
-    const query = req.query.q;
-    if (!query || query.length < 2) {
-      return res.json({ users: [] });
-    }
-
-    const result = await pool.query(`
-      SELECT id, username as name, email, subscription_type
-      FROM users
-      WHERE username ILIKE $1 OR email ILIKE $1
-      ORDER BY username
-      LIMIT 50
-    `, [`%${query}%`]);
-
-    res.json({ users: result.rows });
-  } catch (error) {
-    console.error('User search error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// DEPRECATED: This endpoint has been replaced by /api/admin2/users/search
+// The old route used 'username' which doesn't exist in the schema (should be 'naam')
+// Removed to prevent confusion and 500 errors
 
 // GET /api/admin/messages/preview-targets - Preview targeting
 app.get('/api/admin/messages/preview-targets', requireAdmin, async (req, res) => {

@@ -1925,18 +1925,18 @@
 
             searchDebounceTimer = setTimeout(async () => {
                 try {
-                    const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
+                    const response = await fetch(`/api/admin2/users/search?q=${encodeURIComponent(query)}`);
                     const data = await response.json();
 
                     const resultsDiv = document.getElementById('userSearchResults');
-                    if (data.users && data.users.length > 0) {
-                        resultsDiv.innerHTML = data.users
+                    if (data.results && data.results.length > 0) {
+                        resultsDiv.innerHTML = data.results
                             .filter(u => !selectedUserIds.includes(u.id))
                             .map(u => `
                                 <div class="user-search-item"
-                                     onclick="selectUser(${u.id}, '${escapeHtml(u.name || 'Unnamed')}', '${escapeHtml(u.email)}')">
+                                     onclick="selectUser(${u.id}, '${escapeHtml(u.naam || 'Unnamed')}', '${escapeHtml(u.email)}')">
                                     <div>
-                                        <strong>${escapeHtml(u.name || 'Unnamed')}</strong>
+                                        <strong>${escapeHtml(u.naam || 'Unnamed')}</strong>
                                         <div style="font-size: 12px; color: var(--macos-text-secondary);">${escapeHtml(u.email)}</div>
                                     </div>
                                 </div>
