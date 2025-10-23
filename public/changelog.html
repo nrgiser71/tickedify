@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.165 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.165</span>
+                <span class="version-date">23 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Modal Detectie Logica Gecorrigeerd</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Vereenvoudigde Check</strong>: Modal detectie checkt nu correct of style.display === 'flex' in plaats van !== 'none'. Dit voorkomt false positives waarbij lege strings als "open" werden gedetecteerd.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Betrouwbare Polling</strong>: Berichten worden nu correct getoond wanneer geen modal/popup open is. Polling werkt nu zoals bedoeld zonder onnodige blocks.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.164 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.164</span>
+                <span class="version-badge badge-feature">v0.19.164</span>
                 <span class="version-date">23 oktober 2025</span>
             </div>
             <div class="changes-list">

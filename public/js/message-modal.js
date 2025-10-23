@@ -46,22 +46,16 @@ async function checkForMessages() {
 function isModalOpen() {
   // Check for edit modal (taak-modal)
   const editModal = document.querySelector('.taak-modal');
-  if (editModal) {
-    const computedStyle = window.getComputedStyle(editModal);
-    if (computedStyle.display !== 'none' && editModal.style.display !== 'none') {
-      console.log('📢 Edit modal is open - skipping message check');
-      return true;
-    }
+  if (editModal && editModal.style.display === 'flex') {
+    console.log('📢 Edit modal is open - skipping message check');
+    return true;
   }
 
   // Check for recurring popup (herhaling-popup)
   const recurringPopup = document.querySelector('.herhaling-popup');
-  if (recurringPopup) {
-    const computedStyle = window.getComputedStyle(recurringPopup);
-    if (computedStyle.display !== 'none' && recurringPopup.style.display !== 'none') {
-      console.log('📢 Recurring popup is open - skipping message check');
-      return true;
-    }
+  if (recurringPopup && recurringPopup.style.display === 'flex') {
+    console.log('📢 Recurring popup is open - skipping message check');
+    return true;
   }
 
   return false;
