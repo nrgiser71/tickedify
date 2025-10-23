@@ -13408,88 +13408,94 @@ class QuickAddModal {
     
     async handleSubmit() {
         const taakNaam = this.input.value.trim();
-        
+
         if (!taakNaam) {
             toast.warning('Please enter a task name');
             this.input.focus();
             return;
         }
-        
+
         try {
             // Check if user is logged in first
             if (app && !app.isLoggedIn()) {
                 toast.warning('Log in to add tasks.');
                 return;
             }
-            
-            console.log('<i class="ti ti-search"></i> DEBUG: Adding task via API:', taakNaam);
-            
-            // Check current user first
-            const userResponse = await fetch('/api/debug/current-user');
-            const userData = await userResponse.json();
-            console.log('<i class="ti ti-search"></i> DEBUG: Current user:', userData);
-            
-            // Check inbox before adding
-            const beforeResponse = await fetch('/api/lijst/inbox');
-            const beforeTasks = await beforeResponse.json();
-            console.log('<i class="ti ti-search"></i> DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
-            
-            // SAFE APPROACH: Use dedicated single task endpoint
-            const requestBody = { tekst: taakNaam };
-            console.log('<i class="ti ti-search"></i> DEBUG: Request body:', requestBody);
-            
-            const response = await fetch('/api/taak/add-to-inbox', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-            
-            console.log('<i class="ti ti-search"></i> DEBUG: Response status:', response.status);
-            console.log('<i class="ti ti-search"></i> DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (response.ok) {
-                const responseData = await response.json();
-                console.log('<i class="ti ti-search"></i> DEBUG: Response data:', responseData);
-                
-                // Check inbox after adding
-                const afterResponse = await fetch('/api/lijst/inbox');
-                const afterTasks = await afterResponse.json();
-                console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
-                
-                toast.success('Task added to inbox');
-                this.hide();
-                
-                // Update counts and refresh if in inbox
-                if (app) {
-                    await app.laadTellingen();
-                    if (app.huidigeLijst === 'inbox') {
-                        await app.laadHuidigeLijst();
-                    }
-                }
-            } else {
-                let errorText;
-                try {
-                    errorText = await response.text();
-                } catch (e) {
-                    errorText = 'Could not read error response';
-                }
-                
-                console.error('<i class="ti ti-alert-circle"></i> DEBUG: API Error details:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    errorText: errorText,
-                    url: response.url
+
+            await loading.withLoading(async () => {
+                console.log('<i class="ti ti-search"></i> DEBUG: Adding task via API:', taakNaam);
+
+                // Check current user first
+                const userResponse = await fetch('/api/debug/current-user');
+                const userData = await userResponse.json();
+                console.log('<i class="ti ti-search"></i> DEBUG: Current user:', userData);
+
+                // Check inbox before adding
+                const beforeResponse = await fetch('/api/lijst/inbox');
+                const beforeTasks = await beforeResponse.json();
+                console.log('<i class="ti ti-search"></i> DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
+
+                // SAFE APPROACH: Use dedicated single task endpoint
+                const requestBody = { tekst: taakNaam };
+                console.log('<i class="ti ti-search"></i> DEBUG: Request body:', requestBody);
+
+                const response = await fetch('/api/taak/add-to-inbox', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
                 });
-                
-                // Check inbox after failed request
-                const afterFailResponse = await fetch('/api/lijst/inbox');
-                const afterFailTasks = await afterFailResponse.json();
-                console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
-                
-                toast.error('Error adding: ' + (response.status === 401 ? 'Please log in first' : 'Server error (500)'));
-            }
+
+                console.log('<i class="ti ti-search"></i> DEBUG: Response status:', response.status);
+                console.log('<i class="ti ti-search"></i> DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    console.log('<i class="ti ti-search"></i> DEBUG: Response data:', responseData);
+
+                    // Check inbox after adding
+                    const afterResponse = await fetch('/api/lijst/inbox');
+                    const afterTasks = await afterResponse.json();
+                    console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
+
+                    toast.success('Task added to inbox');
+                    this.hide();
+
+                    // Update counts and refresh if in inbox
+                    if (app) {
+                        await app.laadTellingen();
+                        if (app.huidigeLijst === 'inbox') {
+                            await app.laadHuidigeLijst();
+                        }
+                    }
+                } else {
+                    let errorText;
+                    try {
+                        errorText = await response.text();
+                    } catch (e) {
+                        errorText = 'Could not read error response';
+                    }
+
+                    console.error('<i class="ti ti-alert-circle"></i> DEBUG: API Error details:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        errorText: errorText,
+                        url: response.url
+                    });
+
+                    // Check inbox after failed request
+                    const afterFailResponse = await fetch('/api/lijst/inbox');
+                    const afterFailTasks = await afterFailResponse.json();
+                    console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
+
+                    toast.error('Error adding: ' + (response.status === 401 ? 'Please log in first' : 'Server error (500)'));
+                }
+            }, {
+                operationId: 'add-task',
+                showGlobal: true,
+                message: 'Taak toevoegen...'
+            });
         } catch (error) {
             console.error('Error adding task:', error);
             toast.error('Error adding task: ' + error.message);
