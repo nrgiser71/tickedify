@@ -9289,6 +9289,19 @@ body.dagkalender-focus-active {
   color: #e11d48;
 }
 
+.message-content mark {
+  background: #fef08a;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: #854d0e;
+}
+
+.message-content hr {
+  border: none;
+  border-top: 2px solid #e5e7eb;
+  margin: 16px 0;
+}
+
 .message-content ul {
   margin: 8px 0;
   padding-left: 24px;

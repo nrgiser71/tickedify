@@ -163,10 +163,16 @@ function parseMarkdownLinks(text) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
+  // Horizontal rule: --- (must be on its own line)
+  html = html.replace(/^---$/gm, '<hr>');
+
   // Headers (must be at start of line)
   html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
   html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Highlight: ==text==
+  html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
 
   // Bold: **text** or __text__
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
