@@ -13216,43 +13216,6 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
 
 
 // Force deploy Thu Jun 26 11:21:42 CEST 2025
-// 404 handler - MUST be after all routes!
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
-    
-    // Initialize database and storage manager after server starts
-    setTimeout(async () => {
-        try {
-            if (db) {
-                const { initDatabase } = require('./database');
-                await initDatabase();
-                dbInitialized = true;
-                console.log('✅ Database initialized successfully');
-            } else {
-                console.log('⚠️ Database module not available, skipping initialization');
-            }
-        } catch (error) {
-            console.error('⚠️ Database initialization failed:', error.message);
-        }
-
-        // Initialize storage manager for B2 functionality
-        try {
-            if (storageManager) {
-                await storageManager.initialize();
-                console.log('✅ Storage manager initialized successfully');
-                console.log('🔧 B2 available:', storageManager.isB2Available());
-            } else {
-                console.log('⚠️ Storage manager not available, skipping initialization');
-            }
-        } catch (error) {
-            console.error('⚠️ Storage manager initialization failed:', error.message);
-        }
-    }, 1000);
-});
 
 // ===================================================================
 // === ADMIN MESSAGING SYSTEM ENDPOINTS ===
@@ -13483,3 +13446,42 @@ app.post('/api/page-visit/:pageIdentifier', async (req, res) => {
 });
 // Force redeploy Sat Oct 18 23:52:24 CEST 2025
 // Force redeploy Thu Oct 23 11:51:27 CEST 2025
+
+// 404 handler - MUST be after all routes!
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
+    
+    // Initialize database and storage manager after server starts
+    setTimeout(async () => {
+        try {
+            if (db) {
+                const { initDatabase } = require('./database');
+                await initDatabase();
+                dbInitialized = true;
+                console.log('✅ Database initialized successfully');
+            } else {
+                console.log('⚠️ Database module not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Database initialization failed:', error.message);
+        }
+
+        // Initialize storage manager for B2 functionality
+        try {
+            if (storageManager) {
+                await storageManager.initialize();
+                console.log('✅ Storage manager initialized successfully');
+                console.log('🔧 B2 available:', storageManager.isB2Available());
+            } else {
+                console.log('⚠️ Storage manager not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Storage manager initialization failed:', error.message);
+        }
+    }, 1000);
+});
+
