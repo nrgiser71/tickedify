@@ -7,11 +7,15 @@
 
 let currentMessages = [];
 let currentMessageIndex = 0;
+let pollingInterval = null;
+const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-// Auto-check on page load
+// Auto-check on page load and start polling
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('📢 Message modal system initialized');
   await checkForMessages();
+  startPolling();
+  console.log('📢 Polling started - checking every 5 minutes');
 });
 
 // Check for unread messages from backend
@@ -35,6 +39,67 @@ async function checkForMessages() {
     }
   } catch (error) {
     console.error('Check messages error:', error);
+  }
+}
+
+// Check if modal/popup is currently open (blocking message display)
+function isModalOpen() {
+  // Check for edit modal (taak-modal)
+  const editModal = document.querySelector('.taak-modal');
+  if (editModal) {
+    const computedStyle = window.getComputedStyle(editModal);
+    if (computedStyle.display !== 'none' && editModal.style.display !== 'none') {
+      console.log('📢 Edit modal is open - skipping message check');
+      return true;
+    }
+  }
+
+  // Check for recurring popup (herhaling-popup)
+  const recurringPopup = document.querySelector('.herhaling-popup');
+  if (recurringPopup) {
+    const computedStyle = window.getComputedStyle(recurringPopup);
+    if (computedStyle.display !== 'none' && recurringPopup.style.display !== 'none') {
+      console.log('📢 Recurring popup is open - skipping message check');
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Start polling for messages every 5 minutes
+function startPolling() {
+  // Prevent multiple intervals
+  if (pollingInterval) {
+    console.log('📢 Polling already active');
+    return;
+  }
+
+  pollingInterval = setInterval(async () => {
+    // Only check if tab is visible
+    if (document.visibilityState !== 'visible') {
+      console.log('📢 Tab not visible - skipping poll');
+      return;
+    }
+
+    // Don't check if modal/popup is open
+    if (isModalOpen()) {
+      return; // Message already logged by isModalOpen()
+    }
+
+    console.log('📢 Polling: checking for messages...');
+    await checkForMessages();
+  }, POLLING_INTERVAL);
+
+  console.log(`📢 Polling interval set: every ${POLLING_INTERVAL / 1000 / 60} minutes`);
+}
+
+// Stop polling (cleanup function)
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+    console.log('📢 Polling stopped');
   }
 }
 
@@ -377,6 +442,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // Tab visibility tracking - pause polling when tab is not visible
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      console.log('📢 Tab became visible - polling will resume on next interval');
+    } else {
+      console.log('📢 Tab became hidden - polling paused');
+    }
+  });
 });
 
 // Expose functions globally for potential external use
@@ -384,3 +458,5 @@ window.checkForMessages = checkForMessages;
 window.showMessage = showMessage;
 window.dismissMessage = dismissMessage;
 window.snoozeMessage = snoozeMessage;
+window.startPolling = startPolling;
+window.stopPolling = stopPolling;
