@@ -1400,6 +1400,18 @@
                                 <textarea class="form-textarea" id="msg-message" maxlength="10000" required></textarea>
                                 <div class="text-help">Markdown links ondersteund: [tekst](url)</div>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">Type *</label>
+                                <select class="form-input" id="msg-type" required>
+                                    <option value="information">ℹ️ Information - Algemene informatie (blauw)</option>
+                                    <option value="educational">📚 Educational - Educatieve tip (blauw)</option>
+                                    <option value="feature">🆕 Feature - Nieuwe functionaliteit (groen)</option>
+                                    <option value="tip">💡 Tip - Handige tip (geel)</option>
+                                    <option value="warning">⚠️ Warning - Waarschuwing (oranje)</option>
+                                    <option value="important">❗ Important - Belangrijk bericht (rood)</option>
+                                </select>
+                                <div class="text-help">Bepaalt het icoon en de kleur van het bericht</div>
+                            </div>
                         </div>
 
                         <!-- Targeting Section -->
@@ -2013,7 +2025,7 @@
                 const messageData = {
                     title: document.getElementById('msg-title').value,
                     message: document.getElementById('msg-message').value,
-                    message_type: 'information',
+                    message_type: document.getElementById('msg-type').value,
                     target_type: targetType,
                     target_subscription: targetSubscription,
                     target_users: targetUsers,

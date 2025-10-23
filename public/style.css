@@ -9274,3 +9274,65 @@ body.dagkalender-focus-active {
   }
 }
 
+/* Message Type Specific Styling */
+.message-modal.message-information {
+  border-left: 4px solid #3b82f6; /* Blue */
+}
+
+.message-modal.message-educational {
+  border-left: 4px solid #3b82f6; /* Blue */
+}
+
+.message-modal.message-feature {
+  border-left: 4px solid #10b981; /* Green */
+}
+
+.message-modal.message-tip {
+  border-left: 4px solid #f59e0b; /* Yellow/Orange */
+}
+
+.message-modal.message-warning {
+  border-left: 4px solid #f97316; /* Orange */
+}
+
+.message-modal.message-important {
+  border-left: 4px solid #ef4444; /* Red */
+}
+
+/* Optional: Add subtle background tint for each type */
+.message-modal.message-information .message-header,
+.message-modal.message-educational .message-header {
+  background-color: #eff6ff; /* Light blue */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-feature .message-header {
+  background-color: #f0fdf4; /* Light green */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-tip .message-header {
+  background-color: #fffbeb; /* Light yellow */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-warning .message-header {
+  background-color: #fff7ed; /* Light orange */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-important .message-header {
+  background-color: #fef2f2; /* Light red */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+

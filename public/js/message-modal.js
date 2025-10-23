@@ -46,6 +46,12 @@ function showMessage(message) {
     return;
   }
 
+  // Update icon based on message type
+  const iconElement = document.querySelector('.message-icon');
+  if (iconElement) {
+    iconElement.textContent = getMessageIcon(message.message_type || 'information');
+  }
+
   // Update content
   const titleElement = document.querySelector('.message-title');
   const contentElement = document.querySelector('.message-content');
@@ -53,9 +59,15 @@ function showMessage(message) {
   if (titleElement) titleElement.textContent = message.title;
   if (contentElement) contentElement.textContent = message.message;
 
+  // Apply type-specific styling to modal
+  const modalElement = document.querySelector('.message-modal');
+  if (modalElement) {
+    modalElement.className = `message-modal message-${message.message_type || 'information'}`;
+  }
+
   // Show modal
   modal.style.display = 'flex';
-  console.log(`📢 Showing message: "${message.title}"`);
+  console.log(`📢 Showing message: "${message.title}" (${message.message_type})`);
 
   // Handle dismiss button
   const dismissBtn = document.querySelector('.btn-message-dismiss');
@@ -64,6 +76,19 @@ function showMessage(message) {
       await dismissMessage(message.id);
     };
   }
+}
+
+// Get icon emoji for message type
+function getMessageIcon(type) {
+  const icons = {
+    information: 'ℹ️',
+    educational: '📚',
+    warning: '⚠️',
+    important: '❗',
+    feature: '🆕',
+    tip: '💡'
+  };
+  return icons[type] || 'ℹ️';
 }
 
 // Dismiss a message (mark as read)
