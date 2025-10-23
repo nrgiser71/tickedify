@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betaling Geannuleerd - Tickedify</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .cancelled-container {
+            background: white;
+            border-radius: 16px;
+            padding: 48px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .cancelled-icon {
+            width: 80px;
+            height: 80px;
+            background: #f59e0b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .cancelled-icon i {
+            color: white;
+            font-size: 40px;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            color: #1f2937;
+            font-size: 28px;
+            margin: 0 0 16px;
+        }
+
+        p {
+            color: #6b7280;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0 0 32px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 8px;
+        }
+
+        .button-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .button-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .button-secondary:hover {
+            background: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+            color: #1e40af;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .info-box ul {
+            margin: 8px 0 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="cancelled-container">
+        <div class="cancelled-icon">
+            <i class="fas fa-times"></i>
+        </div>
+        <h1>Betaling Geannuleerd</h1>
+        <p>
+            Je hebt de betaling geannuleerd. Geen zorgen, er is geen bedrag afgeschreven.
+        </p>
+
+        <div class="info-box">
+            <strong><i class="fas fa-info-circle"></i> Wil je toch doorgaan?</strong>
+            <ul>
+                <li>Kies opnieuw een abonnement</li>
+                <li>Probeer de 14-daagse gratis trial</li>
+                <li>Neem contact op met support voor vragen</li>
+            </ul>
+        </div>
+
+        <div>
+            <a href="/subscription.html" class="button button-primary">
+                <i class="fas fa-redo"></i>
+                Probeer Opnieuw
+            </a>
+            <a href="/" class="button button-secondary">
+                <i class="fas fa-home"></i>
+                Terug naar Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const cancelled = urlParams.get('cancelled');
+        const error = urlParams.get('error');
+
+        if (error) {
+            const errorBox = document.createElement('div');
+            errorBox.style.cssText = 'background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 24px 0; color: #991b1b; font-size: 14px;';
+            errorBox.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Er is een fout opgetreden bij het verwerken van je aanvraag.';
+            document.querySelector('.cancelled-container').insertBefore(
+                errorBox,
+                document.querySelector('.info-box')
+            );
+        }
+    </script>
+</body>
+</html>

@@ -248,6 +248,11 @@ body {
     color: white;
 }
 
+/* Extra ruimte tussen Afgewerkt en Dagelijkse Planning - Feature 009 */
+.lijst-item[data-lijst="dagelijkse-planning"] {
+    margin-top: 20px;
+}
+
 .lijst-icon {
     width: 20px;
     height: 20px;
@@ -262,6 +267,15 @@ body {
     flex: 1;
     font-size: 13px;
     font-weight: 500;
+}
+
+/* Sidebar task counters - Feature 022 */
+.task-count {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 6px;
+    font-weight: normal;
+    opacity: 0.8;
 }
 
 .lijst-telling {
@@ -349,6 +363,13 @@ body {
     display: flex;
     gap: 12px;
     margin-bottom: 24px;
+}
+
+/* Feature 023: Disabled state for Toevoegen button during submission */
+#toevoegBtn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .taken-container {
@@ -1230,6 +1251,35 @@ button:not(.acties-table button):not(.actie-buttons button):not(.bewerk-btn):not
     box-shadow: var(--macos-shadow-medium);
 }
 
+.drag-handle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: var(--macos-text-secondary);
+    font-size: 16px;
+    border-radius: var(--macos-radius-small);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.drag-handle:hover {
+    background: var(--macos-gray-5);
+    color: var(--macos-blue);
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-dots {
+    line-height: 1;
+    user-select: none;
+}
+
 .taak-checkbox {
     display: flex;
     align-items: center;
@@ -1743,6 +1793,83 @@ mark {
     z-index: 1500;
 }
 
+/* Onboarding Video Popup (Feature 014) - Between standard popup (1000) and keyboard help (1500) */
+#onboardingVideoPopup {
+    z-index: 1200;
+}
+
+.onboarding-video-content {
+    max-width: 700px;
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--macos-radius-medium);
+}
+
+.close-video-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 32px;
+    cursor: pointer;
+    color: var(--macos-text-secondary);
+    z-index: 10;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.close-video-btn:hover {
+    color: var(--macos-text-primary);
+    transform: scale(1.1);
+}
+
+.fallback-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--macos-text-secondary);
+    font-size: 14px;
+}
+
+/* Mobile responsive styles for onboarding video */
+@media (max-width: 768px) {
+    .onboarding-video-content {
+        width: 95%;
+        max-width: 95%;
+        padding: 16px;
+    }
+
+    .onboarding-video-content h2 {
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    .close-video-btn {
+        top: 8px;
+        right: 8px;
+        font-size: 28px;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -1832,6 +1959,12 @@ mark {
     letter-spacing: 0.5px;
 }
 
+.form-groep label .required {
+    color: var(--macos-red);
+    font-weight: bold;
+    margin-left: 2px;
+}
+
 .form-groep input,
 .form-groep select,
 .form-groep textarea {
@@ -1876,6 +2009,27 @@ button:focus {
 .form-groep textarea:focus {
     border-color: var(--macos-blue) !important;
     box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3) !important;
+}
+
+/* Checkbox + Input wrapper - horizontal layout voor Planning Popup */
+.checkbox-input-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-input-wrapper input[type="checkbox"] {
+    flex-shrink: 0;
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-input-wrapper input[type="text"] {
+    flex: 1;
+    width: auto; /* override default 100% width from .form-groep */
 }
 
 .select-met-toevoeg button:focus {
@@ -2770,13 +2924,13 @@ button:focus {
     display: flex;
     gap: 0; /* Remove gap - splitter will handle spacing */
     height: calc(100vh - 140px); /* Full viewport height minus header and offset */
-    margin: 0 -32px -24px -32px; /* No top margin to make space for header */
+    margin: 0 -32px -24px 0; /* No top margin to make space for header, no left margin */
     padding: 16px 16px 0 16px; /* Remove bottom padding to eliminate gap */
     position: relative; /* For absolute positioned splitter */
 }
 
 .planning-sidebar {
-    width: 50%; /* Default 50% - can be adjusted by splitter */
+    width: 35%; /* Default 35% - better balance for sidebar content */
     flex-shrink: 0; /* Don't shrink */
     background: #f0f0f0; /* Simple gray background */
     border-radius: 8px;
@@ -2825,6 +2979,62 @@ button:focus {
     background: var(--macos-blue);
     height: 80px;
     width: 3px;
+}
+
+/* Touch-friendly splitter voor tablets */
+@media (min-width: 769px) and (max-width: 1400px) and (pointer: coarse) {
+    .planning-splitter {
+        width: 20px !important;
+        background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.05);
+        border-radius: 4px;
+    }
+    
+    .planning-splitter:hover,
+    .planning-splitter:active {
+        background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.15);
+    }
+    
+    .planning-splitter.resizing {
+        background: rgba(var(--macos-blue-rgb, 0, 122, 255), 0.25);
+    }
+    
+    .splitter-handle {
+        display: none; /* Vervangen door grip pattern */
+    }
+    
+    /* Grip pattern voor touch feedback */
+    .planning-splitter::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 6px;
+        height: 60px;
+        background-image: 
+            radial-gradient(circle at 50% 20%, var(--macos-gray-4) 2px, transparent 2px),
+            radial-gradient(circle at 50% 50%, var(--macos-gray-4) 2px, transparent 2px),
+            radial-gradient(circle at 50% 80%, var(--macos-gray-4) 2px, transparent 2px);
+        background-size: 6px 20px;
+        background-repeat: no-repeat;
+    }
+    
+    .planning-splitter:hover::before,
+    .planning-splitter:active::before,
+    .planning-splitter.resizing::before {
+        background-image: 
+            radial-gradient(circle at 50% 20%, var(--macos-blue) 2px, transparent 2px),
+            radial-gradient(circle at 50% 50%, var(--macos-blue) 2px, transparent 2px),
+            radial-gradient(circle at 50% 80%, var(--macos-blue) 2px, transparent 2px);
+    }
+}
+
+/* Voor tablets - zorg dat sidebar resizable blijft */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .planning-sidebar {
+        width: 35% !important; /* Consistent 35% for tablets */
+        flex: none !important;
+    }
 }
 
 /* Collapsible sections styling */
@@ -2891,24 +3101,21 @@ button:focus {
 
 /* Make the section containers themselves compact when collapsed */
 .templates-sectie.collapsed,
-.tijd-sectie.collapsed,
-.top-prioriteiten-sectie.collapsed {
+.tijd-sectie.collapsed {
     margin-bottom: 2px !important;
     padding: 0 !important;
     min-height: auto !important;
 }
 
 .templates-sectie.collapsed .section-header,
-.tijd-sectie.collapsed .section-header,
-.top-prioriteiten-sectie.collapsed .section-header {
+.tijd-sectie.collapsed .section-header {
     margin: 0 !important;
     padding: 4px 8px !important;
 }
 
 /* Completely minimize collapsed containers - only header visible */
 .templates-sectie.collapsed,
-.tijd-sectie.collapsed,
-.top-prioriteiten-sectie.collapsed {
+.tijd-sectie.collapsed {
     /* Remove ALL spacing and sizing */
     border: none !important;
     background: transparent !important;
@@ -2924,8 +3131,7 @@ button:focus {
 
 /* Header becomes the entire visible element */
 .templates-sectie.collapsed .section-header,
-.tijd-sectie.collapsed .section-header,
-.top-prioriteiten-sectie.collapsed .section-header {
+.tijd-sectie.collapsed .section-header {
     margin: 0 !important;
     padding: 3px 8px !important;
     background: rgba(0, 0, 0, 0.05) !important;
@@ -3320,7 +3526,7 @@ button:focus {
 }
 
 .dag-kalender {
-    width: 50%; /* Default 50% - can be adjusted by splitter */
+    width: 65%; /* Default 65% - more room for calendar content */
     flex-shrink: 0; /* Don't shrink */
     background: var(--macos-bg-primary);
     border-radius: var(--macos-radius-large);
@@ -3841,8 +4047,17 @@ button:focus {
     background: rgba(255, 149, 0, 0.1);
 }
 
+/* Hide collapsible blocks in daily planning - Feature 007 */
+#tijd-sectie {
+    display: none;
+}
+
+#templates-sectie {
+    display: none;
+}
+
 /* Tablet and iPad responsive */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .hamburger-menu {
         display: flex;
     }
@@ -3971,20 +4186,25 @@ button:focus {
     .dagelijkse-planning-layout {
         flex-direction: row !important;
         height: calc(100vh - 140px) !important;
-        gap: 20px !important;
+        gap: 0 !important;
     }
     
     .planning-sidebar {
-        width: 40% !important;
+        width: 35% !important;
         height: 100% !important;
         max-height: none !important;
         order: 1 !important;
         flex: none !important;
     }
     
-    .dag-kalender {
-        flex: 1 !important;
+    .planning-splitter {
         order: 2 !important;
+    }
+    
+    .dag-kalender {
+        width: 65% !important;
+        flex: none !important;
+        order: 3 !important;
         height: 100% !important;
     }
 }
@@ -4091,20 +4311,18 @@ button:focus {
     }
     
     .tijd-sectie .section-content,
-    .templates-sectie .section-content,
-    .top-prioriteiten-sectie .section-content {
+    .templates-sectie .section-content {
         padding: 10px !important;
     }
     
     /* Smaller margins between sections */
     .tijd-sectie,
-    .templates-sectie,
-    .top-prioriteiten-sectie {
+    .templates-sectie {
         margin-bottom: 8px !important;
     }
     
     .planning-sidebar {
-        width: 50% !important;
+        width: 35% !important;
         flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
@@ -4115,7 +4333,7 @@ button:focus {
     }
     
     .dag-kalender {
-        width: 50% !important;
+        width: 65% !important;
         flex-shrink: 0 !important;
         order: 3 !important;
         height: 100% !important;
@@ -4201,7 +4419,7 @@ button:focus {
     }
     
     .planning-sidebar {
-        width: 50% !important;
+        width: 35% !important;
         flex-shrink: 0 !important;
         height: 100% !important;
         order: 1 !important;
@@ -4212,7 +4430,7 @@ button:focus {
     }
     
     .dag-kalender {
-        width: 50% !important;
+        width: 65% !important;
         flex-shrink: 0 !important;
         order: 3 !important;
         height: 100% !important;
@@ -4357,194 +4575,42 @@ button:focus {
     border-color: var(--soft-green-hover);
 }
 
-/* Top 3 Priorities section */
-.top-prioriteiten-sectie {
-    background: linear-gradient(135deg, var(--priority-bg), var(--macos-bg-primary));
-    border-radius: var(--macos-radius-medium);
-    border: 1px solid var(--priority-border);
-    margin-bottom: 10px;
-    box-shadow: 0 2px 8px var(--priority-shadow);
-}
-
-.top-prioriteiten-sectie .section-content {
-    padding: 12px;
-}
-
-.top-prioriteiten-sectie h3 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: var(--priority-text);
-    font-weight: 600;
-    text-align: center;
-}
-
-.prioriteit-slots {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.prioriteit-slot {
+/* Top Priority Star Checkbox Styling */
+.actie-star {
     display: flex;
     align-items: center;
-    background: white;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 10px;
+    margin-right: 8px;
     position: relative;
-    transition: all 0.3s ease;
-    min-height: 50px;
 }
 
-.prioriteit-slot.empty {
-    border-style: dashed;
-    border-color: var(--priority-border);
-    background: var(--priority-bg);
-}
-
-.prioriteit-slot.empty:hover {
-    border-color: var(--priority-border-hover);
-    background: var(--priority-bg-hover);
-}
-
-.prioriteit-slot.filled {
-    border-color: var(--priority-border);
-    background: linear-gradient(135deg, var(--macos-bg-primary), var(--priority-bg));
-    box-shadow: 0 2px 4px var(--priority-shadow);
-}
-
-.prioriteit-slot.filled:hover {
-    border-color: var(--priority-border-hover);
-    box-shadow: 0 4px 8px var(--priority-shadow);
-    transform: translateY(-1px);
-}
-
-.prioriteit-slot.drag-over {
-    border-color: #32CD32;
-    background: rgba(50, 205, 50, 0.1);
-    box-shadow: 0 4px 12px rgba(50, 205, 50, 0.3);
+.actie-star .star-checkbox {
+    position: absolute;
+    opacity: 0;
     cursor: pointer;
-    position: relative;
-}
-
-.prioriteit-slot.drag-over::after {
-    content: "✅";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.prioriteit-slot.drag-rejected {
-    border-color: #DC143C;
-    background: rgba(220, 20, 60, 0.1);
-    animation: shake 0.5s ease-in-out;
-    cursor: not-allowed !important;
-    position: relative;
-}
-
-.prioriteit-slot.drag-rejected::after {
-    content: "🚫";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.slot-nummer {
     width: 24px;
     height: 24px;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    margin-right: 10px;
-    flex-shrink: 0;
+    z-index: 2;
 }
 
-.slot-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.slot-placeholder {
-    color: #999;
-    font-style: italic;
-    font-size: 12px;
-    text-align: center;
-    padding: 8px;
-}
-
-.prioriteit-taak {
-    cursor: grab;
-}
-
-.prioriteit-taak:active {
-    cursor: grabbing;
-}
-
-.prioriteit-titel {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--macos-text-primary);
-    margin-bottom: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.prioriteit-details {
-    font-size: 11px;
-    color: #666;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.remove-prioriteit {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 20px;
-    height: 20px;
-    background: #FF6347;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 12px;
-    line-height: 1;
+.actie-star .star-label {
+    font-size: 20px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    filter: grayscale(100%);
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    user-select: none;
+    pointer-events: none;
 }
 
-.prioriteit-slot.filled:hover .remove-prioriteit {
+.actie-star .star-checkbox:hover ~ .star-label {
+    opacity: 0.8;
+    filter: grayscale(50%);
+}
+
+.actie-star .star-checkbox:checked ~ .star-label {
+    filter: grayscale(0%);
     opacity: 1;
-}
-
-.remove-prioriteit:hover {
-    background: #DC143C;
-    transform: scale(1.1);
-}
-
-/* Shake animation for rejected drops */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+    transform: scale(1.15);
 }
 
 /* Actions section - takes remaining space */
@@ -5498,6 +5564,17 @@ button:focus {
     color: var(--macos-text-secondary);
     margin-top: 4px;
     line-height: 1.3;
+}
+
+/* Bijlagen indicator styling */
+.bijlagen-indicator {
+    color: var(--macos-blue);
+    font-weight: 500;
+}
+
+.bijlagen-indicator i {
+    margin-right: 2px;
+    font-size: 11px;
 }
 
 .taak-item.overdue {
@@ -7459,6 +7536,336 @@ button:focus {
     color: var(--macos-text-tertiary);
 }
 
+/* Inbox Empty State Styling */
+.inbox-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    min-height: 300px;
+}
+
+.inbox-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+.inbox-empty-title {
+    color: var(--macos-text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+}
+
+.inbox-empty-subtitle {
+    color: var(--macos-text-secondary);
+    font-size: 1rem;
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Inbox Celebration Animation */
+.inbox-celebration-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(2px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: none;
+}
+
+.inbox-celebration-container.celebration-active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.inbox-celebration-container.celebration-exit {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.5s ease-out;
+}
+
+.inbox-celebration {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px 50px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 400px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease-out;
+}
+
+.inbox-celebration-container.celebration-active .inbox-celebration {
+    transform: translateY(0);
+}
+
+.celebration-animation {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    animation: celebration-bounce 0.6s ease-out, celebration-rotate 2s ease-in-out 0.6s;
+}
+
+.celebration-text h2 {
+    color: var(--macos-text-primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+}
+
+.celebration-text p {
+    color: var(--macos-text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* Celebration Keyframes */
+@keyframes gentle-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+@keyframes celebration-bounce {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-20px) scale(1.2);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes celebration-rotate {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(-10deg) scale(1.1);
+    }
+    75% {
+        transform: rotate(10deg) scale(1.1);
+    }
+}
+
+/* Mobile Responsive Celebration */
+@media (max-width: 768px) {
+    .inbox-celebration {
+        padding: 30px 35px;
+        margin: 20px;
+    }
+    
+    .celebration-animation {
+        font-size: 4rem;
+    }
+    
+    .celebration-text h2 {
+        font-size: 1.5rem;
+    }
+    
+    .celebration-text p {
+        font-size: 1rem;
+    }
+}
+
+/* Preview Modal */
+.preview-modal {
+    z-index: 2000; /* Above other modals */
+}
+
+.preview-modal-content {
+    background: var(--macos-bg-primary);
+    border-radius: var(--macos-radius-large);
+    width: 95vw;
+    height: 90vh;
+    max-width: 1200px;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--macos-shadow-heavy);
+    border: 1px solid var(--macos-gray-5);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--macos-gray-5);
+    flex-shrink: 0;
+}
+
+.preview-filename {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--macos-text-primary);
+    truncate: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: calc(100% - 60px);
+}
+
+.preview-close {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--macos-text-secondary);
+    transition: all 0.2s ease;
+}
+
+.preview-close:hover {
+    background: var(--macos-gray-5);
+    color: var(--macos-text-primary);
+}
+
+.preview-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: auto;
+}
+
+.preview-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--macos-radius-medium);
+    box-shadow: var(--macos-shadow-light);
+}
+
+.preview-container iframe,
+.preview-container embed {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: var(--macos-radius-medium);
+}
+
+.preview-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    border-top: 1px solid var(--macos-gray-5);
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.preview-nav-btn {
+    background: var(--macos-gray-6);
+    border: 1px solid var(--macos-gray-5);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--macos-text-primary);
+    transition: all 0.2s ease;
+}
+
+.preview-nav-btn:hover:not(:disabled) {
+    background: var(--macos-blue);
+    color: white;
+    border-color: var(--macos-blue);
+}
+
+.preview-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.preview-counter {
+    color: var(--macos-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .preview-modal-content {
+        width: 98vw;
+        height: 95vh;
+        max-width: none;
+        max-height: none;
+    }
+    
+    .preview-header {
+        padding: 12px 16px;
+    }
+    
+    .preview-filename {
+        font-size: 14px;
+    }
+    
+    .preview-container {
+        padding: 16px;
+    }
+    
+    .preview-navigation {
+        padding: 12px;
+    }
+}
+
+/* Click to preview styling for supported file types */
+.bijlage-item.preview-supported {
+    cursor: pointer;
+}
+
+.bijlage-item.preview-supported:hover {
+    background: rgba(var(--macos-blue-rgb), 0.05);
+}
+
+.bijlage-item.preview-supported:hover .bijlage-icon {
+    color: var(--macos-blue);
+}
+
 /* Floating Drop Panel */
 .floating-drop-panel {
     position: fixed;
@@ -7477,7 +7884,7 @@ button:focus {
 }
 
 .floating-drop-panel.active {
-    top: 80px;
+    top: 30px;
 }
 
 .drop-panel-content {
@@ -7508,6 +7915,7 @@ button:focus {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
+    pointer-events: auto; /* Zorg dat drop zones interactief blijven */
 }
 
 .drop-zone-item:hover {
@@ -7560,6 +7968,216 @@ button:focus {
     
     .drop-zone-item span {
         font-size: 14px;
+    }
+}
+
+/* ===== ACTIES DRAG & DROP OVERLAY ===== */
+.acties-drag-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10001; /* HOGERE Z-INDEX dan floating panel */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    /* POINTER-EVENTS NONE WEGGEHAALD - was de root cause van onzichtbaarheid! */
+}
+
+.acties-drag-overlay.active {
+    opacity: 1;
+    pointer-events: auto; /* Expliciet auto bij active state voor zekerheid */
+}
+
+.acties-drop-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 2px rgba(0, 0, 0, 0.1);
+    max-width: 700px;
+    min-width: 550px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto; /* Drop panel zelf blijft interactief */
+}
+
+.acties-drag-overlay.active .acties-drop-panel {
+    transform: scale(1) translateY(0);
+}
+
+.acties-drop-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.drop-section {
+    background: var(--macos-bg-secondary);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid var(--macos-gray-5);
+}
+
+.drop-section h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drop-zones-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.drop-zones-row.week-days {
+    justify-content: space-between;
+}
+
+/* Week day drop zones styling */
+.week-day-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    background: var(--macos-bg-primary);
+    border: 2px dashed var(--macos-gray-4);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 55px;
+    text-align: center;
+    pointer-events: auto; /* Week dag zones blijven klikbaar voor drops */
+}
+
+.week-day-zone:hover {
+    background: rgba(0, 122, 255, 0.05);
+    border-color: var(--macos-blue);
+    transform: translateY(-1px);
+}
+
+.week-day-zone.drag-over {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: var(--macos-blue);
+    border-style: solid;
+    transform: scale(1.05) translateY(-2px);
+}
+
+.week-day-zone .day-abbr {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--macos-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.week-day-zone .day-number {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    line-height: 1;
+}
+
+.week-day-zone.drag-over .day-abbr,
+.week-day-zone.drag-over .day-number {
+    color: var(--macos-blue);
+}
+
+/* Current day styling */
+.week-day-zone.current-day {
+    background: rgba(0, 122, 255, 0.08);
+    border-color: rgba(0, 122, 255, 0.4);
+    border-style: solid;
+}
+
+.week-day-zone.current-day .day-name {
+    color: var(--macos-blue);
+    font-weight: 700;
+}
+
+.week-day-zone.current-day .day-date {
+    color: var(--macos-blue);
+    font-weight: 600;
+}
+
+/* Uitgesteld section styling */
+.uitgesteld-section .drop-zones-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+    .acties-drop-panel {
+        min-width: 90vw;
+        max-width: 90vw;
+        margin: 15px;
+        padding: 15px;
+    }
+    
+    .acties-drop-grid {
+        gap: 12px;
+    }
+    
+    .drop-section {
+        padding: 12px;
+    }
+    
+    .week-day-zone {
+        min-width: 50px;
+        padding: 8px;
+    }
+    
+    .week-day-zone .day-number {
+        font-size: 18px;
+    }
+    
+    .uitgesteld-section .drop-zones-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .acties-drop-panel {
+        min-width: 95vw;
+        max-width: 95vw;
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .drop-zones-row.week-days {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    
+    .week-day-zone {
+        min-width: auto;
+        padding: 8px 4px;
+    }
+    
+    .week-day-zone .day-number {
+        font-size: 16px;
+    }
+    
+    .week-day-zone .day-abbr {
+        font-size: 10px;
     }
 }
 
@@ -7853,5 +8471,969 @@ body.dagkalender-focus-active {
     border-color: var(--macos-gray-3) !important;
     transform: none !important;
     box-shadow: none !important;
+}
+
+/* Bijlagen (Attachments) Styling */
+.bijlagen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.storage-usage {
+    font-size: 12px;
+    color: var(--macos-gray-1);
+    padding: 4px 8px;
+    background: var(--macos-gray-6);
+    border-radius: 8px;
+    border: 1px solid var(--macos-gray-4);
+}
+
+.bijlagen-upload {
+    margin-bottom: 15px;
+}
+
+.upload-dropzone {
+    border: 2px dashed var(--macos-gray-3);
+    border-radius: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    background: var(--macos-bg-secondary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.upload-dropzone:hover {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.05);
+}
+
+.upload-dropzone.dragover {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-dropzone i {
+    font-size: 24px;
+    color: var(--macos-gray-1);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.upload-dropzone p {
+    margin: 0 0 5px 0;
+    color: var(--macos-text-primary);
+    font-weight: 500;
+}
+
+.upload-link {
+    color: var(--macos-blue);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.upload-link:hover {
+    color: var(--macos-blue-hover);
+}
+
+.upload-limits {
+    color: var(--macos-gray-1);
+    font-size: 12px;
+    margin: 0;
+}
+
+.bijlagen-lijst {
+    margin-top: 15px;
+}
+
+.bijlage-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: var(--macos-bg-primary);
+    border: 1px solid var(--macos-gray-4);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.bijlage-item:hover {
+    background: var(--macos-gray-6);
+    border-color: var(--macos-gray-3);
+}
+
+.bijlage-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    color: var(--macos-blue);
+    flex-shrink: 0;
+}
+
+.bijlage-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.bijlage-naam {
+    font-weight: 500;
+    color: var(--macos-text-primary);
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bijlage-details {
+    font-size: 12px;
+    color: var(--macos-gray-1);
+    margin: 0;
+}
+
+.bijlage-acties {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.bijlage-btn {
+    background: none;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bijlage-btn.download {
+    color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.1);
+}
+
+.bijlage-btn.download:hover {
+    background: rgba(0, 122, 255, 0.2);
+}
+
+.bijlage-btn.delete {
+    color: var(--macos-red);
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.bijlage-btn.delete:hover {
+    background: rgba(255, 59, 48, 0.2);
+}
+
+.upload-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.progress-bar {
+    width: 200px;
+    height: 4px;
+    background: var(--macos-gray-5);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--macos-blue);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--macos-text-primary);
+    font-weight: 500;
+}
+
+/* Premium Upgrade Prompt */
+.upgrade-prompt {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(175, 82, 222, 0.1), rgba(255, 149, 0, 0.1));
+    border: 1px solid rgba(175, 82, 222, 0.2);
+    border-radius: 12px;
+}
+
+.upgrade-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.upgrade-content i {
+    font-size: 24px;
+    color: var(--macos-purple);
+    flex-shrink: 0;
+}
+
+.upgrade-text {
+    flex: 1;
+}
+
+.upgrade-text strong {
+    display: block;
+    color: var(--macos-text-primary);
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.upgrade-text p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--macos-gray-1);
+}
+
+.upgrade-btn {
+    background: linear-gradient(135deg, var(--macos-purple), var(--macos-orange));
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.upgrade-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(175, 82, 222, 0.3);
+}
+
+/* File type icons */
+.bijlage-icon.pdf { color: #E53E3E; }
+.bijlage-icon.doc, .bijlage-icon.docx { color: #2B6CB0; }
+.bijlage-icon.xls, .bijlage-icon.xlsx { color: #38A169; }
+.bijlage-icon.ppt, .bijlage-icon.pptx { color: #D69E2E; }
+.bijlage-icon.jpg, .bijlage-icon.jpeg, .bijlage-icon.png, .bijlage-icon.gif { color: #8B5CF6; }
+.bijlage-icon.zip, .bijlage-icon.rar { color: #F56565; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .bijlage-item {
+        padding: 10px 12px;
+    }
+    
+    .bijlage-acties {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .bijlage-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .upload-dropzone {
+        padding: 20px 15px;
+    }
+    
+    .upgrade-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}
+
+/* =================================================================== */
+/* PRIORITEIT INDICATOREN                                             */
+/* =================================================================== */
+
+.prioriteit-indicator {
+    font-size: 12px;
+    margin-right: 8px;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.prioriteit-hoog {
+    color: #FF4444 !important;
+    text-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
+}
+
+.prioriteit-gemiddeld {
+    color: #FF9500 !important;
+    text-shadow: 0 0 2px rgba(255, 149, 0, 0.3);
+}
+
+.prioriteit-laag {
+    color: #8E8E93 !important;
+}
+
+/* Prioriteit in tabel rijen */
+.actie-row .prioriteit-indicator {
+    margin-left: 4px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* Prioriteit in lijst items */
+.taak-item .prioriteit-indicator {
+    margin-right: 6px;
+    align-self: center;
+}
+
+/* Prioriteit tooltips */
+.prioriteit-indicator[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Prioriteit dropdown in planning popup */
+.prioriteit-selectie {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.prioriteit-selectie label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--macos-text-secondary);
+    min-width: 65px;
+}
+
+.prioriteit-dropdown {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    background: var(--macos-bg-primary);
+    font-size: 12px;
+    color: var(--macos-text-primary);
+}
+
+.prioriteit-dropdown option {
+    padding: 4px 8px;
+}
+
+/* Prioriteit filter in toolbar */
+.prioriteit-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prioriteit-filter label {
+    font-size: 11px;
+    color: var(--macos-text-secondary);
+    font-weight: 500;
+}
+
+.prioriteit-filter select {
+    padding: 4px 6px;
+    border: 1px solid var(--macos-gray-4);
+    border-radius: var(--macos-radius-small);
+    background: var(--macos-bg-primary);
+    font-size: 11px;
+    min-width: 80px;
+}
+
+/* Planning kalender prioriteit badges */
+.planning-item-prioriteit {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+}
+
+.planning-item-prioriteit .prioriteit-indicator {
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+}
+
+/* Responsive aanpassingen voor prioriteit */
+@media (max-width: 768px) {
+    .prioriteit-indicator {
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+    }
+    
+    .prioriteit-selectie {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    
+    .prioriteit-selectie label {
+        min-width: auto;
+        font-size: 11px;
+    }
+}
+
+/* ===== SIMPLE DRAG & DROP ===== */
+
+/* Draggable taak items - zoals uitgesteld systeem */
+.taak-item[draggable="true"] {
+    cursor: grab;
+}
+
+.taak-item[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* ===== ACTIES FLOATING PANEL ===== */
+
+/* Acties floating panel styling */
+.acties-floating-panel {
+    position: fixed;
+    top: -400px; /* Hidden above screen - exact zoals werkend uitgesteld systeem */
+    left: 50%;
+    transform: translateX(-50%); /* Alleen horizontal centering */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    z-index: 10000;
+    min-width: 550px;
+    max-width: 600px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+    opacity: 0; /* Verborgen */
+    transition: opacity 0.3s ease; /* Fade animatie */
+}
+
+.acties-floating-panel.active {
+    opacity: 1; /* Zichtbaar */
+    max-height: calc(100vh - 50px);
+}
+
+.acties-floating-panel .drop-panel-content h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.acties-floating-panel .week-section {
+    margin-bottom: 20px;
+}
+
+/* Derde week sectie (Ctrl-toets activated) */
+#actiesDerdeWeekSection {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    transition: max-height 0.2s ease-out, opacity 0.2s ease-out, margin-bottom 0.2s ease-out;
+}
+
+#actiesDerdeWeekSection.visible {
+    max-height: 100px;
+    opacity: 1;
+    margin-bottom: 20px;
+}
+
+.acties-floating-panel .week-section h5 {
+    margin: 0 0 10px 0;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.acties-floating-panel .week-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.acties-floating-panel .week-day-zone {
+    padding: 10px 6px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: var(--text-color);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    min-height: 45px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.acties-floating-panel .week-day-zone:hover,
+.acties-floating-panel .week-day-zone.drag-over {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.acties-floating-panel .week-day-zone.current-day {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.08);
+    border-width: 2px;
+}
+
+.acties-floating-panel .week-day-zone.current-day .day-name {
+    color: var(--macos-blue);
+    font-weight: 700;
+}
+
+.acties-floating-panel .week-day-zone.current-day .day-date {
+    color: var(--macos-blue);
+    font-weight: 600;
+}
+
+.acties-floating-panel .week-day-zone .day-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.acties-floating-panel .week-day-zone .day-date {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.acties-floating-panel .lists-section {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 15px;
+}
+
+.acties-floating-panel .lists-section h5 {
+    margin: 0 0 10px 0;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.acties-floating-panel .drop-zone {
+    padding: 10px 14px;
+    margin: 6px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f8f9fa;
+    color: var(--text-color);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+}
+
+.acties-floating-panel .drop-zone:hover,
+.acties-floating-panel .drop-zone.drag-over {
+    border-color: var(--macos-blue);
+    background: rgba(0, 122, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+/* List separator voor extra ruimte tussen Opvolgen en Uitgesteld */
+.acties-floating-panel .list-separator {
+    height: 15px;
+    margin: 10px 0;
+}
+
+/* Password Validation Styles - Feature 017 */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    flex: 1;
+    padding-right: 40px;
+}
+
+#toggle-password-visibility {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px 8px;
+    color: #666;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+#toggle-password-visibility:hover {
+    color: var(--macos-blue);
+    transform: scale(1.1);
+}
+
+#toggle-password-visibility:focus {
+    outline: 2px solid var(--macos-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.password-requirements {
+    margin-top: 10px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+.password-requirements p {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    color: var(--macos-text-secondary);
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.password-requirement {
+    font-size: 0.9em;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.password-requirement.neutral {
+    color: #666;
+}
+
+.password-requirement.valid {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.password-requirement.valid::before {
+    content: "✓ ";
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+.password-requirement.invalid {
+    color: #dc3545;
+}
+
+.password-requirement.invalid::before {
+    content: "✗ ";
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+/* ===================================================================
+   MESSAGE MODAL STYLING
+   Feature: 026-lees-messaging-system
+   Phase 1: Core Foundation
+   =================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.message-modal {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.message-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.message-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.carousel-indicator {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.message-body {
+  margin-bottom: 20px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.message-content {
+  margin: 0;
+  font-size: 14px;
+}
+
+.message-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.message-content a:hover {
+  color: #1d4ed8;
+}
+
+.message-button {
+  margin-bottom: 16px;
+}
+
+.btn-message-action {
+  width: 100%;
+  padding: 12px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: background 0.2s ease;
+}
+
+.btn-message-action:hover {
+  background: #1d4ed8;
+}
+
+.btn-message-action:active {
+  background: #1e40af;
+}
+
+.message-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-prev,
+.btn-next {
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.btn-prev:hover,
+.btn-next:hover {
+  background: #e5e7eb;
+}
+
+.snooze-options {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-snooze {
+  padding: 6px 10px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.btn-snooze:hover {
+  background: #fde68a;
+}
+
+.btn-message-dismiss {
+  padding: 8px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.btn-message-dismiss:hover {
+  background: #1d4ed8;
+}
+
+.btn-message-dismiss:active {
+  background: #1e40af;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .message-modal {
+    width: 95%;
+    padding: 20px;
+    max-width: none;
+  }
+
+  .message-title {
+    font-size: 16px;
+  }
+
+  .message-content {
+    font-size: 13px;
+  }
+
+  .message-actions {
+    flex-direction: column;
+  }
+
+  .snooze-options {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn-message-dismiss,
+  .btn-message-action {
+    width: 100%;
+  }
+
+  .btn-prev,
+  .btn-next {
+    width: 100%;
+  }
+}
+
+/* Message Type Specific Styling */
+.message-modal.message-information {
+  border-left: 4px solid #3b82f6; /* Blue */
+}
+
+.message-modal.message-educational {
+  border-left: 4px solid #3b82f6; /* Blue */
+}
+
+.message-modal.message-feature {
+  border-left: 4px solid #10b981; /* Green */
+}
+
+.message-modal.message-tip {
+  border-left: 4px solid #f59e0b; /* Yellow/Orange */
+}
+
+.message-modal.message-warning {
+  border-left: 4px solid #f97316; /* Orange */
+}
+
+.message-modal.message-important {
+  border-left: 4px solid #ef4444; /* Red */
+}
+
+/* Optional: Add subtle background tint for each type */
+.message-modal.message-information .message-header,
+.message-modal.message-educational .message-header {
+  background-color: #eff6ff; /* Light blue */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-feature .message-header {
+  background-color: #f0fdf4; /* Light green */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-tip .message-header {
+  background-color: #fffbeb; /* Light yellow */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-warning .message-header {
+  background-color: #fff7ed; /* Light orange */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
+}
+
+.message-modal.message-important .message-header {
+  background-color: #fef2f2; /* Light red */
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: -8px -12px 16px -12px;
 }
 

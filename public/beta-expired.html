@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta Periode Afgelopen - Tickedify</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/subscription.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Custom styling for beta expired page */
+        .beta-expired-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 48px 24px;
+        }
+
+        .beta-expired-icon {
+            font-size: 80px;
+            color: #f59e0b;
+            margin-bottom: 32px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .beta-expired-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: #1a202c;
+            margin: 0 0 24px 0;
+            line-height: 1.2;
+        }
+
+        .beta-expired-subtitle {
+            font-size: 20px;
+            color: #64748b;
+            margin: 0 0 32px 0;
+            line-height: 1.5;
+        }
+
+        .beta-expired-message {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            font-size: 16px;
+            color: #92400e;
+            line-height: 1.6;
+        }
+
+        .beta-thanks {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            color: #065f46;
+            line-height: 1.6;
+        }
+
+        .upgrade-cta {
+            margin: 48px 0;
+        }
+
+        .btn-upgrade {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, var(--macos-blue, #007AFF) 0%, #0056D3 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+            min-width: 280px;
+        }
+
+        .btn-upgrade:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-upgrade:active {
+            transform: translateY(0);
+        }
+
+        .features-preview {
+            margin: 48px 0;
+            text-align: left;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-card h3 {
+            color: var(--macos-blue, #007AFF);
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-card p {
+            color: #64748b;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .beta-expired-container {
+                padding: 32px 16px;
+            }
+
+            .beta-expired-icon {
+                font-size: 60px;
+            }
+
+            .beta-expired-title {
+                font-size: 32px;
+            }
+
+            .beta-expired-subtitle {
+                font-size: 18px;
+            }
+
+            .btn-upgrade {
+                width: 100%;
+                padding: 18px 24px;
+                font-size: 16px;
+            }
+
+            .features-preview {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="subscription-page">
+    <!-- Header -->
+    <header class="subscription-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-check-circle"></i>
+                <span>Tickedify</span>
+            </div>
+            <div class="header-subtitle">
+                Bedankt voor het testen van Tickedify!
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="subscription-main">
+        <div class="beta-expired-container">
+            <!-- Beta Expired Icon -->
+            <div class="beta-expired-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+
+            <!-- Main Message -->
+            <h1 class="beta-expired-title">Beta Periode Afgelopen</h1>
+            <p class="beta-expired-subtitle">
+                Je hebt alle geweldige functies van Tickedify kunnen ontdekken tijdens de beta periode
+            </p>
+
+            <!-- Status Message -->
+            <div class="beta-expired-message">
+                <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                <strong>De beta periode is officieel afgelopen.</strong><br>
+                Je hebt nu twee opties: <strong>start een betaald abonnement</strong> of <strong>test Tickedify nog 2 weken gratis</strong> met de trial periode.
+            </div>
+
+            <!-- Thank You Message -->
+            <div class="beta-thanks">
+                <i class="fas fa-heart" style="margin-right: 8px; color: #10b981;"></i>
+                <strong>Bedankt voor je feedback en het testen van Tickedify!</strong><br>
+                Jouw input heeft geholpen om de applicatie nog beter te maken. Nu is het tijd om je productiviteit naar het volgende niveau te tillen.
+            </div>
+
+            <!-- Upgrade CTA -->
+            <div class="upgrade-cta">
+                <a href="/subscription.html?source=beta" class="btn-upgrade">
+                    <i class="fas fa-rocket"></i>
+                    Kies betaald abonnement of 2 weken gratis trial
+                </a>
+                <p style="margin-top: 16px; color: #64748b; font-size: 14px;">
+                    <i class="fas fa-gift" style="color: #10b981;"></i> Probeer Tickedify eerst 14 dagen gratis, of kies direct een betaald abonnement
+                    <br>
+                    <i class="fas fa-shield-alt"></i> Al je data en instellingen blijven behouden
+                </p>
+            </div>
+
+            <!-- Features Preview -->
+            <div class="features-preview">
+                <div class="feature-card" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.4);">
+                    <h3 style="color: #059669;">
+                        <i class="fas fa-gift"></i>
+                        14 Dagen Gratis Trial
+                    </h3>
+                    <p><strong>Probeer eerst uit zonder te betalen!</strong> Test alle features 2 weken gratis. Geen creditcard nodig. Je kunt daarna kiezen of je wilt betalen.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>
+                        <i class="fas fa-tasks"></i>
+                        Alle Functies
+                    </h3>
+                    <p>Onbeperkte taken, projecten, contexten en herhalende taken. Alles wat je nodig hebt voor productiviteit.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>
+                        <i class="fas fa-envelope"></i>
+                        Email Import
+                    </h3>
+                    <p>Verstuur emails direct naar je inbox en converteer ze automatisch naar taken.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>
+                        <i class="fas fa-calendar-day"></i>
+                        Dagelijkse Planning
+                    </h3>
+                    <p>Krachtige planning interface met drag & drop en tijdblokken voor optimale productiviteit.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>
+                        <i class="fas fa-headset"></i>
+                        Premium Support
+                    </h3>
+                    <p>Directe hulp en ondersteuning bij vragen of problemen met je productiviteitssysteem.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="subscription-footer">
+        <div class="footer-content">
+            <p>
+                <i class="fas fa-shield-alt"></i>
+                Al je data blijft veilig bewaard. Geen functionaliteit wordt weggenomen.
+            </p>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Voorwaarden</a>
+                <a href="#" class="footer-link">Privacy</a>
+                <a href="#" class="footer-link">Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay (inherited from subscription.css) -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Bezig met laden...</span>
+        </div>
+    </div>
+
+    <script>
+        // Simple analytics tracking
+        console.log('Beta expired page viewed');
+
+        // Track time spent on page for analytics
+        let startTime = Date.now();
+
+        window.addEventListener('beforeunload', () => {
+            let timeSpent = Math.round((Date.now() - startTime) / 1000);
+            console.log(`Beta expired page: ${timeSpent} seconds viewed`);
+        });
+
+        // Handle upgrade button click
+        document.addEventListener('DOMContentLoaded', function() {
+            const upgradeBtn = document.querySelector('.btn-upgrade');
+            if (upgradeBtn) {
+                upgradeBtn.addEventListener('click', function() {
+                    console.log('Beta expired: upgrade button clicked');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

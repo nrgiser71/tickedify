@@ -429,6 +429,119 @@
         .status-bekeken { background: var(--macos-blue); color: white; }
         .status-in_behandeling { background: var(--macos-orange); color: white; }
         .status-opgelost { background: var(--macos-green); color: white; }
+
+        /* Payment Configuration styling */
+        .payment-config-item {
+            background: var(--macos-bg-secondary);
+            border-radius: var(--macos-radius-medium);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--macos-blue);
+        }
+
+        .payment-config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .payment-config-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--macos-text-primary);
+        }
+
+        .payment-config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--macos-text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"] {
+            padding: 10px 14px;
+            border: 1px solid var(--macos-gray-4);
+            border-radius: var(--macos-radius-button);
+            background: var(--macos-bg-primary);
+            color: var(--macos-text-primary);
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--macos-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--macos-gray-4);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--macos-green);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .config-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -436,7 +549,7 @@
         <h1 class="login-title">🔐 Admin Login</h1>
         <form class="login-form" id="loginForm">
             <input type="password" id="adminPassword" class="login-input" placeholder="Admin Wachtwoord" required>
-            <button type="submit" class="login-btn">Inloggen</button>
+            <button type="submit" class="login-btn">Log in</button>
         </form>
         <div id="loginError" class="error" style="display: none;">
             Onjuist wachtwoord. Probeer opnieuw.
@@ -458,6 +571,12 @@
             </button>
             <button class="admin-btn warning" onclick="runMaintenance()">
                 🛠️ Database Onderhoud
+            </button>
+            <button class="admin-btn warning" onclick="window.location.href='/admin-cleanup.html'">
+                🧹 Testgebruikers Cleanup
+            </button>
+            <button class="admin-btn" id="betaToggleBtn" onclick="toggleBetaPeriod()">
+                🧪 Beta Beëindigen
             </button>
             <button class="admin-btn danger" onclick="logout()">
                 🚪 Uitloggen
@@ -526,7 +645,16 @@
                     <span class="stat-title">Feedback</span>
                 </div>
                 <div class="stat-value" id="feedbackTotal">-</div>
-                <div class="stat-description">Nieuw: <span id="feedbackNieuw">-</span> | Bugs: <span id="feedbackBugs">-</span> | Features: <span id="feedbackFeatures">-</span></div>
+                <div class="stat-description">New: <span id="feedbackNieuw">-</span> | Bugs: <span id="feedbackBugs">-</span> | Features: <span id="feedbackFeatures">-</span></div>
+            </div>
+
+            <div class="stat-card tools">
+                <div class="stat-header">
+                    <span class="stat-icon">🧪</span>
+                    <span class="stat-title">Beta Periode</span>
+                </div>
+                <div class="stat-value" id="betaStatus">-</div>
+                <div class="stat-description">Beta gebruikers: <span id="betaUsers">-</span> | Nieuw deze week: <span id="betaNewThisWeek">-</span></div>
             </div>
         </div>
 
@@ -596,6 +724,28 @@
             </div>
         </div>
 
+        <!-- Beta Gebruikers -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">🧪</span>
+                <span>Beta Gebruikers</span>
+            </div>
+            <div class="table-content" id="betaUsersTable">
+                <div class="loading">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Alle Gebruikers -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">👥</span>
+                <span>Alle Gebruikers</span>
+            </div>
+            <div class="table-content" id="allUsersTable">
+                <div class="loading">Laden...</div>
+            </div>
+        </div>
+
         <!-- Feedback Overzicht -->
         <div class="data-table">
             <div class="table-header">
@@ -604,6 +754,74 @@
             </div>
             <div class="table-content" id="feedbackTable">
                 <div class="loading">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Payment Configurations -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">💳</span>
+                <span>Payment Configurations</span>
+            </div>
+            <div class="table-content">
+                <div id="paymentConfigsLoading" class="loading">Laden...</div>
+                <div id="paymentConfigsError" class="error" style="display: none;"></div>
+                <div id="paymentConfigsTable" style="padding: 20px;">
+                    <!-- Payment configs will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Onboarding Video Settings (Feature 014) -->
+        <div class="data-table">
+            <div class="table-header">
+                <span class="table-icon">📹</span>
+                <span>Welkomstvideo Instellingen</span>
+            </div>
+            <div class="table-content">
+                <div class="payment-config-item">
+                    <div class="payment-config-header">
+                        <span class="payment-config-title">YouTube Video Configuratie</span>
+                    </div>
+                    <div class="payment-config-form">
+                        <div class="form-group">
+                            <label for="onboardingVideoUrl">YouTube Video URL</label>
+                            <input type="url"
+                                   id="onboardingVideoUrl"
+                                   placeholder="https://youtube.com/watch?v=..."
+                                   class="form-group">
+                            <small style="color: var(--macos-text-secondary); font-size: 12px; margin-top: 4px;">
+                                Ondersteunt: youtube.com, youtu.be, youtube-nocookie.com
+                            </small>
+                        </div>
+
+                        <div id="videoPreview" style="display: none; margin-top: 15px;">
+                            <h4 style="margin-bottom: 10px; color: var(--macos-text-primary);">Preview</h4>
+                            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--macos-radius-medium);">
+                                <iframe id="previewIframe"
+                                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button id="saveVideoUrl" class="admin-btn success" onclick="saveOnboardingVideo()">
+                                💾 Opslaan
+                            </button>
+                            <button id="previewVideo" class="admin-btn" onclick="showVideoPreview()">
+                                👁️ Preview
+                            </button>
+                            <button id="clearVideoUrl" class="admin-btn danger" onclick="clearOnboardingVideo()">
+                                🗑️ Verwijderen
+                            </button>
+                        </div>
+
+                        <div id="videoUrlStatus" style="margin-top: 15px; padding: 10px; border-radius: var(--macos-radius-medium); display: none;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -643,7 +861,7 @@
                         <div id="feedbackTitel" class="detail-content"></div>
                     </div>
                     <div class="detail-row">
-                        <label>Beschrijving:</label>
+                        <label>Description:</label>
                         <div id="feedbackBeschrijving" class="detail-content"></div>
                     </div>
                     <div class="detail-row" id="feedbackStappenRow" style="display: none;">

@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Admin Settings API
+  description: Admin-only endpoints for managing onboarding video settings
+  version: 0.19.0
+  contact:
+    name: Jan Buskens
+    email: jan@tickedify.com
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production
+  - url: https://dev.tickedify.com/api
+    description: Staging
+
+tags:
+  - name: admin
+    description: Admin-only operations
+
+paths:
+  /settings/onboarding-video:
+    put:
+      summary: Update onboarding video URL (admin only)
+      description: |
+        Updates the system-wide onboarding video URL. Only accessible to admin users.
+        Validates YouTube URL format before saving. Sets url to NULL to clear.
+      tags:
+        - admin
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  description: YouTube video URL (null to clear)
+                  pattern: '^https?://(www\.)?(youtube\.com/watch\?v=|youtu\.be/|youtube-nocookie\.com/embed/)[\w-]+'
+                  example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+              required:
+                - url
+            examples:
+              setVideo:
+                summary: Set video URL
+                value:
+                  url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+              clearVideo:
+                summary: Clear video URL
+                value:
+                  url: null
+      responses:
+        '200':
+          description: Video URL updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Onboarding video URL updated"
+                  url:
+                    type: string
+                    nullable: true
+                    format: uri
+                    description: The saved URL value
+                    example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        '400':
+          description: Invalid YouTube URL format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Invalid YouTube URL format"
+        '401':
+          description: Unauthorized - user not logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+        '403':
+          description: Forbidden - user is not admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Admin access required"
+        '500':
+          description: Server error during update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error

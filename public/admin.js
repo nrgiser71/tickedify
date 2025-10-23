@@ -4,8 +4,44 @@ class AdminDashboard {
         this.isAuthenticated = false;
         this.data = {};
         this.refreshInterval = null;
-        
+
         this.initializeEventListeners();
+
+        // Check for existing session on page load (FR-001, FR-002, FR-003)
+        this.checkExistingSession();
+    }
+
+    async checkExistingSession() {
+        try {
+            const response = await fetch('/api/admin/session', {
+                credentials: 'include'  // Required for cookies
+            });
+
+            if (response.ok) {
+                const session = await response.json();
+                console.log('✅ Valid session found:', session.loginTime);
+
+                // Session is valid - skip login form
+                this.isAuthenticated = true;
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+
+                await this.loadDashboard();
+                this.startAutoRefresh();
+
+                return true;
+            } else {
+                // No valid session - show login form
+                console.log('❌ No valid session - showing login form');
+                this.isAuthenticated = false;
+                return false;
+            }
+        } catch (error) {
+            console.error('Session check failed:', error);
+            // On error, default to showing login form (safe fallback)
+            this.isAuthenticated = false;
+            return false;
+        }
     }
 
     initializeEventListeners() {
@@ -110,12 +146,29 @@ class AdminDashboard {
             '/api/admin/api-usage',
             '/api/admin/email-stats',
             '/api/admin/feedback/stats',
-            '/api/admin/feedback'
+            '/api/admin/feedback',
+            '/api/admin/beta/status',
+            '/api/admin/beta/users',
+            '/api/admin/all-users',
+            '/api/admin/payment-configurations'
         ];
 
         const results = await Promise.allSettled(
-            endpoints.map(endpoint => fetch(endpoint).then(r => r.json()))
+            endpoints.map(endpoint =>
+                fetch(endpoint, {
+                    credentials: 'include'  // Ensure cookies are sent
+                }).then(r => r.json())
+            )
         );
+
+        // Debug logging for failed endpoints
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                console.error(`❌ Failed to fetch ${endpoints[index]}:`, result.reason);
+            } else if (endpoints[index] === '/api/admin/payment-configurations') {
+                console.log('💳 Payment configs response:', result.value);
+            }
+        });
 
         this.data = {
             users: results[0].status === 'fulfilled' ? results[0].value : {},
@@ -129,7 +182,11 @@ class AdminDashboard {
             apiUsage: results[8].status === 'fulfilled' ? results[8].value : {},
             emailStats: results[9].status === 'fulfilled' ? results[9].value : {},
             feedbackStats: results[10].status === 'fulfilled' ? results[10].value : {},
-            feedback: results[11].status === 'fulfilled' ? results[11].value : {}
+            feedback: results[11].status === 'fulfilled' ? results[11].value : {},
+            betaStatus: results[12].status === 'fulfilled' ? results[12].value : {},
+            betaUsers: results[13].status === 'fulfilled' ? results[13].value : {},
+            allUsers: results[14].status === 'fulfilled' ? results[14].value : {},
+            paymentConfigurations: results[15].status === 'fulfilled' ? results[15].value : {}
         };
     }
 
@@ -176,6 +233,26 @@ class AdminDashboard {
             document.getElementById('feedbackNieuw').textContent = stats.nieuw || 0;
             document.getElementById('feedbackBugs').textContent = stats.bugs || 0;
             document.getElementById('feedbackFeatures').textContent = stats.features || 0;
+        }
+
+        // Beta statistics
+        if (this.data.betaStatus && this.data.betaStatus.betaConfig) {
+            const config = this.data.betaStatus.betaConfig;
+            const stats = this.data.betaStatus.statistics;
+            
+            document.getElementById('betaStatus').textContent = config.beta_period_active ? 'Actief' : 'Beëindigd';
+            document.getElementById('betaUsers').textContent = stats?.totalBetaUsers || 0;
+            document.getElementById('betaNewThisWeek').textContent = stats?.newThisWeek || 0;
+            
+            // Update toggle button
+            const toggleBtn = document.getElementById('betaToggleBtn');
+            if (config.beta_period_active) {
+                toggleBtn.textContent = '🧪 Beta Beëindigen';
+                toggleBtn.className = 'admin-btn danger';
+            } else {
+                toggleBtn.textContent = '🧪 Beta Activeren';
+                toggleBtn.className = 'admin-btn success';
+            }
         }
     }
 
@@ -241,8 +318,86 @@ class AdminDashboard {
             api.last_called ? this.formatDateTime(api.last_called) : '-'
         ]);
 
+        // Beta users tabel
+        this.renderBetaUsersTable();
+
+        // All users tabel
+        this.renderAllUsersTable();
+
         // Feedback tabel
         this.renderFeedbackTable();
+
+        // Payment Configurations
+        this.renderPaymentConfigurations();
+    }
+
+    renderBetaUsersTable() {
+        const container = document.getElementById('betaUsersTable');
+        const betaUsers = this.data.betaUsers && this.data.betaUsers.users || [];
+        
+        if (!betaUsers || betaUsers.length === 0) {
+            container.innerHTML = '<div class="loading">Geen beta gebruikers beschikbaar</div>';
+            return;
+        }
+
+        let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
+        html += '<div>Email</div><div>Naam</div><div>Status</div><div>GHL</div><div>Registratie</div>';
+        html += '</div>';
+
+        betaUsers.forEach(user => {
+            html += '<div class="table-row">';
+            html += `<div>${this.escapeHtml(user.email)}</div>`;
+            html += `<div>${this.escapeHtml(user.naam || 'Geen naam')}</div>`;
+            html += `<div><span class="status-badge ${user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw'}">${user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen'}</span></div>`;
+            html += `<div>${user.ghl_contact_id ? '✅ Gesynchroniseerd' : '❌ Niet gesynd'}</div>`;
+            html += `<div>${this.formatRelativeTime(user.created_at)}</div>`;
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    renderAllUsersTable() {
+        const container = document.getElementById('allUsersTable');
+        const allUsers = this.data.allUsers && this.data.allUsers.users || [];
+        
+        if (!allUsers || allUsers.length === 0) {
+            container.innerHTML = '<div class="loading">Geen gebruikers beschikbaar</div>';
+            return;
+        }
+
+        let html = '<div class="table-row" style="font-weight: 600; background: var(--macos-gray-6);">';
+        html += '<div>Email</div><div>Naam</div><div>Account Type</div><div>Status</div><div>Abonnement</div><div>Taken</div><div>Laatste Login</div><div>Acties</div>';
+        html += '</div>';
+
+        allUsers.forEach(user => {
+            const accountTypeText = user.account_type === 'beta' ? 'Beta' : 'Regular';
+            const accountTypeBadge = user.account_type === 'beta' ? 'status-nieuw' : 'status-opgelost';
+            const statusText = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? '✅ Actief' : '❌ Verlopen';
+            const statusBadge = user.subscription_status === 'active' || user.subscription_status === 'beta_active' ? 'status-opgelost' : 'status-nieuw';
+
+            // Format subscription plan
+            const subscriptionInfo = this.formatSubscriptionPlan(user.selected_plan);
+
+            html += '<div class="table-row">';
+            html += `<div>${this.escapeHtml(user.email)}</div>`;
+            html += `<div>${this.escapeHtml(user.naam || 'Geen naam')}</div>`;
+            html += `<div><span class="status-badge ${accountTypeBadge}">${accountTypeText}</span></div>`;
+            html += `<div><span class="status-badge ${statusBadge}">${statusText}</span></div>`;
+            html += `<div>${subscriptionInfo.html}</div>`;
+            html += `<div>${user.task_count || 0}</div>`;
+            html += `<div>${user.last_activity ? this.formatRelativeTime(user.last_activity) : 'Nooit'}</div>`;
+            html += `<div>
+                <select id="accountType-${user.id}" data-current="${user.account_type}" style="margin-right: 8px; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="beta" ${user.account_type === 'beta' ? 'selected' : ''}>Beta</option>
+                    <option value="regular" ${user.account_type === 'regular' ? 'selected' : ''}>Regular</option>
+                </select>
+                <button onclick="changeUserAccountType('${user.id}', '${user.email}')" class="admin-btn" style="padding: 4px 8px; font-size: 12px;">Wijzig</button>
+            </div>`;
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
     }
 
     renderFeedbackTable() {
@@ -426,12 +581,129 @@ class AdminDashboard {
         notification.style.padding = '15px 20px';
         notification.style.borderRadius = '8px';
         notification.style.fontWeight = '500';
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             document.body.removeChild(notification);
         }, 5000);
+    }
+
+    formatSubscriptionPlan(selectedPlan) {
+        if (!selectedPlan) {
+            return {
+                text: 'Geen',
+                html: '<span class="status-badge" style="background-color: #f1f5f9; color: #475569;">Geen</span>'
+            };
+        }
+
+        let text, badge, color;
+        switch (selectedPlan) {
+            case 'trial_14_days':
+                text = '14 dagen gratis';
+                badge = 'trial';
+                color = '#f59e0b'; // Orange
+                break;
+            case 'monthly_7':
+                text = '€7/maand';
+                badge = 'monthly';
+                color = '#3b82f6'; // Blue
+                break;
+            case 'yearly_70':
+                text = '€70/jaar';
+                badge = 'yearly';
+                color = '#10b981'; // Green
+                break;
+            default:
+                text = selectedPlan;
+                badge = 'unknown';
+                color = '#6b7280'; // Gray
+        }
+
+        return {
+            text: text,
+            html: `<span class="status-badge" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">${text}</span>`
+        };
+    }
+
+    renderPaymentConfigurations() {
+        const loadingDiv = document.getElementById('paymentConfigsLoading');
+        const errorDiv = document.getElementById('paymentConfigsError');
+        const container = document.getElementById('paymentConfigsTable');
+
+        console.log('🔍 DEBUG paymentConfigurations full data:', this.data.paymentConfigurations);
+        const configs = this.data.paymentConfigurations?.configurations || [];
+        console.log('🔍 DEBUG configs array:', configs, 'length:', configs.length);
+
+        // Check if API call had an error
+        if (this.data.paymentConfigurations?.error) {
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            errorDiv.textContent = `API Error: ${this.data.paymentConfigurations.error}`;
+            errorDiv.style.display = 'block';
+            console.error('❌ Payment configs API error:', this.data.paymentConfigurations.error);
+            return;
+        }
+
+        if (configs.length === 0) {
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            container.innerHTML = '<p style="color: var(--macos-text-secondary);">Geen payment configuraties beschikbaar (configs.length = 0)</p>';
+            console.warn('⚠️ No payment configs found');
+            return;
+        }
+
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        if (errorDiv) errorDiv.style.display = 'none';
+        console.log('✅ Rendering', configs.length, 'payment configurations');
+
+        // Find Standard and No Limit configs
+        const standardConfig = configs.find(c => c.plan_id === 'monthly_7') || configs.find(c => c.plan_id === 'yearly_70') || {};
+        const noLimitConfig = configs.find(c => c.plan_id === 'monthly_8') || configs.find(c => c.plan_id === 'yearly_80') || {};
+
+        const standardUrl = standardConfig.checkout_url || '';
+        const noLimitUrl = noLimitConfig.checkout_url || '';
+
+        let html = `
+            <div class="payment-config-item">
+                <div class="payment-config-header">
+                    <span class="payment-config-title">💳 Checkout URLs (2 tiers)</span>
+                </div>
+                <form class="payment-config-form" onsubmit="updateTierCheckoutUrls(event)">
+                    <div class="form-group">
+                        <label for="standard-checkout-url">🔵 Standard Abonnement (€7/€70)</label>
+                        <input
+                            type="url"
+                            id="standard-checkout-url"
+                            name="standard_url"
+                            value="${this.escapeHtml(standardUrl)}"
+                            placeholder="https://..."
+                            required>
+                        <small style="color: var(--macos-text-secondary); font-size: 12px;">
+                            Voor monthly_7 en yearly_70 plans
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="nolimit-checkout-url">⭐ No Limit Abonnement (€8/€80)</label>
+                        <input
+                            type="url"
+                            id="nolimit-checkout-url"
+                            name="nolimit_url"
+                            value="${this.escapeHtml(noLimitUrl)}"
+                            placeholder="https://..."
+                            required>
+                        <small style="color: var(--macos-text-secondary); font-size: 12px;">
+                            Voor monthly_8 en yearly_80 plans
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="admin-btn success">
+                            💾 Opslaan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        container.innerHTML = html;
     }
 }
 
@@ -450,6 +722,54 @@ function runMaintenance() {
 
 function logout() {
     adminDashboard.logout();
+}
+
+async function toggleBetaPeriod() {
+    const config = adminDashboard.data.betaStatus?.betaConfig;
+    if (!config) {
+        alert('Beta configuratie niet beschikbaar');
+        return;
+    }
+
+    const currentStatus = config.beta_period_active;
+    const action = currentStatus ? 'beëindigen' : 'activeren';
+    
+    if (!confirm(`Weet je zeker dat je de beta periode wilt ${action}?`)) {
+        return;
+    }
+
+    const toggleBtn = document.getElementById('betaToggleBtn');
+    const originalText = toggleBtn.textContent;
+    toggleBtn.textContent = '🔄 Bezig...';
+    toggleBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/admin/beta/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                active: !currentStatus
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            // Refresh dashboard data
+            await adminDashboard.refreshData();
+        } else {
+            alert('Fout bij wijzigen beta periode: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error toggling beta period:', error);
+        alert('Fout bij wijzigen beta periode: ' + error.message);
+    } finally {
+        toggleBtn.disabled = false;
+        toggleBtn.textContent = originalText;
+    }
 }
 
 // Initialize dashboard when page loads
@@ -553,6 +873,78 @@ async function updateFeedbackStatus() {
     }
 }
 
+// Change user account type function
+async function changeUserAccountType(userId, userEmail) {
+    const selectElement = document.getElementById(`accountType-${userId}`);
+    if (!selectElement) {
+        alert('Kan account type selector niet vinden');
+        return;
+    }
+    
+    const newAccountType = selectElement.value;
+    const currentAccountType = selectElement.getAttribute('data-current');
+    
+    if (newAccountType === currentAccountType) {
+        alert('Geen wijziging - account type is al ' + newAccountType);
+        return;
+    }
+    
+    const confirmMessage = `Weet je zeker dat je het account type van ${userEmail} wilt wijzigen van ${currentAccountType} naar ${newAccountType}?`;
+    if (!confirm(confirmMessage)) {
+        // Reset selectie als geannuleerd
+        selectElement.value = currentAccountType;
+        return;
+    }
+    
+    // Button disable
+    const button = selectElement.nextElementSibling;
+    const originalText = button.textContent;
+    button.textContent = '🔄 Bezig...';
+    button.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/admin/user/${userId}/account-type`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ account_type: newAccountType })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Success message
+            if (window.dashboard) {
+                window.dashboard.showSuccess(`✅ ${userEmail} account type gewijzigd naar ${newAccountType}`);
+                
+                // Refresh data
+                await window.dashboard.refreshData();
+            } else {
+                alert(`✅ Account type succesvol gewijzigd naar ${newAccountType}`);
+                window.location.reload();
+            }
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+        
+    } catch (error) {
+        console.error('Error changing account type:', error);
+        if (window.dashboard) {
+            window.dashboard.showError('❌ Fout bij wijzigen account type: ' + error.message);
+        } else {
+            alert('❌ Fout bij wijzigen account type: ' + error.message);
+        }
+        
+        // Reset selectie bij fout
+        selectElement.value = currentAccountType;
+    } finally {
+        // Button restore
+        button.textContent = originalText;
+        button.disabled = false;
+    }
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('feedbackModal');
@@ -560,3 +952,423 @@ window.onclick = function(event) {
         closeFeedbackModal();
     }
 }
+
+// Payment Configuration Functions
+async function updateCheckoutUrl(event, planId) {
+    event.preventDefault();
+
+    const form = event.target;
+    const urlInput = form.querySelector('input[name="checkout_url"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const checkoutUrl = urlInput.value.trim();
+
+    if (!checkoutUrl) {
+        alert('Voer een checkout URL in');
+        return;
+    }
+
+    // Disable button during save
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '🔄 Bezig met opslaan...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/admin/payment-configurations', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: planId,
+                checkout_url: checkoutUrl
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            adminDashboard.showSuccess(`✅ Checkout URL bijgewerkt voor ${planId}`);
+            // Refresh data to show updated timestamp
+            await adminDashboard.refreshData();
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error updating checkout URL:', error);
+        adminDashboard.showError('❌ Fout bij opslaan: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+async function togglePlanActive(planId, isActive) {
+    try {
+        const response = await fetch('/api/admin/payment-configurations', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                plan_id: planId,
+                is_active: isActive
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            adminDashboard.showSuccess(`✅ ${planId} is nu ${isActive ? 'actief' : 'inactief'}`);
+            await adminDashboard.refreshData();
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error toggling plan active:', error);
+        adminDashboard.showError('❌ Fout bij wijzigen status: ' + error.message);
+        // Reset checkbox on error
+        document.getElementById(`active-${planId}`).checked = !isActive;
+    }
+}
+
+function testCheckoutUrl(planId) {
+    const urlInput = document.getElementById(`url-${planId}`);
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        alert('Geen checkout URL ingesteld');
+        return;
+    }
+
+    // Open URL in new tab
+    window.open(url, '_blank');
+    adminDashboard.showSuccess(`🔗 Checkout URL geopend in nieuw tabblad`);
+}
+
+// Shared checkout URL functions (for single URL used by both plans)
+async function updateSharedCheckoutUrl(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const urlInput = form.querySelector('input[name="checkout_url"]');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const checkoutUrl = urlInput.value.trim();
+
+    if (!checkoutUrl) {
+        alert('Voer een checkout URL in');
+        return;
+    }
+
+    // Disable button during save
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '🔄 Bezig met opslaan...';
+    submitBtn.disabled = true;
+
+    try {
+        // Update BOTH plans with the same URL
+        const planIds = ['monthly_7', 'yearly_70'];
+        const updatePromises = planIds.map(planId =>
+            fetch('/api/admin/payment-configurations', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    checkout_url: checkoutUrl
+                })
+            }).then(r => r.json())
+        );
+
+        const results = await Promise.all(updatePromises);
+
+        // Check if all updates succeeded
+        const allSuccess = results.every(result => result.success);
+
+        if (allSuccess) {
+            adminDashboard.showSuccess(`✅ Checkout URL bijgewerkt voor beide abonnementen`);
+            // Refresh data to show updated timestamp
+            await adminDashboard.refreshData();
+        } else {
+            throw new Error('Een of meer updates zijn mislukt');
+        }
+    } catch (error) {
+        console.error('Error updating shared checkout URL:', error);
+        adminDashboard.showError('❌ Fout bij opslaan: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+function testSharedCheckoutUrl() {
+    const urlInput = document.getElementById('shared-checkout-url');
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        alert('Geen checkout URL ingesteld');
+        return;
+    }
+
+    // Open URL in new tab
+    window.open(url, '_blank');
+    adminDashboard.showSuccess(`🔗 Checkout URL geopend in nieuw tabblad`);
+}
+
+// Update tier checkout URLs (2 URLs for 4 plans: Standard and No Limit)
+async function updateTierCheckoutUrls(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const standardUrl = form.querySelector('#standard-checkout-url').value.trim();
+    const noLimitUrl = form.querySelector('#nolimit-checkout-url').value.trim();
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    if (!standardUrl || !noLimitUrl) {
+        alert('Voer beide checkout URLs in');
+        return;
+    }
+
+    // Disable button during save
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '🔄 Bezig met opslaan...';
+    submitBtn.disabled = true;
+
+    try {
+        // Update all 4 plans: Standard (monthly_7, yearly_70) and No Limit (monthly_8, yearly_80)
+        const updates = [
+            { plan_id: 'monthly_7', checkout_url: standardUrl },
+            { plan_id: 'yearly_70', checkout_url: standardUrl },
+            { plan_id: 'monthly_8', checkout_url: noLimitUrl },
+            { plan_id: 'yearly_80', checkout_url: noLimitUrl }
+        ];
+
+        const updatePromises = updates.map(update =>
+            fetch('/api/admin/payment-configurations', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(update)
+            }).then(r => r.json())
+        );
+
+        const results = await Promise.all(updatePromises);
+
+        // Check if all updates succeeded
+        const allSuccess = results.every(result => result.success);
+
+        if (allSuccess) {
+            adminDashboard.showSuccess(`✅ Checkout URLs bijgewerkt voor beide tiers (4 plans)`);
+            // Refresh data to show updated timestamps
+            await adminDashboard.refreshData();
+        } else {
+            const failedUpdates = results.filter(r => !r.success);
+            throw new Error(`${failedUpdates.length} update(s) mislukt`);
+        }
+    } catch (error) {
+        console.error('Error updating tier checkout URLs:', error);
+        adminDashboard.showError('❌ Fout bij opslaan: ' + error.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Feature 014: Onboarding Video Settings Functions
+async function loadOnboardingSettings() {
+    try {
+        const response = await fetch('/api/settings/onboarding-video');
+        if (!response.ok) {
+            throw new Error('Fout bij ophalen video instellingen');
+        }
+
+        const data = await response.json();
+        const urlInput = document.getElementById('onboardingVideoUrl');
+
+        if (urlInput && data.url) {
+            urlInput.value = data.url;
+        }
+    } catch (error) {
+        console.error('Error loading onboarding settings:', error);
+        showVideoStatus('Fout bij laden van instellingen', 'error');
+    }
+}
+
+async function saveOnboardingVideo() {
+    const urlInput = document.getElementById('onboardingVideoUrl');
+    const url = urlInput.value.trim();
+
+    // Validate URL
+    if (url && !isValidYouTubeUrl(url)) {
+        showVideoStatus('Ongeldige YouTube URL. Ondersteunde formaten: youtube.com, youtu.be, youtube-nocookie.com', 'error');
+        return;
+    }
+
+    // Show loading state
+    const saveBtn = document.getElementById('saveVideoUrl');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '🔄 Bezig met opslaan...';
+    saveBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/settings/onboarding-video', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: url || null })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showVideoStatus('✅ Onboarding video URL succesvol opgeslagen', 'success');
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error saving onboarding video:', error);
+        showVideoStatus('❌ Fout bij opslaan: ' + error.message, 'error');
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
+function isValidYouTubeUrl(url) {
+    // Validate YouTube URL patterns
+    const youtubePatterns = [
+        /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+        /^https?:\/\/youtu\.be\/[\w-]+/,
+        /^https?:\/\/(www\.)?youtube-nocookie\.com\/embed\/[\w-]+/
+    ];
+
+    return youtubePatterns.some(pattern => pattern.test(url));
+}
+
+function extractYouTubeId(url) {
+    if (!url) return null;
+
+    // Pattern 1: youtube.com/watch?v=VIDEO_ID
+    let match = url.match(/[?&]v=([^&]+)/);
+    if (match) return match[1];
+
+    // Pattern 2: youtu.be/VIDEO_ID
+    match = url.match(/youtu\.be\/([^?]+)/);
+    if (match) return match[1];
+
+    // Pattern 3: youtube-nocookie.com/embed/VIDEO_ID
+    match = url.match(/youtube-nocookie\.com\/embed\/([^?]+)/);
+    if (match) return match[1];
+
+    // Pattern 4: youtube.com/embed/VIDEO_ID
+    match = url.match(/youtube\.com\/embed\/([^?]+)/);
+    if (match) return match[1];
+
+    return null;
+}
+
+function showVideoPreview() {
+    const urlInput = document.getElementById('onboardingVideoUrl');
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        showVideoStatus('Voer eerst een YouTube URL in', 'error');
+        return;
+    }
+
+    if (!isValidYouTubeUrl(url)) {
+        showVideoStatus('Ongeldige YouTube URL', 'error');
+        return;
+    }
+
+    const videoId = extractYouTubeId(url);
+    if (!videoId) {
+        showVideoStatus('Kan video ID niet extraheren uit URL', 'error');
+        return;
+    }
+
+    // Show preview section
+    const previewSection = document.getElementById('videoPreview');
+    const previewIframe = document.getElementById('previewIframe');
+
+    previewIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+    previewSection.style.display = 'block';
+
+    showVideoStatus('Preview geladen', 'success');
+}
+
+async function clearOnboardingVideo() {
+    if (!confirm('Weet je zeker dat je de onboarding video wilt verwijderen?')) {
+        return;
+    }
+
+    const clearBtn = document.getElementById('clearVideoUrl');
+    const originalText = clearBtn.innerHTML;
+    clearBtn.innerHTML = '🔄 Bezig...';
+    clearBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/settings/onboarding-video', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: null })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            document.getElementById('onboardingVideoUrl').value = '';
+            document.getElementById('videoPreview').style.display = 'none';
+            document.getElementById('previewIframe').src = '';
+            showVideoStatus('✅ Onboarding video verwijderd', 'success');
+        } else {
+            throw new Error(result.error || 'Onbekende fout');
+        }
+    } catch (error) {
+        console.error('Error clearing onboarding video:', error);
+        showVideoStatus('❌ Fout bij verwijderen: ' + error.message, 'error');
+    } finally {
+        clearBtn.innerHTML = originalText;
+        clearBtn.disabled = false;
+    }
+}
+
+function showVideoStatus(message, type) {
+    const statusDiv = document.getElementById('videoUrlStatus');
+    statusDiv.textContent = message;
+    statusDiv.style.display = 'block';
+
+    if (type === 'success') {
+        statusDiv.style.backgroundColor = 'var(--toast-success-bg)';
+        statusDiv.style.color = 'var(--toast-success)';
+        statusDiv.style.borderLeft = '4px solid var(--toast-success)';
+    } else {
+        statusDiv.style.backgroundColor = 'var(--toast-error-bg)';
+        statusDiv.style.color = 'var(--toast-error)';
+        statusDiv.style.borderLeft = '4px solid var(--toast-error)';
+    }
+
+    // Hide after 5 seconds
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Load onboarding settings when dashboard loads
+// Add this call to the AdminDashboard.loadDashboard() method
+if (window.addEventListener) {
+    window.addEventListener('load', () => {
+        // Wait for dashboard to authenticate before loading settings
+        setTimeout(() => {
+            if (adminDashboard && adminDashboard.isAuthenticated) {
+                loadOnboardingSettings();
+            }
+        }, 1000);
+    });
+}
+
+// ============================================================================
+// MESSAGING SYSTEM - Moved to admin2.html
+// ============================================================================
+// Messaging system is now part of admin2.html (modern admin dashboard)
+// admin.html is the legacy dashboard and no longer contains messaging code

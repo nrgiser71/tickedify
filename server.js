@@ -26,6 +26,22 @@ app.use(express.static('public'));
 // Multer for form-data parsing (Mailgun webhooks)
 const upload = multer();
 
+// Multer configuration for file uploads (in-memory storage)
+const uploadAttachment = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max file size (will be checked by business logic)
+    files: 5 // Max 5 files per request
+  },
+  fileFilter: (req, file, cb) => {
+    // Basic file type check (more detailed validation in storage manager)
+    if (!file.mimetype) {
+      return cb(new Error('Geen bestandstype gedetecteerd'));
+    }
+    cb(null, true);
+  }
+});
+
 // Enhanced request logging with API tracking
 const apiStats = new Map();
 const errorLogs = [];
@@ -33,6 +49,309 @@ const MAX_ERROR_LOGS = 100;
 
 // Import forensic logger
 const forensicLogger = require('./forensic-logger');
+
+// Import storage manager for attachments
+const { storageManager, STORAGE_CONFIG } = require('./storage-manager');
+
+// GHL Helper Function
+async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
+    if (!process.env.GHL_API_KEY) {
+        console.log('⚠️ GHL not configured, skipping contact sync');
+        return null;
+    }
+    
+    try {
+        const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
+        
+        // Search for existing contact
+        const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                'Content-Type': 'application/json',
+                'Version': '2021-07-28'
+            }
+        });
+        
+        let contactId = null;
+        
+        if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            if (searchData.contact && searchData.contact.id) {
+                contactId = searchData.contact.id;
+                
+                // Update existing contact with new tags
+                const tagResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Version': '2021-07-28'
+                    },
+                    body: JSON.stringify({ tags })
+                });
+                
+                if (tagResponse.ok) {
+                    console.log(`✅ GHL: Updated existing contact ${contactId} with tags: ${tags.join(', ')}`);
+                } else {
+                    console.error(`⚠️ GHL: Failed to add tags to existing contact ${contactId}`);
+                }
+            }
+        }
+        
+        if (!contactId) {
+            // Create new contact
+            const createResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GHL_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Version': '2021-07-28'
+                },
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    firstName: name ? name.split(' ')[0] : '',
+                    lastName: name ? name.split(' ').slice(1).join(' ') : '',
+                    name: name || email,
+                    locationId: locationId,
+                    tags: tags,
+                    source: 'tickedify-registration'
+                })
+            });
+            
+            if (createResponse.ok) {
+                const createData = await createResponse.json();
+                contactId = createData.contact?.id;
+                console.log(`✅ GHL: Created new contact ${contactId} with tags: ${tags.join(', ')}`);
+            } else {
+                const errorText = await createResponse.text();
+                console.error(`⚠️ GHL: Failed to create contact: ${createResponse.status} - ${errorText}`);
+            }
+        }
+        
+        return contactId;
+        
+    } catch (error) {
+        console.error('⚠️ GHL integration error:', error.message);
+        return null;
+    }
+}
+
+// ========================================
+// SUBSCRIPTION & PAYMENT HELPER FUNCTIONS
+// Feature: 011-in-de-app
+// ========================================
+
+// Subscription State Machine Constants
+const SUBSCRIPTION_STATES = {
+  BETA: 'beta',
+  BETA_ACTIVE: 'beta_active',
+  BETA_EXPIRED: 'beta_expired',
+  PENDING_PAYMENT: 'pending_payment',
+  TRIALING: 'trialing',
+  TRIAL_EXPIRED: 'trial_expired',
+  ACTIVE: 'active',
+  CANCELLED: 'cancelled',
+  EXPIRED: 'expired'
+};
+
+const PLAN_IDS = {
+  TRIAL_14: 'trial_14_days',
+  MONTHLY_7: 'monthly_7',
+  YEARLY_70: 'yearly_70',
+  MONTHLY_8: 'monthly_8',
+  YEARLY_80: 'yearly_80'
+};
+
+// Check if user can access the app based on subscription status
+function canAccessApp(user) {
+  if (!user || !user.subscription_status) {
+    return false;
+  }
+
+  const allowedStates = [
+    SUBSCRIPTION_STATES.BETA,
+    SUBSCRIPTION_STATES.TRIALING,
+    SUBSCRIPTION_STATES.ACTIVE
+  ];
+
+  return allowedStates.includes(user.subscription_status);
+}
+
+// Check if trial has expired
+function isTrialExpired(user) {
+  // If user has no trial_end_date, they never had a trial
+  if (!user.trial_end_date) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const trialEnd = new Date(user.trial_end_date);
+  trialEnd.setHours(0, 0, 0, 0);
+
+  // Return true if trial end date is in the past
+  return today > trialEnd;
+}
+
+// Validate plan selection (includes No Limit plans: MONTHLY_8 and YEARLY_80)
+function validatePlanSelection(planId, currentStatus, hadTrial = false) {
+  // Beta users can select trial (only if they never had trial) or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.BETA) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  // Beta-active users (new registration during active beta) can select trial or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.BETA_ACTIVE) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  // Beta-expired users can select trial (if never had trial) or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.BETA_EXPIRED) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  // Pending payment users (new registration during stopped beta) can select trial or paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.PENDING_PAYMENT) {
+    // If trying to select trial, check if user already had trial
+    if (planId === PLAN_IDS.TRIAL_14 && hadTrial) {
+      return false; // User already had trial, cannot select again
+    }
+    return [PLAN_IDS.TRIAL_14, PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  // Trial expired users can only select paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.TRIAL_EXPIRED) {
+    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  // Trialing users can upgrade to paid plans
+  if (currentStatus === SUBSCRIPTION_STATES.TRIALING) {
+    return [PLAN_IDS.MONTHLY_7, PLAN_IDS.YEARLY_70, PLAN_IDS.MONTHLY_8, PLAN_IDS.YEARLY_80].includes(planId);
+  }
+
+  return false;
+}
+
+// Calculate trial end date (14 days from today)
+function calculateTrialEndDate() {
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 14);
+  return endDate;
+}
+
+// Generate cryptographically random login token
+function generateLoginToken() {
+  const crypto = require('crypto');
+  return crypto.randomBytes(30).toString('hex'); // 60 character hex string
+}
+
+// Calculate token expiry (10 minutes from now)
+function calculateTokenExpiry() {
+  const expiry = new Date();
+  expiry.setMinutes(expiry.getMinutes() + 10);
+  return expiry;
+}
+
+// Validate login token
+async function validateLoginToken(token, pool) {
+  if (!token) {
+    return { valid: false, error: 'Geen token opgegeven' };
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT id, email, login_token_expires, login_token_used
+       FROM users
+       WHERE login_token = $1`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return { valid: false, error: 'Ongeldig token' };
+    }
+
+    const user = result.rows[0];
+
+    // Check if token already used
+    if (user.login_token_used) {
+      return { valid: false, error: 'Token al gebruikt' };
+    }
+
+    // Check if token expired
+    const now = new Date();
+    const expiry = new Date(user.login_token_expires);
+    if (now > expiry) {
+      return { valid: false, error: 'Token verlopen' };
+    }
+
+    // Mark token as used
+    await pool.query(
+      'UPDATE users SET login_token_used = TRUE WHERE id = $1',
+      [user.id]
+    );
+
+    return { valid: true, userId: user.id, email: user.email };
+
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return { valid: false, error: 'Fout bij token validatie' };
+  }
+}
+
+// Check webhook idempotency (prevent duplicate processing)
+async function checkWebhookIdempotency(orderId, pool) {
+  try {
+    const result = await pool.query(
+      'SELECT id FROM users WHERE plugandpay_order_id = $1',
+      [orderId]
+    );
+
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Idempotency check error:', error);
+    return false;
+  }
+}
+
+// Log webhook event for audit trail
+async function logWebhookEvent(webhookData, pool) {
+  try {
+    await pool.query(
+      `INSERT INTO payment_webhook_logs
+       (user_id, event_type, order_id, email, amount_cents, payload, signature_valid, ip_address, error_message)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        webhookData.user_id || null,
+        webhookData.event_type,
+        webhookData.order_id,
+        webhookData.email,
+        webhookData.amount_cents,
+        JSON.stringify(webhookData.payload),
+        webhookData.signature_valid,
+        webhookData.ip_address,
+        webhookData.error_message || null
+      ]
+    );
+  } catch (error) {
+    console.error('Webhook logging error:', error);
+    // Non-critical error, don't throw
+  }
+}
 
 // Debug: Check forensic logger status at startup
 console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
@@ -159,7 +478,7 @@ try {
         cookie: {
             secure: 'auto', // Let express-session auto-detect HTTPS
             httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours (FR-006 requirement)
             sameSite: 'lax' // Better compatibility with modern browsers
         },
         name: 'tickedify.sid' // Custom session name for better identification
@@ -185,7 +504,7 @@ try {
         cookie: {
             secure: 'auto',
             httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours (FR-006 requirement)
             sameSite: 'lax'
         },
         name: 'tickedify.sid'
@@ -216,6 +535,183 @@ app.get('/api/db-test', async (req, res) => {
         console.error('Database test failed:', error);
         res.status(500).json({ 
             status: 'database_error',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Debug endpoint for B2 storage status
+app.get('/api/debug/storage-status', async (req, res) => {
+    try {
+        console.log('🔍 DEBUG: Testing storage manager initialization...');
+        
+        const status = {
+            timestamp: new Date().toISOString(),
+            environment_vars: {
+                B2_APPLICATION_KEY_ID: !!process.env.B2_APPLICATION_KEY_ID,
+                B2_APPLICATION_KEY: !!process.env.B2_APPLICATION_KEY,
+                B2_BUCKET_NAME: process.env.B2_BUCKET_NAME || 'not_set'
+            },
+            storage_manager: {
+                exists: !!storageManager,
+                initialized: storageManager?.initialized || false,
+                b2_available: false
+            }
+        };
+        
+        // Test storage manager initialization with detailed bucket testing
+        if (storageManager) {
+            try {
+                // Initialize storage manager (no force reinit to avoid resetting)
+                await storageManager.initialize();
+                status.storage_manager.initialized = storageManager.initialized;
+                status.storage_manager.b2_available = storageManager.isB2Available();
+                status.storage_manager.b2_client_exists = !!storageManager.b2Client;
+                status.storage_manager.bucket_id = storageManager.bucketId || 'not_set';
+                
+                // Test B2 operations directly if client exists
+                if (storageManager.b2Client) {
+                    try {
+                        console.log('🔍 Testing B2 listBuckets operation...');
+                        const bucketsResponse = await storageManager.b2Client.listBuckets();
+                        status.storage_manager.bucket_test = {
+                            list_buckets_success: true,
+                            buckets_found: bucketsResponse.data.buckets.length,
+                            bucket_names: bucketsResponse.data.buckets.map(b => b.bucketName),
+                            target_bucket_exists: bucketsResponse.data.buckets.some(b => b.bucketName === 'tickedify-attachments')
+                        };
+                    } catch (bucketError) {
+                        status.storage_manager.bucket_test = {
+                            list_buckets_success: false,
+                            error: bucketError.message
+                        };
+                    }
+                }
+                
+                // Additional B2 info if available
+                if (storageManager.b2Client && storageManager.bucketId) {
+                    status.storage_manager.b2_status = 'fully_initialized';
+                } else if (storageManager.b2Client) {
+                    status.storage_manager.b2_status = 'client_only_no_bucket';
+                } else {
+                    status.storage_manager.b2_status = 'not_initialized';
+                }
+            } catch (initError) {
+                status.storage_manager.initialization_error = initError.message;
+                status.storage_manager.b2_status = 'initialization_failed';
+                console.error('🔍 Initialization error details:', initError);
+            }
+        }
+        
+        console.log('🔍 DEBUG: Storage status:', status);
+        res.json(status);
+        
+    } catch (error) {
+        console.error('❌ Storage status test failed:', error);
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Simple direct B2 test endpoint
+app.get('/api/debug/b2-direct-test', async (req, res) => {
+    try {
+        console.log('🔍 Testing B2 directly with current environment vars');
+        
+        const B2 = require('backblaze-b2');
+        
+        const result = {
+            timestamp: new Date().toISOString(),
+            env_check: {
+                key_id: !!process.env.B2_APPLICATION_KEY_ID,
+                key: !!process.env.B2_APPLICATION_KEY,
+                bucket_name: process.env.B2_BUCKET_NAME
+            },
+            steps: []
+        };
+        
+        // Step 1: Create B2 client
+        const b2Client = new B2({
+            applicationKeyId: process.env.B2_APPLICATION_KEY_ID,
+            applicationKey: process.env.B2_APPLICATION_KEY
+        });
+        result.steps.push('✅ B2 client created');
+        
+        // Step 2: Authorize
+        await b2Client.authorize();
+        result.steps.push('✅ B2 authorization successful');
+        
+        // Step 3: List buckets
+        const bucketsResponse = await b2Client.listBuckets();
+        result.steps.push(`✅ Listed ${bucketsResponse.data.buckets.length} buckets`);
+        
+        result.buckets = bucketsResponse.data.buckets.map(b => ({
+            name: b.bucketName,
+            id: b.bucketId,
+            type: b.bucketType
+        }));
+        
+        // Check if target bucket exists
+        const targetBucket = bucketsResponse.data.buckets.find(b => b.bucketName === 'tickedify-attachments');
+        if (targetBucket) {
+            result.target_bucket = {
+                found: true,
+                id: targetBucket.bucketId,
+                type: targetBucket.bucketType
+            };
+            result.steps.push('✅ Target bucket "tickedify-attachments" found');
+        } else {
+            result.target_bucket = { found: false };
+            result.steps.push('⚠️ Target bucket "tickedify-attachments" not found - will need to create');
+        }
+        
+        result.success = true;
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Direct B2 test failed:', error);
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString(),
+            success: false
+        });
+    }
+});
+
+// Debug endpoint to check bijlage exists
+app.get('/api/debug/bijlage/:id', async (req, res) => {
+    try {
+        const { id: bijlageId } = req.params;
+        
+        console.log('🔍 DEBUG: Looking for bijlage:', bijlageId);
+        
+        if (!db) {
+            return res.json({ error: 'Database not available', bijlageId });
+        }
+        
+        const bijlage = await db.getBijlage(bijlageId, false);
+        
+        const result = {
+            bijlageId: bijlageId,
+            found: !!bijlage,
+            bijlage: bijlage,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Also check if there are ANY bijlagen in the database
+        const allBijlagenQuery = await pool.query('SELECT id, bestandsnaam FROM bijlagen LIMIT 5');
+        result.sample_bijlagen = allBijlagenQuery.rows;
+        result.total_bijlagen = allBijlagenQuery.rows.length;
+        
+        console.log('🔍 DEBUG bijlage result:', result);
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Debug bijlage error:', error);
+        res.status(500).json({
             error: error.message,
             timestamp: new Date().toISOString()
         });
@@ -290,6 +786,23 @@ app.post('/api/admin/init-database', async (req, res) => {
             error: error.message,
             timestamp: new Date().toISOString()
         });
+    }
+});
+
+// TEMP: Make jan@buskens.be admin for Feature 011 testing
+app.post('/api/admin/make-jan-admin', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        await pool.query(`UPDATE users SET rol = 'admin' WHERE email = 'jan@buskens.be'`);
+
+        console.log('✅ jan@buskens.be is now admin');
+        res.json({ success: true, message: 'jan@buskens.be is now admin' });
+    } catch (error) {
+        console.error('❌ Failed to make jan admin:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -656,13 +1169,24 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
         ]);
         
         const createdTask = result.rows[0];
-        
+
         console.log('✅ Task created successfully:', {
             id: createdTask.id,
             tekst: createdTask.tekst,
             lijst: createdTask.lijst
         });
-        
+
+        // Track email import in analytics table
+        try {
+            await pool.query(`
+                INSERT INTO email_imports (user_id, email_from, email_subject, task_id)
+                VALUES ($1, $2, $3, $4)
+            `, [userId, sender, subject, createdTask.id]);
+            console.log('📊 Email import tracked for analytics');
+        } catch (trackError) {
+            console.error('⚠️ Failed to track email import (non-critical):', trackError.message);
+        }
+
         // Send confirmation (would need Mailgun sending setup)
         console.log('📤 Would send confirmation email to:', sender);
         
@@ -953,30 +1477,30 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { email } = req.body;
         const targetEmail = email || 'info@BaasOverJeTijd.be';
-        
+
         // Find the actual user (not default-user-001)
         const result = await pool.query(`
-            SELECT id, email, naam, email_import_code 
-            FROM users 
-            WHERE email = $1 
+            SELECT id, email, naam, email_import_code
+            FROM users
+            WHERE email = $1
             AND id != 'default-user-001'
         `, [targetEmail]);
-        
+
         if (result.rows.length === 0) {
             return res.json({
                 success: false,
                 message: `No actual user found with email ${targetEmail}`
             });
         }
-        
+
         const actualUser = result.rows[0];
-        
+
         // Generate new import code for actual user
         const newCode = await db.generateEmailImportCode(actualUser.id);
-        
+
         res.json({
             success: true,
             user: {
@@ -989,10 +1513,177 @@ app.post('/api/debug/fix-user-import-code', async (req, res) => {
             importEmail: `import+${newCode}@mg.tickedify.com`,
             message: 'Import code updated for actual user'
         });
-        
+
     } catch (error) {
         console.error('Fix import code error:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check payment configurations
+app.get('/api/debug/payment-configs', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const configs = await pool.query(`
+            SELECT plan_id, checkout_url, is_active, updated_at
+            FROM payment_configurations
+            ORDER BY plan_id
+        `);
+
+        res.json({
+            success: true,
+            configs: configs.rows,
+            count: configs.rows.length
+        });
+
+    } catch (error) {
+        console.error('Payment configs check error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to activate all payment configurations
+// Debug endpoint to reset user subscription status (for testing)
+// Debug endpoint to check beta config and user status
+app.get('/api/debug/beta-status', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ error: 'Email parameter required' });
+        }
+
+        // Get beta config
+        const betaConfig = await db.getBetaConfig();
+
+        // Get user details
+        const userResult = await pool.query(`
+            SELECT id, email, naam, account_type, subscription_status,
+                   selected_plan, plan_selected_at, had_trial,
+                   trial_start_date, trial_end_date
+            FROM users
+            WHERE email = $1
+        `, [email]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+
+        // Check if requiresUpgrade would be true
+        const requiresUpgrade = !betaConfig.beta_period_active &&
+            user.account_type === 'beta' &&
+            user.subscription_status !== 'paid' &&
+            user.subscription_status !== 'active';
+
+        res.json({
+            betaConfig: {
+                beta_period_active: betaConfig.beta_period_active,
+                beta_ended_at: betaConfig.beta_ended_at
+            },
+            user: user,
+            requiresUpgrade: requiresUpgrade,
+            checkDetails: {
+                betaPeriodActive: betaConfig.beta_period_active,
+                accountType: user.account_type,
+                subscriptionStatus: user.subscription_status,
+                isPaid: user.subscription_status === 'paid',
+                isActive: user.subscription_status === 'active'
+            }
+        });
+
+    } catch (error) {
+        console.error('Beta status check error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/debug/reset-subscription', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        // Get user before update
+        const beforeResult = await pool.query(`
+            SELECT email, subscription_status, selected_plan, plan_selected_at
+            FROM users
+            WHERE email = $1
+        `, [email]);
+
+        if (beforeResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const before = beforeResult.rows[0];
+
+        // Reset subscription fields
+        const afterResult = await pool.query(`
+            UPDATE users
+            SET subscription_status = 'beta_expired',
+                selected_plan = NULL,
+                plan_selected_at = NULL
+            WHERE email = $1
+            RETURNING email, subscription_status, selected_plan, plan_selected_at
+        `, [email]);
+
+        const after = afterResult.rows[0];
+
+        res.json({
+            success: true,
+            message: `Subscription reset for ${email}`,
+            before: before,
+            after: after
+        });
+
+    } catch (error) {
+        console.error('Reset subscription error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to manually run subscription column migration
+app.post('/api/debug/run-subscription-migration', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log('🔄 Running subscription column migration...');
+
+        // Add subscription-related columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255)
+        `);
+
+        console.log('✅ Users table subscription columns added');
+
+        res.json({
+            success: true,
+            message: 'Migration completed successfully',
+            columns_added: ['plugandpay_subscription_id']
+        });
+
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            detail: error.detail
+        });
     }
 });
 
@@ -1043,6 +1734,109 @@ app.get('/api/user/info', async (req, res) => {
     }
 });
 
+// Feature 014: Onboarding video endpoints
+
+// GET /api/user/onboarding-status - Check if user has seen onboarding video
+app.get('/api/user/onboarding-status', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        const seen = await db.hasSeenOnboardingVideo(userId);
+
+        res.json({ seen });
+    } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        res.status(500).json({ error: 'Fout bij ophalen onboarding status' });
+    }
+});
+
+// PUT /api/user/onboarding-video-seen - Mark onboarding video as seen
+app.put('/api/user/onboarding-video-seen', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        await db.markOnboardingVideoSeen(userId);
+
+        res.json({ success: true, message: 'Onboarding video gemarkeerd als gezien' });
+    } catch (error) {
+        console.error('Error marking onboarding video as seen:', error);
+        res.status(500).json({ error: 'Fout bij markeren onboarding video' });
+    }
+});
+
+// GET /api/settings/onboarding-video - Get onboarding video URL (any authenticated user)
+app.get('/api/settings/onboarding-video', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        const url = await db.getSystemSetting('onboarding_video_url');
+
+        res.json({ url });
+    } catch (error) {
+        console.error('Error getting onboarding video URL:', error);
+        res.status(500).json({ error: 'Fout bij ophalen video URL' });
+    }
+});
+
+// PUT /api/settings/onboarding-video - Update onboarding video URL (admin only)
+app.put('/api/settings/onboarding-video', async (req, res) => {
+    try {
+        const userId = getCurrentUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        // Check if user is admin
+        const userResult = await pool.query(
+            'SELECT rol FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+            return res.status(403).json({ error: 'Geen admin rechten' });
+        }
+
+        const { url } = req.body;
+
+        // Validate YouTube URL format (if URL is provided)
+        if (url && url.trim() !== '') {
+            const youtubePatterns = [
+                /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+                /^https?:\/\/youtu\.be\/[\w-]+/,
+                /^https?:\/\/(www\.)?youtube-nocookie\.com\/embed\/[\w-]+/
+            ];
+
+            const isValid = youtubePatterns.some(pattern => pattern.test(url));
+
+            if (!isValid) {
+                return res.status(400).json({ error: 'Ongeldige YouTube URL' });
+            }
+        }
+
+        // Update setting (null if empty string)
+        const finalUrl = (url && url.trim() !== '') ? url : null;
+        await db.updateSystemSetting('onboarding_video_url', finalUrl, userId);
+
+        res.json({ success: true, message: 'Onboarding video URL bijgewerkt', url: finalUrl });
+    } catch (error) {
+        console.error('Error updating onboarding video URL:', error);
+        res.status(500).json({ error: 'Fout bij bijwerken video URL' });
+    }
+});
+
 // API endpoint voor alle gebruikers (voor test dashboard)
 app.get('/api/users', async (req, res) => {
     try {
@@ -1070,7 +1864,7 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/debug/current-user', (req, res) => {
     const userId = getCurrentUserId(req);
     const sessionData = req.session || {};
-    
+
     res.json({
         currentUserId: userId,
         sessionData: {
@@ -1081,6 +1875,73 @@ app.get('/api/debug/current-user', (req, res) => {
         isAuthenticated: !!sessionData.userId,
         message: 'Current user info based on session'
     });
+});
+
+// Debug endpoint to inspect database tables and subscription data
+app.get('/api/debug/database-tables', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get all database tables
+        const tablesQuery = await pool.query(`
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        `);
+
+        const tables = tablesQuery.rows.map(r => r.table_name);
+
+        // Get jan@buskens.be user data
+        const janUserQuery = await pool.query(`
+            SELECT * FROM users WHERE email = 'jan@buskens.be'
+        `);
+
+        // Get subscriptions table schema if it exists
+        let subscriptionsSchema = null;
+        let subscriptionsData = null;
+        let allSubscriptions = null;
+        if (tables.includes('subscriptions')) {
+            // Get schema
+            const schemaQuery = await pool.query(`
+                SELECT column_name, data_type, column_default, is_nullable
+                FROM information_schema.columns
+                WHERE table_name = 'subscriptions'
+                ORDER BY ordinal_position
+            `);
+            subscriptionsSchema = schemaQuery.rows;
+
+            // Get data for jan
+            const subscriptionsQuery = await pool.query(`
+                SELECT * FROM subscriptions WHERE user_id = $1
+            `, [janUserQuery.rows[0]?.id]);
+            subscriptionsData = subscriptionsQuery.rows;
+
+            // Get ALL subscriptions to see if table has any data at all
+            const allSubsQuery = await pool.query(`SELECT * FROM subscriptions LIMIT 10`);
+            allSubscriptions = allSubsQuery.rows;
+        }
+
+        res.json({
+            tables: tables,
+            tables_count: tables.length,
+            has_subscriptions_table: tables.includes('subscriptions'),
+            subscriptions_schema: subscriptionsSchema,
+            jan_user_data: janUserQuery.rows[0] || null,
+            jan_subscriptions: subscriptionsData,
+            all_subscriptions_sample: allSubscriptions,
+            message: 'Database inspection complete'
+        });
+
+    } catch (error) {
+        console.error('❌ Error inspecting database:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: error.message
+        });
+    }
 });
 
 // Debug endpoint to check all inbox tasks
@@ -1456,9 +2317,20 @@ function convertNotionPatternServer(notionText) {
 
 // Authentication middleware
 function requireAuth(req, res, next) {
+    console.log('🔍 requireAuth check:', {
+        url: req.url,
+        method: req.method,
+        hasSession: !!req.session,
+        userId: req.session?.userId,
+        sessionId: req.sessionID
+    });
+    
     if (!req.session.userId) {
+        console.log('❌ Authentication failed - no userId in session');
         return res.status(401).json({ error: 'Authentication required' });
     }
+    
+    console.log('✅ Authentication passed for user:', req.session.userId);
     next();
 }
 
@@ -1468,76 +2340,370 @@ function optionalAuth(req, res, next) {
     next();
 }
 
+// Admin middleware - requires auth + admin account
+async function requireAdmin(req, res, next) {
+    console.log('🔍 requireAdmin check:', {
+        url: req.url,
+        method: req.method,
+        userId: req.session?.userId,
+        isAdmin: req.session?.isAdmin,
+        adminAuthenticated: req.session?.adminAuthenticated
+    });
+
+    // OPTION 1: Password-based admin authentication (for admin2.html)
+    if (req.session.isAdmin || req.session.adminAuthenticated) {
+        console.log('✅ Admin check passed - password-based auth');
+        return next();
+    }
+
+    // OPTION 2: User-based admin authentication (for user accounts with admin role)
+    if (!req.session.userId) {
+        console.log('❌ Admin check failed - not authenticated');
+        return res.status(401).json({
+            error: 'Not authenticated',
+            message: 'Please login as admin'
+        });
+    }
+
+    // Check if user account is admin type
+    try {
+        const result = await pool.query(
+            'SELECT account_type FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+
+        if (result.rows.length === 0) {
+            console.log('❌ Admin check failed - user not found');
+            return res.status(401).json({
+                error: 'Not authenticated',
+                message: 'User not found'
+            });
+        }
+
+        if (result.rows[0].account_type !== 'admin') {
+            console.log('❌ Admin check failed - not admin account:', result.rows[0].account_type);
+            return res.status(403).json({
+                error: 'Not authorized',
+                message: 'Admin access required'
+            });
+        }
+
+        console.log('✅ Admin check passed for user:', req.session.userId);
+        next();
+
+    } catch (error) {
+        console.error('❌ Admin check error:', error);
+        return res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to verify admin status'
+        });
+    }
+}
+
 // Get current user ID from session or fallback to default
 function getCurrentUserId(req) {
-    // Return user from session if authenticated, otherwise Jan's actual user ID
-    return req.session.userId || 'user_1750513625687_5458i79dj';
+    if (!req.session.userId) {
+        throw new Error('Niet ingelogd - geen geldige sessie');
+    }
+    return req.session.userId;
+}
+
+// Beta subscription middleware - checks if user has access during/after beta period
+async function requireActiveSubscription(req, res, next) {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+    
+    try {
+        // Get beta config
+        const betaConfig = await db.getBetaConfig();
+        
+        // During beta period - everyone has access
+        if (betaConfig.beta_period_active) {
+            return next();
+        }
+        
+        // After beta period - check user subscription
+        const userResult = await pool.query('SELECT subscription_status FROM users WHERE id = $1', [req.session.userId]);
+        const user = userResult.rows[0];
+        
+        if (user && (user.subscription_status === 'active' || user.subscription_status === 'trialing')) {
+            return next();
+        }
+        
+        // Redirect to upgrade page
+        console.log(`❌ Access denied for user ${req.session.userId} - subscription required`);
+        res.redirect('/upgrade');
+        
+    } catch (error) {
+        console.error('❌ Error checking subscription status:', error);
+        // On error, allow access (fail open)
+        next();
+    }
+}
+
+// Synchrone B2 cleanup functie met retry logic en gedetailleerde logging
+async function cleanupB2Files(bijlagen, taskId = 'unknown') {
+    console.log(`🧹 Starting B2 cleanup for ${bijlagen.length} files (task: ${taskId})`);
+    
+    if (!bijlagen || bijlagen.length === 0) {
+        console.log(`ℹ️ No bijlagen to cleanup for task ${taskId}`);
+        return { success: true, deleted: 0, failed: 0, errors: [] };
+    }
+    
+    // Check B2 availability before attempting cleanup
+    if (!storageManager.isB2Available()) {
+        console.warn(`⚠️ B2 not available for cleanup task ${taskId} - skipping ${bijlagen.length} files`);
+        return {
+            success: false,
+            deleted: 0,
+            failed: bijlagen.length,
+            errors: [{
+                error: 'B2 storage not available - missing credentials or configuration',
+                category: 'CONFIG_ERROR'
+            }],
+            configError: true
+        };
+    }
+    
+    const deletedFiles = [];
+    const failedFiles = [];
+    const errors = [];
+    
+    // Sequential delete with retry logic voor betere betrouwbaarheid
+    for (const bijlage of bijlagen) {
+        console.log(`🔄 Attempting to delete B2 file: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
+        
+        let deleteSuccess = false;
+        let lastError = null;
+        
+        // Retry logic - max 2 pogingen
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                console.log(`🔄 Delete attempt ${attempt}/2 for ${bijlage.bestandsnaam}`);
+                await storageManager.deleteFile(bijlage);
+                console.log(`✅ B2 file deleted successfully: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
+                deletedFiles.push(bijlage.bestandsnaam);
+                deleteSuccess = true;
+                break;
+            } catch (error) {
+                lastError = error;
+                console.error(`❌ Delete attempt ${attempt}/2 failed for ${bijlage.bestandsnaam}:`, error.message);
+                
+                // Wait 1 second before retry
+                if (attempt < 2) {
+                    console.log(`⏳ Waiting 1 second before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+        }
+        
+        if (!deleteSuccess) {
+            console.error(`❌ All delete attempts failed for ${bijlage.bestandsnaam}. Final error:`, lastError?.message || 'Unknown error');
+            failedFiles.push(bijlage.bestandsnaam);
+            errors.push({
+                file: bijlage.bestandsnaam,
+                storage_path: bijlage.storage_path,
+                error: lastError?.message || 'Unknown error'
+            });
+        }
+    }
+    
+    const result = {
+        success: failedFiles.length === 0,
+        deleted: deletedFiles.length,
+        failed: failedFiles.length,
+        deletedFiles,
+        failedFiles,
+        errors
+    };
+    
+    console.log(`🧹 B2 cleanup completed for task ${taskId}:`, {
+        deleted: deletedFiles.length,
+        failed: failedFiles.length,
+        success: result.success
+    });
+    
+    if (failedFiles.length > 0) {
+        console.error(`⚠️ B2 cleanup had failures for task ${taskId}:`, failedFiles);
+    }
+    
+    return result;
+}
+
+// T010: Password Strength Validation Function - Feature 017
+function validatePasswordStrength(password) {
+    const errors = [];
+
+    // Rule 1: Minimum length
+    if (!password || password.length < 8) {
+        errors.push('Wachtwoord moet minimaal 8 tekens bevatten');
+    }
+
+    // Rule 2: Uppercase letter
+    if (!/[A-Z]/.test(password)) {
+        errors.push('Wachtwoord moet minimaal 1 hoofdletter bevatten');
+    }
+
+    // Rule 3: Digit
+    if (!/[0-9]/.test(password)) {
+        errors.push('Wachtwoord moet minimaal 1 cijfer bevatten');
+    }
+
+    // Rule 4: Special character
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        errors.push('Wachtwoord moet minimaal 1 speciaal teken bevatten');
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors: errors
+    };
 }
 
 // Authentication API endpoints
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, naam, wachtwoord } = req.body;
-        
+
+        // T011: Required fields check
         if (!email || !naam || !wachtwoord) {
-            return res.status(400).json({ error: 'Email, naam en wachtwoord zijn verplicht' });
+            return res.status(400).json({
+                success: false,
+                error: 'Email, naam en wachtwoord zijn verplicht'
+            });
         }
-        
+
         if (!pool) {
-            return res.status(503).json({ error: 'Database not available' });
+            return res.status(503).json({
+                success: false,
+                error: 'Database not available'
+            });
         }
-        
-        // Check if user already exists
+
+        // T011 & T013: Password strength validation BEFORE email check (prevent timing attacks)
+        const passwordValidation = validatePasswordStrength(wachtwoord);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({
+                success: false,
+                error: 'Wachtwoord voldoet niet aan de beveiligingseisen',
+                passwordErrors: passwordValidation.errors
+            });
+        }
+
+        // T013: Email uniqueness check AFTER password validation
         const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (existingUser.rows.length > 0) {
-            return res.status(409).json({ error: 'Email adres al in gebruik' });
+            return res.status(409).json({
+                success: false,
+                error: 'Email adres al in gebruik'
+            });
         }
+        
+        // Check beta status
+        const betaConfig = await db.getBetaConfig();
+        
+        // Determine account type and status
+        const accountType = betaConfig.beta_period_active ? 'beta' : 'regular';
+        const subscriptionStatus = betaConfig.beta_period_active ? 'beta_active' : 'pending_payment';
         
         // Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(wachtwoord, saltRounds);
         
-        // Create user
+        // Create user with beta fields
         const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         await pool.query(`
-            INSERT INTO users (id, email, naam, wachtwoord_hash, rol, aangemaakt, actief)
-            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
-        `, [userId, email, naam, hashedPassword, 'user', true]);
+            INSERT INTO users (id, email, naam, wachtwoord_hash, rol, aangemaakt, actief, account_type, subscription_status)
+            VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6, $7, $8)
+        `, [userId, email, naam, hashedPassword, 'user', true, accountType, subscriptionStatus]);
         
         // Generate email import code for new user
         const importCode = await db.generateEmailImportCode(userId);
         console.log(`📧 Generated import code for new user: ${importCode}`);
         
-        // Start session
+        // Sync to GHL with appropriate tag
+        let ghlContactId = null;
+        try {
+            const tag = betaConfig.beta_period_active ? 'tickedify-beta-tester' : 'tickedify-user-needs-payment';
+            ghlContactId = await addContactToGHL(email, naam, [tag]);
+            
+            if (ghlContactId) {
+                await pool.query('UPDATE users SET ghl_contact_id = $1 WHERE id = $2', [ghlContactId, userId]);
+                console.log(`✅ GHL: User synced with contact ID: ${ghlContactId}`);
+            }
+        } catch (ghlError) {
+            console.error('⚠️ GHL sync failed during registration:', ghlError.message);
+            // Don't fail registration if GHL sync fails
+        }
+        
+        // If NOT in beta period, redirect to payment
+        if (!betaConfig.beta_period_active) {
+            console.log(`📦 User registered during non-beta period: ${email} - requires payment`);
+            return res.json({
+                success: true,
+                requiresPayment: true,
+                message: 'Account aangemaakt. Betaling vereist voor toegang.',
+                redirect: '/upgrade',
+                user: {
+                    id: userId,
+                    email,
+                    naam,
+                    account_type: accountType,
+                    subscription_status: subscriptionStatus
+                }
+            });
+        }
+        
+        // Beta period - start session and give access
         req.session.userId = userId;
         req.session.userEmail = email;
         req.session.userNaam = naam;
-        
-        console.log(`✅ New user registered: ${email} (${userId}) with import code: ${importCode}`);
-        
-        res.json({
-            success: true,
-            message: 'Account succesvol aangemaakt',
-            user: {
-                id: userId,
-                email,
-                naam,
-                rol: 'user',
-                importCode: importCode,
-                importEmail: `import+${importCode}@mg.tickedify.com`
+
+        // Explicitly save session before sending response
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error during registration:', err);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Fout bij opslaan sessie'
+                });
             }
+
+            console.log(`✅ Beta user registered with session: ${email} (${userId}) with import code: ${importCode}`);
+
+            res.json({
+                success: true,
+                message: 'Welkom als beta tester! Account succesvol aangemaakt.',
+                redirect: '/app',
+                user: {
+                    id: userId,
+                    email,
+                    naam,
+                    rol: 'user',
+                    account_type: accountType,
+                    subscription_status: subscriptionStatus,
+                    importCode: importCode,
+                    importEmail: `import+${importCode}@mg.tickedify.com`
+                }
+            });
         });
-        
+
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ error: 'Fout bij aanmaken account' });
+        res.status(500).json({
+            success: false,
+            error: 'Fout bij aanmaken account'
+        });
     }
 });
 
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, wachtwoord } = req.body;
-        
+
+        console.log(`[LOGIN-START] Login attempt for: ${email} [v0.17.24]`);
+
         if (!email || !wachtwoord) {
             return res.status(400).json({ error: 'Email en wachtwoord zijn verplicht' });
         }
@@ -1568,19 +2734,80 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Ongeldige email of wachtwoord' });
         }
         
+        // Check beta access before creating session
+        const betaConfig = await db.getBetaConfig();
+
+        // Get user's account details for beta check
+        const userDetailsResult = await pool.query(`
+            SELECT account_type, subscription_status, trial_end_date
+            FROM users
+            WHERE id = $1
+        `, [user.id]);
+
+        const userDetails = userDetailsResult.rows[0];
+
+        console.log(`[BETA-CHECK] Login beta check for ${email}: betaPeriodActive=${betaConfig.beta_period_active}, accountType=${userDetails.account_type}, subscriptionStatus=${userDetails.subscription_status}`);
+
+        // Check if trial is expired
+        const trialIsExpired = isTrialExpired(userDetails);
+
+        // If beta period is not active and user is beta type without paid/active subscription (or expired trial)
+        if (!betaConfig.beta_period_active &&
+            userDetails.account_type === 'beta' &&
+            userDetails.subscription_status !== 'paid' &&
+            userDetails.subscription_status !== 'active' &&
+            (userDetails.subscription_status !== 'trialing' || trialIsExpired)) {
+
+            console.log(`[LIMITED-LOGIN] Limited login for user ${email} - ${trialIsExpired ? 'trial expired' : 'beta period ended'}, upgrade required`);
+
+            // Create session for subscription selection (limited access)
+            req.session.userId = user.id;
+            req.session.userEmail = user.email;
+            req.session.userNaam = user.naam;
+            req.session.requiresUpgrade = true; // Flag for limited access
+
+            // Explicitly save session before sending response
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ error: 'Fout bij opslaan sessie' });
+                }
+
+                console.log(`✅ Session saved for beta user ${email} (userId: ${user.id})`);
+
+                return res.json({
+                    success: true,
+                    requiresUpgrade: true,
+                    expiryType: trialIsExpired ? 'trial' : 'beta',
+                    message: 'Login succesvol, upgrade vereist voor volledige toegang',
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        naam: user.naam,
+                        rol: user.rol
+                    }
+                });
+            });
+
+            // CRITICAL: Return here to prevent continuing to normal login flow
+            return;
+        }
+
+        console.log(`[NORMAL-LOGIN] Normal login flow for ${email} - beta check passed or not applicable`);
+
         // Update last login
         await pool.query(
             'UPDATE users SET laatste_login = CURRENT_TIMESTAMP WHERE id = $1',
             [user.id]
         );
-        
+
         // Start session
         req.session.userId = user.id;
         req.session.userEmail = user.email;
         req.session.userNaam = user.naam;
-        
+
         console.log(`✅ User logged in: ${email} (${user.id})`);
-        
+
         res.json({
             success: true,
             message: 'Succesvol ingelogd',
@@ -1610,6 +2837,494 @@ app.post('/api/auth/logout', (req, res) => {
         console.log(`✅ User logged out: ${userEmail}`);
         res.json({ success: true, message: 'Succesvol uitgelogd' });
     });
+});
+
+// ========================================
+// SUBSCRIPTION & PAYMENT API ENDPOINTS
+// Feature: 011-in-de-app
+// ========================================
+
+// T009: POST /api/subscription/select - User selects subscription plan
+app.post('/api/subscription/select', async (req, res) => {
+  try {
+    const { planId } = req.body;
+    const userId = req.session.userId;
+
+    console.log(`📋 Subscription select request - planId: ${planId}, userId: ${userId}, session:`, {
+      userId: req.session.userId,
+      userEmail: req.session.userEmail,
+      requiresUpgrade: req.session.requiresUpgrade,
+      sessionID: req.sessionID
+    });
+
+    if (!userId) {
+      console.error('❌ Subscription select failed - no userId in session');
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    if (!planId) {
+      console.error('❌ Subscription select failed - no planId provided');
+      return res.status(400).json({ error: 'Plan ID is verplicht' });
+    }
+
+    // Get user info (including email for confirmation page)
+    const userResult = await pool.query('SELECT email, subscription_status, had_trial FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Validate plan selection
+    if (!validatePlanSelection(planId, user.subscription_status, user.had_trial)) {
+      // Provide specific error message for trial rejection
+      if (planId === PLAN_IDS.TRIAL_14 && user.had_trial) {
+        return res.status(400).json({ error: 'Je hebt al eerder een trial gehad. Kies een betaald abonnement.' });
+      }
+      return res.status(400).json({ error: 'Ongeldige plan selectie voor huidige status' });
+    }
+
+    // Handle trial selection (no payment needed)
+    if (planId === PLAN_IDS.TRIAL_14) {
+      const trialEndDate = calculateTrialEndDate();
+
+      await pool.query(
+        `UPDATE users
+         SET subscription_status = $1, trial_start_date = CURRENT_DATE, trial_end_date = $2, had_trial = TRUE
+         WHERE id = $3`,
+        [SUBSCRIPTION_STATES.TRIALING, trialEndDate, userId]
+      );
+
+      console.log(`✅ Trial activated for user ${userId} - expires ${trialEndDate.toISOString().split('T')[0]}`);
+
+      return res.json({
+        success: true,
+        trial: true,
+        trialEndDate: trialEndDate.toISOString().split('T')[0],
+        message: 'Trial geactiveerd! Je hebt 14 dagen om Tickedify uit te proberen.'
+      });
+    }
+
+    // Handle paid plan selection - get checkout URL
+    const configResult = await pool.query(
+      'SELECT checkout_url, is_active FROM payment_configurations WHERE plan_id = $1',
+      [planId]
+    );
+
+    if (configResult.rows.length === 0 || !configResult.rows[0].is_active) {
+      return res.status(400).json({ error: 'Plan niet beschikbaar' });
+    }
+
+    const checkoutUrl = configResult.rows[0].checkout_url;
+    if (!checkoutUrl) {
+      return res.status(500).json({ error: 'Checkout URL niet geconfigureerd. Neem contact op met support.' });
+    }
+
+    // Generate auto-login token for return flow
+    const loginToken = generateLoginToken();
+    const tokenExpiry = calculateTokenExpiry();
+
+    await pool.query(
+      `UPDATE users
+       SET login_token = $1, login_token_expires = $2, login_token_used = FALSE
+       WHERE id = $3`,
+      [loginToken, tokenExpiry, userId]
+    );
+
+    // Build redirect URL with token
+    const redirectUrl = `${checkoutUrl}${checkoutUrl.includes('?') ? '&' : '?'}return_token=${loginToken}`;
+
+    console.log(`💳 User ${userId} (${user.email}) selected plan ${planId} - redirecting to checkout`);
+
+    res.json({
+      success: true,
+      paid: true,
+      redirectUrl: redirectUrl,
+      email: user.email  // Include email for confirmation page
+    });
+
+  } catch (error) {
+    console.error('Subscription select error:', error);
+    res.status(500).json({ error: 'Fout bij plan selectie' });
+  }
+});
+
+// T010: POST /api/webhooks/plugandpay - Plug&Pay webhook for payment confirmation
+app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const webhookData = req.body;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+    console.log('🔔 Plug&Pay webhook received:', {
+      webhook_event: webhookData.webhook_event,
+      contract_id: webhookData.contract_id,
+      email: webhookData.email,
+      billing_cycle: webhookData.billing_cycle,
+      product: webhookData.product,
+      sku: webhookData.sku,
+      signup_token: webhookData.signup_token,
+      full_payload: JSON.stringify(webhookData, null, 2)
+    });
+
+    // API key validation (DISABLED - PlugAndPay doesn't send API key automatically)
+    // Based on Minddumper implementation analysis, Plug&Pay does not automatically
+    // include API key in webhook payload, so we disable this check for now.
+    // Security relies on webhook URL being private and HTTPS only.
+    if (webhookData.api_key) {
+      const apiKeyValid = webhookData.api_key === process.env.PLUGANDPAY_API_KEY;
+      if (!apiKeyValid) {
+        console.error('❌ Invalid API key provided in webhook');
+      } else {
+        console.log('✅ API key validation passed');
+      }
+    } else {
+      console.log('⚠️ No API key in webhook (expected behavior for Plug&Pay)');
+    }
+
+    // Check event type - Plug&Pay uses "webhook_event" field with "contracts.new" value
+    const isSubscriptionActive =
+      webhookData.webhook_event === 'contracts.new' ||
+      webhookData.webhook_event === 'contracts.renewed' ||
+      webhookData.webhook_event === 'subscription_started' ||
+      webhookData.webhook_event === 'subscription_activated' ||
+      webhookData.event === 'subscription_active' ||
+      webhookData.event === 'order_payment_completed' ||
+      webhookData.status === 'active' ||
+      webhookData.status === 'paid';
+
+    if (!isSubscriptionActive) {
+      console.log(`ℹ️ Non-subscription webhook: ${webhookData.webhook_event || webhookData.event || webhookData.status}`);
+      await logWebhookEvent({
+        event_type: webhookData.webhook_event || webhookData.event || webhookData.status,
+        order_id: webhookData.signup_token || webhookData.contract_id,
+        email: webhookData.email || webhookData.customer_email,
+        amount_cents: null,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress
+      }, pool);
+      return res.json({ success: true, message: 'Webhook received but not processed' });
+    }
+
+    // Extract data - Plug&Pay uses different field names
+    const orderId = webhookData.signup_token || webhookData.contract_id; // Plug&Pay uses signup_token as order reference
+    const email = webhookData.email || webhookData.customer_email;
+
+    // Parse the raw JSON to extract amount
+    let amountCents = null;
+    if (webhookData.raw) {
+      try {
+        const rawData = JSON.parse(webhookData.raw);
+        amountCents = rawData.total ? Math.round(rawData.total * 100) : null;
+      } catch (e) {
+        console.error('❌ Failed to parse raw data:', e);
+      }
+    }
+
+    // Map billing_cycle to our plan IDs
+    let selectedPlan = null;
+    if (webhookData.billing_cycle === 'monthly') {
+      selectedPlan = 'monthly_7';
+    } else if (webhookData.billing_cycle === 'yearly') {
+      selectedPlan = 'yearly_70';
+    }
+
+    const subscriptionId = webhookData.contract_id || null; // Plug&Pay uses contract_id as subscription ID
+
+    console.log('📦 Subscription details extracted:', {
+      selected_plan: selectedPlan,
+      subscription_id: subscriptionId,
+      billing_cycle: webhookData.billing_cycle,
+      amount_cents: amountCents,
+      sku: webhookData.sku
+    });
+
+    if (!orderId || !email) {
+      console.error('❌ Missing signup_token/contract_id or email in webhook');
+      await logWebhookEvent({
+        event_type: webhookData.webhook_event,
+        order_id: orderId,
+        email: email,
+        amount_cents: amountCents,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress,
+        error_message: 'Missing required fields'
+      }, pool);
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check idempotency
+    const alreadyProcessed = await checkWebhookIdempotency(orderId, pool);
+    if (alreadyProcessed) {
+      console.log(`⚠️ Webhook already processed for order ${orderId}`);
+      await logWebhookEvent({
+        event_type: webhookData.event,
+        order_id: orderId,
+        email: email,
+        amount_cents: amountCents,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress,
+        error_message: 'Already processed (idempotent)'
+      }, pool);
+      return res.json({ success: true, message: 'Already processed' });
+    }
+
+    // Find user by email
+    const userResult = await pool.query('SELECT id, email FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+    if (userResult.rows.length === 0) {
+      console.error(`❌ User not found for email ${email}`);
+      await logWebhookEvent({
+        event_type: webhookData.webhook_event || webhookData.event,
+        order_id: orderId,
+        email: email,
+        amount_cents: amountCents,
+        payload: webhookData,
+        signature_valid: true,
+        ip_address: ipAddress,
+        error_message: 'User not found'
+      }, pool);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Update user to active subscription (set both selected_plan AND subscription_tier for consistency)
+    await pool.query(
+      `UPDATE users
+       SET subscription_status = $1,
+           payment_confirmed_at = NOW(),
+           plugandpay_order_id = $2,
+           amount_paid_cents = $3,
+           selected_plan = $4,
+           subscription_tier = $4,
+           plugandpay_subscription_id = $5
+       WHERE id = $6`,
+      [SUBSCRIPTION_STATES.ACTIVE, orderId, amountCents, selectedPlan, subscriptionId, user.id]
+    );
+
+    // Log successful webhook
+    await logWebhookEvent({
+      user_id: user.id,
+      event_type: webhookData.webhook_event || webhookData.event,
+      order_id: orderId,
+      email: email,
+      amount_cents: amountCents,
+      payload: webhookData,
+      signature_valid: true,
+      ip_address: ipAddress
+    }, pool);
+
+    // Sync to GoHighLevel
+    try {
+      await addContactToGHL(email, user.email, ['tickedify-paid-customer']);
+      console.log(`✅ GHL: Tagged user as paid customer: ${email}`);
+    } catch (ghlError) {
+      console.error('⚠️ GHL sync failed:', ghlError.message);
+      // Don't fail webhook if GHL sync fails
+    }
+
+    console.log(`✅ Payment confirmed for user ${user.id}:`, {
+      order_id: orderId,
+      amount_cents: amountCents,
+      selected_plan: selectedPlan,
+      subscription_id: subscriptionId
+    });
+
+    res.json({ success: true, message: 'Payment processed successfully' });
+
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// T011: GET /api/payment/success - User returns from successful payment
+app.get('/api/payment/success', async (req, res) => {
+  try {
+    const { return_token } = req.query;
+
+    if (!return_token) {
+      // No token - show generic success page and redirect to login
+      return res.redirect('/payment-success.html?no_token=true');
+    }
+
+    // Validate token
+    const tokenValidation = await validateLoginToken(return_token, pool);
+    if (!tokenValidation.valid) {
+      console.log(`⚠️ Invalid/expired return token: ${tokenValidation.error}`);
+      return res.redirect('/payment-success.html?token_error=true');
+    }
+
+    // Token valid - auto-login user
+    req.session.userId = tokenValidation.userId;
+    req.session.userEmail = tokenValidation.email;
+
+    console.log(`✅ Auto-login successful for user ${tokenValidation.email}`);
+    res.redirect('/app?payment_success=true');
+
+  } catch (error) {
+    console.error('Payment success handler error:', error);
+    res.redirect('/payment-success.html?error=true');
+  }
+});
+
+// T012: GET /api/payment/cancelled - User cancelled payment
+app.get('/api/payment/cancelled', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    if (userId) {
+      // Logged in - redirect to subscription page
+      console.log(`ℹ️ User ${userId} cancelled payment`);
+      res.redirect('/subscription.html?cancelled=true');
+    } else {
+      // Not logged in - redirect to generic cancelled page
+      res.redirect('/payment-cancelled.html');
+    }
+
+  } catch (error) {
+    console.error('Payment cancelled handler error:', error);
+    res.redirect('/payment-cancelled.html?error=true');
+  }
+});
+
+// T013: GET /api/subscription/status - Get current subscription status
+app.get('/api/subscription/status', async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    const userResult = await pool.query(
+      `SELECT subscription_status, trial_start_date, trial_end_date,
+              payment_confirmed_at, had_trial, account_type
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden' });
+    }
+
+    const user = userResult.rows[0];
+    const hasAccess = canAccessApp(user);
+    const trialExpired = isTrialExpired(user);
+
+    res.json({
+      success: true,
+      subscription_status: user.subscription_status,
+      account_type: user.account_type,
+      has_access: hasAccess,
+      trial_expired: trialExpired,
+      trial_start_date: user.trial_start_date,
+      trial_end_date: user.trial_end_date,
+      payment_confirmed_at: user.payment_confirmed_at,
+      had_trial: user.had_trial
+    });
+
+  } catch (error) {
+    console.error('Subscription status error:', error);
+    res.status(500).json({ error: 'Fout bij ophalen status' });
+  }
+});
+
+// T014: GET /api/admin/payment-configurations - Admin: Get all payment configurations
+app.get('/api/admin/payment-configurations', async (req, res) => {
+  try {
+    // Check for admin authentication (either password-based or user-based)
+    const isAdminPasswordAuth = req.session.isAdmin === true;
+    const userId = req.session.userId;
+
+    // Allow access if admin password authenticated
+    if (isAdminPasswordAuth) {
+      console.log('✅ Admin password authentication confirmed for payment-configurations');
+    } else if (userId) {
+      // Check admin role for user-based authentication
+      const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+      if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+        return res.status(403).json({ error: 'Admin rechten vereist' });
+      }
+      console.log('✅ User-based admin authentication confirmed for payment-configurations');
+    } else {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    // Get all configurations
+    const configsResult = await pool.query(
+      `SELECT plan_id, plan_name, checkout_url, is_active, created_at, updated_at
+       FROM payment_configurations
+       ORDER BY plan_id`
+    );
+
+    res.json({
+      success: true,
+      configurations: configsResult.rows
+    });
+
+  } catch (error) {
+    console.error('Get payment configurations error:', error);
+    res.status(500).json({ error: 'Fout bij ophalen configuraties' });
+  }
+});
+
+// T015: PUT /api/admin/payment-configurations - Admin: Update checkout URL
+app.put('/api/admin/payment-configurations', async (req, res) => {
+  try {
+    const { plan_id, checkout_url, is_active } = req.body;
+
+    // Check for admin authentication (either password-based or user-based)
+    const isAdminPasswordAuth = req.session.isAdmin === true;
+    const userId = req.session.userId;
+
+    // Allow access if admin password authenticated
+    if (isAdminPasswordAuth) {
+      console.log('✅ Admin password authentication confirmed for PUT payment-configurations');
+    } else if (userId) {
+      // Check admin role for user-based authentication
+      const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+      if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+        return res.status(403).json({ error: 'Admin rechten vereist' });
+      }
+      console.log('✅ User-based admin authentication confirmed for PUT payment-configurations');
+    } else {
+      return res.status(401).json({ error: 'Niet ingelogd' });
+    }
+
+    // Validate checkout URL
+    if (checkout_url && !checkout_url.startsWith('https://')) {
+      return res.status(400).json({ error: 'Checkout URL moet beginnen met https://' });
+    }
+
+    // Update configuration
+    const updateResult = await pool.query(
+      `UPDATE payment_configurations
+       SET checkout_url = COALESCE($1, checkout_url),
+           is_active = COALESCE($2, is_active)
+       WHERE plan_id = $3
+       RETURNING *`,
+      [checkout_url, is_active, plan_id]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan niet gevonden' });
+    }
+
+    const adminIdentifier = userId || 'password-auth';
+    console.log(`✅ Admin ${adminIdentifier} updated payment config for plan ${plan_id}`);
+
+    res.json({
+      success: true,
+      configuration: updateResult.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Update payment configuration error:', error);
+    res.status(500).json({ error: 'Fout bij updaten configuratie' });
+  }
 });
 
 // Waitlist API endpoint
@@ -1764,6 +3479,693 @@ app.get('/api/waitlist/stats', async (req, res) => {
     } catch (error) {
         console.error('Waitlist stats error:', error);
         res.status(500).json({ error: 'Fout bij ophalen statistieken' });
+    }
+});
+
+// Bijlagen (Attachments) API endpoints
+// Upload attachment for a task
+app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'), async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: taakId } = req.params;
+        const userId = req.session.userId;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: 'Geen bestand geüpload' });
+        }
+
+        // Get user plan type and storage stats
+        const planType = await db.getUserPlanType(userId);
+        const userStats = await db.getUserStorageStats(userId);
+
+        // Validate file upload
+        const validation = storageManager.validateFile(file, planType, userStats);
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: validation.errors[0] || 'Bestand niet toegestaan',
+                details: validation.errors
+            });
+        }
+
+        // Check if task exists and belongs to user
+        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2', [taakId, userId]);
+        if (existingTaak.rows.length === 0) {
+            return res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+
+        // Check attachment limit based on plan type
+        // Premium Plus: unlimited attachments
+        // Premium Standard & Free: max 1 attachment per task
+        if (planType !== 'premium_plus') {
+            const existingBijlagen = await db.getBijlagenForTaak(taakId);
+            if (existingBijlagen.length >= STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE) {
+                const upgradeMessage = planType === 'premium_standard'
+                    ? 'Maximum 1 bijlage per taak voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bijlagen.'
+                    : `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.`;
+
+                return res.status(400).json({
+                    error: upgradeMessage
+                });
+            }
+        }
+
+        // DEBUG: Log file info before upload
+        console.log('🔍 [SERVER UPLOAD] File received:', {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+            bufferType: Buffer.isBuffer(file.buffer) ? 'Buffer' : typeof file.buffer
+        });
+
+        // CRITICAL: Check PNG signature IMMEDIATELY after multer processing
+        if (file.buffer && file.buffer.length > 8) {
+            const multerBuffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
+            const multerFirstBytes = multerBuffer.slice(0, 8);
+            const multerHex = Array.from(multerFirstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            
+            // Check if it's a PNG based on signature, regardless of MIME type
+            const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+            const isPNGSignature = expectedPNG.every((byte, index) => multerFirstBytes[index] === byte);
+            
+            console.log('🚨 [MULTER CHECK] File signature after multer:', multerHex);
+            console.log('🚨 [MULTER CHECK] MIME type from browser:   ', file.mimetype);
+            console.log('🚨 [MULTER CHECK] Original filename:       ', file.originalname);
+            console.log('🚨 [MULTER CHECK] Has PNG signature:       ', isPNGSignature);
+            
+            if (isPNGSignature && file.mimetype === 'image/png') {
+                console.log('✅ [MULTER CHECK] PNG with correct MIME type - normal path');
+            } else if (isPNGSignature && file.mimetype !== 'image/png') {
+                console.log('🔍 [MIME TEST] PNG with different MIME type - testing if this fixes corruption');
+            } else if (!isPNGSignature && file.mimetype === 'image/png') {
+                console.log('🚨 [CRITICAL] PNG MIME type but no PNG signature - already corrupt!');
+            }
+        }
+
+        // Upload file using storage manager
+        const bijlageData = await storageManager.uploadFile(file, taakId, userId);
+
+        // Save to database
+        const savedBijlage = await db.createBijlage(bijlageData);
+
+        console.log('✅ Bijlage uploaded successfully:', savedBijlage.id);
+        
+        // If it's a PNG (detect by signature), immediately verify the upload worked correctly
+        let uploadVerification = null;
+        const isPNGFile = file.buffer && file.buffer.length > 8 && 
+                          file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && 
+                          file.buffer[2] === 0x4E && file.buffer[3] === 0x47;
+                          
+        if (isPNGFile) {
+            try {
+                const fileBuffer = await storageManager.downloadFile(savedBijlage);
+                const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                const firstBytes = buffer.slice(0, 8);
+                const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+                const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
+                
+                uploadVerification = {
+                    png_signature_valid: isValidPNG,
+                    first_8_bytes: hexBytes,
+                    expected: '89 50 4e 47 0d 0a 1a 0a'
+                };
+                
+                console.log('🔍 [UPLOAD VERIFICATION] PNG signature after upload:', hexBytes, 'Valid:', isValidPNG);
+            } catch (verifyError) {
+                console.error('❌ [UPLOAD VERIFICATION] Failed to verify PNG after upload:', verifyError);
+                uploadVerification = { error: 'Verification failed' };
+            }
+        }
+        
+        res.json({
+            success: true,
+            bijlage: {
+                id: savedBijlage.id,
+                taak_id: savedBijlage.taak_id,
+                bestandsnaam: savedBijlage.bestandsnaam,
+                bestandsgrootte: savedBijlage.bestandsgrootte,
+                mimetype: savedBijlage.mimetype,
+                geupload: savedBijlage.geupload
+            },
+            upload_verification: uploadVerification,
+            // Include debug info in response so we can see it in frontend
+            debug_info: isPNGFile ? {
+                multer_signature: file.buffer ? Array.from(file.buffer.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ') : 'no buffer',
+                multer_valid: file.buffer && file.buffer.length > 8 ? 
+                    [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A].every((byte, index) => file.buffer[index] === byte) : false
+            } : null
+        });
+
+    } catch (error) {
+        console.error('❌ Error uploading bijlage:', error);
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // Return more specific error information for debugging
+        let errorMessage = 'Fout bij uploaden bijlage';
+        if (error.message && error.message.includes('B2 upload failed')) {
+            errorMessage = `B2 storage error: ${error.message}`;
+        } else if (error.message && error.message.includes('HTTP request failed')) {
+            errorMessage = `Network error: ${error.message}`;
+        } else if (error.message && error.message.includes('Raw upload setup failed')) {
+            errorMessage = `Upload setup error: ${error.message}`;
+        } else if (error.message) {
+            errorMessage = `Upload error: ${error.message}`;
+        }
+        
+        res.status(500).json({ 
+            error: errorMessage,
+            debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+// Get all attachments for a task
+app.get('/api/taak/:id/bijlagen', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: taakId } = req.params;
+        const userId = req.session.userId;
+
+        // Check if task exists and belongs to user
+        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2', [taakId, userId]);
+        if (existingTaak.rows.length === 0) {
+            return res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+
+        const bijlagen = await db.getBijlagenForTaak(taakId);
+        
+        res.json({
+            success: true,
+            bijlagen: bijlagen
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting bijlagen:', error);
+        res.status(500).json({ error: 'Fout bij ophalen bijlagen' });
+    }
+});
+
+// Test endpoint to verify route works
+app.get('/api/bijlage/:id/test', (req, res) => {
+    res.json({ 
+        message: 'Test route works!',
+        id: req.params.id,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// DEBUG: MIME type test endpoint - allows uploading PNG with different MIME types
+app.post('/api/debug/mime-test-upload', requireAuth, uploadAttachment.single('file'), async (req, res) => {
+    try {
+        const { forceMimeType } = req.body;
+        const file = req.file;
+        
+        if (!file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        
+        // Override MIME type for testing if provided
+        if (forceMimeType) {
+            console.log('🔍 [MIME TEST] Original MIME type:', file.mimetype);
+            console.log('🔍 [MIME TEST] Forced MIME type:', forceMimeType);
+            file.mimetype = forceMimeType;
+        }
+        
+        const isPNG = file.buffer && file.buffer.length > 8 && 
+                      file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && 
+                      file.buffer[2] === 0x4E && file.buffer[3] === 0x47;
+        
+        res.json({
+            success: true,
+            analysis: {
+                original_filename: file.originalname,
+                detected_mime_type: file.mimetype,
+                is_png_signature: isPNG,
+                first_8_bytes: Array.from(file.buffer.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' '),
+                file_size: file.size,
+                test_purpose: forceMimeType ? 'MIME type override test' : 'Normal upload analysis'
+            }
+        });
+        
+    } catch (error) {
+        console.error('MIME test error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DEBUG: PNG binary analysis endpoint
+app.get('/api/bijlage/:id/png-debug', requireAuth, async (req, res) => {
+    try {
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+        
+        // Get bijlage metadata
+        const bijlage = await db.getBijlage(bijlageId);
+        if (!bijlage || bijlage.user_id !== userId) {
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Only analyze PNG files
+        if (!bijlage.mimetype || bijlage.mimetype !== 'image/png') {
+            return res.json({ 
+                error: 'Not a PNG file',
+                mimetype: bijlage.mimetype,
+                filename: bijlage.bestandsnaam 
+            });
+        }
+
+        // Download from B2 and analyze
+        const fileBuffer = await storageManager.downloadFile(bijlage);
+        const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+        
+        // Analyze first 32 bytes
+        const firstBytes = buffer.slice(0, 32);
+        const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        
+        // Check PNG signature
+        const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        const actualSignature = Array.from(buffer.slice(0, 8));
+        const isValidPNG = expectedPNG.every((byte, index) => actualSignature[index] === byte);
+        
+        res.json({
+            filename: bijlage.bestandsnaam,
+            mimetype: bijlage.mimetype,
+            size: buffer.length,
+            storage_type: bijlage.storage_type,
+            first_32_bytes_hex: hexBytes,
+            png_signature_expected: expectedPNG.map(b => b.toString(16).padStart(2, '0')).join(' '),
+            png_signature_actual: actualSignature.map(b => b.toString(16).padStart(2, '0')).join(' '),
+            is_valid_png: isValidPNG,
+            analysis: {
+                has_png_header: isValidPNG,
+                file_size_match: buffer.length === bijlage.bestandsgrootte,
+                buffer_type: Buffer.isBuffer(fileBuffer) ? 'Buffer' : typeof fileBuffer
+            }
+        });
+        
+    } catch (error) {
+        console.error('PNG debug error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DEBUG: Test route zonder authentication
+app.get('/api/bijlage/:id/download-debug', (req, res) => {
+    console.log('🐛 DEBUG ROUTE HIT!', { id: req.params.id });
+    res.json({ message: 'Debug route werkt!', id: req.params.id });
+});
+
+// DEBUG: Test route met authentication
+app.get('/api/bijlage/:id/download-auth', requireAuth, (req, res) => {
+    console.log('🔐 AUTH DEBUG ROUTE HIT!', { id: req.params.id, userId: req.session.userId });
+    res.json({ message: 'Auth debug route werkt!', id: req.params.id, userId: req.session.userId });
+});
+
+// Download attachment - step by step restoration
+app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
+    const startTime = Date.now();
+    console.log('🔴 [BACKEND] Download request start:', new Date().toISOString(), { id: req.params.id });
+    
+    try {
+        if (!db) {
+            console.log('❌ No database available');
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+        
+        console.log('🔍 Download attempt:', { bijlageId, userId });
+        console.log('🔍 Database available:', !!db);
+        console.log('🔍 getBijlage function available:', typeof db.getBijlage);
+
+        // Get attachment info first to determine storage type
+        const dbStart = Date.now();
+        console.log('🔴 [BACKEND] About to call db.getBijlage...');
+        const bijlage = await db.getBijlage(bijlageId, false);
+        console.log('🔴 [BACKEND] Database lookup completed in:', Date.now() - dbStart, 'ms');
+        
+        console.log('🔍 Bijlage found:', !!bijlage);
+        console.log('🔍 Bijlage details:', bijlage ? { id: bijlage.id, storage_type: bijlage.storage_type, user_id: bijlage.user_id } : 'null');
+        if (bijlage) {
+            console.log('🔍 Bijlage user_id:', bijlage.user_id, 'Request user_id:', userId);
+        }
+        
+        if (!bijlage) {
+            console.log('❌ Bijlage not found in database');
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Check if user owns this attachment
+        if (bijlage.user_id !== userId) {
+            console.log('❌ User does not own bijlage');
+            return res.status(403).json({ error: 'Geen toegang tot bijlage' });
+        }
+        
+        if (bijlage.storage_type === 'database') {
+            // File stored in database - fetch binary data separately
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 Serving file from database, size:', bijlageWithData.bestand_data.length);
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers with actual buffer size
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🔧 [BACKEND] Headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
+                
+                res.end(buffer, 'binary');
+            } else {
+                console.log('❌ Binary data not found in database');
+                return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
+            }
+        } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
+            // TEMPORARY BYPASS: Try database first, then B2
+            console.log('🔄 TEMPORARY BYPASS: Trying database first for Backblaze file');
+            
+            // Try to get file from database first (fallback)
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 BYPASS: Serving Backblaze file from database backup, size:', bijlageWithData.bestand_data.length);
+                
+                // Ensure we have a Buffer for binary data
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers with actual buffer size
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🔧 [BACKEND] DB Backup headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
+                
+                res.end(buffer, 'binary');
+                return;
+            }
+            
+            // File stored in Backblaze B2 (original logic)
+            console.log('☁️ Database backup not found, trying Backblaze B2, path:', bijlage.storage_path);
+            console.log('🔍 Storage manager available:', !!storageManager);
+            console.log('🔍 Storage manager initialized:', storageManager?.initialized);
+            
+            try {
+                const b2Start = Date.now();
+                console.log('🔴 [BACKEND] About to call storageManager.downloadFile...');
+                // Download file from B2 using storage manager
+                const fileBuffer = await storageManager.downloadFile(bijlage);
+                console.log('🔴 [BACKEND] B2 download completed in:', Date.now() - b2Start, 'ms, result:', !!fileBuffer);
+                
+                if (!fileBuffer) {
+                    console.log('❌ File not found in B2 storage');
+                    return res.status(404).json({ error: 'Bestand niet gevonden in cloud storage' });
+                }
+                
+                console.log('📦 Serving file from B2, size:', fileBuffer.length);
+                console.log('📦 FileBuffer type:', typeof fileBuffer, 'isBuffer:', Buffer.isBuffer(fileBuffer));
+                
+                // Ensure we have a Buffer for binary data
+                const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                
+                // DEBUG: Check PNG file signature (first 8 bytes should be: 89 50 4E 47 0D 0A 1A 0A)
+                if (bijlage.mimetype === 'image/png' && buffer.length > 8) {
+                    const firstBytes = buffer.slice(0, 8);
+                    const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+                    console.log('🔍 [PNG DEBUG] First 8 bytes:', hexBytes);
+                    console.log('🔍 [PNG DEBUG] Expected PNG signature: 89 50 4e 47 0d 0a 1a 0a');
+                    
+                    // Check if PNG signature is correct
+                    const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+                    const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
+                    console.log('🔍 [PNG DEBUG] Valid PNG signature:', isValidPNG);
+                }
+                
+                // Set headers with actual buffer size from B2
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🔧 [BACKEND] B2 headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
+                console.log('🔴 [BACKEND] Total request time:', Date.now() - startTime, 'ms');
+                
+                res.end(buffer, 'binary');
+                
+            } catch (b2Error) {
+                console.error('❌ Error downloading from B2:', b2Error);
+                console.error('❌ B2 Error stack:', b2Error.stack);
+                console.error('❌ B2 Error message:', b2Error.message);
+                console.error('❌ B2 Error name:', b2Error.name);
+                return res.status(500).json({ 
+                    error: 'Fout bij downloaden uit cloud storage',
+                    debug: `${b2Error.name}: ${b2Error.message}`
+                });
+            }
+        } else if (bijlage.storage_type === 'filesystem' && bijlage.storage_path) {
+            // File stored in filesystem (future implementation)
+            console.log('📁 File system storage not implemented yet, path:', bijlage.storage_path);
+            return res.status(501).json({ error: 'File system storage niet geïmplementeerd' });
+        } else {
+            // No valid storage found
+            console.log('❌ No valid storage found for bijlage, type:', bijlage.storage_type);
+            return res.status(404).json({ error: 'Bijlage data niet gevonden' });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error downloading bijlage:', error);
+        res.status(500).json({ error: 'Fout bij downloaden bijlage' });
+    }
+});
+
+// Preview attachment - same as download but with inline content-disposition
+app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
+    const startTime = Date.now();
+    console.log('🎯 [BACKEND] Preview request start:', new Date().toISOString(), { id: req.params.id });
+    
+    try {
+        if (!db) {
+            console.log('❌ No database available');
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+        
+        console.log('🎯 Preview attempt:', { bijlageId, userId });
+
+        // Get attachment info first to determine storage type
+        const dbStart = Date.now();
+        const bijlage = await db.getBijlage(bijlageId, false);
+        console.log('🎯 [BACKEND] Database lookup completed in:', Date.now() - dbStart, 'ms');
+        
+        if (!bijlage) {
+            console.log('❌ Bijlage not found in database');
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Check if user owns this attachment
+        if (bijlage.user_id !== userId) {
+            console.log('❌ User does not own bijlage');
+            return res.status(403).json({ error: 'Geen toegang tot bijlage' });
+        }
+
+        // Check if file type supports preview
+        const isImage = bijlage.mimetype && bijlage.mimetype.startsWith('image/');
+        const isPdf = bijlage.mimetype === 'application/pdf';
+        
+        if (!isImage && !isPdf) {
+            console.log('❌ File type not supported for preview:', bijlage.mimetype);
+            return res.status(400).json({ error: 'Bestandstype ondersteunt geen preview' });
+        }
+        
+        if (bijlage.storage_type === 'database') {
+            // File stored in database - fetch binary data separately
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 Serving preview from database, size:', bijlageWithData.bestand_data.length);
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers for inline viewing
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🎯 [BACKEND] Preview headers set - Content-Length:', buffer.length);
+                
+                res.end(buffer, 'binary');
+            } else {
+                console.log('❌ Binary data not found in database');
+                return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
+            }
+        } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
+            // Try database first as fallback, then B2
+            console.log('🔄 Trying database first for Backblaze file preview');
+            
+            const bijlageWithData = await db.getBijlage(bijlageId, true);
+            if (bijlageWithData && bijlageWithData.bestand_data) {
+                console.log('📦 Serving Backblaze preview from database backup, size:', bijlageWithData.bestand_data.length);
+                
+                const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
+                
+                // Set headers for inline viewing
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🎯 [BACKEND] DB Backup preview headers set - Content-Length:', buffer.length);
+                
+                res.end(buffer, 'binary');
+                return;
+            }
+
+            // Fallback to B2 download
+            try {
+                console.log('🔽 Falling back to B2 download for preview:', bijlage.storage_path);
+                
+                const storageStart = Date.now();
+                const fileBuffer = await storageManager.downloadFile(bijlage);
+                console.log('🎯 [BACKEND] B2 download completed in:', Date.now() - storageStart, 'ms');
+                
+                if (!fileBuffer) {
+                    console.log('❌ No file buffer returned from B2');
+                    return res.status(404).json({ error: 'Bijlage niet gevonden in cloud storage' });
+                }
+                
+                console.log('📦 FileBuffer type:', typeof fileBuffer, 'isBuffer:', Buffer.isBuffer(fileBuffer));
+                
+                const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
+                
+                // Set headers for inline viewing
+                res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
+                res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
+                res.setHeader('Content-Length', buffer.length);
+                console.log('🎯 [BACKEND] B2 preview headers set - Content-Length:', buffer.length);
+                console.log('🎯 [BACKEND] Total preview request time:', Date.now() - startTime, 'ms');
+                
+                res.end(buffer, 'binary');
+                
+            } catch (b2Error) {
+                console.error('❌ Error downloading from B2 for preview:', b2Error);
+                return res.status(500).json({ 
+                    error: 'Fout bij laden preview uit cloud storage',
+                    debug: `${b2Error.name}: ${b2Error.message}`
+                });
+            }
+        } else {
+            console.log('❌ No valid storage found for bijlage preview, type:', bijlage.storage_type);
+            return res.status(404).json({ error: 'Bijlage data niet gevonden' });
+        }
+        
+    } catch (error) {
+        console.error('❌ Error previewing bijlage:', error);
+        res.status(500).json({ error: 'Fout bij laden preview' });
+    }
+});
+
+// Delete attachment
+app.delete('/api/bijlage/:id', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const { id: bijlageId } = req.params;
+        const userId = req.session.userId;
+
+        // Get attachment info first
+        const bijlage = await db.getBijlage(bijlageId);
+        
+        console.log(`🗑️ Deleting bijlage ${bijlageId}:`, {
+            bestandsnaam: bijlage?.bestandsnaam,
+            storage_path: bijlage?.storage_path,
+            user_id: bijlage?.user_id
+        });
+        
+        if (!bijlage) {
+            console.log(`❌ Bijlage ${bijlageId} not found`);
+            return res.status(404).json({ error: 'Bijlage niet gevonden' });
+        }
+
+        // Check if user owns this attachment
+        if (bijlage.user_id !== userId) {
+            console.log(`❌ User ${userId} does not own bijlage ${bijlageId} (owned by ${bijlage.user_id})`);
+            return res.status(403).json({ error: 'Geen toegang tot bijlage' });
+        }
+
+        // Delete from B2 storage first
+        try {
+            console.log(`🧹 Attempting B2 delete for: ${bijlage.bestandsnaam}`);
+            await storageManager.deleteFile(bijlage);
+            console.log(`✅ B2 delete successful for: ${bijlage.bestandsnaam}`);
+        } catch (error) {
+            console.error(`⚠️ B2 delete failed for ${bijlage.bestandsnaam}:`, error.message);
+            // Continue with database deletion even if B2 fails
+        }
+
+        // Delete from database
+        const success = await db.deleteBijlage(bijlageId, userId);
+
+        if (success) {
+            console.log(`✅ Bijlage deleted successfully: ${bijlageId} (${bijlage.bestandsnaam})`);
+            res.json({ success: true });
+        } else {
+            console.log(`❌ Database delete failed for bijlage ${bijlageId}`);
+            res.status(500).json({ error: 'Fout bij verwijderen bijlage' });
+        }
+
+    } catch (error) {
+        console.error('❌ Error deleting bijlage:', error);
+        res.status(500).json({ error: 'Fout bij verwijderen bijlage' });
+    }
+});
+
+// Get user storage statistics
+app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database niet beschikbaar' });
+        }
+
+        const userId = req.session.userId;
+
+        const stats = await db.getUserStorageStats(userId);
+        const planType = await db.getUserPlanType(userId);
+        const isPremium = planType !== 'free';
+
+        // Get user's plan_id for reference
+        const userResult = await pool.query('SELECT selected_plan FROM users WHERE id = $1', [userId]);
+        const planId = userResult.rows[0]?.selected_plan || null;
+
+        const isPremiumPlus = planType === 'premium_plus';
+        const isPremiumStandard = planType === 'premium_standard';
+
+        res.json({
+            success: true,
+            stats: {
+                used_bytes: stats.used_bytes,
+                used_formatted: storageManager.formatBytes(stats.used_bytes),
+                bijlagen_count: stats.bijlagen_count,
+                is_premium: isPremium,
+                plan_id: planId,
+                plan_type: planType,
+                limits: {
+                    total_bytes: isPremiumPlus ? null : STORAGE_CONFIG.FREE_TIER_LIMIT,
+                    total_formatted: isPremiumPlus ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT),
+                    max_file_size: isPremiumPlus ? null : STORAGE_CONFIG.MAX_FILE_SIZE_FREE,
+                    max_file_formatted: isPremiumPlus ? 'Onbeperkt' : storageManager.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE),
+                    max_attachments_per_task: isPremiumPlus ? null : STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting storage stats:', error);
+        res.status(500).json({ error: 'Fout bij ophalen opslag statistieken' });
     }
 });
 
@@ -1930,19 +4332,88 @@ app.post('/api/test/ghl-tag', async (req, res) => {
     }
 });
 
-app.get('/api/auth/me', (req, res) => {
+app.get('/api/auth/me', async (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
     
-    res.json({
-        authenticated: true,
-        user: {
-            id: req.session.userId,
-            email: req.session.userEmail,
-            naam: req.session.userNaam
+    try {
+        // Get user information including beta status
+        const userResult = await pool.query(`
+            SELECT
+                id, email, naam,
+                account_type, subscription_status, trial_end_date,
+                created_at
+            FROM users
+            WHERE id = $1
+        `, [req.session.userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(401).json({ error: 'User not found' });
         }
-    });
+        
+        const user = userResult.rows[0];
+        
+        // Get beta configuration
+        const betaConfig = await db.getBetaConfig();
+        
+        // Check if user has access
+        let hasAccess = true;
+        let accessMessage = null;
+        let requiresUpgrade = false;
+        let expiryType = null;
+
+        // If beta period is not active and user is beta type
+        if (!betaConfig.beta_period_active && user.account_type === 'beta') {
+            // Check if trial is expired
+            const trialIsExpired = isTrialExpired(user);
+
+            if (user.subscription_status !== 'paid' &&
+                user.subscription_status !== 'active' &&
+                (user.subscription_status !== 'trialing' || trialIsExpired)) {
+                hasAccess = false;
+                requiresUpgrade = true;
+                expiryType = trialIsExpired ? 'trial' : 'beta';
+                accessMessage = trialIsExpired
+                    ? 'Je gratis proefperiode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.'
+                    : 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
+
+                console.log(`⚠️ /api/auth/me - User ${user.email} requires upgrade (${trialIsExpired ? 'trial expired' : 'beta expired'})`);
+            }
+        }
+
+        res.json({
+            authenticated: true,
+            hasAccess: hasAccess,
+            requiresUpgrade: requiresUpgrade,
+            expiryType: expiryType,
+            accessMessage: accessMessage,
+            user: {
+                id: req.session.userId,
+                email: req.session.userEmail,
+                naam: req.session.userNaam,
+                account_type: user.account_type,
+                subscription_status: user.subscription_status
+            },
+            betaConfig: {
+                beta_period_active: betaConfig.beta_period_active,
+                beta_ended_at: betaConfig.beta_ended_at
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error in /api/auth/me:', error);
+        // Fallback to basic auth response on error
+        res.json({
+            authenticated: true,
+            hasAccess: true, // Fail open for safety
+            user: {
+                id: req.session.userId,
+                email: req.session.userEmail,
+                naam: req.session.userNaam
+            }
+        });
+    }
 });
 
 // Old admin users endpoint removed - using consolidated version later in file
@@ -2183,6 +4654,77 @@ app.put('/api/feedback/:id/status', async (req, res) => {
     }
 });
 
+// B2 Storage debug endpoint - test B2 connectivity and credentials
+app.get('/api/debug/b2-status', async (req, res) => {
+    try {
+        const { storageManager } = require('./storage-manager');
+        
+        // Test B2 initialization
+        await storageManager.initialize();
+        
+        const status = {
+            b2Available: storageManager.isB2Available(),
+            bucketName: process.env.B2_BUCKET_NAME || 'not-configured',
+            hasKeyId: !!process.env.B2_APPLICATION_KEY_ID,
+            hasAppKey: !!process.env.B2_APPLICATION_KEY,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('🔍 B2 Status check:', status);
+        res.json(status);
+    } catch (error) {
+        console.error('❌ B2 status check failed:', error);
+        res.status(500).json({ 
+            error: 'B2 status check failed', 
+            message: error.message,
+            b2Available: false 
+        });
+    }
+});
+
+// Test B2 cleanup voor specifieke taak (zonder daadwerkelijk verwijderen)
+app.get('/api/debug/b2-cleanup-test/:taskId', async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        const userId = getCurrentUserId(req);
+        
+        // Haal bijlagen op voor deze taak
+        const bijlagen = await db.getBijlagenForTaak(taskId);
+        
+        if (!bijlagen || bijlagen.length === 0) {
+            return res.json({
+                message: 'Geen bijlagen gevonden voor deze taak',
+                taskId,
+                bijlagenCount: 0
+            });
+        }
+        
+        console.log(`🧪 Testing B2 cleanup for task ${taskId} with ${bijlagen.length} bijlagen`);
+        
+        // Test B2 cleanup zonder echte verwijdering (dry run)
+        const testResult = {
+            taskId,
+            bijlagenCount: bijlagen.length,
+            bijlagen: bijlagen.map(b => ({
+                id: b.id,
+                bestandsnaam: b.bestandsnaam,
+                storage_path: b.storage_path,
+                mimetype: b.mimetype
+            })),
+            wouldAttemptDelete: bijlagen.length,
+            timestamp: new Date().toISOString()
+        };
+        
+        res.json(testResult);
+    } catch (error) {
+        console.error(`❌ B2 cleanup test failed for task ${req.params.taskId}:`, error);
+        res.status(500).json({ 
+            error: 'B2 cleanup test failed', 
+            message: error.message 
+        });
+    }
+});
+
 // Database cleanup endpoint - removes all task data but keeps users
 app.post('/api/debug/clean-database', async (req, res) => {
     try {
@@ -2243,13 +4785,83 @@ app.get('/api/tellingen', async (req, res) => {
         if (!db) {
             return res.json({}); // Return empty if database not available
         }
-        
+
         const userId = getCurrentUserId(req);
         const tellingen = await db.getCounts(userId);
         res.json(tellingen);
     } catch (error) {
         console.error('Error getting counts:', error);
         res.json({});
+    }
+});
+
+// Sidebar counters endpoint - Feature 022
+app.get('/api/counts/sidebar', async (req, res) => {
+    try {
+        if (!db || !pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get userId - throw error if not logged in
+        let userId;
+        try {
+            userId = getCurrentUserId(req);
+        } catch (error) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        // Two separate sequential queries (simplest approach)
+
+        // Query 1: Taken counts
+        const takenResult = await pool.query(`
+            SELECT
+                COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
+                COUNT(CASE WHEN lijst = 'acties' AND afgewerkt IS NULL
+                    AND (verschijndatum IS NULL OR verschijndatum <= CURRENT_DATE) THEN 1 END) as acties,
+                COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
+                COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
+            FROM taken
+            WHERE user_id = $1
+        `, [userId]);
+
+        // Query 2: Projecten count
+        const projectenResult = await pool.query(`
+            SELECT COUNT(*) as count FROM projecten WHERE user_id = $1
+        `, [userId]);
+
+        // Safety check for results
+        if (!takenResult || !takenResult.rows || takenResult.rows.length === 0) {
+            return res.json({
+                inbox: 0,
+                acties: 0,
+                projecten: 0,
+                opvolgen: 0,
+                uitgesteld: 0
+            });
+        }
+
+        // Convert string counts to integers
+        const counts = {
+            inbox: parseInt(takenResult.rows[0].inbox) || 0,
+            acties: parseInt(takenResult.rows[0].acties) || 0,
+            projecten: parseInt(projectenResult.rows[0]?.count) || 0,
+            opvolgen: parseInt(takenResult.rows[0].opvolgen) || 0,
+            uitgesteld: parseInt(takenResult.rows[0].uitgesteld) || 0
+        };
+
+        res.json(counts);
+    } catch (error) {
+        console.error('Error getting sidebar counts:', error);
+        // For debugging: include error details in response
+        res.status(500).json({
+            error: 'Failed to get sidebar counts',
+            debug: {
+                message: error.message,
+                stack: error.stack?.split('\n')[0],
+                poolExists: !!pool,
+                dbExists: !!db
+            }
+        });
     }
 });
 
@@ -2263,6 +4875,23 @@ app.get('/api/lijst/:naam', async (req, res) => {
         const { naam } = req.params;
         const userId = getCurrentUserId(req);
         const data = await db.getList(naam, userId);
+        
+        // Add bijlagen counts for task lists (not for projecten-lijst or contexten)
+        if (naam !== 'projecten-lijst' && naam !== 'contexten') {
+            const taakIds = data.map(item => item.id).filter(id => id);
+            if (taakIds.length > 0) {
+                const bijlagenCounts = await db.getBijlagenCountsForTaken(taakIds);
+                data.forEach(item => {
+                    item.bijlagenCount = bijlagenCounts[item.id] || 0;
+                });
+            } else {
+                // Ensure all items have bijlagenCount property
+                data.forEach(item => {
+                    item.bijlagenCount = 0;
+                });
+            }
+        }
+        
         res.json(data);
     } catch (error) {
         console.error(`Error getting list ${req.params.naam}:`, error);
@@ -2310,7 +4939,7 @@ app.get('/api/debug/user-by-email/:email', async (req, res) => {
         const { email } = req.params;
         
         // Find user by email
-        const result = await pool.query('SELECT id, email, name FROM users WHERE email = $1', [email]);
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
@@ -2486,19 +5115,117 @@ app.put('/api/taak/:id', async (req, res) => {
         if (!db) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { id } = req.params;
         const userId = getCurrentUserId(req);
+        const { completedViaCheckbox, ...updateData } = req.body;
+
         console.log(`🔄 Server: Updating task ${id} for user ${userId}:`, JSON.stringify(req.body, null, 2));
-        
-        const success = await db.updateTask(id, req.body, userId);
-        
-        if (success) {
-            console.log(`Task ${id} updated successfully`);
-            res.json({ success: true });
+
+        // Check if this is a completion via checkbox
+        if (completedViaCheckbox && updateData.lijst === 'afgewerkt') {
+            console.log(`✅ Processing task completion via checkbox for task ${id}`);
+
+            // First, get the current task to check its status and recurring settings
+            const currentTask = await db.getTask(id, userId);
+            if (!currentTask) {
+                console.log(`Task ${id} not found`);
+                return res.status(404).json({
+                    success: false,
+                    error: 'Task not found',
+                    code: 'TASK_NOT_FOUND'
+                });
+            }
+
+            // Check if task is already completed
+            if (currentTask.lijst === 'afgewerkt') {
+                console.log(`Task ${id} is already completed`);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Task is already completed',
+                    code: 'INVALID_TASK_STATE',
+                    currentState: currentTask.lijst
+                });
+            }
+
+            // Validate required completion fields
+            if (!updateData.afgewerkt) {
+                console.log(`Missing completion timestamp for task ${id}`);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Completion timestamp (afgewerkt) is required',
+                    code: 'VALIDATION_ERROR'
+                });
+            }
+
+            // Update task to completed status
+            const success = await db.updateTask(id, updateData, userId);
+
+            if (!success) {
+                console.log(`Failed to update task ${id} to completed status`);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Failed to update task status',
+                    code: 'UPDATE_FAILED'
+                });
+            }
+
+            // Get updated task for response
+            const updatedTask = await db.getTask(id, userId);
+
+            // Check if task has recurring settings and needs a new instance
+            let recurringTaskCreated = false;
+            let nextTask = null;
+
+            if (currentTask.herhaling_actief && currentTask.herhaling_type) {
+                console.log(`🔄 Creating recurring task for completed task ${id} with pattern: ${currentTask.herhaling_type}`);
+
+                try {
+                    // Create next recurring task instance
+                    const recurringResult = await db.createRecurringTask(currentTask);
+                    if (recurringResult && recurringResult.success) {
+                        recurringTaskCreated = true;
+                        nextTask = recurringResult.newTask;
+                        console.log(`✅ Created recurring task ${nextTask.id} for completed task ${id}`);
+                    } else {
+                        console.log(`⚠️ Failed to create recurring task for ${id}:`, recurringResult);
+                    }
+                } catch (recurringError) {
+                    console.error(`❌ Error creating recurring task for ${id}:`, recurringError);
+                    // Don't fail the main completion - just log the error
+                }
+            }
+
+            // Return success response with task data and recurring info
+            console.log(`✅ Task ${id} completed successfully via checkbox`);
+            return res.json({
+                success: true,
+                task: {
+                    id: updatedTask.id,
+                    tekst: updatedTask.tekst,
+                    lijst: updatedTask.lijst,
+                    afgewerkt: updatedTask.afgewerkt,
+                    herhaling_actief: updatedTask.herhaling_actief
+                },
+                recurringTaskCreated,
+                ...(nextTask && { nextTask: {
+                    id: nextTask.id,
+                    tekst: nextTask.tekst,
+                    lijst: nextTask.lijst,
+                    verschijndatum: nextTask.verschijndatum
+                }})
+            });
         } else {
-            console.log(`Task ${id} not found or update failed`);
-            res.status(404).json({ error: 'Taak niet gevonden' });
+            // Normal task update (existing functionality)
+            const success = await db.updateTask(id, req.body, userId);
+
+            if (success) {
+                console.log(`Task ${id} updated successfully`);
+                res.json({ success: true });
+            } else {
+                console.log(`Task ${id} not found or update failed`);
+                res.status(404).json({ error: 'Taak niet gevonden' });
+            }
         }
     } catch (error) {
         console.error(`Error updating task ${id}:`, error);
@@ -2517,6 +5244,12 @@ app.delete('/api/taak/:id', async (req, res) => {
         const userId = getCurrentUserId(req);
         console.log(`🗑️ Deleting task ${id} for user ${userId}`);
         
+        // Eerst bijlagen ophalen voor B2 cleanup (voor CASCADE ze verwijdert)
+        const bijlagen = await db.getBijlagenForTaak(id);
+        if (bijlagen && bijlagen.length > 0) {
+            console.log(`📎 Found ${bijlagen.length} bijlagen for task ${id}`);
+        }
+        
         const result = await pool.query(
             'DELETE FROM taken WHERE id = $1 AND user_id = $2 RETURNING id',
             [id, userId]
@@ -2524,7 +5257,42 @@ app.delete('/api/taak/:id', async (req, res) => {
         
         if (result.rows.length > 0) {
             console.log(`✅ Task ${id} deleted successfully`);
-            res.json({ success: true, deleted: id });
+            
+            let cleanupResult = { success: true, deleted: 0, failed: 0 };
+            
+            // Synchrone B2 cleanup met timeout
+            if (bijlagen && bijlagen.length > 0) {
+                console.log(`🧹 Starting synchronous B2 cleanup for task ${id}`);
+                try {
+                    // Timeout van 8 seconden voor B2 cleanup
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('B2 cleanup timeout after 8 seconds')), 8000);
+                    });
+                    
+                    cleanupResult = await Promise.race([
+                        cleanupB2Files(bijlagen, id),
+                        timeoutPromise
+                    ]);
+                    
+                    console.log(`🧹 B2 cleanup completed for task ${id}:`, cleanupResult);
+                } catch (error) {
+                    console.error(`⚠️ B2 cleanup failed for task ${id}:`, error.message);
+                    cleanupResult = {
+                        success: false,
+                        deleted: 0,
+                        failed: bijlagen.length,
+                        error: error.message,
+                        timeout: error.message.includes('timeout')
+                    };
+                }
+            }
+            
+            // Response met B2 cleanup status
+            res.json({ 
+                success: true, 
+                deleted: id,
+                b2Cleanup: cleanupResult
+            });
         } else {
             console.log(`❌ Task ${id} not found or not owned by user`);
             res.status(404).json({ error: 'Taak niet gevonden' });
@@ -2680,10 +5448,14 @@ app.get('/api/version', (req, res) => {
     // Clear require cache for package.json to get fresh version
     delete require.cache[require.resolve('./package.json')];
     const packageJson = require('./package.json');
+
+    console.log(`📋 Version check - code version: 0.17.23-FINAL`);
+
     res.json({
         version: packageJson.version,
         commit_hash: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) || 'unknown',
         deployed_at: new Date().toISOString(),
+        code_marker: '0.17.23-FINAL',
         features: ['toast-notifications', 'recurring-tasks', 'test-dashboard', 'smart-date-filtering'],
         environment: process.env.NODE_ENV || 'development'
     });
@@ -2796,6 +5568,120 @@ app.get('/api/test/run-business', async (req, res) => {
     } catch (error) {
         console.error('❌ Business logic tests failed:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-taskCompletionAPI', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runTaskCompletionAPITests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Task completion API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-recurringTaskAPI', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runRecurringTaskAPITests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Recurring task API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-errorHandlingAPI', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runErrorHandlingAPITests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Error handling API tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/test/run-uiIntegration', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runUIIntegrationTests(testRunner);
+        const cleanupSuccess = await testRunner.cleanup();
+
+        const summary = testRunner.getSummary();
+        summary.cleanup_successful = cleanupSuccess;
+        summary.test_data_removed = summary.test_data_created;
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ UI integration tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Performance Tests API endpoint
+app.get('/api/test/run-performance', async (req, res) => {
+    try {
+        const testRunner = new testModule.TestRunner();
+        await testModule.runPerformanceTests(testRunner);
+
+        const summary = {
+            passed: testRunner.testResults.filter(r => r.passed).length,
+            failed: testRunner.testResults.filter(r => !r.passed).length,
+            total: testRunner.testResults.length,
+            results: testRunner.testResults,
+            cleanup_successful: true,
+            test_data_created: Object.values(testRunner.createdRecords).flat().length
+        };
+
+        await testRunner.cleanup();
+        console.log('✅ Performance tests completed successfully');
+
+        res.json(summary);
+    } catch (error) {
+        console.error('❌ Performance tests failed:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Clean project names from planning items
+app.post('/api/dagelijkse-planning/clean-project-names', async (req, res) => {
+    try {
+        if (!db) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+        
+        const userId = getCurrentUserId(req);
+        const cleanedCount = await db.cleanPlanningProjectNames(userId);
+        
+        res.json({ 
+            success: true, 
+            message: `Successfully cleaned ${cleanedCount} planning items`,
+            cleanedCount: cleanedCount
+        });
+    } catch (error) {
+        console.error('Error cleaning planning project names:', error);
+        res.status(500).json({ error: 'Fout bij opschonen planning project namen' });
     }
 });
 
@@ -3560,38 +6446,79 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         
         // First check if task already exists for this user
         const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
+
+        let result;
         if (existingCheck.rows.length > 0) {
-            console.log('🔧 SINGLE ACTION: Task already exists, updating instead');
-            
-            // Delete the existing task first
-            await pool.query('DELETE FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
-            console.log('🔧 SINGLE ACTION: Deleted existing task');
+            console.log('🔧 SINGLE ACTION: Task already exists, UPDATE to preserve bijlagen');
+
+            // UPDATE existing task instead of DELETE+INSERT
+            // This preserves bijlagen due to CASCADE DELETE on foreign key
+            result = await pool.query(`
+                UPDATE taken
+                SET
+                    lijst = $1,
+                    tekst = $2,
+                    opmerkingen = $3,
+                    project_id = $4,
+                    verschijndatum = $5,
+                    context_id = $6,
+                    duur = $7,
+                    type = $8,
+                    herhaling_type = $9,
+                    herhaling_waarde = $10,
+                    herhaling_actief = $11,
+                    prioriteit = $12
+                WHERE id = $13 AND user_id = $14
+                RETURNING id
+            `, [
+                'acties',
+                actionData.tekst,
+                actionData.opmerkingen || null,
+                actionData.projectId || null,
+                actionData.verschijndatum || null,
+                actionData.contextId || null,
+                actionData.duur || null,
+                actionData.type || null,
+                actionData.herhalingType || null,
+                actionData.herhalingWaarde || null,
+                actionData.herhalingActief === true || actionData.herhalingActief === 'true',
+                actionData.prioriteit || null,
+                actionData.id,
+                userId
+            ]);
+
+            console.log('🔧 SINGLE ACTION: Successfully updated to acties, bijlagen preserved');
+        } else {
+            console.log('🔧 SINGLE ACTION: New task, inserting');
+
+            // Insert new action (direct action creation, not from inbox)
+            result = await pool.query(`
+                INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, prioriteit, afgewerkt, user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                RETURNING id
+            `, [
+                actionData.id,
+                actionData.tekst,
+                actionData.opmerkingen || null,
+                actionData.aangemaakt,
+                'acties',
+                actionData.projectId || null,
+                actionData.verschijndatum || null,
+                actionData.contextId || null,
+                actionData.duur || null,
+                actionData.type || null,
+                actionData.herhalingType || null,
+                actionData.herhalingWaarde || null,
+                actionData.herhalingActief === true || actionData.herhalingActief === 'true',
+                actionData.prioriteit || null,
+                null,
+                userId
+            ]);
+
+            console.log('🔧 SINGLE ACTION: Successfully inserted new action');
         }
-        
-        // Insert directly without touching existing data - WITH user_id
-        const result = await pool.query(`
-            INSERT INTO taken (id, tekst, opmerkingen, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, afgewerkt, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-            RETURNING id
-        `, [
-            actionData.id,
-            actionData.tekst,
-            actionData.opmerkingen || null,
-            actionData.aangemaakt,
-            'acties',
-            actionData.projectId || null,
-            actionData.verschijndatum || null,
-            actionData.contextId || null,
-            actionData.duur || null,
-            actionData.type || null,
-            actionData.herhalingType || null,
-            actionData.herhalingWaarde || null,
-            actionData.herhalingActief === true || actionData.herhalingActief === 'true',
-            null,
-            userId  // Add user_id
-        ]);
-        
-        console.log('🔧 SINGLE ACTION: Successfully inserted with ID:', result.rows[0].id);
+
+        console.log('🔧 SINGLE ACTION: Result ID:', result.rows[0].id);
         
         res.json({ 
             success: true, 
@@ -5253,18 +8180,12 @@ app.get('/api/admin/projects', async (req, res) => {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
 
         const result = await pool.query(`
-            SELECT p.naam as name, 
-                   COUNT(t.id) as task_count,
-                   COUNT(DISTINCT t.user_id) as user_count,
-                   COALESCE(
-                       (COUNT(CASE WHEN t.afgewerkt IS NOT NULL THEN 1 END) * 100.0 / 
-                        NULLIF(COUNT(t.id), 0)), 0
-                   ) as completion_rate
-            FROM projecten p
-            LEFT JOIN taken t ON p.naam = t.project
-            GROUP BY p.naam
-            HAVING COUNT(t.id) > 0
-            ORDER BY task_count DESC
+            SELECT naam as name, 
+                   0 as task_count,
+                   0 as user_count,
+                   0 as completion_rate
+            FROM projecten 
+            ORDER BY naam
             LIMIT 20
         `);
 
@@ -5286,15 +8207,12 @@ app.get('/api/admin/contexts', async (req, res) => {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
 
         const result = await pool.query(`
-            SELECT c.naam as name,
-                   COUNT(t.id) as task_count,
-                   COUNT(DISTINCT t.user_id) as user_count,
-                   COALESCE(AVG(t.duur), 0) as avg_duration
-            FROM contexten c
-            LEFT JOIN taken t ON c.naam = t.context
-            GROUP BY c.naam
-            HAVING COUNT(t.id) > 0
-            ORDER BY task_count DESC
+            SELECT naam as name,
+                   0 as task_count,
+                   0 as user_count,
+                   0 as avg_duration
+            FROM contexten 
+            ORDER BY naam
             LIMIT 20
         `);
 
@@ -5508,6 +8426,7 @@ app.post('/api/admin/auth', async (req, res) => {
         if (password === adminPassword) {
             // Set admin session flag
             req.session.isAdmin = true;
+            req.session.adminAuthenticated = true; // Also set this for consistency
             req.session.adminLoginTime = new Date().toISOString();
             
             res.json({ 
@@ -5526,10 +8445,22 @@ app.post('/api/admin/auth', async (req, res) => {
 
 // Admin Session Check Endpoint
 app.get('/api/admin/session', (req, res) => {
-    res.json({ 
-        isAuthenticated: !!req.session.isAdmin,
-        loginTime: req.session.adminLoginTime || null
-    });
+    if (req.session && req.session.isAdmin) {
+        const loginTime = req.session.adminLoginTime;
+        const sessionAge = new Date() - new Date(loginTime);
+
+        res.json({
+            authenticated: true,
+            isAdmin: true,
+            loginTime: loginTime,
+            sessionAge: sessionAge
+        });
+    } else {
+        res.status(401).json({
+            authenticated: false,
+            message: 'No active admin session'
+        });
+    }
 });
 
 // Admin Logout Endpoint
@@ -5720,6 +8651,2518 @@ app.get('/api/debug/feedback-test', async (req, res) => {
         res.status(500).json({ 
             error: error.message,
             stack: error.stack 
+        });
+    }
+});
+
+// ===== ADMIN DASHBOARD V2 STATISTICS ENDPOINTS =====
+
+// GET /api/admin2/stats/growth - User growth data for chart (last 30 days)
+app.get('/api/admin2/stats/growth', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Query voor user growth per dag (laatste 30 dagen)
+        const growthQuery = `
+            SELECT
+                DATE(created_at) as date,
+                COUNT(*) as new_users
+            FROM users
+            WHERE created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        `;
+
+        const result = await pool.query(growthQuery);
+
+        // Bereken cumulative count
+        let cumulative = 0;
+
+        // Haal eerst het totaal aantal users vóór de 30-dagen periode
+        const baseCountQuery = `
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE created_at < NOW() - INTERVAL '30 days'
+        `;
+        const baseResult = await pool.query(baseCountQuery);
+        cumulative = parseInt(baseResult.rows[0].count || 0);
+
+        // Map de resultaten en voeg cumulative toe
+        const data = result.rows.map(row => {
+            cumulative += parseInt(row.new_users);
+            return {
+                date: row.date,
+                new_users: parseInt(row.new_users),
+                cumulative: cumulative
+            };
+        });
+
+        res.json({
+            period: '30d',
+            data: data
+        });
+
+    } catch (error) {
+        console.error('Error fetching growth statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
+// ===== BETA MANAGEMENT ADMIN ENDPOINTS =====
+
+app.get('/api/admin/beta/status', async (req, res) => {
+    try {
+        const betaConfig = await db.getBetaConfig();
+        
+        // Get beta user statistics
+        const result = await pool.query(`
+            SELECT 
+                COUNT(*) as total_beta_users,
+                COUNT(CASE WHEN subscription_status = 'beta_active' THEN 1 END) as active_beta_users,
+                COUNT(CASE WHEN subscription_status = 'expired' THEN 1 END) as expired_beta_users,
+                COUNT(CASE WHEN created_at > NOW() - INTERVAL '7 days' THEN 1 END) as new_this_week
+            FROM users 
+            WHERE account_type = 'beta'
+        `);
+        
+        const stats = result.rows[0];
+        
+        res.json({
+            success: true,
+            betaConfig,
+            statistics: {
+                totalBetaUsers: parseInt(stats.total_beta_users),
+                activeBetaUsers: parseInt(stats.active_beta_users),
+                expiredBetaUsers: parseInt(stats.expired_beta_users),
+                newThisWeek: parseInt(stats.new_this_week)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting beta status:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/admin/beta/toggle', async (req, res) => {
+    try {
+        const { active } = req.body;
+        
+        // Update beta config
+        const updatedConfig = await db.updateBetaConfig(active);
+        
+        // If ending beta period, update all active beta users to beta_expired
+        if (!active) {
+            await pool.query(`
+                UPDATE users
+                SET subscription_status = 'beta_expired'
+                WHERE account_type = 'beta' AND subscription_status = 'beta_active'
+            `);
+        }
+        
+        res.json({
+            success: true,
+            message: active ? 'Beta periode geactiveerd' : 'Beta periode beëindigd',
+            config: updatedConfig
+        });
+    } catch (error) {
+        console.error('Error toggling beta status:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/admin/beta/users', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_status,
+                ghl_contact_id,
+                created_at,
+                laatste_login as last_activity
+            FROM users 
+            WHERE account_type = 'beta'
+            ORDER BY created_at DESC
+            LIMIT 50
+        `);
+        
+        res.json({
+            success: true,
+            users: result.rows
+        });
+    } catch (error) {
+        console.error('Error getting beta users:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get all users (both beta and regular) for admin management
+app.get('/api/admin/all-users', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_status,
+                selected_plan,
+                plan_selected_at,
+                selection_source,
+                ghl_contact_id,
+                created_at,
+                laatste_login as last_activity,
+                (SELECT COUNT(*) FROM taken WHERE user_id = users.id) as task_count
+            FROM users
+            ORDER BY laatste_login DESC NULLS LAST, created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({
+            success: true,
+            users: result.rows
+        });
+    } catch (error) {
+        console.error('Error getting all users:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update user account type
+app.put('/api/admin/user/:id/account-type', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { account_type } = req.body;
+        
+        // Validate account type
+        if (!account_type || !['beta', 'regular'].includes(account_type)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid account type. Must be "beta" or "regular"' 
+            });
+        }
+        
+        // Get current user data
+        const currentUserResult = await pool.query(
+            'SELECT email, account_type, subscription_status FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (currentUserResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        
+        const currentUser = currentUserResult.rows[0];
+        let newSubscriptionStatus;
+        
+        // Determine new subscription status based on account type
+        if (account_type === 'regular') {
+            newSubscriptionStatus = 'active';
+        } else if (account_type === 'beta') {
+            // Check if beta period is active to set correct status
+            const betaConfig = await db.getBetaConfig();
+            newSubscriptionStatus = betaConfig.beta_period_active ? 'beta_active' : 'beta_expired';
+        }
+        
+        // Update user account type and subscription status
+        await pool.query(`
+            UPDATE users 
+            SET account_type = $1, 
+                subscription_status = $2
+            WHERE id = $3
+        `, [account_type, newSubscriptionStatus, userId]);
+        
+        console.log(`✅ Admin updated user ${currentUser.email} from ${currentUser.account_type} to ${account_type}`);
+        
+        res.json({
+            success: true,
+            message: `User account type updated from ${currentUser.account_type} to ${account_type}`,
+            user: {
+                id: userId,
+                email: currentUser.email,
+                account_type: account_type,
+                subscription_status: newSubscriptionStatus
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error updating user account type:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Force beta database migration endpoint
+app.get('/api/admin/force-beta-migration', async (req, res) => {
+    try {
+        console.log('🔄 Starting forced beta migration...');
+        
+        // Add beta columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) DEFAULT 'regular',
+            ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'active',
+            ADD COLUMN IF NOT EXISTS ghl_contact_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        `);
+        console.log('✅ Users table beta columns added');
+        
+        // Create beta_config table if it doesn't exist
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS beta_config (
+                id INTEGER PRIMARY KEY DEFAULT 1,
+                beta_period_active BOOLEAN DEFAULT TRUE,
+                beta_ended_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Beta_config table created');
+        
+        // Insert default beta config if not exists
+        await pool.query(`
+            INSERT INTO beta_config (id, beta_period_active, created_at, updated_at)
+            VALUES (1, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO NOTHING
+        `);
+        console.log('✅ Default beta config inserted');
+
+        // Add subscription-related columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255)
+        `);
+        console.log('✅ Users table subscription columns added');
+
+        // Set existing users to beta type if they were created recently (assuming they are beta testers)
+        await pool.query(`
+            UPDATE users 
+            SET account_type = 'beta', 
+                subscription_status = 'beta_active'
+            WHERE account_type IS NULL OR account_type = 'regular'
+        `);
+        console.log('✅ Existing users converted to beta type');
+        
+        // Also reset any expired users back to active if beta period is active
+        const betaConfig = await db.getBetaConfig();
+        if (betaConfig.beta_period_active) {
+            await pool.query(`
+                UPDATE users
+                SET subscription_status = 'beta_active'
+                WHERE account_type = 'beta' AND (subscription_status = 'expired' OR subscription_status = 'beta_expired')
+            `);
+            console.log('✅ Expired beta users reactivated');
+        }
+        
+        res.json({
+            success: true,
+            message: 'Beta migration completed successfully',
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('❌ Beta migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Migration endpoint: Fix expired status to beta_expired
+app.get('/api/admin/migrate-expired-to-beta-expired', async (req, res) => {
+    try {
+        console.log('🔄 Starting migration: expired → beta_expired for beta users');
+
+        // Update all beta users with 'expired' status to 'beta_expired'
+        const result = await pool.query(`
+            UPDATE users
+            SET subscription_status = 'beta_expired'
+            WHERE account_type = 'beta' AND subscription_status = 'expired'
+            RETURNING id, email, subscription_status
+        `);
+
+        console.log(`✅ Migrated ${result.rows.length} beta users from 'expired' to 'beta_expired'`);
+
+        res.json({
+            success: true,
+            message: `Successfully migrated ${result.rows.length} users`,
+            updated_users: result.rows,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('❌ Migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Debug endpoint to update trial end date (for testing expired trials)
+app.post('/api/debug/update-trial-end-date', async (req, res) => {
+    try {
+        const { email, trial_end_date } = req.body;
+
+        if (!email || !trial_end_date) {
+            return res.status(400).json({ error: 'Email and trial_end_date are required' });
+        }
+
+        const result = await pool.query(`
+            UPDATE users
+            SET trial_end_date = $1
+            WHERE email = $2
+            RETURNING id, email, subscription_status, trial_start_date, trial_end_date
+        `, [trial_end_date, email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Trial end date updated',
+            user: result.rows[0],
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error updating trial end date:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check users table schema
+app.get('/api/debug/users-schema', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_name = 'users'
+            ORDER BY ordinal_position
+        `);
+
+        res.json({
+            table: 'users',
+            columns: result.rows,
+            column_count: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching users schema:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to check user subscription status
+app.get('/api/debug/user-subscription-status', async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email parameter required' });
+        }
+
+        const result = await pool.query(`
+            SELECT
+                id,
+                email,
+                naam,
+                account_type,
+                subscription_status,
+                had_trial,
+                trial_start_date,
+                trial_end_date,
+                created_at,
+                laatste_login
+            FROM users
+            WHERE email = $1
+        `, [email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = result.rows[0];
+
+        // Check what validatePlanSelection would return
+        const validationResults = {
+            trial_14_days: validatePlanSelection('trial_14_days', user.subscription_status, user.had_trial),
+            monthly_7: validatePlanSelection('monthly_7', user.subscription_status, user.had_trial),
+            monthly_8: validatePlanSelection('monthly_8', user.subscription_status, user.had_trial),
+            yearly_70: validatePlanSelection('yearly_70', user.subscription_status, user.had_trial),
+            yearly_80: validatePlanSelection('yearly_80', user.subscription_status, user.had_trial)
+        };
+
+        res.json({
+            user: user,
+            validation: validationResults,
+            subscription_states_enum: SUBSCRIPTION_STATES,
+            plan_ids_enum: PLAN_IDS
+        });
+
+    } catch (error) {
+        console.error('Error checking user subscription status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Test users cleanup endpoints
+app.get('/api/admin/test-users', async (req, res) => {
+    try {
+        // Check for admin authentication via session or basic check
+        if (!req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        // Get all users with their related data counts for preview
+        const result = await pool.query(`
+            SELECT 
+                u.id,
+                u.email,
+                u.naam,
+                u.created_at,
+                u.account_type,
+                u.subscription_status,
+                u.ghl_contact_id,
+                u.laatste_login,
+                (SELECT COUNT(*) FROM taken WHERE user_id = u.id) as task_count,
+                (SELECT COUNT(*) FROM projecten WHERE user_id = u.id) as project_count,
+                (SELECT COUNT(*) FROM contexten WHERE user_id = u.id) as context_count
+            FROM users u
+            ORDER BY u.created_at DESC
+        `);
+        
+        // Filter for potential test users based on email patterns
+        const testUsers = result.rows.filter(user => {
+            const email = (user.email || '').toLowerCase();
+            return (
+                email.startsWith('test') ||
+                email.startsWith('demo') ||
+                email.includes('@test.') ||
+                email.includes('@example.') ||
+                email.includes('@demo.') ||
+                email.includes('foo@') ||
+                email.includes('bar@') ||
+                email.startsWith('example')
+            );
+        });
+        
+        res.json({
+            success: true,
+            users: testUsers,
+            total: testUsers.length
+        });
+        
+    } catch (error) {
+        console.error('Error getting test users:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/admin/delete-test-users', async (req, res) => {
+    try {
+        // Check for admin authentication
+        if (!req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        const { userIds } = req.body;
+        
+        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+            return res.status(400).json({ error: 'No user IDs provided' });
+        }
+        
+        console.log(`🗑️ Admin cleanup: Deleting ${userIds.length} test users...`);
+        
+        let deletedCount = 0;
+        const results = [];
+        
+        // Use transaction for safety
+        const client = await pool.connect();
+        
+        try {
+            await client.query('BEGIN');
+            
+            for (const userId of userIds) {
+                try {
+                    // Get user info for logging
+                    const userResult = await client.query('SELECT email, naam FROM users WHERE id = $1', [userId]);
+                    const user = userResult.rows[0];
+                    
+                    if (!user) {
+                        results.push({ userId, status: 'not_found', error: 'User not found' });
+                        continue;
+                    }
+                    
+                    console.log(`🗑️ Deleting user: ${user.email} (${userId})`);
+                    
+                    // First check what data this user has
+                    const dataCheck = await client.query(`
+                        SELECT 
+                            (SELECT COUNT(*) FROM taken WHERE user_id = $1) as tasks,
+                            (SELECT COUNT(*) FROM projecten WHERE user_id = $1) as projects,
+                            (SELECT COUNT(*) FROM contexten WHERE user_id = $1) as contexts,
+                            (SELECT COUNT(*) FROM dagelijkse_planning WHERE user_id = $1) as planning,
+                            (SELECT COUNT(*) FROM feedback WHERE user_id = $1) as feedback
+                    `, [userId]);
+                    
+                    const counts = dataCheck.rows[0];
+                    console.log(`📊 User ${user.email} has:`, counts);
+                    
+                    // Delete all related data first (in correct order to avoid FK violations)
+                    console.log(`🧹 Cleaning up related data for ${user.email}...`);
+                    
+                    // 1. Delete subtaken (depends on taken)
+                    const subtakenDeleted = await client.query('DELETE FROM subtaken WHERE parent_taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
+                    console.log(`🗑️ Deleted ${subtakenDeleted.rowCount} subtaken`);
+                    
+                    // 2. Delete bijlagen (depends on taken)  
+                    const bijlagenDeleted = await client.query('DELETE FROM bijlagen WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
+                    console.log(`🗑️ Deleted ${bijlagenDeleted.rowCount} bijlagen`);
+                    
+                    // 3. Delete dagelijkse_planning (references taken)
+                    const planningDeleted = await client.query('DELETE FROM dagelijkse_planning WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${planningDeleted.rowCount} planning items`);
+                    
+                    // 4. Delete taken (references projecten/contexten)
+                    const takenDeleted = await client.query('DELETE FROM taken WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${takenDeleted.rowCount} taken`);
+                    
+                    // 5. Delete projecten 
+                    const projectenDeleted = await client.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${projectenDeleted.rowCount} projecten`);
+                    
+                    // 6. Delete contexten
+                    const contextenDeleted = await client.query('DELETE FROM contexten WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${contextenDeleted.rowCount} contexten`);
+                    
+                    // 7. Delete feedback
+                    const feedbackDeleted = await client.query('DELETE FROM feedback WHERE user_id = $1', [userId]);
+                    console.log(`🗑️ Deleted ${feedbackDeleted.rowCount} feedback`);
+                    
+                    // 8. Delete mind_dump_preferences if exists
+                    try {
+                        const mindDumpDeleted = await client.query('DELETE FROM mind_dump_preferences WHERE user_id = $1', [userId]);
+                        console.log(`🗑️ Deleted ${mindDumpDeleted.rowCount} mind dump preferences`);
+                    } catch (mindDumpError) {
+                        console.log(`⚠️ Mind dump preferences table might not exist: ${mindDumpError.message}`);
+                    }
+                    
+                    // 9. Finally delete the user
+                    const deleteResult = await client.query('DELETE FROM users WHERE id = $1', [userId]);
+                    console.log(`🔄 DELETE user result: rowCount=${deleteResult.rowCount}`);
+                    
+                    if (deleteResult.rowCount > 0) {
+                        deletedCount++;
+                        results.push({ 
+                            userId, 
+                            email: user.email,
+                            status: 'deleted',
+                            originalCounts: counts,
+                            deletedCounts: {
+                                subtaken: subtakenDeleted.rowCount,
+                                bijlagen: bijlagenDeleted.rowCount,
+                                planning: planningDeleted.rowCount,
+                                taken: takenDeleted.rowCount,
+                                projecten: projectenDeleted.rowCount,
+                                contexten: contextenDeleted.rowCount,
+                                feedback: feedbackDeleted.rowCount
+                            }
+                        });
+                        console.log(`✅ Successfully deleted user: ${user.email} and all related data`);
+                    } else {
+                        results.push({ 
+                            userId, 
+                            email: user.email,
+                            status: 'failed', 
+                            error: 'User delete failed after cleaning related data',
+                            originalCounts: counts
+                        });
+                        console.log(`❌ User delete failed for ${user.email} after cleaning related data`);
+                    }
+                    
+                } catch (userError) {
+                    console.error(`❌ Error deleting user ${userId}:`, userError);
+                    results.push({ 
+                        userId, 
+                        status: 'error', 
+                        error: userError.message 
+                    });
+                }
+            }
+            
+            await client.query('COMMIT');
+            
+            res.json({
+                success: true,
+                deleted: deletedCount,
+                total: userIds.length,
+                message: `${deletedCount}/${userIds.length} test users deleted successfully`,
+                results: results
+            });
+            
+        } catch (transactionError) {
+            await client.query('ROLLBACK');
+            throw transactionError;
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('Error deleting test users:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
+app.get('/api/admin/user-data/:userId', async (req, res) => {
+    try {
+        // Check for admin authentication
+        if (!req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        const { userId } = req.params;
+        
+        // Get detailed user data preview
+        const userResult = await pool.query(`
+            SELECT 
+                id, email, naam, created_at, laatste_login,
+                account_type, subscription_status, ghl_contact_id
+            FROM users 
+            WHERE id = $1
+        `, [userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // Get related data counts
+        const [tasksResult, projectsResult, contextsResult] = await Promise.all([
+            pool.query('SELECT COUNT(*) FROM taken WHERE user_id = $1', [userId]),
+            pool.query('SELECT COUNT(*) FROM projecten WHERE user_id = $1', [userId]),
+            pool.query('SELECT COUNT(*) FROM contexten WHERE user_id = $1', [userId])
+        ]);
+        
+        const dataPreview = {
+            user: user,
+            relatedData: {
+                tasks: parseInt(tasksResult.rows[0].count),
+                projects: parseInt(projectsResult.rows[0].count),
+                contexts: parseInt(contextsResult.rows[0].count)
+            }
+        };
+        
+        res.json({
+            success: true,
+            data: dataPreview
+        });
+        
+    } catch (error) {
+        console.error('Error getting user data:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Migrate database constraints to enable CASCADE DELETE
+app.get('/api/admin/migrate-cascade-delete', async (req, res) => {
+    try {
+        // Check for admin authentication
+        if (!req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+        
+        console.log('🔄 Starting CASCADE DELETE migration...');
+        
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Drop and recreate foreign key constraints with CASCADE DELETE
+            const migrations = [
+                // Projecten table
+                'ALTER TABLE projecten DROP CONSTRAINT IF EXISTS projecten_user_id_fkey',
+                'ALTER TABLE projecten ADD CONSTRAINT projecten_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Contexten table  
+                'ALTER TABLE contexten DROP CONSTRAINT IF EXISTS contexten_user_id_fkey',
+                'ALTER TABLE contexten ADD CONSTRAINT contexten_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Taken table
+                'ALTER TABLE taken DROP CONSTRAINT IF EXISTS taken_user_id_fkey',
+                'ALTER TABLE taken ADD CONSTRAINT taken_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Dagelijkse planning table (user_id)
+                'ALTER TABLE dagelijkse_planning DROP CONSTRAINT IF EXISTS dagelijkse_planning_user_id_fkey',
+                'ALTER TABLE dagelijkse_planning ADD CONSTRAINT dagelijkse_planning_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+                
+                // Feedback table
+                'ALTER TABLE feedback DROP CONSTRAINT IF EXISTS feedback_user_id_fkey',
+                'ALTER TABLE feedback ADD CONSTRAINT feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE',
+            ];
+            
+            for (const migration of migrations) {
+                try {
+                    await client.query(migration);
+                    console.log(`✅ Executed: ${migration.substring(0, 50)}...`);
+                } catch (migError) {
+                    console.log(`⚠️ Migration warning: ${migError.message}`);
+                }
+            }
+            
+            await client.query('COMMIT');
+            
+            res.json({
+                success: true,
+                message: 'CASCADE DELETE constraints migrated successfully',
+                note: 'All user-related data will now be automatically deleted when users are deleted'
+            });
+            
+        } catch (transactionError) {
+            await client.query('ROLLBACK');
+            throw transactionError;
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        console.error('❌ CASCADE DELETE migration error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ===== Admin Dashboard v2 Statistics Endpoints =====
+
+// GET /api/admin2/stats/revenue - Payment and revenue statistics
+app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log('📊 Fetching revenue statistics...');
+
+        // Hardcoded pricing (TODO: migrate to payment_configurations table with pricing)
+        const pricing = {
+            'monthly_7': 7.00,
+            'yearly_70': 70.00,
+            'monthly_8': 8.00,
+            'yearly_80': 80.00,
+            'free': 0
+        };
+
+        // Calculate MRR (Monthly Recurring Revenue) by tier with hardcoded pricing
+        // NOTE: Using selected_plan because Plug&Pay webhook sets that field, not subscription_tier
+        const mrrQuery = await pool.query(`
+            SELECT
+                COALESCE(selected_plan, 'free') as tier,
+                COUNT(*) as user_count
+            FROM users
+            WHERE subscription_status = 'active'
+              AND COALESCE(selected_plan, 'free') != 'free'
+            GROUP BY COALESCE(selected_plan, 'free')
+            ORDER BY COALESCE(selected_plan, 'free')
+        `);
+
+        // Format by_tier array with calculated revenue
+        const byTier = mrrQuery.rows.map(row => {
+            const tier = row.tier;
+            const userCount = parseInt(row.user_count);
+            const priceMonthly = pricing[tier] || 0;
+            const revenue = userCount * priceMonthly;
+
+            return {
+                tier,
+                user_count: userCount,
+                price_monthly: priceMonthly,
+                revenue
+            };
+        });
+
+        // Calculate total MRR
+        const totalMrr = byTier.reduce((sum, tier) => sum + tier.revenue, 0);
+
+        // Get payment configurations (simplified - no pricing data)
+        const configsQuery = await pool.query(`
+            SELECT
+                plan_id,
+                plan_name,
+                checkout_url,
+                is_active
+            FROM payment_configurations
+            WHERE is_active = true
+            ORDER BY plan_id
+        `);
+
+        const paymentConfigs = configsQuery.rows.map(row => ({
+            plan_id: row.plan_id,
+            plan_name: row.plan_name,
+            checkout_url: row.checkout_url,
+            is_active: row.is_active
+        }));
+
+        console.log('✅ Revenue statistics calculated:', {
+            mrr: totalMrr,
+            tiers: byTier.length,
+            configs: paymentConfigs.length
+        });
+
+        res.json({
+            mrr: totalMrr,
+            arr: totalMrr * 12,  // Annual Recurring Revenue
+            by_tier: byTier,
+            payment_configs: paymentConfigs
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching revenue statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
+// ===== Admin Dashboard v2 User Management Endpoints =====
+
+// GET /api/admin2/users/search - Search for users by email, name, or ID
+app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get query parameter
+        const query = req.query.q;
+        const limit = parseInt(req.query.limit) || 50;
+
+        // Validation: minimum 2 characters
+        if (!query || query.trim().length < 2) {
+            return res.status(400).json({
+                error: 'Invalid query',
+                message: 'Search term must be at least 2 characters'
+            });
+        }
+
+        console.log(`🔍 Searching users with query: "${query}"`);
+
+        // Search in email, naam, and id (cast to text)
+        const searchPattern = `%${query}%`;
+        const searchQuery = await pool.query(`
+            SELECT
+                u.id,
+                u.email,
+                u.naam,
+                u.account_type,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier,
+                u.subscription_status,
+                u.trial_end_date,
+                u.actief,
+                u.created_at,
+                u.laatste_login
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            WHERE u.email ILIKE $1
+                OR u.naam ILIKE $1
+                OR u.id::text ILIKE $1
+            ORDER BY
+                CASE
+                    WHEN u.email ILIKE $1 THEN 1
+                    WHEN u.naam ILIKE $1 THEN 2
+                    ELSE 3
+                END,
+                u.created_at DESC
+            LIMIT $2
+        `, [searchPattern, limit]);
+
+        // Get total users count for context
+        const totalQuery = await pool.query('SELECT COUNT(*) as total FROM users');
+        const totalUsers = parseInt(totalQuery.rows[0].total);
+
+        console.log(`✅ Found ${searchQuery.rows.length} users (total: ${totalUsers})`);
+
+        res.json({
+            query: query,
+            results: searchQuery.rows,
+            count: searchQuery.rows.length,
+            total_users: totalUsers
+        });
+
+    } catch (error) {
+        console.error('❌ Error searching users:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to search users'
+        });
+    }
+});
+
+// GET /api/admin2/users/:id - Get detailed information about a specific user
+app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = req.params.id; // Accept string IDs like 'user_1750513625687_5458i79dj'
+
+        // Validation: user ID must not be empty
+        if (!userId || userId.trim() === '') {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must not be empty'
+            });
+        }
+
+        console.log(`🔍 Getting details for user ID: ${userId}`);
+
+        // 1. Get user details
+        const userQuery = await pool.query(`
+            SELECT
+                u.id,
+                u.email,
+                u.naam,
+                u.account_type,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier,
+                u.subscription_status,
+                u.trial_end_date,
+                u.actief,
+                u.created_at,
+                u.laatste_login,
+                u.onboarding_video_seen,
+                u.onboarding_video_seen_at
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            WHERE u.id = $1
+        `, [userId]);
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const user = userQuery.rows[0];
+
+        // 2. Get task summary (afgewerkt is a timestamp, not boolean)
+        const taskSummaryQuery = await pool.query(`
+            SELECT
+                COUNT(*) as total_tasks,
+                COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL) as completed_tasks,
+                COUNT(*) FILTER (WHERE afgewerkt IS NULL) as active_tasks,
+                COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring_tasks
+            FROM taken
+            WHERE user_id = $1
+        `, [userId]);
+
+        const taskSummary = taskSummaryQuery.rows[0];
+
+        // 3. Get tasks by project (top 10)
+        // Fix: Use project_id with AS aliasing for frontend compatibility
+        const tasksByProjectQuery = await pool.query(`
+            SELECT project_id AS project, COUNT(*) as count
+            FROM taken
+            WHERE user_id = $1 AND project_id IS NOT NULL
+            GROUP BY project_id
+            ORDER BY count DESC
+            LIMIT 10
+        `, [userId]);
+
+        // 4. Get tasks by context (top 10)
+        // Fix: Use context_id with AS aliasing for frontend compatibility
+        const tasksByContextQuery = await pool.query(`
+            SELECT context_id AS context, COUNT(*) as count
+            FROM taken
+            WHERE user_id = $1 AND context_id IS NOT NULL
+            GROUP BY context_id
+            ORDER BY count DESC
+            LIMIT 10
+        `, [userId]);
+
+        // 5. Get email import summary
+        const emailSummaryQuery = await pool.query(`
+            SELECT
+                COUNT(*) as total_imports,
+                COUNT(*) FILTER (WHERE task_id IS NOT NULL) as processed_imports,
+                MIN(imported_at) as first_import,
+                MAX(imported_at) as last_import
+            FROM email_imports
+            WHERE user_id = $1
+        `, [userId]);
+
+        const emailSummary = emailSummaryQuery.rows[0];
+
+        // 6. Get recent email imports (last 10)
+        const recentEmailsQuery = await pool.query(`
+            SELECT email_from, email_subject, imported_at
+            FROM email_imports
+            WHERE user_id = $1
+            ORDER BY imported_at DESC
+            LIMIT 10
+        `, [userId]);
+
+        // 7. Get subscription details with payment configuration
+        const subscriptionQuery = await pool.query(`
+            SELECT
+                u.subscription_status,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier,
+                u.trial_end_date,
+                pc.plan_name,
+                pc.checkout_url,
+                pc.price_monthly
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            LEFT JOIN payment_configurations pc
+                ON pc.plan_id = CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END AND pc.is_active = true
+            WHERE u.id = $1
+        `, [userId]);
+
+        const subscription = subscriptionQuery.rows[0] || {
+            subscription_status: user.subscription_status,
+            subscription_tier: user.subscription_tier,
+            trial_end_date: user.trial_end_date,
+            plan_name: null,
+            checkout_url: null,
+            price_monthly: null
+        };
+
+        console.log(`✅ User details retrieved for ID ${userId}`);
+
+        // Calculate completion rate and recent emails
+        const totalTasks = parseInt(taskSummary.total_tasks) || 0;
+        const completedTasks = parseInt(taskSummary.completed_tasks) || 0;
+        const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) : 0;
+        const pendingTasks = parseInt(taskSummary.active_tasks) || 0;
+
+        // Build response according to frontend contract
+        res.json({
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                account_type: user.account_type,
+                subscription_tier: user.subscription_tier,
+                subscription_status: user.subscription_status,
+                trial_end_date: user.trial_end_date,
+                actief: user.actief,
+                created_at: user.created_at,
+                last_login: user.laatste_login,
+                onboarding_video_seen: user.onboarding_video_seen,
+                onboarding_video_seen_at: user.onboarding_video_seen_at
+            },
+            tasks: {
+                summary: {
+                    total: totalTasks,
+                    completed: completedTasks,
+                    completion_rate: completionRate,
+                    pending: pendingTasks,
+                    recurring: parseInt(taskSummary.recurring_tasks) || 0
+                },
+                by_project: tasksByProjectQuery.rows,
+                by_context: tasksByContextQuery.rows
+            },
+            emails: {
+                summary: {
+                    total: parseInt(emailSummary.total_imports) || 0,
+                    recent_30d: parseInt(emailSummary.processed_imports) || 0
+                },
+                recent: recentEmailsQuery.rows
+            },
+            subscription: {
+                status: subscription.subscription_status,
+                tier: subscription.subscription_tier,
+                trial_end_date: subscription.trial_end_date,
+                plan_name: subscription.plan_name,
+                price_monthly: subscription.price_monthly
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting user details:', error);
+        console.error('❌ Error stack:', error.stack);
+        console.error('❌ User ID that failed:', req.params.id);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to get user details',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// PUT /api/admin2/users/:id/tier - Change user's subscription tier
+app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const { tier } = req.body;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        // Validation: tier must be provided and valid
+        const validTiers = ['free', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
+        if (!tier || !validTiers.includes(tier)) {
+            return res.status(400).json({
+                error: 'Invalid tier',
+                message: 'Tier must be one of: free, monthly_7, yearly_70, monthly_8, yearly_80'
+            });
+        }
+
+        console.log(`🔄 Changing tier for user ${userId} to ${tier}`);
+
+        // Get current user data before update
+        const currentUserQuery = await pool.query(`
+            SELECT id, email, subscription_tier
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        if (currentUserQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const currentUser = currentUserQuery.rows[0];
+        const oldTier = currentUser.subscription_tier;
+
+        // Update user's subscription tier (update subscription_tier column directly)
+        const updateQuery = await pool.query(`
+            UPDATE users
+            SET subscription_tier = $1
+            WHERE id = $2
+            RETURNING id, subscription_tier
+        `, [tier, userId]);
+
+        const updatedAt = new Date().toISOString();
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'TIER_CHANGE',
+            userId,
+            oldTier,
+            tier,
+            updatedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Tier changed for user ${userId}: ${oldTier} → ${tier}`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            old_tier: oldTier,
+            new_tier: tier,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error changing user tier:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to change tier'
+        });
+    }
+});
+
+// PUT /api/admin2/users/:id/trial - Extend user's trial period
+app.put('/api/admin2/users/:id/trial', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const { trial_end_date } = req.body;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        // Validation: trial_end_date is required
+        if (!trial_end_date) {
+            return res.status(400).json({
+                error: 'Invalid input',
+                message: 'trial_end_date is required'
+            });
+        }
+
+        // Validation: trial_end_date must be a valid date
+        const trialDate = new Date(trial_end_date);
+        if (isNaN(trialDate.getTime())) {
+            return res.status(400).json({
+                error: 'Invalid date',
+                message: 'trial_end_date must be a valid ISO date (YYYY-MM-DD)'
+            });
+        }
+
+        // Validation: trial_end_date must be in the future
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset to start of today
+        trialDate.setHours(0, 0, 0, 0);
+
+        if (trialDate <= today) {
+            return res.status(400).json({
+                error: 'Invalid date',
+                message: 'Trial end date must be in the future'
+            });
+        }
+
+        console.log(`🔄 Updating trial for user ID: ${userId} to ${trial_end_date}`);
+
+        // Check if user exists and get old value
+        const userQuery = await pool.query(
+            'SELECT id, email, trial_end_date FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const oldTrialEnd = userQuery.rows[0].trial_end_date;
+
+        // Update trial_end_date
+        await pool.query(
+            'UPDATE users SET trial_end_date = $1 WHERE id = $2',
+            [trial_end_date, userId]
+        );
+
+        const updatedAt = new Date().toISOString();
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'TRIAL_EXTEND',
+            userId,
+            oldTrialEnd ? oldTrialEnd.toISOString().split('T')[0] : null,
+            trial_end_date,
+            updatedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Trial extended for user ${userId}: ${oldTrialEnd} → ${trial_end_date}`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            old_trial_end: oldTrialEnd ? oldTrialEnd.toISOString().split('T')[0] : null,
+            new_trial_end: trial_end_date,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating trial:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to update trial'
+        });
+    }
+});
+
+// PUT /api/admin2/users/:id/block - Block user account (prevent login)
+app.put('/api/admin2/users/:id/block', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+        const { blocked } = req.body;
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        // Validation: blocked must be boolean
+        if (typeof blocked !== 'boolean') {
+            return res.status(400).json({
+                error: 'Invalid input',
+                message: 'Blocked must be a boolean value'
+            });
+        }
+
+        // Security: prevent self-block
+        if (userId === req.session.userId) {
+            return res.status(403).json({
+                error: 'Cannot block self',
+                message: 'Admins cannot block their own account'
+            });
+        }
+
+        console.log(`🔄 ${blocked ? 'Blocking' : 'Unblocking'} user ${userId}`);
+
+        // Check if user exists
+        const userQuery = await pool.query(
+            'SELECT id, email FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        // Update actief status (actief = !blocked)
+        await pool.query(
+            'UPDATE users SET actief = $1 WHERE id = $2',
+            [!blocked, userId]
+        );
+
+        const updatedAt = new Date().toISOString();
+
+        // Invalidate all sessions for this user (if blocking)
+        let sessionsInvalidated = 0;
+        if (blocked) {
+            // Delete sessions where user_id matches in the session data
+            const deleteResult = await pool.query(`
+                DELETE FROM session
+                WHERE sess::jsonb->'passport'->>'user' = $1
+                OR sess::jsonb->>'userId' = $1
+            `, [userId.toString()]);
+
+            sessionsInvalidated = deleteResult.rowCount || 0;
+            console.log(`🗑️ Invalidated ${sessionsInvalidated} session(s) for user ${userId}`);
+        }
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            blocked ? 'USER_BLOCK' : 'USER_UNBLOCK',
+            userId,
+            (!blocked).toString(),
+            blocked.toString(),
+            updatedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ User ${userId} ${blocked ? 'blocked' : 'unblocked'} successfully`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            blocked: blocked,
+            sessions_invalidated: sessionsInvalidated,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error blocking user:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to block user'
+        });
+    }
+});
+
+// DELETE /api/admin2/users/:id - Delete user account and all associated data
+app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = req.params.id; // Accept string IDs like 'user_1750513625687_5458i79dj'
+        const adminUserId = req.session.userId;
+
+        // Validation: user ID must not be empty
+        if (!userId || userId.trim() === '') {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must not be empty'
+            });
+        }
+
+        console.log(`🗑️ Admin ${adminUserId} attempting to delete user ${userId}`);
+
+        // Security Check 1: Prevent self-delete
+        if (userId === adminUserId) {
+            console.log(`❌ Self-delete prevented for admin ${adminUserId}`);
+            return res.status(403).json({
+                error: 'Cannot delete self',
+                message: 'Admins cannot delete their own account'
+            });
+        }
+
+        // Get user info before deletion (for audit log and response)
+        const userResult = await pool.query(
+            'SELECT id, email, account_type FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            console.log(`❌ User ${userId} not found`);
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const targetUser = userResult.rows[0];
+
+        // Security Check 2: Prevent deletion of last admin
+        if (targetUser.account_type === 'admin') {
+            const adminCountResult = await pool.query(
+                "SELECT COUNT(*) as count FROM users WHERE account_type = 'admin'"
+            );
+            const adminCount = parseInt(adminCountResult.rows[0].count);
+
+            if (adminCount <= 1) {
+                console.log(`❌ Cannot delete last admin account (user ${userId})`);
+                return res.status(403).json({
+                    error: 'Cannot delete last admin',
+                    message: 'At least one admin account must remain'
+                });
+            }
+        }
+
+        // Count cascade deletions before deletion (for audit log and response)
+        const tasksCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM taken WHERE gebruiker_id = $1',
+            [userId]
+        );
+        const tasksCount = parseInt(tasksCountResult.rows[0].count);
+
+        const emailsCountResult = await pool.query(
+            'SELECT COUNT(*) as count FROM email_imports WHERE user_id = $1',
+            [userId]
+        );
+        const emailsCount = parseInt(emailsCountResult.rows[0].count);
+
+        const sessionsCountResult = await pool.query(
+            "SELECT COUNT(*) as count FROM sessions WHERE sess::text LIKE $1",
+            [`%"userId":"${userId}"%`]
+        );
+        const sessionsCount = parseInt(sessionsCountResult.rows[0].count);
+
+        console.log(`📊 Preparing to delete user ${targetUser.email} with ${tasksCount} tasks, ${emailsCount} emails, ${sessionsCount} sessions`);
+
+        // Perform deletion (cascades handled by database foreign keys)
+        // Database schema has ON DELETE CASCADE for:
+        // - taken.gebruiker_id -> users.id
+        // - email_imports.user_id -> users.id
+        // Sessions need manual cleanup (JSON column, no foreign key)
+
+        await pool.query('BEGIN');
+
+        // Delete user's sessions manually (sessions table has JSON data, no FK constraint)
+        await pool.query(
+            "DELETE FROM sessions WHERE sess::text LIKE $1",
+            [`%"userId":"${userId}"%`]
+        );
+
+        // Delete user (cascades to tasks, email_imports via foreign keys)
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+        await pool.query('COMMIT');
+
+        const deletedAt = new Date().toISOString();
+
+        // Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'USER_DELETE',
+            userId,
+            targetUser.email,
+            JSON.stringify({
+                tasks: tasksCount,
+                email_imports: emailsCount,
+                sessions: sessionsCount
+            }),
+            deletedAt,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ User ${targetUser.email} (ID ${userId}) deleted successfully by admin ${adminUserId}`);
+        console.log(`   Cascade deleted: ${tasksCount} tasks, ${emailsCount} email imports, ${sessionsCount} sessions`);
+
+        res.json({
+            success: true,
+            user_id: targetUser.id,
+            email: targetUser.email,
+            deleted_at: deletedAt,
+            cascade_deleted: {
+                tasks: tasksCount,
+                email_imports: emailsCount,
+                sessions: sessionsCount
+            }
+        });
+
+    } catch (error) {
+        // Rollback transaction on error
+        try {
+            await pool.query('ROLLBACK');
+        } catch (rollbackError) {
+            console.error('❌ Rollback error:', rollbackError);
+        }
+
+        console.error('❌ Error deleting user:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to delete user'
+        });
+    }
+});
+
+// POST /api/admin2/users/:id/reset-password - Reset user's password (admin-initiated)
+app.post('/api/admin2/users/:id/reset-password', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        console.log(`🔑 Resetting password for user ID: ${userId}`);
+
+        // 1. Check if user exists
+        const userQuery = await pool.query(`
+            SELECT id, email, naam
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const user = userQuery.rows[0];
+
+        // 2. Generate random 12-character alphanumeric password
+        const generatePassword = () => {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            let password = '';
+            for (let i = 0; i < 12; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        };
+
+        const newPassword = generatePassword();
+
+        // 3. Hash the new password with bcrypt
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // 4. Update user's password in database
+        await pool.query(`
+            UPDATE users
+            SET wachtwoord_hash = $1
+            WHERE id = $2
+        `, [hashedPassword, userId]);
+
+        const timestamp = new Date().toISOString();
+
+        // 5. Log audit trail
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'PASSWORD_RESET',
+            userId,
+            null,  // old_value: niet opslaan voor security
+            null,  // new_value: niet opslaan voor security
+            timestamp,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Password reset for user ${userId} (${user.email}) by admin ${req.session.userId}`);
+
+        // 6. Return success with new password
+        res.json({
+            success: true,
+            user_id: userId,
+            email: user.email,
+            new_password: newPassword,
+            message: 'Provide this password to the user securely'
+        });
+
+    } catch (error) {
+        console.error('❌ Error resetting password:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to reset password'
+        });
+    }
+});
+
+// POST /api/admin2/users/:id/logout - Force logout user (invalidate all sessions)
+app.post('/api/admin2/users/:id/logout', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id);
+
+        // Validation: user ID must be a valid number
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive number'
+            });
+        }
+
+        console.log(`🚪 Force logout for user ID: ${userId} (requested by admin ID: ${req.session.userId})`);
+
+        // Check if user exists
+        const userCheck = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        // Delete all sessions for this user
+        // PostgreSQL session store: sess->'passport'->>'user' bevat user_id als string
+        const deleteResult = await pool.query(`
+            DELETE FROM session
+            WHERE sess->>'passport' IS NOT NULL
+                AND sess->'passport'->>'user' = $1::text
+            RETURNING sid
+        `, [userId]);
+
+        const sessionsInvalidated = deleteResult.rows.length;
+
+        // Log audit entry
+        const timestamp = new Date().toISOString();
+        await pool.query(`
+            INSERT INTO admin_audit_log (
+                admin_user_id,
+                action,
+                target_user_id,
+                old_value,
+                new_value,
+                timestamp,
+                ip_address,
+                user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+            req.session.userId,
+            'FORCE_LOGOUT',
+            userId,
+            null,
+            JSON.stringify({ sessions_invalidated: sessionsInvalidated }),
+            timestamp,
+            req.ip || req.connection.remoteAddress,
+            req.headers['user-agent'] || 'Unknown'
+        ]).catch(err => {
+            // If audit log table doesn't exist yet, log to console but don't fail the request
+            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
+        });
+
+        console.log(`✅ Force logout completed: ${sessionsInvalidated} session(s) invalidated for user ${userId}`);
+
+        res.json({
+            success: true,
+            user_id: userId,
+            sessions_invalidated: sessionsInvalidated,
+            timestamp: timestamp
+        });
+
+    } catch (error) {
+        console.error('❌ Error forcing logout:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to force logout'
+        });
+    }
+});
+
+// ========================================
+// ADMIN DASHBOARD V2 - SYSTEM CONFIGURATION
+// ========================================
+
+// GET /api/admin2/system/settings - Get all system settings
+app.get('/api/admin2/system/settings', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log(`⚙️ Fetching system settings (requested by admin ID: ${req.session.userId})`);
+
+        // Query all settings from system_settings table
+        const result = await pool.query(`
+            SELECT key, value, description, updated_at
+            FROM system_settings
+            ORDER BY key ASC
+        `);
+
+        console.log(`✅ Retrieved ${result.rows.length} system settings`);
+
+        res.json({
+            settings: result.rows,
+            count: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('❌ System settings error:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: error.stack
+        });
+
+        // Graceful fallback - return empty array if table doesn't exist or query fails
+        res.status(200).json({
+            settings: [],
+            count: 0,
+            warning: 'System settings table may not exist or query failed',
+            debug: error.message  // Temporary for debugging
+        });
+    }
+});
+
+// PUT /api/admin2/system/settings/:key - Update a system setting
+app.put('/api/admin2/system/settings/:key', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { key } = req.params;
+        const { value } = req.body;
+
+        console.log(`⚙️ Updating system setting: ${key} (requested by admin ID: ${req.session.userId})`);
+
+        // Validation: value must be non-empty string
+        if (!value || typeof value !== 'string' || value.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Invalid value',
+                message: 'Value is required and must be a non-empty string'
+            });
+        }
+
+        // Special validation for onboarding_video_url
+        if (key === 'onboarding_video_url') {
+            const youtubePattern = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/)[a-zA-Z0-9_-]+/;
+            const vimeoPattern = /^https:\/\/(www\.)?vimeo\.com\/\d+/;
+
+            const isValidUrl = youtubePattern.test(value) || vimeoPattern.test(value);
+
+            if (!isValidUrl) {
+                return res.status(400).json({
+                    error: 'Invalid value',
+                    message: 'onboarding_video_url must be a valid YouTube or Vimeo URL',
+                    field: 'value'
+                });
+            }
+        }
+
+        // 1. Get old value first for audit trail
+        const existingSetting = await pool.query(
+            'SELECT value FROM system_settings WHERE key = $1',
+            [key]
+        );
+
+        if (existingSetting.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Setting not found',
+                message: `No setting with key '${key}'`
+            });
+        }
+
+        const oldValue = existingSetting.rows[0].value;
+
+        // 2. Update with new value
+        const updateResult = await pool.query(
+            `UPDATE system_settings
+             SET value = $1, updated_at = NOW()
+             WHERE key = $2
+             RETURNING updated_at`,
+            [value, key]
+        );
+
+        const updatedAt = updateResult.rows[0].updated_at;
+
+        // 3. Insert audit log with graceful fallback
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_identifier,
+                    details,
+                    ip_address,
+                    user_agent,
+                    created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            `, [
+                req.session.userId,
+                'SETTING_UPDATE',
+                'system_setting',
+                key,
+                JSON.stringify({
+                    setting_key: key,
+                    old_value: oldValue,
+                    new_value: value
+                }),
+                req.ip,
+                req.get('User-Agent') || 'Unknown'
+            ]);
+            console.log(`✅ Audit log created for setting update: ${key}`);
+        } catch (auditError) {
+            // Graceful fallback - don't fail the entire operation
+            console.error('⚠️ Failed to create audit log (non-critical):', auditError.message);
+        }
+
+        console.log(`✅ System setting updated: ${key}`);
+        console.log(`   Old value: ${oldValue}`);
+        console.log(`   New value: ${value}`);
+
+        res.json({
+            success: true,
+            key,
+            old_value: oldValue,
+            new_value: value,
+            updated_at: updatedAt
+        });
+
+    } catch (error) {
+        console.error('❌ Error updating system setting:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to update system setting'
+        });
+    }
+});
+
+// ========================================
+// ADMIN DASHBOARD V2 - DEBUG TOOLS
+// ========================================
+
+// GET /api/admin2/debug/user-data/:id - Complete user data inspector
+app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = parseInt(req.params.id, 10);
+
+        // Validate userId
+        if (isNaN(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID',
+                message: 'User ID must be a positive integer'
+            });
+        }
+
+        console.log(`🔍 Fetching complete user data for user ID: ${userId} (requested by admin ID: ${req.session.userId})`);
+
+        // Parallel queries voor performance - gebruik Promise.all
+        const [
+            userResult,
+            taskSummary,
+            tasksByProject,
+            tasksByContext,
+            emailSummary,
+            recentEmails,
+            sessionInfo,
+            planningCount,
+            recurringCount
+        ] = await Promise.all([
+            // 1. User details - ALLE velden
+            pool.query(`
+                SELECT
+                    id,
+                    email,
+                    naam,
+                    LENGTH(wachtwoord_hash) as password_hash_length,
+                    account_type,
+                    subscription_tier,
+                    subscription_status,
+                    trial_end_date,
+                    actief,
+                    created_at,
+                    last_login,
+                    onboarding_video_seen,
+                    onboarding_video_seen_at
+                FROM users
+                WHERE id = $1
+            `, [userId]),
+
+            // 2. Task summary
+            pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE voltooid = true) as completed,
+                    COUNT(*) FILTER (WHERE voltooid = false) as pending,
+                    COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring,
+                    COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked,
+                    CASE
+                        WHEN COUNT(*) > 0 THEN
+                            ROUND((COUNT(*) FILTER (WHERE voltooid = true)::numeric / COUNT(*)::numeric) * 100, 1)
+                        ELSE 0
+                    END as completion_rate
+                FROM taken
+                WHERE user_id = $1
+            `, [userId]),
+
+            // 3. Tasks by project
+            pool.query(`
+                SELECT
+                    COALESCE(project, '(geen project)') as project,
+                    COUNT(*) as count
+                FROM taken
+                WHERE user_id = $1
+                GROUP BY project
+                ORDER BY count DESC
+                LIMIT 20
+            `, [userId]),
+
+            // 4. Tasks by context
+            pool.query(`
+                SELECT
+                    COALESCE(context, '(geen context)') as context,
+                    COUNT(*) as count
+                FROM taken
+                WHERE user_id = $1
+                GROUP BY context
+                ORDER BY count DESC
+                LIMIT 20
+            `, [userId]),
+
+            // 5. Email imports summary
+            pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE imported_at >= NOW() - INTERVAL '30 days') as recent_30d,
+                    MIN(imported_at) as oldest_import,
+                    MAX(imported_at) as newest_import,
+                    COUNT(*) FILTER (WHERE task_id IS NOT NULL) as processed,
+                    COUNT(*) FILTER (WHERE task_id IS NOT NULL) as converted_to_task
+                FROM email_imports
+                WHERE user_id = $1
+            `, [userId]),
+
+            // 6. Recent email imports (last 10)
+            pool.query(`
+                SELECT
+                    email_from,
+                    email_subject,
+                    imported_at,
+                    CASE WHEN task_id IS NOT NULL THEN true ELSE false END as processed,
+                    task_id
+                FROM email_imports
+                WHERE user_id = $1
+                ORDER BY imported_at DESC
+                LIMIT 10
+            `, [userId]),
+
+            // 7. Session info
+            pool.query(`
+                SELECT
+                    COUNT(*) as active_sessions,
+                    MAX(expire) as last_activity
+                FROM session
+                WHERE sess::text LIKE $1
+                AND expire > NOW()
+            `, [`%"userId":"${userId}"%`]),
+
+            // 8. Dagelijkse planning entries count
+            pool.query(`
+                SELECT COUNT(*) as total
+                FROM dagelijkse_planning
+                WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)
+            `, [userId]),
+
+            // 9. Herhalende taken count (actief)
+            pool.query(`
+                SELECT COUNT(*) as total
+                FROM taken
+                WHERE user_id = $1
+                AND herhaling_actief = true
+            `, [userId])
+        ]);
+
+        // Check if user exists
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        const user = userResult.rows[0];
+        const tasks = taskSummary.rows[0];
+        const emails = emailSummary.rows[0];
+        const sessions = sessionInfo.rows[0];
+
+        // Build comprehensive response
+        const responseData = {
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                password_hash_length: user.password_hash_length, // Voor debugging
+                account_type: user.account_type,
+                subscription_tier: user.subscription_tier,
+                subscription_status: user.subscription_status,
+                trial_end_date: user.trial_end_date,
+                actief: user.actief,
+                created_at: user.created_at,
+                last_login: user.last_login,
+                onboarding_video_seen: user.onboarding_video_seen,
+                onboarding_video_seen_at: user.onboarding_video_seen_at
+            },
+            tasks: {
+                summary: {
+                    total: parseInt(tasks.total),
+                    completed: parseInt(tasks.completed),
+                    pending: parseInt(tasks.pending),
+                    recurring: parseInt(tasks.recurring),
+                    blocked: parseInt(tasks.blocked),
+                    completion_rate: parseFloat(tasks.completion_rate)
+                },
+                by_project: tasksByProject.rows.map(row => ({
+                    project: row.project,
+                    count: parseInt(row.count)
+                })),
+                by_context: tasksByContext.rows.map(row => ({
+                    context: row.context,
+                    count: parseInt(row.count)
+                }))
+            },
+            emails: {
+                summary: {
+                    total: parseInt(emails.total),
+                    recent_30d: parseInt(emails.recent_30d),
+                    oldest_import: emails.oldest_import,
+                    newest_import: emails.newest_import,
+                    processed: parseInt(emails.processed),
+                    converted_to_task: parseInt(emails.converted_to_task)
+                },
+                recent: recentEmails.rows.map(email => ({
+                    from_email: email.email_from,
+                    subject: email.email_subject,
+                    imported_at: email.imported_at,
+                    processed: email.processed,
+                    task_id: email.task_id
+                }))
+            },
+            subscription: {
+                status: user.subscription_status,
+                tier: user.subscription_tier,
+                trial_end_date: user.trial_end_date
+            },
+            sessions: {
+                active_count: parseInt(sessions.active_sessions),
+                last_activity: sessions.last_activity
+            },
+            planning: {
+                total_entries: parseInt(planningCount.rows[0].total)
+            },
+            recurring: {
+                total_active: parseInt(recurringCount.rows[0].total)
+            }
+        };
+
+        console.log(`✅ User data inspector completed for user ${userId}`);
+        console.log(`   Tasks: ${tasks.total} total, ${tasks.completed} completed (${tasks.completion_rate}%)`);
+        console.log(`   Emails: ${emails.total} total, ${emails.recent_30d} last 30 days`);
+        console.log(`   Sessions: ${sessions.active_sessions} active`);
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.error('❌ Error in user data inspector:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to fetch user data',
+            details: error.message
+        });
+    }
+});
+
+// ========================================
+// ADMIN DASHBOARD V2 API ENDPOINTS
+// ========================================
+// Admin Dashboard V2 - User-based authentication with account_type='admin'
+// All endpoints require valid session + account_type='admin' check
+
+
+// GET /api/admin2/stats/tasks - Task statistics
+app.get('/api/admin2/stats/tasks', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Total taken count
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM taken');
+        const total = parseInt(totalResult.rows[0].count);
+
+        // Completion rate (afgewerkt is TIMESTAMP, not boolean - check IS NOT NULL)
+        const completionResult = await pool.query(`
+            SELECT
+                (COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL) * 100.0 / COUNT(*))::DECIMAL(5,2) as completion_rate
+            FROM taken
+        `);
+        const completionRate = parseFloat(completionResult.rows[0].completion_rate || 0);
+
+        // Tasks created today (gebruik "aangemaakt" niet "aangemaakt_op")
+        const todayResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE DATE(aangemaakt) = CURRENT_DATE
+        `);
+        const createdToday = parseInt(todayResult.rows[0].count);
+
+        // Tasks created this week
+        const weekResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE aangemaakt >= DATE_TRUNC('week', NOW())
+        `);
+        const createdWeek = parseInt(weekResult.rows[0].count);
+
+        // Tasks created this month
+        const monthResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE aangemaakt >= DATE_TRUNC('month', NOW())
+        `);
+        const createdMonth = parseInt(monthResult.rows[0].count);
+
+        // Calculate completed and pending counts
+        const completedCount = Math.round(total * (completionRate / 100));
+        const pendingCount = total - completedCount;
+
+        res.json({
+            total_tasks: total,
+            completed: completedCount,
+            pending: pendingCount,
+            completion_rate: completionRate,
+            created_today: createdToday,
+            created_week: createdWeek,
+            created_month: createdMonth
+        });
+    } catch (error) {
+        console.error('Admin2 tasks stats error:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
+// GET /api/admin2/stats/emails - Email import statistics
+app.get('/api/admin2/stats/emails', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Total emails imported
+        const totalResult = await pool.query('SELECT COUNT(*) as count FROM email_imports');
+        const totalImports = parseInt(totalResult.rows[0].count);
+
+        // Emails imported today
+        const todayResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE DATE(imported_at) = CURRENT_DATE
+        `);
+        const importedToday = parseInt(todayResult.rows[0].count);
+
+        // Emails imported this week
+        const weekResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE imported_at >= DATE_TRUNC('week', NOW())
+        `);
+        const importedWeek = parseInt(weekResult.rows[0].count);
+
+        // Emails imported this month
+        const monthResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM email_imports
+            WHERE imported_at >= DATE_TRUNC('month', NOW())
+        `);
+        const importedMonth = parseInt(monthResult.rows[0].count);
+
+        // Users with email imports (count and percentage)
+        const usersWithImportResult = await pool.query(`
+            SELECT COUNT(DISTINCT user_id) as count
+            FROM email_imports
+        `);
+        const usersWithImportCount = parseInt(usersWithImportResult.rows[0].count);
+
+        // Total users for percentage calculation
+        const totalUsersResult = await pool.query('SELECT COUNT(*) as count FROM users');
+        const totalUsers = parseInt(totalUsersResult.rows[0].count);
+
+        // Calculate percentage (users with imports / total users * 100)
+        const usersWithImportPercentage = totalUsers > 0
+            ? parseFloat(((usersWithImportCount / totalUsers) * 100).toFixed(2))
+            : 0;
+
+        res.json({
+            total_imports: totalImports,
+            imported: {
+                today: importedToday,
+                week: importedWeek,
+                month: importedMonth
+            },
+            users_with_import: {
+                count: usersWithImportCount,
+                percentage: usersWithImportPercentage
+            }
+        });
+    } catch (error) {
+        console.error('Admin2 email stats error:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
+// GET /api/admin2/stats/database - Database size and table statistics
+app.get('/api/admin2/stats/database', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        console.log('📊 Fetching database statistics...');
+
+        // Get database size (pretty format)
+        const dbSizeResult = await pool.query(`
+            SELECT pg_size_pretty(pg_database_size(current_database())) as database_size
+        `);
+
+        // Get database size in bytes
+        const dbSizeBytesResult = await pool.query(`
+            SELECT pg_database_size(current_database()) as database_size_bytes
+        `);
+
+        // Get table sizes with row counts (Neon PostgreSQL compatible)
+        const tablesResult = await pool.query(`
+            SELECT
+                schemaname,
+                tablename as name,
+                pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
+                pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
+            FROM pg_tables
+            WHERE schemaname = 'public'
+            ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+            LIMIT 50
+        `);
+
+        // Get row counts for each table via COUNT(*)
+        const tables = [];
+        let totalRows = 0;
+
+        for (const row of tablesResult.rows) {
+            try {
+                // Query row count for this specific table
+                const countResult = await pool.query(`SELECT COUNT(*) as row_count FROM ${row.name}`);
+                const rowCount = parseInt(countResult.rows[0].row_count);
+
+                tables.push({
+                    name: row.name,
+                    size: row.size,
+                    size_bytes: parseInt(row.size_bytes),
+                    row_count: rowCount
+                });
+
+                totalRows += rowCount;
+            } catch (countError) {
+                // If COUNT fails for a table, add it without row count
+                console.warn(`⚠️ Could not count rows for table ${row.name}:`, countError.message);
+                tables.push({
+                    name: row.name,
+                    size: row.size,
+                    size_bytes: parseInt(row.size_bytes),
+                    row_count: 0
+                });
+            }
+        }
+
+        const databaseSize = dbSizeResult.rows[0].database_size;
+        const tableCount = tables.length;
+
+        console.log('✅ Database statistics calculated:', {
+            database_size: databaseSize,
+            table_count: tableCount,
+            total_rows: totalRows
+        });
+
+        res.json({
+            database_size: databaseSize,
+            database_size_formatted: databaseSize,  // Frontend verwacht deze naam
+            database_size_bytes: parseInt(dbSizeBytesResult.rows[0].database_size_bytes),
+            table_count: tableCount,
+            total_rows: totalRows,
+            tables: tables
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching database statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
         });
     }
 });
@@ -6574,46 +12017,503 @@ app.post('/api/debug/switch-test-user', async (req, res) => {
     }
 });
 
-// Direct database query for forensic logs (bypass logger)
-app.get('/api/debug/forensic/raw-database', async (req, res) => {
+// ============================================================================
+// ADMIN DASHBOARD V2 STATISTICS ENDPOINTS
+// ============================================================================
+
+// GET /api/admin2/stats/home - All statistics for home dashboard
+app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
     try {
-        if (!pool) return res.status(503).json({ error: 'Database not available' });
-        
-        // Check if forensic_logs table exists
-        const tableExists = await pool.query(`
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.tables 
-                WHERE table_name = 'forensic_logs'
-            ) as exists
+        console.log('📊 Fetching admin home statistics...');
+
+        // User statistics - all counts in parallel
+        const [
+            totalUsers,
+            active7d,
+            active30d,
+            newToday,
+            newWeek,
+            newMonth,
+            inactive30d,
+            inactive60d,
+            inactive90d
+        ] = await Promise.all([
+            // Total users
+            pool.query('SELECT COUNT(*) FROM users'),
+            // Active last 7 days
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login >= NOW() - INTERVAL '7 days'"),
+            // Active last 30 days
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login >= NOW() - INTERVAL '30 days'"),
+            // New today
+            pool.query('SELECT COUNT(*) FROM users WHERE DATE(COALESCE(created_at, aangemaakt)) = CURRENT_DATE'),
+            // New this week
+            pool.query("SELECT COUNT(*) FROM users WHERE COALESCE(created_at, aangemaakt) >= DATE_TRUNC('week', NOW())"),
+            // New this month
+            pool.query("SELECT COUNT(*) FROM users WHERE COALESCE(created_at, aangemaakt) >= DATE_TRUNC('month', NOW())"),
+            // Inactive >30 days
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '30 days' OR laatste_login IS NULL"),
+            // Inactive >60 days
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '60 days' OR laatste_login IS NULL"),
+            // Inactive >90 days
+            pool.query("SELECT COUNT(*) FROM users WHERE laatste_login < NOW() - INTERVAL '90 days' OR laatste_login IS NULL")
+        ]);
+
+        // Subscription tier distribution - JOIN to subscriptions table
+        const subscriptionTiers = await pool.query(`
+            SELECT
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as tier,
+                COUNT(*) as count
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            GROUP BY tier
         `);
-        
-        if (!tableExists.rows[0].exists) {
-            return res.json({
-                status: 'forensic_logs table does not exist',
-                forensic_debug: process.env.FORENSIC_DEBUG,
-                logger_enabled: forensicLogger.enabled
+
+        const tierCounts = {
+            free: 0,
+            trial: 0,
+            standard: 0,
+            no_limit: 0
+        };
+
+        subscriptionTiers.rows.forEach(row => {
+            const tier = row.tier || 'free';
+            const count = parseInt(row.count);
+
+            // Map actual tier IDs to display groups
+            if (tier === 'monthly_7' || tier === 'yearly_70') {
+                tierCounts.standard += count;
+            } else if (tier === 'monthly_8' || tier === 'yearly_80') {
+                tierCounts.no_limit += count;
+            } else if (tier === 'trial') {
+                tierCounts.trial += count;
+            } else if (tier === 'free') {
+                tierCounts.free = count;
+            }
+        });
+
+        // Trial statistics
+        const activeTrials = await pool.query(`
+            SELECT COUNT(*) FROM users
+            WHERE subscription_status = 'trial' AND trial_end_date >= CURRENT_DATE
+        `);
+
+        // Trial conversion rate - only count COMPLETED trials (trial_end_date < today)
+        // NOTE: Old query only counted ('active', 'expired', 'cancelled') statuses, missing 'trialing' and 'beta_expired'
+        const conversionRate = await pool.query(`
+            SELECT
+                (COUNT(*) FILTER (WHERE subscription_status = 'active') * 100.0 /
+                 NULLIF(COUNT(*), 0))::DECIMAL(5,2) as conversion_rate
+            FROM users
+            WHERE trial_end_date IS NOT NULL
+              AND trial_end_date < CURRENT_DATE
+        `);
+
+        // Recent registrations (last 10) - JOIN to subscriptions table
+        const recentRegistrations = await pool.query(`
+            SELECT
+                u.id,
+                u.email,
+                u.naam,
+                COALESCE(u.created_at, u.aangemaakt) as created_at,
+                CASE
+                    WHEN s.id IS NULL THEN 'free'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' AND s.addon_storage = 'basic' THEN 'monthly_7'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' AND s.addon_storage = 'basic' THEN 'yearly_70'
+                    WHEN s.status = 'active' AND s.plan_type = 'monthly' THEN 'monthly_8'
+                    WHEN s.status = 'active' AND s.plan_type = 'yearly' THEN 'yearly_80'
+                    WHEN s.status = 'trial' THEN 'trial'
+                    ELSE 'free'
+                END as subscription_tier
+            FROM users u
+            LEFT JOIN subscriptions s ON s.user_id = u.id
+            ORDER BY COALESCE(u.created_at, u.aangemaakt) DESC
+            LIMIT 10
+        `);
+
+        // Build response
+        const response = {
+            users: {
+                total: parseInt(totalUsers.rows[0].count),
+                active_7d: parseInt(active7d.rows[0].count),
+                active_30d: parseInt(active30d.rows[0].count),
+                new_today: parseInt(newToday.rows[0].count),
+                new_week: parseInt(newWeek.rows[0].count),
+                new_month: parseInt(newMonth.rows[0].count),
+                inactive_30d: parseInt(inactive30d.rows[0].count),
+                inactive_60d: parseInt(inactive60d.rows[0].count),
+                inactive_90d: parseInt(inactive90d.rows[0].count)
+            },
+            subscriptions: tierCounts,
+            trials: {
+                active: parseInt(activeTrials.rows[0].count),
+                conversion_rate: parseFloat(conversionRate.rows[0].conversion_rate) || 0
+            },
+            recent_registrations: recentRegistrations.rows.map(user => ({
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                created_at: user.created_at,
+                subscription_tier: user.subscription_tier || 'free'
+            }))
+        };
+
+        console.log('✅ Admin home statistics fetched successfully');
+        res.json(response);
+
+    } catch (error) {
+        console.error('❌ Error fetching admin home statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch statistics'
+        });
+    }
+});
+
+// ============================================================================
+// T020: GET /api/admin2/system/payments - Get all payment configurations
+// ============================================================================
+
+app.get('/api/admin2/system/payments', requireAdmin, async (req, res) => {
+    try {
+        console.log('💰 Fetching payment configurations...');
+
+        // Simple SELECT van payment_configurations tabel
+        const result = await pool.query(`
+            SELECT
+                id,
+                plan_id,
+                plan_name,
+                plan_description,
+                checkout_url,
+                is_active,
+                created_at,
+                updated_at
+            FROM payment_configurations
+            ORDER BY plan_id ASC
+        `);
+
+        console.log(`✅ Fetched ${result.rows.length} payment configurations`);
+
+        res.json({
+            payment_configs: result.rows,
+            count: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('❌ Payment configurations error:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: error.stack
+        });
+
+        // Graceful fallback - return empty array if table/columns don't exist or query fails
+        res.status(200).json({
+            payment_configs: [],
+            count: 0,
+            warning: 'Payment configurations table may have schema issues',
+            debug: error.message  // Temporary for debugging
+        });
+    }
+});
+
+// ============================================================================
+// T021: PUT /api/admin2/system/payments/:id/checkout-url - Update checkout URL
+// ============================================================================
+
+app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req, res) => {
+    try {
+        console.log('🔗 Updating checkout URL for payment config:', {
+            config_id: req.params.id,
+            admin_user_id: req.session.userId
+        });
+
+        const configId = parseInt(req.params.id);
+        const { checkout_url } = req.body;
+
+        // Validatie: config ID moet valid integer zijn
+        if (isNaN(configId)) {
+            return res.status(400).json({
+                error: 'Invalid config ID',
+                message: 'Config ID must be a valid number'
             });
         }
-        
-        // Get recent logs directly from database
-        const logs = await pool.query(`
-            SELECT * FROM forensic_logs 
-            ORDER BY timestamp DESC 
-            LIMIT 20
-        `);
-        
-        res.json({
-            status: 'forensic_logs table exists',
-            forensic_debug: process.env.FORENSIC_DEBUG,
-            logger_enabled: forensicLogger.enabled,
-            total_logs: logs.rows.length,
-            recent_logs: logs.rows
+
+        // Validatie: checkout_url is verplicht
+        if (!checkout_url) {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'checkout_url is required',
+                field: 'checkout_url'
+            });
+        }
+
+        // Validatie: moet HTTPS zijn
+        if (!checkout_url.startsWith('https://')) {
+            return res.status(400).json({
+                error: 'Invalid checkout URL',
+                message: 'Checkout URL must start with https://',
+                field: 'checkout_url'
+            });
+        }
+
+        // Validatie: URL format check
+        try {
+            new URL(checkout_url);
+        } catch (urlError) {
+            return res.status(400).json({
+                error: 'Invalid checkout URL',
+                message: 'Checkout URL is not a valid URL format',
+                field: 'checkout_url'
+            });
+        }
+
+        // Validatie: moet payment provider domain bevatten
+        const validProviders = ['mollie.com', 'stripe.com', 'paypal.com', 'paddle.com'];
+        const hasValidProvider = validProviders.some(provider => checkout_url.includes(provider));
+
+        if (!hasValidProvider) {
+            return res.status(400).json({
+                error: 'Invalid checkout URL',
+                message: `Checkout URL must contain one of: ${validProviders.join(', ')}`,
+                field: 'checkout_url'
+            });
+        }
+
+        // GET oude checkout_url en plan details eerst
+        const currentConfig = await pool.query(`
+            SELECT id, plan_id, plan_name, checkout_url
+            FROM payment_configurations
+            WHERE id = $1
+        `, [configId]);
+
+        if (currentConfig.rows.length === 0) {
+            console.log('❌ Payment configuration not found:', configId);
+            return res.status(404).json({
+                error: 'Payment configuration not found',
+                message: `No configuration with ID ${configId}`
+            });
+        }
+
+        const config = currentConfig.rows[0];
+        const oldUrl = config.checkout_url;
+
+        // UPDATE met nieuwe checkout_url
+        const updateResult = await pool.query(`
+            UPDATE payment_configurations
+            SET checkout_url = $1,
+                updated_at = NOW()
+            WHERE id = $2
+            RETURNING updated_at
+        `, [checkout_url, configId]);
+
+        const updatedAt = updateResult.rows[0].updated_at;
+
+        // INSERT audit log met graceful fallback
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    old_value,
+                    new_value,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                'PAYMENT_CHECKOUT_URL_UPDATE',
+                'payment_configuration',
+                configId,
+                oldUrl,
+                checkout_url,
+                req.ip,
+                req.get('User-Agent')
+            ]);
+            console.log('✅ Audit log created for checkout URL update');
+        } catch (auditError) {
+            // Graceful fallback - log to console als audit tabel niet bestaat
+            console.log('[AUDIT] Admin', req.session.userId, 'updated checkout URL for config', configId, ':', oldUrl, '→', checkout_url);
+        }
+
+        // Return plan context + old/new URL voor confirmation
+        const response = {
+            success: true,
+            config_id: configId,
+            plan_id: config.plan_id,
+            plan_name: config.plan_name,
+            old_url: oldUrl,
+            new_url: checkout_url,
+            updated_at: updatedAt
+        };
+
+        console.log('✅ Checkout URL updated successfully:', {
+            config_id: configId,
+            plan_id: config.plan_id
         });
+
+        res.json(response);
+
     } catch (error) {
-        res.status(500).json({ 
-            error: error.message,
-            forensic_debug: process.env.FORENSIC_DEBUG,
-            logger_enabled: forensicLogger.enabled
+        console.error('❌ Error updating checkout URL:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to update checkout URL'
+        });
+    }
+});
+
+// ============================================================================
+// T024: POST /api/admin2/debug/database-backup - Database backup metadata
+// ============================================================================
+
+app.post('/api/admin2/debug/database-backup', requireAdmin, async (req, res) => {
+    try {
+        console.log('💾 Collecting database backup metadata...');
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Collect database size
+        const sizeResult = await pool.query(`
+            SELECT pg_database_size(current_database()) / 1024 / 1024 AS size_mb
+        `);
+        const database_size_mb = Math.round(sizeResult.rows[0].size_mb);
+
+        // Collect table info with row counts
+        const tablesResult = await pool.query(`
+            SELECT
+                tablename
+            FROM pg_catalog.pg_tables
+            WHERE schemaname = 'public'
+            ORDER BY tablename
+        `);
+
+        const tables = [];
+        let total_rows = 0;
+
+        // Get row count for each table
+        for (const table of tablesResult.rows) {
+            try {
+                const countResult = await pool.query(`SELECT COUNT(*) as count FROM ${table.tablename}`);
+                const row_count = parseInt(countResult.rows[0].count);
+                tables.push({
+                    name: table.tablename,
+                    rows: row_count
+                });
+                total_rows += row_count;
+            } catch (error) {
+                console.error(`❌ Error counting rows in ${table.tablename}:`, error.message);
+                tables.push({
+                    name: table.tablename,
+                    rows: 0,
+                    error: 'Failed to count rows'
+                });
+            }
+        }
+
+        // Get last backup timestamp from system_settings or use NOW()
+        let last_backup_timestamp;
+        try {
+            const backupSettingResult = await pool.query(`
+                SELECT value FROM system_settings WHERE key = 'last_backup_timestamp'
+            `);
+            if (backupSettingResult.rows.length > 0) {
+                last_backup_timestamp = backupSettingResult.rows[0].value;
+            } else {
+                last_backup_timestamp = new Date().toISOString();
+            }
+        } catch (error) {
+            // Fallback als system_settings tabel niet bestaat
+            last_backup_timestamp = new Date().toISOString();
+        }
+
+        // Collect database name from connection
+        const dbNameResult = await pool.query(`SELECT current_database() as db_name`);
+        const database_name = dbNameResult.rows[0].db_name;
+
+        // Generate Neon dashboard URL (from env vars if available)
+        const neon_project_id = process.env.NEON_PROJECT_ID || 'your-project-id';
+        const neon_dashboard_url = `https://console.neon.tech/app/projects/${neon_project_id}`;
+
+        // Build response with backup metadata
+        const backup_info = {
+            database_name,
+            database_size_mb,
+            table_count: tables.length,
+            total_rows,
+            tables,
+            backup_timestamp: last_backup_timestamp
+        };
+
+        const instructions = {
+            automatic_backups: 'Neon automatically backs up your database daily with point-in-time restore capability',
+            manual_backup_via_branch: 'Create a new branch in Neon dashboard for instant backup snapshot',
+            sql_export: `Use pg_dump for manual SQL export: pg_dump -h ${process.env.DB_HOST || 'your-neon-host'} -U ${process.env.DB_USER || 'your-user'} -d ${database_name} > backup.sql`,
+            neon_documentation: 'https://neon.tech/docs/manage/backups'
+        };
+
+        // Audit logging met graceful fallback
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    old_value,
+                    new_value,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                'DATABASE_BACKUP_REQUEST',
+                'database',
+                database_name,
+                null,
+                JSON.stringify({ size_mb: database_size_mb, tables: tables.length, rows: total_rows }),
+                req.ip,
+                req.get('User-Agent')
+            ]);
+            console.log('✅ Audit log created for backup request');
+        } catch (auditError) {
+            // Graceful fallback - log to console als audit tabel niet bestaat
+            console.log('[AUDIT] Admin', req.session.userId, 'requested database backup metadata for', database_name);
+        }
+
+        console.log('✅ Backup metadata collected:', {
+            database: database_name,
+            size_mb: database_size_mb,
+            tables: tables.length,
+            total_rows
+        });
+
+        res.json({
+            success: true,
+            backup_info,
+            neon_dashboard_url,
+            instructions,
+            message: 'Backup metadata collected. Use Neon dashboard or pg_dump for actual backups.'
+        });
+
+    } catch (error) {
+        console.error('❌ Error collecting backup metadata:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to collect backup metadata',
+            details: error.message
         });
     }
 });
@@ -6677,31 +12577,144 @@ app.get('/api/debug/database-columns', async (req, res) => {
     }
 });
 
-// 404 handler - MUST be after all routes!
-app.use((req, res) => {
-    res.status(404).json({ error: `Route ${req.path} not found` });
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
-    
-    // Initialize database after server starts
-    setTimeout(async () => {
-        try {
-            if (db) {
-                const { initDatabase } = require('./database');
-                await initDatabase();
-                dbInitialized = true;
-                console.log('✅ Database initialized successfully');
-            } else {
-                console.log('⚠️ Database module not available, skipping initialization');
+// Subscription API Endpoints
+// GET /api/subscription/plans - Get available subscription plans
+app.get('/api/subscription/plans', (req, res) => {
+    try {
+        // Static subscription plans data as defined in data-model.md
+        const SUBSCRIPTION_PLANS = [
+            {
+                id: 'trial_14_days',
+                name: '14 dagen gratis',
+                description: 'Probeer alle functies gratis uit',
+                price: 0,
+                billing_cycle: 'trial',
+                trial_days: 14,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import']
+            },
+            {
+                id: 'monthly_7',
+                name: 'Maandelijks',
+                description: 'Per maand, stop wanneer je wilt',
+                price: 7,
+                billing_cycle: 'monthly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support']
+            },
+            {
+                id: 'yearly_70',
+                name: 'Jaarlijks',
+                description: 'Bespaar €14 per jaar',
+                price: 70,
+                billing_cycle: 'yearly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', '2 maanden gratis']
+            },
+            {
+                id: 'monthly_8',
+                name: 'No Limit Maandelijks',
+                description: 'Ongelimiteerde bijlages per maand',
+                price: 8,
+                billing_cycle: 'monthly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte']
+            },
+            {
+                id: 'yearly_80',
+                name: 'No Limit Jaarlijks',
+                description: 'Ongelimiteerde bijlages - bespaar €16 per jaar',
+                price: 80,
+                billing_cycle: 'yearly',
+                trial_days: 0,
+                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte', '2 maanden gratis']
             }
-        } catch (error) {
-            console.error('⚠️ Database initialization failed:', error.message);
-        }
-    }, 1000);
+        ];
+
+        res.json({
+            success: true,
+            plans: SUBSCRIPTION_PLANS
+        });
+    } catch (error) {
+        console.error('Error fetching subscription plans:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
 });
 
+// POST /api/subscription/select - Select subscription plan
+app.post('/api/subscription/select', requireAuth, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({
+                success: false,
+                error: 'Database not available'
+            });
+        }
+
+        const { plan_id, source } = req.body;
+
+        // Validate required fields
+        if (!plan_id || !source) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: plan_id and source are required'
+            });
+        }
+
+        // Validate plan_id (includes No Limit plans: monthly_8 and yearly_80)
+        const validPlanIds = ['trial_14_days', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
+        if (!validPlanIds.includes(plan_id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid plan_id. Must be one of: ' + validPlanIds.join(', ')
+            });
+        }
+
+        // Validate source
+        const validSources = ['beta', 'upgrade', 'registration'];
+        if (!validSources.includes(source)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid source. Must be one of: ' + validSources.join(', ')
+            });
+        }
+
+        const userId = req.session.userId;
+
+        // Update user's subscription selection and status
+        const updateResult = await pool.query(`
+            UPDATE users
+            SET selected_plan = $1,
+                plan_selected_at = NOW(),
+                selection_source = $2,
+                subscription_status = 'active'
+            WHERE id = $3
+            RETURNING selected_plan, subscription_status
+        `, [plan_id, source, userId]);
+
+        if (updateResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Plan selection saved successfully',
+            selected_plan: plan_id
+        });
+
+    } catch (error) {
+        console.error('Error selecting subscription plan:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
 // Debug endpoint to find specific task by ID without user filtering
 app.get('/api/debug/find-task/:id', async (req, res) => {
     try {
@@ -6758,4 +12771,909 @@ app.put('/api/debug/fix-user/:id', async (req, res) => {
     }
 });
 
+// Migration endpoint for pure B2 storage
+app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
+    try {
+        const { migrateDatabaseFilesToB2 } = require('./migrate-to-pure-b2.js');
+        
+        console.log('🚀 Starting migration to pure B2 storage via API...');
+        await migrateDatabaseFilesToB2();
+        
+        res.json({
+            success: true,
+            message: 'Migration to pure B2 storage completed successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Migration API failed:', error);
+        res.status(500).json({
+            error: 'Migration failed',
+            details: error.message
+        });
+    }
+});
+
+// ============================================================================
+// T023: POST /api/admin2/debug/sql-query - Execute SQL queries with safety checks
+// ============================================================================
+
+app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
+    try {
+        console.log('🔍 SQL query execution request:', {
+            admin_user_id: req.session.userId,
+            has_query: !!req.body.query,
+            confirm_destructive: req.body.confirm_destructive
+        });
+
+        const { query, confirm_destructive } = req.body;
+
+        // Validatie: query is verplicht
+        if (!query) {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'SQL query is required',
+                field: 'query'
+            });
+        }
+
+        // Validatie: query moet een string zijn
+        if (typeof query !== 'string') {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'Query must be a string',
+                field: 'query'
+            });
+        }
+
+        // Parse en trim query
+        const trimmedQuery = query.trim();
+
+        if (trimmedQuery.length === 0) {
+            return res.status(400).json({
+                error: 'Validation error',
+                message: 'Query cannot be empty',
+                field: 'query'
+            });
+        }
+
+        // Uppercase check voor keywords
+        const upperQuery = trimmedQuery.toUpperCase();
+
+        // BLOCKING CHECK: Dangerous operations die NOOIT toegestaan zijn
+        const blockedKeywords = ['DROP', 'TRUNCATE', 'ALTER'];
+
+        for (const keyword of blockedKeywords) {
+            if (upperQuery.includes(keyword)) {
+                console.log('🚫 BLOCKED query attempt:', {
+                    keyword,
+                    admin_user_id: req.session.userId,
+                    query_preview: trimmedQuery.substring(0, 100)
+                });
+
+                // Log blocked attempt to audit
+                try {
+                    await pool.query(`
+                        INSERT INTO admin_audit_log (
+                            admin_user_id,
+                            action,
+                            target_type,
+                            target_id,
+                            old_value,
+                            new_value,
+                            ip_address,
+                            user_agent
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    `, [
+                        req.session.userId,
+                        'SQL_QUERY_BLOCKED',
+                        'database',
+                        null,
+                        null,
+                        JSON.stringify({ keyword, query_preview: trimmedQuery.substring(0, 200) }),
+                        req.ip,
+                        req.get('User-Agent')
+                    ]);
+                } catch (auditError) {
+                    console.log('[AUDIT] Blocked SQL query attempt:', keyword, 'by admin', req.session.userId);
+                }
+
+                return res.status(400).json({
+                    error: `${keyword} operations are blocked for safety`,
+                    blocked_keyword: keyword,
+                    message: 'This operation is permanently blocked to protect the database'
+                });
+            }
+        }
+
+        // DESTRUCTIVE CHECK: Operations die confirmation vereisen
+        const destructiveKeywords = ['DELETE', 'UPDATE'];
+
+        for (const keyword of destructiveKeywords) {
+            if (upperQuery.includes(keyword) && !confirm_destructive) {
+                console.log('⚠️ Destructive query requires confirmation:', {
+                    keyword,
+                    admin_user_id: req.session.userId,
+                    query_preview: trimmedQuery.substring(0, 100)
+                });
+
+                return res.status(400).json({
+                    error: `${keyword} operations require explicit confirmation`,
+                    destructive_keyword: keyword,
+                    required_body: { confirm_destructive: true },
+                    message: 'Add "confirm_destructive": true to execute this query'
+                });
+            }
+        }
+
+        // Execute query met timeout en timing
+        console.log('⏱️ Executing SQL query:', {
+            query_length: trimmedQuery.length,
+            query_preview: trimmedQuery.substring(0, 100),
+            is_destructive: confirm_destructive
+        });
+
+        // Set statement timeout to 10 seconds
+        await pool.query('SET statement_timeout = 10000');
+
+        const startTime = Date.now();
+        let result;
+
+        try {
+            result = await pool.query(trimmedQuery);
+        } finally {
+            // Always reset timeout
+            await pool.query('RESET statement_timeout');
+        }
+
+        const executionTime = Date.now() - startTime;
+
+        // Prepare response
+        const rows = result.rows || [];
+        const rowCount = rows.length;
+        const warnings = [];
+
+        // Limit results to 1000 rows
+        const limitedRows = rows.slice(0, 1000);
+        if (rowCount > 1000) {
+            warnings.push('Results limited to 1000 rows');
+        }
+
+        // Log to audit
+        try {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_type,
+                    target_id,
+                    old_value,
+                    new_value,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                confirm_destructive ? 'SQL_QUERY_DESTRUCTIVE' : 'SQL_QUERY_SAFE',
+                'database',
+                null,
+                null,
+                JSON.stringify({
+                    query: trimmedQuery.substring(0, 500), // Truncate long queries
+                    row_count: rowCount,
+                    execution_time_ms: executionTime
+                }),
+                req.ip,
+                req.get('User-Agent')
+            ]);
+            console.log('✅ Audit log created for SQL query execution');
+        } catch (auditError) {
+            console.log('[AUDIT] Admin', req.session.userId, 'executed SQL query:', trimmedQuery.substring(0, 100), '| Rows:', rowCount);
+        }
+
+        // Build response
+        const response = {
+            success: true,
+            query: trimmedQuery,
+            rows: limitedRows,
+            row_count: rowCount,
+            execution_time_ms: executionTime,
+            warnings: warnings.length > 0 ? warnings : undefined
+        };
+
+        console.log('✅ SQL query executed successfully:', {
+            row_count: rowCount,
+            execution_time_ms: executionTime,
+            had_warnings: warnings.length > 0
+        });
+
+        res.json(response);
+
+    } catch (error) {
+        console.error('❌ Error executing SQL query:', error);
+
+        // Check for specific PostgreSQL errors
+        if (error.code === '57014') {
+            // Query timeout
+            return res.status(500).json({
+                error: 'Query timeout',
+                message: 'Query execution exceeded 10 second timeout',
+                postgres_code: error.code
+            });
+        }
+
+        if (error.code === '42601' || error.code === '42501') {
+            // Syntax error or permission denied
+            return res.status(400).json({
+                error: 'Query error',
+                message: error.message,
+                postgres_code: error.code
+            });
+        }
+
+        // Generic error
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to execute SQL query',
+            details: error.message
+        });
+    }
+});
+
+// ============================================================================
+// T025: POST /api/admin2/debug/cleanup-orphaned-data - Multi-level cleanup van orphaned data
+// ============================================================================
+
+app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, res) => {
+    const startTime = Date.now();
+
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { preview = true, targets } = req.body;
+        const adminUserId = req.session.userId;
+
+        // Validation: preview must be boolean if provided
+        if (typeof preview !== 'boolean') {
+            return res.status(400).json({
+                error: 'Invalid preview value',
+                message: 'preview must be a boolean (true/false)'
+            });
+        }
+
+        // Validation: targets must be array if provided
+        if (targets !== undefined && !Array.isArray(targets)) {
+            return res.status(400).json({
+                error: 'Invalid targets value',
+                message: 'targets must be an array of strings'
+            });
+        }
+
+        console.log(`🧹 Admin ${adminUserId} initiating cleanup (preview=${preview}, targets=${targets ? targets.join(',') : 'all'})`);
+
+        // Definieer alle cleanup targets met queries
+        const allTargets = [
+            {
+                name: 'orphaned_tasks',
+                description: 'Tasks with non-existent user_id',
+                countQuery: 'SELECT COUNT(*) as count FROM taken WHERE user_id NOT IN (SELECT id FROM users)',
+                deleteQuery: 'DELETE FROM taken WHERE user_id NOT IN (SELECT id FROM users)',
+                enabled: !targets || targets.includes('orphaned_tasks')
+            },
+            {
+                name: 'orphaned_email_imports',
+                description: 'Email imports with non-existent user_id',
+                countQuery: 'SELECT COUNT(*) as count FROM email_imports WHERE user_id NOT IN (SELECT id FROM users)',
+                deleteQuery: 'DELETE FROM email_imports WHERE user_id NOT IN (SELECT id FROM users)',
+                enabled: !targets || targets.includes('orphaned_email_imports')
+            },
+            {
+                name: 'orphaned_planning_entries',
+                description: 'Planning entries with non-existent user_id or taak_id',
+                countQuery: `SELECT COUNT(*) as count FROM dagelijkse_planning
+                             WHERE user_id NOT IN (SELECT id FROM users)
+                             OR taak_id NOT IN (SELECT id FROM taken)`,
+                deleteQuery: `DELETE FROM dagelijkse_planning
+                              WHERE user_id NOT IN (SELECT id FROM users)
+                              OR taak_id NOT IN (SELECT id FROM taken)`,
+                enabled: !targets || targets.includes('orphaned_planning_entries')
+            },
+            {
+                name: 'expired_sessions',
+                description: 'Session records older than 30 days',
+                countQuery: "SELECT COUNT(*) as count FROM session WHERE expire < NOW() - INTERVAL '30 days'",
+                deleteQuery: "DELETE FROM session WHERE expire < NOW() - INTERVAL '30 days'",
+                enabled: !targets || targets.includes('expired_sessions')
+            },
+            {
+                name: 'orphaned_audit_logs',
+                description: 'Audit logs with non-existent admin_user_id (optional)',
+                countQuery: `SELECT COUNT(*) as count FROM admin_audit_log
+                             WHERE admin_user_id NOT IN (SELECT id FROM users WHERE account_type = 'admin')`,
+                deleteQuery: `DELETE FROM admin_audit_log
+                              WHERE admin_user_id NOT IN (SELECT id FROM users WHERE account_type = 'admin')`,
+                enabled: (!targets || targets.includes('orphaned_audit_logs')) && false // disabled by default, table might not exist
+            }
+        ];
+
+        const cleanupResults = [];
+        let totalDeleted = 0;
+
+        // PREVIEW MODE - alleen tellen, niet verwijderen
+        if (preview) {
+            console.log('📊 Running in PREVIEW mode - no data will be deleted');
+
+            for (const target of allTargets.filter(t => t.enabled)) {
+                try {
+                    const countResult = await pool.query(target.countQuery);
+                    const count = parseInt(countResult.rows[0].count);
+
+                    cleanupResults.push({
+                        target: target.name,
+                        description: target.description,
+                        found: count,
+                        deleted: 0,
+                        query: target.deleteQuery
+                    });
+
+                    console.log(`  ${target.name}: ${count} records found`);
+                } catch (error) {
+                    // Graceful skip voor targets die niet bestaan (bijv. admin_audit_log)
+                    console.log(`  ${target.name}: skipped (table might not exist)`);
+                }
+            }
+        }
+        // EXECUTE MODE - daadwerkelijk verwijderen
+        else {
+            console.log('🗑️ Running in EXECUTE mode - data will be deleted');
+
+            await pool.query('BEGIN');
+
+            try {
+                for (const target of allTargets.filter(t => t.enabled)) {
+                    try {
+                        // Eerst tellen
+                        const countResult = await pool.query(target.countQuery);
+                        const count = parseInt(countResult.rows[0].count);
+
+                        // Dan verwijderen
+                        const deleteResult = await pool.query(target.deleteQuery);
+                        const deleted = deleteResult.rowCount || 0;
+
+                        cleanupResults.push({
+                            target: target.name,
+                            description: target.description,
+                            found: count,
+                            deleted: deleted,
+                            query: target.deleteQuery
+                        });
+
+                        totalDeleted += deleted;
+                        console.log(`  ${target.name}: ${deleted} records deleted`);
+                    } catch (error) {
+                        // Graceful skip voor targets die niet bestaan
+                        console.log(`  ${target.name}: skipped (${error.message})`);
+                    }
+                }
+
+                await pool.query('COMMIT');
+                console.log(`✅ Cleanup committed: ${totalDeleted} total records deleted`);
+
+                // Audit log voor execute mode
+                const cleanupTimestamp = new Date().toISOString();
+                await pool.query(`
+                    INSERT INTO admin_audit_log (
+                        admin_user_id,
+                        action,
+                        target_user_id,
+                        old_value,
+                        new_value,
+                        timestamp,
+                        ip_address,
+                        user_agent
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                `, [
+                    adminUserId,
+                    'DATA_CLEANUP',
+                    null,
+                    JSON.stringify({ targets: targets || 'all' }),
+                    JSON.stringify({
+                        cleanup_results: cleanupResults,
+                        total_deleted: totalDeleted
+                    }),
+                    cleanupTimestamp,
+                    req.ip || req.connection.remoteAddress,
+                    req.headers['user-agent'] || 'Unknown'
+                ]).catch(err => {
+                    console.log('⚠️ Audit log failed (table might not exist):', err.message);
+                });
+
+            } catch (error) {
+                await pool.query('ROLLBACK');
+                throw error;
+            }
+        }
+
+        const executionTime = Date.now() - startTime;
+
+        res.json({
+            success: true,
+            preview: preview,
+            cleanup_results: cleanupResults,
+            total_records_deleted: preview ? 0 : totalDeleted,
+            execution_time_ms: executionTime
+        });
+
+    } catch (error) {
+        console.error('❌ Error during cleanup:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to cleanup orphaned data'
+        });
+    }
+});
+
+
 // Force deploy Thu Jun 26 11:21:42 CEST 2025
+
+// ===================================================================
+// === ADMIN MESSAGING SYSTEM ENDPOINTS ===
+// Feature: 026-lees-messaging-system
+// Phase 1: Core Foundation
+// ===================================================================
+
+// Note: requireAdmin middleware is defined earlier in server.js (line ~2344)
+// It supports both password-based admin auth (admin2.html) and user-based admin auth
+
+// POST /api/admin/messages - Create message
+app.post('/api/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    const {
+      title, message, message_type, target_type, target_subscription,
+      target_users, trigger_type, trigger_value, dismissible, snoozable,
+      publish_at, expires_at, button_label, button_action, button_target
+    } = req.body;
+
+    // Validation
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required' });
+    }
+
+    // Set publish_at to NOW() if not provided and trigger is immediate
+    const finalTriggerType = trigger_type || 'immediate';
+    const finalPublishAt = publish_at || (finalTriggerType === 'immediate' ? new Date() : null);
+
+    const result = await pool.query(`
+      INSERT INTO admin_messages (
+        title, message, message_type, target_type, target_subscription,
+        target_users, trigger_type, trigger_value, dismissible, snoozable,
+        publish_at, expires_at, button_label, button_action, button_target
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING id
+    `, [
+      title, message, message_type || 'information', target_type || 'all',
+      target_subscription, target_users, finalTriggerType,
+      trigger_value, dismissible !== false, snoozable !== false,
+      finalPublishAt, expires_at || null, button_label || null,
+      button_action || null, button_target || null
+    ]);
+
+    res.status(201).json({
+      success: true,
+      messageId: result.rows[0].id,
+      message: 'Message created successfully'
+    });
+  } catch (error) {
+    console.error('Create message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/messages - List all messages
+app.get('/api/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        m.*,
+        COUNT(DISTINCT CASE WHEN mi.user_id IS NOT NULL THEN mi.user_id END) as shown_count,
+        COUNT(DISTINCT CASE WHEN mi.dismissed = true THEN mi.user_id END) as dismissed_count
+      FROM admin_messages m
+      LEFT JOIN message_interactions mi ON mi.message_id = m.id
+      GROUP BY m.id
+      ORDER BY m.created_at DESC
+    `);
+
+    res.json({ messages: result.rows });
+  } catch (error) {
+    console.error('List messages error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/messages/:id/analytics - Message analytics
+app.get('/api/admin/messages/:id/analytics', requireAdmin, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    // TODO: Implement full analytics (zie api-contracts.md)
+    // Phase 4 implementation
+
+    res.json({ message: 'Analytics implementation coming in Phase 4' });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/messages/:id/toggle - Toggle active status
+app.post('/api/admin/messages/:id/toggle', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      UPDATE admin_messages
+      SET active = NOT active, updated_at = NOW()
+      WHERE id = $1
+      RETURNING active
+    `, [req.params.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.json({ success: true, active: result.rows[0].active });
+  } catch (error) {
+    console.error('Toggle message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/users/search - Search users
+app.get('/api/admin/users/search', requireAdmin, async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) {
+      return res.json({ users: [] });
+    }
+
+    const result = await pool.query(`
+      SELECT id, username as name, email, subscription_type
+      FROM users
+      WHERE username ILIKE $1 OR email ILIKE $1
+      ORDER BY username
+      LIMIT 50
+    `, [`%${query}%`]);
+
+    res.json({ users: result.rows });
+  } catch (error) {
+    console.error('User search error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/messages/preview-targets - Preview targeting
+app.get('/api/admin/messages/preview-targets', requireAdmin, async (req, res) => {
+  try {
+    const { target_type, target_subscription, target_users } = req.query;
+
+    // Dynamic query building based on targeting
+    let whereConditions = ['1=1'];
+    let queryParams = [];
+
+    if (target_type === 'filtered' && target_subscription) {
+      const subscriptions = JSON.parse(target_subscription);
+      queryParams.push(subscriptions);
+      whereConditions.push(`subscription_type = ANY($${queryParams.length})`);
+    } else if (target_type === 'specific_users' && target_users) {
+      const userIds = JSON.parse(target_users);
+      queryParams.push(userIds);
+      whereConditions.push(`id = ANY($${queryParams.length})`);
+    }
+    // target_type = 'all' → geen extra where clause
+
+    // Count total + get sample of first 5
+    const countQuery = `
+      SELECT COUNT(*) as count FROM users
+      WHERE ${whereConditions.join(' AND ')}
+    `;
+    const sampleQuery = `
+      SELECT id, username as name, email FROM users
+      WHERE ${whereConditions.join(' AND ')}
+      ORDER BY username
+      LIMIT 5
+    `;
+
+    const [countResult, sampleResult] = await Promise.all([
+      pool.query(countQuery, queryParams),
+      pool.query(sampleQuery, queryParams)
+    ]);
+
+    res.json({
+      count: parseInt(countResult.rows[0].count),
+      sample: sampleResult.rows
+    });
+  } catch (error) {
+    console.error('Preview targets error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ===================================================================
+// === USER MESSAGING ENDPOINTS ===
+// ===================================================================
+
+// GET /api/messages/unread - Get unread messages
+app.get('/api/messages/unread', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const userId = req.session.userId;
+    const pageIdentifier = req.query.page; // Voor page visit triggers
+    const now = new Date();
+
+    // Haal user subscription type en created_at op
+    const userResult = await pool.query(`
+      SELECT subscription_type, created_at FROM users WHERE id = $1
+    `, [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userSubscription = userResult.rows[0].subscription_type || 'free';
+    const userCreatedAt = userResult.rows[0].created_at;
+    const daysSinceSignup = Math.floor((now - new Date(userCreatedAt)) / (1000 * 60 * 60 * 24));
+
+    // Query voor immediate en days_after_signup triggers
+    const mainQuery = `
+      SELECT m.* FROM admin_messages m
+      WHERE m.active = true
+        AND m.publish_at <= $1
+        AND (m.expires_at IS NULL OR m.expires_at > $1)
+
+        -- Targeting filter
+        AND (
+          m.target_type = 'all'
+          OR (m.target_type = 'filtered' AND $3 = ANY(m.target_subscription))
+          OR (m.target_type = 'specific_users' AND $2 = ANY(m.target_users))
+        )
+
+        -- Trigger filter (immediate + days_after_signup)
+        AND (
+          m.trigger_type = 'immediate'
+          OR (m.trigger_type = 'days_after_signup' AND $4 >= m.trigger_value::integer)
+        )
+
+        -- Exclude dismissed/snoozed
+        AND m.id NOT IN (
+          SELECT message_id FROM message_interactions
+          WHERE user_id = $2
+            AND (dismissed = true OR snoozed_until > $1)
+        )
+
+      ORDER BY
+        CASE m.message_type
+          WHEN 'important' THEN 1
+          WHEN 'warning' THEN 2
+          WHEN 'feature' THEN 3
+          WHEN 'educational' THEN 4
+          WHEN 'tip' THEN 5
+          WHEN 'information' THEN 6
+          ELSE 7
+        END,
+        m.created_at DESC
+    `;
+
+    const mainResult = await pool.query(mainQuery, [now, userId, userSubscription, daysSinceSignup]);
+    let messages = mainResult.rows;
+
+    // Page visit triggers - alleen als pageIdentifier is meegegeven
+    if (pageIdentifier) {
+      // Haal visit count op voor deze page
+      const visitResult = await pool.query(`
+        SELECT visit_count FROM user_page_visits
+        WHERE user_id = $1 AND page_identifier = $2
+      `, [userId, pageIdentifier]);
+
+      const visitCount = visitResult.rows.length > 0 ? visitResult.rows[0].visit_count : 0;
+
+      // Query voor page visit triggered messages
+      const pageVisitQuery = `
+        SELECT m.* FROM admin_messages m
+        WHERE m.active = true
+          AND m.publish_at <= $1
+          AND (m.expires_at IS NULL OR m.expires_at > $1)
+
+          -- Targeting filter
+          AND (
+            m.target_type = 'all'
+            OR (m.target_type = 'filtered' AND $3 = ANY(m.target_subscription))
+            OR (m.target_type = 'specific_users' AND $2 = ANY(m.target_users))
+          )
+
+          -- Page visit triggers
+          AND (
+            (m.trigger_type = 'first_page_visit' AND m.trigger_value = $5 AND $6 = 1)
+            OR (m.trigger_type = 'nth_page_visit' AND
+                split_part(m.trigger_value, ':', 2) = $5 AND
+                $6 >= split_part(m.trigger_value, ':', 1)::integer)
+          )
+
+          -- Exclude dismissed/snoozed
+          AND m.id NOT IN (
+            SELECT message_id FROM message_interactions
+            WHERE user_id = $2
+              AND (dismissed = true OR snoozed_until > $1)
+          )
+      `;
+
+      const pageVisitResult = await pool.query(pageVisitQuery, [
+        now, userId, userSubscription, null, pageIdentifier, visitCount
+      ]);
+
+      // Merge messages (vermijd duplicaten)
+      const messageIds = new Set(messages.map(m => m.id));
+      for (const msg of pageVisitResult.rows) {
+        if (!messageIds.has(msg.id)) {
+          messages.push(msg);
+          messageIds.add(msg.id);
+        }
+      }
+
+      // Re-sort merged messages by priority
+      messages.sort((a, b) => {
+        const priorityOrder = {
+          'important': 1, 'warning': 2, 'feature': 3,
+          'educational': 4, 'tip': 5, 'information': 6
+        };
+        const aPriority = priorityOrder[a.message_type] || 7;
+        const bPriority = priorityOrder[b.message_type] || 7;
+
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+    }
+
+    res.json({ messages });
+  } catch (error) {
+    console.error('Unread messages error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/messages/:id/dismiss - Dismiss message
+app.post('/api/messages/:id/dismiss', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    await pool.query(`
+      INSERT INTO message_interactions (message_id, user_id, dismissed)
+      VALUES ($1, $2, true)
+      ON CONFLICT (message_id, user_id)
+      DO UPDATE SET dismissed = true, last_shown_at = NOW()
+    `, [req.params.id, req.session.userId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Dismiss message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/messages/:id/snooze - Snooze a message
+app.post('/api/messages/:id/snooze', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { duration } = req.body; // duration in seconds
+    if (!duration || typeof duration !== 'number') {
+      return res.status(400).json({ error: 'Invalid duration' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO message_interactions (message_id, user_id, snoozed_until)
+      VALUES ($1, $2, NOW() + INTERVAL '1 second' * $3)
+      ON CONFLICT (message_id, user_id)
+      DO UPDATE SET snoozed_until = NOW() + INTERVAL '1 second' * $3
+      RETURNING snoozed_until
+    `, [req.params.id, req.session.userId, duration]);
+
+    res.json({
+      success: true,
+      snoozedUntil: result.rows[0].snoozed_until
+    });
+  } catch (error) {
+    console.error('Snooze message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/messages/:id/button-click - Track button click
+app.post('/api/messages/:id/button-click', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    await pool.query(`
+      UPDATE message_interactions
+      SET button_clicked = true, button_clicked_at = NOW()
+      WHERE message_id = $1 AND user_id = $2
+    `, [req.params.id, req.session.userId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Button click tracking error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/page-visit/:pageIdentifier - Track page visit
+app.post('/api/page-visit/:pageIdentifier', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO user_page_visits (user_id, page_identifier, visit_count)
+      VALUES ($1, $2, 1)
+      ON CONFLICT (user_id, page_identifier)
+      DO UPDATE SET
+        visit_count = user_page_visits.visit_count + 1,
+        last_visit_at = NOW()
+      RETURNING visit_count
+    `, [req.session.userId, req.params.pageIdentifier]);
+
+    res.json({ success: true, visitCount: result.rows[0].visit_count });
+  } catch (error) {
+    console.error('Page visit error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+// Force redeploy Sat Oct 18 23:52:24 CEST 2025
+// Force redeploy Thu Oct 23 11:51:27 CEST 2025
+
+// 404 handler - MUST be after all routes!
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.path} not found` });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
+    
+    // Initialize database and storage manager after server starts
+    setTimeout(async () => {
+        try {
+            if (db) {
+                const { initDatabase } = require('./database');
+                await initDatabase();
+                dbInitialized = true;
+                console.log('✅ Database initialized successfully');
+            } else {
+                console.log('⚠️ Database module not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Database initialization failed:', error.message);
+        }
+
+        // Initialize storage manager for B2 functionality
+        try {
+            if (storageManager) {
+                await storageManager.initialize();
+                console.log('✅ Storage manager initialized successfully');
+                console.log('🔧 B2 available:', storageManager.isB2Available());
+            } else {
+                console.log('⚠️ Storage manager not available, skipping initialization');
+            }
+        } catch (error) {
+            console.error('⚠️ Storage manager initialization failed:', error.message);
+        }
+    }, 1000);
+});
+

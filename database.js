@@ -59,7 +59,8 @@ const initDatabase = async () => {
         ADD COLUMN IF NOT EXISTS opmerkingen TEXT,
         ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) REFERENCES users(id),
         ADD COLUMN IF NOT EXISTS top_prioriteit INTEGER CHECK (top_prioriteit IN (1, 2, 3)),
-        ADD COLUMN IF NOT EXISTS prioriteit_datum DATE
+        ADD COLUMN IF NOT EXISTS prioriteit_datum DATE,
+        ADD COLUMN IF NOT EXISTS prioriteit VARCHAR(10) DEFAULT 'gemiddeld' CHECK (prioriteit IN ('laag', 'gemiddeld', 'hoog'))
       `);
       console.log('✅ Recurring task columns and opmerkingen added/verified');
     } catch (alterError) {
@@ -72,7 +73,8 @@ const initDatabase = async () => {
         { name: 'opmerkingen', type: 'TEXT' },
         { name: 'user_id', type: 'VARCHAR(50) REFERENCES users(id)' },
         { name: 'top_prioriteit', type: 'INTEGER CHECK (top_prioriteit IN (1, 2, 3))' },
-        { name: 'prioriteit_datum', type: 'DATE' }
+        { name: 'prioriteit_datum', type: 'DATE' },
+        { name: 'prioriteit', type: 'VARCHAR(10) DEFAULT \'gemiddeld\' CHECK (prioriteit IN (\'laag\', \'gemiddeld\', \'hoog\'))' }
       ];
       
       for (const col of recurringColumns) {
@@ -99,6 +101,73 @@ const initDatabase = async () => {
       console.log('✅ Added email_import_code column to users table');
     } catch (migrateError) {
       console.log('⚠️ Could not add email_import_code column:', migrateError.message);
+    }
+
+    // Add beta testing columns to users table
+    try {
+      await pool.query(`
+        ALTER TABLE users 
+        ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) DEFAULT 'beta',
+        ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'beta_active',
+        ADD COLUMN IF NOT EXISTS ghl_contact_id VARCHAR(255)
+      `);
+      console.log('✅ Added beta testing columns to users table');
+    } catch (betaMigrateError) {
+      console.log('⚠️ Could not add beta columns, trying individually:', betaMigrateError.message);
+      // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
+      const betaColumns = [
+        { name: 'account_type', type: 'VARCHAR(20) DEFAULT \'beta\'' },
+        { name: 'subscription_status', type: 'VARCHAR(20) DEFAULT \'beta_active\'' },
+        { name: 'ghl_contact_id', type: 'VARCHAR(255)' }
+      ];
+      
+      for (const col of betaColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added beta column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Beta column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    // Add subscription selection columns to users table
+    try {
+      await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS selected_plan VARCHAR(20),
+        ADD COLUMN IF NOT EXISTS plan_selected_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS selection_source VARCHAR(20)
+      `);
+      console.log('✅ Added subscription selection columns to users table');
+    } catch (subscriptionMigrateError) {
+      console.log('⚠️ Could not add subscription columns, trying individually:', subscriptionMigrateError.message);
+      // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
+      const subscriptionColumns = [
+        { name: 'selected_plan', type: 'VARCHAR(20)' },
+        { name: 'plan_selected_at', type: 'TIMESTAMP' },
+        { name: 'selection_source', type: 'VARCHAR(20)' }
+      ];
+
+      for (const col of subscriptionColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added subscription column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Subscription column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    // Add index for subscription plan queries
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_selected_plan
+        ON users(selected_plan) WHERE selected_plan IS NOT NULL
+      `);
+      console.log('✅ Added index for selected_plan column');
+    } catch (indexError) {
+      console.log('⚠️ Could not add selected_plan index:', indexError.message);
     }
 
     await pool.query(`
@@ -187,6 +256,43 @@ const initDatabase = async () => {
       )
     `);
 
+    // Create bijlagen table for task attachments (pure B2 storage)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bijlagen (
+        id VARCHAR(50) PRIMARY KEY,
+        taak_id VARCHAR(50) NOT NULL REFERENCES taken(id) ON DELETE CASCADE,
+        bestandsnaam VARCHAR(255) NOT NULL,
+        bestandsgrootte INTEGER NOT NULL,
+        mimetype VARCHAR(100) NOT NULL,
+        storage_type VARCHAR(20) NOT NULL DEFAULT 'backblaze' CHECK (storage_type = 'backblaze'),
+        storage_path VARCHAR(500) NOT NULL, -- B2 object key (required for all files)
+        geupload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        user_id VARCHAR(50) REFERENCES users(id)
+      )
+    `);
+
+    // Migration: Drop bestand_data column if it exists (for pure B2 storage)
+    try {
+      await pool.query(`
+        ALTER TABLE bijlagen DROP COLUMN IF EXISTS bestand_data
+      `);
+      console.log('✅ Migrated bijlagen table to pure B2 storage');
+    } catch (error) {
+      // Ignore error if column doesn't exist
+      console.log('📝 bestand_data column removal: already done or not needed');
+    }
+
+    // Create user storage usage tracking table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_storage_usage (
+        user_id VARCHAR(50) PRIMARY KEY REFERENCES users(id),
+        used_bytes BIGINT DEFAULT 0,
+        bijlagen_count INTEGER DEFAULT 0,
+        premium_expires DATE, -- NULL = free user
+        updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add position column to existing tables if it doesn't exist
     try {
       await pool.query('ALTER TABLE dagelijkse_planning ADD COLUMN IF NOT EXISTS positie INTEGER DEFAULT 0');
@@ -213,6 +319,190 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add projecten columns (might already exist):', error.message);
     }
 
+    // Add premium_expires column to users table if it doesn't exist
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_expires DATE');
+      console.log('✅ Premium expires column added to users table');
+    } catch (error) {
+      console.log('⚠️ Could not add premium_expires column (might already exist):', error.message);
+    }
+
+    // Create beta configuration table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS beta_config (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        beta_period_active BOOLEAN DEFAULT TRUE,
+        beta_ended_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Insert default beta config if it doesn't exist
+    try {
+      await pool.query(`
+        INSERT INTO beta_config (id, beta_period_active) 
+        VALUES (1, TRUE) 
+        ON CONFLICT (id) DO NOTHING
+      `);
+      console.log('✅ Beta configuration table created with default settings');
+    } catch (error) {
+      console.log('⚠️ Could not insert default beta config:', error.message);
+    }
+
+    // Update bestaande taken die nog geen prioriteit hebben naar 'gemiddeld'
+    try {
+      const updateResult = await pool.query(`
+        UPDATE taken SET prioriteit = 'gemiddeld'
+        WHERE prioriteit IS NULL OR prioriteit = ''
+      `);
+      if (updateResult.rowCount > 0) {
+        console.log(`✅ Updated ${updateResult.rowCount} existing tasks to 'gemiddeld' priority`);
+      }
+    } catch (error) {
+      console.log('⚠️ Could not update existing tasks priority (might not have prioriteit column yet):', error.message);
+    }
+
+    // Feature 011: Payment System - Extend users table
+    try {
+      await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS payment_confirmed_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS trial_start_date DATE,
+        ADD COLUMN IF NOT EXISTS trial_end_date DATE,
+        ADD COLUMN IF NOT EXISTS had_trial BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS plugandpay_order_id VARCHAR(255) UNIQUE,
+        ADD COLUMN IF NOT EXISTS amount_paid_cents INTEGER,
+        ADD COLUMN IF NOT EXISTS login_token VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS login_token_expires TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS login_token_used BOOLEAN DEFAULT FALSE
+      `);
+      console.log('✅ Feature 011: Payment tracking columns added to users table');
+    } catch (paymentMigrateError) {
+      console.log('⚠️ Could not add payment columns, trying individually:', paymentMigrateError.message);
+      const paymentColumns = [
+        { name: 'payment_confirmed_at', type: 'TIMESTAMP' },
+        { name: 'trial_start_date', type: 'DATE' },
+        { name: 'trial_end_date', type: 'DATE' },
+        { name: 'had_trial', type: 'BOOLEAN DEFAULT FALSE' },
+        { name: 'plugandpay_order_id', type: 'VARCHAR(255) UNIQUE' },
+        { name: 'amount_paid_cents', type: 'INTEGER' },
+        { name: 'login_token', type: 'VARCHAR(255)' },
+        { name: 'login_token_expires', type: 'TIMESTAMP' },
+        { name: 'login_token_used', type: 'BOOLEAN DEFAULT FALSE' }
+      ];
+
+      for (const col of paymentColumns) {
+        try {
+          await pool.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added payment column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Payment column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    // Feature 011: Create payment_configurations table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payment_configurations (
+        id SERIAL PRIMARY KEY,
+        plan_id VARCHAR(50) UNIQUE NOT NULL,
+        plan_name VARCHAR(100) NOT NULL,
+        checkout_url TEXT NOT NULL DEFAULT '',
+        is_active BOOLEAN DEFAULT TRUE,
+        price_monthly DECIMAL(10,2),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Feature 011: Insert initial payment configurations (all active by default)
+    try {
+      await pool.query(`
+        INSERT INTO payment_configurations (plan_id, plan_name, checkout_url, is_active, price_monthly) VALUES
+          ('monthly_7', 'Maandelijks €7', '', TRUE, 7.00),
+          ('yearly_70', 'Jaarlijks €70', '', TRUE, 5.83),
+          ('monthly_8', 'No Limit Maandelijks €8', '', TRUE, 8.00),
+          ('yearly_80', 'No Limit Jaarlijks €80', '', TRUE, 6.67)
+        ON CONFLICT (plan_id) DO NOTHING
+      `);
+      console.log('✅ Feature 011 & 013: Payment configurations initialized (all plans active)');
+    } catch (error) {
+      console.log('⚠️ Could not insert payment configurations:', error.message);
+    }
+
+    // Feature 011: Create payment_webhook_logs table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS payment_webhook_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        event_type VARCHAR(100),
+        order_id VARCHAR(255),
+        email VARCHAR(255),
+        amount_cents INTEGER,
+        payload JSONB,
+        signature_valid BOOLEAN,
+        processed_at TIMESTAMP DEFAULT NOW(),
+        error_message TEXT,
+        ip_address VARCHAR(45)
+      )
+    `);
+
+    // Feature 011: Add payment indexes
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_subscription_status ON users(subscription_status);
+        CREATE INDEX IF NOT EXISTS idx_users_plugandpay_order_id ON users(plugandpay_order_id);
+        CREATE INDEX IF NOT EXISTS idx_users_login_token ON users(login_token) WHERE login_token_used = FALSE;
+        CREATE INDEX IF NOT EXISTS idx_users_trial_end_date ON users(trial_end_date) WHERE subscription_status = 'trialing';
+        CREATE INDEX IF NOT EXISTS idx_payment_configs_plan_id ON payment_configurations(plan_id);
+        CREATE INDEX IF NOT EXISTS idx_payment_configs_active ON payment_configurations(is_active);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_user_id ON payment_webhook_logs(user_id);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_order_id ON payment_webhook_logs(order_id);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_processed_at ON payment_webhook_logs(processed_at);
+        CREATE INDEX IF NOT EXISTS idx_webhook_logs_event_type ON payment_webhook_logs(event_type);
+      `);
+      console.log('✅ Feature 011: Payment system indexes created');
+    } catch (indexError) {
+      console.log('⚠️ Could not create payment indexes:', indexError.message);
+    }
+
+    // Feature 011: Create updated_at trigger for payment_configurations
+    try {
+      await pool.query(`
+        CREATE OR REPLACE FUNCTION update_payment_config_updated_at()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.updated_at = NOW();
+          RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER payment_config_updated_at
+          BEFORE UPDATE ON payment_configurations
+          FOR EACH ROW
+          EXECUTE FUNCTION update_payment_config_updated_at();
+      `);
+      console.log('✅ Feature 011: Payment configuration trigger created');
+    } catch (triggerError) {
+      console.log('⚠️ Payment configuration trigger might already exist:', triggerError.message);
+    }
+
+    // Feature 015: Add price_monthly column to payment_configurations
+    try {
+      await pool.query('ALTER TABLE payment_configurations ADD COLUMN IF NOT EXISTS price_monthly DECIMAL(10,2)');
+      // Set default prices for existing plans
+      await pool.query(`
+        UPDATE payment_configurations SET price_monthly = 7.00 WHERE plan_id = 'monthly_7' AND price_monthly IS NULL;
+        UPDATE payment_configurations SET price_monthly = 5.83 WHERE plan_id = 'yearly_70' AND price_monthly IS NULL;
+        UPDATE payment_configurations SET price_monthly = 8.00 WHERE plan_id = 'monthly_8' AND price_monthly IS NULL;
+        UPDATE payment_configurations SET price_monthly = 6.67 WHERE plan_id = 'yearly_80' AND price_monthly IS NULL;
+      `);
+      console.log('✅ Feature 015: price_monthly column added to payment_configurations');
+    } catch (error) {
+      console.log('⚠️ price_monthly column might already exist:', error.message);
+    }
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);
@@ -220,6 +510,7 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_taken_context ON taken(context_id);
       CREATE INDEX IF NOT EXISTS idx_taken_user ON taken(user_id);
       CREATE INDEX IF NOT EXISTS idx_taken_user_lijst ON taken(user_id, lijst);
+      CREATE INDEX IF NOT EXISTS idx_taken_prioriteit ON taken(prioriteit);
       CREATE INDEX IF NOT EXISTS idx_projecten_user ON projecten(user_id);
       CREATE INDEX IF NOT EXISTS idx_contexten_user ON contexten(user_id);
       CREATE INDEX IF NOT EXISTS idx_dagelijkse_planning_datum ON dagelijkse_planning(datum);
@@ -232,6 +523,9 @@ const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
       CREATE INDEX IF NOT EXISTS idx_subtaken_parent ON subtaken(parent_taak_id);
       CREATE INDEX IF NOT EXISTS idx_subtaken_parent_volgorde ON subtaken(parent_taak_id, volgorde);
+      CREATE INDEX IF NOT EXISTS idx_bijlagen_taak ON bijlagen(taak_id);
+      CREATE INDEX IF NOT EXISTS idx_bijlagen_user ON bijlagen(user_id);
+      CREATE INDEX IF NOT EXISTS idx_user_storage_usage_premium ON user_storage_usage(premium_expires);
     `);
 
     console.log('✅ Database initialized successfully');
@@ -244,6 +538,34 @@ const initDatabase = async () => {
 
 // Database helper functions
 const db = {
+  // Get a single task by ID for a specific user
+  async getTask(taskId, userId) {
+    try {
+      if (!pool) {
+        throw new Error('Database pool not available');
+      }
+
+      if (!userId) {
+        console.warn('⚠️ getTask called without userId - operation cancelled');
+        return null;
+      }
+
+      const result = await pool.query(
+        'SELECT * FROM taken WHERE id = $1 AND user_id = $2',
+        [taskId, userId]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error getting task:', error);
+      throw error;
+    }
+  },
+
   // Get all items from a specific list for a specific user
   async getList(listName, userId) {
     try {
@@ -332,12 +654,12 @@ const db = {
         await pool.query('DELETE FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL', [userId]);
         for (const item of items) {
           await pool.query(`
-            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, afgewerkt, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, prioriteit, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
           `, [
             item.id, item.tekst, item.aangemaakt, item.lijst || 'afgewerkt',
             item.projectId, item.verschijndatum, item.contextId, item.duur, item.type, item.afgewerkt,
-            item.herhalingType, item.herhalingWaarde, item.herhalingActief, item.opmerkingen, userId
+            item.herhalingType, item.herhalingWaarde, item.herhalingActief, item.opmerkingen, item.prioriteit || 'gemiddeld', userId
           ]);
         }
       } else {
@@ -359,8 +681,8 @@ const db = {
           // Check if herhaling columns exist and fall back gracefully
           try {
             await pool.query(`
-              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+              INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, prioriteit, afgewerkt, user_id)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             `, [
               item.id, 
               item.tekst, 
@@ -375,6 +697,7 @@ const db = {
               item.herhalingWaarde || null, 
               item.herhalingActief === true || item.herhalingActief === 'true',
               item.opmerkingen || null,
+              item.prioriteit || 'gemiddeld',
               null,  // afgewerkt
               userId
             ]);
@@ -386,8 +709,8 @@ const db = {
               
               console.log(`⚠️ DB: Falling back to basic insert for item ${item.id}`);
               await pool.query(`
-                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, prioriteit, afgewerkt, user_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
               `, [
                 item.id, 
                 item.tekst, 
@@ -399,6 +722,7 @@ const db = {
                 item.duur || null, 
                 item.type || null,
                 item.opmerkingen || null,
+                item.prioriteit || 'gemiddeld',
                 null,  // afgewerkt
                 userId
               ]);
@@ -600,18 +924,38 @@ const db = {
           originalTask.herhalingWaarde || null, 
           originalTask.herhalingType ? true : false, // herhalingActief = true als er een herhalingType is 
           originalTask.opmerkingen || null, 
+          originalTask.prioriteit || 'gemiddeld',
           null, 
           userId
         ];
         
         const insertResult = await client.query(`
-          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, afgewerkt, user_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, herhaling_type, herhaling_waarde, herhaling_actief, opmerkingen, prioriteit, afgewerkt, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
           RETURNING id
         `, insertValues);
         
         if (insertResult.rows.length === 0) {
           throw new Error('Insert returned no rows');
+        }
+        
+        // Copy bijlagen references from original task to new recurring task
+        // Debug: log all available properties
+        console.log('🔍 DEBUG: originalTask properties:', Object.keys(originalTask));
+        console.log('🔍 DEBUG: originalTask sample values:', {
+          id: originalTask.id,
+          taakId: originalTask.taakId,
+          task_id: originalTask.task_id,
+          originalId: originalTask.originalId
+        });
+        
+        const originalTaskId = originalTask.id || originalTask.taakId || originalTask.task_id || null;
+        if (originalTaskId) {
+          console.log('✅ Found original task ID for bijlagen:', originalTaskId);
+          await this.copyBijlagenReferences(originalTaskId, newId, userId, client);
+        } else {
+          console.log('⚠️ No original task ID found for bijlagen copying - skipping');
+          console.log('⚠️ Available properties:', Object.keys(originalTask));
         }
         
         await client.query('COMMIT');
@@ -636,18 +980,38 @@ const db = {
           originalTask.duur || 0, 
           originalTask.type || 'actie', 
           originalTask.opmerkingen || null, 
+          originalTask.prioriteit || 'gemiddeld',
           null, 
           userId
         ];
         
         const basicInsertResult = await client.query(`
-          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, afgewerkt, user_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          INSERT INTO taken (id, tekst, aangemaakt, lijst, project_id, verschijndatum, context_id, duur, type, opmerkingen, prioriteit, afgewerkt, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING id
         `, basicInsertValues);
         
         if (basicInsertResult.rows.length === 0) {
           throw new Error('Basic insert returned no rows');
+        }
+        
+        // Copy bijlagen references from original task to new recurring task
+        // Debug: log all available properties
+        console.log('🔍 DEBUG: originalTask properties:', Object.keys(originalTask));
+        console.log('🔍 DEBUG: originalTask sample values:', {
+          id: originalTask.id,
+          taakId: originalTask.taakId,
+          task_id: originalTask.task_id,
+          originalId: originalTask.originalId
+        });
+        
+        const originalTaskId = originalTask.id || originalTask.taakId || originalTask.task_id || null;
+        if (originalTaskId) {
+          console.log('✅ Found original task ID for bijlagen:', originalTaskId);
+          await this.copyBijlagenReferences(originalTaskId, newId, userId, client);
+        } else {
+          console.log('⚠️ No original task ID found for bijlagen copying - skipping');
+          console.log('⚠️ Available properties:', Object.keys(originalTask));
         }
         
         await client.query('COMMIT');
@@ -664,6 +1028,42 @@ const db = {
       return null;
     } finally {
       client.release();
+    }
+  },
+
+  // Copy bijlagen references from original task to new recurring task
+  async copyBijlagenReferences(originalTaskId, newTaskId, userId, client) {
+    try {
+      console.log('📎 Copying bijlagen references from', originalTaskId, 'to', newTaskId);
+      
+      const result = await client.query(`
+        INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, 
+                             mimetype, storage_type, storage_path, user_id)
+        SELECT 
+          $2 || '_bij_' || ROW_NUMBER() OVER() as id, -- nieuwe unieke bijlage ID
+          $2, -- nieuwe taak_id  
+          bestandsnaam, 
+          bestandsgrootte, 
+          mimetype, 
+          storage_type, 
+          storage_path,  -- ZELFDE B2 bestand - geen duplicaat!
+          user_id
+        FROM bijlagen 
+        WHERE taak_id = $1 AND user_id = $3
+        RETURNING id
+      `, [originalTaskId, newTaskId, userId]);
+      
+      if (result.rowCount > 0) {
+        console.log('✅ Copied', result.rowCount, 'bijlagen references to new recurring task');
+      } else {
+        console.log('📎 No bijlagen to copy - task had no attachments');
+      }
+      
+      return result.rowCount;
+    } catch (error) {
+      console.error('❌ Error copying bijlagen references:', error);
+      // Don't throw - bijlagen copying should not fail the recurring task creation
+      return 0;
     }
   },
 
@@ -703,6 +1103,29 @@ const db = {
     } catch (error) {
       console.error('Error getting counts:', error);
       return {};
+    }
+  },
+
+  // Clean project names from planning items (remove "(ProjectName)" from naam field)
+  async cleanPlanningProjectNames(userId) {
+    try {
+      // Update planning items where naam contains project in parentheses
+      // Extract the tekst from taken table and use that as the clean naam
+      const result = await pool.query(`
+        UPDATE dagelijkse_planning dp
+        SET naam = t.tekst
+        FROM taken t
+        WHERE dp.actie_id = t.id 
+        AND dp.user_id = $1
+        AND dp.naam ~ '\\(.*\\)$'
+        AND dp.naam != t.tekst
+      `, [userId]);
+      
+      console.log(`✅ Cleaned ${result.rowCount} planning items - removed project names from naam field`);
+      return result.rowCount;
+    } catch (error) {
+      console.error('❌ Error cleaning planning project names:', error);
+      throw error;
     }
   },
 
@@ -1595,6 +2018,398 @@ const db = {
       return true;
     } catch (error) {
       console.error('Error reordering subtaken:', error);
+      return false;
+    }
+  },
+
+  // Bijlagen (Attachments) functions
+  async createBijlage(bijlageData) {
+    try {
+      const result = await pool.query(`
+        INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *
+      `, [
+        bijlageData.id,
+        bijlageData.taak_id,
+        bijlageData.bestandsnaam,
+        bijlageData.bestandsgrootte,
+        bijlageData.mimetype,
+        bijlageData.storage_type, // Always 'backblaze'
+        bijlageData.storage_path, // Required B2 path
+        bijlageData.user_id
+      ]);
+
+      // Update user storage usage
+      await this.updateUserStorageUsage(bijlageData.user_id);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error creating bijlage:', error);
+      throw error;
+    }
+  },
+
+  async getBijlagenForTaak(taakId) {
+    try {
+      const result = await pool.query(`
+        SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, geupload, user_id
+        FROM bijlagen 
+        WHERE taak_id = $1 
+        ORDER BY geupload DESC
+      `, [taakId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting bijlagen for taak:', error);
+      return [];
+    }
+  },
+
+  async getBijlagenCountsForTaken(taakIds) {
+    try {
+      if (!taakIds || taakIds.length === 0) {
+        return {};
+      }
+      
+      const result = await pool.query(`
+        SELECT taak_id, COUNT(*) as bijlagen_count
+        FROM bijlagen 
+        WHERE taak_id = ANY($1)
+        GROUP BY taak_id
+      `, [taakIds]);
+      
+      // Convert to object with taak_id as key
+      const counts = {};
+      result.rows.forEach(row => {
+        counts[row.taak_id] = parseInt(row.bijlagen_count);
+      });
+      
+      return counts;
+    } catch (error) {
+      console.error('Error getting bijlagen counts for taken:', error);
+      return {};
+    }
+  },
+
+  async getBijlage(bijlageId, includeData = false) {
+    try {
+      let query = `
+        SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, storage_type, storage_path, geupload, user_id
+        ${includeData ? ', bestand_data' : ''}
+        FROM bijlagen 
+        WHERE id = $1
+      `;
+      
+      const result = await pool.query(query, [bijlageId]);
+      
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error getting bijlage:', error);
+      return null;
+    }
+  },
+
+  async deleteBijlage(bijlageId, userId) {
+    try {
+      const result = await pool.query(`
+        DELETE FROM bijlagen 
+        WHERE id = $1 AND user_id = $2
+        RETURNING *
+      `, [bijlageId, userId]);
+
+      if (result.rows.length > 0) {
+        // Update user storage usage after deletion
+        await this.updateUserStorageUsage(userId);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error deleting bijlage:', error);
+      return false;
+    }
+  },
+
+  async updateUserStorageUsage(userId) {
+    try {
+      // Calculate total usage for this user
+      const result = await pool.query(`
+        SELECT 
+          COALESCE(SUM(bestandsgrootte), 0) as used_bytes,
+          COUNT(*) as bijlagen_count
+        FROM bijlagen 
+        WHERE user_id = $1
+      `, [userId]);
+
+      const { used_bytes, bijlagen_count } = result.rows[0];
+
+      // Upsert the usage record
+      await pool.query(`
+        INSERT INTO user_storage_usage (user_id, used_bytes, bijlagen_count, updated)
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id)
+        DO UPDATE SET 
+          used_bytes = $2,
+          bijlagen_count = $3,
+          updated = CURRENT_TIMESTAMP
+      `, [userId, used_bytes, bijlagen_count]);
+
+      return { used_bytes: parseInt(used_bytes), bijlagen_count: parseInt(bijlagen_count) };
+    } catch (error) {
+      console.error('Error updating user storage usage:', error);
+      return { used_bytes: 0, bijlagen_count: 0 };
+    }
+  },
+
+  async getUserStorageStats(userId) {
+    try {
+      const result = await pool.query(`
+        SELECT used_bytes, bijlagen_count, premium_expires, updated
+        FROM user_storage_usage 
+        WHERE user_id = $1
+      `, [userId]);
+
+      if (result.rows.length === 0) {
+        // Initialize usage record if it doesn't exist
+        return await this.updateUserStorageUsage(userId);
+      }
+
+      const stats = result.rows[0];
+      return {
+        used_bytes: parseInt(stats.used_bytes),
+        bijlagen_count: parseInt(stats.bijlagen_count),
+        premium_expires: stats.premium_expires,
+        updated: stats.updated
+      };
+    } catch (error) {
+      console.error('Error getting user storage stats:', error);
+      return { used_bytes: 0, bijlagen_count: 0, premium_expires: null };
+    }
+  },
+
+  async checkUserPremiumStatus(userId) {
+    try {
+      // Check for Premium Plus subscription (monthly_8 or yearly_80) in users table
+      const userResult = await pool.query(`
+        SELECT selected_plan, trial_end_date
+        FROM users
+        WHERE id = $1
+      `, [userId]);
+
+      if (userResult.rows.length === 0) {
+        return false; // User not found
+      }
+
+      const { selected_plan, trial_end_date } = userResult.rows[0];
+
+      // Define Premium Plus plan IDs
+      const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
+      const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
+      const ALL_PREMIUM_PLAN_IDS = [...PREMIUM_PLUS_PLAN_IDS, ...PREMIUM_STANDARD_PLAN_IDS];
+
+      // Check if user has an active paid subscription (Standard or Premium Plus)
+      if (selected_plan && ALL_PREMIUM_PLAN_IDS.includes(selected_plan)) {
+        // Check if trial hasn't expired (for trial users)
+        if (trial_end_date) {
+          const now = new Date();
+          const trialEnds = new Date(trial_end_date);
+          if (trialEnds > now) {
+            return true; // Trial still active
+          }
+          // Trial expired, check if they have a paid plan
+          return selected_plan && ALL_PREMIUM_PLAN_IDS.includes(selected_plan);
+        }
+        // No trial_end_date means paid subscription
+        return true;
+      }
+
+      // Fallback: Check legacy premium_expires in user_storage_usage table
+      const storageResult = await pool.query(`
+        SELECT premium_expires
+        FROM user_storage_usage
+        WHERE user_id = $1
+      `, [userId]);
+
+      if (storageResult.rows.length === 0) {
+        return false; // No record = free user
+      }
+
+      const premiumExpires = storageResult.rows[0].premium_expires;
+      if (!premiumExpires) {
+        return false; // NULL = free user
+      }
+
+      // Check if legacy premium is still valid
+      const now = new Date();
+      const expires = new Date(premiumExpires);
+      return expires > now;
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      return false;
+    }
+  },
+
+  async getUserPlanType(userId) {
+    try {
+      const userResult = await pool.query(`
+        SELECT selected_plan, trial_end_date
+        FROM users
+        WHERE id = $1
+      `, [userId]);
+
+      if (userResult.rows.length === 0) {
+        return 'free'; // User not found, default to free
+      }
+
+      const { selected_plan, trial_end_date } = userResult.rows[0];
+
+      // Define plan tier constants
+      const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
+      const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
+
+      // Check for active trial or paid subscription
+      if (selected_plan) {
+        // Check if trial is active or if it's a paid plan
+        if (trial_end_date) {
+          const now = new Date();
+          const trialEnds = new Date(trial_end_date);
+          if (trialEnds < now) {
+            // Trial expired without payment
+            return 'free';
+          }
+        }
+
+        // Determine tier based on selected_plan
+        if (PREMIUM_PLUS_PLAN_IDS.includes(selected_plan)) {
+          return 'premium_plus';
+        } else if (PREMIUM_STANDARD_PLAN_IDS.includes(selected_plan)) {
+          return 'premium_standard';
+        }
+      }
+
+      return 'free'; // Default to free
+    } catch (error) {
+      console.error('Error getting user plan type:', error);
+      return 'free'; // Default to free on error
+    }
+  },
+
+  // Beta configuration functions
+  async getBetaConfig() {
+    try {
+      const result = await pool.query('SELECT * FROM beta_config WHERE id = 1');
+      return result.rows[0] || { beta_period_active: true };
+    } catch (error) {
+      console.error('Error getting beta config:', error);
+      return { beta_period_active: true }; // Default to beta active if error
+    }
+  },
+
+  async updateBetaConfig(active) {
+    try {
+      const result = await pool.query(`
+        UPDATE beta_config 
+        SET beta_period_active = $1,
+            beta_ended_at = CASE WHEN $1 = FALSE THEN NOW() ELSE NULL END,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+        RETURNING *
+      `, [active]);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating beta config:', error);
+      throw error;
+    }
+  },
+
+  async setPremiumStatus(userId, expiresDate) {
+    try {
+      await pool.query(`
+        INSERT INTO user_storage_usage (user_id, premium_expires, updated)
+        VALUES ($1, $2, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id)
+        DO UPDATE SET
+          premium_expires = $2,
+          updated = CURRENT_TIMESTAMP
+      `, [userId, expiresDate]);
+
+      return true;
+    } catch (error) {
+      console.error('Error setting premium status:', error);
+      return false;
+    }
+  },
+
+  // Onboarding Video functions (Feature 014)
+  async hasSeenOnboardingVideo(userId) {
+    try {
+      const result = await pool.query(
+        'SELECT onboarding_video_seen FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (result.rows.length === 0) {
+        return false;
+      }
+
+      return result.rows[0].onboarding_video_seen || false;
+    } catch (error) {
+      console.error('Error checking onboarding video seen status:', error);
+      return false;
+    }
+  },
+
+  async markOnboardingVideoSeen(userId) {
+    try {
+      await pool.query(
+        'UPDATE users SET onboarding_video_seen = TRUE, onboarding_video_seen_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [userId]
+      );
+
+      console.log(`✅ Marked onboarding video as seen for user ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('Error marking onboarding video as seen:', error);
+      return false;
+    }
+  },
+
+  async getSystemSetting(key) {
+    try {
+      const result = await pool.query(
+        'SELECT value FROM system_settings WHERE key = $1',
+        [key]
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return result.rows[0].value;
+    } catch (error) {
+      console.error(`Error getting system setting ${key}:`, error);
+      return null;
+    }
+  },
+
+  async updateSystemSetting(key, value, adminUserId) {
+    try {
+      await pool.query(`
+        INSERT INTO system_settings (key, value, updated_at, updated_by)
+        VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+        ON CONFLICT (key)
+        DO UPDATE SET
+          value = $2,
+          updated_at = CURRENT_TIMESTAMP,
+          updated_by = $3
+      `, [key, value, adminUserId]);
+
+      console.log(`✅ Updated system setting ${key}`);
+      return true;
+    } catch (error) {
+      console.error(`Error updating system setting ${key}:`, error);
       return false;
     }
   }

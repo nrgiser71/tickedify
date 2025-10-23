@@ -19,7 +19,7 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <button class="sidebar-toggle" id="sidebar-toggle" title="Sidebar in-/uitklappen">
+                    <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse/expand sidebar">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <div class="app-logo">
@@ -28,8 +28,8 @@
                     <div class="user-section" id="user-section">
                         <!-- Will be populated by JavaScript based on auth state -->
                         <div class="auth-buttons" id="auth-buttons">
-                            <button class="btn-auth btn-login" id="btn-login">Inloggen</button>
-                            <button class="btn-auth btn-register" id="btn-register">Registreren</button>
+                            <button class="btn-auth btn-login" id="btn-login">Log in</button>
+                            <button class="btn-auth btn-register" id="btn-register">Register</button>
                         </div>
                         <div class="user-info" id="user-info" style="display: none;">
                             <div class="user-info-top">
@@ -38,20 +38,20 @@
                                     <span class="user-name" id="user-name"></span>
                                     <span class="user-email" id="user-email"></span>
                                 </div>
-                                <button class="btn-logout" id="btn-logout">Uitloggen</button>
+                                <button class="btn-logout" id="btn-logout">Log out</button>
                             </div>
                             <div class="user-import-email" id="user-import-email" style="display: none;">
                                 <div class="import-email-container">
                                     <span class="import-label">Email import:</span>
                                     <a href="#" class="import-email-link" id="import-email-link"></a>
-                                    <button class="btn-copy" id="btn-copy-import" title="Kopieer naar clipboard"><i class="fas fa-copy"></i></button>
+                                    <button class="btn-copy" id="btn-copy-import" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="version-info">
-                        <span class="version-number" id="version-number">v0.3.3</span>
-                        <a href="changelog.html" target="_blank" class="changelog-link" title="Bekijk wat er nieuw is">(Changelog)</a>
+                        <span class="version-number" id="version-number">v0.18.2</span>
+                        <a href="changelog.html" target="_blank" class="changelog-link" title="See what's new">(Changelog)</a>
                     </div>
                 </div>
                 
@@ -59,30 +59,30 @@
                 <!-- Welkomstbericht voor niet-ingelogde gebruikers -->
                 <div class="welcome-message" id="welcome-message" style="display: none;">
                     <div class="welcome-content">
-                        <h2>Welkom bij Tickedify</h2>
-                        <p>Smart task management volgens de "Baas Over Je Tijd" methodologie.</p>
+                        <h2>Welcome to Tickedify</h2>
+                        <p>Smart task management based on the "Master of Your Time" methodology.</p>
                         
                         <div class="features-list">
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-list-check"></i></span>
-                                <span>Gestructureerd takenbeheer</span>
+                                <span>Structured task management</span>
                             </div>
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-redo"></i></span>
-                                <span>Herhalende taken</span>
+                                <span>Recurring tasks</span>
                             </div>
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-calendar"></i></span>
-                                <span>Dagelijkse planning</span>
+                                <span>Daily planning</span>
                             </div>
                             <div class="feature">
                                 <span class="feature-icon"><i class="fas fa-folder"></i></span>
-                                <span>Projecten & contexten</span>
+                                <span>Projects & contexts</span>
                             </div>
                         </div>
                         
                         <p class="login-prompt">
-                            <strong>Log in of registreer</strong> om te beginnen met het organiseren van je taken.
+                            <strong>Log in or register</strong> to start organizing your tasks.
                         </p>
                     </div>
                 </div>
@@ -92,57 +92,47 @@
                     <div class="lijst-sectie">
                         <div class="lijst-item actief" data-lijst="inbox">
                             <div class="lijst-icon"><i class="fas fa-inbox"></i></div>
-                            <span class="lijst-naam">Inbox</span>
+                            <span class="lijst-naam">Inbox<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="acties">
                             <div class="lijst-icon"><i class="fas fa-list-check"></i></div>
-                            <span class="lijst-naam">Acties</span>
+                            <span class="lijst-naam">Actions<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="projecten">
                             <div class="lijst-icon"><i class="fas fa-folder"></i></div>
-                            <span class="lijst-naam">Projecten</span>
+                            <span class="lijst-naam">Projects<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="opvolgen">
                             <div class="lijst-icon"><i class="fas fa-clock"></i></div>
-                            <span class="lijst-naam">Opvolgen</span>
+                            <span class="lijst-naam">Follow-up<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="uitgesteld">
                             <div class="lijst-icon"><i class="fas fa-pause-circle"></i></div>
-                            <span class="lijst-naam">Uitgesteld</span>
+                            <span class="lijst-naam">Postponed<span class="task-count"></span></span>
                         </div>
                         <div class="lijst-item" data-lijst="afgewerkte-taken">
                             <div class="lijst-icon"><i class="fas fa-check"></i></div>
-                            <span class="lijst-naam">Afgewerkt</span>
+                            <span class="lijst-naam">Completed</span>
                         </div>
                     </div>
 
-                    <!-- Tools dropdown -->
+                    <!-- Voormalige Tools items - nu direct zichtbaar -->
                     <div class="lijst-sectie">
-                        <div class="sectie-header dropdown-header" id="tools-dropdown">
-                            <span class="dropdown-arrow"><i class="fas fa-chevron-right"></i></span>
-                            <span><i class="fas fa-tools"></i> Tools</span>
+                        <div class="lijst-item" data-lijst="dagelijkse-planning">
+                            <div class="lijst-icon"><i class="fas fa-calendar"></i></div>
+                            <span class="lijst-naam">Daily Planning</span>
                         </div>
-                        <div class="dropdown-content" id="tools-content" style="display: none;">
-                            <div class="lijst-item" data-lijst="dagelijkse-planning">
-                                <div class="lijst-icon"><i class="fas fa-calendar"></i></div>
-                                <span class="lijst-naam">Dagelijkse Planning</span>
-                            </div>
-                            <div class="lijst-item" data-tool="contextenbeheer">
-                                <div class="lijst-icon"><i class="fas fa-tag"></i></div>
-                                <span class="lijst-naam">Contexten Beheer</span>
-                            </div>
-                            <div class="lijst-item" data-tool="csv-import">
-                                <div class="lijst-icon"><i class="fas fa-file-csv"></i></div>
-                                <span class="lijst-naam">CSV Import</span>
-                            </div>
-                            <div class="lijst-item" data-tool="wekelijkse-optimalisatie">
-                                <div class="lijst-icon"><i class="fas fa-bullseye"></i></div>
-                                <span class="lijst-naam">Wekelijkse Optimalisatie</span>
-                            </div>
-                            <div class="lijst-item" data-tool="zoeken">
-                                <div class="lijst-icon"><i class="fas fa-search"></i></div>
-                                <span class="lijst-naam">Zoeken</span>
-                            </div>
+                        <div class="lijst-item" data-tool="contextenbeheer">
+                            <div class="lijst-icon"><i class="fas fa-tag"></i></div>
+                            <span class="lijst-naam">Context Management</span>
+                        </div>
+                        <div class="lijst-item" data-tool="csv-import">
+                            <div class="lijst-icon"><i class="fas fa-file-csv"></i></div>
+                            <span class="lijst-naam">CSV Import</span>
+                        </div>
+                        <div class="lijst-item" data-tool="zoeken">
+                            <div class="lijst-icon"><i class="fas fa-search"></i></div>
+                            <span class="lijst-naam">Search</span>
                         </div>
                     </div>
 
@@ -153,12 +143,16 @@
                         </div>
                         <div class="lijst-item feedback-item" data-feedback="bug">
                             <div class="lijst-icon"><i class="fas fa-bug"></i></div>
-                            <span class="lijst-naam">Bug Melden</span>
+                            <span class="lijst-naam">Report Bug</span>
                         </div>
                         <div class="lijst-item feedback-item" data-feedback="feature">
                             <div class="lijst-icon"><i class="fas fa-lightbulb"></i></div>
                             <span class="lijst-naam">Feature Request</span>
                         </div>
+                        <a href="#" id="openOnboardingVideoLink" class="lijst-item">
+                            <div class="lijst-icon"><i class="fas fa-video"></i></div>
+                            <span class="lijst-naam">Instruction Video</span>
+                        </a>
                     </div>
                 </div>
             </aside>
@@ -176,9 +170,9 @@
 
                 <div class="content-area">
                     <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
-                        <button id="toevoegBtn">Toevoegen</button>
-                        <button id="testTakenBtn" class="test-button" style="display: none;">+ Test Taken</button>
+                        <input type="text" id="taakInput" placeholder="New task..." autofocus>
+                        <button id="toevoegBtn">Add</button>
+                        <button id="testTakenBtn" class="test-button" style="display: none;">+ Test Tasks</button>
                         <!-- Delete all knop wordt dynamisch toegevoegd door JavaScript -->
                     </div>
 
@@ -192,9 +186,9 @@
         <!-- Keyboard Shortcuts Footer -->
         <footer class="shortcuts-footer" id="shortcuts-footer">
             <div class="shortcuts-content">
-                <span class="shortcut-item"><kbd>Shift+F12</kbd> Nieuwe taak</span>
+                <span class="shortcut-item"><kbd>Shift+F12</kbd> New task</span>
                 <span class="shortcut-item"><kbd>?</kbd> Help</span>
-                <span class="shortcut-item"><kbd>ESC</kbd> Sluiten</span>
+                <span class="shortcut-item"><kbd>ESC</kbd> Close</span>
             </div>
         </footer>
     </div>
@@ -202,13 +196,13 @@
     <!-- Quick Add Modal -->
     <div id="quickAddModal" class="popup-overlay quick-add-overlay" style="display: none;">
         <div class="popup-content quick-add-content">
-            <h3>Nieuwe taak toevoegen</h3>
+            <h3>Add new task</h3>
             <div class="form-groep">
-                <input type="text" id="quickAddInput" placeholder="Taaknaam..." autofocus>
+                <input type="text" id="quickAddInput" placeholder="Task name..." autofocus>
             </div>
             <div class="quick-add-actions">
-                <button id="quickAddCancel" class="btn-cancel">Annuleren</button>
-                <button id="quickAddOk" class="btn-primary">Toevoegen</button>
+                <button id="quickAddCancel" class="btn-cancel">Cancel</button>
+                <button id="quickAddOk" class="btn-primary">Add</button>
             </div>
         </div>
     </div>
@@ -216,22 +210,22 @@
     <!-- Keyboard Help Modal -->
     <div id="keyboardHelpModal" class="popup-overlay" style="display: none;">
         <div class="popup-content keyboard-help-content">
-            <h3><i class="fas fa-keyboard"></i> Sneltoetsen</h3>
+            <h3><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h3>
             <div class="shortcuts-grid">
                 <div class="shortcuts-category">
-                    <h4>Algemeen</h4>
+                    <h4>General</h4>
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F12</kbd></span>
-                            <span class="shortcut-desc">Nieuwe taak toevoegen</span>
+                            <span class="shortcut-desc">Add new task</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F1</kbd></span>
-                            <span class="shortcut-desc">Deze help tonen</span>
+                            <span class="shortcut-desc">Show this help</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>ESC</kbd></span>
-                            <span class="shortcut-desc">Modal sluiten</span>
+                            <span class="shortcut-desc">Close modal</span>
                         </div>
                     </div>
                 </div>
@@ -240,20 +234,20 @@
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>Tab</kbd></span>
-                            <span class="shortcut-desc">Tussen velden navigeren</span>
+                            <span class="shortcut-desc">Navigate between fields</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>+</kbd></span>
-                            <span class="shortcut-desc">Nieuw project/context</span>
+                            <span class="shortcut-desc">New project/context</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>Enter</kbd></span>
-                            <span class="shortcut-desc">Opslaan</span>
+                            <span class="shortcut-desc">Save</span>
                         </div>
                     </div>
                 </div>
                 <div class="shortcuts-category">
-                    <h4>F-toetsen (Planning Popup)</h4>
+                    <h4>F-keys (Planning Popup)</h4>
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F2</kbd></span>
@@ -261,11 +255,11 @@
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F3</kbd></span>
-                            <span class="shortcut-desc">Datum = vandaag</span>
+                            <span class="shortcut-desc">Date = today</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F4</kbd></span>
-                            <span class="shortcut-desc">Datum = morgen</span>
+                            <span class="shortcut-desc">Date = tomorrow</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F6</kbd></span>
@@ -277,54 +271,54 @@
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F8</kbd></span>
-                            <span class="shortcut-desc">Cyclische duur (5→10→15...→120)</span>
+                            <span class="shortcut-desc">Cycle duration (5→10→15...→120)</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F9</kbd></span>
-                            <span class="shortcut-desc">Focus opmerkingen</span>
+                            <span class="shortcut-desc">Focus notes</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>F10</kbd></span>
-                            <span class="shortcut-desc">Herhaling instellen</span>
+                            <span class="shortcut-desc">Configure Recurrence</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F10</kbd></span>
-                            <span class="shortcut-desc">Subtaak toevoegen</span>
+                            <span class="shortcut-desc">Add subtask</span>
                         </div>
                     </div>
                 </div>
                 <div class="shortcuts-category">
-                    <h4>Snel verplaatsen (SHIFT+F)</h4>
+                    <h4>Quick move (SHIFT+F)</h4>
                     <div class="shortcut-list">
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F1</kbd></span>
-                            <span class="shortcut-desc">Opvolgen</span>
+                            <span class="shortcut-desc">Follow-up</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F2</kbd></span>
-                            <span class="shortcut-desc">Wekelijks</span>
+                            <span class="shortcut-desc">Weekly</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F3</kbd></span>
-                            <span class="shortcut-desc">Maandelijks</span>
+                            <span class="shortcut-desc">Monthly</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F4</kbd></span>
-                            <span class="shortcut-desc">3-maandelijks</span>
+                            <span class="shortcut-desc">Quarterly</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F6</kbd></span>
-                            <span class="shortcut-desc">6-maandelijks</span>
+                            <span class="shortcut-desc">Bi-annual</span>
                         </div>
                         <div class="shortcut-row">
                             <span class="shortcut-keys"><kbd>SHIFT+F7</kbd></span>
-                            <span class="shortcut-desc">Jaarlijks</span>
+                            <span class="shortcut-desc">Yearly</span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="popup-acties">
-                <button id="keyboardHelpClose" class="btn-primary">Sluiten</button>
+                <button id="keyboardHelpClose" class="btn-primary">Close</button>
             </div>
         </div>
     </div>
@@ -332,90 +326,102 @@
     <!-- Planning Popup -->
     <div id="planningPopup" class="popup-overlay" style="display: none;">
         <div class="popup-content">
-            <h3>Taak plannen</h3>
-            <p class="keyboard-help"><i class="fas fa-lightbulb"></i> Toetsenbord: Tab = navigeren, + = nieuw item, Esc = annuleren, Enter = opslaan</p>
-            
+            <h3>Plan task</h3>
+            <p class="keyboard-help"><i class="fas fa-lightbulb"></i> Keyboard: Tab = navigate, + = new item, Esc = cancel, Enter = save</p>
+
             <div class="form-groep">
-                <label>Taaknaam:</label>
-                <input type="text" id="taakNaamInput" required>
+                <label>Task name:</label>
+                <div class="checkbox-input-wrapper">
+                    <input type="checkbox" id="completeTaskCheckbox">
+                    <input type="text" id="taakNaamInput" required>
+                </div>
             </div>
-            
+
             <div class="planning-opties">
                 <div class="optie-groep">
-                    <h4>Maak actie:</h4>
+                    <h4>Create action:</h4>
                     <div class="form-groep">
                         <label>Project:</label>
                         <div class="select-met-toevoeg">
                             <select id="projectSelect">
-                                <option value="">Geen project</option>
+                                <option value="">No project</option>
                             </select>
                             <button id="nieuwProjectBtn" type="button" tabindex="-1">+</button>
                         </div>
                     </div>
-                    
+
                     <div class="form-groep">
-                        <label>Verschijndatum:</label>
+                        <label>Due date: <span class="required">*</span></label>
                         <input type="date" id="verschijndatum" required>
                     </div>
-                    
+
                     <div class="form-groep">
-                        <label>Context:</label>
+                        <label>Context: <span class="required">*</span></label>
                         <div class="select-met-toevoeg">
                             <select id="contextSelect" required>
-                                <option value="">Selecteer context...</option>
+                                <option value="">Select context...</option>
                             </select>
                             <button id="nieuweContextBtn" type="button" tabindex="-1">+</button>
                         </div>
                     </div>
-                    
+
+                    <div class="form-groep" id="prioriteitFormGroep">
+                        <label>Priority:</label>
+                        <select id="prioriteitSelect" class="prioriteit-dropdown">
+                            <option value="laag">⚪ Low</option>
+                            <option value="gemiddeld" selected>🟠 Medium</option>
+                            <option value="hoog">🔴 High</option>
+                        </select>
+                    </div>
+
                     <div class="form-groep">
-                        <label>Geschatte duur (minuten):</label>
+                        <label>Estimated duration (minutes): <span class="required">*</span></label>
                         <input type="number" id="duur" min="1" step="1" required>
                     </div>
-                    
+
                     <div class="form-groep">
-                        <label>Herhaling:</label>
+                        <label>Recurrence:</label>
                         <div class="herhaling-selectie">
-                            <input type="text" id="herhalingDisplay" readonly placeholder="Geen herhaling" onclick="app.openHerhalingPopup()">
-                            <button type="button" id="herhalingBtn" onclick="app.openHerhalingPopup()">Instellen</button>
+                            <input type="text" id="herhalingDisplay" readonly placeholder="No recurrence" onclick="app.openHerhalingPopup()">
+                            <button type="button" id="herhalingBtn" onclick="app.openHerhalingPopup()">Configure</button>
                             <input type="hidden" id="herhalingSelect" value="">
                         </div>
                     </div>
                 </div>
                 
                 <div class="optie-groep">
-                    <h4>Of verplaats naar:</h4>
+                    <h4>Or defer to:</h4>
                     <div class="verplaats-knoppen">
-                        <button class="verplaats-btn" data-lijst="opvolgen">Opvolgen</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-wekelijks">Wekelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-maandelijks">Maandelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">3-maandelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">6-maandelijks</button>
-                        <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Jaarlijks</button>
+                        <button class="verplaats-btn" data-lijst="opvolgen">Follow-up</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-wekelijks">Weekly</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-maandelijks">Monthly</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-3maandelijks">Quarterly</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-6maandelijks">Bi-annual</button>
+                        <button class="verplaats-btn" data-lijst="uitgesteld-jaarlijks">Yearly</button>
                     </div>
                 </div>
             </div>
             
             <!-- Volledige breedte velden -->
             <div class="form-groep">
-                <label>Opmerkingen:</label>
-                <textarea id="opmerkingen" rows="3" placeholder="Aanvullende informatie, notities of details..."></textarea>
+                <label>Notes:</label>
+                <textarea id="opmerkingen" rows="3" placeholder="Additional information, notes or details..."></textarea>
             </div>
-            
+
             <div class="form-groep" id="subtaken-sectie" style="display: none;">
                 <div class="subtaken-header">
-                    <label>Subtaken:</label>
+                    <label>Subtasks:</label>
                     <span class="subtaken-progress" id="subtaken-progress" style="display: none;"></span>
                     <div class="select-met-toevoeg">
                         <div style="flex: 1;"></div>
-                        <button type="button" id="subtaak-add-btn" title="Nieuwe subtaak toevoegen">+</button>
+                        <button type="button" id="subtaak-add-btn" title="Add new subtask">+</button>
                     </div>
                 </div>
                 
                 <div class="subtaken-container" id="subtaken-container">
                     <div class="subtaken-empty" id="subtaken-empty">
                         <i class="fas fa-tasks"></i>
-                        <span>Geen subtaken - klik + om toe te voegen</span>
+                        <span>No subtasks - click + to add</span>
                     </div>
                     
                     <div class="subtaken-lijst" id="subtaken-lijst">
@@ -423,12 +429,12 @@
                     </div>
                     
                     <div class="subtaak-input-container" id="subtaak-input-container" style="display: none;">
-                        <input type="text" id="subtaak-input" placeholder="Nieuwe subtaak..." maxlength="500">
+                        <input type="text" id="subtaak-input" placeholder="New subtask..." maxlength="500">
                         <div class="subtaak-input-acties">
-                            <button type="button" class="subtaak-save-btn" id="subtaak-save-btn" title="Opslaan">
+                            <button type="button" class="subtaak-save-btn" id="subtaak-save-btn" title="Save">
                                 <i class="fas fa-check"></i>
                             </button>
-                            <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Annuleren">
+                            <button type="button" class="subtaak-cancel-btn" id="subtaak-cancel-btn" title="Cancel">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -436,9 +442,41 @@
                 </div>
             </div>
             
+            <div class="form-groep" id="bijlagen-sectie">
+                <div class="bijlagen-header">
+                    <label>Attachments:</label>
+                    <span class="storage-usage" id="storage-usage" style="display: none;"></span>
+                </div>
+                
+                <div class="bijlagen-upload" id="bijlagen-upload">
+                    <div class="upload-dropzone" id="upload-dropzone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag file here or <span class="upload-link">click to select</span></p>
+                        <small class="upload-limits" id="upload-limits">Max 4.5MB, 1 attachment per task (free)</small>
+                    </div>
+                    <input type="file" id="file-input" style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp,.svg,.zip,.rar,.7z,.json,.xml">
+                </div>
+                
+                <div class="bijlagen-lijst" id="bijlagen-lijst" style="display: none;">
+                    <!-- Bijlagen worden hier dynamisch toegevoegd -->
+                </div>
+                
+                <div class="upgrade-prompt" id="upgrade-prompt" style="display: none;">
+                    <div class="upgrade-content">
+                        <i class="fas fa-star"></i>
+                        <div class="upgrade-text">
+                            <strong>Upgrade to Premium</strong>
+                            <p>Standard (€7/month, €70/year): 100MB storage | Premium Plus (€8/month, €80/year): Unlimited attachments</p>
+                        </div>
+                        <button class="upgrade-btn" id="upgrade-btn">View options</button>
+                    </div>
+                </div>
+            </div>
+            
             <div class="popup-acties">
-                <button type="button" id="sluitPopupBtn">Annuleren</button>
-                <button type="button" id="maakActieBtn" class="actie-btn">Maak actie</button>
+                <button type="button" id="sluitPopupBtn">Cancel</button>
+                <button type="button" id="verwijderInboxTaakBtn" class="verwijder-btn" style="display: none;">Delete</button>
+                <button type="button" id="maakActieBtn" class="actie-btn">Create action</button>
             </div>
         </div>
     </div>
@@ -446,79 +484,79 @@
     <!-- Herhaling Popup -->
     <div id="herhalingPopup" class="popup-overlay" style="display: none;">
         <div class="popup-content herhaling-popup">
-            <h3>Herhaling instellen</h3>
+            <h3>Configure Recurrence</h3>
             
             <div class="herhaling-configuratie">
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingNone" name="herhalingType" value="" checked>
-                    <label for="herhalingNone">Geen herhaling</label>
+                    <label for="herhalingNone">No recurrence</label>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingDaily" name="herhalingType" value="daily">
-                    <label for="herhalingDaily">Dagelijks - Elke</label>
+                    <label for="herhalingDaily">Daily - Every</label>
                     <input type="number" id="dailyInterval" min="1" max="30" value="1" disabled>
-                    <span>dagen</span>
+                    <span>days</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingWorkdays" name="herhalingType" value="workdays">
-                    <label for="herhalingWorkdays">Elke werkdag (ma-vr)</label>
+                    <label for="herhalingWorkdays">Every weekday (Mon-Fri)</label>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingWeekly" name="herhalingType" value="weekly">
-                    <label for="herhalingWeekly">Wekelijks - Elke</label>
+                    <label for="herhalingWeekly">Weekly - Every</label>
                     <input type="number" id="weeklyInterval" min="1" max="12" value="1" disabled>
-                    <span>weken op:</span>
+                    <span>weeks on:</span>
                     <div class="weekdag-checkboxes">
-                        <label><input type="checkbox" value="1" disabled> Ma</label>
-                        <label><input type="checkbox" value="2" disabled> Di</label>
-                        <label><input type="checkbox" value="3" disabled> Wo</label>
-                        <label><input type="checkbox" value="4" disabled> Do</label>
-                        <label><input type="checkbox" value="5" disabled> Vr</label>
-                        <label><input type="checkbox" value="6" disabled> Za</label>
-                        <label><input type="checkbox" value="0" disabled> Zo</label>
+                        <label><input type="checkbox" value="1" disabled> Mon</label>
+                        <label><input type="checkbox" value="2" disabled> Tue</label>
+                        <label><input type="checkbox" value="3" disabled> Wed</label>
+                        <label><input type="checkbox" value="4" disabled> Thu</label>
+                        <label><input type="checkbox" value="5" disabled> Fri</label>
+                        <label><input type="checkbox" value="6" disabled> Sat</label>
+                        <label><input type="checkbox" value="0" disabled> Sun</label>
                     </div>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingMonthly" name="herhalingType" value="monthly">
-                    <label for="herhalingMonthly">Maandelijks - Dag</label>
+                    <label for="herhalingMonthly">Monthly - Day</label>
                     <input type="number" id="monthlyDay" min="1" max="31" value="1" disabled>
-                    <span>van elke</span>
+                    <span>of every</span>
                     <input type="number" id="monthlyInterval" min="1" max="12" value="1" disabled>
-                    <span>maanden</span>
+                    <span>months</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingMonthlyWeekday" name="herhalingType" value="monthly-weekday">
-                    <label for="herhalingMonthlyWeekday">Maandelijks - De</label>
+                    <label for="herhalingMonthlyWeekday">Monthly - The</label>
                     <select id="monthlyWeekdayPosition" disabled>
-                        <option value="first">eerste</option>
-                        <option value="second">tweede</option>
-                        <option value="third">derde</option>
-                        <option value="fourth">vierde</option>
-                        <option value="last">laatste</option>
+                        <option value="first">first</option>
+                        <option value="second">second</option>
+                        <option value="third">third</option>
+                        <option value="fourth">fourth</option>
+                        <option value="last">last</option>
                     </select>
                     <select id="monthlyWeekdayDay" disabled>
-                        <option value="1">maandag</option>
-                        <option value="2">dinsdag</option>
-                        <option value="3">woensdag</option>
-                        <option value="4">donderdag</option>
-                        <option value="5">vrijdag</option>
-                        <option value="6">zaterdag</option>
-                        <option value="0">zondag</option>
-                        <option value="workday">werkdag</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="0">Sunday</option>
+                        <option value="workday">workday</option>
                     </select>
-                    <span>van elke</span>
+                    <span>of every</span>
                     <input type="number" id="monthlyWeekdayInterval" min="1" max="12" value="1" disabled>
-                    <span>maanden</span>
+                    <span>months</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingYearly" name="herhalingType" value="yearly">
-                    <label for="herhalingYearly">Jaarlijks - Elke</label>
+                    <label for="herhalingYearly">Yearly - Every</label>
                     <select id="yearlyDay" disabled>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -553,52 +591,52 @@
                         <option value="31">31</option>
                     </select>
                     <select id="yearlyMonth" disabled>
-                        <option value="1">januari</option>
-                        <option value="2">februari</option>
-                        <option value="3">maart</option>
-                        <option value="4">april</option>
-                        <option value="5">mei</option>
-                        <option value="6">juni</option>
-                        <option value="7">juli</option>
-                        <option value="8">augustus</option>
-                        <option value="9">september</option>
-                        <option value="10">oktober</option>
-                        <option value="11">november</option>
-                        <option value="12">december</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
                     </select>
-                    <span>van elke</span>
+                    <span>of every</span>
                     <input type="number" id="yearlyInterval" min="1" max="5" value="1" disabled>
-                    <span>jaar</span>
+                    <span>year</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingYearlySpecial" name="herhalingType" value="yearly-special">
-                    <label for="herhalingYearlySpecial">Jaarlijks speciaal - De</label>
+                    <label for="herhalingYearlySpecial">Yearly special - The</label>
                     <select id="yearlySpecialType" disabled>
-                        <option value="first-workday">eerste werkdag van het jaar</option>
-                        <option value="last-workday">laatste werkdag van het jaar</option>
+                        <option value="first-workday">first workday of the year</option>
+                        <option value="last-workday">last workday of the year</option>
                     </select>
-                    <span>van elke</span>
+                    <span>of every</span>
                     <input type="number" id="yearlySpecialInterval" min="1" max="5" value="1" disabled>
-                    <span>jaar</span>
+                    <span>year</span>
                 </div>
                 
                 <div class="herhaling-optie-groep">
                     <input type="radio" id="herhalingEvent" name="herhalingType" value="gebeurtenis-gebaseerd">
-                    <label for="herhalingEvent">Gebeurtenis-gebaseerd -</label>
+                    <label for="herhalingEvent">Event-based -</label>
                     <input type="number" id="eventDays" min="1" max="365" value="1" disabled>
-                    <span>dagen</span>
+                    <span>days</span>
                     <select id="eventDirection" disabled>
-                        <option value="voor">voor</option>
-                        <option value="na">na</option>
+                        <option value="voor">before</option>
+                        <option value="na">after</option>
                     </select>
-                    <input type="text" id="eventName" placeholder="bijv. webinar, vergadering..." disabled>
+                    <input type="text" id="eventName" placeholder="e.g. webinar, meeting..." disabled>
                 </div>
             </div>
             
             <div class="popup-acties">
                 <button type="button" id="herhalingOkBtn" class="actie-btn">OK</button>
-                <button type="button" id="sluitHerhalingPopupBtn">Annuleren</button>
+                <button type="button" id="sluitHerhalingPopupBtn">Cancel</button>
             </div>
         </div>
     </div>
@@ -606,17 +644,17 @@
     <!-- Gebeurtenis Datum Popup -->
     <div id="eventDatePopup" class="popup-overlay" style="display: none;">
         <div class="popup-content">
-            <h3>Herhalende taak afgevinkt</h3>
-            <p id="eventPromptText">Wanneer is de volgende gebeurtenis?</p>
+            <h3>Recurring task completed</h3>
+            <p id="eventPromptText">When is the next event?</p>
             
             <div class="form-groep">
-                <label id="eventDateLabel">Gebeurtenis datum:</label>
+                <label id="eventDateLabel">Event date:</label>
                 <input type="date" id="nextEventDate" required>
             </div>
             
             <div class="popup-acties">
                 <button id="eventDateOkBtn" class="actie-btn">OK</button>
-                <button id="eventDateCancelBtn">Annuleren</button>
+                <button id="eventDateCancelBtn">Cancel</button>
             </div>
         </div>
     </div>
@@ -637,11 +675,11 @@
         <div class="popup-content">
             <h3 id="inputModalTitle">Input</h3>
             <div class="form-groep">
-                <label id="inputModalLabel">Voer waarde in:</label>
+                <label id="inputModalLabel">Enter value:</label>
                 <input type="text" id="inputModalInput" required>
             </div>
             <div class="popup-acties">
-                <button id="inputModalCancel">Annuleren</button>
+                <button id="inputModalCancel">Cancel</button>
                 <button id="inputModalOk" class="actie-btn">OK</button>
             </div>
         </div>
@@ -652,7 +690,7 @@
         <div class="popup-content project-modal-content">
             <h3 id="projectModalTitle">Project</h3>
             <div class="form-groep">
-                <label for="projectModalNaam">Naam:</label>
+                <label for="projectModalNaam">Name:</label>
                 <input type="text" id="projectModalNaam" required>
             </div>
             <div class="form-groep">
@@ -660,12 +698,12 @@
                 <input type="date" id="projectModalDueDate">
             </div>
             <div class="form-groep">
-                <label for="projectModalOpmerkingen">Opmerkingen:</label>
-                <textarea id="projectModalOpmerkingen" rows="4" placeholder="Optionele opmerkingen over dit project..."></textarea>
+                <label for="projectModalOpmerkingen">Notes:</label>
+                <textarea id="projectModalOpmerkingen" rows="4" placeholder="Optional notes about this project..."></textarea>
             </div>
             <div class="popup-acties">
-                <button id="projectModalCancel">Annuleren</button>
-                <button id="projectModalOk" class="actie-btn">Opslaan</button>
+                <button id="projectModalCancel">Cancel</button>
+                <button id="projectModalOk" class="actie-btn">Save</button>
             </div>
         </div>
     </div>
@@ -673,10 +711,10 @@
     <!-- Custom Confirm Modal -->
     <div id="confirmModal" class="popup-overlay" style="display: none;">
         <div class="popup-content">
-            <h3 id="confirmModalTitle">Bevestigen</h3>
-            <p id="confirmModalMessage">Weet je het zeker?</p>
+            <h3 id="confirmModalTitle">Confirm</h3>
+            <p id="confirmModalMessage">Are you sure?</p>
             <div class="popup-acties">
-                <button id="confirmModalCancel">Annuleren</button>
+                <button id="confirmModalCancel">Cancel</button>
                 <button id="confirmModalOk" class="actie-btn">OK</button>
             </div>
         </div>
@@ -685,19 +723,19 @@
     <!-- Login Modal -->
     <div id="loginModal" class="popup-overlay" style="display: none;">
         <div class="popup-content auth-modal">
-            <h3>Inloggen</h3>
+            <h3>Log in</h3>
             <form id="loginForm">
                 <div class="form-group">
                     <label for="loginEmail">Email:</label>
                     <input type="email" id="loginEmail" required>
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Wachtwoord:</label>
+                    <label for="loginPassword">Password:</label>
                     <input type="password" id="loginPassword" required>
                 </div>
                 <div class="popup-acties">
-                    <button type="button" id="loginCancel">Annuleren</button>
-                    <button type="submit" class="actie-btn" id="loginSubmit">Inloggen</button>
+                    <button type="button" id="loginCancel">Cancel</button>
+                    <button type="submit" class="actie-btn" id="loginSubmit">Log in</button>
                 </div>
             </form>
         </div>
@@ -706,10 +744,10 @@
     <!-- Register Modal -->
     <div id="registerModal" class="popup-overlay" style="display: none;">
         <div class="popup-content auth-modal">
-            <h3>Account Aanmaken</h3>
+            <h3>Create Account</h3>
             <form id="registerForm">
                 <div class="form-group">
-                    <label for="registerName">Naam:</label>
+                    <label for="registerName">Name:</label>
                     <input type="text" id="registerName" required>
                 </div>
                 <div class="form-group">
@@ -717,16 +755,30 @@
                     <input type="email" id="registerEmail" required>
                 </div>
                 <div class="form-group">
-                    <label for="registerPassword">Wachtwoord:</label>
-                    <input type="password" id="registerPassword" required>
+                    <label for="registerPassword">Password:</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="registerPassword" required>
+                        <button type="button" id="toggle-password-visibility" aria-label="Show password" title="Show password">
+                            <i class="fas fa-eye" id="toggle-icon"></i>
+                        </button>
+                    </div>
+                    <div class="password-requirements">
+                        <p>Password requirements:</p>
+                        <ul>
+                            <li id="req-length" class="password-requirement neutral">Minimum 8 characters</li>
+                            <li id="req-uppercase" class="password-requirement neutral">At least 1 uppercase letter</li>
+                            <li id="req-digit" class="password-requirement neutral">At least 1 digit</li>
+                            <li id="req-special" class="password-requirement neutral">At least 1 special character</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="registerPasswordConfirm">Wachtwoord bevestigen:</label>
+                    <label for="registerPasswordConfirm">Confirm password:</label>
                     <input type="password" id="registerPasswordConfirm" required>
                 </div>
                 <div class="popup-acties">
-                    <button type="button" id="registerCancel">Annuleren</button>
-                    <button type="submit" class="actie-btn" id="registerSubmit">Account Aanmaken</button>
+                    <button type="button" id="registerCancel">Cancel</button>
+                    <button type="submit" class="actie-btn" id="registerSubmit">Create Account</button>
                 </div>
             </form>
         </div>
@@ -735,28 +787,28 @@
     <!-- Feedback Modal -->
     <div id="feedbackModal" class="popup-overlay" style="display: none;">
         <div class="popup-content feedback-modal">
-            <h3 id="feedbackTitle">Bug Melden</h3>
+            <h3 id="feedbackTitle">Report Bug</h3>
             <form id="feedbackForm">
                 <div class="form-groep">
-                    <label for="feedbackTitel">Titel *</label>
-                    <input type="text" id="feedbackTitel" required placeholder="Korte omschrijving van het probleem">
+                    <label for="feedbackTitel">Title *</label>
+                    <input type="text" id="feedbackTitel" required placeholder="Brief description of the problem">
                 </div>
-                
+
                 <div class="form-groep">
-                    <label for="feedbackBeschrijving">Beschrijving *</label>
-                    <textarea id="feedbackBeschrijving" rows="6" required 
-                        placeholder="Beschrijf het probleem zo gedetailleerd mogelijk"></textarea>
+                    <label for="feedbackBeschrijving">Description *</label>
+                    <textarea id="feedbackBeschrijving" rows="6" required
+                        placeholder="Describe the problem in as much detail as possible"></textarea>
                 </div>
                 
                 <div class="form-groep" id="bugDetails" style="display: none;">
-                    <label for="feedbackStappen">Stappen om te reproduceren</label>
+                    <label for="feedbackStappen">Steps to reproduce</label>
                     <textarea id="feedbackStappen" rows="4" 
                         placeholder="1. Ga naar...&#10;2. Klik op...&#10;3. Het probleem is..."></textarea>
                 </div>
                 
                 <div class="popup-acties">
-                    <button type="button" id="feedbackCancel">Annuleren</button>
-                    <button type="submit" id="feedbackSubmit" class="actie-btn">Verzenden</button>
+                    <button type="button" id="feedbackCancel">Cancel</button>
+                    <button type="submit" id="feedbackSubmit" class="actie-btn">Send</button>
                 </div>
             </form>
         </div>
@@ -765,26 +817,71 @@
     <!-- Clear Planning Confirmation Modal -->
     <div class="popup-overlay" id="clearPlanningModal" style="display: none;">
         <div class="popup-content clear-planning-popup">
-            <h2>Planning leegmaken</h2>
-            <p>Weet je zeker dat je de planning wilt leegmaken?</p>
+            <h2>Clear Planning</h2>
+            <p>Are you sure you want to clear the planning?</p>
             <div class="clear-options">
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearTaken" checked>
-                    <span>Taken verwijderen</span>
+                    <span>Remove tasks</span>
                 </label>
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearPauzes" checked>
-                    <span>Pauzes verwijderen</span>
+                    <span>Remove breaks</span>
                 </label>
                 <label class="checkbox-option">
                     <input type="checkbox" id="clearGeblokkeerd" checked>
-                    <span>Geblokkeerde tijd verwijderen</span>
+                    <span>Remove blocked time</span>
                 </label>
             </div>
             <div class="popup-acties clear-planning-actions">
-                <button type="button" id="clearPlanningCancel" class="btn-cancel">Annuleren</button>
-                <button type="button" id="clearPlanningConfirm" class="btn-danger">Leegmaken</button>
+                <button type="button" id="clearPlanningCancel" class="btn-cancel">Cancel</button>
+                <button type="button" id="clearPlanningConfirm" class="btn-danger">Clear</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal voor bijlagen -->
+    <div id="previewModal" class="popup-overlay preview-modal" style="display: none;">
+        <div class="preview-modal-content">
+            <div class="preview-header">
+                <span class="preview-filename" id="previewFilename"></span>
+                <button class="preview-close" id="previewClose" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="preview-body">
+                <div class="preview-container" id="previewContainer">
+                    <!-- Preview content will be loaded here -->
+                </div>
+                <div class="preview-navigation" id="previewNavigation" style="display: none;">
+                    <button class="preview-nav-btn" id="previewPrevious" title="Vorige bijlage">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="preview-counter" id="previewCounter"></span>
+                    <button class="preview-nav-btn" id="previewNext" title="Volgende bijlage">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Video Popup (Feature 014) -->
+    <div id="onboardingVideoPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content onboarding-video-content">
+            <button class="close-video-btn" aria-label="Sluiten">&times;</button>
+            <h2>Welcome to Tickedify</h2>
+            <div class="video-container">
+                <iframe id="onboardingVideoIframe"
+                        width="560" height="315"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                        allowfullscreen>
+                </iframe>
+            </div>
+            <p class="fallback-message" style="display: none;">
+                Nog geen welkomstvideo beschikbaar
+            </p>
         </div>
     </div>
 
@@ -792,7 +889,7 @@
     <div class="floating-drop-panel" id="floatingDropPanel" style="display: none;">
         <div class="drop-panel-content">
             <div class="drop-panel-header">
-                <span>Sleep hier naartoe:</span>
+                <span>Drag here:</span>
             </div>
             <div class="drop-zones">
                 <div class="drop-zone-item" data-target="inbox">
@@ -801,12 +898,284 @@
                 </div>
                 <div class="drop-zone-item" data-target="opvolgen">
                     <i class="fas fa-clock"></i>
-                    <span>Opvolgen</span>
+                    <span>Follow-up</span>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Floating Drop Panel voor acties drag & drop naar dagelijkse planning -->
+    <div class="floating-drop-panel acties-floating-panel" id="actiesFloatingPanel" style="display: none;">
+        <div class="drop-panel-content">
+            <div class="drop-panel-header">
+                <span>Drag task to:</span>
+            </div>
+            
+            <!-- Huidige Week Sectie -->
+            <div class="week-section">
+                <h5>This week</h5>
+                <div class="week-days" id="actiesHuidigeWeek">
+                    <!-- Dynamisch gegenereerd -->
+                </div>
+            </div>
+            
+            <!-- Volgende Week Sectie -->
+            <div class="week-section">
+                <h5>Next week</h5>
+                <div class="week-days" id="actiesVolgendeWeek">
+                    <!-- Dynamisch gegenereerd -->
+                </div>
+            </div>
+
+            <!-- Derde Week Sectie (Ctrl-toets activated) -->
+            <div class="week-section" id="actiesDerdeWeekSection" style="display: none;">
+                <h5>Week after</h5>
+                <div class="week-days" id="actiesDerdeWeek">
+                    <!-- Dynamisch gegenereerd via Ctrl-toets -->
+                </div>
+            </div>
+
+            <!-- Lijsten Sectie -->
+            <div class="lists-section">
+                <h5>Or move to list:</h5>
+                <div class="list-zones">
+                    <div class="drop-zone-item" data-target="opvolgen" data-type="list">
+                        <i class="fas fa-clock"></i>
+                        <span>Follow-up</span>
+                    </div>
+                    
+                    <!-- Extra ruimte tussen Opvolgen en Uitgesteld lijsten -->
+                    <div class="list-separator"></div>
+                    
+                    <div class="drop-zone-item" data-target="uitgesteld-wekelijks" data-type="list">
+                        <i class="fas fa-pause-circle"></i>
+                        <span>Weekly</span>
+                    </div>
+                    <div class="drop-zone-item" data-target="uitgesteld-maandelijks" data-type="list">
+                        <i class="fas fa-pause-circle"></i>
+                        <span>Monthly</span>
+                    </div>
+                    <div class="drop-zone-item" data-target="uitgesteld-3maandelijks" data-type="list">
+                        <i class="fas fa-pause-circle"></i>
+                        <span>Quarterly</span>
+                    </div>
+                    <div class="drop-zone-item" data-target="uitgesteld-6maandelijks" data-type="list">
+                        <i class="fas fa-pause-circle"></i>
+                        <span>Bi-annual</span>
+                    </div>
+                    <div class="drop-zone-item" data-target="uitgesteld-jaarlijks" data-type="list">
+                        <i class="fas fa-pause-circle"></i>
+                        <span>Yearly</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Acties Drag & Drop Overlay -->
+    <div class="acties-drag-overlay" id="actiesDragOverlay" style="display: none;">
+        <div class="acties-drop-panel">
+            <div class="drop-panel-header">
+                <span>Drag here:</span>
+            </div>
+            
+            <!-- Grid layout voor alle drop zones -->
+            <div class="acties-drop-grid">
+                <!-- Huidige week sectie - bovenaan -->
+                <div class="drop-section week-section">
+                    <h4>This week</h4>
+                    <div class="drop-zones-row week-days" id="huidigeWeekZones">
+                        <!-- Week dagen worden dynamisch gegenereerd -->
+                    </div>
+                </div>
+                
+                <!-- Next week sectie - tweede -->
+                <div class="drop-section week-section">
+                    <h4>Next week</h4>
+                    <div class="drop-zones-row week-days" id="volgendeWeekZones">
+                        <!-- Week dagen worden dynamisch gegenereerd -->
+                    </div>
+                </div>
+                
+                <!-- Uitgesteld lijsten sectie - derde -->
+                <div class="drop-section uitgesteld-section">
+                    <h4>Postponed</h4>
+                    <div class="drop-zones-row">
+                        <div class="drop-zone-item" data-target="uitgesteld-wekelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Weekly</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-maandelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Monthly</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-3maandelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Quarterly</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-6maandelijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Bi-annual</span>
+                        </div>
+                        <div class="drop-zone-item" data-target="uitgesteld-jaarlijks">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>Yearly</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Opvolgen sectie - onderaan -->
+                <div class="drop-section opvolgen-section">
+                    <h4>Lijst</h4>
+                    <div class="drop-zones-row">
+                        <div class="drop-zone-item" data-target="opvolgen">
+                            <i class="fas fa-clock"></i>
+                            <span>Follow-up</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Validation Script - Feature 017 -->
+    <script>
+        // T005: Password Validation Rules Object
+        const passwordValidationRules = {
+            minLength: {
+                test: (password) => password.length >= 8,
+                message: 'Minimum 8 characters',
+                element: 'req-length'
+            },
+            hasUppercase: {
+                test: (password) => /[A-Z]/.test(password),
+                message: 'At least 1 uppercase letter',
+                element: 'req-uppercase'
+            },
+            hasDigit: {
+                test: (password) => /[0-9]/.test(password),
+                message: 'At least 1 digit',
+                element: 'req-digit'
+            },
+            hasSpecialChar: {
+                test: (password) => /[^A-Za-z0-9]/.test(password),
+                message: 'At least 1 special character',
+                element: 'req-special'
+            }
+        };
+
+        // T006: Real-Time Validation Function
+        function validatePasswordStrength(password) {
+            const results = {};
+            let allValid = true;
+
+            for (const [ruleName, rule] of Object.entries(passwordValidationRules)) {
+                const isValid = rule.test(password);
+                results[ruleName] = isValid;
+                if (!isValid) allValid = false;
+            }
+
+            results.isValid = allValid;
+            return results;
+        }
+
+        // T007: Visual Feedback Update Function
+        function updatePasswordFeedback(validationResults) {
+            for (const [ruleName, rule] of Object.entries(passwordValidationRules)) {
+                const element = document.getElementById(rule.element);
+                if (!element) continue; // Skip if element doesn't exist
+
+                const isValid = validationResults[ruleName];
+
+                // Remove all state classes
+                element.classList.remove('neutral', 'valid', 'invalid');
+
+                // Add appropriate state class
+                if (isValid) {
+                    element.classList.add('valid');
+                } else {
+                    element.classList.add('invalid');
+                }
+            }
+        }
+
+        // T008 & T009: Event Listeners Setup
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('registerPassword');
+            const submitButton = document.getElementById('registerSubmit');
+            const toggleButton = document.getElementById('toggle-password-visibility');
+            const toggleIcon = document.getElementById('toggle-icon');
+
+            // T008: Input Event Listener for Real-Time Validation
+            if (passwordInput && submitButton) {
+                passwordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    const validationResults = validatePasswordStrength(password);
+                    updatePasswordFeedback(validationResults);
+
+                    // Enable/disable submit button based on validation
+                    submitButton.disabled = !validationResults.isValid;
+                });
+            }
+
+            // T009: Show/Hide Password Toggle Function
+            if (toggleButton && passwordInput && toggleIcon) {
+                toggleButton.addEventListener('click', function() {
+                    if (passwordInput.type === 'password') {
+                        // Show password
+                        passwordInput.type = 'text';
+                        toggleIcon.classList.remove('fa-eye');
+                        toggleIcon.classList.add('fa-eye-slash');
+                        this.setAttribute('aria-label', 'Hide password');
+                        this.setAttribute('title', 'Hide password');
+                    } else {
+                        // Hide password
+                        passwordInput.type = 'password';
+                        toggleIcon.classList.remove('fa-eye-slash');
+                        toggleIcon.classList.add('fa-eye');
+                        this.setAttribute('aria-label', 'Show password');
+                        this.setAttribute('title', 'Show password');
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Message Modal System -->
+    <div id="message-modal-overlay" class="modal-overlay" style="display: none;">
+      <div class="message-modal">
+        <div class="message-header">
+          <span class="message-icon">ℹ️</span>
+          <h3 class="message-title"></h3>
+          <span class="carousel-indicator" style="display: none;">1 / 1</span>
+        </div>
+        <div class="message-body">
+          <div class="message-content"></div>
+        </div>
+
+        <!-- Optional action button -->
+        <div class="message-button" style="display: none;"></div>
+
+        <div class="message-actions">
+          <!-- Carousel navigation -->
+          <button class="btn-prev" style="display: none;">◀ Previous</button>
+          <button class="btn-next" style="display: none;">Next ▶</button>
+
+          <!-- Snooze options -->
+          <div class="snooze-options" style="display: none;">
+            <button class="btn-snooze" data-duration="3600">💤 1 hour</button>
+            <button class="btn-snooze" data-duration="14400">💤 4 hours</button>
+            <button class="btn-snooze" data-duration="86400">💤 1 day</button>
+          </div>
+
+          <!-- Dismiss -->
+          <button class="btn-message-dismiss">Got it</button>
+        </div>
+      </div>
+    </div>
+
     <script src="app.js"></script>
+    <script src="js/message-modal.js"></script>
 </body>
 </html>

@@ -76,6 +76,8 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `laadHuidigeLijst()` - regel ~400 - Laadt taken voor huidige lijst
 - `renderTakenLijst(taken)` - regel ~600 - Rendert taken in UI
 - `verplaatsTaak(taakId, nieuweLijst)` - regel ~1,000
+- `verwijderTaak(id, categoryKey)` - regel ~3921 - Algemene taak verwijdering
+- `verwijderInboxTaak()` - regel ~4036 - Specifieke inbox taak verwijdering met workflow
 
 **Drag & Drop Systeem (regels 1,500-2,500)**
 - `initializeDragAndDrop()` - regel ~1,600
@@ -87,16 +89,17 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `handlePlanningDrop()` - regel ~3,200
 - `verwijderUitPlanning()` - regel ~3,500
 - `herorderPlanning()` - regel ~3,800
+- `initPlanningResizer()` - regel ~5,944 - Touch/mouse resize functionaliteit
 
 **Herhalende Taken (regels 4,000-5,500)**
 - `toonHerhalingPopup()` - regel ~4,100 - UI voor recurring setup
 - `calculateNextRecurringDate()` - regel ~4,500 - Datum berekeningen
 - `createRecurringTask()` - regel ~5,000 - API call voor nieuwe recurring
 
-**Top 3 Prioriteiten (regels 5,500-6,500)**
-- `laadTopPrioriteiten()` - regel ~5,600
-- `renderTopPrioriteiten()` - regel ~5,800
-- `handlePriorityDrop()` - regel ~6,200
+**Top 3 Prioriteiten (Sterretje Checkbox Systeem)**
+- `toggleTopPriority()` - regel ~5,708 - Toggle checkbox met max 3 validatie
+- `renderActiesVoorPlanning()` - regel ~8,333 - Sterretje checkbox rendering
+- Top prioriteiten data laden - regel ~7,949 - Ophalen via `/api/prioriteiten/${today}`
 
 **Bulk Acties (regels 6,500-7,500)**
 - `toggleBulkMode()` - regel ~6,600
@@ -129,8 +132,20 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `setupFloatingDropZones()` - regel ~8,905 - Event handlers voor floating drop zones
 - `handleFloatingDropZoneDrop()` - regel ~8,938 - Drop verwerking naar inbox/opvolgen
 
+**Acties Floating Panel & Shift-toets Derde Week (regels 11,000-11,250)**
+- `showActiesFloatingPanel()` - regel ~11,024 - Toon acties drag panel met 3 weken
+- `hideActiesFloatingPanel()` - regel ~11,172 - Verberg panel met Shift status reset
+- `hideActiesFloatingPanelImmediately()` - regel ~11,192 - Onmiddellijk verbergen (drop events)
+- `generateActiesWeekDays()` - regel ~11,044 - Genereer 3 weken datums (huidige + volgende + derde)
+- `toggleDerdeWeek(show)` - regel ~11,147 - Toggle derde week sectie met CSS transitions
+- `updateActiesFloatingPanelDates()` - regel ~11,039 - Update week datums dynamisch
+- `setupActiesFloatingDropZones()` - regel ~11,211 - Drop zone handlers + Shift detectie in dragover
+
 **Utility Functions (regels 9,000-10,507)**
 - `formatDuration()` - regel ~8,600
+- `formatDisplayDate()` - regel ~14687 - Centrale datum formatting DD/MM/YYYY
+  - Used by: 19+ UI locaties voor consistente datum weergave
+  - Future: User preference extensibility (FR-011)
 - `parseRecurringPattern()` - regel ~9,000
 - Email import functies - regels ~9,500-10,000
 - Keyboard shortcuts - regels ~10,000-10,500
@@ -149,6 +164,8 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Floating Drop Panel**: regels 6,439-6,542 - Panel styling met blur effects en animaties
 - **Context Menu Highlighting**: regels 1,428-1,452 - `.context-menu-highlighted` met glow animatie
 - **Acties Menu Overlay**: regels 1,290-1,305 - Blur overlay styling voor menu achtergrond
+- **Acties Floating Panel & Derde Week**: regels 8,816-8,950 - `.acties-floating-panel` met week grid layout
+- **Derde Week Toggle (Shift-toets)**: regels 8,853-8,866 - `#actiesDerdeWeekSection` met smooth max-height transitions
 
 ### Backend
 
@@ -257,11 +274,14 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Database**: `createRecurringTask()` in database.js:850
 - **API**: `/api/taak/recurring` in server.js:3200
 
-### Top 3 Prioriteiten
-- **UI Rendering**: `renderTopPrioriteiten()` in app.js:5800
-- **Drag & Drop**: `handlePriorityDrop()` in app.js:6200
-- **Database**: `top_prioriteit` kolom in taken tabel
-- **API**: `/api/taak/:id/prioriteit` in server.js:2700
+### Top 3 Prioriteiten (Sterretje Checkbox Systeem)
+- **UI**: Sterretje checkbox bij elke actie in dagelijkse planning (app.js:~8350)
+- **Toggle Functie**: `toggleTopPriority()` in app.js:~5708 - max 3 validatie
+- **Kalender Weergave**: Sterretjes tonen bij ingeplande prioriteiten (app.js:~8231)
+- **Data Laden**: Top prioriteiten ophalen in `toonDagelijksePlanning()` (app.js:~7949)
+- **Database**: `top_prioriteit` kolom (1-3) + `prioriteit_datum` in taken tabel
+- **API**: `/api/taak/:id/prioriteit` (PUT) en `/api/prioriteiten/:datum` (GET) in server.js:~4800
+- **Styling**: `.actie-star` checkbox styling in style.css:~4450
 
 ### Subtaken Systeem (Hierarchische Taken)
 - **SubtakenManager Class**: Volledige CRUD management in app.js:~1000
@@ -276,6 +296,27 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Toggle**: `toggleBulkMode()` in app.js:6600
 - **Execute**: `executeBulkAction()` in app.js:7000
 - **UI**: `renderBulkToolbar()` in app.js:7300
+
+### Subscription & Beta-naar-Productie Flow (v0.19.21+)
+- **Beta Expired Page**: `/public/beta-expired.html` - Toon wanneer beta periode afgelopen is
+- **Trial Expired Page**: `/public/trial-expired.html` - Toon wanneer 14-dagen trial afgelopen is
+- **Subscription Selection**: `/public/subscription.html` - Keuze tussen trial en betaald abonnement
+- **Subscription Confirm**: `/public/subscription-confirm.html` - Email verificatie voor betaling
+- **JavaScript Files**:
+  - `public/js/subscription.js` - Hoofdlogica voor subscription flow
+  - `public/js/subscription-data.js` - Plan data en validatie functies
+  - `public/js/subscription-api.js` - API calls voor subscription endpoints
+  - `public/js/subscription-confirm.js` - Email confirmatie logica
+- **Key Functions**:
+  - `confirmSelection()` - regel ~379 - Verwerkt trial/betaald selectie, slaat redirectTarget op
+  - `closeSuccessModal()` - regel ~565 - Checkt trial redirect en stuurt door naar /app
+  - `initializeSubscriptionPage()` - regel ~20 - Laadt plans en user status
+- **User Flow**: Beta expired → Subscription page → Trial/Betaald keuze → Success modal → Auto-redirect naar /app
+- **Backend Endpoints**:
+  - `POST /api/subscription/select` - Trial activatie of betaald plan selectie (server.js:~2690)
+  - `GET /api/subscription/status` - Gebruiker subscription status (server.js:~3000)
+  - `GET /api/subscription/plans` - Beschikbare abonnementen ophalen
+- **Database Schema**: `users` tabel bevat subscription kolommen (trial_start_date, trial_end_date, subscription_status, selected_plan)
 
 ### Email Import (Mailgun Subdomein Architectuur)
 - **Domain Setup**: mg.tickedify.com subdomein voor Mailgun routing
@@ -295,16 +336,45 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **CSS**: Panel styling met blur effects in style.css:6439-6542
 - **Positioning**: top: 80px rechts, smooth slide-in animaties
 
+### Acties Floating Panel & Shift-toets Derde Week (v0.17.0) ✅
+- **HTML Structure**: Acties floating panel in index.html:871-925
+  - `#actiesFloatingPanel` - Main panel container met `.acties-floating-panel` class
+  - `#actiesHuidigeWeek` - Huidige week container (regel 880)
+  - `#actiesVolgendeWeek` - Volgende week container (regel 888)
+  - `#actiesDerdeWeekSection` - Derde week sectie (regel 894, initieel hidden)
+  - `#actiesDerdeWeek` - Derde week container voor dynamische dag zones
+- **JavaScript Functions**:
+  - `generateActiesWeekDays()` - app.js:11044 - Genereert 3 weken datums (huidige, volgende, derde)
+  - `toggleDerdeWeek(show)` - app.js:11147 - Toggle derde week met CSS transitions
+  - `showActiesFloatingPanel()` - app.js:11024 - Activeer panel en setup drop zones
+  - `hideActiesFloatingPanel()` - app.js:11172 - Deactiveer panel met Shift status reset
+  - `hideActiesFloatingPanelImmediately()` - app.js:11192 - Onmiddellijk verbergen (drop events)
+  - `setupActiesFloatingDropZones()` - app.js:11211 - Drop zones met Shift detectie in dragover
+- **Shift Detectie**:
+  - Via `event.shiftKey` in dragover handler (app.js:11221-11227)
+  - Real-time toggle tijdens drag over drop zones
+  - Property tracking: `this.shiftKeyPressed` (boolean)
+- **CSS Styling**:
+  - Panel layout in style.css:8816-8950
+  - Derde week transitions in style.css:8853-8866 (max-height + opacity)
+  - Week grid layout met flexbox column voor 3 weken
+- **User Interaction**:
+  - Shift-toets indrukken tijdens drag over drop zones → 3e week verschijnt (14-20 dagen vooruit)
+  - Shift-toets loslaten → 3e week verdwijnt met smooth transition (<200ms)
+  - Werkt naadloos met drop functionaliteit (geen conflict met browser drag & drop)
+- **Performance**: Real-time response via dragover events, <50ms UI update
+- **Browser Compatibility**: Shift-toets conflicteert niet met native drag & drop (vs Ctrl = copy/move switching)
+
 ### Beta Feedback Systeem (v0.11.93) ✅
 - **Frontend Manager**: `FeedbackManager` class in app.js:11247-11400
 - **Sidebar Buttons**: Bug Melden & Feature Request in index.html sidebar
 - **Modal Forms**: Feedback modals in index.html:697-724 (perfect gecentreerd, beide buttons zichtbaar)
 - **CSS Styling**: Feedback modal styling in style.css:7358-7478 (gekopieerd van confirmModal)
-- **API Endpoints**: 
+- **API Endpoints**:
   - `POST /api/feedback` - Nieuwe feedback
   - `GET /api/feedback` - Gebruiker feedback
   - Admin endpoints in server.js:5348-5462
-- **Admin Dashboard**: 
+- **Admin Dashboard**:
   - Feedback stats card in admin.html:388-395
   - Feedback tabel in admin.html:465-473
   - Detail modal in admin.html:477-525
@@ -390,7 +460,10 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ### Modals & Popups
 - **Herhalingen**: `toonHerhalingPopup()` in app.js:4100
-- **Planning**: Planning popup in index.html
+- **Planning**: Planning popup in index.html (regel 328-484)
+  - **Checkbox Layout**: `.checkbox-input-wrapper` in style.css:1910-1929 (v0.16.31)
+  - **Flexbox Horizontal**: Checkbox links van input field via `display: flex`
+  - **Responsive**: Gap 10px spacing, werkt op desktop/tablet/mobile
 - **Event datum**: Event popup voor recurring taken
 
 ### Focus Mode (Dagelijkse Planning)
@@ -410,6 +483,21 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Content**: Project, context, datum, duur, clickable URLs in opmerkingen
 - **Integration**: Werkt naast drag & drop zonder conflicten (v0.11.99 fix)
 
+### Tablet Resize Functionaliteit (Dagelijkse Planning)
+- **Main Function**: `initPlanningResizer()` in app.js:5944-6056 - Complete touch/mouse resize setup
+- **HTML Structure**: `.planning-splitter` + `.splitter-handle` in dagelijkse planning layout
+- **Event Handlers**: Touch (touchstart/touchmove/touchend) + Mouse (mousedown/mousemove/mouseup)
+- **Touch Improvements**: Verbeterde coordinate extractie `e.touches[0].clientX` voor tablets
+- **CSS Styling**: `.planning-splitter` basic styling (8px width desktop) in style.css:2792-2828
+- **Tablet CSS**: Touch-friendly media query styling in style.css:2830-2884
+  - **Width**: 20px breed op tablets voor betere touch targets
+  - **Grip Pattern**: 3-dots radial-gradient indicator met CSS pseudo-elements
+  - **Media Query**: `@media (min-width: 769px) and (max-width: 1400px) and (pointer: coarse)`
+  - **Hover States**: macOS blue theming voor active/hover feedback
+- **LocalStorage**: Planning sidebar width persistence met validatie (20%-80%)
+- **Haptic Feedback**: iOS vibrate support bij touch start (navigator.vibrate)
+- **Flex Order Fix**: Correcte volgorde sidebar(1) → splitter(2) → calendar(3) op tablets
+
 ## 🔧 Utility Locaties
 
 ### Date Helpers
@@ -427,6 +515,29 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `setupIntelligentScrollIndicators()` - app.js:~9000-9200
 - Position:fixed scroll indicators voor uitgesteld lijsten
 - ResizeObserver voor content detection
+
+### Inbox Task Deletion System (v0.16.1) ✅
+**Complete verwijder functionaliteit voor inbox taken met automatische workflow**
+
+**Core Functionaliteit:**
+- **Delete Button**: `setDeleteButtonVisibility()` in app.js:4241 - Context-aware button visibility
+- **Main Function**: `verwijderInboxTaak()` in app.js:4036 - Inbox-specific deletion with workflow
+- **Event Handler**: Event listener in app.js:1217 voor verwijder knop click
+- **HTML Element**: `#verwijderInboxTaakBtn` in index.html:481 (rode "Verwijderen" knop)
+- **CSS Styling**: Button styling in style.css:2239-2260 (rode border, hover effects)
+
+**Workflow Mechanisme:**
+- **Context Detection**: Knop alleen zichtbaar wanneer `this.huidigeLijst === 'inbox'`
+- **Confirmation Dialog**: `confirmModal.show()` voor veiligheidscheck
+- **B2 Cleanup**: Automatische bijlagen verwijdering uit cloud storage
+- **Next Task Logic**: `openVolgendeInboxTaak()` voor automatische workflow
+- **Success Handling**: Toast notifications met B2 cleanup status
+
+**Integration Points:**
+- **Planning Popup**: `planTaak()` in app.js:4305 roept `setDeleteButtonVisibility()`
+- **Edit Action**: `bewerkActie()` in app.js:6529 roept `setDeleteButtonVisibility()`
+- **Button Layout**: Popup-acties tussen "Annuleren" en "Maak actie" knoppen
+- **CSS Specificity**: `#planningPopup .popup-acties button.verwijder-btn` voor styling override
 
 ### Context Menu & Highlighting Helpers
 - `addContextMenuToTaskItems()` - app.js:3687 - Attach right-click listeners
@@ -509,11 +620,13 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 ---
 
-**LAATSTE UPDATE**: Augustus 2, 2025 - Uitklapbare Taken Dagelijkse Planning Bug Fix
+**LAATSTE UPDATE**: Oktober 18, 2025 - Subscription Flow Verbetering (v0.19.22)
 **BELANGRIJKSTE UPDATES**:
+- Oktober 18: Subscription Flow - Naadloze beta-naar-productie transitie met automatische redirect naar /app (v0.19.21-0.19.22)
+- Augustus 24: Tablet Resize Functionaliteit - Complete touch-friendly resize implementatie voor dagelijkse planning (v0.12.21-0.12.22)
 - Augustus 2: Uitklapbare Taken Fix - Hersteld expandable functionaliteit in dag-kalender planning
 - Juli 24: Highlighted Context Menu - Complete implementation met DOM cloning en consistent UX
 - Juli 18: Focus Mode - Volledige CSS overrides voor perfect fullscreen gedrag
 - Juli 13: Scroll Indicators - Intelligente scroll feedback voor uitgesteld lijsten
-- Juli 13: Floating Drop Panel - Moderne drag & drop interface 
+- Juli 13: Floating Drop Panel - Moderne drag & drop interface
 **BELANGRIJK**: Update dit document bij ELKE wijziging aan de codebase structuur!

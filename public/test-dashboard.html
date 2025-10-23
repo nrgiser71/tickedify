@@ -379,6 +379,18 @@
             <button class="btn btn-secondary" id="runBusinessTestsBtn">
                 <span>🎯</span> Business Logic Tests
             </button>
+            <button class="btn btn-secondary" id="runTaskCompletionAPITestsBtn">
+                <span>✅</span> Task Completion API Tests
+            </button>
+            <button class="btn btn-secondary" id="runRecurringTaskAPITestsBtn">
+                <span>🔄</span> Recurring Task API Tests
+            </button>
+            <button class="btn btn-secondary" id="runErrorHandlingAPITestsBtn">
+                <span>⚠️</span> Error Handling API Tests
+            </button>
+            <button class="btn btn-secondary" id="runUIIntegrationTestsBtn">
+                <span>🖱️</span> UI Integration Tests
+            </button>
             <button class="btn btn-danger" id="emergencyCleanupBtn">
                 <span>🧹</span> Noodmatige Cleanup
             </button>
@@ -436,7 +448,12 @@
                     'database': { name: '🗄️ Database Integriteit', tests: [] },
                     'api': { name: '🔌 API Endpoints', tests: [] },
                     'recurring': { name: '🔄 Herhalende Taken', tests: [] },
-                    'business': { name: '🎯 Business Logic', tests: [] }
+                    'business': { name: '🎯 Business Logic', tests: [] },
+                    'taskCompletionAPI': { name: '✅ Task Completion API', tests: [] },
+                    'recurringTaskAPI': { name: '🔄 Recurring Task API', tests: [] },
+                    'errorHandlingAPI': { name: '⚠️ Error Handling API', tests: [] },
+                    'uiIntegration': { name: '🖱️ UI Integration', tests: [] },
+                    'performance': { name: '🚀 Performance', tests: [] }
                 };
                 this.init();
             }
@@ -465,6 +482,11 @@
                 document.getElementById('runApiTestsBtn').addEventListener('click', () => this.runSpecificTests('api'));
                 document.getElementById('runRecurringTestsBtn').addEventListener('click', () => this.runSpecificTests('recurring'));
                 document.getElementById('runBusinessTestsBtn').addEventListener('click', () => this.runSpecificTests('business'));
+                document.getElementById('runTaskCompletionAPITestsBtn').addEventListener('click', () => this.runSpecificTests('taskCompletionAPI'));
+                document.getElementById('runRecurringTaskAPITestsBtn').addEventListener('click', () => this.runSpecificTests('recurringTaskAPI'));
+                document.getElementById('runErrorHandlingAPITestsBtn').addEventListener('click', () => this.runSpecificTests('errorHandlingAPI'));
+                document.getElementById('runUIIntegrationTestsBtn').addEventListener('click', () => this.runSpecificTests('uiIntegration'));
+                document.getElementById('runPerformanceTestsBtn').addEventListener('click', () => this.runSpecificTests('performance'));
                 document.getElementById('emergencyCleanupBtn').addEventListener('click', () => this.emergencyCleanup());
             }
 
