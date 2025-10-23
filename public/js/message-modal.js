@@ -44,10 +44,10 @@ async function checkForMessages() {
 
 // Check if modal/popup is currently open (blocking message display)
 function isModalOpen() {
-  // Check for edit modal (taak-modal)
-  const editModal = document.querySelector('.taak-modal');
-  if (editModal && editModal.style.display === 'flex') {
-    console.log('📢 Edit modal is open - skipping message check');
+  // Check for planning/edit popup (planningPopup)
+  const planningPopup = document.getElementById('planningPopup');
+  if (planningPopup && planningPopup.style.display === 'flex') {
+    console.log('📢 Planning popup is open - skipping message check');
     return true;
   }
 
