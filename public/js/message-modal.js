@@ -57,7 +57,8 @@ function showMessage(message) {
   const contentElement = document.querySelector('.message-content');
 
   if (titleElement) titleElement.textContent = message.title;
-  if (contentElement) contentElement.textContent = message.message;
+  // Use innerHTML with parsed markdown links
+  if (contentElement) contentElement.innerHTML = parseMarkdownLinks(message.message);
 
   // Apply type-specific styling to modal
   const modalElement = document.querySelector('.message-modal');
@@ -65,17 +66,78 @@ function showMessage(message) {
     modalElement.className = `message-modal message-${message.message_type || 'information'}`;
   }
 
+  // Update carousel indicator
+  const carouselIndicator = document.querySelector('.carousel-indicator');
+  if (currentMessages.length > 1 && carouselIndicator) {
+    carouselIndicator.textContent = `${currentMessageIndex + 1} / ${currentMessages.length}`;
+    carouselIndicator.style.display = 'block';
+  } else if (carouselIndicator) {
+    carouselIndicator.style.display = 'none';
+  }
+
+  // Show/hide navigation buttons
+  const btnPrev = document.querySelector('.btn-prev');
+  const btnNext = document.querySelector('.btn-next');
+  if (btnPrev) btnPrev.style.display = currentMessageIndex > 0 ? 'inline-block' : 'none';
+  if (btnNext) btnNext.style.display = currentMessageIndex < currentMessages.length - 1 ? 'inline-block' : 'none';
+
+  // Handle action button
+  const buttonContainer = document.querySelector('.message-button');
+  if (message.button_label && buttonContainer) {
+    buttonContainer.innerHTML = `
+      <button class="btn-message-action" data-action="${message.button_action || 'navigate'}"
+              data-target="${message.button_target || ''}">
+        ${message.button_label}
+      </button>
+    `;
+    buttonContainer.style.display = 'block';
+
+    // Attach click handler
+    const actionBtn = buttonContainer.querySelector('.btn-message-action');
+    if (actionBtn) {
+      actionBtn.onclick = () => handleButtonAction(message);
+    }
+  } else if (buttonContainer) {
+    buttonContainer.style.display = 'none';
+  }
+
+  // Handle snooze options
+  const snoozeContainer = document.querySelector('.snooze-options');
+  if (message.snoozable && snoozeContainer) {
+    snoozeContainer.style.display = 'flex';
+  } else if (snoozeContainer) {
+    snoozeContainer.style.display = 'none';
+  }
+
+  // Update dismiss button visibility and text
+  const dismissBtn = document.querySelector('.btn-message-dismiss');
+  if (dismissBtn) {
+    if (message.dismissible) {
+      dismissBtn.style.display = 'inline-block';
+      dismissBtn.textContent = 'Got it';
+    } else if (!message.button_label) {
+      // Non-dismissible without action button: show "OK" that just closes
+      dismissBtn.style.display = 'inline-block';
+      dismissBtn.textContent = 'OK';
+    } else {
+      // Non-dismissible with action button: hide dismiss button
+      dismissBtn.style.display = 'none';
+    }
+
+    // Attach click handler
+    dismissBtn.onclick = async () => {
+      if (message.dismissible) {
+        await dismissMessage(message.id);
+      } else {
+        // Just close modal for non-dismissible
+        modal.style.display = 'none';
+      }
+    };
+  }
+
   // Show modal
   modal.style.display = 'flex';
   console.log(`📢 Showing message: "${message.title}" (${message.message_type})`);
-
-  // Handle dismiss button
-  const dismissBtn = document.querySelector('.btn-message-dismiss');
-  if (dismissBtn) {
-    dismissBtn.onclick = async () => {
-      await dismissMessage(message.id);
-    };
-  }
 }
 
 // Get icon emoji for message type
@@ -89,6 +151,12 @@ function getMessageIcon(type) {
     tip: '💡'
   };
   return icons[type] || 'ℹ️';
+}
+
+// Parse markdown links: [text](url) -> <a href="url">text</a>
+function parseMarkdownLinks(text) {
+  if (!text) return '';
+  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
 }
 
 // Dismiss a message (mark as read)
@@ -125,7 +193,114 @@ async function dismissMessage(messageId) {
   }
 }
 
+// Handle action button click
+async function handleButtonAction(message) {
+  try {
+    // Track button click
+    await fetch(`/api/messages/${message.id}/button-click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    console.log(`📢 Button clicked on message ${message.id}: ${message.button_action}`);
+
+    if (message.button_action === 'navigate') {
+      // Internal navigation
+      window.location.href = message.button_target;
+    } else if (message.button_action === 'external') {
+      // External link in new tab
+      window.open(message.button_target, '_blank');
+    }
+
+    // Dismiss message after button click if dismissible
+    if (message.dismissible) {
+      await dismissMessage(message.id);
+    } else {
+      // For non-dismissible, just close modal
+      const modal = document.getElementById('message-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Button action error:', error);
+  }
+}
+
+// Snooze a message
+async function snoozeMessage(messageId, duration) {
+  try {
+    const response = await fetch(`/api/messages/${messageId}/snooze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ duration })
+    });
+
+    if (!response.ok) {
+      console.error('Failed to snooze message');
+      return;
+    }
+
+    const data = await response.json();
+    console.log(`📢 Message ${messageId} snoozed until ${data.snoozedUntil}`);
+
+    // Remove from current messages
+    currentMessages = currentMessages.filter(m => m.id !== messageId);
+
+    // Show next message or close modal
+    if (currentMessages.length > 0) {
+      currentMessageIndex = Math.min(currentMessageIndex, currentMessages.length - 1);
+      showMessage(currentMessages[currentMessageIndex]);
+    } else {
+      const modal = document.getElementById('message-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Snooze error:', error);
+  }
+}
+
+// Carousel navigation - Previous message
+function showPreviousMessage() {
+  if (currentMessageIndex > 0) {
+    currentMessageIndex--;
+    showMessage(currentMessages[currentMessageIndex]);
+  }
+}
+
+// Carousel navigation - Next message
+function showNextMessage() {
+  if (currentMessageIndex < currentMessages.length - 1) {
+    currentMessageIndex++;
+    showMessage(currentMessages[currentMessageIndex]);
+  }
+}
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  // Carousel navigation
+  const btnPrev = document.querySelector('.btn-prev');
+  const btnNext = document.querySelector('.btn-next');
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', showPreviousMessage);
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener('click', showNextMessage);
+  }
+
+  // Snooze buttons
+  document.querySelectorAll('.btn-snooze').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const duration = parseInt(btn.dataset.duration);
+      if (currentMessages[currentMessageIndex]) {
+        await snoozeMessage(currentMessages[currentMessageIndex].id, duration);
+      }
+    });
+  });
+});
+
 // Expose functions globally for potential external use
 window.checkForMessages = checkForMessages;
 window.showMessage = showMessage;
 window.dismissMessage = dismissMessage;
+window.snoozeMessage = snoozeMessage;

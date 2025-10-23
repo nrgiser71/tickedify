@@ -13563,6 +13563,56 @@ app.post('/api/messages/:id/dismiss', async (req, res) => {
   }
 });
 
+// POST /api/messages/:id/snooze - Snooze a message
+app.post('/api/messages/:id/snooze', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { duration } = req.body; // duration in seconds
+    if (!duration || typeof duration !== 'number') {
+      return res.status(400).json({ error: 'Invalid duration' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO message_interactions (message_id, user_id, snoozed_until)
+      VALUES ($1, $2, NOW() + INTERVAL '1 second' * $3)
+      ON CONFLICT (message_id, user_id)
+      DO UPDATE SET snoozed_until = NOW() + INTERVAL '1 second' * $3
+      RETURNING snoozed_until
+    `, [req.params.id, req.session.userId, duration]);
+
+    res.json({
+      success: true,
+      snoozedUntil: result.rows[0].snoozed_until
+    });
+  } catch (error) {
+    console.error('Snooze message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/messages/:id/button-click - Track button click
+app.post('/api/messages/:id/button-click', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    await pool.query(`
+      UPDATE message_interactions
+      SET button_clicked = true, button_clicked_at = NOW()
+      WHERE message_id = $1 AND user_id = $2
+    `, [req.params.id, req.session.userId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Button click tracking error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/page-visit/:pageIdentifier - Track page visit
 app.post('/api/page-visit/:pageIdentifier', async (req, res) => {
   try {

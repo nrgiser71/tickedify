@@ -1148,11 +1148,28 @@
         <div class="message-header">
           <span class="message-icon">ℹ️</span>
           <h3 class="message-title"></h3>
+          <span class="carousel-indicator" style="display: none;">1 / 1</span>
         </div>
         <div class="message-body">
-          <p class="message-content"></p>
+          <div class="message-content"></div>
         </div>
+
+        <!-- Optional action button -->
+        <div class="message-button" style="display: none;"></div>
+
         <div class="message-actions">
+          <!-- Carousel navigation -->
+          <button class="btn-prev" style="display: none;">◀ Previous</button>
+          <button class="btn-next" style="display: none;">Next ▶</button>
+
+          <!-- Snooze options -->
+          <div class="snooze-options" style="display: none;">
+            <button class="btn-snooze" data-duration="3600">💤 1 hour</button>
+            <button class="btn-snooze" data-duration="14400">💤 4 hours</button>
+            <button class="btn-snooze" data-duration="86400">💤 1 day</button>
+          </div>
+
+          <!-- Dismiss -->
           <button class="btn-message-dismiss">Got it</button>
         </div>
       </div>
