@@ -9260,6 +9260,8 @@ body.dagkalender-focus-active {
 .message-content {
   margin: 0;
   font-size: 14px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 /* Markdown styling in message content */
@@ -9395,23 +9397,23 @@ body.dagkalender-focus-active {
     0 1px 4px rgba(37, 99, 235, 0.2);
 }
 
-/* Navigation row (separate from actions) */
-.message-navigation {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  padding: 0 28px 16px 28px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
 .message-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  padding: 0 28px 16px 28px;
+}
+
+/* Navigation row at bottom (separate from actions) */
+.message-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
   padding: 16px 28px 28px 28px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .btn-prev,
