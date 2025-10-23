@@ -12417,6 +12417,7 @@ class AuthManager {
         this.currentUser = null;
         this.isAuthenticated = false;
         this.betaCheckInterval = null;
+        this.messageCheckInterval = null;
         this.setupEventListeners();
         this.checkAuthStatus();
     }
@@ -12561,6 +12562,14 @@ class AuthManager {
                 // Load user-specific data (only if still authenticated after checkAuthStatus)
                 if (this.isAuthenticated && app) {
                     await app.loadUserData();
+
+                    // Check for unread messages after login
+                    if (window.checkForMessages) {
+                        await window.checkForMessages();
+                    }
+
+                    // Start periodic message checking (every 5 minutes)
+                    this.startMessageChecking();
                 }
             } else {
                 toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
@@ -12638,10 +12647,11 @@ class AuthManager {
             if (response.ok) {
                 this.currentUser = null;
                 this.isAuthenticated = false;
-                
-                // Stop beta check interval to prevent memory leaks
+
+                // Stop intervals to prevent memory leaks
                 this.stopBetaCheckInterval();
-                
+                this.stopMessageChecking();
+
                 this.updateUI();
                 
                 toast.info('Je bent uitgelogd.');
@@ -12778,6 +12788,29 @@ class AuthManager {
             clearInterval(this.betaCheckInterval);
             this.betaCheckInterval = null;
             console.log('⏹️ Beta controle interval gestopt');
+        }
+    }
+
+    startMessageChecking() {
+        // Clear any existing interval first
+        this.stopMessageChecking();
+
+        // Check every 5 minutes (300000 ms)
+        this.messageCheckInterval = setInterval(() => {
+            if (this.isAuthenticated && window.checkForMessages) {
+                console.log('📢 Periodieke message controle uitgevoerd');
+                window.checkForMessages();
+            }
+        }, 300000); // 5 minutes
+
+        console.log('✅ Message controle interval gestart (elke 5 minuten)');
+    }
+
+    stopMessageChecking() {
+        if (this.messageCheckInterval) {
+            clearInterval(this.messageCheckInterval);
+            this.messageCheckInterval = null;
+            console.log('⏹️ Message controle interval gestopt');
         }
     }
 

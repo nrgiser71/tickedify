@@ -347,6 +347,15 @@ function showNextMessage() {
 
 // Initialize event listeners
 document.addEventListener('DOMContentLoaded', () => {
+  // Close button
+  const btnClose = document.querySelector('.btn-close-modal');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      const modal = document.getElementById('message-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+
   // Carousel navigation
   const btnPrev = document.querySelector('.btn-prev');
   const btnNext = document.querySelector('.btn-next');
