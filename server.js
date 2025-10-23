@@ -13291,6 +13291,27 @@ app.get('/api/admin/messages', requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/messages/:id - Get single message
+app.get('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    const result = await pool.query(
+      'SELECT * FROM admin_messages WHERE id = $1',
+      [messageId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.json({ message: result.rows[0] });
+  } catch (error) {
+    console.error('Get message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/admin/messages/:id/analytics - Message analytics
 app.get('/api/admin/messages/:id/analytics', requireAdmin, async (req, res) => {
   try {
@@ -13323,6 +13344,140 @@ app.post('/api/admin/messages/:id/toggle', requireAdmin, async (req, res) => {
     res.json({ success: true, active: result.rows[0].active });
   } catch (error) {
     console.error('Toggle message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/admin/messages/:id - Update message
+app.put('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    const {
+      title, message, message_type, target_type, target_subscription,
+      target_users, trigger_type, trigger_value, dismissible, snoozable,
+      publish_at, expires_at, button_label, button_action, button_target, active
+    } = req.body;
+
+    // Validation
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required' });
+    }
+
+    const result = await pool.query(`
+      UPDATE admin_messages SET
+        title = $1,
+        message = $2,
+        message_type = $3,
+        target_type = $4,
+        target_subscription = $5,
+        target_users = $6,
+        trigger_type = $7,
+        trigger_value = $8,
+        dismissible = $9,
+        snoozable = $10,
+        publish_at = $11,
+        expires_at = $12,
+        button_label = $13,
+        button_action = $14,
+        button_target = $15,
+        active = $16,
+        updated_at = NOW()
+      WHERE id = $17
+      RETURNING *
+    `, [
+      title, message, message_type || 'information', target_type || 'all',
+      target_subscription, target_users, trigger_type || 'immediate',
+      trigger_value, dismissible !== false, snoozable !== false,
+      publish_at, expires_at, button_label, button_action, button_target,
+      active !== false, req.params.id
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.json({ success: true, message: result.rows[0] });
+  } catch (error) {
+    console.error('Update message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/admin/messages/:id - Delete message
+app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    // Check if message exists
+    const checkResult = await pool.query(
+      'SELECT id FROM admin_messages WHERE id = $1',
+      [messageId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Delete message (hard delete)
+    // Note: This will cascade delete message_interactions due to foreign key
+    await pool.query('DELETE FROM admin_messages WHERE id = $1', [messageId]);
+
+    res.json({ success: true, message: 'Message deleted successfully' });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/messages/:id/duplicate - Duplicate message
+app.post('/api/admin/messages/:id/duplicate', requireAdmin, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    // Get original message
+    const original = await pool.query(
+      'SELECT * FROM admin_messages WHERE id = $1',
+      [messageId]
+    );
+
+    if (original.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    const msg = original.rows[0];
+
+    // Create duplicate with modified title and inactive status
+    const result = await pool.query(`
+      INSERT INTO admin_messages (
+        title, message, message_type, target_type, target_subscription,
+        target_users, trigger_type, trigger_value, dismissible, snoozable,
+        publish_at, expires_at, button_label, button_action, button_target, active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, false)
+      RETURNING id
+    `, [
+      `Copy of ${msg.title}`,
+      msg.message,
+      msg.message_type,
+      msg.target_type,
+      msg.target_subscription,
+      msg.target_users,
+      msg.trigger_type,
+      msg.trigger_value,
+      msg.dismissible,
+      msg.snoozable,
+      msg.publish_at,
+      msg.expires_at,
+      msg.button_label,
+      msg.button_action,
+      msg.button_target
+    ]);
+
+    res.json({
+      success: true,
+      messageId: result.rows[0].id,
+      message: 'Message duplicated successfully (inactive)'
+    });
+  } catch (error) {
+    console.error('Duplicate message error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
