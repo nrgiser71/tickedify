@@ -1826,6 +1826,18 @@
         // Cache voor messages (gebruikt door preview functie)
         let messagesCache = [];
 
+        // Helper: Convert UTC timestamp to local ISO string for datetime-local input
+        // This fixes the timezone bug where times displayed 2 hours earlier when editing messages
+        // datetime-local expects local time string (e.g., "2025-10-24T10:00")
+        // but toISOString() returns UTC string (e.g., "2025-10-24T08:00:00.000Z")
+        function toLocalISOString(utcTimestamp) {
+            if (!utcTimestamp) return '';
+            const date = new Date(utcTimestamp);
+            // Adjust for timezone offset: subtract offset to get local time
+            const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+            return localDate.toISOString().slice(0, 16);
+        }
+
         // Initialize messaging form event listeners
         document.addEventListener('DOMContentLoaded', () => {
             // Target type radio buttons
@@ -2160,12 +2172,10 @@
 
                 // Set scheduling
                 if (msg.publish_at) {
-                    const publishDate = new Date(msg.publish_at);
-                    document.getElementById('publishAt').value = publishDate.toISOString().slice(0, 16);
+                    document.getElementById('publishAt').value = toLocalISOString(msg.publish_at);
                 }
                 if (msg.expires_at) {
-                    const expiresDate = new Date(msg.expires_at);
-                    document.getElementById('expiresAt').value = expiresDate.toISOString().slice(0, 16);
+                    document.getElementById('expiresAt').value = toLocalISOString(msg.expires_at);
                 }
 
                 // Open modal

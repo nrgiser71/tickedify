@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.172 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.172</span>
+                <span class="version-date">24 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Admin2 Bericht Tijdstip Correctie</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Timezone Display Bug Opgelost</strong>: Admin2 message scheduling tijden tonen nu correct in lokale timezone bij het bewerken van berichten. Probleem: Invoer van 10:00 toonde 08:00 na opslaan (2 uur verschil door UTC/local timezone conversie).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Implementatie</strong>: Nieuwe toLocalISOString() helper functie converteert UTC timestamps correct naar local time voor datetime-local inputs. Fix geldt voor zowel publishAt als expiresAt velden.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Admins zien nu exact het tijdstip dat ze ingevoerd hebben (10:00 blijft 10:00, niet meer 08:00). Database blijft correct UTC timestamps opslaan.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.171 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.171</span>
+                <span class="version-badge badge-fix">v0.19.171</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">
