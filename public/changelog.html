@@ -134,10 +134,153 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.144 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.144</span>
+                <span class="version-date">23 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 In-App Messaging: Markdown List Spacing Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>List Rendering Fix</strong>: Opgelost dat bullet points en numbered lists te veel ruimte tussen items hadden. Lists worden nu correct gegroepeerd zonder extra line breaks.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Improved Parser</strong>: Markdown parser herschreven om consecutive list items als één groep te verwerken, waardoor unwanted &lt;br&gt; tags rond lists worden vermeden.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.143 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.143</span>
+                <span class="version-date">23 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">✨ In-App Messaging: Extended Markdown Support</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Highlight Syntax</strong>: ==tekst== syntax toegevoegd voor het highlighten van belangrijke tekst met gele achtergrond.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Horizontal Rule</strong>: --- syntax toegevoegd voor horizontale lijnen in berichten.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.142 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.142</span>
+                <span class="version-date">23 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">📝 In-App Messaging: Full Markdown Support</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Markdown Parser</strong>: Volledige markdown ondersteuning toegevoegd voor headers (#, ##, ###), bold (**), italic (*), code (`), lists (- item), en links.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Styling</strong>: CSS toegevoegd voor alle markdown elementen in message content met passende kleuren, spacing en typography.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.141 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.141</span>
+                <span class="version-date">23 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 In-App Messaging System - Phase 3: Rich Features Complete</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Multi-Message Carousel</strong>: Meerdere berichten kunnen nu genavigeerd worden via prev/next buttons met visuele indicator (bijv. "2 / 5").
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Action Buttons</strong>: Berichten kunnen actie buttons bevatten die navigeren naar interne pagina's of externe links openen in nieuwe tab.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Snooze Functionaliteit</strong>: Users kunnen berichten snoozen voor 1 uur, 4 uur of 1 dag. Gesnoozede berichten verschijnen opnieuw na interval.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Non-Dismissible Messages</strong>: Admin kan berichten maken die niet dismissed kunnen worden (forceren van actie of kennisname).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Priority Sorting</strong>: Berichten worden gesorteerd op message_type priority (important > warning > feature > educational > information > tip).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Analytics Tracking</strong>: Button clicks en snooze acties worden getracked in message_interactions table voor toekomstige analytics.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.139 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.139</span>
+                <span class="version-date">23 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 In-App Messaging: Publish Date Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Auto-set publish_at</strong>: Berichten met 'immediate' trigger krijgen nu automatisch publish_at = NOW() ipv NULL, waardoor ze direct verschijnen bij app launch.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.136 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.136</span>
+                <span class="version-badge badge-feature">v0.19.136</span>
                 <span class="version-date">23 oktober 2025</span>
             </div>
             <div class="changes-list">

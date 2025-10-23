@@ -188,17 +188,43 @@ function parseMarkdownLinks(text) {
   // Links: [text](url)
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-  // Unordered lists: - item or * item
-  html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+  // Lists: Group consecutive list items properly
+  // Match consecutive lines starting with - or *
+  html = html.replace(/((?:^[*-] .+$\n?)+)/gm, function(match) {
+    // Convert each line to <li>
+    const items = match.trim().split('\n').map(line => {
+      const content = line.replace(/^[*-] /, '');
+      return `<li>${content}</li>`;
+    }).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Ordered lists: 1. item, 2. item
+  html = html.replace(/((?:^\d+\. .+$\n?)+)/gm, function(match) {
+    const items = match.trim().split('\n').map(line => {
+      const content = line.replace(/^\d+\. /, '');
+      return `<li>${content}</li>`;
+    }).join('');
+    return `<ol>${items}</ol>`;
+  });
 
   // Line breaks: double newline = paragraph, single newline = <br>
-  html = html.replace(/\n\n/g, '</p><p>');
+  // But preserve lists
+  html = html.replace(/\n\n+/g, '</p><p>');
   html = html.replace(/\n/g, '<br>');
   html = '<p>' + html + '</p>';
 
+  // Clean up paragraphs around lists
+  html = html.replace(/<p>(<[uo]l>)/g, '$1');
+  html = html.replace(/(<\/[uo]l>)<\/p>/g, '$1');
+
+  // Remove <br> tags around lists
+  html = html.replace(/<br>(<[uo]l>)/g, '$1');
+  html = html.replace(/(<\/[uo]l>)<br>/g, '$1');
+
   // Clean up empty paragraphs
   html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<p><br><\/p>/g, '');
 
   return html;
 }
