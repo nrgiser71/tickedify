@@ -9173,61 +9173,94 @@ body.dagkalender-focus-active {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
 
 .message-modal {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  max-width: 500px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 520px;
   width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  animation: modalSlideIn 0.3s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .message-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .message-icon {
-  font-size: 24px;
+  font-size: 32px;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .message-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: #1a1a1a;
   flex: 1;
+  letter-spacing: -0.02em;
 }
 
 .carousel-indicator {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
   color: #6b7280;
-  background: #f3f4f6;
-  padding: 4px 8px;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .message-body {
@@ -9328,23 +9361,50 @@ body.dagkalender-focus-active {
 
 .btn-message-action {
   width: 100%;
-  padding: 12px 16px;
-  background: #2563eb;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   font-size: 15px;
-  transition: background 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 12px rgba(37, 99, 235, 0.3),
+    0 2px 4px rgba(37, 99, 235, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-message-action::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .btn-message-action:hover {
-  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(37, 99, 235, 0.4),
+    0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-message-action:hover::before {
+  opacity: 1;
 }
 
 .btn-message-action:active {
-  background: #1e40af;
+  transform: translateY(0px);
+  box-shadow:
+    0 2px 8px rgba(37, 99, 235, 0.3),
+    0 1px 4px rgba(37, 99, 235, 0.2);
 }
 
 .message-actions {
@@ -9357,18 +9417,26 @@ body.dagkalender-focus-active {
 
 .btn-prev,
 .btn-next {
-  padding: 6px 12px;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 4px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
   cursor: pointer;
   font-size: 13px;
-  transition: background 0.2s ease;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .btn-prev:hover,
 .btn-next:hover {
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
 .snooze-options {
@@ -9377,38 +9445,52 @@ body.dagkalender-focus-active {
 }
 
 .btn-snooze {
-  padding: 6px 10px;
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 4px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 500;
+  color: #92400e;
   white-space: nowrap;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
 }
 
 .btn-snooze:hover {
-  background: #fde68a;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%);
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.15);
 }
 
 .btn-message-dismiss {
-  padding: 8px 16px;
-  background: #2563eb;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(29, 78, 216, 0.9) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: white;
-  border: none;
-  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .btn-message-dismiss:hover {
-  background: #1d4ed8;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 1) 0%, rgba(29, 78, 216, 1) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
 
 .btn-message-dismiss:active {
-  background: #1e40af;
+  transform: translateY(0px);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
 /* Mobile responsiveness */
@@ -9447,65 +9529,95 @@ body.dagkalender-focus-active {
   }
 }
 
-/* Message Type Specific Styling */
-.message-modal.message-information {
-  border-left: 4px solid #3b82f6; /* Blue */
+/* Message Type Specific Styling - Glassmorphism with Gradient Accents */
+.message-modal.message-information::before,
+.message-modal.message-educational::before,
+.message-modal.message-feature::before,
+.message-modal.message-tip::before,
+.message-modal.message-warning::before,
+.message-modal.message-important::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 22px;
+  z-index: -1;
+  opacity: 0.6;
+  filter: blur(8px);
 }
 
-.message-modal.message-educational {
-  border-left: 4px solid #3b82f6; /* Blue */
+.message-modal.message-information::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
 }
 
-.message-modal.message-feature {
-  border-left: 4px solid #10b981; /* Green */
+.message-modal.message-educational::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
 }
 
-.message-modal.message-tip {
-  border-left: 4px solid #f59e0b; /* Yellow/Orange */
+.message-modal.message-feature::before {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 }
 
-.message-modal.message-warning {
-  border-left: 4px solid #f97316; /* Orange */
+.message-modal.message-tip::before {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 }
 
-.message-modal.message-important {
-  border-left: 4px solid #ef4444; /* Red */
+.message-modal.message-warning::before {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
 }
 
-/* Optional: Add subtle background tint for each type */
-.message-modal.message-information .message-header,
+.message-modal.message-important::before {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+}
+
+/* Subtle gradient overlay on header */
+.message-modal.message-information .message-header {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(96, 165, 250, 0.08) 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -8px -8px 20px -8px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
 .message-modal.message-educational .message-header {
-  background-color: #eff6ff; /* Light blue */
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: -8px -12px 16px -12px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -8px -8px 20px -8px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
 .message-modal.message-feature .message-header {
-  background-color: #f0fdf4; /* Light green */
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: -8px -12px 16px -12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.08) 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -8px -8px 20px -8px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
 }
 
 .message-modal.message-tip .message-header {
-  background-color: #fffbeb; /* Light yellow */
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: -8px -12px 16px -12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.08) 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -8px -8px 20px -8px;
+  border: 1px solid rgba(245, 158, 11, 0.15);
 }
 
 .message-modal.message-warning .message-header {
-  background-color: #fff7ed; /* Light orange */
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: -8px -12px 16px -12px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(251, 146, 60, 0.08) 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -8px -8px 20px -8px;
+  border: 1px solid rgba(249, 115, 22, 0.15);
 }
 
 .message-modal.message-important .message-header {
-  background-color: #fef2f2; /* Light red */
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: -8px -12px 16px -12px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(248, 113, 113, 0.08) 100%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -8px -8px 20px -8px;
+  border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
