@@ -13354,9 +13354,44 @@ app.get('/api/admin/users/search', requireAdmin, async (req, res) => {
 // GET /api/admin/messages/preview-targets - Preview targeting
 app.get('/api/admin/messages/preview-targets', requireAdmin, async (req, res) => {
   try {
-    // TODO: Implement target preview (zie api-contracts.md)
-    // Phase 2 implementation
-    res.json({ count: 0, sample: [] });
+    const { target_type, target_subscription, target_users } = req.query;
+
+    // Dynamic query building based on targeting
+    let whereConditions = ['1=1'];
+    let queryParams = [];
+
+    if (target_type === 'filtered' && target_subscription) {
+      const subscriptions = JSON.parse(target_subscription);
+      queryParams.push(subscriptions);
+      whereConditions.push(`subscription_type = ANY($${queryParams.length})`);
+    } else if (target_type === 'specific_users' && target_users) {
+      const userIds = JSON.parse(target_users);
+      queryParams.push(userIds);
+      whereConditions.push(`id = ANY($${queryParams.length})`);
+    }
+    // target_type = 'all' → geen extra where clause
+
+    // Count total + get sample of first 5
+    const countQuery = `
+      SELECT COUNT(*) as count FROM users
+      WHERE ${whereConditions.join(' AND ')}
+    `;
+    const sampleQuery = `
+      SELECT id, username as name, email FROM users
+      WHERE ${whereConditions.join(' AND ')}
+      ORDER BY username
+      LIMIT 5
+    `;
+
+    const [countResult, sampleResult] = await Promise.all([
+      pool.query(countQuery, queryParams),
+      pool.query(sampleQuery, queryParams)
+    ]);
+
+    res.json({
+      count: parseInt(countResult.rows[0].count),
+      sample: sampleResult.rows
+    });
   } catch (error) {
     console.error('Preview targets error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -13375,25 +13410,133 @@ app.get('/api/messages/unread', async (req, res) => {
     }
 
     const userId = req.session.userId;
+    const pageIdentifier = req.query.page; // Voor page visit triggers
     const now = new Date();
 
-    // Basic query - Phase 1: only 'all' targeting + 'immediate' trigger
-    const result = await pool.query(`
+    // Haal user subscription type en created_at op
+    const userResult = await pool.query(`
+      SELECT subscription_type, created_at FROM users WHERE id = $1
+    `, [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userSubscription = userResult.rows[0].subscription_type || 'free';
+    const userCreatedAt = userResult.rows[0].created_at;
+    const daysSinceSignup = Math.floor((now - new Date(userCreatedAt)) / (1000 * 60 * 60 * 24));
+
+    // Query voor immediate en days_after_signup triggers
+    const mainQuery = `
       SELECT m.* FROM admin_messages m
       WHERE m.active = true
         AND m.publish_at <= $1
         AND (m.expires_at IS NULL OR m.expires_at > $1)
-        AND m.target_type = 'all'
-        AND m.trigger_type = 'immediate'
+
+        -- Targeting filter
+        AND (
+          m.target_type = 'all'
+          OR (m.target_type = 'filtered' AND $3 = ANY(m.target_subscription))
+          OR (m.target_type = 'specific_users' AND $2 = ANY(m.target_users))
+        )
+
+        -- Trigger filter (immediate + days_after_signup)
+        AND (
+          m.trigger_type = 'immediate'
+          OR (m.trigger_type = 'days_after_signup' AND $4 >= m.trigger_value::integer)
+        )
+
+        -- Exclude dismissed/snoozed
         AND m.id NOT IN (
           SELECT message_id FROM message_interactions
           WHERE user_id = $2
             AND (dismissed = true OR snoozed_until > $1)
         )
-      ORDER BY m.created_at DESC
-    `, [now, userId]);
 
-    res.json({ messages: result.rows });
+      ORDER BY
+        CASE m.message_type
+          WHEN 'important' THEN 1
+          WHEN 'warning' THEN 2
+          WHEN 'feature' THEN 3
+          WHEN 'educational' THEN 4
+          WHEN 'tip' THEN 5
+          WHEN 'information' THEN 6
+          ELSE 7
+        END,
+        m.created_at DESC
+    `;
+
+    const mainResult = await pool.query(mainQuery, [now, userId, userSubscription, daysSinceSignup]);
+    let messages = mainResult.rows;
+
+    // Page visit triggers - alleen als pageIdentifier is meegegeven
+    if (pageIdentifier) {
+      // Haal visit count op voor deze page
+      const visitResult = await pool.query(`
+        SELECT visit_count FROM user_page_visits
+        WHERE user_id = $1 AND page_identifier = $2
+      `, [userId, pageIdentifier]);
+
+      const visitCount = visitResult.rows.length > 0 ? visitResult.rows[0].visit_count : 0;
+
+      // Query voor page visit triggered messages
+      const pageVisitQuery = `
+        SELECT m.* FROM admin_messages m
+        WHERE m.active = true
+          AND m.publish_at <= $1
+          AND (m.expires_at IS NULL OR m.expires_at > $1)
+
+          -- Targeting filter
+          AND (
+            m.target_type = 'all'
+            OR (m.target_type = 'filtered' AND $3 = ANY(m.target_subscription))
+            OR (m.target_type = 'specific_users' AND $2 = ANY(m.target_users))
+          )
+
+          -- Page visit triggers
+          AND (
+            (m.trigger_type = 'first_page_visit' AND m.trigger_value = $5 AND $6 = 1)
+            OR (m.trigger_type = 'nth_page_visit' AND
+                split_part(m.trigger_value, ':', 2) = $5 AND
+                $6 >= split_part(m.trigger_value, ':', 1)::integer)
+          )
+
+          -- Exclude dismissed/snoozed
+          AND m.id NOT IN (
+            SELECT message_id FROM message_interactions
+            WHERE user_id = $2
+              AND (dismissed = true OR snoozed_until > $1)
+          )
+      `;
+
+      const pageVisitResult = await pool.query(pageVisitQuery, [
+        now, userId, userSubscription, null, pageIdentifier, visitCount
+      ]);
+
+      // Merge messages (vermijd duplicaten)
+      const messageIds = new Set(messages.map(m => m.id));
+      for (const msg of pageVisitResult.rows) {
+        if (!messageIds.has(msg.id)) {
+          messages.push(msg);
+          messageIds.add(msg.id);
+        }
+      }
+
+      // Re-sort merged messages by priority
+      messages.sort((a, b) => {
+        const priorityOrder = {
+          'important': 1, 'warning': 2, 'feature': 3,
+          'educational': 4, 'tip': 5, 'information': 6
+        };
+        const aPriority = priorityOrder[a.message_type] || 7;
+        const bPriority = priorityOrder[b.message_type] || 7;
+
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+    }
+
+    res.json({ messages });
   } catch (error) {
     console.error('Unread messages error:', error);
     res.status(500).json({ error: 'Internal server error' });

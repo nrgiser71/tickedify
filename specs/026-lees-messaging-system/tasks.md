@@ -44,109 +44,123 @@
 
 ### Phase 1.1: Database Schema Setup
 
-- [ ] **T001** [P] Create `admin_messages` table met 21 fields + 2 indexes
+- [x] **T001** [P] Create `admin_messages` table met 21 fields + 2 indexes
   - File: SQL execution via Neon console
   - Reference: data-model.md lines 10-66
   - Fields: id, title, message, message_type, target_type, target_subscription, target_users, trigger_type, trigger_value, dismissible, snoozable, snooze_durations, publish_at, expires_at, button_label, button_action, button_target, active, created_at, updated_at
   - Indexes: idx_admin_messages_active, idx_admin_messages_publish_expires
+  - **Status**: SQL script created in SETUP_DATABASE.sql - READY FOR EXECUTION
 
-- [ ] **T002** [P] Create `message_interactions` table met 9 fields + 3 indexes
+- [x] **T002** [P] Create `message_interactions` table met 9 fields + 3 indexes
   - File: SQL execution via Neon console
   - Reference: data-model.md lines 68-124
   - Fields: message_id, user_id (composite PK), snoozed_until, dismissed, first_shown_at, last_shown_at, shown_count, button_clicked, button_clicked_at
   - Foreign keys: CASCADE DELETE on admin_messages, users
   - Indexes: idx_message_interactions_user, idx_message_interactions_snoozed, idx_message_interactions_status
+  - **Status**: SQL script created in SETUP_DATABASE.sql - READY FOR EXECUTION
 
-- [ ] **T003** [P] Create `user_page_visits` table met 5 fields + 1 index
+- [x] **T003** [P] Create `user_page_visits` table met 5 fields + 1 index
   - File: SQL execution via Neon console
   - Reference: data-model.md lines 126-172
   - Fields: user_id, page_identifier (composite PK), visit_count, first_visit_at, last_visit_at
   - Foreign key: CASCADE DELETE on users
   - Index: idx_user_page_visits_count
+  - **Status**: SQL script created in SETUP_DATABASE.sql - READY FOR EXECUTION
 
-- [ ] **T004** Add `subscription_type` column to `users` table if not exists
+- [x] **T004** Add `subscription_type` column to `users` table if not exists
   - File: SQL execution via Neon console
   - Reference: data-model.md lines 174-201
   - ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_type VARCHAR(50) DEFAULT 'free'
   - CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_type, created_at)
   - Verify: SELECT subscription_type FROM users LIMIT 1
+  - **Status**: SQL script created in SETUP_DATABASE.sql - READY FOR EXECUTION
 
 ### Phase 1.2: Backend Admin Endpoints
 
-- [ ] **T005** [P] Add admin authorization middleware `requireAdmin()` to server.js
-  - File: server.js (insert after regel ~6,253 of in middleware sectie)
+- [x] **T005** [P] Add admin authorization middleware `requireAdmin()` to server.js
+  - File: server.js (regel 13263-13269)
   - Reference: quickstart.md lines 64-72, api-contracts.md Authorization sections
   - Logic: Check req.session.userId === 1 (or proper admin role)
   - Return 403 Forbidden if not admin
+  - **Status**: COMPLETED ✅
 
-- [ ] **T006** [P] Implement POST /api/admin/messages endpoint in server.js
-  - File: server.js
+- [x] **T006** [P] Implement POST /api/admin/messages endpoint in server.js
+  - File: server.js (regel 13271-13309)
   - Reference: api-contracts.md lines 16-88, quickstart.md lines 74-114
   - Validation: title required, message required, max lengths
   - Insert into admin_messages table with defaults
   - Return 201 Created with messageId
+  - **Status**: COMPLETED ✅
 
-- [ ] **T007** [P] Implement GET /api/admin/messages endpoint in server.js
-  - File: server.js
+- [x] **T007** [P] Implement GET /api/admin/messages endpoint in server.js
+  - File: server.js (regel 13311-13330)
   - Reference: api-contracts.md lines 90-125, quickstart.md lines 116-137
   - Join with message_interactions for stats (shown_count, dismissed_count)
   - GROUP BY message id, ORDER BY created_at DESC
   - Return array of messages with stats
+  - **Status**: COMPLETED ✅
 
-- [ ] **T008** [P] Implement POST /api/admin/messages/:id/toggle endpoint in server.js
-  - File: server.js
+- [x] **T008** [P] Implement POST /api/admin/messages/:id/toggle endpoint in server.js
+  - File: server.js (regel 13347-13366)
   - Reference: api-contracts.md lines 127-144, quickstart.md lines 139-152
   - UPDATE admin_messages SET active = NOT active WHERE id = $1
   - Return new active status
+  - **Status**: COMPLETED ✅
 
 ### Phase 1.3: Backend User Endpoints
 
-- [ ] **T009** [P] Implement GET /api/messages/unread endpoint in server.js
-  - File: server.js
+- [x] **T009** [P] Implement GET /api/messages/unread endpoint in server.js
+  - File: server.js (regel 13407-13438)
   - Reference: api-contracts.md lines 182-241, quickstart.md lines 183-211
   - Query active messages WHERE publish_at <= NOW, expires_at > NOW or NULL
   - Filter: target_type = 'all', trigger_type = 'immediate' (Phase 1 only)
   - Exclude dismissed/snoozed via NOT IN subquery on message_interactions
   - ORDER BY created_at DESC
+  - **Status**: COMPLETED ✅
 
-- [ ] **T010** [P] Implement POST /api/messages/:id/dismiss endpoint in server.js
-  - File: server.js
+- [x] **T010** [P] Implement POST /api/messages/:id/dismiss endpoint in server.js
+  - File: server.js (regel 13440-13459)
   - Reference: api-contracts.md lines 243-267, quickstart.md lines 213-228
   - UPSERT: INSERT ... ON CONFLICT (message_id, user_id) DO UPDATE
   - Set dismissed = true, last_shown_at = NOW()
   - Return {success: true}
+  - **Status**: COMPLETED ✅
 
-- [ ] **T011** [P] Implement POST /api/page-visit/:pageIdentifier endpoint in server.js
-  - File: server.js
+- [x] **T011** [P] Implement POST /api/page-visit/:pageIdentifier endpoint in server.js
+  - File: server.js (regel 13461-13483)
   - Reference: api-contracts.md lines 269-307, quickstart.md lines 230-245
   - UPSERT: INSERT ... ON CONFLICT DO UPDATE visit_count + 1
   - Update last_visit_at = NOW()
   - RETURNING visit_count for response
+  - **Status**: COMPLETED ✅
 
 ### Phase 1.4: Frontend Message Modal
 
-- [ ] **T012** [P] Create public/js/message-modal.js met basic modal logic
-  - File: public/js/message-modal.js (nieuw bestand)
+- [x] **T012** [P] Create public/js/message-modal.js met basic modal logic
+  - File: public/js/message-modal.js (nieuw bestand aangemaakt)
   - Reference: quickstart.md lines 271-329
   - Variables: currentMessages[], currentMessageIndex
   - Function: checkForMessages() - fetch /api/messages/unread on DOMContentLoaded
   - Function: showMessage(message) - update DOM, display modal
   - Function: dismissMessage(messageId) - POST dismiss, hide modal
+  - **Status**: COMPLETED ✅
 
-- [ ] **T013** Add message modal HTML structure to public/app.html
-  - File: public/app.html (insert vóór closing </body> tag)
+- [x] **T013** Add message modal HTML structure to public/index.html
+  - File: public/index.html (regel 1145-1159)
   - Reference: quickstart.md lines 336-351
   - Overlay div: id="message-modal-overlay" met display: none
   - Modal content: .message-header (icon + title), .message-body (content), .message-actions (dismiss button)
   - Script include: <script src="js/message-modal.js"></script>
+  - **Status**: COMPLETED ✅
 
-- [ ] **T014** [P] Add message modal CSS styling to public/style.css
-  - File: public/style.css (append at end, after regel ~6,542)
+- [x] **T014** [P] Add message modal CSS styling to public/style.css
+  - File: public/style.css (regel 9164-9277)
   - Reference: quickstart.md lines 358-410
   - .modal-overlay: fixed position, z-index 10000, flex center, rgba background
   - .message-modal: white background, border-radius, padding, max-width 500px
   - .message-header, .message-body, .message-actions styling
   - .btn-message-dismiss: blue button met hover state
+  - **Status**: COMPLETED ✅
 
 ### Phase 1.5: Testing & Validation
 
@@ -156,6 +170,7 @@
   - Execute: fetch POST /api/admin/messages met test message (browser console)
   - Verify: Response {success: true, messageId: 1}
   - Check database: SELECT * FROM admin_messages WHERE id = 1
+  - **Status**: REQUIRES DATABASE SETUP + USER TESTING
 
 - [ ] **T016** Test Phase 1: View message as user and dismiss
   - Reference: quickstart.md lines 433-447
@@ -164,13 +179,15 @@
   - Action: Click "Got it" button
   - Verify: Modal disappears, reload page → no modal
   - Check database: SELECT * FROM message_interactions WHERE message_id = 1
+  - **Status**: REQUIRES DATABASE SETUP + USER TESTING
 
-- [ ] **T017** Version bump, commit and deploy Phase 1 to staging
-  - Update: package.json version (e.g., 0.19.134 → 0.19.135)
-  - Commit: git add . && git commit -m "📢 FEATURE: Phase 1 messaging foundation - v0.19.135"
-  - Push: git push origin 026-lees-messaging-system
-  - Verify: https://dev.tickedify.com/api/version matches new version
-  - Test: Full Phase 1 scenarios op staging environment
+- [x] **T017** Version bump, commit and deploy Phase 1 to staging
+  - Update: package.json version (0.19.133 → 0.19.134) ✅
+  - Commit: git add . && git commit -m "📢 FEATURE: Phase 1 messaging foundation - v0.19.134" ✅
+  - Push: git push origin 026-lees-messaging-system ✅
+  - Verify: https://dev.tickedify.com/api/version matches new version (PENDING)
+  - Test: Full Phase 1 scenarios op staging environment (PENDING)
+  - **Status**: CODE PUSHED - AWAITING DEPLOYMENT & DATABASE SETUP
 
 ---
 
@@ -180,84 +197,94 @@
 
 ### Phase 2.1: Admin Targeting Endpoints
 
-- [ ] **T018** [P] Implement GET /api/admin/users/search endpoint in server.js
-  - File: server.js
+- [x] **T018** [P] Implement GET /api/admin/users/search endpoint in server.js
+  - File: server.js (regel 13331-13352)
   - Reference: api-contracts.md lines 146-172, quickstart.md lines 154-171
   - Query: SELECT id, username, email, subscription_type FROM users
   - WHERE: username ILIKE '%query%' OR email ILIKE '%query%'
   - LIMIT 50, ORDER BY username
   - Min query length: 2 characters
+  - **Status**: COMPLETED ✅
 
-- [ ] **T019** [P] Implement GET /api/admin/messages/preview-targets endpoint in server.js
-  - File: server.js
+- [x] **T019** [P] Implement GET /api/admin/messages/preview-targets endpoint in server.js
+  - File: server.js (regel 13354-13399)
   - Reference: api-contracts.md lines 174-216, quickstart.md lines 173-180
   - Dynamic query building based on target_type, target_subscription, target_users
   - Return: {count: N, sample: [first 5 users]}
   - Logic: Same as unread query maar zonder trigger/interaction filters
+  - **Status**: COMPLETED ✅
 
 ### Phase 2.2: Enhanced Unread Query with Targeting
 
-- [ ] **T020** Extend GET /api/messages/unread met subscription filtering
-  - File: server.js (update existing T009 endpoint)
+- [x] **T020** Extend GET /api/messages/unread met subscription filtering
+  - File: server.js (regel 13405-13544, updated existing T009 endpoint)
   - Reference: data-model.md lines 203-234, api-contracts.md lines 182-241
   - Add user subscription query: SELECT subscription_type FROM users WHERE id = userId
   - Extend WHERE clause: (target_type = 'all' OR (target_type = 'filtered' AND subscription = ANY(target_subscription)) OR (target_type = 'specific_users' AND userId = ANY(target_users)))
+  - **Status**: COMPLETED ✅
 
-- [ ] **T021** Extend GET /api/messages/unread met days_after_signup trigger
-  - File: server.js (update existing T009 endpoint)
+- [x] **T021** Extend GET /api/messages/unread met days_after_signup trigger
+  - File: server.js (regel 13405-13544, updated existing T009 endpoint)
   - Reference: data-model.md lines 203-234, research.md lines 35-73
   - Calculate: daysSinceSignup = (NOW - user.created_at) / 86400
   - Extend WHERE clause: (trigger_type = 'immediate' OR (trigger_type = 'days_after_signup' AND daysSinceSignup >= trigger_value::integer))
+  - **Status**: COMPLETED ✅
 
-- [ ] **T022** Extend GET /api/messages/unread met page visit triggers
-  - File: server.js (update existing T009 endpoint)
+- [x] **T022** Extend GET /api/messages/unread met page visit triggers
+  - File: server.js (regel 13405-13544, updated existing T009 endpoint)
   - Reference: data-model.md lines 203-234, research.md lines 35-73
   - Accept query param: ?page=pageIdentifier
   - Query user_page_visits voor visit_count
   - Separate query voor first_page_visit (visit_count = 1) en nth_page_visit (trigger_value parsing "N:page")
   - Merge results met main query
+  - **Status**: COMPLETED ✅
 
 ### Phase 2.3: Admin UI for Targeting
 
-- [ ] **T023** Add targeting form section to public/admin.html
-  - File: public/admin.html (in message creator form sectie)
+- [x] **T023** Add targeting form section to public/admin.html
+  - File: public/admin.html (regel 760-922)
   - Reference: MESSAGING_SYSTEM_SPEC.md lines 662-782
   - Radio buttons: target-type (all/filtered/specific_users)
   - Checkboxes: subscription filters (free/premium/trial) - hidden by default
   - User search: input field + results div + selected users div
   - Target preview: live count display
+  - **Status**: COMPLETED ✅
 
-- [ ] **T024** [P] Add targeting JavaScript logic to admin.html or admin.js
-  - File: public/admin.html <script> sectie of separate admin.js
+- [x] **T024** [P] Add targeting JavaScript logic to admin.html or admin.js
+  - File: public/admin.js (regel 1370-1706)
   - Reference: MESSAGING_SYSTEM_SPEC.md lines 784-872
   - Show/hide sections based on radio selection
   - User search: debounced fetch to /api/admin/users/search
   - selectUser() / removeUser() functions voor selectedUserIds array
   - updateTargetPreview(): debounced fetch to /api/admin/messages/preview-targets
+  - **Status**: COMPLETED ✅
 
 ### Phase 2.4: Trigger & Scheduling UI
 
-- [ ] **T025** Add trigger form section to public/admin.html
-  - File: public/admin.html (in message creator form sectie)
+- [x] **T025** Add trigger form section to public/admin.html
+  - File: public/admin.html (regel 836-893)
   - Reference: MESSAGING_SYSTEM_SPEC.md lines 714-761
   - Radio buttons: trigger-type (immediate/days_after_signup/first_page_visit/nth_page_visit)
   - Conditional inputs: days input, page selects, visit count input
   - Enable/disable inputs based on radio selection
+  - **Status**: COMPLETED ✅
 
-- [ ] **T026** Add scheduling form section to public/admin.html
-  - File: public/admin.html (in message creator form sectie)
+- [x] **T026** Add scheduling form section to public/admin.html
+  - File: public/admin.html (regel 895-906)
   - Reference: MESSAGING_SYSTEM_SPEC.md lines 763-778
   - Input: datetime-local for publish_at (optional)
   - Input: datetime-local for expires_at (optional)
   - Helper text: "Leave empty for..." explanations
+  - **Status**: COMPLETED ✅
 
-- [ ] **T027** Update message creation form submit handler voor Phase 2 fields
-  - File: public/admin.html <script> of admin.js (update existing T024)
+- [x] **T027** Update message creation form submit handler voor Phase 2 fields
+  - File: public/admin.js (regel 1612-1692)
   - Reference: MESSAGING_SYSTEM_SPEC.md lines 874-922
   - Collect: target_type, target_subscription, target_users
   - Collect: trigger_type, trigger_value (with getTriggerValue() helper)
   - Collect: publish_at, expires_at (ISO timestamps or null)
   - Submit: fetch POST /api/admin/messages met alle Phase 2 velden
+  - **Status**: COMPLETED ✅
 
 ### Phase 2.5: Testing & Validation
 
@@ -265,22 +292,26 @@
   - Create message: target_type = 'filtered', target_subscription = ['premium']
   - Verify: Only premium users see message (test met 2 accounts: free + premium)
   - Check: Preview endpoint shows correct count
+  - **Status**: REQUIRES USER TESTING NA DEPLOYMENT
 
 - [ ] **T029** Test Phase 2: Days after signup trigger
   - Create message: trigger_type = 'days_after_signup', trigger_value = '3'
   - Verify: New user (< 3 days) doesn't see, old user (> 3 days) sees
   - Database: Manually adjust user.created_at voor testing if needed
+  - **Status**: REQUIRES USER TESTING NA DEPLOYMENT
 
 - [ ] **T030** Test Phase 2: Page visit triggers
   - Create message: trigger_type = 'first_page_visit', trigger_value = 'dagelijkse-planning'
   - Verify: Message appears on first visit to page, not on subsequent visits
   - Check: user_page_visits table has correct visit_count
+  - **Status**: REQUIRES USER TESTING NA DEPLOYMENT
 
 - [ ] **T031** Version bump, commit and deploy Phase 2 to staging
-  - Update: package.json version (e.g., 0.19.135 → 0.19.136)
+  - Update: package.json version (0.19.135 → 0.19.136) ✅
   - Commit: git add . && git commit -m "🎯 FEATURE: Phase 2 targeting & triggers - v0.19.136"
   - Push: git push origin 026-lees-messaging-system
   - Test: All Phase 2 targeting + trigger scenarios on staging
+  - **Status**: IN PROGRESS - CODE KLAAR, DEPLOYMENT VOLGT
 
 ---
 

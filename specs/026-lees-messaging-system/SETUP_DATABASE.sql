@@ -20,7 +20,7 @@ CREATE TABLE admin_messages (
   target_type VARCHAR(50) DEFAULT 'all',
   target_subscription VARCHAR(50)[],
   target_search TEXT,
-  target_users INTEGER[],
+  target_users VARCHAR(50)[],
   trigger_type VARCHAR(50) DEFAULT 'immediate',
   trigger_value TEXT,
   dismissible BOOLEAN DEFAULT TRUE,
@@ -47,7 +47,7 @@ CREATE INDEX idx_admin_messages_publish_expires ON admin_messages(publish_at, ex
 
 CREATE TABLE message_interactions (
   message_id INTEGER REFERENCES admin_messages(id) ON DELETE CASCADE,
-  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  user_id VARCHAR(50) REFERENCES users(id) ON DELETE CASCADE,
   snoozed_until TIMESTAMP,
   dismissed BOOLEAN DEFAULT FALSE,
   first_shown_at TIMESTAMP DEFAULT NOW(),
@@ -70,7 +70,7 @@ CREATE INDEX idx_message_interactions_status ON message_interactions(user_id, di
 -- ===================================================================
 
 CREATE TABLE user_page_visits (
-  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  user_id VARCHAR(50) REFERENCES users(id) ON DELETE CASCADE,
   page_identifier VARCHAR(100) NOT NULL,
   visit_count INTEGER DEFAULT 1,
   first_visit_at TIMESTAMP DEFAULT NOW(),
