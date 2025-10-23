@@ -49,7 +49,8 @@ function showMessage(message) {
   // Update icon based on message type
   const iconElement = document.querySelector('.message-icon');
   if (iconElement) {
-    iconElement.textContent = getMessageIcon(message.message_type || 'information');
+    const iconClass = getMessageIcon(message.message_type || 'information');
+    iconElement.className = `message-icon fas ${iconClass}`;
   }
 
   // Update content
@@ -140,17 +141,17 @@ function showMessage(message) {
   console.log(`📢 Showing message: "${message.title}" (${message.message_type})`);
 }
 
-// Get icon emoji for message type
+// Get Font Awesome icon class for message type
 function getMessageIcon(type) {
   const icons = {
-    information: 'ℹ️',
-    educational: '📚',
-    warning: '⚠️',
-    important: '❗',
-    feature: '🆕',
-    tip: '💡'
+    information: 'fa-info-circle',
+    educational: 'fa-book',
+    warning: 'fa-exclamation-triangle',
+    important: 'fa-exclamation-circle',
+    feature: 'fa-star',
+    tip: 'fa-lightbulb'
   };
-  return icons[type] || 'ℹ️';
+  return icons[type] || 'fa-info-circle';
 }
 
 // Parse markdown to HTML (supports common markdown syntax)
