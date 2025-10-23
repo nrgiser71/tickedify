@@ -1934,7 +1934,7 @@
                             .filter(u => !selectedUserIds.includes(u.id))
                             .map(u => `
                                 <div class="user-search-item"
-                                     onclick="selectUser(${u.id}, '${escapeJsString(u.naam || 'Unnamed')}', '${escapeJsString(u.email)}')">
+                                     onclick="selectUser('${u.id}', '${escapeJsString(u.naam || 'Unnamed')}', '${escapeJsString(u.email)}')">
                                     <div>
                                         <strong>${escapeHtml(u.naam || 'Unnamed')}</strong>
                                         <div style="font-size: 12px; color: var(--macos-text-secondary);">${escapeHtml(u.email)}</div>
