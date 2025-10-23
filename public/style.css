@@ -9231,7 +9231,7 @@ body.dagkalender-focus-active {
   position: absolute;
   top: 16px;
   right: 16px;
-  background: none;
+  background-color: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.8);
   font-size: 24px;
@@ -9241,11 +9241,24 @@ body.dagkalender-focus-active {
   transition: all 0.2s ease;
   z-index: 10;
   border-radius: 50%;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .btn-close-modal:hover {
   background: rgba(255, 255, 255, 0.15);
   transform: scale(1.1);
+}
+
+.btn-close-modal:focus {
+  outline: none;
+  background: transparent;
+}
+
+.btn-close-modal:active {
+  background: transparent;
 }
 
 .btn-close-modal i {
