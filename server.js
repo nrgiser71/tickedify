@@ -13223,13 +13223,8 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
 // Phase 1: Core Foundation
 // ===================================================================
 
-// Middleware: Admin authorization
-function requireAdmin(req, res, next) {
-  if (!req.session.userId || req.session.userId !== 1) {
-    return res.status(403).json({ error: 'Forbidden - Admin access required' });
-  }
-  next();
-}
+// Note: requireAdmin middleware is defined earlier in server.js (line ~2344)
+// It supports both password-based admin auth (admin2.html) and user-based admin auth
 
 // POST /api/admin/messages - Create message
 app.post('/api/admin/messages', requireAdmin, async (req, res) => {
