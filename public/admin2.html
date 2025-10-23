@@ -1823,6 +1823,9 @@
         let searchDebounceTimer = null;
         let previewDebounceTimer = null;
 
+        // Cache voor messages (gebruikt door preview functie)
+        let messagesCache = [];
+
         // Initialize messaging form event listeners
         document.addEventListener('DOMContentLoaded', () => {
             // Target type radio buttons
@@ -2317,8 +2320,12 @@
             if (!messages || messages.length === 0) {
                 emptyEl.style.display = 'inline';
                 tableEl.style.display = 'none';
+                messagesCache = []; // Clear cache
                 return;
             }
+
+            // Store messages in cache for preview functionality
+            messagesCache = messages;
 
             // Show table
             emptyEl.style.display = 'none';
@@ -2620,10 +2627,11 @@
          * @param {number} messageId - ID of message to preview
          */
         function previewMessageFromList(messageId) {
-            const message = currentMessages.find(m => m.id === messageId);
+            const message = messagesCache.find(m => m.id === messageId);
 
             if (!message) {
-                console.error('Message not found:', messageId);
+                console.error('Message not found in cache:', messageId);
+                console.log('Available messages:', messagesCache.map(m => m.id));
                 return;
             }
 
