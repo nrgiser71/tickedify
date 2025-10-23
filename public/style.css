@@ -9241,6 +9241,65 @@ body.dagkalender-focus-active {
   font-size: 14px;
 }
 
+/* Markdown styling in message content */
+.message-content p {
+  margin: 0 0 12px 0;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  color: #1a1a1a;
+}
+
+.message-content h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 14px 0 8px 0;
+  color: #1a1a1a;
+}
+
+.message-content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 12px 0 6px 0;
+  color: #1a1a1a;
+}
+
+.message-content strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.message-content em {
+  font-style: italic;
+}
+
+.message-content code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #e11d48;
+}
+
+.message-content ul {
+  margin: 8px 0;
+  padding-left: 24px;
+  list-style: disc;
+}
+
+.message-content li {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
 .message-content a {
   color: #2563eb;
   text-decoration: underline;

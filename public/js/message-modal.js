@@ -153,10 +153,48 @@ function getMessageIcon(type) {
   return icons[type] || 'ℹ️';
 }
 
-// Parse markdown links: [text](url) -> <a href="url">text</a>
+// Parse markdown to HTML (supports common markdown syntax)
 function parseMarkdownLinks(text) {
   if (!text) return '';
-  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+  // Escape HTML to prevent XSS
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Headers (must be at start of line)
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Bold: **text** or __text__
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Italic: *text* or _text_ (but not in URLs or bold)
+  html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+  html = html.replace(/\b_([^_]+?)_\b/g, '<em>$1</em>');
+
+  // Code: `code`
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+  // Links: [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Unordered lists: - item or * item
+  html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+  // Line breaks: double newline = paragraph, single newline = <br>
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  html = '<p>' + html + '</p>';
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+
+  return html;
 }
 
 // Dismiss a message (mark as read)
