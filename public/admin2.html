@@ -1556,8 +1556,36 @@
 
                 <!-- Tab Content: Messages List -->
                 <div class="tab-content" data-tab-content="list">
-                    <div id="messages-list-container">
-                        <p class="text-secondary">Message lijst komt in Phase 4</p>
+                    <div class="admin-table">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>📋 Alle Berichten</h3>
+                            <button class="btn btn-primary" onclick="loadMessagesList()" style="font-size: 14px;">
+                                🔄 Ververs
+                            </button>
+                        </div>
+                        <div id="messages-list-container">
+                            <p class="text-secondary" style="text-align: center; padding: 40px;">
+                                <span id="messages-loading">Laden...</span>
+                                <span id="messages-empty" style="display: none;">Geen berichten gevonden</span>
+                            </p>
+                            <table id="messages-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Titel</th>
+                                        <th>Target</th>
+                                        <th>Trigger</th>
+                                        <th>Aangemaakt</th>
+                                        <th>Status</th>
+                                        <th>Stats</th>
+                                        <th>Acties</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="messages-table-body">
+                                    <!-- Rows will be dynamically inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1752,6 +1780,11 @@
                     // Update content
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+
+                    // Load messages list when switching to list tab
+                    if (tab === 'list') {
+                        loadMessagesList();
+                    }
                 });
             });
 
@@ -2080,6 +2113,197 @@
             document.getElementById('daysAfterSignupSection').style.display = 'none';
             document.getElementById('firstPageVisitSection').style.display = 'none';
             document.getElementById('nthPageVisitSection').style.display = 'none';
+        }
+
+        // ========================================
+        // MESSAGE LIST FUNCTIONALITY
+        // ========================================
+
+        // Load messages list from API
+        async function loadMessagesList() {
+            const loadingEl = document.getElementById('messages-loading');
+            const emptyEl = document.getElementById('messages-empty');
+            const tableEl = document.getElementById('messages-table');
+
+            // Show loading state
+            loadingEl.style.display = 'inline';
+            emptyEl.style.display = 'none';
+            tableEl.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/admin/messages', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch messages');
+                }
+
+                const data = await response.json();
+                renderMessagesList(data.messages);
+            } catch (error) {
+                console.error('Load messages error:', error);
+                loadingEl.innerHTML = '<span style="color: var(--macos-red);">❌ Fout bij laden berichten</span>';
+            }
+        }
+
+        // Render messages table
+        function renderMessagesList(messages) {
+            const loadingEl = document.getElementById('messages-loading');
+            const emptyEl = document.getElementById('messages-empty');
+            const tableEl = document.getElementById('messages-table');
+            const tbody = document.getElementById('messages-table-body');
+
+            // Hide loading
+            loadingEl.style.display = 'none';
+
+            // Check if empty
+            if (!messages || messages.length === 0) {
+                emptyEl.style.display = 'inline';
+                tableEl.style.display = 'none';
+                return;
+            }
+
+            // Show table
+            emptyEl.style.display = 'none';
+            tableEl.style.display = 'table';
+
+            // Build rows
+            tbody.innerHTML = messages.map(msg => {
+                const typeBadge = getTypeBadge(msg.type);
+                const targetText = getTargetText(msg);
+                const triggerText = getTriggerText(msg);
+                const dateText = formatMessageDate(msg.created_at);
+                const isActive = msg.active;
+
+                return `
+                    <tr>
+                        <td>${typeBadge}</td>
+                        <td>
+                            <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(msg.title)}</div>
+                            <div style="font-size: 13px; color: var(--macos-text-secondary); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${escapeHtml(msg.message.substring(0, 80))}${msg.message.length > 80 ? '...' : ''}
+                            </div>
+                        </td>
+                        <td style="font-size: 13px;">${targetText}</td>
+                        <td style="font-size: 13px;">${triggerText}</td>
+                        <td style="font-size: 13px; white-space: nowrap;">${dateText}</td>
+                        <td>
+                            <label class="toggle-switch" style="margin: 0;">
+                                <input type="checkbox" ${isActive ? 'checked' : ''}
+                                       onchange="toggleMessageActive(${msg.id}, ${isActive})">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td style="font-size: 13px;">
+                            <div>👁️ ${msg.shown_count || 0}</div>
+                            <div style="color: var(--macos-text-secondary);">✓ ${msg.dismissed_count || 0}</div>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm" onclick="viewMessageAnalytics(${msg.id})"
+                                    style="padding: 6px 12px; font-size: 12px;">
+                                📊 Analytics
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get type badge HTML
+        function getTypeBadge(type) {
+            const badges = {
+                information: { icon: 'ℹ️', label: 'Information', color: '#3b82f6' },
+                educational: { icon: '📚', label: 'Educational', color: '#8b5cf6' },
+                feature: { icon: '🚀', label: 'Feature', color: '#10b981' },
+                tip: { icon: '💡', label: 'Tip', color: '#f59e0b' },
+                warning: { icon: '⚠️', label: 'Warning', color: '#f97316' },
+                important: { icon: '❗', label: 'Important', color: '#ef4444' }
+            };
+
+            const badge = badges[type] || badges.information;
+            return `<span style="display: inline-block; padding: 4px 10px; border-radius: 6px;
+                    background: ${badge.color}20; color: ${badge.color};
+                    font-size: 12px; font-weight: 600; white-space: nowrap;">
+                ${badge.icon} ${badge.label}
+            </span>`;
+        }
+
+        // Get target text
+        function getTargetText(msg) {
+            if (msg.target_type === 'all') return '👥 Alle gebruikers';
+            if (msg.target_type === 'filtered') {
+                const subs = msg.target_subscriptions || [];
+                return `🎯 Filtered (${subs.join(', ')})`;
+            }
+            if (msg.target_type === 'specific_users') {
+                const userIds = msg.target_user_ids || [];
+                return `👤 ${userIds.length} user(s)`;
+            }
+            return 'Unknown';
+        }
+
+        // Get trigger text
+        function getTriggerText(msg) {
+            if (msg.trigger_type === 'immediate') return '⚡ Direct';
+            if (msg.trigger_type === 'days_after_signup') return `📅 ${msg.trigger_value} dagen na signup`;
+            if (msg.trigger_type === 'first_page_visit') return `🔗 Eerste bezoek: ${msg.trigger_page}`;
+            if (msg.trigger_type === 'nth_page_visit') return `🔁 ${msg.trigger_value}e bezoek: ${msg.trigger_page}`;
+            return 'Unknown';
+        }
+
+        // Format date
+        function formatMessageDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'Vandaag';
+            if (diffDays === 1) return 'Gisteren';
+            if (diffDays < 7) return `${diffDays} dagen geleden`;
+
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Toggle message active status
+        async function toggleMessageActive(messageId, currentActive) {
+            try {
+                const response = await fetch(`/api/admin/messages/${messageId}/toggle`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to toggle message');
+                }
+
+                const data = await response.json();
+                console.log(`Message ${messageId} toggled:`, data.active);
+
+                // Optionally show toast notification
+                // showToast(data.active ? 'Bericht geactiveerd' : 'Bericht gedeactiveerd', 'success');
+            } catch (error) {
+                console.error('Toggle message error:', error);
+                alert('Fout bij wijzigen status. Probeer opnieuw.');
+                // Reload list to reset toggle state
+                loadMessagesList();
+            }
+        }
+
+        // View message analytics
+        function viewMessageAnalytics(messageId) {
+            // TODO: Implement analytics modal/page in future
+            alert(`Analytics voor bericht ${messageId} komt in een toekomstige versie`);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
