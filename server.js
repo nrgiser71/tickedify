@@ -13238,7 +13238,7 @@ app.listen(PORT, () => {
         } catch (error) {
             console.error('⚠️ Database initialization failed:', error.message);
         }
-        
+
         // Initialize storage manager for B2 functionality
         try {
             if (storageManager) {
@@ -13252,5 +13252,233 @@ app.listen(PORT, () => {
             console.error('⚠️ Storage manager initialization failed:', error.message);
         }
     }, 1000);
+});
+
+// ===================================================================
+// === ADMIN MESSAGING SYSTEM ENDPOINTS ===
+// Feature: 026-lees-messaging-system
+// Phase 1: Core Foundation
+// ===================================================================
+
+// Middleware: Admin authorization
+function requireAdmin(req, res, next) {
+  if (!req.session.userId || req.session.userId !== 1) {
+    return res.status(403).json({ error: 'Forbidden - Admin access required' });
+  }
+  next();
+}
+
+// POST /api/admin/messages - Create message
+app.post('/api/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    const {
+      title, message, message_type, target_type, target_subscription,
+      target_users, trigger_type, trigger_value, dismissible, snoozable,
+      publish_at, expires_at, button_label, button_action, button_target
+    } = req.body;
+
+    // Validation
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO admin_messages (
+        title, message, message_type, target_type, target_subscription,
+        target_users, trigger_type, trigger_value, dismissible, snoozable,
+        publish_at, expires_at, button_label, button_action, button_target
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING id
+    `, [
+      title, message, message_type || 'information', target_type || 'all',
+      target_subscription, target_users, trigger_type || 'immediate',
+      trigger_value, dismissible !== false, snoozable !== false,
+      publish_at || null, expires_at || null, button_label || null,
+      button_action || null, button_target || null
+    ]);
+
+    res.status(201).json({
+      success: true,
+      messageId: result.rows[0].id,
+      message: 'Message created successfully'
+    });
+  } catch (error) {
+    console.error('Create message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/messages - List all messages
+app.get('/api/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        m.*,
+        COUNT(DISTINCT CASE WHEN mi.user_id IS NOT NULL THEN mi.user_id END) as shown_count,
+        COUNT(DISTINCT CASE WHEN mi.dismissed = true THEN mi.user_id END) as dismissed_count
+      FROM admin_messages m
+      LEFT JOIN message_interactions mi ON mi.message_id = m.id
+      GROUP BY m.id
+      ORDER BY m.created_at DESC
+    `);
+
+    res.json({ messages: result.rows });
+  } catch (error) {
+    console.error('List messages error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/messages/:id/analytics - Message analytics
+app.get('/api/admin/messages/:id/analytics', requireAdmin, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+
+    // TODO: Implement full analytics (zie api-contracts.md)
+    // Phase 4 implementation
+
+    res.json({ message: 'Analytics implementation coming in Phase 4' });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/admin/messages/:id/toggle - Toggle active status
+app.post('/api/admin/messages/:id/toggle', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      UPDATE admin_messages
+      SET active = NOT active, updated_at = NOW()
+      WHERE id = $1
+      RETURNING active
+    `, [req.params.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.json({ success: true, active: result.rows[0].active });
+  } catch (error) {
+    console.error('Toggle message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/users/search - Search users
+app.get('/api/admin/users/search', requireAdmin, async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query || query.length < 2) {
+      return res.json({ users: [] });
+    }
+
+    const result = await pool.query(`
+      SELECT id, username as name, email, subscription_type
+      FROM users
+      WHERE username ILIKE $1 OR email ILIKE $1
+      ORDER BY username
+      LIMIT 50
+    `, [`%${query}%`]);
+
+    res.json({ users: result.rows });
+  } catch (error) {
+    console.error('User search error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/admin/messages/preview-targets - Preview targeting
+app.get('/api/admin/messages/preview-targets', requireAdmin, async (req, res) => {
+  try {
+    // TODO: Implement target preview (zie api-contracts.md)
+    // Phase 2 implementation
+    res.json({ count: 0, sample: [] });
+  } catch (error) {
+    console.error('Preview targets error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ===================================================================
+// === USER MESSAGING ENDPOINTS ===
+// ===================================================================
+
+// GET /api/messages/unread - Get unread messages
+app.get('/api/messages/unread', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const userId = req.session.userId;
+    const now = new Date();
+
+    // Basic query - Phase 1: only 'all' targeting + 'immediate' trigger
+    const result = await pool.query(`
+      SELECT m.* FROM admin_messages m
+      WHERE m.active = true
+        AND m.publish_at <= $1
+        AND (m.expires_at IS NULL OR m.expires_at > $1)
+        AND m.target_type = 'all'
+        AND m.trigger_type = 'immediate'
+        AND m.id NOT IN (
+          SELECT message_id FROM message_interactions
+          WHERE user_id = $2
+            AND (dismissed = true OR snoozed_until > $1)
+        )
+      ORDER BY m.created_at DESC
+    `, [now, userId]);
+
+    res.json({ messages: result.rows });
+  } catch (error) {
+    console.error('Unread messages error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/messages/:id/dismiss - Dismiss message
+app.post('/api/messages/:id/dismiss', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    await pool.query(`
+      INSERT INTO message_interactions (message_id, user_id, dismissed)
+      VALUES ($1, $2, true)
+      ON CONFLICT (message_id, user_id)
+      DO UPDATE SET dismissed = true, last_shown_at = NOW()
+    `, [req.params.id, req.session.userId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Dismiss message error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/page-visit/:pageIdentifier - Track page visit
+app.post('/api/page-visit/:pageIdentifier', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO user_page_visits (user_id, page_identifier, visit_count)
+      VALUES ($1, $2, 1)
+      ON CONFLICT (user_id, page_identifier)
+      DO UPDATE SET
+        visit_count = user_page_visits.visit_count + 1,
+        last_visit_at = NOW()
+      RETURNING visit_count
+    `, [req.session.userId, req.params.pageIdentifier]);
+
+    res.json({ success: true, visitCount: result.rows[0].visit_count });
+  } catch (error) {
+    console.error('Page visit error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 // Force redeploy Sat Oct 18 23:52:24 CEST 2025
