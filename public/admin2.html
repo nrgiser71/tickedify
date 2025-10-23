@@ -2170,7 +2170,7 @@
 
             // Build rows
             tbody.innerHTML = messages.map(msg => {
-                const typeBadge = getTypeBadge(msg.type);
+                const typeBadge = getTypeBadge(msg.message_type);
                 const targetText = getTargetText(msg);
                 const triggerText = getTriggerText(msg);
                 const dateText = formatMessageDate(msg.created_at);
