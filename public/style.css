@@ -9210,8 +9210,6 @@ body.dagkalender-focus-active {
     0 2px 8px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-  overflow: hidden;
 }
 
 @keyframes modalSlideIn {
@@ -9529,47 +9527,59 @@ body.dagkalender-focus-active {
   }
 }
 
-/* Message Type Specific Styling - Glassmorphism with Gradient Accents */
-.message-modal.message-information::before,
-.message-modal.message-educational::before,
-.message-modal.message-feature::before,
-.message-modal.message-tip::before,
-.message-modal.message-warning::before,
-.message-modal.message-important::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: 22px;
-  z-index: -1;
-  opacity: 0.6;
-  filter: blur(8px);
+/* Message Type Specific Styling - Glassmorphism with Border Accents */
+.message-modal.message-information {
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.message-modal.message-information::before {
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+.message-modal.message-educational {
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.message-modal.message-educational::before {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+.message-modal.message-feature {
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(16, 185, 129, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.message-modal.message-feature::before {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+.message-modal.message-tip {
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(245, 158, 11, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.message-modal.message-tip::before {
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+.message-modal.message-warning {
+  border: 2px solid rgba(249, 115, 22, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(249, 115, 22, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.message-modal.message-warning::before {
-  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
-}
-
-.message-modal.message-important::before {
-  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+.message-modal.message-important {
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(239, 68, 68, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* Subtle gradient overlay on header - NO negative margins */
