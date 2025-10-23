@@ -13366,13 +13366,21 @@ class QuickAddModal {
     setupEventListeners() {
         // Button events
         this.cancelBtn.addEventListener('click', () => this.hide());
-        this.okBtn.addEventListener('click', () => this.handleSubmit());
-        
+        this.okBtn.addEventListener('click', () => {
+            // Feature 025: Prevent duplicate submissions
+            if (!loading.isOperationActive('add-task')) {
+                this.handleSubmit();
+            }
+        });
+
         // Keyboard events
         this.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                this.handleSubmit();
+                // Feature 025: Prevent duplicate submissions
+                if (!loading.isOperationActive('add-task')) {
+                    this.handleSubmit();
+                }
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 this.hide();
