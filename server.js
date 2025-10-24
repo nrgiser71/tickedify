@@ -994,6 +994,28 @@ app.get('/api/debug/test-import-code/:recipient', async (req, res) => {
     }
 });
 
+// Debug endpoint to view message by title
+app.get('/api/debug/message/:title', async (req, res) => {
+    try {
+        const title = req.params.title;
+        const result = await pool.query(`
+            SELECT * FROM admin_messages
+            WHERE title ILIKE $1
+            ORDER BY created_at DESC
+            LIMIT 1
+        `, [`%${title}%`]);
+
+        if (result.rows.length === 0) {
+            return res.json({ found: false, message: 'No message found with that title' });
+        }
+
+        res.json({ found: true, message: result.rows[0] });
+    } catch (error) {
+        console.error('Error fetching message:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Helper function to get user ID by email address
 async function getUserIdByEmail(email) {
     try {
