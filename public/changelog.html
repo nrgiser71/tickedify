@@ -137,7 +137,44 @@
         <!-- Version 0.19.173 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.173</span>
+                <span class="version-badge badge-latest">v0.19.174</span>
+                <span class="version-date">24 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚡ FEATURE: "Volgende Keer" Bericht Trigger</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Nieuwe Trigger Optie</strong>: Admin berichten kunnen nu ingesteld worden met "🔄 Volgende keer" trigger. Deze toont het bericht automatisch bij het eerstvolgende pagina bezoek na aanmaak van het bericht.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Ideaal voor Feature Aankondigingen</strong>: Gebruik deze trigger om alle actieve gebruikers te informeren over nieuwe functionaliteit zodra ze de app openen, ongeacht welke pagina.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backend & Frontend</strong>: Backend trigger logica toegevoegd aan GET /api/messages/unread endpoint. Frontend admin interface uitgebreid met nieuwe radio button optie tussen "Direct" en "X dagen na signup".
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backwards Compatible</strong>: Bestaande trigger types (Direct, X dagen na signup, Eerste bezoek, Na N bezoeken) blijven ongewijzigd functioneren. Geen database schema wijzigingen nodig.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.173 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.173</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">

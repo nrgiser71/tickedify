@@ -13248,6 +13248,7 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
     }
 
     // Set publish_at to NOW() if not provided and trigger is immediate
+    // Trigger types: immediate, days_after_signup, first_page_visit, nth_page_visit, next_time
     const finalTriggerType = trigger_type || 'immediate';
     const finalPublishAt = publish_at || (finalTriggerType === 'immediate' ? new Date() : null);
 
@@ -13568,7 +13569,9 @@ app.get('/api/messages/unread', async (req, res) => {
     const userCreatedAt = userResult.rows[0].created_at;
     const daysSinceSignup = Math.floor((now - new Date(userCreatedAt)) / (1000 * 60 * 60 * 24));
 
-    // Query voor immediate en days_after_signup triggers
+    console.log(`📢 Evaluating messages for user ${userId}`);
+
+    // Query voor immediate, days_after_signup, en next_time triggers
     const mainQuery = `
       SELECT m.* FROM admin_messages m
       WHERE m.active = true
@@ -13582,10 +13585,11 @@ app.get('/api/messages/unread', async (req, res) => {
           OR (m.target_type = 'specific_users' AND $2 = ANY(m.target_users))
         )
 
-        -- Trigger filter (immediate + days_after_signup)
+        -- Trigger filter (immediate + days_after_signup + next_time)
         AND (
           m.trigger_type = 'immediate'
           OR (m.trigger_type = 'days_after_signup' AND $4 >= m.trigger_value::integer)
+          OR m.trigger_type = 'next_time'
         )
 
         -- Exclude dismissed/snoozed
