@@ -2223,17 +2223,53 @@
                         // Populate selectedUserIds state
                         selectedUserIds = userIds;
 
-                        // Populate selectedUsersData with user info
-                        // Strategy: Start with user IDs, graceful degradation
+                        // Fetch real user data for each user ID
                         selectedUsersData = {};
-                        userIds.forEach(userId => {
-                            selectedUsersData[userId] = {
-                                naam: `Gebruiker #${userId}`,  // Fallback - will show ID
-                                email: 'Loading...'             // Graceful degradation
+
+                        // Fetch user details for each ID
+                        const userDataPromises = userIds.map(async (userId) => {
+                            try {
+                                const response = await fetch(`/api/admin2/users/${userId}`, {
+                                    credentials: 'include'
+                                });
+
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    return {
+                                        userId: userId,
+                                        naam: data.user?.naam || `Gebruiker #${userId}`,
+                                        email: data.user?.email || 'Onbekend'
+                                    };
+                                } else {
+                                    // Fallback if user not found
+                                    return {
+                                        userId: userId,
+                                        naam: `Gebruiker #${userId}`,
+                                        email: 'Niet gevonden'
+                                    };
+                                }
+                            } catch (error) {
+                                console.error(`Error fetching user ${userId}:`, error);
+                                return {
+                                    userId: userId,
+                                    naam: `Gebruiker #${userId}`,
+                                    email: 'Fout bij laden'
+                                };
+                            }
+                        });
+
+                        // Wait for all user data to load
+                        const usersData = await Promise.all(userDataPromises);
+
+                        // Populate selectedUsersData
+                        usersData.forEach(userData => {
+                            selectedUsersData[userData.userId] = {
+                                naam: userData.naam,
+                                email: userData.email
                             };
                         });
 
-                        // Render user badges in UI
+                        // Render user badges in UI with real data
                         updateSelectedUsersDisplay();
                     } else {
                         // Edge case: Empty or null target_users
