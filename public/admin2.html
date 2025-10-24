@@ -1700,10 +1700,6 @@
                                 <span>⚡ Direct (bij eerstvolgende page load)</span>
                             </label>
                             <label class="form-radio-label">
-                                <input type="radio" name="triggerType" value="next_time">
-                                <span>🔄 Volgende keer</span>
-                            </label>
-                            <label class="form-radio-label">
                                 <input type="radio" name="triggerType" value="next_page_visit">
                                 <span>📍 Volgend bezoek aan pagina</span>
                             </label>
@@ -2139,8 +2135,6 @@
                 return count && page ? `${count}:${page}` : null;
             } else if (triggerType === 'next_page_visit') {
                 return document.getElementById('nextPageSelect').value;
-            } else if (triggerType === 'next_time') {
-                return null;
             }
             return null;
         }

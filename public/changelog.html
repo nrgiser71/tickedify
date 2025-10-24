@@ -170,7 +170,13 @@
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
-                            <strong>Backwards Compatible</strong>: Bestaande trigger types (Direct, X dagen na signup, Eerste bezoek, Na N bezoeken, Volgende keer) blijven ongewijzigd functioneren. Geen database schema wijzigingen nodig - hergebruikt bestaande VARCHAR trigger_type en trigger_value velden.
+                            <strong>Backwards Compatible</strong>: Bestaande trigger types (Direct, X dagen na signup, Eerste bezoek, Na N bezoeken) blijven ongewijzigd functioneren. Geen database schema wijzigingen nodig - hergebruikt bestaande VARCHAR trigger_type en trigger_value velden.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Cleanup: "Volgende keer" Trigger Verwijderd</strong>: De incorrecte "🔄 Volgende keer" trigger optie (Feature 032) is verwijderd uit de admin UI. Deze globale trigger was onjuist geïmplementeerd en is vervangen door de correcte page-specific "Volgend bezoek aan pagina" trigger.
                         </div>
                     </div>
                     <div class="change-item">
