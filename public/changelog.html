@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.179 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.179</span>
+                <span class="version-date">24 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Admin2 Bericht Edit - Gebruiker en Pagina Selectie Weergave</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Specifieke Gebruiker Selectie Fix</strong>: Bij het bewerken van berichten met "Specifieke gebruikers" targeting worden nu correct de geselecteerde gebruikers getoond als badges met naam en email. Voorheen toonde het edit scherm "Geen gebruikers geselecteerd" ondanks dat de data wel in de database aanwezig was.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Pagina Selectie Fix</strong>: Berichten met "Volgend bezoek aan pagina" trigger tonen nu correct de geselecteerde pagina in de dropdown. Dit geldt ook voor "Eerste bezoek" en "N-de bezoek" triggers. De pagina selectie werd niet geladen uit de database bij het openen van het edit scherm.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Graceful Degradation</strong>: Edge cases worden netjes afgehandeld - gebruikers die niet meer bestaan worden getoond met hun User ID, en pagina's die niet in de dropdown staan worden dynamisch toegevoegd met een "(custom)" label. Lege selecties tonen correct "Geen gebruikers geselecteerd".
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Implementation Details</strong>: Bug fix in openEditMessageModal() functie (public/admin2.html regels 2215-2285). State variabelen selectedUserIds en selectedUsersData worden nu correct gepopuleerd vanuit database response. Next_page_visit trigger werd helemaal niet geladen - nu toegevoegd aan trigger value assignment logica.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Geen Breaking Changes</strong>: Pure frontend JavaScript fix zonder database wijzigingen. Backward compatible met alle bestaande berichten. Create nieuwe berichten functionaliteit ongewijzigd - alleen edit modal loading was gebroken.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.176 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.176</span>
+                <span class="version-badge badge-fix">v0.19.176</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">

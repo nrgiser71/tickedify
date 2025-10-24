@@ -2212,21 +2212,82 @@
                     });
                 }
 
+                // Load specific users if target type is specific_users (BUG FIX: 034-als-ik-in)
+                if (targetType === 'specific_users') {
+                    if (msg.target_users && msg.target_users.length > 0) {
+                        // Parse target_users (kan JSON string of array zijn)
+                        const userIds = Array.isArray(msg.target_users)
+                            ? msg.target_users
+                            : JSON.parse(msg.target_users || '[]');
+
+                        // Populate selectedUserIds state
+                        selectedUserIds = userIds;
+
+                        // Populate selectedUsersData with user info
+                        // Strategy: Start with user IDs, graceful degradation
+                        selectedUsersData = {};
+                        userIds.forEach(userId => {
+                            selectedUsersData[userId] = {
+                                naam: `Gebruiker #${userId}`,  // Fallback - will show ID
+                                email: 'Loading...'             // Graceful degradation
+                            };
+                        });
+
+                        // Render user badges in UI
+                        updateSelectedUsersDisplay();
+                    } else {
+                        // Edge case: Empty or null target_users
+                        selectedUserIds = [];
+                        selectedUsersData = {};
+                        updateSelectedUsersDisplay(); // Shows "Geen gebruikers geselecteerd"
+                    }
+                }
+
                 // Set trigger type
                 const triggerType = msg.trigger_type || 'immediate';
                 document.querySelector(`input[name="triggerType"][value="${triggerType}"]`).checked = true;
                 handleTriggerTypeChange({ target: { value: triggerType } });
 
-                // Set trigger value based on trigger type
+                // Set trigger value based on trigger type (BUG FIX: 034-als-ik-in)
                 if (triggerType === 'days_after_signup') {
                     document.getElementById('daysAfterSignup').value = msg.trigger_value || '';
                 } else if (triggerType === 'first_page_visit') {
-                    document.getElementById('firstPageSelect').value = msg.trigger_value || '';
+                    const select = document.getElementById('firstPageSelect');
+                    select.value = msg.trigger_value || '';
+                    // Fallback: if value not in options, add it dynamically
+                    if (select.value === '' && msg.trigger_value) {
+                        const option = document.createElement('option');
+                        option.value = msg.trigger_value;
+                        option.textContent = msg.trigger_value + ' (custom)';
+                        select.appendChild(option);
+                        select.value = msg.trigger_value;
+                    }
                 } else if (triggerType === 'nth_page_visit') {
                     const parts = (msg.trigger_value || '').split(':');
                     if (parts.length === 2) {
                         document.getElementById('nthVisitCount').value = parts[0];
-                        document.getElementById('nthPageSelect').value = parts[1];
+                        const select = document.getElementById('nthPageSelect');
+                        select.value = parts[1];
+                        // Fallback: if value not in options, add it dynamically
+                        if (select.value === '' && parts[1]) {
+                            const option = document.createElement('option');
+                            option.value = parts[1];
+                            option.textContent = parts[1] + ' (custom)';
+                            select.appendChild(option);
+                            select.value = parts[1];
+                        }
+                    }
+                } else if (triggerType === 'next_page_visit') {
+                    // BUG FIX: next_page_visit was NOT being loaded!
+                    const select = document.getElementById('nextPageSelect');
+                    select.value = msg.trigger_value || '';
+                    // Fallback: if value not in options, add it dynamically
+                    if (select.value === '' && msg.trigger_value) {
+                        const option = document.createElement('option');
+                        option.value = msg.trigger_value;
+                        option.textContent = msg.trigger_value + ' (custom)';
+                        select.appendChild(option);
+                        select.value = msg.trigger_value;
                     }
                 }
 
