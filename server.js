@@ -13283,7 +13283,15 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
         });
       }
 
-      const validPages = ['/app', '/planning', '/taken', '/actielijst', '/profiel'];
+      const validPages = [
+        '/app',
+        // Lijsten
+        '/inbox', '/actielijst', '/projecten', '/follow-up', '/completed', '/planning', '/postponed',
+        // Tools
+        '/contextenbeheer', '/wekelijkse-optimalisatie', '/zoeken',
+        // Popups
+        '/planning-popup', '/recurring-popup'
+      ];
       if (!validPages.includes(trigger_value)) {
         return res.status(400).json({
           error: `Invalid page. Must be one of: ${validPages.join(', ')}`

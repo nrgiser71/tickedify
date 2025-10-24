@@ -134,10 +134,10 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.175 -->
+        <!-- Version 0.19.176 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.175</span>
+                <span class="version-badge badge-latest">v0.19.176</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">
@@ -183,6 +183,39 @@
                         <div class="change-icon">•</div>
                         <div class="change-content">
                             <strong>Correctie van Feature 032</strong>: Deze feature vervangt de incorrecte Feature 032 implementatie die een globale trigger had in plaats van page-specific. Branch 032-bij-het-maken wordt abandoned en NIET gemerged naar main.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: SPA Architectuur Support voor Page-Specific Triggers</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>View Switch Hooks</strong>: Message checks worden nu automatisch getriggerd bij elke view switch in de Single Page Application. Hooks toegevoegd aan navigeerNaarLijst(), tool show functies (contextenbeheer, wekelijkse optimalisatie, zoeken), en popup openers (planning popup, recurring popup).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>PAGE_IDENTIFIERS Mapping</strong>: Nieuwe mapping tabel vertaalt interne view namen (bijv. "acties", "dagelijkse-planning") naar page identifiers (bijv. "/actielijst", "/planning") die matchen met de admin UI selector.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Uitgebreide Page Selector</strong>: Admin UI dropdown nu met 13 opties verdeeld over 3 categorieën: Lijsten (Inbox, Actielijst, Projecten, Follow-up, Afgewerkt, Planning, Uitgesteld), Tools (Contextenbeheer, Wekelijkse Optimalisatie, Zoeken), en Popups (Planning Popup, Recurring Popup).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Enhanced Message Polling</strong>: checkForMessages() accepteert nu optionele pageOverride parameter om expliciete page identifier mee te geven in plaats van window.location.pathname (altijd "/app" in SPA).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backend Validatie</strong>: validPages array uitgebreid van 5 naar 13 opties om alle nieuwe lijsten, tools en popups te ondersteunen. Server valideert nu correct alle mogelijke page identifiers.
                         </div>
                     </div>
                 </div>

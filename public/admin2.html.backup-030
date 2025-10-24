@@ -1700,10 +1700,6 @@
                                 <span>⚡ Direct (bij eerstvolgende page load)</span>
                             </label>
                             <label class="form-radio-label">
-                                <input type="radio" name="triggerType" value="next_page_visit">
-                                <span>📍 Volgend bezoek aan pagina</span>
-                            </label>
-                            <label class="form-radio-label">
                                 <input type="radio" name="triggerType" value="days_after_signup">
                                 <span>📅 X dagen na signup</span>
                             </label>
@@ -1753,38 +1749,6 @@
                             <option value="planning-popup">Planning Popup</option>
                         </select>
                     </div>
-
-                    <!-- Next Page Visit Select (hidden by default) -->
-                    <div id="nextPageVisitSection" class="form-group" style="display: none; margin-left: 30px;">
-                        <label class="form-label" for="nextPageSelect">Selecteer pagina:</label>
-                        <select class="form-input" id="nextPageSelect" required>
-                            <option value="">-- Kies een pagina --</option>
-
-                            <!-- Lijsten -->
-                            <optgroup label="Lijsten">
-                                <option value="/inbox">Inbox</option>
-                                <option value="/actielijst">Actielijst</option>
-                                <option value="/projecten">Projecten</option>
-                                <option value="/follow-up">Follow-up</option>
-                                <option value="/completed">Afgewerkte Taken</option>
-                                <option value="/planning">Dagelijkse Planning</option>
-                                <option value="/postponed">Uitgesteld</option>
-                            </optgroup>
-
-                            <!-- Tools -->
-                            <optgroup label="Tools">
-                                <option value="/contextenbeheer">Contextenbeheer</option>
-                                <option value="/wekelijkse-optimalisatie">Wekelijkse Optimalisatie</option>
-                                <option value="/zoeken">Zoeken</option>
-                            </optgroup>
-
-                            <!-- Popups -->
-                            <optgroup label="Popups">
-                                <option value="/planning-popup">Planning Popup</option>
-                                <option value="/recurring-popup">Recurring Popup</option>
-                            </optgroup>
-                        </select>
-                    </div>
                 </div>
 
                 <!-- Scheduling Section -->
@@ -1792,11 +1756,8 @@
                     <h3>Planning (Optioneel)</h3>
                     <div class="form-group">
                         <label class="form-label" for="publishAt">Publiceren op:</label>
-                        <input type="datetime-local" class="form-input" id="publishAt" onchange="updatePublishWarning()">
+                        <input type="datetime-local" class="form-input" id="publishAt">
                         <div class="text-help">Leeg laten voor direct publiceren</div>
-                        <div id="future-publish-warning" style="display: none; margin-top: 8px; padding: 10px; background: #D1ECF1; border-left: 4px solid #17A2B8; border-radius: 4px; color: #0C5460;">
-                            📅 <strong>Info:</strong> Bericht wordt pas zichtbaar vanaf <span id="publish-date-display"></span>
-                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="expiresAt">Verloopt op:</label>
@@ -1809,13 +1770,10 @@
                 <div class="form-section">
                     <div class="form-group">
                         <label class="form-checkbox-label">
-                            <input type="checkbox" id="msg-active" checked onchange="updateActiveWarning()">
+                            <input type="checkbox" id="msg-active" checked>
                             <span>✅ Bericht actief maken</span>
                         </label>
                         <div class="text-help">Inactieve berichten worden niet getoond aan gebruikers</div>
-                        <div id="inactive-warning" style="display: none; margin-top: 8px; padding: 10px; background: #FFF3CD; border-left: 4px solid #FFC107; border-radius: 4px; color: #856404;">
-                            ⚠️ <strong>Let op:</strong> Bericht is niet actief - gebruikers zullen dit niet zien
-                        </div>
                     </div>
                 </div>
 
@@ -1862,24 +1820,11 @@
 
         // State voor user selection en debouncing
         let selectedUserIds = [];
-        let selectedUsersData = {}; // Map userId -> {naam, email}
         let searchDebounceTimer = null;
         let previewDebounceTimer = null;
 
         // Cache voor messages (gebruikt door preview functie)
         let messagesCache = [];
-
-        // Helper: Convert UTC timestamp to local ISO string for datetime-local input
-        // This fixes the timezone bug where times displayed 2 hours earlier when editing messages
-        // datetime-local expects local time string (e.g., "2025-10-24T10:00")
-        // but toISOString() returns UTC string (e.g., "2025-10-24T08:00:00.000Z")
-        function toLocalISOString(utcTimestamp) {
-            if (!utcTimestamp) return '';
-            const date = new Date(utcTimestamp);
-            // Adjust for timezone offset: subtract offset to get local time
-            const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-            return localDate.toISOString().slice(0, 16);
-        }
 
         // Initialize messaging form event listeners
         document.addEventListener('DOMContentLoaded', () => {
@@ -1952,16 +1897,11 @@
             const daysSection = document.getElementById('daysAfterSignupSection');
             const firstPageSection = document.getElementById('firstPageVisitSection');
             const nthPageSection = document.getElementById('nthPageVisitSection');
-            const nextPageSection = document.getElementById('nextPageVisitSection');
 
             // Reset visibility
             daysSection.style.display = 'none';
             firstPageSection.style.display = 'none';
             nthPageSection.style.display = 'none';
-            nextPageSection.style.display = 'none';
-
-            // Reset required attributes
-            document.getElementById('nextPageSelect').required = false;
 
             if (triggerType === 'days_after_signup') {
                 daysSection.style.display = 'block';
@@ -1969,9 +1909,6 @@
                 firstPageSection.style.display = 'block';
             } else if (triggerType === 'nth_page_visit') {
                 nthPageSection.style.display = 'block';
-            } else if (triggerType === 'next_page_visit') {
-                nextPageSection.style.display = 'block';
-                document.getElementById('nextPageSelect').required = true;
             }
         }
 
@@ -2039,7 +1976,6 @@
             if (selectedUserIds.includes(userId)) return;
 
             selectedUserIds.push(userId);
-            selectedUsersData[userId] = { naam: userName, email: userEmail };
             updateSelectedUsersDisplay();
             updateTargetPreview();
 
@@ -2051,7 +1987,6 @@
         // Remove user
         function removeUser(userId) {
             selectedUserIds = selectedUserIds.filter(id => id !== userId);
-            delete selectedUsersData[userId];
             updateSelectedUsersDisplay();
             updateTargetPreview();
         }
@@ -2069,17 +2004,12 @@
                     Geselecteerde gebruikers (${selectedUserIds.length}):
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    ${selectedUserIds.map(id => {
-                        const userData = selectedUsersData[id] || {};
-                        const displayName = userData.naam || 'Unnamed';
-                        const displayEmail = userData.email || id;
-                        return `
-                            <div class="selected-user-badge">
-                                <span><strong>${escapeHtml(displayName)}</strong> (${escapeHtml(displayEmail)})</span>
-                                <span class="selected-user-remove" onclick="removeUser('${id}')">×</span>
-                            </div>
-                        `;
-                    }).join('')}
+                    ${selectedUserIds.map(id => `
+                        <div class="selected-user-badge">
+                            <span>User ID: ${id}</span>
+                            <span class="selected-user-remove" onclick="removeUser(${id})">×</span>
+                        </div>
+                    `).join('')}
                 </div>
             `;
         }
@@ -2152,8 +2082,6 @@
                 const count = document.getElementById('nthVisitCount').value;
                 const page = document.getElementById('nthPageSelect').value;
                 return count && page ? `${count}:${page}` : null;
-            } else if (triggerType === 'next_page_visit') {
-                return document.getElementById('nextPageSelect').value;
             }
             return null;
         }
@@ -2232,10 +2160,12 @@
 
                 // Set scheduling
                 if (msg.publish_at) {
-                    document.getElementById('publishAt').value = toLocalISOString(msg.publish_at);
+                    const publishDate = new Date(msg.publish_at);
+                    document.getElementById('publishAt').value = publishDate.toISOString().slice(0, 16);
                 }
                 if (msg.expires_at) {
-                    document.getElementById('expiresAt').value = toLocalISOString(msg.expires_at);
+                    const expiresDate = new Date(msg.expires_at);
+                    document.getElementById('expiresAt').value = expiresDate.toISOString().slice(0, 16);
                 }
 
                 // Open modal
@@ -2344,47 +2274,10 @@
             }
         }
 
-        // Update active warning
-        function updateActiveWarning() {
-            const activeCheckbox = document.getElementById('msg-active');
-            const warningDiv = document.getElementById('inactive-warning');
-            warningDiv.style.display = activeCheckbox.checked ? 'none' : 'block';
-        }
-
-        // Update publish date warning
-        function updatePublishWarning() {
-            const publishInput = document.getElementById('publishAt');
-            const warningDiv = document.getElementById('future-publish-warning');
-            const dateDisplay = document.getElementById('publish-date-display');
-
-            if (!publishInput.value) {
-                warningDiv.style.display = 'none';
-                return;
-            }
-
-            const publishDate = new Date(publishInput.value);
-            const now = new Date();
-
-            if (publishDate > now) {
-                const options = {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                };
-                dateDisplay.textContent = publishDate.toLocaleDateString('nl-NL', options);
-                warningDiv.style.display = 'block';
-            } else {
-                warningDiv.style.display = 'none';
-            }
-        }
-
         // Reset message form
         function resetMessageForm() {
             document.getElementById('message-creation-form').reset();
             selectedUserIds = [];
-            selectedUsersData = {};
             updateSelectedUsersDisplay();
             document.getElementById('message-status').style.display = 'none';
             document.getElementById('targetPreview').style.display = 'none';
@@ -2393,9 +2286,6 @@
             document.getElementById('daysAfterSignupSection').style.display = 'none';
             document.getElementById('firstPageVisitSection').style.display = 'none';
             document.getElementById('nthPageVisitSection').style.display = 'none';
-            document.getElementById('nextPageVisitSection').style.display = 'none';
-            document.getElementById('inactive-warning').style.display = 'none';
-            document.getElementById('future-publish-warning').style.display = 'none';
         }
 
         // ========================================

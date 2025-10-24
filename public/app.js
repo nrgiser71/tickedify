@@ -751,6 +751,31 @@ class LoadingManager {
 // Global loading instance
 const loading = new LoadingManager();
 
+// Page identifier mapping for message system (Feature 033)
+// Maps internal view/lijst names to page identifiers for page-specific message triggers
+const PAGE_IDENTIFIERS = {
+    // Lijsten
+    'inbox': '/inbox',
+    'acties': '/actielijst',
+    'projecten': '/projecten',
+    'opvolgen': '/follow-up',
+    'afgewerkte-taken': '/completed',
+    'dagelijkse-planning': '/planning',
+
+    // Uitgesteld (alle subcategorieën krijgen zelfde identifier)
+    'uitgesteld': '/postponed',
+    'uitgesteld-wekelijks': '/postponed',
+    'uitgesteld-maandelijks': '/postponed',
+    'uitgesteld-3maandelijks': '/postponed',
+    'uitgesteld-6maandelijks': '/postponed',
+    'uitgesteld-jaarlijks': '/postponed',
+
+    // Tools
+    'contextenbeheer': '/contextenbeheer',
+    'wekelijkse-optimalisatie': '/wekelijkse-optimalisatie',
+    'zoeken': '/zoeken'
+};
+
 class Taakbeheer {
     constructor() {
         // Restore last selected list from localStorage, default to inbox
@@ -1506,6 +1531,11 @@ class Taakbeheer {
         
         this.loadHerhalingFromValue();
         document.getElementById('herhalingPopup').style.display = 'flex';
+
+        // Check for page-specific messages when recurring popup opens (Feature 033)
+        if (window.checkForMessages) {
+            window.checkForMessages('/recurring-popup');
+        }
     }
 
     sluitHerhalingPopup() {
@@ -1949,6 +1979,12 @@ class Taakbeheer {
         console.log('📋 huidigeLijst is now:', this.huidigeLijst);
         this.saveCurrentList(); // Remember the selected list
         await this.laadHuidigeLijst();
+
+        // Check for page-specific messages after list is loaded (Feature 033)
+        const pageIdentifier = PAGE_IDENTIFIERS[lijst] || '/app';
+        if (window.checkForMessages) {
+            await window.checkForMessages(pageIdentifier);
+        }
 
         // Update sidebar counters after list is loaded - Feature 022
         // This ensures counters update for ALL lists (dagelijkse-planning, uitgesteld, and normal lists)
@@ -4501,9 +4537,14 @@ class Taakbeheer {
                     }
                 }
             }
-            
+
             // Track usage for progressive F-key tips
             this.trackPlanningUsage();
+
+            // Check for page-specific messages when planning popup opens (Feature 033)
+            if (window.checkForMessages) {
+                await window.checkForMessages('/planning-popup');
+            }
         }
     }
 
@@ -6894,6 +6935,11 @@ class Taakbeheer {
 
         // Show contexten beheer interface
         this.renderContextenBeheer();
+
+        // Check for page-specific messages (Feature 033)
+        if (window.checkForMessages) {
+            window.checkForMessages('/contextenbeheer');
+        }
     }
 
     restoreNormalContainer(targetLijst = null) {
@@ -7150,6 +7196,11 @@ class Taakbeheer {
 
         // Show wekelijkse optimalisatie interface
         this.renderWekelijkseOptimalisatie();
+
+        // Check for page-specific messages (Feature 033)
+        if (window.checkForMessages) {
+            window.checkForMessages('/wekelijkse-optimalisatie');
+        }
     }
 
     async renderWekelijkseOptimalisatie() {
@@ -7395,6 +7446,11 @@ class Taakbeheer {
 
         // Focus on search input
         zoekInput.focus();
+
+        // Check for page-specific messages (Feature 033)
+        if (window.checkForMessages) {
+            window.checkForMessages('/zoeken');
+        }
     }
 
     async performSearch() {

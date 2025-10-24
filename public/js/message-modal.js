@@ -19,10 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Check for unread messages from backend
-async function checkForMessages() {
+// pageOverride: optional page identifier to override window.location.pathname (for SPA view switches)
+async function checkForMessages(pageOverride = null) {
   try {
     // Get current page pathname for page-specific messages
-    const page = window.location.pathname;
+    // Use pageOverride if provided (for SPA view switches), otherwise fall back to window.location.pathname
+    const page = pageOverride || window.location.pathname;
     const url = `/api/messages/unread?page=${encodeURIComponent(page)}`;
 
     const response = await fetch(url);
