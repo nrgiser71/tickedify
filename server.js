@@ -13634,7 +13634,7 @@ app.get('/api/messages/unread', async (req, res) => {
     const mainQuery = `
       SELECT m.* FROM admin_messages m
       WHERE m.active = true
-        AND m.publish_at <= $1
+        AND (m.publish_at IS NULL OR m.publish_at <= $1)
         AND (m.expires_at IS NULL OR m.expires_at > $1)
 
         -- Targeting filter
@@ -13688,7 +13688,7 @@ app.get('/api/messages/unread', async (req, res) => {
       const pageVisitQuery = `
         SELECT m.* FROM admin_messages m
         WHERE m.active = true
-          AND m.publish_at <= $1
+          AND (m.publish_at IS NULL OR m.publish_at <= $1)
           AND (m.expires_at IS NULL OR m.expires_at > $1)
 
           -- Targeting filter
