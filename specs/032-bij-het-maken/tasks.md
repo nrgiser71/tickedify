@@ -223,7 +223,7 @@
 
 ---
 
-### T009 Bump versie nummer in package.json
+### T009 Bump versie nummer in package.json ✅
 **File**: `package.json`
 **Description**:
 - Open package.json
@@ -241,7 +241,7 @@
 
 ---
 
-### T010 Deploy naar staging en voer final verification uit
+### T010 Deploy naar staging en voer final verification uit ⚠️ MANUAL
 **File**: N/A (deployment + testing)
 **Description**:
 - Push feature branch naar GitHub: `git push origin 032-bij-het-maken`
