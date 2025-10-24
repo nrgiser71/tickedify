@@ -13700,11 +13700,11 @@ app.get('/api/messages/unread', async (req, res) => {
 
           -- Page visit triggers
           AND (
-            (m.trigger_type = 'first_page_visit' AND m.trigger_value = $5 AND $6 = 1)
+            (m.trigger_type = 'first_page_visit' AND m.trigger_value = $4 AND $5 = 1)
             OR (m.trigger_type = 'nth_page_visit' AND
-                split_part(m.trigger_value, ':', 2) = $5 AND
-                $6 >= split_part(m.trigger_value, ':', 1)::integer)
-            OR (m.trigger_type = 'next_page_visit' AND m.trigger_value = $5)
+                split_part(m.trigger_value, ':', 2) = $4 AND
+                $5 >= split_part(m.trigger_value, ':', 1)::integer)
+            OR (m.trigger_type = 'next_page_visit' AND m.trigger_value = $4)
           )
 
           -- Exclude dismissed/snoozed
@@ -13716,7 +13716,7 @@ app.get('/api/messages/unread', async (req, res) => {
       `;
 
       const pageVisitResult = await pool.query(pageVisitQuery, [
-        now, userId, userSubscription, null, pageIdentifier, visitCount
+        now, userId, userSubscription, pageIdentifier, visitCount
       ]);
 
       // Merge messages (vermijd duplicaten)
