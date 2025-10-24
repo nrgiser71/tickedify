@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.173 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.173</span>
+                <span class="version-date">24 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Admin Message Validatie & UX Verbeteringen</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backend Validatie</strong>: Berichten voor specifieke gebruikers kunnen niet meer worden aangemaakt zonder gebruiker selectie. Server blokkeert nu automatisch lege target_users arrays met duidelijke Nederlandse foutmelding.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Email Adressen Zichtbaar</strong>: Admin2 messaging interface toont nu email adressen in zowel zoek resultaten als geselecteerde gebruikers lijst. Format: "Jan Buskens (jan@buskens.be)" voor duidelijke identificatie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Waarschuwingen Toegevoegd</strong>: Visuele waarschuwingen verschijnen automatisch bij inactieve berichten (⚠️ oranje badge) en toekomstige publicatie datums (📅 blauwe info badge) om admin misverstanden te voorkomen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Bug Fix Context</strong>: Lost het probleem op waarbij admins zochten op verkeerd email adres (info@baasoverjetijd.be ipv jan@buskens.be) en berichten aanmaakten die niet verschenen. Deze updates voorkomen data kwaliteit issues in messaging targeting.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.172 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.172</span>
+                <span class="version-badge badge-fix">v0.19.172</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">

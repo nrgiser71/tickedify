@@ -13240,6 +13240,13 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
+    // Validate specific_users target type has users selected
+    if (target_type === 'specific_users' && (!target_users || target_users.length === 0)) {
+      return res.status(400).json({
+        error: 'Geen gebruikers geselecteerd. Selecteer minimaal één gebruiker voor dit bericht.'
+      });
+    }
+
     // Set publish_at to NOW() if not provided and trigger is immediate
     const finalTriggerType = trigger_type || 'immediate';
     const finalPublishAt = publish_at || (finalTriggerType === 'immediate' ? new Date() : null);
