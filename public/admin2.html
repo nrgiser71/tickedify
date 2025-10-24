@@ -2120,19 +2120,46 @@
                     const previewDiv = document.getElementById('targetPreview');
                     const contentDiv = document.getElementById('targetPreviewContent');
 
+                    // BUG FIX 034-als-ik-in: Handle undefined count for specific_users
+                    let count = data.count;
+                    let sample = data.sample || [];
+
+                    // Fallback for specific_users: use selectedUserIds.length
+                    if (targetType === 'specific_users' && (count === undefined || count === null)) {
+                        count = selectedUserIds.length;
+                        // Generate sample from selectedUsersData
+                        sample = selectedUserIds.slice(0, 5).map(userId => ({
+                            name: selectedUsersData[userId]?.naam,
+                            email: selectedUsersData[userId]?.email
+                        }));
+                    }
+
+                    // Ensure count is always a number
+                    count = parseInt(count) || 0;
+
                     previewDiv.style.display = 'block';
                     contentDiv.innerHTML = `
                         <div style="font-size: 16px; font-weight: 600; color: var(--macos-blue); margin-bottom: 8px;">
-                            ${data.count} gebruiker${data.count !== 1 ? 's' : ''} zullen dit bericht ontvangen
+                            ${count} gebruiker${count !== 1 ? 's' : ''} ${count === 1 ? 'zal' : 'zullen'} dit bericht ontvangen
                         </div>
-                        ${data.sample && data.sample.length > 0 ? `
+                        ${sample && sample.length > 0 ? `
                             <div style="font-size: 14px; color: var(--macos-text-secondary); margin-top: 8px;">
-                                Voorbeelden: ${data.sample.map(u => escapeHtml(u.name || u.email)).join(', ')}
+                                Voorbeelden: ${sample.map(u => escapeHtml(u.name || u.email)).join(', ')}
                             </div>
                         ` : ''}
                     `;
                 } catch (error) {
                     console.error('Preview error:', error);
+                    // BUG FIX 034-als-ik-in: Show error state instead of leaving undefined
+                    const previewDiv = document.getElementById('targetPreview');
+                    const contentDiv = document.getElementById('targetPreviewContent');
+
+                    previewDiv.style.display = 'block';
+                    contentDiv.innerHTML = `
+                        <div style="font-size: 14px; color: var(--macos-text-secondary);">
+                            Preview kon niet worden geladen. Controleer de doelgroep instellingen.
+                        </div>
+                    `;
                 }
             }, 500);
         }

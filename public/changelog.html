@@ -158,6 +158,12 @@
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
+                            <strong>Doelgroep Preview Fix</strong>: De "undefined gebruikers" bug in de doelgroep preview is opgelost. Bij specifieke gebruikers toont de preview nu correct het aantal geselecteerde gebruikers (bijv. "1 gebruiker zal dit bericht ontvangen"). Fallback logica gebruikt selectedUserIds.length als de API geen count teruggeeft.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
                             <strong>Graceful Degradation</strong>: Edge cases worden netjes afgehandeld - gebruikers die niet meer bestaan worden getoond met hun User ID, en pagina's die niet in de dropdown staan worden dynamisch toegevoegd met een "(custom)" label. Lege selecties tonen correct "Geen gebruikers geselecteerd".
                         </div>
                     </div>
