@@ -13247,8 +13247,30 @@ app.post('/api/admin/messages', requireAdmin, async (req, res) => {
       });
     }
 
+    // Validate next_page_visit trigger has valid page identifier
+    if (trigger_type === 'next_page_visit') {
+      if (!trigger_value || trigger_value.trim() === '') {
+        return res.status(400).json({
+          error: 'Page identifier required for next_page_visit trigger'
+        });
+      }
+
+      if (!trigger_value.startsWith('/')) {
+        return res.status(400).json({
+          error: 'Page identifier must start with / (e.g., /planning)'
+        });
+      }
+
+      const validPages = ['/app', '/planning', '/taken', '/actielijst', '/profiel'];
+      if (!validPages.includes(trigger_value)) {
+        return res.status(400).json({
+          error: `Invalid page. Must be one of: ${validPages.join(', ')}`
+        });
+      }
+    }
+
     // Set publish_at to NOW() if not provided and trigger is immediate
-    // Trigger types: immediate, days_after_signup, first_page_visit, nth_page_visit, next_time
+    // Trigger types: immediate, days_after_signup, first_page_visit, nth_page_visit, next_time, next_page_visit
     const finalTriggerType = trigger_type || 'immediate';
     const finalPublishAt = publish_at || (finalTriggerType === 'immediate' ? new Date() : null);
 
@@ -13556,6 +13578,13 @@ app.get('/api/messages/unread', async (req, res) => {
     const pageIdentifier = req.query.page; // Voor page visit triggers
     const now = new Date();
 
+    // Valideer page parameter format
+    if (pageIdentifier && !pageIdentifier.startsWith('/')) {
+      return res.status(400).json({
+        error: 'Page parameter must start with / (e.g., /planning)'
+      });
+    }
+
     // Haal user subscription type en created_at op
     const userResult = await pool.query(`
       SELECT subscription_type, created_at FROM users WHERE id = $1
@@ -13569,7 +13598,7 @@ app.get('/api/messages/unread', async (req, res) => {
     const userCreatedAt = userResult.rows[0].created_at;
     const daysSinceSignup = Math.floor((now - new Date(userCreatedAt)) / (1000 * 60 * 60 * 24));
 
-    console.log(`📢 Evaluating messages for user ${userId}`);
+    console.log(`📢 Evaluating messages for user ${userId}, page: ${pageIdentifier || 'any'}`);
 
     // Query voor immediate, days_after_signup, en next_time triggers
     const mainQuery = `
@@ -13645,6 +13674,7 @@ app.get('/api/messages/unread', async (req, res) => {
             OR (m.trigger_type = 'nth_page_visit' AND
                 split_part(m.trigger_value, ':', 2) = $5 AND
                 $6 >= split_part(m.trigger_value, ':', 1)::integer)
+            OR (m.trigger_type = 'next_page_visit' AND m.trigger_value = $5)
           )
 
           -- Exclude dismissed/snoozed

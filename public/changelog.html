@@ -134,15 +134,64 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.173 -->
+        <!-- Version 0.19.175 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.174</span>
+                <span class="version-badge badge-latest">v0.19.175</span>
                 <span class="version-date">24 oktober 2025</span>
             </div>
             <div class="changes-list">
                 <div class="change-category">
-                    <div class="change-category-title">⚡ FEATURE: "Volgende Keer" Bericht Trigger</div>
+                    <div class="change-category-title">⚡ FEATURE: "Volgend Bezoek Aan Pagina" Bericht Trigger</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Page-Specific Message Trigger</strong>: Nieuwe "📍 Volgend bezoek aan pagina" trigger optie voor admin berichten. Berichten verschijnen nu ALLEEN wanneer gebruiker een SPECIFIEKE pagina bezoekt (bijv. /planning, /taken, /actielijst), in plaats van op elke pagina.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Page Selector Dropdown</strong>: Admin interface bevat nu een handige pagina selector dropdown die verschijnt bij selectie van "Volgend bezoek aan pagina" trigger. Kies uit Hoofdapplicatie, Dagelijkse Planning, Takenlijst, Actielijst, of Profiel.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Ideaal voor Pagina-Specifieke Aankondigingen</strong>: Gebruik deze trigger om gebruikers te informeren over nieuwe features op een specifieke pagina. Bijvoorbeeld: nieuwe filter functionaliteit op de planning pagina, of bulk acties op de takenlijst.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backend & Frontend Implementatie</strong>: Backend filtert berichten op basis van huidige pagina (?page= parameter in GET /api/messages/unread). Frontend stuurt automatisch current page pathname mee bij message polling. Validatie voorkomt invalid page identifiers.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Backwards Compatible</strong>: Bestaande trigger types (Direct, X dagen na signup, Eerste bezoek, Na N bezoeken, Volgende keer) blijven ongewijzigd functioneren. Geen database schema wijzigingen nodig - hergebruikt bestaande VARCHAR trigger_type en trigger_value velden.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Correctie van Feature 032</strong>: Deze feature vervangt de incorrecte Feature 032 implementatie die een globale trigger had in plaats van page-specific. Branch 032-bij-het-maken wordt abandoned en NIET gemerged naar main.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.174 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.19.174</span>
+                <span class="version-date">24 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚡ FEATURE: "Volgende Keer" Bericht Trigger (ABANDONED - zie v0.19.175)</div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">

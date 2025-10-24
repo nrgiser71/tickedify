@@ -1704,6 +1704,10 @@
                                 <span>🔄 Volgende keer</span>
                             </label>
                             <label class="form-radio-label">
+                                <input type="radio" name="triggerType" value="next_page_visit">
+                                <span>📍 Volgend bezoek aan pagina</span>
+                            </label>
+                            <label class="form-radio-label">
                                 <input type="radio" name="triggerType" value="days_after_signup">
                                 <span>📅 X dagen na signup</span>
                             </label>
@@ -1751,6 +1755,19 @@
                             <option value="quick-add-modal">Quick Add Modal</option>
                             <option value="recurring-task-popup">Herhalende Taak Popup</option>
                             <option value="planning-popup">Planning Popup</option>
+                        </select>
+                    </div>
+
+                    <!-- Next Page Visit Select (hidden by default) -->
+                    <div id="nextPageVisitSection" class="form-group" style="display: none; margin-left: 30px;">
+                        <label class="form-label" for="nextPageSelect">Selecteer pagina:</label>
+                        <select class="form-input" id="nextPageSelect" required>
+                            <option value="">-- Kies een pagina --</option>
+                            <option value="/app">Hoofdapplicatie</option>
+                            <option value="/planning">Dagelijkse Planning</option>
+                            <option value="/taken">Takenlijst</option>
+                            <option value="/actielijst">Actielijst</option>
+                            <option value="/profiel">Profiel</option>
                         </select>
                     </div>
                 </div>
@@ -1920,11 +1937,16 @@
             const daysSection = document.getElementById('daysAfterSignupSection');
             const firstPageSection = document.getElementById('firstPageVisitSection');
             const nthPageSection = document.getElementById('nthPageVisitSection');
+            const nextPageSection = document.getElementById('nextPageVisitSection');
 
             // Reset visibility
             daysSection.style.display = 'none';
             firstPageSection.style.display = 'none';
             nthPageSection.style.display = 'none';
+            nextPageSection.style.display = 'none';
+
+            // Reset required attributes
+            document.getElementById('nextPageSelect').required = false;
 
             if (triggerType === 'days_after_signup') {
                 daysSection.style.display = 'block';
@@ -1932,6 +1954,9 @@
                 firstPageSection.style.display = 'block';
             } else if (triggerType === 'nth_page_visit') {
                 nthPageSection.style.display = 'block';
+            } else if (triggerType === 'next_page_visit') {
+                nextPageSection.style.display = 'block';
+                document.getElementById('nextPageSelect').required = true;
             }
         }
 
@@ -2112,6 +2137,10 @@
                 const count = document.getElementById('nthVisitCount').value;
                 const page = document.getElementById('nthPageSelect').value;
                 return count && page ? `${count}:${page}` : null;
+            } else if (triggerType === 'next_page_visit') {
+                return document.getElementById('nextPageSelect').value;
+            } else if (triggerType === 'next_time') {
+                return null;
             }
             return null;
         }
@@ -2351,6 +2380,7 @@
             document.getElementById('daysAfterSignupSection').style.display = 'none';
             document.getElementById('firstPageVisitSection').style.display = 'none';
             document.getElementById('nthPageVisitSection').style.display = 'none';
+            document.getElementById('nextPageVisitSection').style.display = 'none';
             document.getElementById('inactive-warning').style.display = 'none';
             document.getElementById('future-publish-warning').style.display = 'none';
         }

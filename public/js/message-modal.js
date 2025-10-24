@@ -21,7 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Check for unread messages from backend
 async function checkForMessages() {
   try {
-    const response = await fetch('/api/messages/unread');
+    // Get current page pathname for page-specific messages
+    const page = window.location.pathname;
+    const url = `/api/messages/unread?page=${encodeURIComponent(page)}`;
+
+    const response = await fetch(url);
     if (!response.ok) {
       console.log('No messages or auth required');
       return;
@@ -30,7 +34,7 @@ async function checkForMessages() {
     const data = await response.json();
 
     if (data.messages && data.messages.length > 0) {
-      console.log(`📢 ${data.messages.length} unread message(s) found`);
+      console.log(`📢 ${data.messages.length} unread message(s) found for page ${page}`);
       currentMessages = data.messages;
       currentMessageIndex = 0;
       showMessage(currentMessages[0]);
