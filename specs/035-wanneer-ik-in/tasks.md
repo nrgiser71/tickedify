@@ -138,7 +138,7 @@ setupUitgesteldDropZones() {
 
 ## Phase 3.2: Testing
 
-### T003: Manual testing op staging volgens quickstart.md protocol
+### [X] T003: Manual testing op staging volgens quickstart.md protocol
 **File**: N/A (manual browser testing)
 **Reference**: `specs/035-wanneer-ik-in/quickstart.md`
 
