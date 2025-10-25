@@ -1051,8 +1051,10 @@ class Taakbeheer {
         
         // Width-based detection (with lower threshold for safety)
         const isNarrowScreen = width <= 1400;
-        
-        const result = hasTouch && (isMobileUA || isTabletUA || isIOS || isNarrowScreen);
+
+        // CRITICAL FIX: Narrow screens should ALWAYS be treated as mobile,
+        // regardless of touch capability (e.g., MacBook Pro 13" resized browser)
+        const result = isNarrowScreen || (hasTouch && (isMobileUA || isTabletUA || isIOS));
         
         console.log('🔍 Mobile device detection:', {
             width,
