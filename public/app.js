@@ -526,6 +526,15 @@ class LoadingManager {
         this.stopEntertainmentRotation();
     }
 
+    // Aliases for backwards compatibility
+    showGlobal(message) {
+        return this.show(message);
+    }
+
+    hideGlobal() {
+        return this.hide();
+    }
+
     // Show loading with progress tracking
     showWithProgress(baseMessage, current, total) {
         this.overlay.classList.add('active');
