@@ -526,6 +526,15 @@ class LoadingManager {
         this.stopEntertainmentRotation();
     }
 
+    // Aliases for backwards compatibility
+    showGlobal(message) {
+        return this.show(message);
+    }
+
+    hideGlobal() {
+        return this.hide();
+    }
+
     // Show loading with progress tracking
     showWithProgress(baseMessage, current, total) {
         this.overlay.classList.add('active');
@@ -750,6 +759,7 @@ class LoadingManager {
 
 // Global loading instance
 const loading = new LoadingManager();
+window.loading = loading; // Make loading globally accessible
 
 class Taakbeheer {
     constructor() {
@@ -786,6 +796,11 @@ class Taakbeheer {
         // Feature 014: Onboarding Video Manager
         this.onboardingVideo = new OnboardingVideoManager();
 
+        // Resize handler flags to prevent duplicate listeners
+        this.resizeListenerAdded = false;
+        this.mobileInterfaceSetup = false;
+        this.resizeDebounceTimer = null;
+
         this.init();
     }
 
@@ -795,6 +810,14 @@ class Taakbeheer {
         this.zetVandaagDatum();
         // Add document click listener to close dropdowns
         document.addEventListener('click', (event) => this.handleDocumentClick(event));
+
+        // Add resize listener ONCE for sidebar responsiveness
+        if (!this.resizeListenerAdded) {
+            window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+            this.resizeListenerAdded = true;
+            console.log('✅ Resize listener added (one-time setup)');
+        }
+
         // Data loading happens after authentication check in AuthManager
         // Sidebar counters are initialized in navigeerNaarLijst() - Feature 022
     }
@@ -996,24 +1019,19 @@ class Taakbeheer {
             
             mainContent.innerHTML = `
                 <header class="main-header">
-                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
                     <h1 id="page-title"></h1>
                 </header>
-                
+
                 <div class="content-area">
                     <div class="taak-input-container" id="taak-input-container">
                         <input type="text" id="taakInput" placeholder="Log in om taken toe te voegen..." disabled>
                         <button id="toevoegBtn" disabled>Toevoegen</button>
                     </div>
-                    
+
                     <div class="taken-container">
                         <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
                             <h3>📱 Welkom bij Tickedify</h3>
-                            <p>Gebruik het hamburger menu (☰) om te navigeren en in te loggen.</p>
+                            <p>Gebruik de sidebar toggle (☰) om te navigeren en in te loggen.</p>
                             <p style="margin-top: 20px; font-size: 14px;">Je kunt inloggen of een account aanmaken via de sidebar.</p>
                         </div>
                         <ul id="takenLijst" style="display: none;"></ul>
@@ -1041,8 +1059,10 @@ class Taakbeheer {
         
         // Width-based detection (with lower threshold for safety)
         const isNarrowScreen = width <= 1400;
-        
-        const result = hasTouch && (isMobileUA || isTabletUA || isIOS || isNarrowScreen);
+
+        // CRITICAL FIX: Narrow screens should ALWAYS be treated as mobile,
+        // regardless of touch capability (e.g., MacBook Pro 13" resized browser)
+        const result = isNarrowScreen || (hasTouch && (isMobileUA || isTabletUA || isIOS));
         
         console.log('🔍 Mobile device detection:', {
             width,
@@ -1058,20 +1078,27 @@ class Taakbeheer {
     }
     
     setupMobileInterface() {
-        console.log('📱 Setting up mobile interface...');
-        
-        // Inject CSS to force hamburger menu visibility
+        // Idempotent setup - safe to call multiple times
+        if (this.mobileInterfaceSetup) {
+            console.log('📱 Mobile interface already set up, skipping...');
+            return;
+        }
+
+        console.log('📱 Setting up mobile interface (first time)...');
+
+        // Inject CSS to force sidebar-toggle visibility
         this.injectMobileCSS();
-        
-        // Force hamburger menu visible
-        this.forceHamburgerMenuVisible();
-        
+
+        // Force sidebar-toggle visible
+        this.forceSidebarToggleVisible();
+
         // Initialize mobile sidebar with aggressive setup
         this.initializeMobileSidebar();
-        
+
         // Add direct event listeners with multiple event types
         this.bindMobileEvents();
-        
+
+        this.mobileInterfaceSetup = true;
         console.log('✅ Mobile interface setup completed');
     }
     
@@ -1079,14 +1106,14 @@ class Taakbeheer {
         const style = document.createElement('style');
         style.id = 'mobile-force-css';
         style.textContent = `
-            .hamburger-menu {
-                display: flex !important;
+            .sidebar-toggle {
+                display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
                 pointer-events: auto !important;
                 z-index: 1001 !important;
             }
-            
+
             @media (max-width: 1400px) {
                 .sidebar {
                     position: fixed !important;
@@ -1129,18 +1156,18 @@ class Taakbeheer {
     }
     
     bindMobileEvents() {
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        if (!hamburgerMenu) {
-            console.log('❌ No hamburger menu found for event binding');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (!sidebarToggle) {
+            console.log('❌ No sidebar toggle found for event binding');
             return;
         }
-        
+
         // Remove existing listeners first
-        hamburgerMenu.replaceWith(hamburgerMenu.cloneNode(true));
-        const newHamburgerMenu = document.getElementById('hamburger-menu');
-        
+        sidebarToggle.replaceWith(sidebarToggle.cloneNode(true));
+        const newSidebarToggle = document.getElementById('sidebar-toggle');
+
         const toggleSidebar = () => {
-            console.log('📱 Hamburger menu clicked!');
+            console.log('📱 Sidebar toggle clicked!');
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.querySelector('.sidebar-overlay');
             
@@ -1166,10 +1193,10 @@ class Taakbeheer {
         
         // Use only touchend for iOS, with fallback to click for other devices
         let hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        
+
         if (hasTouch) {
             // iOS/Touch devices: use touchend only
-            newHamburgerMenu.addEventListener('touchend', (e) => {
+            newSidebarToggle.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`📱 Touch event fired: touchend`);
@@ -1177,14 +1204,14 @@ class Taakbeheer {
             });
         } else {
             // Desktop/Non-touch devices: use click
-            newHamburgerMenu.addEventListener('click', (e) => {
+            newSidebarToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`📱 Click event fired: click`);
                 toggleSidebar();
             });
         }
-        
+
         // Also add overlay close handler
         const overlay = document.querySelector('.sidebar-overlay');
         if (overlay) {
@@ -1193,16 +1220,16 @@ class Taakbeheer {
                 toggleSidebar();
             });
         }
-        
-        console.log('📱 Mobile events bound to hamburger menu');
+
+        console.log('📱 Mobile events bound to sidebar toggle');
     }
-    
-    forceHamburgerMenuVisible() {
-        // Force hamburger menu visible via JavaScript for mobile devices
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        if (hamburgerMenu) {
-            hamburgerMenu.style.display = 'flex';
-            console.log('📱 Forced hamburger menu visible via JavaScript');
+
+    forceSidebarToggleVisible() {
+        // Force sidebar toggle visible via JavaScript for narrow screens
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (sidebarToggle) {
+            sidebarToggle.style.display = 'block';
+            console.log('📱 Forced sidebar toggle visible via JavaScript');
         }
     }
     
@@ -2744,7 +2771,7 @@ class Taakbeheer {
             isMobile: this.isMobileDevice(),
             innerWidth: window.innerWidth
         });
-        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.querySelector('.sidebar');
         const mainContent = document.querySelector('.main-content');
         let overlay = document.getElementById('sidebar-overlay');
@@ -2758,9 +2785,9 @@ class Taakbeheer {
             console.log('📱 Created sidebar-overlay element for mobile');
         }
 
-        if (!hamburgerMenu || !sidebar || !mainContent) {
+        if (!sidebarToggle || !sidebar || !mainContent) {
             console.log('❌ Mobile sidebar: Missing required elements', {
-                hamburgerMenu: !!hamburgerMenu,
+                sidebarToggle: !!sidebarToggle,
                 sidebar: !!sidebar,
                 mainContent: !!mainContent
             });
@@ -2771,27 +2798,27 @@ class Taakbeheer {
 
         const toggleSidebar = () => {
             const isOpen = sidebar.classList.contains('sidebar-open');
-            
+
             if (isOpen) {
                 // Close sidebar
                 sidebar.classList.remove('sidebar-open');
                 mainContent.classList.remove('sidebar-open');
                 overlay.classList.remove('active');
-                hamburgerMenu.classList.remove('active');
+                sidebarToggle.classList.remove('active');
                 document.body.style.overflow = '';
             } else {
                 // Open sidebar
                 sidebar.classList.add('sidebar-open');
                 mainContent.classList.add('sidebar-open');
                 overlay.classList.add('active');
-                hamburgerMenu.classList.add('active');
+                sidebarToggle.classList.add('active');
                 document.body.style.overflow = 'hidden'; // Prevent background scroll
             }
         };
 
-        // Hamburger menu click (both click and touch events for iOS)
-        hamburgerMenu.addEventListener('click', toggleSidebar);
-        hamburgerMenu.addEventListener('touchend', (e) => {
+        // Sidebar toggle click (both click and touch events for iOS)
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        sidebarToggle.addEventListener('touchend', (e) => {
             e.preventDefault(); // Prevent double-firing with click
             toggleSidebar();
         });
@@ -6979,11 +7006,6 @@ class Taakbeheer {
                 
                 mainContent.innerHTML = `
                     <header class="main-header">
-                        <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </button>
                         <h1 id="page-title">${currentTitle}</h1>
                     </header>
                     <div class="content-area">
@@ -8237,16 +8259,11 @@ class Taakbeheer {
         const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
         
         container.innerHTML = `
-            <!-- Mobile header met hamburger menu -->
+            <!-- Mobile header -->
             <header class="main-header">
-                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
                 <h1>Dagelijkse Planning</h1>
             </header>
-            
+
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
@@ -9419,9 +9436,8 @@ class Taakbeheer {
         
         // Bind toggle event
         toggleButton.addEventListener('click', () => this.toggleLaptopSidebar());
-        
-        // Update toggle visibility based on screen size
-        window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+
+        // Note: Resize listener is added ONCE in init() to prevent duplicate listeners
     }
     
     toggleLaptopSidebar() {
@@ -9455,16 +9471,59 @@ class Taakbeheer {
     }
     
     handleLaptopSidebarResize() {
-        const sidebar = document.querySelector('.sidebar');
-        const isLaptop = window.innerWidth >= 1201 && window.innerWidth < 1600;
-        
-        if (!isLaptop) {
-            // Remove collapsed state when not on laptop
-            sidebar?.classList.remove('collapsed');
-        } else {
-            // Reinitialize if entering laptop range
-            this.initializeLaptopSidebar();
+        // Debounce resize events to prevent multiple rapid calls
+        if (this.resizeDebounceTimer) {
+            clearTimeout(this.resizeDebounceTimer);
         }
+
+        this.resizeDebounceTimer = setTimeout(() => {
+            const sidebar = document.querySelector('.sidebar');
+            const width = window.innerWidth;
+            const isLaptop = width >= 1201 && width < 1600;
+            const isMobile = width <= 1400;
+
+            console.log('📐 Resize handled (debounced):', { width, isMobile, isLaptop });
+
+            if (isMobile) {
+                // Mobile range (≤1400px) - ensure sidebar is visible
+                console.log('📱 Mobile range detected - ensuring sidebar visibility');
+
+                // Remove desktop collapsed state
+                sidebar?.classList.remove('collapsed');
+
+                // Ensure sidebar is visible by adding sidebar-open class
+                if (sidebar && !sidebar.classList.contains('sidebar-open')) {
+                    sidebar.classList.add('sidebar-open');
+                    console.log('✅ Sidebar made visible (sidebar-open class added)');
+                }
+
+                // Setup mobile interface (idempotent - only runs once)
+                this.setupMobileInterface();
+
+            } else if (!isLaptop) {
+                // Desktop range (>1600px) - remove mobile classes
+                console.log('🖥️ Desktop range detected - cleanup mobile classes');
+
+                sidebar?.classList.remove('collapsed');
+                sidebar?.classList.remove('sidebar-open');
+
+                // Remove mobile overlay if it exists
+                const overlay = document.getElementById('sidebar-overlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+
+                // Reset mobile interface flag for next mobile transition
+                this.mobileInterfaceSetup = false;
+
+            } else {
+                // Laptop range (1201-1599px) - reinitialize laptop sidebar
+                console.log('💻 Laptop range detected - initializing laptop sidebar');
+
+                sidebar?.classList.remove('sidebar-open');
+                this.initializeLaptopSidebar();
+            }
+        }, 150); // 150ms debounce delay
     }
 
     removeDragAndDropEvents() {
@@ -10766,11 +10825,6 @@ class Taakbeheer {
 
         container.innerHTML = `
             <header class="main-header">
-                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
                 <h1 id="page-title">Uitgesteld</h1>
             </header>
 
@@ -12829,12 +12883,12 @@ class AuthManager {
                 setTimeout(() => {
                     const sidebar = document.querySelector('.sidebar');
                     const overlay = document.querySelector('.sidebar-overlay');
-                    const hamburgerMenu = document.getElementById('hamburger-menu');
-                    
+                    const sidebarToggle = document.getElementById('sidebar-toggle');
+
                     if (sidebar && !sidebar.classList.contains('sidebar-open')) {
                         sidebar.classList.add('sidebar-open');
                         if (overlay) overlay.classList.add('active');
-                        if (hamburgerMenu) hamburgerMenu.classList.add('active');
+                        if (sidebarToggle) sidebarToggle.classList.add('active');
                         document.body.style.overflow = 'hidden';
                         console.log('📱 Sidebar automatically opened for unauthenticated user');
                     }

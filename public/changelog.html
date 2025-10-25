@@ -134,10 +134,190 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.185 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.185</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL FIX: Resize Event Listener Duplication & Race Conditions</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dubbele Event Listeners Opgelost</strong>: De resize event listener werd meerdere keren toegevoegd (bij page load, bij resize naar laptop range, etc). Dit veroorzaakte dat handleLaptopSidebarResize() meerdere keren simultaan werd uitgevoerd bij elke resize. Fix: Resize listener wordt nu EENMALIG toegevoegd in init() met resizeListenerAdded flag, initializeLaptopSidebar() voegt GEEN listener meer toe.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Race Condition Fix Met Debouncing</strong>: Meerdere simultane calls naar handleLaptopSidebarResize() creëerden race conditions waarbij sidebar-open class werd toegevoegd EN verwijderd in dezelfde cycle. Fix: 150ms debounce timer zorgt dat resize handler max 1x per 150ms wordt uitgevoerd, wat race conditions elimineert. Clear logging toont exact welk scenario wordt getriggerd (mobile/desktop/laptop).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Idempotent Mobile Interface Setup</strong>: setupMobileInterface() werd bij elke resize naar mobile range opnieuw aangeroepen, wat CSS opnieuw injecteerde en event listeners dupliceerde. Fix: mobileInterfaceSetup flag zorgt dat setup slechts 1x wordt uitgevoerd. Bij resize naar desktop wordt flag gereset voor volgende mobile transition. Performance verbetering door redundante DOM manipulatie te voorkomen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Resize Behavior Nu Volledig Betrouwbaar</strong>: Desktop → Mobile resize: sidebar blijft zichtbaar met sidebar-open class. Mobile → Desktop resize: sidebar-open wordt verwijderd, normale desktop layout hersteld. Laptop range: collapsed state werkt correct zonder interferentie. Geen verdwijnende sidebar meer, geen grijs scherm, geen dubbele toggles - resize werkt nu exact zoals verwacht.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.184 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.184</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Sidebar Visibility Bij Window Resize</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Resize Bug Opgelost</strong>: Wanneer je op een groot scherm (>1400px) begon en het browser venster kleiner maakte naar mobile range (≤1400px), verdween de sidebar en bleef off-screen verstopt. Dit kwam doordat de resize handler alleen laptop range (1201-1599px) afhandelde en niet de desktop-naar-mobile transition.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete Resize Handling</strong>: De handleLaptopSidebarResize() functie is uitgebreid met drie scenarios: (1) Mobile range (≤1400px): sidebar wordt automatisch zichtbaar gemaakt met sidebar-open class en mobile interface wordt geactiveerd. (2) Desktop range (>1600px): sidebar-open en collapsed classes worden verwijderd voor normale desktop weergave. (3) Laptop range (1201-1599px): laptop sidebar functionality wordt geïnitialiseerd.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dynamische Interface Aanpassing</strong>: De app past nu correct aan bij window resize zonder refresh nodig. Resize van groot naar klein scherm toont automatisch de sidebar in mobile mode. Geen grijs scherm meer, geen verdwenen sidebar - de interface adapteert real-time aan de viewport grootte.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.183 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.183</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 UI VERBETERING: Dubbele Sidebar Toggle Verwijderd</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dubbele Toggle Buttons Opgelost</strong>: Na de narrow screen fix in v0.19.182 waren er twee sidebar toggle buttons zichtbaar op schermen tussen 1201-1400px breed: de hamburger-menu (links in header) en de sidebar-toggle (rechts in sidebar). Dit was verwarrend en onnodige UI clutter.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Geconsolideerd naar Eén Toggle</strong>: Hamburger-menu volledig verwijderd uit HTML, CSS en JavaScript. Sidebar-toggle (rechts in sidebar) is nu de enige toggle button en werkt op alle narrow screens (&lt;1400px). Deze button is intuïtiever gepositioneerd en visueel consistenter met de rest van de interface.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Code Cleanup</strong>: Alle hamburger-menu referenties verwijderd uit app.js (bindMobileEvents, initializeMobileSidebar, injectMobileCSS, renderUitgesteld, etc), index.html en style.css. De code is nu schoner en makkelijker te onderhouden zonder redundante UI elementen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.182 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.182</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 HOTFIX: Narrow Screen Detection Logica Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Root Cause van Grijs Scherm</strong>: De isMobileDevice() functie gebruikte `hasTouch && (... || isNarrowScreen)` logica. Dit betekende dat een MacBook Pro 13" (narrow screen zonder touch) NIET als mobiel werd gedetecteerd, wat leidde tot incorrecte UI initialisatie en een permanent grijs scherm bij registratie/login.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Logica Fix</strong>: Gewijzigd naar `isNarrowScreen || (hasTouch && ...)`. Narrow screens (width <= 1400px) worden nu ALTIJD als mobiel behandeld, ongeacht touch capability. Dit zorgt voor correcte mobile UI setup op alle narrow screen devices (laptops, resized browsers, etc).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>MacBook Pro 13" Volledig Werkend</strong>: Gebruikers op MacBook Pro 13" en andere narrow screen devices kunnen nu probleemloos registreren en inloggen zonder grijs scherm. De app detecteert correct dat de viewport te smal is voor desktop layout en activeert automatisch de mobile interface.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.181 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.181</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 HOTFIX: LoadingManager showGlobal/hideGlobal Methoden Toegevoegd</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Methode Naam Fix</strong>: De LoadingManager class had methoden show() en hide(), maar de code riep showGlobal() en hideGlobal() aan. Dit veroorzaakte "loading.showGlobal is not a function" errors. Toegevoegde alias methoden lossen dit op en zorgen voor backwards compatibility.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Grijs Scherm Bug Volledig Opgelost</strong>: De complete fix voor het MacBook Pro 13" grijs scherm probleem is nu werkend. Gebruikers kunnen registreren én de app gebruiken zonder vastlopende loading overlays.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.180 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.180</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 HOTFIX: MacBook Pro 13" Grijs Scherm Bug</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>LoadingManager Global Fix</strong>: Kritieke bug opgelost waarbij gebruikers op MacBook Pro 13" een grijs scherm zagen en niet konden registreren. De LoadingManager werd niet correct als window.loading beschikbaar gemaakt, waardoor de loading overlay na registratie niet werd verborgen. Fix zorgt voor correcte initialisatie en verberging van de loading indicator.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Registratie Workflow Hersteld</strong>: Nieuwe gebruikers kunnen nu probleemloos registreren zonder vast te lopen op een grijs loading scherm. Dit lost de meest kritieke blocker op voor nieuwe gebruiker onboarding.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.111 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.111</span>
+                <span class="version-badge badge-fix">v0.19.111</span>
                 <span class="version-date">22 oktober 2025</span>
             </div>
             <div class="changes-list">
