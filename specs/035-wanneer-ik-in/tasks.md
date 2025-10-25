@@ -254,7 +254,7 @@ setupUitgesteldDropZones() {
 
 ---
 
-### T005: Git commit en push naar feature branch
+### [X] T005: Git commit en push naar feature branch
 **Branch**: `035-wanneer-ik-in`
 **Files**: All modified files (public/app.js, public/changelog.html, package.json)
 
