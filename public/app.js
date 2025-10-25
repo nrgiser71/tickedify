@@ -750,6 +750,7 @@ class LoadingManager {
 
 // Global loading instance
 const loading = new LoadingManager();
+window.loading = loading; // Make loading globally accessible
 
 class Taakbeheer {
     constructor() {
