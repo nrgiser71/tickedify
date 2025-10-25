@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.183 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.183</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 UI VERBETERING: Dubbele Sidebar Toggle Verwijderd</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dubbele Toggle Buttons Opgelost</strong>: Na de narrow screen fix in v0.19.182 waren er twee sidebar toggle buttons zichtbaar op schermen tussen 1201-1400px breed: de hamburger-menu (links in header) en de sidebar-toggle (rechts in sidebar). Dit was verwarrend en onnodige UI clutter.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Geconsolideerd naar Eén Toggle</strong>: Hamburger-menu volledig verwijderd uit HTML, CSS en JavaScript. Sidebar-toggle (rechts in sidebar) is nu de enige toggle button en werkt op alle narrow screens (&lt;1400px). Deze button is intuïtiever gepositioneerd en visueel consistenter met de rest van de interface.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Code Cleanup</strong>: Alle hamburger-menu referenties verwijderd uit app.js (bindMobileEvents, initializeMobileSidebar, injectMobileCSS, renderUitgesteld, etc), index.html en style.css. De code is nu schoner en makkelijker te onderhouden zonder redundante UI elementen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.182 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.182</span>
+                <span class="version-badge badge-fix">v0.19.182</span>
                 <span class="version-date">25 oktober 2025</span>
             </div>
             <div class="changes-list">

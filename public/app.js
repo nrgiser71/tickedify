@@ -1006,24 +1006,19 @@ class Taakbeheer {
             
             mainContent.innerHTML = `
                 <header class="main-header">
-                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
                     <h1 id="page-title"></h1>
                 </header>
-                
+
                 <div class="content-area">
                     <div class="taak-input-container" id="taak-input-container">
                         <input type="text" id="taakInput" placeholder="Log in om taken toe te voegen..." disabled>
                         <button id="toevoegBtn" disabled>Toevoegen</button>
                     </div>
-                    
+
                     <div class="taken-container">
                         <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
                             <h3>📱 Welkom bij Tickedify</h3>
-                            <p>Gebruik het hamburger menu (☰) om te navigeren en in te loggen.</p>
+                            <p>Gebruik de sidebar toggle (☰) om te navigeren en in te loggen.</p>
                             <p style="margin-top: 20px; font-size: 14px;">Je kunt inloggen of een account aanmaken via de sidebar.</p>
                         </div>
                         <ul id="takenLijst" style="display: none;"></ul>
@@ -1076,7 +1071,7 @@ class Taakbeheer {
         this.injectMobileCSS();
         
         // Force hamburger menu visible
-        this.forceHamburgerMenuVisible();
+        this.forceSidebarToggleVisible();
         
         // Initialize mobile sidebar with aggressive setup
         this.initializeMobileSidebar();
@@ -1091,14 +1086,14 @@ class Taakbeheer {
         const style = document.createElement('style');
         style.id = 'mobile-force-css';
         style.textContent = `
-            .hamburger-menu {
-                display: flex !important;
+            .sidebar-toggle {
+                display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
                 pointer-events: auto !important;
                 z-index: 1001 !important;
             }
-            
+
             @media (max-width: 1400px) {
                 .sidebar {
                     position: fixed !important;
@@ -1141,18 +1136,18 @@ class Taakbeheer {
     }
     
     bindMobileEvents() {
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        if (!hamburgerMenu) {
-            console.log('❌ No hamburger menu found for event binding');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (!sidebarToggle) {
+            console.log('❌ No sidebar toggle found for event binding');
             return;
         }
-        
+
         // Remove existing listeners first
-        hamburgerMenu.replaceWith(hamburgerMenu.cloneNode(true));
-        const newHamburgerMenu = document.getElementById('hamburger-menu');
-        
+        sidebarToggle.replaceWith(sidebarToggle.cloneNode(true));
+        const newSidebarToggle = document.getElementById('sidebar-toggle');
+
         const toggleSidebar = () => {
-            console.log('📱 Hamburger menu clicked!');
+            console.log('📱 Sidebar toggle clicked!');
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.querySelector('.sidebar-overlay');
             
@@ -1178,10 +1173,10 @@ class Taakbeheer {
         
         // Use only touchend for iOS, with fallback to click for other devices
         let hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        
+
         if (hasTouch) {
             // iOS/Touch devices: use touchend only
-            newHamburgerMenu.addEventListener('touchend', (e) => {
+            newSidebarToggle.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`📱 Touch event fired: touchend`);
@@ -1189,14 +1184,14 @@ class Taakbeheer {
             });
         } else {
             // Desktop/Non-touch devices: use click
-            newHamburgerMenu.addEventListener('click', (e) => {
+            newSidebarToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`📱 Click event fired: click`);
                 toggleSidebar();
             });
         }
-        
+
         // Also add overlay close handler
         const overlay = document.querySelector('.sidebar-overlay');
         if (overlay) {
@@ -1205,16 +1200,16 @@ class Taakbeheer {
                 toggleSidebar();
             });
         }
-        
-        console.log('📱 Mobile events bound to hamburger menu');
+
+        console.log('📱 Mobile events bound to sidebar toggle');
     }
-    
-    forceHamburgerMenuVisible() {
-        // Force hamburger menu visible via JavaScript for mobile devices
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        if (hamburgerMenu) {
-            hamburgerMenu.style.display = 'flex';
-            console.log('📱 Forced hamburger menu visible via JavaScript');
+
+    forceSidebarToggleVisible() {
+        // Force sidebar toggle visible via JavaScript for narrow screens
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (sidebarToggle) {
+            sidebarToggle.style.display = 'block';
+            console.log('📱 Forced sidebar toggle visible via JavaScript');
         }
     }
     
@@ -2756,7 +2751,7 @@ class Taakbeheer {
             isMobile: this.isMobileDevice(),
             innerWidth: window.innerWidth
         });
-        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.querySelector('.sidebar');
         const mainContent = document.querySelector('.main-content');
         let overlay = document.getElementById('sidebar-overlay');
@@ -2770,9 +2765,9 @@ class Taakbeheer {
             console.log('📱 Created sidebar-overlay element for mobile');
         }
 
-        if (!hamburgerMenu || !sidebar || !mainContent) {
+        if (!sidebarToggle || !sidebar || !mainContent) {
             console.log('❌ Mobile sidebar: Missing required elements', {
-                hamburgerMenu: !!hamburgerMenu,
+                sidebarToggle: !!sidebarToggle,
                 sidebar: !!sidebar,
                 mainContent: !!mainContent
             });
@@ -2783,27 +2778,27 @@ class Taakbeheer {
 
         const toggleSidebar = () => {
             const isOpen = sidebar.classList.contains('sidebar-open');
-            
+
             if (isOpen) {
                 // Close sidebar
                 sidebar.classList.remove('sidebar-open');
                 mainContent.classList.remove('sidebar-open');
                 overlay.classList.remove('active');
-                hamburgerMenu.classList.remove('active');
+                sidebarToggle.classList.remove('active');
                 document.body.style.overflow = '';
             } else {
                 // Open sidebar
                 sidebar.classList.add('sidebar-open');
                 mainContent.classList.add('sidebar-open');
                 overlay.classList.add('active');
-                hamburgerMenu.classList.add('active');
+                sidebarToggle.classList.add('active');
                 document.body.style.overflow = 'hidden'; // Prevent background scroll
             }
         };
 
-        // Hamburger menu click (both click and touch events for iOS)
-        hamburgerMenu.addEventListener('click', toggleSidebar);
-        hamburgerMenu.addEventListener('touchend', (e) => {
+        // Sidebar toggle click (both click and touch events for iOS)
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        sidebarToggle.addEventListener('touchend', (e) => {
             e.preventDefault(); // Prevent double-firing with click
             toggleSidebar();
         });
@@ -6991,11 +6986,6 @@ class Taakbeheer {
                 
                 mainContent.innerHTML = `
                     <header class="main-header">
-                        <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </button>
                         <h1 id="page-title">${currentTitle}</h1>
                     </header>
                     <div class="content-area">
@@ -8249,16 +8239,11 @@ class Taakbeheer {
         const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
         
         container.innerHTML = `
-            <!-- Mobile header met hamburger menu -->
+            <!-- Mobile header -->
             <header class="main-header">
-                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
                 <h1>Dagelijkse Planning</h1>
             </header>
-            
+
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
@@ -10778,11 +10763,6 @@ class Taakbeheer {
 
         container.innerHTML = `
             <header class="main-header">
-                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
                 <h1 id="page-title">Uitgesteld</h1>
             </header>
 
@@ -12841,12 +12821,12 @@ class AuthManager {
                 setTimeout(() => {
                     const sidebar = document.querySelector('.sidebar');
                     const overlay = document.querySelector('.sidebar-overlay');
-                    const hamburgerMenu = document.getElementById('hamburger-menu');
-                    
+                    const sidebarToggle = document.getElementById('sidebar-toggle');
+
                     if (sidebar && !sidebar.classList.contains('sidebar-open')) {
                         sidebar.classList.add('sidebar-open');
                         if (overlay) overlay.classList.add('active');
-                        if (hamburgerMenu) hamburgerMenu.classList.add('active');
+                        if (sidebarToggle) sidebarToggle.classList.add('active');
                         document.body.style.overflow = 'hidden';
                         console.log('📱 Sidebar automatically opened for unauthenticated user');
                     }
