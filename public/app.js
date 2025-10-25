@@ -9453,13 +9453,39 @@ class Taakbeheer {
     
     handleLaptopSidebarResize() {
         const sidebar = document.querySelector('.sidebar');
-        const isLaptop = window.innerWidth >= 1201 && window.innerWidth < 1600;
-        
-        if (!isLaptop) {
-            // Remove collapsed state when not on laptop
+        const width = window.innerWidth;
+        const isLaptop = width >= 1201 && width < 1600;
+        const isMobile = width <= 1400;
+
+        console.log('📐 Resize detected:', { width, isMobile, isLaptop });
+
+        if (isMobile) {
+            // Entered mobile range - ensure sidebar is visible (not hidden off-screen)
+            // Remove desktop collapsed state
             sidebar?.classList.remove('collapsed');
+
+            // Ensure sidebar is visible by adding sidebar-open class
+            // This makes the sidebar slide in from the left
+            if (sidebar && !sidebar.classList.contains('sidebar-open')) {
+                sidebar.classList.add('sidebar-open');
+                console.log('✅ Sidebar made visible for mobile screen');
+            }
+
+            // Ensure mobile interface is set up
+            this.setupMobileInterface();
+        } else if (!isLaptop) {
+            // Desktop range (>1600px) - remove collapsed state and mobile classes
+            sidebar?.classList.remove('collapsed');
+            sidebar?.classList.remove('sidebar-open');
+
+            // Remove mobile overlay if it exists
+            const overlay = document.getElementById('sidebar-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
         } else {
-            // Reinitialize if entering laptop range
+            // Laptop range (1201-1599px) - reinitialize laptop sidebar
+            sidebar?.classList.remove('sidebar-open');
             this.initializeLaptopSidebar();
         }
     }
