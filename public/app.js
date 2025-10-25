@@ -10981,7 +10981,7 @@ class Taakbeheer {
     setupUitgesteldDropZones() {
         // Setup drop zones for all uitgesteld section headers
         const uitgesteldCategories = [
-            'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
+            'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks',
             'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks'
         ];
 
@@ -10989,13 +10989,15 @@ class Taakbeheer {
             // Drop zone for section header (closed sections)
             const header = document.querySelector(`[data-category="${categoryKey}"] .sectie-header`);
             if (header) {
-                this.setupDropZone(header, categoryKey, 'header');
+                const cleanHeader = this.cleanupEventListeners(header);
+                this.setupDropZone(cleanHeader, categoryKey, 'header');
             }
 
             // Drop zone for content area (open sections)
             const content = document.getElementById(`content-${categoryKey}`);
             if (content) {
-                this.setupDropZone(content, categoryKey, 'content');
+                const cleanContent = this.cleanupEventListeners(content);
+                this.setupDropZone(cleanContent, categoryKey, 'content');
             }
         });
     }
@@ -11004,7 +11006,7 @@ class Taakbeheer {
         element.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            
+
             // Add visual feedback
             if (zoneType === 'header') {
                 element.classList.add('drop-target-header');
@@ -11020,21 +11022,21 @@ class Taakbeheer {
 
         element.addEventListener('drop', async (e) => {
             e.preventDefault();
-            
+
             // Remove visual feedback
             element.classList.remove('drop-target-header', 'drop-target-content');
-            
+
             try {
                 const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                
+
                 if (dragData.type === 'uitgesteld-taak') {
                     const { taakId, bronLijst } = dragData;
-                    
+
                     // Don't move to same list
                     if (bronLijst === targetCategory) {
                         return;
                     }
-                    
+
                     // Perform the move
                     await this.handleUitgesteldDrop(taakId, bronLijst, targetCategory);
                 }
@@ -11043,6 +11045,13 @@ class Taakbeheer {
                 toast.error('Fout bij verplaatsen van taak');
             }
         });
+    }
+
+    cleanupEventListeners(element) {
+        // Clone element to remove all event listeners
+        const clone = element.cloneNode(true);
+        element.parentNode.replaceChild(clone, element);
+        return clone;
     }
 
     async handleUitgesteldDrop(taakId, bronLijst, doelLijst) {
