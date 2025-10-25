@@ -796,6 +796,11 @@ class Taakbeheer {
         // Feature 014: Onboarding Video Manager
         this.onboardingVideo = new OnboardingVideoManager();
 
+        // Resize handler flags to prevent duplicate listeners
+        this.resizeListenerAdded = false;
+        this.mobileInterfaceSetup = false;
+        this.resizeDebounceTimer = null;
+
         this.init();
     }
 
@@ -805,6 +810,14 @@ class Taakbeheer {
         this.zetVandaagDatum();
         // Add document click listener to close dropdowns
         document.addEventListener('click', (event) => this.handleDocumentClick(event));
+
+        // Add resize listener ONCE for sidebar responsiveness
+        if (!this.resizeListenerAdded) {
+            window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+            this.resizeListenerAdded = true;
+            console.log('✅ Resize listener added (one-time setup)');
+        }
+
         // Data loading happens after authentication check in AuthManager
         // Sidebar counters are initialized in navigeerNaarLijst() - Feature 022
     }
@@ -1065,20 +1078,27 @@ class Taakbeheer {
     }
     
     setupMobileInterface() {
-        console.log('📱 Setting up mobile interface...');
-        
-        // Inject CSS to force hamburger menu visibility
+        // Idempotent setup - safe to call multiple times
+        if (this.mobileInterfaceSetup) {
+            console.log('📱 Mobile interface already set up, skipping...');
+            return;
+        }
+
+        console.log('📱 Setting up mobile interface (first time)...');
+
+        // Inject CSS to force sidebar-toggle visibility
         this.injectMobileCSS();
-        
-        // Force hamburger menu visible
+
+        // Force sidebar-toggle visible
         this.forceSidebarToggleVisible();
-        
+
         // Initialize mobile sidebar with aggressive setup
         this.initializeMobileSidebar();
-        
+
         // Add direct event listeners with multiple event types
         this.bindMobileEvents();
-        
+
+        this.mobileInterfaceSetup = true;
         console.log('✅ Mobile interface setup completed');
     }
     
@@ -9416,9 +9436,8 @@ class Taakbeheer {
         
         // Bind toggle event
         toggleButton.addEventListener('click', () => this.toggleLaptopSidebar());
-        
-        // Update toggle visibility based on screen size
-        window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+
+        // Note: Resize listener is added ONCE in init() to prevent duplicate listeners
     }
     
     toggleLaptopSidebar() {
@@ -9452,42 +9471,59 @@ class Taakbeheer {
     }
     
     handleLaptopSidebarResize() {
-        const sidebar = document.querySelector('.sidebar');
-        const width = window.innerWidth;
-        const isLaptop = width >= 1201 && width < 1600;
-        const isMobile = width <= 1400;
-
-        console.log('📐 Resize detected:', { width, isMobile, isLaptop });
-
-        if (isMobile) {
-            // Entered mobile range - ensure sidebar is visible (not hidden off-screen)
-            // Remove desktop collapsed state
-            sidebar?.classList.remove('collapsed');
-
-            // Ensure sidebar is visible by adding sidebar-open class
-            // This makes the sidebar slide in from the left
-            if (sidebar && !sidebar.classList.contains('sidebar-open')) {
-                sidebar.classList.add('sidebar-open');
-                console.log('✅ Sidebar made visible for mobile screen');
-            }
-
-            // Ensure mobile interface is set up
-            this.setupMobileInterface();
-        } else if (!isLaptop) {
-            // Desktop range (>1600px) - remove collapsed state and mobile classes
-            sidebar?.classList.remove('collapsed');
-            sidebar?.classList.remove('sidebar-open');
-
-            // Remove mobile overlay if it exists
-            const overlay = document.getElementById('sidebar-overlay');
-            if (overlay) {
-                overlay.classList.remove('active');
-            }
-        } else {
-            // Laptop range (1201-1599px) - reinitialize laptop sidebar
-            sidebar?.classList.remove('sidebar-open');
-            this.initializeLaptopSidebar();
+        // Debounce resize events to prevent multiple rapid calls
+        if (this.resizeDebounceTimer) {
+            clearTimeout(this.resizeDebounceTimer);
         }
+
+        this.resizeDebounceTimer = setTimeout(() => {
+            const sidebar = document.querySelector('.sidebar');
+            const width = window.innerWidth;
+            const isLaptop = width >= 1201 && width < 1600;
+            const isMobile = width <= 1400;
+
+            console.log('📐 Resize handled (debounced):', { width, isMobile, isLaptop });
+
+            if (isMobile) {
+                // Mobile range (≤1400px) - ensure sidebar is visible
+                console.log('📱 Mobile range detected - ensuring sidebar visibility');
+
+                // Remove desktop collapsed state
+                sidebar?.classList.remove('collapsed');
+
+                // Ensure sidebar is visible by adding sidebar-open class
+                if (sidebar && !sidebar.classList.contains('sidebar-open')) {
+                    sidebar.classList.add('sidebar-open');
+                    console.log('✅ Sidebar made visible (sidebar-open class added)');
+                }
+
+                // Setup mobile interface (idempotent - only runs once)
+                this.setupMobileInterface();
+
+            } else if (!isLaptop) {
+                // Desktop range (>1600px) - remove mobile classes
+                console.log('🖥️ Desktop range detected - cleanup mobile classes');
+
+                sidebar?.classList.remove('collapsed');
+                sidebar?.classList.remove('sidebar-open');
+
+                // Remove mobile overlay if it exists
+                const overlay = document.getElementById('sidebar-overlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+
+                // Reset mobile interface flag for next mobile transition
+                this.mobileInterfaceSetup = false;
+
+            } else {
+                // Laptop range (1201-1599px) - reinitialize laptop sidebar
+                console.log('💻 Laptop range detected - initializing laptop sidebar');
+
+                sidebar?.classList.remove('sidebar-open');
+                this.initializeLaptopSidebar();
+            }
+        }, 150); // 150ms debounce delay
     }
 
     removeDragAndDropEvents() {

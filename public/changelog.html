@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.19.185 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.185</span>
+                <span class="version-date">25 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL FIX: Resize Event Listener Duplication & Race Conditions</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Dubbele Event Listeners Opgelost</strong>: De resize event listener werd meerdere keren toegevoegd (bij page load, bij resize naar laptop range, etc). Dit veroorzaakte dat handleLaptopSidebarResize() meerdere keren simultaan werd uitgevoerd bij elke resize. Fix: Resize listener wordt nu EENMALIG toegevoegd in init() met resizeListenerAdded flag, initializeLaptopSidebar() voegt GEEN listener meer toe.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Race Condition Fix Met Debouncing</strong>: Meerdere simultane calls naar handleLaptopSidebarResize() creëerden race conditions waarbij sidebar-open class werd toegevoegd EN verwijderd in dezelfde cycle. Fix: 150ms debounce timer zorgt dat resize handler max 1x per 150ms wordt uitgevoerd, wat race conditions elimineert. Clear logging toont exact welk scenario wordt getriggerd (mobile/desktop/laptop).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Idempotent Mobile Interface Setup</strong>: setupMobileInterface() werd bij elke resize naar mobile range opnieuw aangeroepen, wat CSS opnieuw injecteerde en event listeners dupliceerde. Fix: mobileInterfaceSetup flag zorgt dat setup slechts 1x wordt uitgevoerd. Bij resize naar desktop wordt flag gereset voor volgende mobile transition. Performance verbetering door redundante DOM manipulatie te voorkomen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Resize Behavior Nu Volledig Betrouwbaar</strong>: Desktop → Mobile resize: sidebar blijft zichtbaar met sidebar-open class. Mobile → Desktop resize: sidebar-open wordt verwijderd, normale desktop layout hersteld. Laptop range: collapsed state werkt correct zonder interferentie. Geen verdwijnende sidebar meer, geen grijs scherm, geen dubbele toggles - resize werkt nu exact zoals verwacht.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.184 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.184</span>
+                <span class="version-badge badge-fix">v0.19.184</span>
                 <span class="version-date">25 oktober 2025</span>
             </div>
             <div class="changes-list">
