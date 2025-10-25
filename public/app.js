@@ -402,7 +402,7 @@ class OnboardingVideoManager {
             // Fetch video URL from API
             const response = await fetch('/api/settings/onboarding-video');
             if (!response.ok) {
-                console.error('Errorophalen video URL');
+                console.error('Fout bij ophalen video URL');
                 return;
             }
 
@@ -430,7 +430,7 @@ class OnboardingVideoManager {
             // Display popup
             this.popup.style.display = 'flex';
         } catch (error) {
-            console.error('Errortonen video:', error);
+            console.error('Fout bij tonen video:', error);
         }
     }
 
@@ -457,7 +457,7 @@ class OnboardingVideoManager {
                     this.hasSeenThisSession = true;
                 }
             } catch (error) {
-                console.error('Errormarkeren video als gezien:', error);
+                console.error('Fout bij markeren video als gezien:', error);
             }
         }
     }
@@ -506,7 +506,7 @@ class LoadingManager {
     }
 
     // Global loading overlay
-    show(message = 'Loading...') {
+    show(message = 'Laden...') {
         this.overlay.classList.add('active');
         // Hide progress text when showing regular loading
         if (this.progressText) {
@@ -524,6 +524,15 @@ class LoadingManager {
         }
         // Stop entertainment rotation
         this.stopEntertainmentRotation();
+    }
+
+    // Aliases for backwards compatibility
+    showGlobal(message) {
+        return this.show(message);
+    }
+
+    hideGlobal() {
+        return this.hide();
     }
 
     // Show loading with progress tracking
@@ -613,7 +622,7 @@ class LoadingManager {
     }
 
     // Operation-based loading (multiple concurrent operations)
-    startOperation(operationId, message = 'Loading...') {
+    startOperation(operationId, message = 'Laden...') {
         this.activeOperations.add(operationId);
         if (this.activeOperations.size === 1) {
             this.show(message);
@@ -646,7 +655,7 @@ class LoadingManager {
             if (!element.querySelector('.loading-inline')) {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'loading-inline';
-                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Loading...</span>';
+                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Laden...</span>';
                 element.appendChild(loadingDiv);
             }
         } else {
@@ -710,7 +719,7 @@ class LoadingManager {
             showGlobal = true,
             button = null,
             section = null,
-            message = 'Loading...'
+            message = 'Laden...'
         } = options;
 
         try {
@@ -750,31 +759,7 @@ class LoadingManager {
 
 // Global loading instance
 const loading = new LoadingManager();
-
-// Page identifier mapping for message system (Feature 033)
-// Maps internal view/lijst names to page identifiers for page-specific message triggers
-const PAGE_IDENTIFIERS = {
-    // Lijsten
-    'inbox': '/inbox',
-    'acties': '/actielijst',
-    'projecten': '/projecten',
-    'opvolgen': '/follow-up',
-    'afgewerkte-taken': '/completed',
-    'dagelijkse-planning': '/planning',
-
-    // Uitgesteld (alle subcategorieën krijgen zelfde identifier)
-    'uitgesteld': '/postponed',
-    'uitgesteld-wekelijks': '/postponed',
-    'uitgesteld-maandelijks': '/postponed',
-    'uitgesteld-3maandelijks': '/postponed',
-    'uitgesteld-6maandelijks': '/postponed',
-    'uitgesteld-jaarlijks': '/postponed',
-
-    // Tools
-    'contextenbeheer': '/contextenbeheer',
-    'wekelijkse-optimalisatie': '/wekelijkse-optimalisatie',
-    'zoeken': '/zoeken'
-};
+window.loading = loading; // Make loading globally accessible
 
 class Taakbeheer {
     constructor() {
@@ -811,6 +796,11 @@ class Taakbeheer {
         // Feature 014: Onboarding Video Manager
         this.onboardingVideo = new OnboardingVideoManager();
 
+        // Resize handler flags to prevent duplicate listeners
+        this.resizeListenerAdded = false;
+        this.mobileInterfaceSetup = false;
+        this.resizeDebounceTimer = null;
+
         this.init();
     }
 
@@ -820,6 +810,14 @@ class Taakbeheer {
         this.zetVandaagDatum();
         // Add document click listener to close dropdowns
         document.addEventListener('click', (event) => this.handleDocumentClick(event));
+
+        // Add resize listener ONCE for sidebar responsiveness
+        if (!this.resizeListenerAdded) {
+            window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+            this.resizeListenerAdded = true;
+            console.log('✅ Resize listener added (one-time setup)');
+        }
+
         // Data loading happens after authentication check in AuthManager
         // Sidebar counters are initialized in navigeerNaarLijst() - Feature 022
     }
@@ -947,7 +945,7 @@ class Taakbeheer {
                 }
             }
         } catch (error) {
-            console.error('Errorcontroleren onboarding status:', error);
+            console.error('Fout bij controleren onboarding status:', error);
             // Continue loading app even if onboarding check fails
         }
 
@@ -1021,24 +1019,19 @@ class Taakbeheer {
             
             mainContent.innerHTML = `
                 <header class="main-header">
-                    <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
                     <h1 id="page-title"></h1>
                 </header>
-                
+
                 <div class="content-area">
                     <div class="taak-input-container" id="taak-input-container">
                         <input type="text" id="taakInput" placeholder="Log in om taken toe te voegen..." disabled>
                         <button id="toevoegBtn" disabled>Toevoegen</button>
                     </div>
-                    
+
                     <div class="taken-container">
                         <div style="text-align: center; padding: 40px 20px; color: var(--macos-text-secondary);">
                             <h3>📱 Welkom bij Tickedify</h3>
-                            <p>Gebruik het hamburger menu (☰) om te navigeren en in te loggen.</p>
+                            <p>Gebruik de sidebar toggle (☰) om te navigeren en in te loggen.</p>
                             <p style="margin-top: 20px; font-size: 14px;">Je kunt inloggen of een account aanmaken via de sidebar.</p>
                         </div>
                         <ul id="takenLijst" style="display: none;"></ul>
@@ -1066,8 +1059,10 @@ class Taakbeheer {
         
         // Width-based detection (with lower threshold for safety)
         const isNarrowScreen = width <= 1400;
-        
-        const result = hasTouch && (isMobileUA || isTabletUA || isIOS || isNarrowScreen);
+
+        // CRITICAL FIX: Narrow screens should ALWAYS be treated as mobile,
+        // regardless of touch capability (e.g., MacBook Pro 13" resized browser)
+        const result = isNarrowScreen || (hasTouch && (isMobileUA || isTabletUA || isIOS));
         
         console.log('🔍 Mobile device detection:', {
             width,
@@ -1083,20 +1078,27 @@ class Taakbeheer {
     }
     
     setupMobileInterface() {
-        console.log('📱 Setting up mobile interface...');
-        
-        // Inject CSS to force hamburger menu visibility
+        // Idempotent setup - safe to call multiple times
+        if (this.mobileInterfaceSetup) {
+            console.log('📱 Mobile interface already set up, skipping...');
+            return;
+        }
+
+        console.log('📱 Setting up mobile interface (first time)...');
+
+        // Inject CSS to force sidebar-toggle visibility
         this.injectMobileCSS();
-        
-        // Force hamburger menu visible
-        this.forceHamburgerMenuVisible();
-        
+
+        // Force sidebar-toggle visible
+        this.forceSidebarToggleVisible();
+
         // Initialize mobile sidebar with aggressive setup
         this.initializeMobileSidebar();
-        
+
         // Add direct event listeners with multiple event types
         this.bindMobileEvents();
-        
+
+        this.mobileInterfaceSetup = true;
         console.log('✅ Mobile interface setup completed');
     }
     
@@ -1104,14 +1106,14 @@ class Taakbeheer {
         const style = document.createElement('style');
         style.id = 'mobile-force-css';
         style.textContent = `
-            .hamburger-menu {
-                display: flex !important;
+            .sidebar-toggle {
+                display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
                 pointer-events: auto !important;
                 z-index: 1001 !important;
             }
-            
+
             @media (max-width: 1400px) {
                 .sidebar {
                     position: fixed !important;
@@ -1154,18 +1156,18 @@ class Taakbeheer {
     }
     
     bindMobileEvents() {
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        if (!hamburgerMenu) {
-            console.log('❌ No hamburger menu found for event binding');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (!sidebarToggle) {
+            console.log('❌ No sidebar toggle found for event binding');
             return;
         }
-        
+
         // Remove existing listeners first
-        hamburgerMenu.replaceWith(hamburgerMenu.cloneNode(true));
-        const newHamburgerMenu = document.getElementById('hamburger-menu');
-        
+        sidebarToggle.replaceWith(sidebarToggle.cloneNode(true));
+        const newSidebarToggle = document.getElementById('sidebar-toggle');
+
         const toggleSidebar = () => {
-            console.log('📱 Hamburger menu clicked!');
+            console.log('📱 Sidebar toggle clicked!');
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.querySelector('.sidebar-overlay');
             
@@ -1191,10 +1193,10 @@ class Taakbeheer {
         
         // Use only touchend for iOS, with fallback to click for other devices
         let hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        
+
         if (hasTouch) {
             // iOS/Touch devices: use touchend only
-            newHamburgerMenu.addEventListener('touchend', (e) => {
+            newSidebarToggle.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`📱 Touch event fired: touchend`);
@@ -1202,14 +1204,14 @@ class Taakbeheer {
             });
         } else {
             // Desktop/Non-touch devices: use click
-            newHamburgerMenu.addEventListener('click', (e) => {
+            newSidebarToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log(`📱 Click event fired: click`);
                 toggleSidebar();
             });
         }
-        
+
         // Also add overlay close handler
         const overlay = document.querySelector('.sidebar-overlay');
         if (overlay) {
@@ -1218,16 +1220,16 @@ class Taakbeheer {
                 toggleSidebar();
             });
         }
-        
-        console.log('📱 Mobile events bound to hamburger menu');
+
+        console.log('📱 Mobile events bound to sidebar toggle');
     }
-    
-    forceHamburgerMenuVisible() {
-        // Force hamburger menu visible via JavaScript for mobile devices
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        if (hamburgerMenu) {
-            hamburgerMenu.style.display = 'flex';
-            console.log('📱 Forced hamburger menu visible via JavaScript');
+
+    forceSidebarToggleVisible() {
+        // Force sidebar toggle visible via JavaScript for narrow screens
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (sidebarToggle) {
+            sidebarToggle.style.display = 'block';
+            console.log('📱 Forced sidebar toggle visible via JavaScript');
         }
     }
     
@@ -1526,16 +1528,11 @@ class Taakbeheer {
         const currentValue = document.getElementById('herhalingSelect').value;
         if (!currentValue) {
             document.getElementById('herhalingSelect').value = '';
-            document.getElementById('herhalingDisplay').value = 'No recurrence';
+            document.getElementById('herhalingDisplay').value = 'Geen herhaling';
         }
         
         this.loadHerhalingFromValue();
         document.getElementById('herhalingPopup').style.display = 'flex';
-
-        // Check for page-specific messages when recurring popup opens (Feature 033)
-        if (window.checkForMessages) {
-            window.checkForMessages('/recurring-popup');
-        }
     }
 
     sluitHerhalingPopup() {
@@ -1555,7 +1552,7 @@ class Taakbeheer {
         
         switch (selectedType) {
             case '':
-                return 'No recurrence';
+                return 'Geen herhaling';
             case 'daily':
                 const days = document.getElementById('dailyInterval').value;
                 return days === '1' ? 'Elke dag' : `Elke ${days} dagen`;
@@ -1600,7 +1597,7 @@ class Taakbeheer {
                 const directionText = eventDirection === 'voor' ? 'voor' : 'na';
                 return eventName ? `${eventDays} dagen ${directionText} ${eventName}` : `${eventDays} dagen ${directionText} event`;
             default:
-                return 'No recurrence';
+                return 'Geen herhaling';
         }
     }
 
@@ -1868,48 +1865,48 @@ class Taakbeheer {
 
     getHerhalingDisplayText(value) {
         const herhalingTexts = {
-            '': 'No recurrence',
-            'dagelijks': 'Daily',
-            'wekelijks': 'Weekly',
-            'maandelijks': 'Monthly',
-            'jaarlijks': 'Yearly',
-            'maandag': 'Every Monday',
-            'dinsdag': 'Every Tuesday',
-            'woensdag': 'Every Wednesday',
-            'donderdag': 'Every Thursday',
-            'vrijdag': 'Every Friday',
-            'zaterdag': 'Every Saturday',
-            'zondag': 'Every Sunday',
-            'eerste-dag-maand': 'First day of the month',
-            'laatste-dag-maand': 'Last day of the month',
-            'eerste-werkdag-maand': 'First workday of the month',
-            'laatste-werkdag-maand': 'Last workday of the month',
-            'eerste-maandag-maand': 'First Monday',
-            'eerste-dinsdag-maand': 'First Tuesday',
-            'eerste-woensdag-maand': 'First Wednesday',
-            'eerste-donderdag-maand': 'First Thursday',
-            'eerste-vrijdag-maand': 'First Friday',
-            'eerste-zaterdag-maand': 'First Saturday',
-            'eerste-zondag-maand': 'First Sunday',
-            'laatste-maandag-maand': 'Last Monday',
-            'laatste-dinsdag-maand': 'Last Tuesday',
-            'laatste-woensdag-maand': 'Last Wednesday',
-            'laatste-donderdag-maand': 'Last Thursday',
-            'laatste-vrijdag-maand': 'Last Friday',
-            'laatste-zaterdag-maand': 'Last Saturday',
-            'laatste-zondag-maand': 'Last Sunday',
-            'eerste-dag-jaar': 'First day of the year',
-            'laatste-dag-jaar': 'Last day of the year',
-            'eerste-werkdag-jaar': 'First workday of the year',
-            'laatste-werkdag-jaar': 'Last workday of the year',
-            'om-de-dag': 'Every other day',
-            '2-weken': 'Every 2 weeks',
-            '3-weken': 'Every 3 weeks',
-            '2-maanden': 'Every 2 months',
-            '3-maanden': 'Every 3 months',
-            '6-maanden': 'Every 6 months'
+            '': 'Geen herhaling',
+            'dagelijks': 'Dagelijks',
+            'wekelijks': 'Wekelijks',
+            'maandelijks': 'Maandelijks',
+            'jaarlijks': 'Jaarlijks',
+            'maandag': 'Elke maandag',
+            'dinsdag': 'Elke dinsdag',
+            'woensdag': 'Elke woensdag',
+            'donderdag': 'Elke donderdag',
+            'vrijdag': 'Elke vrijdag',
+            'zaterdag': 'Elke zaterdag',
+            'zondag': 'Elke zondag',
+            'eerste-dag-maand': 'Eerste dag van de maand',
+            'laatste-dag-maand': 'Laatste dag van de maand',
+            'eerste-werkdag-maand': 'Eerste werkdag van de maand',
+            'laatste-werkdag-maand': 'Laatste werkdag van de maand',
+            'eerste-maandag-maand': 'Eerste maandag',
+            'eerste-dinsdag-maand': 'Eerste dinsdag',
+            'eerste-woensdag-maand': 'Eerste woensdag',
+            'eerste-donderdag-maand': 'Eerste donderdag',
+            'eerste-vrijdag-maand': 'Eerste vrijdag',
+            'eerste-zaterdag-maand': 'Eerste zaterdag',
+            'eerste-zondag-maand': 'Eerste zondag',
+            'laatste-maandag-maand': 'Laatste maandag',
+            'laatste-dinsdag-maand': 'Laatste dinsdag',
+            'laatste-woensdag-maand': 'Laatste woensdag',
+            'laatste-donderdag-maand': 'Laatste donderdag',
+            'laatste-vrijdag-maand': 'Laatste vrijdag',
+            'laatste-zaterdag-maand': 'Laatste zaterdag',
+            'laatste-zondag-maand': 'Laatste zondag',
+            'eerste-dag-jaar': 'Eerste dag van het jaar',
+            'laatste-dag-jaar': 'Laatste dag van het jaar',
+            'eerste-werkdag-jaar': 'Eerste werkdag van het jaar',
+            'laatste-werkdag-jaar': 'Laatste werkdag van het jaar',
+            'om-de-dag': 'Om de dag',
+            '2-weken': 'Elke 2 weken',
+            '3-weken': 'Elke 3 weken',
+            '2-maanden': 'Elke 2 maanden',
+            '3-maanden': 'Elke 3 maanden',
+            '6-maanden': 'Elke 6 maanden'
         };
-        return herhalingTexts[value] || 'No recurrence';
+        return herhalingTexts[value] || 'Geen herhaling';
     }
 
     async navigeerNaarLijst(lijst) {
@@ -1938,20 +1935,20 @@ class Taakbeheer {
             listItem.classList.add('actief');
         }
 
-        // Update main title
+        // Update hoofdtitel
         const titles = {
             'inbox': 'Inbox',
-            'acties': 'Actions',
-            'projecten': 'Projects',
-            'opvolgen': 'Follow-up',
-            'afgewerkte-taken': 'Completed',
-            'dagelijkse-planning': 'Daily Planning',
-            'uitgesteld': 'Postponed',
-            'uitgesteld-wekelijks': 'Weekly',
-            'uitgesteld-maandelijks': 'Monthly',
-            'uitgesteld-3maandelijks': 'Quarterly',
-            'uitgesteld-6maandelijks': 'Bi-annual',
-            'uitgesteld-jaarlijks': 'Yearly'
+            'acties': 'Acties',
+            'projecten': 'Projecten',
+            'opvolgen': 'Opvolgen',
+            'afgewerkte-taken': 'Afgewerkt',
+            'dagelijkse-planning': 'Dagelijkse Planning',
+            'uitgesteld': 'Uitgesteld',
+            'uitgesteld-wekelijks': 'Wekelijks',
+            'uitgesteld-maandelijks': 'Maandelijks',
+            'uitgesteld-3maandelijks': '3-maandelijks',
+            'uitgesteld-6maandelijks': '6-maandelijks',
+            'uitgesteld-jaarlijks': 'Jaarlijks'
         };
         // Only update title if it wasn't already set by restoreNormalContainer
         if (!titleAlreadySet) {
@@ -1979,12 +1976,6 @@ class Taakbeheer {
         console.log('📋 huidigeLijst is now:', this.huidigeLijst);
         this.saveCurrentList(); // Remember the selected list
         await this.laadHuidigeLijst();
-
-        // Check for page-specific messages after list is loaded (Feature 033)
-        const pageIdentifier = PAGE_IDENTIFIERS[lijst] || '/app';
-        if (window.checkForMessages) {
-            await window.checkForMessages(pageIdentifier);
-        }
 
         // Update sidebar counters after list is loaded - Feature 022
         // This ensures counters update for ALL lists (dagelijkse-planning, uitgesteld, and normal lists)
@@ -2028,7 +2019,7 @@ class Taakbeheer {
                 }
             }
         } catch (error) {
-            console.error('Errorladen tellingen:', error);
+            console.error('Fout bij laden tellingen:', error);
         }
     }
 
@@ -2040,7 +2031,7 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="projecten-container">
                 <div class="projecten-header">
-                    <button id="nieuwProjectBtnLijst" class="nieuw-btn">+ New Project</button>
+                    <button id="nieuwProjectBtnLijst" class="nieuw-btn">+ Nieuw Project</button>
                 </div>
                 <div class="projecten-lijst" id="projecten-lijst"></div>
             </div>
@@ -2075,7 +2066,7 @@ class Taakbeheer {
             text = `Over ${diffDays} dagen`;
         } else {
             badgeClass += ' future';
-            text = this.formatDisplayDate(due);
+            text = due.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
         }
         
         return `<span class="${badgeClass}">${text}</span>`;
@@ -2107,15 +2098,15 @@ class Taakbeheer {
                             <div class="project-naam" title="${this.escapeHtml(project.naam)}">${project.naam}</div>
                             ${dueDateBadge}
                         </div>
-                        <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed</div>
+                        <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt</div>
                     </div>
                     <div class="project-acties" onclick="event.stopPropagation()">
-                        <button onclick="app.bewerkProject('${project.id}')" class="bewerk-project-btn" title="Edit project">✏️</button>
-                        <button onclick="app.verwijderProject('${project.id}')" class="verwijder-btn" title="Delete project">×</button>
+                        <button onclick="app.bewerkProject('${project.id}')" class="bewerk-project-btn" title="Bewerk project">✏️</button>
+                        <button onclick="app.verwijderProject('${project.id}')" class="verwijder-btn" title="Verwijder project">×</button>
                     </div>
                 </div>
                 <div class="project-taken-container" id="taken-${project.id}" style="display: none;">
-                    <div class="project-taken-loading">Loading...</div>
+                    <div class="project-taken-loading">Laden...</div>
                 </div>
             `;
             container.appendChild(div);
@@ -2159,7 +2150,7 @@ class Taakbeheer {
             
             return taskCounts;
         } catch (error) {
-            console.error('Errorbatch laden project task counts:', error);
+            console.error('Fout bij batch laden project task counts:', error);
             return {};
         }
     }
@@ -2178,7 +2169,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProjectViaLijst() {
-        const projectData = await projectModal.show('New Project');
+        const projectData = await projectModal.show('Nieuw Project');
         if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -2205,7 +2196,7 @@ class Taakbeheer {
             opmerkingen: project.opmerkingen || ''
         };
         
-        const projectData = await projectModal.show('Edit Project', defaultValues);
+        const projectData = await projectModal.show('Project Bewerken', defaultValues);
         if (projectData) {
             project.naam = projectData.naam;
             project.dueDate = projectData.dueDate;
@@ -2221,13 +2212,13 @@ class Taakbeheer {
         
         const actiesInfo = await this.telActiesPerProject(id);
         const totaalActies = actiesInfo.open + actiesInfo.afgewerkt;
-        let bevestigingsTekst = `Are you sure you want to delete project "${project.naam}"?`;
-
+        let bevestigingsTekst = `Weet je zeker dat je project "${project.naam}" wilt verwijderen?`;
+        
         if (totaalActies > 0) {
-            bevestigingsTekst += `\n\nWarning: There are still ${totaalActies} ${totaalActies === 1 ? 'action' : 'actions'} linked to this project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed). They will lose their project connection.`;
+            bevestigingsTekst += `\n\nLet op: Er zijn nog ${totaalActies} ${totaalActies === 1 ? 'actie' : 'acties'} gekoppeld aan dit project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt). Deze zullen hun projectkoppeling verliezen.`;
         }
-
-        const bevestiging = await confirmModal.show('Delete Project', bevestigingsTekst);
+        
+        const bevestiging = await confirmModal.show('Project Verwijderen', bevestigingsTekst);
         if (!bevestiging) return;
         
         this.projecten = this.projecten.filter(p => p.id !== id);
@@ -2285,8 +2276,8 @@ class Taakbeheer {
             this.renderProjectActies(container, openActies, afgewerkteActies, project);
             
         } catch (error) {
-            console.error('Errorladen project acties:', error);
-            container.innerHTML = '<div class="project-taken-error">Error loading actions</div>';
+            console.error('Fout bij laden project acties:', error);
+            container.innerHTML = '<div class="project-taken-error">Fout bij laden acties</div>';
         }
     }
 
@@ -2316,10 +2307,10 @@ class Taakbeheer {
         // Open acties
         if (openActies.length > 0) {
             html += '<div class="project-taken-sectie">';
-            html += '<h4 class="project-taken-header">Open actions</h4>';
+            html += '<h4 class="project-taken-header">Open acties</h4>';
             openActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
-                const datum = this.formatDisplayDate(actie.verschijndatum);
+                const datum = new Date(actie.verschijndatum).toLocaleDateString('nl-NL');
                 
                 const recurringIndicator = actie.herhalingActief ? '<span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
                 html += `
@@ -2343,7 +2334,7 @@ class Taakbeheer {
             html += '<h4 class="project-taken-header">Afgewerkte acties</h4>';
             afgewerkteActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
-                const afgewerkDatum = this.formatDisplayDate(actie.afgewerkt);
+                const afgewerkDatum = new Date(actie.afgewerkt).toLocaleDateString('nl-NL');
                 
                 html += `
                     <div class="project-actie-item afgewerkt">
@@ -2361,7 +2352,7 @@ class Taakbeheer {
         }
         
         if (openActies.length === 0 && afgewerkteActies.length === 0) {
-            html += '<div class="project-geen-acties">No actions in this project</div>';
+            html += '<div class="project-geen-acties">Geen acties in dit project</div>';
         }
         
         html += '</div>';
@@ -2405,7 +2396,7 @@ class Taakbeheer {
             // Verplaats naar afgewerkte taken
             const success = await this.verplaatsTaakNaarAfgewerkt(actie);
             if (!success) {
-                toast.error('Error completing task. Try again.');
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
                 return;
             }
             
@@ -2431,7 +2422,7 @@ class Taakbeheer {
             
             // Show confirmation for recurring task and refresh lists
             if (nextRecurringTaskId) {
-                const nextDateFormatted = this.formatDisplayDate(calculatedNextDate);
+                const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
                 
                 // Refresh all lists to show the new recurring task
                 console.log('<i class="fas fa-redo"></i> Refreshing lists after recurring task creation...');
@@ -2443,12 +2434,12 @@ class Taakbeheer {
                 }
                 
                 setTimeout(() => {
-                    toast.success(`Task completed! Next recurrence scheduled for ${nextDateFormatted}`);
+                    toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                 }, 100);
             }
             
         } catch (error) {
-            console.error('Errorafwerken taak vanuit project:', error);
+            console.error('Fout bij afwerken taak vanuit project:', error);
         }
     }
 
@@ -2498,7 +2489,7 @@ class Taakbeheer {
             await this.updateProjectTellingen();
             
         } catch (error) {
-            console.error('Errorheropenen taak vanuit project:', error);
+            console.error('Fout bij heropenen taak vanuit project:', error);
         }
     }
 
@@ -2780,7 +2771,7 @@ class Taakbeheer {
             isMobile: this.isMobileDevice(),
             innerWidth: window.innerWidth
         });
-        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.querySelector('.sidebar');
         const mainContent = document.querySelector('.main-content');
         let overlay = document.getElementById('sidebar-overlay');
@@ -2794,9 +2785,9 @@ class Taakbeheer {
             console.log('📱 Created sidebar-overlay element for mobile');
         }
 
-        if (!hamburgerMenu || !sidebar || !mainContent) {
+        if (!sidebarToggle || !sidebar || !mainContent) {
             console.log('❌ Mobile sidebar: Missing required elements', {
-                hamburgerMenu: !!hamburgerMenu,
+                sidebarToggle: !!sidebarToggle,
                 sidebar: !!sidebar,
                 mainContent: !!mainContent
             });
@@ -2807,27 +2798,27 @@ class Taakbeheer {
 
         const toggleSidebar = () => {
             const isOpen = sidebar.classList.contains('sidebar-open');
-            
+
             if (isOpen) {
                 // Close sidebar
                 sidebar.classList.remove('sidebar-open');
                 mainContent.classList.remove('sidebar-open');
                 overlay.classList.remove('active');
-                hamburgerMenu.classList.remove('active');
+                sidebarToggle.classList.remove('active');
                 document.body.style.overflow = '';
             } else {
                 // Open sidebar
                 sidebar.classList.add('sidebar-open');
                 mainContent.classList.add('sidebar-open');
                 overlay.classList.add('active');
-                hamburgerMenu.classList.add('active');
+                sidebarToggle.classList.add('active');
                 document.body.style.overflow = 'hidden'; // Prevent background scroll
             }
         };
 
-        // Hamburger menu click (both click and touch events for iOS)
-        hamburgerMenu.addEventListener('click', toggleSidebar);
-        hamburgerMenu.addEventListener('touchend', (e) => {
+        // Sidebar toggle click (both click and touch events for iOS)
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        sidebarToggle.addEventListener('touchend', (e) => {
             e.preventDefault(); // Prevent double-firing with click
             toggleSidebar();
         });
@@ -3045,12 +3036,12 @@ class Taakbeheer {
     quickMove(lijst) {
         this.verplaatsTaak(lijst);
         const lijstNamen = {
-            'opvolgen': 'Follow-up',
-            'uitgesteld-wekelijks': 'Weekly',
-            'uitgesteld-maandelijks': 'Monthly',
-            'uitgesteld-3maandelijks': 'Quarterly',
-            'uitgesteld-6maandelijks': 'Bi-annual',
-            'uitgesteld-jaarlijks': 'Yearly'
+            'opvolgen': 'Opvolgen',
+            'uitgesteld-wekelijks': 'Wekelijks',
+            'uitgesteld-maandelijks': 'Maandelijks',
+            'uitgesteld-3maandelijks': '3-maandelijks',
+            'uitgesteld-6maandelijks': '6-maandelijks',
+            'uitgesteld-jaarlijks': 'Jaarlijks'
         };
         this.showQuickTip(`Verplaatst naar ${lijstNamen[lijst]}`);
     }
@@ -3075,8 +3066,8 @@ class Taakbeheer {
         if (newUsage === 4) {
             setTimeout(() => {
                 tipToast.show(
-                    "💡 Did you know? F-keys make inbox processing 3x faster. " +
-                    "F3=today, F4=tomorrow, F7=cycle duration. Press F1 for full overview.",
+                    "💡 Wist je dat? F-toetsen maken inbox verwerking 3x sneller. " +
+                    "F3=vandaag, F4=morgen, F7=cyclische duur. Druk F1 voor volledig overzicht.",
                     20000
                 );
             }, 2000);
@@ -3091,8 +3082,8 @@ class Taakbeheer {
         } else if (newUsage === 20) {
             setTimeout(() => {
                 tipToast.show(
-                    "⚡ Master tip: Combine F-keys for super fast processing. " +
-                    "F2→Type→F4→F6→Type→F7→Enter. No mouse needed!",
+                    "⚡ Master tip: Combineer F-toetsen voor super snelle verwerking. " +
+                    "F2→Type→F4→F6→Type→F7→Enter. Geen muis nodig!",
                     20000
                 );
             }, 2000);
@@ -3294,7 +3285,7 @@ class Taakbeheer {
                 }
                 await this.renderTaken();
             } catch (error) {
-                console.error('Errorladen lijst:', error);
+                console.error('Fout bij laden lijst:', error);
                 this.taken = [];
                 await this.renderTaken();
             }
@@ -3318,7 +3309,7 @@ class Taakbeheer {
             await this.renderTaken();
 
         } catch (error) {
-            console.error('Errorladen dagelijkse planning:', error);
+            console.error('Fout bij laden dagelijkse planning:', error);
             this.taken = [];
             await this.renderTaken();
         }
@@ -3335,7 +3326,7 @@ class Taakbeheer {
         const isLoggedIn = this.isLoggedIn();
         console.log('🔐 Login check - isLoggedIn:', isLoggedIn, 'auth exists:', !!auth, 'auth.isAuthenticated:', auth?.isAuthenticated);
         if (!isLoggedIn) {
-            toast.warning('Log in to add tasks.');
+            toast.warning('Log in om taken toe te voegen.');
             return;
         }
         
@@ -3374,11 +3365,11 @@ class Taakbeheer {
 
                     input.value = '';
                     input.focus();
-                    toast.success('Task added!');
+                    toast.success('Taak toegevoegd!');
                 } else {
                     const errorText = await response.text();
                     console.error('❌ Server error:', response.status, errorText);
-                    toast.error(`Error adding task (${response.status}): ${errorText}`);
+                    toast.error(`Fout bij toevoegen van taak (${response.status}): ${errorText}`);
                 }
             }, {
                 operationId: 'add-task',
@@ -3454,23 +3445,23 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
-                    <label>Task:</label>
-                    <input type="text" id="taakFilter" placeholder="Search in task text...">
+                    <label>Taak:</label>
+                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
                 </div>
                 <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
-                        <option value="">All projects</option>
+                        <option value="">Alle projecten</option>
                     </select>
                 </div>
                 <div class="filter-groep">
                     <label>Context:</label>
                     <select id="contextFilter">
-                        <option value="">All contexts</option>
+                        <option value="">Alle contexten</option>
                     </select>
                 </div>
                 <div class="filter-groep">
-                    <label>Date:</label>
+                    <label>Datum:</label>
                     <input type="date" id="datumFilter">
                 </div>
             </div>
@@ -3504,7 +3495,7 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             const duurText = taak.duur ? `${taak.duur} min` : '';
             const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
@@ -3610,55 +3601,55 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
-                    <label>Task:</label>
-                    <input type="text" id="taakFilter" placeholder="Search in task text...">
+                    <label>Taak:</label>
+                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
                 </div>
                 <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
-                        <option value="">All projects</option>
+                        <option value="">Alle projecten</option>
                     </select>
                 </div>
                 <div class="filter-groep">
                     <label>Context:</label>
                     <select id="contextFilter">
-                        <option value="">All contexts</option>
+                        <option value="">Alle contexten</option>
                     </select>
                 </div>
                 <div class="filter-groep">
-                    <label>Date:</label>
+                    <label>Datum:</label>
                     <input type="date" id="datumFilter">
                 </div>
                 <div class="filter-groep">
-                    <label>Priority:</label>
+                    <label>Prioriteit:</label>
                     <select id="prioriteitFilter" class="prioriteit-filter">
-                        <option value="">All priorities</option>
-                        <option value="hoog">🔴 High</option>
-                        <option value="gemiddeld">🟠 Medium</option>
-                        <option value="laag">⚪ Low</option>
+                        <option value="">Alle prioriteiten</option>
+                        <option value="hoog">🔴 Hoog</option>
+                        <option value="gemiddeld">🟠 Gemiddeld</option>
+                        <option value="laag">⚪ Laag</option>
                     </select>
                 </div>
                 <label class="simple-checkbox">
                     <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                    Show future tasks
+                    Toon toekomstige taken
                 </label>
                 <div class="filter-groep" style="display: none;">
-                    <button onclick="deleteAllTasks()"
+                    <button onclick="deleteAllTasks()" 
                             style="background: #ff3b30; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">
-                        🗑️ Delete All (Temporary)
+                        🗑️ Alles Wissen (Tijdelijk)
                     </button>
                 </div>
             </div>
             <div class="bulk-controls-container">
                 <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
-                    Bulk edit
+                    Bulk bewerken
                 </button>
             </div>
             <ul id="acties-lijst" class="taak-lijst"></ul>
             <div id="bulk-toolbar" class="bulk-toolbar" style="display: none;">
                 <div class="bulk-toolbar-content">
                     <div class="bulk-selection-info">
-                        <span id="bulk-selection-count">0 tasks selected</span>
+                        <span id="bulk-selection-count">0 taken geselecteerd</span>
                     </div>
                     <div class="bulk-actions">
                         ${this.getBulkVerplaatsKnoppen()}
@@ -3716,7 +3707,7 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Datum status indicator
@@ -3744,7 +3735,7 @@ class Taakbeheer {
             if (datum) extraInfo.push(`${datumIndicator} ${datum}`);
             if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
             if (taak.bijlagenCount && taak.bijlagenCount > 0) {
-                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} attachment${taak.bijlagenCount > 1 ? 's' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
+                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} bijlage${taak.bijlagenCount > 1 ? 'n' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
             }
             
             const extraInfoHtml = extraInfo.length > 0 ? 
@@ -3762,7 +3753,7 @@ class Taakbeheer {
                 <div class="taak-checkbox">
                     ${checkboxHtml}
                 </div>
-                <div class="taak-content" data-taak-id="${taak.id}" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">
+                <div class="taak-content" data-taak-id="${taak.id}" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
                     <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
                     ${extraInfoHtml}
                 </div>
@@ -3800,7 +3791,7 @@ class Taakbeheer {
             
             const projectNaam = this.getProjectNaam(taak.projectId);
             const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
             
             // Datum status indicator
@@ -3901,7 +3892,7 @@ class Taakbeheer {
             } else if (this.huidigeLijst === 'afgewerkte-taken') {
                 acties = `
                     <div class="taak-acties">
-                        <button onclick="app.terugzettenNaarInbox('${taak.id}')" class="terugzet-btn" title="Back to inbox">↩️</button>
+                        <button onclick="app.terugzettenNaarInbox('${taak.id}')" class="terugzet-btn" title="Terug naar inbox">↩️</button>
                         <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
                     </div>
                 `;
@@ -3922,7 +3913,7 @@ class Taakbeheer {
                     <input type="checkbox" id="taak-${taak.id}" ${checkboxChecked} onchange="app.taakAfwerken('${taak.id}')">
                 </div>
                 <div class="taak-content">
-                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">${taak.tekst}${recurringIndicator}</div>
+                    <div class="taak-titel" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">${taak.tekst}${recurringIndicator}</div>
                 </div>
                 ${acties}
             `;
@@ -3955,16 +3946,16 @@ class Taakbeheer {
         }
         
         // Instant toast voor directe feedback
-        toast.info('Task is being completed...');
+        toast.info('Taak wordt afgewerkt...');
         
         // Entertainment messages voor task completion in acties scherm
         const completionMessages = [
-            '✅ Task is being completed...',
-            '🎯 Progress is being saved...',
-            '📊 Productivity is being updated...',
-            '⚡ Database is being synchronized...',
-            '🔄 Recurring tasks are being processed...',
-            '🚀 Almost done...'
+            '✅ Taak wordt afgewerkt...',
+            '🎯 Voortgang wordt opgeslagen...',
+            '📊 Productiviteit wordt bijgewerkt...',
+            '⚡ Database wordt gesynchroniseerd...',
+            '🔄 Herhalende taken worden verwerkt...',
+            '🚀 Bijna klaar...'
         ];
         
         // Start entertainment loading
@@ -4030,14 +4021,14 @@ class Taakbeheer {
                 // Individual task updates are handled directly via API
                 if (isRecurring && !nextRecurringTaskId) {
                     console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed');
-                    toast.error('Warning: The recurring task could not be created. Check the recurrence settings.');
+                    toast.error('Let op: De herhalende taak kon niet worden aangemaakt. Controleer de herhaling-instellingen.');
                 }
                 // this.laadTellingen().catch(console.error); // Disabled - tellers removed from sidebar
                 
                 // Show success message and refresh UI with scroll preservation
                 if (isRecurring && nextRecurringTaskId) {
-                    const nextDateFormatted = this.formatDisplayDate(calculatedNextDate);
-                    toast.success(`Task completed! Next recurrence scheduled for ${nextDateFormatted}`);
+                    const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
+                    toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // For recurring tasks, add new task to local arrays immediately
                     // this.laadTellingen(); // Disabled - tellers removed from sidebar
@@ -4063,7 +4054,7 @@ class Taakbeheer {
                         }
                     }
                 } else {
-                    toast.success('Task completed!');
+                    toast.success('Taak afgewerkt!');
                 }
 
                 // Update sidebar counters after task complete - Feature 022
@@ -4078,7 +4069,7 @@ class Taakbeheer {
                     checkbox.checked = false;
                     checkbox.disabled = false;
                 }
-                toast.error('Error completing task. Try again.');
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
             
             // Always cleanup the completion tracking
@@ -4146,10 +4137,10 @@ class Taakbeheer {
                     this.renderTaken();
                 }
                 
-                toast.success('Task moved back to inbox');
+                toast.success('Taak teruggezet naar inbox');
                 return true;
             } else {
-                toast.error('Error moving task back');
+                toast.error('Fout bij terugzetten van taak');
                 return false;
             }
         }, {
@@ -4193,7 +4184,7 @@ class Taakbeheer {
         
         // Also show a toast for extra satisfaction
         setTimeout(() => {
-            toast.success('🎊 Great! Your inbox is now completely empty!', 5000);
+            toast.success('🎊 Geweldig! Je inbox is nu volledig leeg!', 5000);
         }, 1000);
     }
 
@@ -4215,11 +4206,11 @@ class Taakbeheer {
         }
         
         if (!taak) {
-            toast.error('Task not found');
+            toast.error('Taak niet gevonden');
             return;
         }
         
-        const bevestiging = await confirmModal.show('Delete Task', `Are you sure you want to delete "${taak.tekst}"?`);
+        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
         
         await loading.withLoading(async () => {
@@ -4233,30 +4224,30 @@ class Taakbeheer {
                     const result = await response.json();
                     
                     // Check B2 cleanup status and provide user feedback
-                    let successMessage = 'Task deleted';
+                    let successMessage = 'Taak verwijderd';
                     let hasB2Warning = false;
-
+                    
                     if (result.b2Cleanup) {
                         const cleanup = result.b2Cleanup;
-
+                        
                         if (cleanup.failed > 0) {
                             hasB2Warning = true;
                             if (cleanup.configError) {
-                                console.warn(`⚠️ B2 configuration problem for task ${id}`);
-                                toast.warning(`Task deleted, but attachment deletion is not configured. Cloud storage cleanup skipped.`);
+                                console.warn(`⚠️ B2 configuratie probleem voor taak ${id}`);
+                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering is niet geconfigureerd. Cloud storage cleanup overgeslagen.`);
                             } else if (cleanup.timeout) {
-                                console.warn(`⚠️ B2 attachment cleanup timeout for task ${id}`);
-                                toast.warning(`Task deleted, but attachment deletion took too long. Some files may not have been deleted from cloud storage.`);
+                                console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${id}`);
+                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
                             } else if (cleanup.deleted > 0) {
-                                console.warn(`⚠️ Partial B2 cleanup for task ${id}: ${cleanup.deleted} succeeded, ${cleanup.failed} failed`);
-                                toast.warning(`Task deleted. ${cleanup.deleted} of ${cleanup.deleted + cleanup.failed} attachments deleted from cloud storage.`);
+                                console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${id}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
+                                toast.warning(`Taak verwijderd. ${cleanup.deleted} van de ${cleanup.deleted + cleanup.failed} bijlagen verwijderd uit cloud storage.`);
                             } else {
-                                console.error(`❌ Complete B2 cleanup failure for task ${id}`);
-                                toast.error(`Task deleted, but attachments could not be deleted from cloud storage. Check your internet connection.`);
+                                console.error(`❌ Volledige B2 cleanup failure voor taak ${id}`);
+                                toast.error(`Taak verwijderd, maar bijlagen konden niet verwijderd worden uit cloud storage. Controleer je internetverbinding.`);
                             }
                         } else if (cleanup.deleted > 0) {
-                            console.log(`✅ B2 cleanup successful for task ${id}: ${cleanup.deleted} files deleted`);
-                            successMessage = `Task and ${cleanup.deleted} attachments deleted`;
+                            console.log(`✅ B2 cleanup succesvol voor taak ${id}: ${cleanup.deleted} bestanden verwijderd`);
+                            successMessage = `Taak en ${cleanup.deleted} bijlagen verwijderd`;
                         }
                     }
                     
@@ -4301,16 +4292,16 @@ class Taakbeheer {
                     }
                 } else {
                     const error = await response.json();
-                    toast.error(`Error deleting: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
-                toast.error('Error deleting task');
+                toast.error('Fout bij verwijderen van taak');
             }
         }, {
             operationId: `delete-task-${id}`,
             showGlobal: true,
-            message: 'Deleting task...'
+            message: 'Taak verwijderen...'
         });
     }
 
@@ -4345,7 +4336,7 @@ class Taakbeheer {
             }
             this.vulProjectSelect();
         } catch (error) {
-            console.error('Errorladen projecten:', error);
+            console.error('Fout bij laden projecten:', error);
         }
     }
 
@@ -4363,7 +4354,7 @@ class Taakbeheer {
             }
             this.vulContextSelect();
         } catch (error) {
-            console.error('Errorladen contexten:', error);
+            console.error('Fout bij laden contexten:', error);
         }
     }
 
@@ -4371,7 +4362,7 @@ class Taakbeheer {
         const select = document.getElementById('projectSelect');
         if (!select) return;
         
-        select.innerHTML = '<option value="">No project</option>';
+        select.innerHTML = '<option value="">Geen project</option>';
         this.projecten.forEach(project => {
             const option = document.createElement('option');
             option.value = project.id;
@@ -4431,7 +4422,7 @@ class Taakbeheer {
     setActionButtonText(isNewAction = true) {
         const button = document.getElementById('maakActieBtn');
         if (button) {
-            button.textContent = isNewAction ? 'Create action' : 'Save changes';
+            button.textContent = isNewAction ? 'Actie maken' : 'Aanpassingen opslaan';
         }
     }
 
@@ -4537,14 +4528,9 @@ class Taakbeheer {
                     }
                 }
             }
-
+            
             // Track usage for progressive F-key tips
             this.trackPlanningUsage();
-
-            // Check for page-specific messages when planning popup opens (Feature 033)
-            if (window.checkForMessages) {
-                await window.checkForMessages('/planning-popup');
-            }
         }
     }
 
@@ -4564,12 +4550,12 @@ class Taakbeheer {
         if (volgendeTaak) {
             // Direct planTaak aanroepen (loading is al actief)
             await this.planTaak(volgendeTaak.id);
-            toast.info(`Next task: ${volgendeTaak.tekst.substring(0, 30)}...`);
+            toast.info(`Volgende taak: ${volgendeTaak.tekst.substring(0, 30)}...`);
             return true;
         }
 
         // Geen taken meer in inbox
-        toast.success('<i class="fas fa-party-horn"></i> Inbox is empty! All tasks have been processed.');
+        toast.success('<i class="fas fa-party-horn"></i> Inbox is leeg! Alle taken zijn verwerkt.');
         return false;
     }
 
@@ -4577,7 +4563,7 @@ class Taakbeheer {
     getWeekdagKnoppen(dagenOffset, onclickCallback, btnClass = 'menu-item') {
         const vandaag = new Date();
         const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
-        const dagenVanDeWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
 
         let weekdagenHTML = '';
         const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
@@ -4636,12 +4622,12 @@ class Taakbeheer {
                     <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
                 </div>
                 
-                <h3>Move to Follow-up</h3>
+                <h3>Verplaats naar Opvolgen</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
                 
-                <h3>Actions</h3>
+                <h3>Acties</h3>
                 <div class="menu-section">
                     <button onclick="app.verwijderTaak('${taakId}'); app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
@@ -4649,11 +4635,11 @@ class Taakbeheer {
         } else if (menuType === 'uitgesteld') {
             // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten (exclusief huidige) + opvolgen
             const uitgesteldOpties = [
-                { id: 'uitgesteld-wekelijks', naam: 'Weekly' },
-                { id: 'uitgesteld-maandelijks', naam: 'Monthly' },
-                { id: 'uitgesteld-3maandelijks', naam: 'Quarterly' },
-                { id: 'uitgesteld-6maandelijks', naam: 'Bi-annual' },
-                { id: 'uitgesteld-jaarlijks', naam: 'Yearly' }
+                { id: 'uitgesteld-wekelijks', naam: 'Wekelijks' },
+                { id: 'uitgesteld-maandelijks', naam: 'Maandelijks' },
+                { id: 'uitgesteld-3maandelijks', naam: '3-maandelijks' },
+                { id: 'uitgesteld-6maandelijks', naam: '6-maandelijks' },
+                { id: 'uitgesteld-jaarlijks', naam: 'Jaarlijks' }
             ];
             
             // Filter uit de huidige lijst
@@ -4675,12 +4661,12 @@ class Taakbeheer {
                     ${uitgesteldButtonsHTML}
                 </div>
                 
-                <h3>Move to Follow-up</h3>
+                <h3>Verplaats naar Opvolgen</h3>
                 <div class="menu-section">
                     <button onclick="app.verplaatsNaarOpvolgen('${taakId}')" class="menu-item opvolgen">Opvolgen</button>
                 </div>
                 
-                <h3>Actions</h3>
+                <h3>Acties</h3>
                 <div class="menu-section">
                     <button onclick="app.verwijderTaak('${taakId}'); app.removeContextMenuHighlight(); document.querySelector('.acties-menu-overlay').remove();" class="menu-item menu-delete">Verwijder taak</button>
                 </div>
@@ -4880,9 +4866,9 @@ class Taakbeheer {
                 // Refresh huidige lijst en tellingen
                 await this.laadHuidigeLijst();
                 // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-                toast.success('Task moved to Inbox');
+                toast.success('Taak verplaatst naar Inbox');
             } else {
-                toast.error('Error moving to Inbox');
+                toast.error('Fout bij verplaatsen naar Inbox');
             }
         }, {
             operationId: 'move-to-inbox',
@@ -4939,18 +4925,18 @@ class Taakbeheer {
                 await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                 // await this.laadTellingen(); // Disabled - tellers removed from sidebar
                 
-                const dagNaam = dagenVoorruit === 0 ? 'today' :
-                               dagenVoorruit === 1 ? 'tomorrow' :
-                               this.formatDisplayDate(nieuweDatum);
-
-                toast.success(`Task scheduled for ${dagNaam}`);
+                const dagNaam = dagenVoorruit === 0 ? 'vandaag' : 
+                               dagenVoorruit === 1 ? 'morgen' : 
+                               `${nieuweDatum.toLocaleDateString('nl-NL', { weekday: 'long' })} ${nieuweDatum.toLocaleDateString('nl-NL')}`;
+                
+                toast.success(`Taak gepland voor ${dagNaam}`);
             } else {
-                toast.error('Error updating date');
+                toast.error('Fout bij updaten van datum');
             }
         }, {
             operationId: 'update-datum',
             showGlobal: true,
-            message: 'Date is being updated...'
+            message: 'Datum wordt bijgewerkt...'
         });
 
         // Sluit menu
@@ -4977,12 +4963,12 @@ class Taakbeheer {
             // await this.laadTellingen(); // Disabled - tellers removed from sidebar
             
             const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
-                .replace('wekelijks', 'Weekly')
-                .replace('maandelijks', 'Monthly')
-                .replace('3maandelijks', 'Quarterly')
-                .replace('6maandelijks', '6-monthly')
-                .replace('jaarlijks', 'Yearly');
-            toast.success(`Task moved to ${weergaveNaam}`);
+                .replace('wekelijks', 'Wekelijks')
+                .replace('maandelijks', 'Maandelijks')
+                .replace('3maandelijks', '3-maandelijks')
+                .replace('6maandelijks', '6-maandelijks')
+                .replace('jaarlijks', 'Jaarlijks');
+            toast.success(`Taak verplaatst naar ${weergaveNaam}`);
         }, {
             operationId: 'verplaats-uitgesteld',
             showGlobal: true,
@@ -5007,12 +4993,12 @@ class Taakbeheer {
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
             // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-
-            toast.success('Task moved to Follow Up');
+            
+            toast.success('Taak verplaatst naar Opvolgen');
         }, {
             operationId: 'verplaats-opvolgen',
             showGlobal: true,
-            message: 'Moving task to Follow-up...'
+            message: 'Taak wordt verplaatst naar Opvolgen...'
         });
     }
 
@@ -5023,7 +5009,7 @@ class Taakbeheer {
         document.getElementById('duur').value = '';
         document.getElementById('opmerkingen').value = '';
         document.getElementById('herhalingSelect').value = '';
-        document.getElementById('herhalingDisplay').value = 'No recurrence';
+        document.getElementById('herhalingDisplay').value = 'Geen herhaling';
 
         this.zetVandaagDatum();
 
@@ -5065,7 +5051,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProject() {
-        const projectData = await projectModal.show('New Project');
+        const projectData = await projectModal.show('Nieuw Project');
         if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -5083,7 +5069,7 @@ class Taakbeheer {
     }
 
     async maakNieuweContext() {
-        const naam = await inputModal.show('New Context', 'Naam voor de nieuwe context:');
+        const naam = await inputModal.show('Nieuwe Context', 'Naam voor de nieuwe context:');
         if (naam && naam.trim()) {
             const nieuweContext = {
                 id: this.generateId(),
@@ -5118,7 +5104,7 @@ class Taakbeheer {
         console.log('maakActie - prioriteit:', prioriteit, 'isInboxTaak:', isInboxTaak);
 
         if (!taakNaam || !verschijndatum || !contextId || !duur) {
-            toast.warning('All fields except project are required!');
+            toast.warning('Alle velden behalve project zijn verplicht!');
             return;
         }
 
@@ -5161,7 +5147,7 @@ class Taakbeheer {
                         await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                         this.sluitPopup();
                     } else {
-                        toast.error('Error editing action');
+                        toast.error('Fout bij bewerken van actie');
                     }
                 }
             } else {
@@ -5195,7 +5181,7 @@ class Taakbeheer {
                 });
                 
                 if (response.ok) {
-                    console.log('<i class="fas fa-check"></i> Action successfully saved with recurrence:', herhalingType);
+                    console.log('<i class="fas fa-check"></i> Actie succesvol opgeslagen met herhaling:', herhalingType);
                     
                     // Save subtaken if any were created
                     if (subtakenManager) {
@@ -5218,8 +5204,8 @@ class Taakbeheer {
                         this.sluitPopup();
                     }
                 } else {
-                    console.error('Erroropslaan actie:', response.status);
-                    toast.error('Error scheduling task. Please try again.');
+                    console.error('Fout bij opslaan actie:', response.status);
+                    toast.error('Fout bij plannen van taak. Probeer opnieuw.');
                     return;
                 }
             }
@@ -5304,7 +5290,7 @@ class Taakbeheer {
                 return false;
             }
         } catch (error) {
-            console.error(`Error moving to ${lijstNaam}:`, error);
+            console.error(`Fout bij verplaatsen naar ${lijstNaam}:`, error);
             return false;
         }
     }
@@ -5326,7 +5312,7 @@ class Taakbeheer {
                 body: JSON.stringify(this.projecten)
             });
         } catch (error) {
-            console.error('Erroropslaan projecten:', error);
+            console.error('Fout bij opslaan projecten:', error);
         }
     }
 
@@ -5338,7 +5324,7 @@ class Taakbeheer {
                 body: JSON.stringify(this.contexten)
             });
         } catch (error) {
-            console.error('Erroropslaan contexten:', error);
+            console.error('Fout bij opslaan contexten:', error);
         }
     }
 
@@ -5926,14 +5912,14 @@ class Taakbeheer {
             // Validate input parameters
             if (!originalTask || !nextDate) {
                 console.error('❌ Invalid parameters for createNextRecurringTask:', { originalTask, nextDate });
-                toast.error('Error: Invalid parameters for recurring task');
+                toast.error('Fout: Ongeldige parameters voor herhalende taak');
                 return null;
             }
-
+            
             // Validate date format
             if (!nextDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 console.error('❌ Invalid date format:', nextDate);
-                toast.error('Error: Invalid date for recurring task');
+                toast.error('Fout: Ongeldige datum voor herhalende taak');
                 return null;
             }
             
@@ -5972,7 +5958,7 @@ class Taakbeheer {
                         return result.taskId;
                     } else {
                         console.error('<i class="ti ti-x"></i> Task creation verification failed, status:', checkResponse.status);
-                        toast.error('Warning: Recurring task created but verification failed');
+                        toast.error('Waarschuwing: Herhalende taak aangemaakt maar verificatie mislukt');
                         return null;
                     }
                 } catch (verifyError) {
@@ -5986,59 +5972,31 @@ class Taakbeheer {
                 
                 // Parse specific error messages
                 if (response.status === 400) {
-                    toast.error('Error: Invalid data for recurring task');
+                    toast.error('Fout: Ongeldige gegevens voor herhalende taak');
                 } else if (response.status === 500) {
-                    toast.error('Server error creating recurring task. Please try again later.');
+                    toast.error('Server fout bij aanmaken herhalende taak. Probeer later opnieuw.');
                 } else {
-                    toast.error(`Error creating recurring task (${response.status})`);
+                    toast.error(`Fout bij aanmaken herhalende taak (${response.status})`);
                 }
                 return null;
             }
         } catch (error) {
             console.error('Error creating recurring task:', error);
-            toast.error('Network error creating recurring task');
+            toast.error('Netwerk fout bij aanmaken herhalende taak');
             return null;
         }
     }
 
     getProjectNaam(projectId) {
-        if (!projectId || projectId === '') return 'No project';
+        if (!projectId || projectId === '') return 'Geen project';
         const project = this.projecten.find(p => p.id === projectId);
-        return project ? project.naam : 'Unknown project';
+        return project ? project.naam : 'Onbekend project';
     }
 
     getContextNaam(contextId) {
-        if (!contextId || contextId === '') return 'No context';
+        if (!contextId || contextId === '') return 'Geen context';
         const context = this.contexten.find(c => c.id === contextId);
-        return context ? context.naam : 'Unknown context';
-    }
-
-    /**
-     * Formats a date for display in DD/MM/YYYY format
-     * @param {Date|string} dateInput - Date object or ISO string (YYYY-MM-DD)
-     * @param {Object} options - Optional formatting options
-     * @param {boolean} options.includeWeekday - Include weekday name (default: false)
-     * @returns {string} Formatted date string "DD/MM/YYYY"
-     * @throws {Error} If dateInput is invalid or results in NaN
-     */
-    formatDisplayDate(dateInput, options = {}) {
-        // Check for null/undefined first
-        if (dateInput === null || dateInput === undefined) {
-            throw new Error(`Invalid date: ${dateInput}`);
-        }
-
-        const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-        if (isNaN(date.getTime())) {
-            throw new Error(`Invalid date: ${dateInput}`);
-        }
-
-        const formatter = new Intl.DateTimeFormat('nl-NL', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-
-        return formatter.format(date).replace(/-/g, '/');
+        return context ? context.naam : 'Onbekende context';
     }
 
     getPrioriteitIndicator(prioriteit) {
@@ -6096,13 +6054,13 @@ class Taakbeheer {
                 if (!setPriorityResponse.ok) {
                     const errorData = await setPriorityResponse.json();
                     checkbox.checked = false;
-                    toast.error(errorData.error || 'Error setting priority');
+                    toast.error(errorData.error || 'Fout bij instellen prioriteit');
                     return;
                 }
 
                 // Reload planning view to show updated star states
                 await this.toonDagelijksePlanning();
-                toast.success('Top priority set');
+                toast.success('Top prioriteit ingesteld');
             } else {
                 // Remove priority
                 const removePriorityResponse = await fetch(`/api/taak/${taakId}/prioriteit`, {
@@ -6114,13 +6072,13 @@ class Taakbeheer {
                 if (!removePriorityResponse.ok) {
                     const errorData = await removePriorityResponse.json();
                     checkbox.checked = true;
-                    toast.error(errorData.error || 'Error removing priority');
+                    toast.error(errorData.error || 'Fout bij verwijderen prioriteit');
                     return;
                 }
 
                 // Reload planning view to show updated star states
                 await this.toonDagelijksePlanning();
-                toast.success('Top priority removed');
+                toast.success('Top prioriteit verwijderd');
             }
         }, {
             operationId: 'toggle-priority',
@@ -6383,7 +6341,7 @@ class Taakbeheer {
         // Project filter vullen
         const projectFilter = document.getElementById('projectFilter');
         if (projectFilter) {
-            // Clear existing options except first ("All projects")
+            // Clear existing options except first ("Alle projecten")
             while (projectFilter.children.length > 1) {
                 projectFilter.removeChild(projectFilter.lastChild);
             }
@@ -6400,7 +6358,7 @@ class Taakbeheer {
         // Context filter vullen
         const contextFilter = document.getElementById('contextFilter');
         if (contextFilter) {
-            // Clear existing options except first ("All contexts")
+            // Clear existing options except first ("Alle contexten")
             while (contextFilter.children.length > 1) {
                 contextFilter.removeChild(contextFilter.lastChild);
             }
@@ -6920,7 +6878,7 @@ class Taakbeheer {
         // Update page title
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
-            pageTitle.textContent = 'Context Management';
+            pageTitle.textContent = 'Contexten Beheer';
         }
 
         // Hide input container
@@ -6935,11 +6893,6 @@ class Taakbeheer {
 
         // Show contexten beheer interface
         this.renderContextenBeheer();
-
-        // Check for page-specific messages (Feature 033)
-        if (window.checkForMessages) {
-            window.checkForMessages('/contextenbeheer');
-        }
     }
 
     restoreNormalContainer(targetLijst = null) {
@@ -6976,15 +6929,15 @@ class Taakbeheer {
                     'inbox': 'Inbox',
                     'acties': 'Acties',
                     'projecten': 'Projecten',
-                    'opvolgen': 'Follow-up',
+                    'opvolgen': 'Opvolgen',
                     'afgewerkte-taken': 'Afgewerkt',
-                    'dagelijkse-planning': 'Daily Planning',
-                    'contextenbeheer': 'Context Management',
-                    'uitgesteld-wekelijks': 'Weekly',
-                    'uitgesteld-maandelijks': 'Monthly',
-                    'uitgesteld-3maandelijks': 'Quarterly',
-                    'uitgesteld-6maandelijks': 'Bi-annual',
-                    'uitgesteld-jaarlijks': 'Yearly'
+                    'dagelijkse-planning': 'Dagelijkse Planning',
+                    'contextenbeheer': 'Contexten Beheer',
+                    'uitgesteld-wekelijks': 'Wekelijks',
+                    'uitgesteld-maandelijks': 'Maandelijks',
+                    'uitgesteld-3maandelijks': '3-maandelijks',
+                    'uitgesteld-6maandelijks': '6-maandelijks',
+                    'uitgesteld-jaarlijks': 'Jaarlijks'
                 };
                 
                 const pageTitle = document.getElementById('page-title');
@@ -6997,7 +6950,7 @@ class Taakbeheer {
                 if (isInbox) {
                     contentArea.innerHTML = `
                         <div class="taak-input-container" id="taak-input-container">
-                            <input type="text" id="taakInput" placeholder="New task..." autofocus>
+                            <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
                             <button id="toevoegBtn">Toevoegen</button>
                         </div>
                         <div class="taken-container">
@@ -7031,33 +6984,28 @@ class Taakbeheer {
                     'inbox': 'Inbox',
                     'acties': 'Acties',
                     'projecten': 'Projecten',
-                    'opvolgen': 'Follow-up',
+                    'opvolgen': 'Opvolgen',
                     'afgewerkte-taken': 'Afgewerkt',
-                    'dagelijkse-planning': 'Daily Planning',
-                    'contextenbeheer': 'Context Management',
-                    'uitgesteld-wekelijks': 'Weekly',
-                    'uitgesteld-maandelijks': 'Monthly',
-                    'uitgesteld-3maandelijks': 'Quarterly',
-                    'uitgesteld-6maandelijks': 'Bi-annual',
-                    'uitgesteld-jaarlijks': 'Yearly'
+                    'dagelijkse-planning': 'Dagelijkse Planning',
+                    'contextenbeheer': 'Contexten Beheer',
+                    'uitgesteld-wekelijks': 'Wekelijks',
+                    'uitgesteld-maandelijks': 'Maandelijks',
+                    'uitgesteld-3maandelijks': '3-maandelijks',
+                    'uitgesteld-6maandelijks': '6-maandelijks',
+                    'uitgesteld-jaarlijks': 'Jaarlijks'
                 };
                 const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
                 
                 // Only show input container for inbox
                 const inputContainerHTML = (targetLijst || this.huidigeLijst) === 'inbox' ? `
                     <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="New task..." autofocus>
+                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
                         <button id="toevoegBtn">Toevoegen</button>
                     </div>
                 ` : '';
                 
                 mainContent.innerHTML = `
                     <header class="main-header">
-                        <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </button>
                         <h1 id="page-title">${currentTitle}</h1>
                     </header>
                     <div class="content-area">
@@ -7137,24 +7085,24 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="contexten-beheer">
                 <div class="beheer-header">
-                    <h3>🏷️ Context Management</h3>
+                    <h3>🏷️ Contexten Beheer</h3>
                     <button onclick="app.voegContextToe()" class="primary-btn">
-                        ➕ New Context
+                        ➕ Nieuwe Context
                     </button>
                 </div>
                 
                 <div class="contexten-lijst" id="contextenLijst">
                     ${this.contexten.length === 0 ? 
-                        '<p class="geen-items">No contexts created yet. Click on "New Context" to get started.</p>' :
+                        '<p class="geen-items">Nog geen contexten aangemaakt. Klik op "Nieuwe Context" om te beginnen.</p>' :
                         this.contexten.map(context => `
                             <div class="context-item" data-id="${context.id}">
                                 <div class="context-content">
                                     <span class="context-naam">${context.naam}</span>
-                                    <small class="context-info">Created: ${this.formatDisplayDate(context.aangemaakt)}</small>
+                                    <small class="context-info">Aangemaakt: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
                                 </div>
                                 <div class="context-acties">
-                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Edit"><i class="fas fa-edit"></i></button>
-                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Delete">×</button>
+                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Bewerken"><i class="fas fa-edit"></i></button>
+                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Verwijderen">×</button>
                                 </div>
                             </div>
                         `).join('')
@@ -7181,7 +7129,7 @@ class Taakbeheer {
         // Update page title
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
-            pageTitle.textContent = 'Weekly Optimization';
+            pageTitle.textContent = 'Wekelijkse Optimalisatie';
         }
 
         // Hide input container
@@ -7196,11 +7144,6 @@ class Taakbeheer {
 
         // Show wekelijkse optimalisatie interface
         this.renderWekelijkseOptimalisatie();
-
-        // Check for page-specific messages (Feature 033)
-        if (window.checkForMessages) {
-            window.checkForMessages('/wekelijkse-optimalisatie');
-        }
     }
 
     async renderWekelijkseOptimalisatie() {
@@ -7279,7 +7222,7 @@ class Taakbeheer {
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="bekijk-opvolgen" class="optimalisatie-checkbox">
                             <label for="bekijk-opvolgen">Bekijk je opvolgen lijst</label>
-                            <button class="actie-knop" onclick="app.navigateToList('opvolgen')">Go to Follow-up</button>
+                            <button class="actie-knop" onclick="app.navigateToList('opvolgen')">Ga naar Opvolgen</button>
                         </div>
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="bekijk-projecten" class="optimalisatie-checkbox">
@@ -7375,21 +7318,21 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="zoek-interface">
                 <div class="zoek-container">
-                    <h2><i class="ti ti-search"></i> Search in Tasks</h2>
-                    <p>Search through all your tasks in all lists</p>
-
+                    <h2><i class="ti ti-search"></i> Zoeken in Taken</h2>
+                    <p>Zoek door al je taken in alle lijsten</p>
+                    
                     <div class="zoek-form">
                         <div class="zoek-input-container">
-                            <input type="text"
-                                   id="zoek-input"
-                                   placeholder="Search in task names, notes, projects..."
+                            <input type="text" 
+                                   id="zoek-input" 
+                                   placeholder="Zoek in taaknamen, opmerkingen, projecten..."
                                    class="zoek-input">
-                            <button id="zoek-btn" class="zoek-btn">Search</button>
+                            <button id="zoek-btn" class="zoek-btn">Zoeken</button>
                         </div>
-
+                        
                         <div class="zoek-filters">
                             <div class="filter-group">
-                                <label>Search in:</label>
+                                <label>Zoek in:</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-inbox" checked>
@@ -7397,27 +7340,27 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-acties" checked>
-                                        <span>Actions</span>
+                                        <span>Acties</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-opvolgen" checked>
-                                        <span>Follow-up</span>
+                                        <span>Opvolgen</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-uitgesteld" checked>
-                                        <span>Postponed</span>
+                                        <span>Uitgesteld</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-afgewerkt">
-                                        <span>Completed</span>
+                                        <span>Afgewerkt</span>
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="zoek-resultaten" id="zoek-resultaten" style="display: none;">
-                        <h3>Search Results</h3>
+                        <h3>Zoekresultaten</h3>
                         <div id="resultaten-lijst"></div>
                     </div>
                 </div>
@@ -7446,11 +7389,6 @@ class Taakbeheer {
 
         // Focus on search input
         zoekInput.focus();
-
-        // Check for page-specific messages (Feature 033)
-        if (window.checkForMessages) {
-            window.checkForMessages('/zoeken');
-        }
     }
 
     async performSearch() {
@@ -7477,7 +7415,7 @@ class Taakbeheer {
 
         try {
             // Show loading
-            resultatenLijst.innerHTML = '<div class="loading">Searching...</div>';
+            resultatenLijst.innerHTML = '<div class="loading">Zoeken...</div>';
             resultatenContainer.style.display = 'block';
 
             // Get all tasks from selected lists
@@ -7529,8 +7467,8 @@ class Taakbeheer {
             this.displayZoekResultaten(gevondenTaken, zoekTerm);
 
         } catch (error) {
-            console.error('Errorzoeken:', error);
-            resultatenLijst.innerHTML = '<div class="error">An error occurred while searching.</div>';
+            console.error('Fout bij zoeken:', error);
+            resultatenLijst.innerHTML = '<div class="error">Er is een fout opgetreden bij het zoeken.</div>';
         }
     }
 
@@ -7541,8 +7479,8 @@ class Taakbeheer {
         if (taken.length === 0) {
             resultatenLijst.innerHTML = `
                 <div class="geen-resultaten">
-                    <p>No tasks found for "${zoekTerm}"</p>
-                    <p class="sub-text">Try another search term or check your filters</p>
+                    <p>Geen taken gevonden voor "${zoekTerm}"</p>
+                    <p class="sub-text">Probeer een andere zoekterm of controleer je filters</p>
                 </div>
             `;
             return;
@@ -7558,7 +7496,7 @@ class Taakbeheer {
             groepen[lijstNaam].push(taak);
         });
 
-        let html = `<div class="resultaten-summary">Found: ${taken.length} tasks</div>`;
+        let html = `<div class="resultaten-summary">Gevonden: ${taken.length} taken</div>`;
 
         // Display results grouped by list
         Object.entries(groepen).forEach(([lijstNaam, taken]) => {
@@ -7572,9 +7510,9 @@ class Taakbeheer {
             taken.forEach(taak => {
                 const projectNaam = this.getProjectNaam(taak.projectId);
                 const contextNaam = this.getContextNaam(taak.contextId);
-                const datum = taak.verschijndatum ?
-                    this.formatDisplayDate(taak.verschijndatum) : '';
-                const recurringIndicator = taak.herhalingActief ?
+                const datum = taak.verschijndatum ? 
+                    new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+                const recurringIndicator = taak.herhalingActief ? 
                     ' <span class="recurring-indicator"><i class="fas fa-redo"></i></span>' : '';
 
                 // Highlight search term in task text
@@ -7606,14 +7544,14 @@ class Taakbeheer {
     getLijstLabel(lijstNaam) {
         const labels = {
             'inbox': '<i class="ti ti-inbox"></i> Inbox',
-            'acties': '<i class="fas fa-clipboard"></i> Actions',
-            'opvolgen': '⏳ Follow-up',
-            'afgewerkte-taken': '<i class="fas fa-check"></i> Completed',
-            'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Weekly',
-            'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Monthly',
-            'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> Quarterly',
-            'uitgesteld-6maandelijks': '<i class="ti ti-calendar"></i> Bi-annual',
-            'uitgesteld-jaarlijks': '<i class="ti ti-calendar"></i> Yearly'
+            'acties': '<i class="fas fa-clipboard"></i> Acties',
+            'opvolgen': '⏳ Opvolgen',
+            'afgewerkte-taken': '<i class="fas fa-check"></i> Afgewerkt',
+            'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Wekelijks',
+            'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Maandelijks',
+            'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> 3-maandelijks',
+            'uitgesteld-6maandelijks': '<i class="ti ti-calendar"></i> 6-maandelijks',
+            'uitgesteld-jaarlijks': '<i class="ti ti-calendar"></i> Jaarlijks'
         };
         return labels[lijstNaam] || lijstNaam;
     }
@@ -7837,7 +7775,7 @@ class Taakbeheer {
         if (text) {
             // Check if user is logged in
             if (!this.isLoggedIn()) {
-                toast.warning('Log in to add tasks.');
+                toast.warning('Log in om taken toe te voegen.');
                 return;
             }
             
@@ -7875,8 +7813,8 @@ class Taakbeheer {
             // Clear input and refocus
             input.value = '';
             input.focus();
-
-            toast.success('Added to inbox!');
+            
+            toast.success('Toegevoegd aan inbox!');
         }
     }
 
@@ -7886,7 +7824,7 @@ class Taakbeheer {
     }
 
     completeMindDump() {
-        toast.success('Mind dump completed!');
+        toast.success('Mind dump voltooid!');
         this.closeMindDump();
     }
 
@@ -7989,9 +7927,9 @@ class Taakbeheer {
             this.mindDumpPreferences[newWord] = true;
             input.value = '';
             this.refreshWordsConfig();
-            toast.success(`"${newWord}" added!`);
+            toast.success(`"${newWord}" toegevoegd!`);
         } else if (this.mindDumpWords.includes(newWord)) {
-            toast.warning('This word already exists!');
+            toast.warning('Dit woord bestaat al!');
         }
     }
 
@@ -8012,17 +7950,17 @@ class Taakbeheer {
             if (response.ok) {
                 // Update active words
                 this.activeMindDumpWords = this.mindDumpWords.filter(word => this.mindDumpPreferences[word]);
-
+                
                 const enabledCount = this.activeMindDumpWords.length;
-                toast.success(`Configuration saved! ${enabledCount} words selected.`);
-
+                toast.success(`Configuratie opgeslagen! ${enabledCount} woorden geselecteerd.`);
+                
                 this.closeMindDumpConfig();
             } else {
-                toast.error('Error saving configuration.');
+                toast.error('Fout bij opslaan configuratie.');
             }
         } catch (error) {
             console.error('Error saving mind dump config:', error);
-            toast.error('Error saving configuration.');
+            toast.error('Fout bij opslaan configuratie.');
         }
     }
 
@@ -8034,7 +7972,7 @@ class Taakbeheer {
     }
 
     async voegContextToe() {
-        const naam = await inputModal.show('New Context', 'Context name:', '');
+        const naam = await inputModal.show('Nieuwe Context', 'Contextnaam:', '');
         if (!naam || !naam.trim()) return;
 
         await loading.withLoading(async () => {
@@ -8051,11 +7989,11 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${naam}" added`);
+            toast.success(`Context "${naam}" toegevoegd`);
         }, {
             operationId: 'add-context',
             showGlobal: true,
-            message: 'Adding context...'
+            message: 'Context toevoegen...'
         });
     }
 
@@ -8063,7 +8001,7 @@ class Taakbeheer {
         const context = this.contexten.find(c => c.id === contextId);
         if (!context) return;
 
-        const nieuweNaam = await inputModal.show('Edit Context', 'New name:', context.naam);
+        const nieuweNaam = await inputModal.show('Context Bewerken', 'Nieuwe naam:', context.naam);
         if (!nieuweNaam || !nieuweNaam.trim() || nieuweNaam.trim() === context.naam) return;
 
         await loading.withLoading(async () => {
@@ -8076,11 +8014,11 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${oudeNaam}" renamed to "${nieuweNaam}"`);
+            toast.success(`Context "${oudeNaam}" hernoemd naar "${nieuweNaam}"`);
         }, {
             operationId: 'edit-context',
             showGlobal: true,
-            message: 'Editing context...'
+            message: 'Context bewerken...'
         });
     }
 
@@ -8089,8 +8027,8 @@ class Taakbeheer {
         if (!context) return;
 
         const bevestiging = await confirmModal.show(
-            'Delete Context',
-            `Are you sure you want to delete context "${context.naam}"?\n\nThis action cannot be undone.`
+            'Context Verwijderen', 
+            `Weet je zeker dat je context "${context.naam}" wilt verwijderen?\n\nDeze actie kan niet ongedaan worden gemaakt.`
         );
         if (!bevestiging) return;
 
@@ -8102,11 +8040,11 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${context.naam}" removed`);
+            toast.success(`Context "${context.naam}" verwijderd`);
         }, {
             operationId: 'delete-context',
             showGlobal: true,
-            message: 'Removing context...'
+            message: 'Context verwijderen...'
         });
     }
 
@@ -8145,7 +8083,7 @@ class Taakbeheer {
                 this.eventDateResolver = null;
             }
         } else {
-            toast.warning('Please enter a valid date.');
+            toast.warning('Voer een geldige datum in.');
         }
     }
 
@@ -8189,7 +8127,7 @@ class Taakbeheer {
         document.getElementById('verschijndatum').value = new Date().toISOString().split('T')[0];
         document.getElementById('contextSelect').value = '';
         document.getElementById('duur').value = '';
-        document.getElementById('herhalingDisplay').value = 'No recurrence';
+        document.getElementById('herhalingDisplay').value = 'Geen herhaling';
         document.getElementById('herhalingSelect').value = '';
         document.getElementById('opmerkingen').value = '';
 
@@ -8245,13 +8183,13 @@ class Taakbeheer {
 
     generateHerhalingDisplayTextFromType(herhalingType) {
         // Simplified version for existing tasks - you can expand this
-        if (!herhalingType) return 'No recurrence';
+        if (!herhalingType) return 'Geen herhaling';
         
         if (herhalingType === 'dagelijks') return 'Elke dag';
         if (herhalingType === 'werkdagen') return 'Elke werkdag';
-        if (herhalingType.includes('weekly')) return 'Weekly';
-        if (herhalingType.includes('monthly')) return 'Monthly';
-        if (herhalingType.includes('yearly')) return 'Yearly';
+        if (herhalingType.includes('weekly')) return 'Wekelijks';
+        if (herhalingType.includes('monthly')) return 'Maandelijks';
+        if (herhalingType.includes('yearly')) return 'Jaarlijks';
         
         return herhalingType; // fallback
     }
@@ -8321,16 +8259,11 @@ class Taakbeheer {
         const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
         
         container.innerHTML = `
-            <!-- Mobile header met hamburger menu -->
+            <!-- Mobile header -->
             <header class="main-header">
-                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <h1>Daily Planning</h1>
+                <h1>Dagelijkse Planning</h1>
             </header>
-            
+
             <div class="dagelijkse-planning-layout">
                 <!-- Left column: Simple sidebar with fixed sections -->
                 <div class="planning-sidebar">
@@ -8374,25 +8307,25 @@ class Taakbeheer {
 
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
-                        <h3><i class="fas fa-clipboard"></i> Actions</h3>
+                        <h3><i class="fas fa-clipboard"></i> Acties</h3>
                         <div class="planning-acties-filters">
-                            <input type="text" id="planningTaakFilter" placeholder="Search task..." class="filter-input">
+                            <input type="text" id="planningTaakFilter" placeholder="Zoek taak..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
-                                <option value="">All projects</option>
+                                <option value="">Alle projecten</option>
                             </select>
                             <select id="planningContextFilter" class="filter-select">
-                                <option value="">All contexts</option>
+                                <option value="">Alle contexten</option>
                             </select>
                             <select id="planningPrioriteitFilter" class="filter-select prioriteit-filter">
-                                <option value="">All priorities</option>
-                                <option value="hoog">🔴 High</option>
-                                <option value="gemiddeld">🟠 Medium</option>
-                                <option value="laag">⚪ Low</option>
+                                <option value="">Alle prioriteiten</option>
+                                <option value="hoog">🔴 Hoog</option>
+                                <option value="gemiddeld">🟠 Gemiddeld</option>
+                                <option value="laag">⚪ Laag</option>
                             </select>
-                            <input type="number" id="planningDuurFilter" placeholder="Max duration (min)" class="filter-input-number" min="0" step="5">
+                            <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" id="planningToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                                <label for="planningToekomstToggle">Show future tasks</label>
+                                <label for="planningToekomstToggle">Toon toekomstige taken</label>
                             </div>
                         </div>
                         <div class="acties-container" id="planningActiesLijst">
@@ -8409,14 +8342,14 @@ class Taakbeheer {
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
                     <div class="kalender-header">
-                        <h2>${this.formatDisplayDate(new Date())}</h2>
+                        <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="header-actions">
-                            <span id="totaalGeplandeTijd" class="totaal-tijd">Total: 0 min</span>
-                            <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus mode - show only day planning">
+                            <span id="totaalGeplandeTijd" class="totaal-tijd">Totaal: 0 min</span>
+                            <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus modus - alleen dagplanning tonen">
                                 📺 Focus
                             </button>
-                            <button class="btn-clear-planning" id="btnClearPlanning" title="Clear planning">
-                                🗑️ Clear
+                            <button class="btn-clear-planning" id="btnClearPlanning" title="Planning leegmaken">
+                                🗑️ Leegmaken
                             </button>
                         </div>
                     </div>
@@ -8450,8 +8383,8 @@ class Taakbeheer {
             const contextNaam = this.getContextNaam(actie.contextId);
             
             // Format date for display
-            const datumString = actie.verschijndatum ?
-                this.formatDisplayDate(actie.verschijndatum) : 'No date';
+            const datumString = actie.verschijndatum ? 
+                new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'Geen datum';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(actie.verschijndatum);
@@ -8485,7 +8418,7 @@ class Taakbeheer {
                         </div>
                         <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}</div>
                         <div class="actie-meta">
-                            ${projectNaam && projectNaam !== 'No project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
+                            ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
                             ${contextNaam ? `<span class="meta-context">${contextNaam}</span>` : ''}
                             <span class="meta-datum">${datumString}</span>
                             <span class="meta-duur">${actie.duur || 60}min</span>
@@ -8556,7 +8489,7 @@ class Taakbeheer {
                         taskDetails = {
                             project: this.getProjectNaam(actie.project_id || actie.projectId),
                             context: this.getContextNaam(actie.context_id || actie.contextId),
-                            deadline: actie.verschijndatum ? this.formatDisplayDate(actie.verschijndatum) : null,
+                            deadline: actie.verschijndatum ? new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : null,
                             duur: actie.duur,
                             opmerkingen: actie.opmerkingen
                         };
@@ -8603,10 +8536,10 @@ class Taakbeheer {
             
             // Line 1: Build extra info line (project/context/datum/duur)
             let extraInfo = [];
-            if (taskDetails.project && taskDetails.project !== 'No project') {
+            if (taskDetails.project && taskDetails.project !== 'Geen project') {
                 extraInfo.push(`<i class="ti ti-folder"></i> ${taskDetails.project}`);
             }
-            if (taskDetails.context && taskDetails.context !== 'No context') {
+            if (taskDetails.context && taskDetails.context !== 'Geen context') {
                 extraInfo.push(`🏷️ ${taskDetails.context}`);
             }
             if (taskDetails.deadline) {
@@ -8647,7 +8580,7 @@ class Taakbeheer {
         
         // Show name in header for all items
         const naamElement = isTemplateItem ? 
-            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Click to edit name">${naam}</span>` :
+            `<span class="planning-naam editable-naam" onclick="app.editPlanningItemName('${planningItem.id}', this)" title="Klik om naam te bewerken">${naam}</span>` :
             `<span class="planning-naam">${naam}</span>`;
         
         const clickHandler = isExpandable ? `onclick="app.togglePlanningItemExpand('${planningItem.id}', event)"` : '';
@@ -8766,14 +8699,14 @@ class Taakbeheer {
                 
                 // Refresh the current planning display
                 await this.renderDagelijksePlanning();
-
-                toast.success(`Subtask ${newStatus ? 'completed' : 'reopened'}`);
+                
+                toast.success(`Subtaak ${newStatus ? 'afgerond' : 'heropend'}`);
             } else {
-                toast.error('Error updating subtask');
+                toast.error('Fout bij bijwerken subtaak');
             }
         } catch (error) {
             console.error('Error toggling planning subtaak:', error);
-            toast.error('Error updating subtask');
+            toast.error('Fout bij bijwerken subtaak');
         }
     }
 
@@ -9348,7 +9281,7 @@ class Taakbeheer {
                 planningItem.actieTekst = actie.tekst;
             } else {
                 planningItem.naam = 'Taak wordt geladen...';
-                planningItem.actieTekst = 'Loading...';
+                planningItem.actieTekst = 'Laden...';
             }
         }
         
@@ -9503,9 +9436,8 @@ class Taakbeheer {
         
         // Bind toggle event
         toggleButton.addEventListener('click', () => this.toggleLaptopSidebar());
-        
-        // Update toggle visibility based on screen size
-        window.addEventListener('resize', () => this.handleLaptopSidebarResize());
+
+        // Note: Resize listener is added ONCE in init() to prevent duplicate listeners
     }
     
     toggleLaptopSidebar() {
@@ -9539,16 +9471,59 @@ class Taakbeheer {
     }
     
     handleLaptopSidebarResize() {
-        const sidebar = document.querySelector('.sidebar');
-        const isLaptop = window.innerWidth >= 1201 && window.innerWidth < 1600;
-        
-        if (!isLaptop) {
-            // Remove collapsed state when not on laptop
-            sidebar?.classList.remove('collapsed');
-        } else {
-            // Reinitialize if entering laptop range
-            this.initializeLaptopSidebar();
+        // Debounce resize events to prevent multiple rapid calls
+        if (this.resizeDebounceTimer) {
+            clearTimeout(this.resizeDebounceTimer);
         }
+
+        this.resizeDebounceTimer = setTimeout(() => {
+            const sidebar = document.querySelector('.sidebar');
+            const width = window.innerWidth;
+            const isLaptop = width >= 1201 && width < 1600;
+            const isMobile = width <= 1400;
+
+            console.log('📐 Resize handled (debounced):', { width, isMobile, isLaptop });
+
+            if (isMobile) {
+                // Mobile range (≤1400px) - ensure sidebar is visible
+                console.log('📱 Mobile range detected - ensuring sidebar visibility');
+
+                // Remove desktop collapsed state
+                sidebar?.classList.remove('collapsed');
+
+                // Ensure sidebar is visible by adding sidebar-open class
+                if (sidebar && !sidebar.classList.contains('sidebar-open')) {
+                    sidebar.classList.add('sidebar-open');
+                    console.log('✅ Sidebar made visible (sidebar-open class added)');
+                }
+
+                // Setup mobile interface (idempotent - only runs once)
+                this.setupMobileInterface();
+
+            } else if (!isLaptop) {
+                // Desktop range (>1600px) - remove mobile classes
+                console.log('🖥️ Desktop range detected - cleanup mobile classes');
+
+                sidebar?.classList.remove('collapsed');
+                sidebar?.classList.remove('sidebar-open');
+
+                // Remove mobile overlay if it exists
+                const overlay = document.getElementById('sidebar-overlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+
+                // Reset mobile interface flag for next mobile transition
+                this.mobileInterfaceSetup = false;
+
+            } else {
+                // Laptop range (1201-1599px) - reinitialize laptop sidebar
+                console.log('💻 Laptop range detected - initializing laptop sidebar');
+
+                sidebar?.classList.remove('sidebar-open');
+                this.initializeLaptopSidebar();
+            }
+        }, 150); // 150ms debounce delay
     }
 
     removeDragAndDropEvents() {
@@ -9711,9 +9686,9 @@ class Taakbeheer {
                 // Update sidebar counters after drag & drop - Feature 022
                 this.debouncedUpdateCounters();
 
-                toast.success('Planning item added!');
+                toast.success('Planning item toegevoegd!');
             } else {
-                toast.error('Error adding planning item');
+                toast.error('Fout bij toevoegen planning item');
             }
     }
 
@@ -10113,12 +10088,12 @@ class Taakbeheer {
                 this.updateTotaalTijd(); // Update total time
                 
                 if (data.currentUur !== targetUur) {
-                    toast.success(`Item moved to ${targetUur.toString().padStart(2, '0')}:00`);
+                    toast.success(`Item verplaatst naar ${targetUur.toString().padStart(2, '0')}:00`);
                 } else {
-                    toast.success('Item reordered!');
+                    toast.success('Item herordend!');
                 }
             } else {
-                toast.error('Error moving item');
+                toast.error('Fout bij verplaatsen item');
             }
             
             await loading.hideWithMinTime();
@@ -10189,25 +10164,25 @@ class Taakbeheer {
                     // Remove from local data and update only the affected area
                     this.removePlanningItemLocally(planningId);
                     this.updateTotaalTijd(); // Update total time
-                    toast.success('Planning item removed!');
+                    toast.success('Planning item verwijderd!');
                 } else {
                     console.error('❌ Server delete failed:', response.status);
                     // Restore the item visibility on error
                     planningItem.style.opacity = '1';
                     planningItem.style.pointerEvents = 'auto';
-                    toast.error('Error removing planning item');
+                    toast.error('Fout bij verwijderen planning item');
                 }
             } catch (error) {
                 console.error('Error deleting planning item:', error);
                 // Restore the item visibility on error
                 planningItem.style.opacity = '1';
                 planningItem.style.pointerEvents = 'auto';
-                toast.error('Error removing planning item');
+                toast.error('Fout bij verwijderen planning item');
             }
         }, {
             operationId: 'delete-planning-item',
             showGlobal: true,
-            message: 'Deleting planning item...'
+            message: 'Planning item verwijderen...'
         });
     }
     
@@ -10380,13 +10355,13 @@ class Taakbeheer {
                 if (item) {
                     item.naam = newName;
                 }
-                toast.success('Name updated!');
+                toast.success('Naam bijgewerkt!');
             } else {
-                toast.error('Error updating name');
+                toast.error('Fout bij bijwerken naam');
             }
         } catch (error) {
             console.error('Error updating planning item name:', error);
-            toast.error('Error updating name');
+            toast.error('Fout bij bijwerken naam');
         }
     }
 
@@ -10399,12 +10374,12 @@ class Taakbeheer {
         
         // Entertainment messages voor task completion
         const completionMessages = [
-            '✅ Task is being completed...',
-            '🎯 Progress is being saved...',
-            '📊 Productivity is being updated...',
-            '⚡ Database is being synchronized...',
-            '🔄 Recurring tasks are being processed...',
-            '🚀 Almost done...'
+            '✅ Taak wordt afgewerkt...',
+            '🎯 Voortgang wordt opgeslagen...',
+            '📊 Productiviteit wordt bijgewerkt...',
+            '⚡ Database wordt gesynchroniseerd...',
+            '🔄 Herhalende taken worden verwerkt...',
+            '🚀 Bijna klaar...'
         ];
         
         // Start entertainment loading
@@ -10432,7 +10407,7 @@ class Taakbeheer {
             
             if (!taak) {
                 console.error('<i class="ti ti-x"></i> Task not found anywhere:', actieId);
-                toast.error('Task not found');
+                toast.error('Taak niet gevonden');
                 checkboxElement.checked = false;
                 return;
             }
@@ -10589,12 +10564,12 @@ class Taakbeheer {
                 
                 // Show success message with task name
                 const projectNaam = this.getProjectNaam(taak.projectId);
-                const taskDisplay = projectNaam !== 'No project' ? `${taak.tekst} (${projectNaam})` : taak.tekst;
+                const taskDisplay = projectNaam !== 'Geen project' ? `${taak.tekst} (${projectNaam})` : taak.tekst;
                 
                 // Handle recurring tasks
                 if (isRecurring && nextRecurringTaskId) {
-                    const nextDateFormatted = this.formatDisplayDate(calculatedNextDate);
-                    toast.success(`${taskDisplay} completed! Next recurrence scheduled for ${nextDateFormatted}`);
+                    const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
+                    toast.success(`${taskDisplay} afgerond! Volgende herhaling gepland voor ${nextDateFormatted}`);
                     
                     // Refresh all data to show the new recurring task
                     console.log('<i class="fas fa-redo"></i> Refreshing all data after recurring task creation...');
@@ -10622,21 +10597,21 @@ class Taakbeheer {
                         }
                     }
                 } else if (taak.herhalingActief && taak.herhalingType) {
-                    toast.success(`${taskDisplay} completed! Next recurrence will be scheduled.`);
+                    toast.success(`${taskDisplay} afgerond! Volgende herhaling wordt gepland.`);
                 } else {
-                    toast.success(`${taskDisplay} completed!`);
+                    toast.success(`${taskDisplay} afgerond!`);
                 }
             } else {
                 // Revert checkbox if completion failed
                 checkboxElement.checked = false;
                 checkboxElement.disabled = false;
-                toast.error('Error completing task. Try again.');
+                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
             }
         } catch (error) {
             console.error('Error completing planning task:', error);
             checkboxElement.checked = false;
             checkboxElement.disabled = false;
-            toast.error('Error completing task. Please try again.');
+            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
         } finally {
             // Hide loading with minimum time for smooth UX
             await loading.hideWithMinTime();
@@ -10704,7 +10679,7 @@ class Taakbeheer {
         const projectNaam = this.getProjectNaam(taak.projectId);
         const contextNaam = this.getContextNaam(taak.contextId);
         const herhalingIndicator = taak.herhalingActief ? ' 🔄' : '';
-        const datum = taak.verschijndatum ? this.formatDisplayDate(taak.verschijndatum) : '';
+        const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
         
         return `
             <td title="Taak afwerken">
@@ -10742,9 +10717,9 @@ class Taakbeheer {
         
         // Build extra info
         const extraInfo = [];
-        if (projectNaam !== 'No project') extraInfo.push(projectNaam);
+        if (projectNaam !== 'Geen project') extraInfo.push(projectNaam);
         if (contextNaam) extraInfo.push('@' + contextNaam);
-        if (taak.verschijndatum) extraInfo.push(this.formatDisplayDate(taak.verschijndatum));
+        if (taak.verschijndatum) extraInfo.push(new Date(taak.verschijndatum).toLocaleDateString('nl-NL'));
         if (taak.duur) extraInfo.push(taak.duur + ' min');
         
         const extraInfoHtml = extraInfo.length > 0 ? 
@@ -10754,7 +10729,7 @@ class Taakbeheer {
             <div class="taak-checkbox">
                 <input type="checkbox" id="taak-${taak.id}" onchange="app.taakAfwerken('${taak.id}')">
             </div>
-            <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">
+            <div class="taak-content" onclick="app.bewerkActieWrapper('${taak.id}')" style="cursor: pointer;" title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Klik om te bewerken'}">
                 <div class="taak-titel">${taak.tekst}${herhalingIndicator}</div>
                 ${extraInfoHtml}
             </div>
@@ -10805,7 +10780,7 @@ class Taakbeheer {
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
 
-            toast.success('Test tasks successfully added!');
+            toast.success('Test taken succesvol toegevoegd!');
             
             // Refresh the current list if we're in inbox
             if (this.huidigeLijst === 'inbox') {
@@ -10814,7 +10789,7 @@ class Taakbeheer {
 
         } catch (error) {
             console.error('Error adding test tasks:', error);
-            toast.error('Error adding test tasks');
+            toast.error('Fout bij toevoegen van test taken');
         }
     }
 
@@ -10824,11 +10799,11 @@ class Taakbeheer {
 
         // Define the uitgesteld categories
         const uitgesteldCategories = [
-            { key: 'uitgesteld-wekelijks', name: 'Weekly', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-maandelijks', name: 'Monthly', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-3maandelijks', name: 'Quarterly', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-6maandelijks', name: 'Bi-annual', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-jaarlijks', name: 'Yearly', icon: 'fas fa-pause-circle' }
+            { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-pause-circle' }
         ];
 
         // Load counts for each category
@@ -10850,12 +10825,7 @@ class Taakbeheer {
 
         container.innerHTML = `
             <header class="main-header">
-                <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                <h1 id="page-title">Postponed</h1>
+                <h1 id="page-title">Uitgesteld</h1>
             </header>
 
             <div class="content-area">
@@ -10874,7 +10844,7 @@ class Taakbeheer {
                             </div>
                             <div class="sectie-content" id="content-${category.key}" style="display: none;">
                                 <div class="loading-placeholder">
-                                    Click to load tasks...
+                                    Klik om taken te laden...
                                 </div>
                             </div>
                         </div>
@@ -10923,7 +10893,7 @@ class Taakbeheer {
 
         try {
             // Show loading state
-            content.innerHTML = '<div class="loading-state">Loading...</div>';
+            content.innerHTML = '<div class="loading-state">Laden...</div>';
             
             // Load data from API
             const response = await fetch(`/api/lijst/${categoryKey}`);
@@ -10934,7 +10904,7 @@ class Taakbeheer {
             const taken = await response.json();
             
             if (taken.length === 0) {
-                content.innerHTML = '<div class="empty-state">No tasks in this category</div>';
+                content.innerHTML = '<div class="empty-state">Geen taken in deze categorie</div>';
                 return;
             }
 
@@ -10954,7 +10924,7 @@ class Taakbeheer {
 
         } catch (error) {
             console.error(`Error loading data for ${categoryKey}:`, error);
-            content.innerHTML = '<div class="error-state">Error loading tasks</div>';
+            content.innerHTML = '<div class="error-state">Fout bij laden van taken</div>';
         }
     }
 
@@ -11070,7 +11040,7 @@ class Taakbeheer {
                 }
             } catch (error) {
                 console.error('Error processing drop:', error);
-                toast.error('Error moving task');
+                toast.error('Fout bij verplaatsen van taak');
             }
         });
     }
@@ -11116,14 +11086,14 @@ class Taakbeheer {
                         await this.loadUitgesteldSectieData(doelLijst);
                     }
 
-                    toast.success(`Task moved to ${doelLijst.replace('uitgesteld-', '')}`);
+                    toast.success(`Taak verplaatst naar ${doelLijst.replace('uitgesteld-', '')}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
-                toast.error('Error moving task');
+                toast.error('Fout bij verplaatsen van taak');
             }
         }, {
             operationId: 'drag-drop-move',
@@ -11263,7 +11233,7 @@ class Taakbeheer {
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
-                    toast.error('Error moving task');
+                    toast.error('Fout bij verplaatsen van taak');
                 }
             });
         });
@@ -11300,14 +11270,14 @@ class Taakbeheer {
                     }
 
                     const targetName = targetList === 'inbox' ? 'Inbox' : 'Opvolgen';
-                    toast.success(`Task moved to ${targetName}`);
+                    toast.success(`Taak verplaatst naar ${targetName}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
+                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
-                toast.error('Error moving task');
+                toast.error('Fout bij verplaatsen van taak');
             }
         }, {
             operationId: 'floating-drop-move',
@@ -11399,8 +11369,8 @@ class Taakbeheer {
         // Reset setup flag zodat event listeners opnieuw worden toegevoegd na DOM wijzigingen
         this.actiesFloatingDropZonesSetup = false;
 
-        // Weekday abbreviations
-        const weekdagen = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        // Nederlandse weekdag afkortingen
+        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
 
         // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
@@ -11603,7 +11573,7 @@ class Taakbeheer {
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
-                    toast.error('Error moving task');
+                    toast.error('Fout bij verplaatsen van taak');
                 }
             });
         });
@@ -11636,18 +11606,18 @@ class Taakbeheer {
                     this.taken = this.taken.filter(t => t.id !== taakId);
                     
                     const targetName = this.getListDisplayName(targetList);
-                    toast.success(`Task moved to ${targetName}`);
+                    toast.success(`Taak verplaatst naar ${targetName}`);
                     
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
                 } else {
-                    toast.error('Error moving to list');
+                    toast.error('Fout bij verplaatsen naar lijst');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error moving task to list:', error);
-                toast.error('Error moving to list');
+                toast.error('Fout bij verplaatsen naar lijst');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
@@ -11666,7 +11636,7 @@ class Taakbeheer {
             this.renderActiesLijst();
             
             const targetName = this.getListDisplayName(targetList);
-            toast.success(`Task moved to ${targetName}`);
+            toast.success(`Taak verplaatst naar ${targetName}`);
         }
     }
 
@@ -11711,9 +11681,14 @@ class Taakbeheer {
                     await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                     
                     // Format datum voor weergave
-                    const dagNaam = this.formatDisplayDate(targetDate);
+                    const datumObj = new Date(targetDate);
+                    const dagNaam = datumObj.toLocaleDateString('nl-NL', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long' 
+                    });
                     
-                    toast.success(`Task scheduled for ${dagNaam}`);
+                    toast.success(`Taak gepland voor ${dagNaam}`);
                     
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
@@ -11723,20 +11698,20 @@ class Taakbeheer {
                         await this.laadDagelijksePlanning();
                     }
                 } else {
-                    toast.error('Error updating date');
+                    toast.error('Fout bij updaten van datum');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error updating task date:', error);
-                toast.error('Error updating date');
+                toast.error('Fout bij updaten van datum');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
         }, {
             operationId: 'update-datum',
             showGlobal: true,
-            message: 'Date is being updated...'
+            message: 'Datum wordt bijgewerkt...'
         });
     }
 
@@ -11756,15 +11731,15 @@ class Taakbeheer {
         if (response.ok) {
             this.taken = this.taken.filter(t => t.id !== dragData.taakId);
             this.renderActiesLijst();
-
-            const datumFormatted = this.formatDisplayDate(datum);
-            toast.success(`Task scheduled for ${datumFormatted}`);
+            
+            const datumFormatted = new Date(datum).toLocaleDateString('nl-NL');
+            toast.success(`Taak gepland voor ${datumFormatted}`);
         }
     }
 
     getListDisplayName(lijst) {
         const names = {
-            'opvolgen': 'Follow-up',
+            'opvolgen': 'Opvolgen',
             'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks',
             'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks',
             'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks',
@@ -11834,7 +11809,7 @@ class Taakbeheer {
         const projectFilter = document.getElementById('planningProjectFilter');
         if (projectFilter) {
             // Reset to default option first
-            projectFilter.innerHTML = '<option value="">All projects</option>';
+            projectFilter.innerHTML = '<option value="">Alle projecten</option>';
             this.projecten.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project.id;
@@ -11847,7 +11822,7 @@ class Taakbeheer {
         const contextFilter = document.getElementById('planningContextFilter');
         if (contextFilter) {
             // Reset to default option first
-            contextFilter.innerHTML = '<option value="">All contexts</option>';
+            contextFilter.innerHTML = '<option value="">Alle contexten</option>';
             this.contexten.forEach(context => {
                 const option = document.createElement('option');
                 option.value = context.id;
@@ -11875,9 +11850,9 @@ class Taakbeheer {
             const minuten = totaalMinuten % 60;
             
             if (uren > 0) {
-                totaalElement.textContent = `Total: ${uren}h ${minuten}min`;
+                totaalElement.textContent = `Totaal: ${uren}u ${minuten}min`;
             } else {
-                totaalElement.textContent = `Total: ${minuten}min`;
+                totaalElement.textContent = `Totaal: ${minuten}min`;
             }
         }
     }
@@ -11921,7 +11896,7 @@ class Taakbeheer {
         const clearGeblokkeerd = document.getElementById('clearGeblokkeerd').checked;
         
         if (!clearTaken && !clearPauzes && !clearGeblokkeerd) {
-            toast.warning('Select at least one option to delete');
+            toast.warning('Selecteer minstens één optie om te verwijderen');
             return;
         }
         
@@ -11967,9 +11942,9 @@ class Taakbeheer {
             // Show success message
             const deletedCount = itemsToDelete.length;
             if (deletedCount > 0) {
-                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} removed from planning`);
+                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} verwijderd uit de planning`);
             } else {
-                toast.info('No items found to delete');
+                toast.info('Geen items gevonden om te verwijderen');
             }
         }, {
             operationId: 'clear-planning',
@@ -12250,7 +12225,7 @@ class Taakbeheer {
 
     async bulkDateAction(action) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Please select one or more tasks first.');
+            toast.warning('Selecteer eerst een of meer taken.');
             return;
         }
 
@@ -12316,14 +12291,14 @@ class Taakbeheer {
                         successCount++;
                     }
                 } catch (error) {
-                    console.error('Errorbulk update:', error);
+                    console.error('Fout bij bulk update:', error);
                 }
             }
             
             // Show finishing message
             loading.show('Afronden...');
             
-            toast.success(`${successCount} tasks updated to ${newDate}`);
+            toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
 
             // Set flag if bulk update cleared inbox
             if (this.huidigeLijst === 'inbox' && successCount > 0) {
@@ -12400,7 +12375,7 @@ class Taakbeheer {
 
     async bulkVerplaatsNaar(lijstNaam) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Please select one or more tasks first.');
+            toast.warning('Selecteer eerst een of meer taken.');
             return;
         }
 
@@ -12434,25 +12409,25 @@ class Taakbeheer {
                         successCount++;
                     }
                 } catch (error) {
-                    console.error('Errorbulk uitstellen:', error);
+                    console.error('Fout bij bulk uitstellen:', error);
                 }
             }
             
             const lijstLabels = {
                 'inbox': 'Inbox',
                 'acties': 'Acties',
-                'opvolgen': 'Follow-up',
-                'uitgesteld-wekelijks': 'Weekly',
-                'uitgesteld-maandelijks': 'Monthly',
-                'uitgesteld-3maandelijks': 'Quarterly',
-                'uitgesteld-6maandelijks': 'Bi-annual',
-                'uitgesteld-jaarlijks': 'Yearly'
+                'opvolgen': 'Opvolgen',
+                'uitgesteld-wekelijks': 'Wekelijks',
+                'uitgesteld-maandelijks': 'Maandelijks',
+                'uitgesteld-3maandelijks': '3-maandelijks',
+                'uitgesteld-6maandelijks': '6-maandelijks',
+                'uitgesteld-jaarlijks': 'Jaarlijks'
             };
             
             // Show finishing message
             loading.show('Afronden...');
             
-            toast.success(`${successCount} tasks moved to ${lijstLabels[lijstNaam]}`);
+            toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
 
             // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
@@ -12473,7 +12448,6 @@ class AuthManager {
         this.currentUser = null;
         this.isAuthenticated = false;
         this.betaCheckInterval = null;
-        this.messageCheckInterval = null;
         this.setupEventListeners();
         this.checkAuthStatus();
     }
@@ -12618,14 +12592,6 @@ class AuthManager {
                 // Load user-specific data (only if still authenticated after checkAuthStatus)
                 if (this.isAuthenticated && app) {
                     await app.loadUserData();
-
-                    // Check for unread messages after login
-                    if (window.checkForMessages) {
-                        await window.checkForMessages();
-                    }
-
-                    // Start periodic message checking (every 5 minutes)
-                    this.startMessageChecking();
                 }
             } else {
                 toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
@@ -12703,11 +12669,10 @@ class AuthManager {
             if (response.ok) {
                 this.currentUser = null;
                 this.isAuthenticated = false;
-
-                // Stop intervals to prevent memory leaks
+                
+                // Stop beta check interval to prevent memory leaks
                 this.stopBetaCheckInterval();
-                this.stopMessageChecking();
-
+                
                 this.updateUI();
                 
                 toast.info('Je bent uitgelogd.');
@@ -12847,29 +12812,6 @@ class AuthManager {
         }
     }
 
-    startMessageChecking() {
-        // Clear any existing interval first
-        this.stopMessageChecking();
-
-        // Check every 5 minutes (300000 ms)
-        this.messageCheckInterval = setInterval(() => {
-            if (this.isAuthenticated && window.checkForMessages) {
-                console.log('📢 Periodieke message controle uitgevoerd');
-                window.checkForMessages();
-            }
-        }, 300000); // 5 minutes
-
-        console.log('✅ Message controle interval gestart (elke 5 minuten)');
-    }
-
-    stopMessageChecking() {
-        if (this.messageCheckInterval) {
-            clearInterval(this.messageCheckInterval);
-            this.messageCheckInterval = null;
-            console.log('⏹️ Message controle interval gestopt');
-        }
-    }
-
     async updateUI() {
         const authButtons = document.getElementById('auth-buttons');
         const userInfo = document.getElementById('user-info');
@@ -12941,12 +12883,12 @@ class AuthManager {
                 setTimeout(() => {
                     const sidebar = document.querySelector('.sidebar');
                     const overlay = document.querySelector('.sidebar-overlay');
-                    const hamburgerMenu = document.getElementById('hamburger-menu');
-                    
+                    const sidebarToggle = document.getElementById('sidebar-toggle');
+
                     if (sidebar && !sidebar.classList.contains('sidebar-open')) {
                         sidebar.classList.add('sidebar-open');
                         if (overlay) overlay.classList.add('active');
-                        if (hamburgerMenu) hamburgerMenu.classList.add('active');
+                        if (sidebarToggle) sidebarToggle.classList.add('active');
                         document.body.style.overflow = 'hidden';
                         console.log('📱 Sidebar automatically opened for unauthenticated user');
                     }
@@ -12983,7 +12925,7 @@ class AuthManager {
             
             if (taakInput) {
                 taakInput.disabled = false;
-                taakInput.placeholder = 'New task...';
+                taakInput.placeholder = 'Nieuwe taak...';
             }
             
             if (toevoegBtn) {
@@ -13324,7 +13266,7 @@ class UpdateManager {
     refreshApp() {
         // Final safety check
         if (this.hasUnsavedChanges) {
-            if (!confirm('You may have unsaved changes. Are you sure you want to refresh?')) {
+            if (!confirm('Je hebt mogelijk onopgeslagen wijzigingen. Weet je zeker dat je wilt vernieuwen?')) {
                 return;
             }
         }
@@ -13455,21 +13397,13 @@ class QuickAddModal {
     setupEventListeners() {
         // Button events
         this.cancelBtn.addEventListener('click', () => this.hide());
-        this.okBtn.addEventListener('click', () => {
-            // Feature 025: Prevent duplicate submissions
-            if (!loading.isOperationActive('add-task')) {
-                this.handleSubmit();
-            }
-        });
-
+        this.okBtn.addEventListener('click', () => this.handleSubmit());
+        
         // Keyboard events
         this.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                // Feature 025: Prevent duplicate submissions
-                if (!loading.isOperationActive('add-task')) {
-                    this.handleSubmit();
-                }
+                this.handleSubmit();
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 this.hide();
@@ -13505,97 +13439,91 @@ class QuickAddModal {
     
     async handleSubmit() {
         const taakNaam = this.input.value.trim();
-
+        
         if (!taakNaam) {
-            toast.warning('Please enter a task name');
+            toast.warning('Voer een taaknaam in');
             this.input.focus();
             return;
         }
-
+        
         try {
             // Check if user is logged in first
             if (app && !app.isLoggedIn()) {
-                toast.warning('Log in to add tasks.');
+                toast.warning('Log in om taken toe te voegen.');
                 return;
             }
-
-            await loading.withLoading(async () => {
-                console.log('<i class="ti ti-search"></i> DEBUG: Adding task via API:', taakNaam);
-
-                // Check current user first
-                const userResponse = await fetch('/api/debug/current-user');
-                const userData = await userResponse.json();
-                console.log('<i class="ti ti-search"></i> DEBUG: Current user:', userData);
-
-                // Check inbox before adding
-                const beforeResponse = await fetch('/api/lijst/inbox');
-                const beforeTasks = await beforeResponse.json();
-                console.log('<i class="ti ti-search"></i> DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
-
-                // SAFE APPROACH: Use dedicated single task endpoint
-                const requestBody = { tekst: taakNaam };
-                console.log('<i class="ti ti-search"></i> DEBUG: Request body:', requestBody);
-
-                const response = await fetch('/api/taak/add-to-inbox', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-
-                console.log('<i class="ti ti-search"></i> DEBUG: Response status:', response.status);
-                console.log('<i class="ti ti-search"></i> DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
-
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('<i class="ti ti-search"></i> DEBUG: Response data:', responseData);
-
-                    // Check inbox after adding
-                    const afterResponse = await fetch('/api/lijst/inbox');
-                    const afterTasks = await afterResponse.json();
-                    console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
-
-                    toast.success('Task added to inbox');
-                    this.hide();
-
-                    // Update counts and refresh if in inbox
-                    if (app) {
-                        await app.laadTellingen();
-                        if (app.huidigeLijst === 'inbox') {
-                            await app.laadHuidigeLijst();
-                        }
-                    }
-                } else {
-                    let errorText;
-                    try {
-                        errorText = await response.text();
-                    } catch (e) {
-                        errorText = 'Could not read error response';
-                    }
-
-                    console.error('<i class="ti ti-alert-circle"></i> DEBUG: API Error details:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        errorText: errorText,
-                        url: response.url
-                    });
-
-                    // Check inbox after failed request
-                    const afterFailResponse = await fetch('/api/lijst/inbox');
-                    const afterFailTasks = await afterFailResponse.json();
-                    console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
-
-                    toast.error('Error adding: ' + (response.status === 401 ? 'Please log in first' : 'Server error (500)'));
-                }
-            }, {
-                operationId: 'add-task',
-                showGlobal: true,
-                message: 'Taak toevoegen...'
+            
+            console.log('<i class="ti ti-search"></i> DEBUG: Adding task via API:', taakNaam);
+            
+            // Check current user first
+            const userResponse = await fetch('/api/debug/current-user');
+            const userData = await userResponse.json();
+            console.log('<i class="ti ti-search"></i> DEBUG: Current user:', userData);
+            
+            // Check inbox before adding
+            const beforeResponse = await fetch('/api/lijst/inbox');
+            const beforeTasks = await beforeResponse.json();
+            console.log('<i class="ti ti-search"></i> DEBUG: Inbox BEFORE adding:', beforeTasks.length, 'tasks');
+            
+            // SAFE APPROACH: Use dedicated single task endpoint
+            const requestBody = { tekst: taakNaam };
+            console.log('<i class="ti ti-search"></i> DEBUG: Request body:', requestBody);
+            
+            const response = await fetch('/api/taak/add-to-inbox', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
             });
+            
+            console.log('<i class="ti ti-search"></i> DEBUG: Response status:', response.status);
+            console.log('<i class="ti ti-search"></i> DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
+            
+            if (response.ok) {
+                const responseData = await response.json();
+                console.log('<i class="ti ti-search"></i> DEBUG: Response data:', responseData);
+                
+                // Check inbox after adding
+                const afterResponse = await fetch('/api/lijst/inbox');
+                const afterTasks = await afterResponse.json();
+                console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
+                
+                toast.success('Taak toegevoegd aan inbox');
+                this.hide();
+                
+                // Update counts and refresh if in inbox
+                if (app) {
+                    await app.laadTellingen();
+                    if (app.huidigeLijst === 'inbox') {
+                        await app.laadHuidigeLijst();
+                    }
+                }
+            } else {
+                let errorText;
+                try {
+                    errorText = await response.text();
+                } catch (e) {
+                    errorText = 'Could not read error response';
+                }
+                
+                console.error('<i class="ti ti-alert-circle"></i> DEBUG: API Error details:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorText: errorText,
+                    url: response.url
+                });
+                
+                // Check inbox after failed request
+                const afterFailResponse = await fetch('/api/lijst/inbox');
+                const afterFailTasks = await afterFailResponse.json();
+                console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
+                
+                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout (500)'));
+            }
         } catch (error) {
             console.error('Error adding task:', error);
-            toast.error('Error adding task: ' + error.message);
+            toast.error('Fout bij toevoegen van taak: ' + error.message);
         }
     }
 }
@@ -13876,7 +13804,7 @@ class FeedbackManager {
         
         // Show loading
         if (window.loading && window.loading.showGlobal) {
-            window.loading.showGlobal('Sending feedback...');
+            window.loading.showGlobal('Feedback verzenden...');
         }
         
         try {
@@ -13896,7 +13824,7 @@ class FeedbackManager {
             });
             
             if (response.ok) {
-                toast.success('Thanks for your feedback! We\'ll get to work on it.');
+                toast.success('Bedankt voor je feedback! We gaan er mee aan de slag.');
                 // Wacht even zodat gebruiker de success melding ziet
                 setTimeout(() => {
                     this.closeModal();
@@ -13946,21 +13874,21 @@ async function deleteAllTasks() {
     });
     
     if (!isActiesLijst) {
-        toast.error('This function only works on the actions list');
+        toast.error('Deze functie werkt alleen op de acties lijst');
         return;
     }
     
     // Vraag dubbele bevestiging
-    const confirmation = confirm('⚠️ WARNING: This will permanently delete ALL tasks in your actions list!\n\nAre you 100% sure?');
+    const confirmation = confirm('⚠️ WAARSCHUWING: Dit zal ALLE taken in je acties lijst permanent verwijderen!\n\nWeet je dit 100% zeker?');
     if (!confirmation) return;
-
-    const secondConfirmation = confirm('🚨 FINAL WARNING: This action CANNOT be undone!\n\nMentally type "I UNDERSTAND THE RISK" and click OK to proceed.');
+    
+    const secondConfirmation = confirm('🚨 LAATSTE WAARSCHUWING: Deze actie kan NIET ongedaan gemaakt worden!\n\nTyp mentaal "IK BEGRIJP HET RISICO" en klik OK om door te gaan.');
     if (!secondConfirmation) return;
     
     try {
         // Check if loading manager exists
         if (window.loading && loading.showGlobal) {
-            loading.showGlobal('Deleting all tasks...');
+            loading.showGlobal('Alle taken verwijderen...');
         }
         
         // Delete alle taken via API - werkt alleen voor aangelogde gebruiker
@@ -13970,7 +13898,7 @@ async function deleteAllTasks() {
         });
         
         if (response.ok) {
-            toast.success('All tasks successfully deleted');
+            toast.success('Alle taken succesvol verwijderd');
             // Refresh de lijst
             if (app && app.laadHuidigeLijst) {
                 await app.laadHuidigeLijst();
@@ -13980,10 +13908,10 @@ async function deleteAllTasks() {
             }
         } else {
             const error = await response.text();
-            toast.error('Error deleting: ' + error);
+            toast.error('Fout bij verwijderen: ' + error);
         }
     } catch (error) {
-        toast.error('Error deleting: ' + error.message);
+        toast.error('Fout bij verwijderen: ' + error.message);
     } finally {
         // Hide loading if it exists
         if (window.loading && loading.hideGlobal) {
@@ -14158,7 +14086,7 @@ class SubtakenManager {
         } else {
             const completed = this.currentSubtaken.filter(s => s.voltooid).length;
             const total = this.currentSubtaken.length;
-            progressElement.textContent = `(${completed}/${total} completed)`;
+            progressElement.textContent = `(${completed}/${total} voltooid)`;
             progressElement.style.display = 'inline';
         }
     }
@@ -14179,13 +14107,13 @@ class SubtakenManager {
         const titel = input.value.trim();
         
         if (!titel) {
-            toast.warning('Please enter a title for the subtask');
+            toast.warning('Voer een titel in voor de subtaak');
             return;
         }
 
         const parentTaakId = app.huidigeTaakId;
         if (!parentTaakId) {
-            toast.error('No parent task selected');
+            toast.error('Geen hoofdtaak geselecteerd');
             return;
         }
 
@@ -14228,10 +14156,10 @@ class SubtakenManager {
                 this.renderSubtaken();
             }
             
-            toast.success(this.editingSubtaak ? 'Subtask updated' : 'Subtask added');
+            toast.success(this.editingSubtaak ? 'Subtaak bijgewerkt' : 'Subtaak toegevoegd');
         } catch (error) {
             console.error('Error saving subtaak:', error);
-            toast.error('Error saving subtask');
+            toast.error('Fout bij opslaan subtaak');
         }
     }
 
@@ -14285,7 +14213,7 @@ class SubtakenManager {
             this.renderSubtaken();
         } catch (error) {
             console.error('Error toggling subtaak:', error);
-            toast.error('Error changing subtask status');
+            toast.error('Fout bij wijzigen subtaak status');
         }
     }
 
@@ -14302,7 +14230,7 @@ class SubtakenManager {
         const subtaak = this.currentSubtaken.find(s => s.id === subtaakId);
         if (!subtaak) return;
 
-        if (!confirm(`Delete subtask "${subtaak.titel}"?`)) {
+        if (!confirm(`Subtaak "${subtaak.titel}" verwijderen?`)) {
             return;
         }
 
@@ -14316,10 +14244,10 @@ class SubtakenManager {
             }
 
             await this.loadSubtaken(app.huidigeTaakId);
-            toast.success('Subtask removed');
+            toast.success('Subtaak verwijderd');
         } catch (error) {
             console.error('Error deleting subtaak:', error);
-            toast.error('Error removing subtask');
+            toast.error('Fout bij verwijderen subtaak');
         }
     }
 
@@ -14571,11 +14499,11 @@ class BijlagenManager {
             const planType = this.storageStats.plan_type || 'free';
 
             if (planType === 'premium_plus') {
-                uploadLimits.textContent = 'Premium Plus: unlimited attachments and size';
+                uploadLimits.textContent = 'Premium Plus: onbeperkte bijlagen en grootte';
             } else if (planType === 'premium_standard') {
-                uploadLimits.textContent = `Standard: Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} attachment per task`;
+                uploadLimits.textContent = `Standard: Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} bijlage per taak`;
             } else {
-                uploadLimits.textContent = `Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} attachment per task (free)`;
+                uploadLimits.textContent = `Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} bijlage per taak (gratis)`;
             }
         }
 
@@ -14596,7 +14524,7 @@ class BijlagenManager {
 
         if (!this.currentTaakId) {
             console.log('❌ DEBUG: No currentTaakId, showing error');
-            toast.error('No task selected for attachment upload');
+            toast.error('Geen taak geselecteerd voor bijlage upload');
             return;
         }
 
@@ -14628,7 +14556,7 @@ class BijlagenManager {
 
             if (data.success) {
                 console.log('✅ DEBUG: Upload successful, updating UI');
-                toast.success(`Attachment "${file.name}" successfully uploaded`);
+                toast.success(`Bijlage "${file.name}" succesvol geüpload`);
                 await this.loadStorageStats();
                 await this.loadBijlagen();
                 this.updateUI();
@@ -14713,7 +14641,7 @@ class BijlagenManager {
     }
 
     async deleteBijlage(bijlageId) {
-        if (!confirm('Are you sure you want to delete this attachment?')) {
+        if (!confirm('Weet je zeker dat je deze bijlage wilt verwijderen?')) {
             return;
         }
 
@@ -14726,7 +14654,7 @@ class BijlagenManager {
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Attachment removed');
+                toast.success('Bijlage verwijderd');
                 await this.loadStorageStats();
                 await this.loadBijlagen();
                 this.updateUI();
@@ -14736,7 +14664,7 @@ class BijlagenManager {
 
         } catch (error) {
             console.error('Delete error:', error);
-            toast.error('Deletion failed. Please try again.');
+            toast.error('Verwijderen gefaald. Probeer opnieuw.');
         }
     }
 
@@ -14793,9 +14721,9 @@ class BijlagenManager {
 
     formatDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleDateString('nl-NL', {
-            year: 'numeric',
-            month: 'short',
+        return date.toLocaleDateString('nl-NL', { 
+            year: 'numeric', 
+            month: 'short', 
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -14821,7 +14749,7 @@ class BijlagenManager {
             const currentIndex = allBijlagen.findIndex(b => b.id === bijlageId);
             
             if (currentIndex === -1) {
-                toast.error('Attachment not found');
+                toast.error('Bijlage niet gevonden');
                 return;
             }
 
@@ -14845,7 +14773,7 @@ class BijlagenManager {
             
         } catch (error) {
             console.error('Preview error:', error);
-            toast.error('Error loading preview');
+            toast.error('Fout bij laden preview');
         }
     }
 

@@ -291,42 +291,6 @@ body {
 }
 
 /* ===== MAIN CONTENT ===== */
-/* ===== HAMBURGER MENU ===== */
-.hamburger-menu {
-    display: none;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 30px;
-    height: 30px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 1001;
-    margin-right: 15px;
-}
-
-.hamburger-menu span {
-    width: 100%;
-    height: 3px;
-    background: var(--macos-text-primary);
-    border-radius: 2px;
-    transition: all 0.3s ease;
-    transform-origin: center;
-}
-
-.hamburger-menu.active span:nth-child(1) {
-    transform: rotate(45deg) translate(7px, 7px);
-}
-
-.hamburger-menu.active span:nth-child(2) {
-    opacity: 0;
-}
-
-.hamburger-menu.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(7px, -7px);
-}
-
 .main-content {
     flex: 1;
     background: var(--macos-bg-primary);
@@ -4058,10 +4022,27 @@ button:focus {
 
 /* Tablet and iPad responsive */
 @media (max-width: 1400px) {
-    .hamburger-menu {
-        display: flex;
+    /* Show sidebar toggle on narrow screens */
+    .sidebar-toggle {
+        display: block !important;
+        position: absolute;
+        top: 20px;
+        right: 15px;
+        background: none;
+        border: none;
+        color: var(--macos-text-secondary);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: var(--macos-radius-small);
+        transition: all 0.2s ease;
+        z-index: 10;
     }
-    
+
+    .sidebar-toggle:hover {
+        background: var(--macos-gray-5);
+        color: var(--macos-blue);
+    }
+
     .app-layout {
         flex-direction: row; /* Keep row for slide effect */
         position: relative;
@@ -4368,28 +4349,6 @@ button:focus {
     
     .main-content {
         flex: 1 !important;
-    }
-    
-    /* Toggle button for laptop */
-    .sidebar-toggle {
-        display: block;
-        position: absolute;
-        top: 20px;
-        right: 15px;
-        background: none;
-        border: none;
-        font-size: 16px;
-        color: var(--macos-text-secondary);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: var(--macos-radius-small);
-        transition: all 0.2s ease;
-        z-index: 10;
-    }
-    
-    .sidebar-toggle:hover {
-        background: var(--macos-gray-5);
-        color: var(--macos-blue);
     }
 }
 
