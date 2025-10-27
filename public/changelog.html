@@ -134,10 +134,65 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.0 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.0</span>
+                <span class="version-date">27 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚡ MAJOR FEATURE: Archive System - Backend Implementation</div>
+                    <div class="change-item">
+                        <div class="change-icon">📦</div>
+                        <div class="change-content">
+                            <strong>Real-time Task Archiving</strong>: Afgewerkte taken worden nu automatisch verplaatst naar archive tabellen (taken_archief en subtaken_archief) bij completion. Dit houdt de actieve taken tabel klein voor optimale query performance (< 200ms target). Archive gebeurt atomisch binnen database transacties met volledige rollback support bij fouten.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔄</div>
+                        <div class="change-content">
+                            <strong>Recurring Task Support</strong>: Herhalende taken worden correct afgehandeld tijdens archivering - de voltooide instantie wordt gearchiveerd en een nieuwe instantie wordt onmiddellijk aangemaakt met dezelfde herhaling instellingen. Geen onderbreking in recurring task chains.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Cascade Archiving voor Subtaken</strong>: Wanneer een parent taak wordt afgewerkt, worden alle bijbehorende subtaken automatisch mee gearchiveerd naar subtaken_archief. Foreign key constraints zorgen voor data integriteit (CASCADE DELETE op parent task).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Afgewerkt Lijst Leest uit Archive</strong>: Het "Afgewerkt" scherm leest nu transparant uit taken_archief tabel. UI blijft identiek - gebruikers merken geen verschil, maar queries zijn veel sneller omdat archive tabel geoptimaliseerd is met indexes op user_id, datum, archived_at.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔧</div>
+                        <div class="change-content">
+                            <strong>Admin Migration Endpoints</strong>: POST /api/admin/migrate-archive endpoint voor eenmalige migratie van bestaande afgewerkte taken. Ondersteunt dry-run mode voor veilige testing. GET /api/admin/archive-stats endpoint voor monitoring van archive health (counts, recent archives, oldest active completed task).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Fallback Mechanisme voor Backward Compatibility</strong>: Alle archive operaties hebben fallback logic - als archive tabellen nog niet bestaan, wordt oude behavior gebruikt (taak blijft in taken tabel). Dit maakt geleidelijke deployment mogelijk zonder breaking changes.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">⚠️</div>
+                        <div class="change-content">
+                            <strong>Deployment Status</strong>: Backend code is geïmplementeerd en gedeployed. Database schema wijzigingen (taken_archief en subtaken_archief tabellen) worden toegepast tijdens 00:00 maintenance window. Tot die tijd werkt de app met fallback behavior - archive functionaliteit wordt actief zodra database setup compleet is.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.19.185 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.185</span>
+                <span class="version-badge badge-fix">v0.19.185</span>
                 <span class="version-date">25 oktober 2025</span>
             </div>
             <div class="changes-list">
