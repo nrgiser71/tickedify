@@ -4883,11 +4883,11 @@ app.get('/api/lijst/:naam', async (req, res) => {
 
             try {
                 const result = await pool.query(
-                    'SELECT * FROM taken_archief WHERE user_id = $1 ORDER BY datum DESC, archived_at DESC',
+                    'SELECT * FROM taken_archief WHERE user_id = $1 ORDER BY afgewerkt DESC, archived_at DESC',
                     [userId]
                 );
                 data = result.rows;
-                console.log(`✅ Retrieved ${data.length} archived tasks for user ${userId}`);
+                console.log(`✅ Retrieved ${data.length} archived tasks from taken_archief for user ${userId}`);
             } catch (archiveError) {
                 console.error(`❌ Error reading from taken_archief:`, archiveError);
 
