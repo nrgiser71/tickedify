@@ -920,7 +920,7 @@ class Taakbeheer {
 
     async loadUserData() {
         // Called by AuthManager after successful login
-        // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+        await this.updateSidebarCounters();
 
         // Restore the correct list without showing intermediate states
         const targetList = this.huidigeLijst;
@@ -2182,7 +2182,7 @@ class Taakbeheer {
             this.projecten.push(nieuwProject);
             await this.slaProjectenOp();
             await this.renderProjectenItems();
-            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+            await this.updateSidebarCounters();
         }
     }
 
@@ -2224,7 +2224,7 @@ class Taakbeheer {
         this.projecten = this.projecten.filter(p => p.id !== id);
         await this.slaProjectenOp();
         await this.renderProjectenItems();
-        // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+        await this.updateSidebarCounters();
     }
 
     async toggleProject(projectId) {
@@ -2411,7 +2411,7 @@ class Taakbeheer {
             }
             
             // Update tellingen in sidebar
-            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+            await this.updateSidebarCounters();
             
             // Herlaad het project om de nieuwe status te tonen, maar behoud de open staat
             const projectId = containerId.replace('taken-', '');
@@ -2426,7 +2426,7 @@ class Taakbeheer {
                 
                 // Refresh all lists to show the new recurring task
                 console.log('<i class="fas fa-redo"></i> Refreshing lists after recurring task creation...');
-                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                await this.updateSidebarCounters();
                 
                 // Refresh the current view if needed with preserved filters
                 if (this.huidigeLijst === 'acties') {
@@ -2479,7 +2479,7 @@ class Taakbeheer {
             });
             
             // Update tellingen in sidebar
-            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+            await this.updateSidebarCounters();
             
             // Herlaad het project om de nieuwe status te tonen, maar behoud de open staat
             const projectId = containerId.replace('taken-', '');
@@ -3136,7 +3136,7 @@ class Taakbeheer {
                     });
                     
                     // Update tellingen
-                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                    await this.updateSidebarCounters();
                     
                     console.log('<i class="fas fa-check"></i> Inbox refreshed - new data detected');
                 } else {
@@ -4865,7 +4865,7 @@ class Taakbeheer {
                 
                 // Refresh huidige lijst en tellingen
                 await this.laadHuidigeLijst();
-                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                await this.updateSidebarCounters();
                 toast.success('Task moved to Inbox');
             } else {
                 toast.error('Error moving to Inbox');
@@ -4923,7 +4923,7 @@ class Taakbeheer {
                 
                 // Herlaad de lijst met preserved scroll position
                 await this.preserveActionsFilters(() => this.laadHuidigeLijst());
-                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                await this.updateSidebarCounters();
                 
                 const dagNaam = dagenVoorruit === 0 ? 'vandaag' : 
                                dagenVoorruit === 1 ? 'morgen' : 
@@ -4960,7 +4960,7 @@ class Taakbeheer {
             
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
-            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+            await this.updateSidebarCounters();
             
             const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
                 .replace('wekelijks', 'Wekelijks')
@@ -4992,7 +4992,7 @@ class Taakbeheer {
             
             // Refresh huidige lijst en tellingen
             await this.laadHuidigeLijst();
-            // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+            await this.updateSidebarCounters();
             
             toast.success('Task moved to Follow-up');
         }, {
@@ -5190,7 +5190,7 @@ class Taakbeheer {
                     
                     // Only remove from inbox AFTER successful save
                     this.verwijderTaakUitHuidigeLijst(this.huidigeTaakId);
-                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                    await this.updateSidebarCounters();
                     
                     // If we're currently viewing acties, refresh the list with preserved filters
                     if (this.huidigeLijst === 'acties') {
@@ -7803,7 +7803,7 @@ class Taakbeheer {
                 }
                 
                 // Update counts
-                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                await this.updateSidebarCounters();
                 
             }, {
                 operationId: 'add-mind-dump-item',
@@ -10559,7 +10559,7 @@ class Taakbeheer {
                     await this.preservePlanningFilters(() => this.renderTaken());
                 }
                 this.updateTotaalTijd(); // Update total time
-                // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                await this.updateSidebarCounters();
                 console.log('📈 Tellingen updated');
                 
                 // Show success message with task name
@@ -10573,7 +10573,7 @@ class Taakbeheer {
                     
                     // Refresh all data to show the new recurring task
                     console.log('<i class="fas fa-redo"></i> Refreshing all data after recurring task creation...');
-                    // await this.laadTellingen(); // Disabled - tellers removed from sidebar
+                    await this.updateSidebarCounters();
                     
                     // For daily planning, refresh the actions list to show the new task
                     if (this.huidigeLijst === 'dagelijkse-planning') {
