@@ -3856,8 +3856,8 @@ class Taakbeheer {
             container.innerHTML = `
                 <div class="inbox-empty-state">
                     <div class="inbox-empty-icon">✨</div>
-                    <h3 class="inbox-empty-title">Perfect! Je inbox is leeg.</h3>
-                    <p class="inbox-empty-subtitle">Tijd voor echte focus. Geweldig werk! 🎯</p>
+                    <h3 class="inbox-empty-title">Perfect! Your inbox is empty.</h3>
+                    <p class="inbox-empty-subtitle">Time for real focus. Great work! 🎯</p>
                 </div>
             `;
             this.prevInboxCount = 0;
@@ -4158,8 +4158,8 @@ class Taakbeheer {
             <div class="inbox-celebration">
                 <div class="celebration-animation">🎉</div>
                 <div class="celebration-text">
-                    <h2>🏆 Inbox Zero bereikt!</h2>
-                    <p>Fantastisch! Je hebt het voor elkaar! ⭐</p>
+                    <h2>🏆 Inbox Zero achieved!</h2>
+                    <p>Fantastic! You did it! ⭐</p>
                 </div>
             </div>
         `;
