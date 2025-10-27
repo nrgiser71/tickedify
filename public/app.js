@@ -6559,21 +6559,14 @@ class Taakbeheer {
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
             
-            // Load subtaken for tasks - same logic as planTaak
+            // Load subtaken for tasks - always try to load subtaken regardless of lijst
+            // This handles unarchived tasks that were restored to inbox but have subtaken
             console.log('DEBUG: bewerkActie - huidigeLijst:', this.huidigeLijst, 'subtakenManager exists:', !!subtakenManager);
-            
+
             if (subtakenManager) {
-                if (this.huidigeLijst === 'acties') {
-                    console.log('DEBUG: bewerkActie - Loading existing subtaken for acties lijst');
-                    // Load existing subtaken for tasks from acties lijst
-                    await subtakenManager.loadSubtaken(id);
-                } else {
-                    console.log('DEBUG: bewerkActie - Showing empty subtaken sectie for inbox task');
-                    // Show empty subtaken sectie for new tasks from inbox
-                    subtakenManager.showSubtakenSectie();
-                    subtakenManager.currentSubtaken = [];
-                    subtakenManager.renderSubtaken();
-                }
+                console.log('DEBUG: bewerkActie - Loading subtaken for task (any lijst)');
+                // Always load subtaken - if task has none, it will show empty state
+                await subtakenManager.loadSubtaken(id);
             } else {
                 console.log('DEBUG: bewerkActie - Fallback - subtakenManager not available, showing sectie directly');
                 // Fallback: directly show subtaken sectie if manager not ready
