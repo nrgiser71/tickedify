@@ -4096,7 +4096,9 @@ class Taakbeheer {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    afgewerkt: taak.afgewerkt
+                    afgewerkt: taak.afgewerkt,
+                    completedViaCheckbox: true,
+                    lijst: 'afgewerkt'
                 })
             });
             
