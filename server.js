@@ -4877,9 +4877,9 @@ app.get('/api/lijst/:naam', async (req, res) => {
 
         let data;
 
-        // Special handling for 'afgewerkt' lijst - read from archive table
-        if (naam === 'afgewerkt') {
-            console.log(`📦 Reading afgewerkt lijst from taken_archief for user ${userId}`);
+        // Special handling for 'afgewerkt' and 'afgewerkte-taken' lijst - read from archive table
+        if (naam === 'afgewerkt' || naam === 'afgewerkte-taken') {
+            console.log(`📦 Reading ${naam} lijst from taken_archief for user ${userId}`);
 
             try {
                 const result = await pool.query(
