@@ -4120,27 +4120,32 @@ class Taakbeheer {
 
     async terugzettenNaarInbox(taakId) {
         return await loading.withLoading(async () => {
-            // Update task to move it back to inbox and clear completed status
-            const response = await fetch(`/api/taak/${taakId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lijst: 'inbox',
-                    afgewerkt: null  // Clear the completed timestamp
-                })
+            // Use new unarchive endpoint to restore task from archive
+            const response = await fetch(`/api/taak/${taakId}/unarchive`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
             });
-            
+
             if (response.ok) {
+                const result = await response.json();
+
                 // Remove from local array if we're on afgewerkte-taken page
                 if (this.huidigeLijst === 'afgewerkte-taken') {
                     this.taken = this.taken.filter(t => t.id !== taakId);
                     this.renderTaken();
                 }
-                
-                toast.success('Taak teruggezet naar inbox');
+
+                // Show success message with subtaken count if any were restored
+                let message = 'Taak teruggezet naar inbox';
+                if (result.restored_subtaken_count > 0) {
+                    message += ` (inclusief ${result.restored_subtaken_count} subtaken)`;
+                }
+
+                toast.success(message);
                 return true;
             } else {
-                toast.error('Fout bij terugzetten van taak');
+                const error = await response.json();
+                toast.error(error.error || 'Fout bij terugzetten van taak');
                 return false;
             }
         }, {

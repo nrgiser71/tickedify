@@ -134,10 +134,59 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.1 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.1</span>
+                <span class="version-date">27 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL FIX: Unarchive Functionaliteit + Gefaseerde Deployment</div>
+                    <div class="change-item">
+                        <div class="change-icon">📤</div>
+                        <div class="change-content">
+                            <strong>Nieuwe Unarchive Endpoint</strong>: POST /api/taak/:id/unarchive endpoint geïmplementeerd om taken correct terug te halen uit archive tabellen. De oude "terug naar inbox" functionaliteit werkte niet met archive tabellen - deze fix zorgt dat taken atomisch worden gerestored (inclusief subtaken) binnen transacties met rollback support.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">♻️</div>
+                        <div class="change-content">
+                            <strong>Frontend Unarchive Fix</strong>: terugzettenNaarInbox() functie aangepast om nieuwe unarchive endpoint te gebruiken. Toont nu ook aantal gerestoreerde subtaken in succes message (bijv. "Taak teruggezet naar inbox (inclusief 3 subtaken)"). Werkt met fallback logic voor oude taken die nog in actieve tabel staan.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📋</div>
+                        <div class="change-content">
+                            <strong>Copy-to-Archive Endpoint</strong>: POST /api/admin/copy-to-archive endpoint voor gefaseerde deployment stap 2. Kopieert ALLEEN afgewerkte taken naar archive zonder te verwijderen uit actieve tabel. Idempotent met ON CONFLICT DO NOTHING - kan veilig opnieuw draaien. Retourneert aantal gekopieerde taken/subtaken en totaal in archive.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🧹</div>
+                        <div class="change-content">
+                            <strong>Cleanup-Archived Endpoint</strong>: POST /api/admin/cleanup-archived endpoint voor gefaseerde deployment stap 5. Verwijdert ALLEEN taken die bestaan in archive (safety check voorkomt dataverlies). Retourneert aantal verwijderde taken/subtaken en waarschuwing als completed taken overblijven die niet in archive zitten.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Gefaseerde Deployment Strategie</strong>: Volledig safe deployment zonder downtime: (1) Voeg archive tabellen toe, (2) Kopieer data met copy-to-archive, (3) Deploy code, (4) Test afgewerkt lijst, (5) Cleanup met cleanup-archived. Elke stap is veilig rollbackable - geen "big bang" migration meer nodig.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Transactie Veiligheid</strong>: Alle drie nieuwe endpoints gebruiken BEGIN/COMMIT/ROLLBACK transacties. Bij fouten wordt automatisch gerollback - geen partial states mogelijk. Cleanup endpoint heeft extra safety check dat alleen taken verwijdert die in archive bestaan.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.0 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.0</span>
+                <span class="version-badge badge-feature">v0.20.0</span>
                 <span class="version-date">27 oktober 2025</span>
             </div>
             <div class="changes-list">
