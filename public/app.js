@@ -6950,7 +6950,7 @@ class Taakbeheer {
                 if (isInbox) {
                     contentArea.innerHTML = `
                         <div class="taak-input-container" id="taak-input-container">
-                            <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                            <input type="text" id="taakInput" placeholder="New task..." autofocus>
                             <button id="toevoegBtn">Toevoegen</button>
                         </div>
                         <div class="taken-container">
@@ -6999,7 +6999,7 @@ class Taakbeheer {
                 // Only show input container for inbox
                 const inputContainerHTML = (targetLijst || this.huidigeLijst) === 'inbox' ? `
                     <div class="taak-input-container" id="taak-input-container">
-                        <input type="text" id="taakInput" placeholder="Nieuwe taak..." autofocus>
+                        <input type="text" id="taakInput" placeholder="New task..." autofocus>
                         <button id="toevoegBtn">Toevoegen</button>
                     </div>
                 ` : '';
@@ -12934,7 +12934,7 @@ class AuthManager {
             
             if (taakInput) {
                 taakInput.disabled = false;
-                taakInput.placeholder = 'Nieuwe taak...';
+                taakInput.placeholder = 'New task...';
             }
             
             if (toevoegBtn) {
