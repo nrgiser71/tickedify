@@ -5320,15 +5320,10 @@ app.put('/api/taak/:id', async (req, res) => {
 // Unarchive endpoint - restore task from archive back to inbox
 app.post('/api/taak/:id/unarchive', async (req, res) => {
     const { id } = req.params;
-    const userId = req.user?.id;
-
-    if (!userId) {
-        return res.status(401).json({ error: 'Niet ingelogd' });
-    }
-
-    console.log(`📤 Starting unarchive operation for task ${id}, user ${userId}`);
 
     try {
+        const userId = getCurrentUserId(req);
+        console.log(`📤 Starting unarchive operation for task ${id}, user ${userId}`);
         // Check if archive tables exist first
         const archiveTablesExist = await pool.query(`
             SELECT EXISTS (
@@ -5372,39 +5367,38 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
         }
 
         const taskData = archivedTask.rows[0];
-        console.log(`📦 Found archived task: ${taskData.naam}`);
+        console.log(`📦 Found archived task: ${taskData.tekst?.substring(0, 50)}`);
 
-        // 2. Restore task to taken table with inbox list
+        // 2. Restore task to taken table with inbox list (use EXACT column names from taken table)
         await pool.query(`
             INSERT INTO taken (
-                id, naam, lijst, status, datum, verschijndatum,
-                project_id, context_id, duur, opmerkingen,
-                top_prioriteit, prioriteit_datum,
+                id, tekst, aangemaakt, lijst, project_id, verschijndatum,
+                context_id, duur, type, afgewerkt,
                 herhaling_type, herhaling_waarde, herhaling_actief,
-                user_id, created_at
+                opmerkingen, user_id, top_prioriteit, prioriteit_datum, prioriteit
             ) VALUES (
-                $1, $2, 'inbox', NULL, $3, $4,
-                $5, $6, $7, $8,
-                $9, $10,
-                $11, $12, $13,
-                $14, $15
+                $1, $2, $3, 'inbox', $4, $5,
+                $6, $7, $8, NULL,
+                $9, $10, $11,
+                $12, $13, $14, $15, $16
             )
         `, [
             taskData.id,
-            taskData.naam,
-            taskData.datum,
-            taskData.verschijndatum,
+            taskData.tekst,
+            taskData.aangemaakt,
             taskData.project_id,
+            taskData.verschijndatum,
             taskData.context_id,
             taskData.duur,
-            taskData.opmerkingen,
-            taskData.top_prioriteit,
-            taskData.prioriteit_datum,
+            taskData.type,
             taskData.herhaling_type,
             taskData.herhaling_waarde,
             taskData.herhaling_actief,
+            taskData.opmerkingen,
             taskData.user_id,
-            taskData.created_at || new Date()
+            taskData.top_prioriteit,
+            taskData.prioriteit_datum,
+            taskData.prioriteit
         ]);
 
         console.log(`✅ Task restored to taken table with lijst='inbox'`);
@@ -5452,8 +5446,18 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
 
     } catch (error) {
         // ROLLBACK on any error
-        await pool.query('ROLLBACK');
+        try {
+            await pool.query('ROLLBACK');
+        } catch (rollbackError) {
+            // Ignore rollback errors (transaction might not have started)
+        }
+
         console.error(`❌ Unarchive error for task ${id}:`, error);
+
+        // Check if it's an authentication error
+        if (error.message && error.message.includes('Niet ingelogd')) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
 
         res.status(500).json({
             error: 'Fout bij terugzetten van taak',
