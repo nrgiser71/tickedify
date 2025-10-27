@@ -3061,33 +3061,8 @@ class Taakbeheer {
         const usage = parseInt(localStorage.getItem('planningPopupUsage') || '0');
         const newUsage = usage + 1;
         localStorage.setItem('planningPopupUsage', newUsage);
-        
-        // Progressive tips
-        if (newUsage === 4) {
-            setTimeout(() => {
-                tipToast.show(
-                    "💡 Wist je dat? F-toetsen maken inbox verwerking 3x sneller. " +
-                    "F3=vandaag, F4=morgen, F7=cyclische duur. Druk F1 voor volledig overzicht.",
-                    20000
-                );
-            }, 2000);
-        } else if (newUsage === 10) {
-            setTimeout(() => {
-                tipToast.show(
-                    "🚀 Power tip: F7 cyclet door populaire duren (5→10→15→20→30→45→60→90→120). " +
-                    "SHIFT+F1 t/m F6 voor snel verplaatsen!",
-                    20000
-                );
-            }, 2000);
-        } else if (newUsage === 20) {
-            setTimeout(() => {
-                tipToast.show(
-                    "⚡ Master tip: Combineer F-toetsen voor super snelle verwerking. " +
-                    "F2→Type→F4→F6→Type→F7→Enter. Geen muis nodig!",
-                    20000
-                );
-            }, 2000);
-        }
+
+        // Progressive tips removed - users can discover keyboard shortcuts naturally
     }
 
     handleInboxAutoRefresh() {
