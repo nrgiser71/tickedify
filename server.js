@@ -5195,18 +5195,18 @@ app.put('/api/taak/:id', async (req, res) => {
                 // 1. Archive task to taken_archief
                 await pool.query(`
                     INSERT INTO taken_archief (
-                        id, naam, lijst, status, datum, verschijndatum,
-                        project_id, context_id, duur, opmerkingen,
-                        top_prioriteit, prioriteit_datum,
+                        id, tekst, aangemaakt, lijst, project_id, verschijndatum,
+                        context_id, duur, type, afgewerkt,
                         herhaling_type, herhaling_waarde, herhaling_actief,
-                        user_id, archived_at
+                        opmerkingen, user_id, top_prioriteit, prioriteit_datum, prioriteit,
+                        archived_at
                     )
                     SELECT
-                        id, naam, 'afgewerkt', 'afgewerkt', datum, verschijndatum,
-                        project_id, context_id, duur, opmerkingen,
-                        top_prioriteit, prioriteit_datum,
+                        id, tekst, aangemaakt, lijst, project_id, verschijndatum,
+                        context_id, duur, type, CURRENT_TIMESTAMP,
                         herhaling_type, herhaling_waarde, FALSE,
-                        user_id, CURRENT_TIMESTAMP
+                        opmerkingen, user_id, top_prioriteit, prioriteit_datum, prioriteit,
+                        CURRENT_TIMESTAMP
                     FROM taken WHERE id = $1 AND user_id = $2
                 `, [id, userId]);
                 console.log(`✅ Task ${id} archived to taken_archief`);
