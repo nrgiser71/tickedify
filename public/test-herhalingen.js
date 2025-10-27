@@ -57,7 +57,7 @@ class HerhalingenTestRunner {
             }
         } catch (error) {
             console.error('Error loading test users:', error);
-            this.showToast('Fout bij laden van gebruikers', 'error');
+            this.showToast('Error loading users', 'error');
         }
     }
     
@@ -166,12 +166,12 @@ class HerhalingenTestRunner {
     
     async runAllTests() {
         if (!this.testUser) {
-            this.showToast('Selecteer eerst een test gebruiker', 'error');
+            this.showToast('Select a test user first', 'error');
             return;
         }
         
         if (this.isRunning) {
-            this.showToast('Tests zijn al bezig', 'warning');
+            this.showToast('Tests are already running', 'warning');
             return;
         }
         
@@ -205,10 +205,10 @@ class HerhalingenTestRunner {
                 await this.runTestSuite(suiteName, tests);
             }
             
-            this.showToast('Alle tests voltooid!', 'success');
+            this.showToast('All tests completed!', 'success');
         } catch (error) {
             console.error('Error running tests:', error);
-            this.showToast('Fout bij uitvoeren van tests', 'error');
+            this.showToast('Error running tests', 'error');
         } finally {
             // Cleanup
             await this.cleanup();
@@ -367,7 +367,7 @@ class HerhalingenTestRunner {
     
     stopTests() {
         this.shouldStop = true;
-        this.showToast('Tests worden gestopt...', 'info');
+        this.showToast('Tests being stopped...', 'info');
     }
     
     clearResults() {

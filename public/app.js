@@ -2396,7 +2396,7 @@ class Taakbeheer {
             // Verplaats naar afgewerkte taken
             const success = await this.verplaatsTaakNaarAfgewerkt(actie);
             if (!success) {
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Error completing task. Please try again.');
                 return;
             }
             
@@ -2434,7 +2434,7 @@ class Taakbeheer {
                 }
                 
                 setTimeout(() => {
-                    toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
+                    toast.success(`Task completed! Next recurrence scheduled for ${nextDateFormatted}`);
                 }, 100);
             }
             
@@ -3326,7 +3326,7 @@ class Taakbeheer {
         const isLoggedIn = this.isLoggedIn();
         console.log('🔐 Login check - isLoggedIn:', isLoggedIn, 'auth exists:', !!auth, 'auth.isAuthenticated:', auth?.isAuthenticated);
         if (!isLoggedIn) {
-            toast.warning('Log in om taken toe te voegen.');
+            toast.warning('Log in to add tasks.');
             return;
         }
         
@@ -3365,11 +3365,11 @@ class Taakbeheer {
 
                     input.value = '';
                     input.focus();
-                    toast.success('Taak toegevoegd!');
+                    toast.success('Task added!');
                 } else {
                     const errorText = await response.text();
                     console.error('❌ Server error:', response.status, errorText);
-                    toast.error(`Fout bij toevoegen van taak (${response.status}): ${errorText}`);
+                    toast.error(`Error adding task (${response.status}): ${errorText}`);
                 }
             }, {
                 operationId: 'add-task',
@@ -3946,7 +3946,7 @@ class Taakbeheer {
         }
         
         // Instant toast voor directe feedback
-        toast.info('Taak wordt afgewerkt...');
+        toast.info('Completing task...');
         
         // Entertainment messages voor task completion in acties scherm
         const completionMessages = [
@@ -4021,14 +4021,14 @@ class Taakbeheer {
                 // Individual task updates are handled directly via API
                 if (isRecurring && !nextRecurringTaskId) {
                     console.error('<i class="ti ti-alert-triangle"></i> Recurring task creation failed');
-                    toast.error('Let op: De herhalende taak kon niet worden aangemaakt. Controleer de herhaling-instellingen.');
+                    toast.error('Warning: The recurring task could not be created. Check the recurrence settings.');
                 }
                 // this.laadTellingen().catch(console.error); // Disabled - tellers removed from sidebar
                 
                 // Show success message and refresh UI with scroll preservation
                 if (isRecurring && nextRecurringTaskId) {
                     const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
-                    toast.success(`Taak afgewerkt! Volgende herhaling gepland voor ${nextDateFormatted}`);
+                    toast.success(`Task completed! Next recurrence scheduled for ${nextDateFormatted}`);
                     
                     // For recurring tasks, add new task to local arrays immediately
                     // this.laadTellingen(); // Disabled - tellers removed from sidebar
@@ -4054,7 +4054,7 @@ class Taakbeheer {
                         }
                     }
                 } else {
-                    toast.success('Taak afgewerkt!');
+                    toast.success('Task completed!');
                 }
 
                 // Update sidebar counters after task complete - Feature 022
@@ -4069,7 +4069,7 @@ class Taakbeheer {
                     checkbox.checked = false;
                     checkbox.disabled = false;
                 }
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Error completing task. Please try again.');
             }
             
             // Always cleanup the completion tracking
@@ -4137,10 +4137,10 @@ class Taakbeheer {
                     this.renderTaken();
                 }
                 
-                toast.success('Taak teruggezet naar inbox');
+                toast.success('Task restored to inbox');
                 return true;
             } else {
-                toast.error('Fout bij terugzetten van taak');
+                toast.error('Error restoring task');
                 return false;
             }
         }, {
@@ -4184,7 +4184,7 @@ class Taakbeheer {
         
         // Also show a toast for extra satisfaction
         setTimeout(() => {
-            toast.success('🎊 Geweldig! Je inbox is nu volledig leeg!', 5000);
+            toast.success('🎊 Awesome! Your inbox is now completely empty!', 5000);
         }, 1000);
     }
 
@@ -4206,7 +4206,7 @@ class Taakbeheer {
         }
         
         if (!taak) {
-            toast.error('Taak niet gevonden');
+            toast.error('Task not found');
             return;
         }
         
@@ -4234,20 +4234,20 @@ class Taakbeheer {
                             hasB2Warning = true;
                             if (cleanup.configError) {
                                 console.warn(`⚠️ B2 configuratie probleem voor taak ${id}`);
-                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering is niet geconfigureerd. Cloud storage cleanup overgeslagen.`);
+                                toast.warning(`Task deleted, but attachment deletion is not configured. Cloud storage cleanup skipped.`);
                             } else if (cleanup.timeout) {
                                 console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${id}`);
-                                toast.warning(`Taak verwijderd, maar bijlagen verwijdering duurde te lang. Sommige bestanden zijn mogelijk niet verwijderd uit cloud storage.`);
+                                toast.warning(`Task deleted, but attachment deletion took too long. Some files may not have been removed from cloud storage.`);
                             } else if (cleanup.deleted > 0) {
                                 console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${id}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
-                                toast.warning(`Taak verwijderd. ${cleanup.deleted} van de ${cleanup.deleted + cleanup.failed} bijlagen verwijderd uit cloud storage.`);
+                                toast.warning(`Task deleted. ${cleanup.deleted} of ${cleanup.deleted + cleanup.failed} attachments removed from cloud storage.`);
                             } else {
                                 console.error(`❌ Volledige B2 cleanup failure voor taak ${id}`);
-                                toast.error(`Taak verwijderd, maar bijlagen konden niet verwijderd worden uit cloud storage. Controleer je internetverbinding.`);
+                                toast.error(`Task deleted, but attachments could not be removed from cloud storage. Check your internet connection.`);
                             }
                         } else if (cleanup.deleted > 0) {
                             console.log(`✅ B2 cleanup succesvol voor taak ${id}: ${cleanup.deleted} bestanden verwijderd`);
-                            successMessage = `Taak en ${cleanup.deleted} bijlagen verwijderd`;
+                            successMessage = `Task and ${cleanup.deleted} attachments deleted`;
                         }
                     }
                     
@@ -4292,11 +4292,11 @@ class Taakbeheer {
                     }
                 } else {
                     const error = await response.json();
-                    toast.error(`Fout bij verwijderen: ${error.error || 'Onbekende fout'}`);
+                    toast.error(`Error deleting: ${error.error || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
-                toast.error('Fout bij verwijderen van taak');
+                toast.error('Error deleting task');
             }
         }, {
             operationId: `delete-task-${id}`,
@@ -4430,7 +4430,7 @@ class Taakbeheer {
         if (this.huidigeLijst !== 'inbox') return;
         
         if (!this.isLoggedIn()) {
-            toast.warning('Log in om taken te plannen.');
+            toast.warning('Log in to schedule tasks.');
             return;
         }
         
@@ -4550,12 +4550,12 @@ class Taakbeheer {
         if (volgendeTaak) {
             // Direct planTaak aanroepen (loading is al actief)
             await this.planTaak(volgendeTaak.id);
-            toast.info(`Volgende taak: ${volgendeTaak.tekst.substring(0, 30)}...`);
+            toast.info(`Next task: ${volgendeTaak.tekst.substring(0, 30)}...`);
             return true;
         }
 
         // Geen taken meer in inbox
-        toast.success('<i class="fas fa-party-horn"></i> Inbox is leeg! Alle taken zijn verwerkt.');
+        toast.success('<i class="fas fa-party-horn"></i> Inbox is empty! All tasks processed.');
         return false;
     }
 
@@ -4866,9 +4866,9 @@ class Taakbeheer {
                 // Refresh huidige lijst en tellingen
                 await this.laadHuidigeLijst();
                 // await this.laadTellingen(); // Disabled - tellers removed from sidebar
-                toast.success('Taak verplaatst naar Inbox');
+                toast.success('Task moved to Inbox');
             } else {
-                toast.error('Fout bij verplaatsen naar Inbox');
+                toast.error('Error moving to Inbox');
             }
         }, {
             operationId: 'move-to-inbox',
@@ -4929,9 +4929,9 @@ class Taakbeheer {
                                dagenVoorruit === 1 ? 'morgen' : 
                                `${nieuweDatum.toLocaleDateString('nl-NL', { weekday: 'long' })} ${nieuweDatum.toLocaleDateString('nl-NL')}`;
                 
-                toast.success(`Taak gepland voor ${dagNaam}`);
+                toast.success(`Task scheduled for ${dagNaam}`);
             } else {
-                toast.error('Fout bij updaten van datum');
+                toast.error('Error updating date');
             }
         }, {
             operationId: 'update-datum',
@@ -4968,7 +4968,7 @@ class Taakbeheer {
                 .replace('3maandelijks', '3-maandelijks')
                 .replace('6maandelijks', '6-maandelijks')
                 .replace('jaarlijks', 'Jaarlijks');
-            toast.success(`Taak verplaatst naar ${weergaveNaam}`);
+            toast.success(`Task moved to ${weergaveNaam}`);
         }, {
             operationId: 'verplaats-uitgesteld',
             showGlobal: true,
@@ -4994,7 +4994,7 @@ class Taakbeheer {
             await this.laadHuidigeLijst();
             // await this.laadTellingen(); // Disabled - tellers removed from sidebar
             
-            toast.success('Taak verplaatst naar Opvolgen');
+            toast.success('Task moved to Follow-up');
         }, {
             operationId: 'verplaats-opvolgen',
             showGlobal: true,
@@ -5104,7 +5104,7 @@ class Taakbeheer {
         console.log('maakActie - prioriteit:', prioriteit, 'isInboxTaak:', isInboxTaak);
 
         if (!taakNaam || !verschijndatum || !contextId || !duur) {
-            toast.warning('Alle velden behalve project zijn verplicht!');
+            toast.warning('All fields except project are required!');
             return;
         }
 
@@ -5147,7 +5147,7 @@ class Taakbeheer {
                         await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                         this.sluitPopup();
                     } else {
-                        toast.error('Fout bij bewerken van actie');
+                        toast.error('Error editing action');
                     }
                 }
             } else {
@@ -5205,7 +5205,7 @@ class Taakbeheer {
                     }
                 } else {
                     console.error('Fout bij opslaan actie:', response.status);
-                    toast.error('Fout bij plannen van taak. Probeer opnieuw.');
+                    toast.error('Error scheduling task. Please try again.');
                     return;
                 }
             }
@@ -5912,14 +5912,14 @@ class Taakbeheer {
             // Validate input parameters
             if (!originalTask || !nextDate) {
                 console.error('❌ Invalid parameters for createNextRecurringTask:', { originalTask, nextDate });
-                toast.error('Fout: Ongeldige parameters voor herhalende taak');
+                toast.error('Error: Invalid parameters for recurring task');
                 return null;
             }
             
             // Validate date format
             if (!nextDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 console.error('❌ Invalid date format:', nextDate);
-                toast.error('Fout: Ongeldige datum voor herhalende taak');
+                toast.error('Error: Invalid date for recurring task');
                 return null;
             }
             
@@ -5958,7 +5958,7 @@ class Taakbeheer {
                         return result.taskId;
                     } else {
                         console.error('<i class="ti ti-x"></i> Task creation verification failed, status:', checkResponse.status);
-                        toast.error('Waarschuwing: Herhalende taak aangemaakt maar verificatie mislukt');
+                        toast.error('Warning: Recurring task created but verification failed');
                         return null;
                     }
                 } catch (verifyError) {
@@ -5972,17 +5972,17 @@ class Taakbeheer {
                 
                 // Parse specific error messages
                 if (response.status === 400) {
-                    toast.error('Fout: Ongeldige gegevens voor herhalende taak');
+                    toast.error('Error: Invalid data for recurring task');
                 } else if (response.status === 500) {
-                    toast.error('Server fout bij aanmaken herhalende taak. Probeer later opnieuw.');
+                    toast.error('Server error creating recurring task. Please try again later.');
                 } else {
-                    toast.error(`Fout bij aanmaken herhalende taak (${response.status})`);
+                    toast.error(`Error creating recurring task (${response.status})`);
                 }
                 return null;
             }
         } catch (error) {
             console.error('Error creating recurring task:', error);
-            toast.error('Netwerk fout bij aanmaken herhalende taak');
+            toast.error('Network error creating recurring task');
             return null;
         }
     }
@@ -6028,7 +6028,7 @@ class Taakbeheer {
                 if (currentMITCount >= 3) {
                     // Maximum 3 priorities - show error and uncheck
                     checkbox.checked = false;
-                    toast.error('Maximum 3 Most Important Tasks bereikt');
+                    toast.error('Maximum 3 Most Important Tasks reached');
                     return;
                 }
 
@@ -6054,13 +6054,13 @@ class Taakbeheer {
                 if (!setPriorityResponse.ok) {
                     const errorData = await setPriorityResponse.json();
                     checkbox.checked = false;
-                    toast.error(errorData.error || 'Fout bij instellen prioriteit');
+                    toast.error(errorData.error || 'Error setting priority');
                     return;
                 }
 
                 // Reload planning view to show updated star states
                 await this.toonDagelijksePlanning();
-                toast.success('Top prioriteit ingesteld');
+                toast.success('Top priority set');
             } else {
                 // Remove priority
                 const removePriorityResponse = await fetch(`/api/taak/${taakId}/prioriteit`, {
@@ -6072,13 +6072,13 @@ class Taakbeheer {
                 if (!removePriorityResponse.ok) {
                     const errorData = await removePriorityResponse.json();
                     checkbox.checked = true;
-                    toast.error(errorData.error || 'Fout bij verwijderen prioriteit');
+                    toast.error(errorData.error || 'Error removing priority');
                     return;
                 }
 
                 // Reload planning view to show updated star states
                 await this.toonDagelijksePlanning();
-                toast.success('Top prioriteit verwijderd');
+                toast.success('Top priority removed');
             }
         }, {
             operationId: 'toggle-priority',
@@ -7775,7 +7775,7 @@ class Taakbeheer {
         if (text) {
             // Check if user is logged in
             if (!this.isLoggedIn()) {
-                toast.warning('Log in om taken toe te voegen.');
+                toast.warning('Log in to add tasks.');
                 return;
             }
             
@@ -7814,7 +7814,7 @@ class Taakbeheer {
             input.value = '';
             input.focus();
             
-            toast.success('Toegevoegd aan inbox!');
+            toast.success('Added to inbox!');
         }
     }
 
@@ -7824,7 +7824,7 @@ class Taakbeheer {
     }
 
     completeMindDump() {
-        toast.success('Mind dump voltooid!');
+        toast.success('Mind dump completed!');
         this.closeMindDump();
     }
 
@@ -7927,9 +7927,9 @@ class Taakbeheer {
             this.mindDumpPreferences[newWord] = true;
             input.value = '';
             this.refreshWordsConfig();
-            toast.success(`"${newWord}" toegevoegd!`);
+            toast.success(`"" added!`);
         } else if (this.mindDumpWords.includes(newWord)) {
-            toast.warning('Dit woord bestaat al!');
+            toast.warning('This word already exists!');
         }
     }
 
@@ -7952,15 +7952,15 @@ class Taakbeheer {
                 this.activeMindDumpWords = this.mindDumpWords.filter(word => this.mindDumpPreferences[word]);
                 
                 const enabledCount = this.activeMindDumpWords.length;
-                toast.success(`Configuratie opgeslagen! ${enabledCount} woorden geselecteerd.`);
+                toast.success(`Configuration saved! ${enabledCount} words selected.`);
                 
                 this.closeMindDumpConfig();
             } else {
-                toast.error('Fout bij opslaan configuratie.');
+                toast.error('Error saving configuration.');
             }
         } catch (error) {
             console.error('Error saving mind dump config:', error);
-            toast.error('Fout bij opslaan configuratie.');
+            toast.error('Error saving configuration.');
         }
     }
 
@@ -7989,7 +7989,7 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${naam}" toegevoegd`);
+            toast.success(`Context "${naam}" added`);
         }, {
             operationId: 'add-context',
             showGlobal: true,
@@ -8014,7 +8014,7 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${oudeNaam}" hernoemd naar "${nieuweNaam}"`);
+            toast.success(`Context "${oudeNaam}" renamed to "${nieuweNaam}"`);
         }, {
             operationId: 'edit-context',
             showGlobal: true,
@@ -8040,7 +8040,7 @@ class Taakbeheer {
             // Update all context dropdowns throughout the app
             this.updateContextSelects();
             
-            toast.success(`Context "${context.naam}" verwijderd`);
+            toast.success(`Context "${context.naam}" deleted`);
         }, {
             operationId: 'delete-context',
             showGlobal: true,
@@ -8083,7 +8083,7 @@ class Taakbeheer {
                 this.eventDateResolver = null;
             }
         } else {
-            toast.warning('Voer een geldige datum in.');
+            toast.warning('Enter a valid date.');
         }
     }
 
@@ -8700,13 +8700,13 @@ class Taakbeheer {
                 // Refresh the current planning display
                 await this.renderDagelijksePlanning();
                 
-                toast.success(`Subtaak ${newStatus ? 'afgerond' : 'heropend'}`);
+                toast.success(`Subtask ${newStatus ? 'completed' : 'reopened'}`);
             } else {
-                toast.error('Fout bij bijwerken subtaak');
+                toast.error('Error updating subtask');
             }
         } catch (error) {
             console.error('Error toggling planning subtaak:', error);
-            toast.error('Fout bij bijwerken subtaak');
+            toast.error('Error updating subtask');
         }
     }
 
@@ -9686,9 +9686,9 @@ class Taakbeheer {
                 // Update sidebar counters after drag & drop - Feature 022
                 this.debouncedUpdateCounters();
 
-                toast.success('Planning item toegevoegd!');
+                toast.success('Planning item added!');
             } else {
-                toast.error('Fout bij toevoegen planning item');
+                toast.error('Error adding planning item');
             }
     }
 
@@ -10088,12 +10088,12 @@ class Taakbeheer {
                 this.updateTotaalTijd(); // Update total time
                 
                 if (data.currentUur !== targetUur) {
-                    toast.success(`Item verplaatst naar ${targetUur.toString().padStart(2, '0')}:00`);
+                    toast.success(`Item moved to ${targetUur.toString().padStart(2, '0')}:00`);
                 } else {
-                    toast.success('Item herordend!');
+                    toast.success('Item reordered!');
                 }
             } else {
-                toast.error('Fout bij verplaatsen item');
+                toast.error('Error moving item');
             }
             
             await loading.hideWithMinTime();
@@ -10137,7 +10137,7 @@ class Taakbeheer {
         const planningItem = document.querySelector(`[data-planning-id="${planningId}"]`);
         if (!planningItem) {
             console.error('❌ Planning item DOM element not found:', planningId);
-            toast.error('Planning item niet gevonden');
+            toast.error('Planning item not found');
             return;
         }
         
@@ -10164,20 +10164,20 @@ class Taakbeheer {
                     // Remove from local data and update only the affected area
                     this.removePlanningItemLocally(planningId);
                     this.updateTotaalTijd(); // Update total time
-                    toast.success('Planning item verwijderd!');
+                    toast.success('Planning item deleted!');
                 } else {
                     console.error('❌ Server delete failed:', response.status);
                     // Restore the item visibility on error
                     planningItem.style.opacity = '1';
                     planningItem.style.pointerEvents = 'auto';
-                    toast.error('Fout bij verwijderen planning item');
+                    toast.error('Error deleting planning item');
                 }
             } catch (error) {
                 console.error('Error deleting planning item:', error);
                 // Restore the item visibility on error
                 planningItem.style.opacity = '1';
                 planningItem.style.pointerEvents = 'auto';
-                toast.error('Fout bij verwijderen planning item');
+                toast.error('Error deleting planning item');
             }
         }, {
             operationId: 'delete-planning-item',
@@ -10355,13 +10355,13 @@ class Taakbeheer {
                 if (item) {
                     item.naam = newName;
                 }
-                toast.success('Naam bijgewerkt!');
+                toast.success('Name updated!');
             } else {
-                toast.error('Fout bij bijwerken naam');
+                toast.error('Error updating name');
             }
         } catch (error) {
             console.error('Error updating planning item name:', error);
-            toast.error('Fout bij bijwerken naam');
+            toast.error('Error updating name');
         }
     }
 
@@ -10407,7 +10407,7 @@ class Taakbeheer {
             
             if (!taak) {
                 console.error('<i class="ti ti-x"></i> Task not found anywhere:', actieId);
-                toast.error('Taak niet gevonden');
+                toast.error('Task not found');
                 checkboxElement.checked = false;
                 return;
             }
@@ -10569,7 +10569,7 @@ class Taakbeheer {
                 // Handle recurring tasks
                 if (isRecurring && nextRecurringTaskId) {
                     const nextDateFormatted = new Date(calculatedNextDate).toLocaleDateString('nl-NL');
-                    toast.success(`${taskDisplay} afgerond! Volgende herhaling gepland voor ${nextDateFormatted}`);
+                    toast.success(`${taskDisplay} completed! Next recurrence scheduled for ${nextDateFormatted}`);
                     
                     // Refresh all data to show the new recurring task
                     console.log('<i class="fas fa-redo"></i> Refreshing all data after recurring task creation...');
@@ -10597,21 +10597,21 @@ class Taakbeheer {
                         }
                     }
                 } else if (taak.herhalingActief && taak.herhalingType) {
-                    toast.success(`${taskDisplay} afgerond! Volgende herhaling wordt gepland.`);
+                    toast.success(`${taskDisplay} completed! Next recurrence will be scheduled.`);
                 } else {
-                    toast.success(`${taskDisplay} afgerond!`);
+                    toast.success(`${taskDisplay} completed!`);
                 }
             } else {
                 // Revert checkbox if completion failed
                 checkboxElement.checked = false;
                 checkboxElement.disabled = false;
-                toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+                toast.error('Error completing task. Please try again.');
             }
         } catch (error) {
             console.error('Error completing planning task:', error);
             checkboxElement.checked = false;
             checkboxElement.disabled = false;
-            toast.error('Fout bij afwerken van taak. Probeer opnieuw.');
+            toast.error('Error completing task. Please try again.');
         } finally {
             // Hide loading with minimum time for smooth UX
             await loading.hideWithMinTime();
@@ -10789,7 +10789,7 @@ class Taakbeheer {
 
         } catch (error) {
             console.error('Error adding test tasks:', error);
-            toast.error('Fout bij toevoegen van test taken');
+            toast.error('Error adding test tasks');
         }
     }
 
@@ -11042,7 +11042,7 @@ class Taakbeheer {
                 }
             } catch (error) {
                 console.error('Error processing drop:', error);
-                toast.error('Fout bij verplaatsen van taak');
+                toast.error('Error moving task');
             }
         });
     }
@@ -11095,14 +11095,14 @@ class Taakbeheer {
                         await this.loadUitgesteldSectieData(doelLijst);
                     }
 
-                    toast.success(`Taak verplaatst naar ${doelLijst.replace('uitgesteld-', '')}`);
+                    toast.success(`Task moved to ${doelLijst.replace('uitgesteld-', '')}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
+                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
-                toast.error('Fout bij verplaatsen van taak');
+                toast.error('Error moving task');
             }
         }, {
             operationId: 'drag-drop-move',
@@ -11242,7 +11242,7 @@ class Taakbeheer {
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
-                    toast.error('Fout bij verplaatsen van taak');
+                    toast.error('Error moving task');
                 }
             });
         });
@@ -11279,14 +11279,14 @@ class Taakbeheer {
                     }
 
                     const targetName = targetList === 'inbox' ? 'Inbox' : 'Opvolgen';
-                    toast.success(`Taak verplaatst naar ${targetName}`);
+                    toast.success(`Task moved to ${targetName}`);
                 } else {
                     const error = await response.json();
-                    toast.error(`Fout bij verplaatsen: ${error.error || 'Onbekende fout'}`);
+                    toast.error(`Error moving: ${error.error || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('Error moving task:', error);
-                toast.error('Fout bij verplaatsen van taak');
+                toast.error('Error moving task');
             }
         }, {
             operationId: 'floating-drop-move',
@@ -11582,7 +11582,7 @@ class Taakbeheer {
                     }
                 } catch (error) {
                     console.error('Error processing drop:', error);
-                    toast.error('Fout bij verplaatsen van taak');
+                    toast.error('Error moving task');
                 }
             });
         });
@@ -11615,18 +11615,18 @@ class Taakbeheer {
                     this.taken = this.taken.filter(t => t.id !== taakId);
                     
                     const targetName = this.getListDisplayName(targetList);
-                    toast.success(`Taak verplaatst naar ${targetName}`);
+                    toast.success(`Task moved to ${targetName}`);
                     
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
                 } else {
-                    toast.error('Fout bij verplaatsen naar lijst');
+                    toast.error('Error moving to list');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error moving task to list:', error);
-                toast.error('Fout bij verplaatsen naar lijst');
+                toast.error('Error moving to list');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
@@ -11645,7 +11645,7 @@ class Taakbeheer {
             this.renderActiesLijst();
             
             const targetName = this.getListDisplayName(targetList);
-            toast.success(`Taak verplaatst naar ${targetName}`);
+            toast.success(`Task moved to ${targetName}`);
         }
     }
 
@@ -11697,7 +11697,7 @@ class Taakbeheer {
                         month: 'long' 
                     });
                     
-                    toast.success(`Taak gepland voor ${dagNaam}`);
+                    toast.success(`Task scheduled for ${dagNaam}`);
                     
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
@@ -11707,13 +11707,13 @@ class Taakbeheer {
                         await this.laadDagelijksePlanning();
                     }
                 } else {
-                    toast.error('Fout bij updaten van datum');
+                    toast.error('Error updating date');
                     // Ook bij fout: verberg overlay onmiddellijk
                     this.hideActiesFloatingPanelImmediately();
                 }
             } catch (error) {
                 console.error('Error updating task date:', error);
-                toast.error('Fout bij updaten van datum');
+                toast.error('Error updating date');
                 // Ook bij exception: verberg overlay onmiddellijk
                 this.hideActiesFloatingPanelImmediately();
             }
@@ -11742,7 +11742,7 @@ class Taakbeheer {
             this.renderActiesLijst();
             
             const datumFormatted = new Date(datum).toLocaleDateString('nl-NL');
-            toast.success(`Taak gepland voor ${datumFormatted}`);
+            toast.success(`Task scheduled for ${datumFormatted}`);
         }
     }
 
@@ -11905,7 +11905,7 @@ class Taakbeheer {
         const clearGeblokkeerd = document.getElementById('clearGeblokkeerd').checked;
         
         if (!clearTaken && !clearPauzes && !clearGeblokkeerd) {
-            toast.warning('Selecteer minstens één optie om te verwijderen');
+            toast.warning('Select at least one option to delete');
             return;
         }
         
@@ -11951,9 +11951,9 @@ class Taakbeheer {
             // Show success message
             const deletedCount = itemsToDelete.length;
             if (deletedCount > 0) {
-                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} verwijderd uit de planning`);
+                toast.success(`${deletedCount} item${deletedCount > 1 ? 's' : ''} removed from planning`);
             } else {
-                toast.info('Geen items gevonden om te verwijderen');
+                toast.info('No items found to delete');
             }
         }, {
             operationId: 'clear-planning',
@@ -11999,7 +11999,7 @@ class Taakbeheer {
         localStorage.setItem('dagkalender-focus-mode', 'true');
         
         // Show toast notification
-        toast.success('Focus modus ingeschakeld - ESC om terug te gaan');
+        toast.success('Focus mode enabled - ESC to return');
         
         console.log('🎯 Focus modus ingeschakeld');
     }
@@ -12234,7 +12234,7 @@ class Taakbeheer {
 
     async bulkDateAction(action) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Selecteer eerst een of meer taken.');
+            toast.warning('Select one or more tasks first.');
             return;
         }
 
@@ -12307,7 +12307,7 @@ class Taakbeheer {
             // Show finishing message
             loading.show('Afronden...');
             
-            toast.success(`${successCount} taken bijgewerkt naar ${newDate}`);
+            toast.success(`${successCount} tasks updated to ${newDate}`);
 
             // Set flag if bulk update cleared inbox
             if (this.huidigeLijst === 'inbox' && successCount > 0) {
@@ -12384,7 +12384,7 @@ class Taakbeheer {
 
     async bulkVerplaatsNaar(lijstNaam) {
         if (this.geselecteerdeTaken.size === 0) {
-            toast.warning('Selecteer eerst een of meer taken.');
+            toast.warning('Select one or more tasks first.');
             return;
         }
 
@@ -12436,7 +12436,7 @@ class Taakbeheer {
             // Show finishing message
             loading.show('Afronden...');
             
-            toast.success(`${successCount} taken verplaatst naar ${lijstLabels[lijstNaam]}`);
+            toast.success(`${successCount} tasks moved to ${lijstLabels[lijstNaam]}`);
 
             // Reset bulk mode and reload with preserved scroll position
             this.toggleBulkModus();
@@ -12562,7 +12562,7 @@ class AuthManager {
         const password = document.getElementById('loginPassword').value;
 
         if (!email || !password) {
-            toast.warning('Voer email en wachtwoord in.');
+            toast.warning('Enter email and password.');
             return;
         }
 
@@ -12593,7 +12593,7 @@ class AuthManager {
                 this.updateUI();
                 this.hideLoginModal();
 
-                toast.success(`Welkom terug, ${data.user.naam}!`);
+                toast.success(`Welcome back, ${data.user.naam}!`);
 
                 // Check auth status immediately after login (includes beta access check)
                 await this.checkAuthStatus();
@@ -12603,11 +12603,11 @@ class AuthManager {
                     await app.loadUserData();
                 }
             } else {
-                toast.error(data.error || 'Inloggen mislukt. Controleer je gegevens.');
+                toast.error(data.error || 'Login failed. Check your credentials.');
             }
         } catch (error) {
             console.error('Login error:', error);
-            toast.error('Er ging iets mis bij het inloggen. Probeer opnieuw.');
+            toast.error('Something went wrong logging in. Please try again.');
         }
     }
 
@@ -12620,17 +12620,17 @@ class AuthManager {
         const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
 
         if (!naam || !email || !password || !passwordConfirm) {
-            toast.warning('Vul alle velden in.');
+            toast.warning('Fill in all fields.');
             return;
         }
 
         if (password !== passwordConfirm) {
-            toast.warning('Wachtwoorden komen niet overeen.');
+            toast.warning('Passwords do not match.');
             return;
         }
 
         if (password.length < 6) {
-            toast.warning('Wachtwoord moet minimaal 6 karakters lang zijn.');
+            toast.warning('Password must be at least 6 characters long.');
             return;
         }
 
@@ -12651,7 +12651,7 @@ class AuthManager {
                 this.updateUI();
                 this.hideRegisterModal();
 
-                toast.success(`Account aangemaakt! Welkom ${data.user.naam}!`);
+                toast.success(`Account created! Welcome ${data.user.naam}!`);
 
                 // Check auth status immediately after registration (includes onboarding video trigger)
                 await this.checkAuthStatus();
@@ -12661,11 +12661,11 @@ class AuthManager {
                     await app.loadUserData();
                 }
             } else {
-                toast.error(data.error || 'Registratie mislukt. Probeer opnieuw.');
+                toast.error(data.error || 'Registration failed. Please try again.');
             }
         } catch (error) {
             console.error('Register error:', error);
-            toast.error('Er ging iets mis bij het registreren. Probeer opnieuw.');
+            toast.error('Something went wrong registering. Please try again.');
         }
     }
 
@@ -12684,7 +12684,7 @@ class AuthManager {
                 
                 this.updateUI();
                 
-                toast.info('Je bent uitgelogd.');
+                toast.info('You are logged out.');
                 
                 // Clear data and reload UI for guest mode
                 if (app) {
@@ -12695,11 +12695,11 @@ class AuthManager {
                     await app.laadTellingen();
                 }
             } else {
-                toast.error('Uitloggen mislukt. Probeer opnieuw.');
+                toast.error('Logout failed. Please try again.');
             }
         } catch (error) {
             console.error('Logout error:', error);
-            toast.error('Er ging iets mis bij het uitloggen.');
+            toast.error('Something went wrong logging out.');
         }
     }
 
@@ -13034,7 +13034,7 @@ class AuthManager {
         // Use modern clipboard API if available
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text).then(() => {
-                toast.success('Import email gekopieerd naar clipboard!');
+                toast.success('Import email copied to clipboard!');
             }).catch(err => {
                 console.error('Failed to copy to clipboard:', err);
                 this.fallbackCopyToClipboard(text);
@@ -13057,10 +13057,10 @@ class AuthManager {
         
         try {
             document.execCommand('copy');
-            toast.success('Import email gekopieerd naar clipboard!');
+            toast.success('Import email copied to clipboard!');
         } catch (err) {
             console.error('Fallback copy failed:', err);
-            toast.error('Kopiëren naar clipboard mislukt');
+            toast.error('Copying to clipboard failed');
         } finally {
             document.body.removeChild(textArea);
         }
@@ -13450,7 +13450,7 @@ class QuickAddModal {
         const taakNaam = this.input.value.trim();
         
         if (!taakNaam) {
-            toast.warning('Voer een taaknaam in');
+            toast.warning('Enter a task name');
             this.input.focus();
             return;
         }
@@ -13458,7 +13458,7 @@ class QuickAddModal {
         try {
             // Check if user is logged in first
             if (app && !app.isLoggedIn()) {
-                toast.warning('Log in om taken toe te voegen.');
+                toast.warning('Log in to add tasks.');
                 return;
             }
             
@@ -13498,7 +13498,7 @@ class QuickAddModal {
                 const afterTasks = await afterResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER adding:', afterTasks.length, 'tasks');
                 
-                toast.success('Taak toegevoegd aan inbox');
+                toast.success('Task added to inbox');
                 this.hide();
                 
                 // Update counts and refresh if in inbox
@@ -13528,11 +13528,11 @@ class QuickAddModal {
                 const afterFailTasks = await afterFailResponse.json();
                 console.log('<i class="ti ti-search"></i> DEBUG: Inbox AFTER FAILED request:', afterFailTasks.length, 'tasks');
                 
-                toast.error('Fout bij toevoegen: ' + (response.status === 401 ? 'Log eerst in' : 'Server fout (500)'));
+                toast.error('Error adding: ' + (response.status === 401 ? 'Log in first' : 'Server error (500)'));
             }
         } catch (error) {
             console.error('Error adding task:', error);
-            toast.error('Fout bij toevoegen van taak: ' + error.message);
+            toast.error('Error adding task: ' + error.message);
         }
     }
 }
@@ -13807,7 +13807,7 @@ class FeedbackManager {
         const stappen = document.getElementById('feedbackStappen').value.trim();
         
         if (!titel || !beschrijving) {
-            toast.warning('Vul alstublieft alle verplichte velden in');
+            toast.warning('Please fill in all required fields');
             return;
         }
         
@@ -13833,17 +13833,17 @@ class FeedbackManager {
             });
             
             if (response.ok) {
-                toast.success('Bedankt voor je feedback! We gaan er mee aan de slag.');
+                toast.success('Thank you for your feedback! We will work on it.');
                 // Wacht even zodat gebruiker de success melding ziet
                 setTimeout(() => {
                     this.closeModal();
                 }, 1500);
             } else {
                 const error = await response.text();
-                toast.error('Er ging iets mis: ' + error);
+                toast.error('Something went wrong: ' + error);
             }
         } catch (error) {
-            toast.error('Er ging iets mis bij het verzenden van je feedback');
+            toast.error('Something went wrong sending your feedback');
             console.error('Feedback error:', error);
         } finally {
             if (window.loading && window.loading.hideGlobal) {
@@ -13883,7 +13883,7 @@ async function deleteAllTasks() {
     });
     
     if (!isActiesLijst) {
-        toast.error('Deze functie werkt alleen op de acties lijst');
+        toast.error('This function only works on the actions list');
         return;
     }
     
@@ -13907,7 +13907,7 @@ async function deleteAllTasks() {
         });
         
         if (response.ok) {
-            toast.success('Alle taken succesvol verwijderd');
+            toast.success('All tasks successfully deleted');
             // Refresh de lijst
             if (app && app.laadHuidigeLijst) {
                 await app.laadHuidigeLijst();
@@ -13917,10 +13917,10 @@ async function deleteAllTasks() {
             }
         } else {
             const error = await response.text();
-            toast.error('Fout bij verwijderen: ' + error);
+            toast.error('Error deleting: ' + error);
         }
     } catch (error) {
-        toast.error('Fout bij verwijderen: ' + error.message);
+        toast.error('Error deleting: ' + error.message);
     } finally {
         // Hide loading if it exists
         if (window.loading && loading.hideGlobal) {
@@ -14116,13 +14116,13 @@ class SubtakenManager {
         const titel = input.value.trim();
         
         if (!titel) {
-            toast.warning('Voer een titel in voor de subtaak');
+            toast.warning('Enter a title for the subtask');
             return;
         }
 
         const parentTaakId = app.huidigeTaakId;
         if (!parentTaakId) {
-            toast.error('Geen hoofdtaak geselecteerd');
+            toast.error('No main task selected');
             return;
         }
 
@@ -14165,10 +14165,10 @@ class SubtakenManager {
                 this.renderSubtaken();
             }
             
-            toast.success(this.editingSubtaak ? 'Subtaak bijgewerkt' : 'Subtaak toegevoegd');
+            toast.success(this.editingSubtaak ? 'Subtask updated' : 'Subtask added');
         } catch (error) {
             console.error('Error saving subtaak:', error);
-            toast.error('Fout bij opslaan subtaak');
+            toast.error('Error saving subtask');
         }
     }
 
@@ -14222,7 +14222,7 @@ class SubtakenManager {
             this.renderSubtaken();
         } catch (error) {
             console.error('Error toggling subtaak:', error);
-            toast.error('Fout bij wijzigen subtaak status');
+            toast.error('Error changing subtask status');
         }
     }
 
@@ -14253,10 +14253,10 @@ class SubtakenManager {
             }
 
             await this.loadSubtaken(app.huidigeTaakId);
-            toast.success('Subtaak verwijderd');
+            toast.success('Subtask deleted');
         } catch (error) {
             console.error('Error deleting subtaak:', error);
-            toast.error('Fout bij verwijderen subtaak');
+            toast.error('Error deleting subtask');
         }
     }
 
@@ -14533,7 +14533,7 @@ class BijlagenManager {
 
         if (!this.currentTaakId) {
             console.log('❌ DEBUG: No currentTaakId, showing error');
-            toast.error('Geen taak geselecteerd voor bijlage upload');
+            toast.error('No task selected for attachment upload');
             return;
         }
 
@@ -14565,7 +14565,7 @@ class BijlagenManager {
 
             if (data.success) {
                 console.log('✅ DEBUG: Upload successful, updating UI');
-                toast.success(`Bijlage "${file.name}" succesvol geüpload`);
+                toast.success(`Attachment "${file.name}" uploaded successfully`);
                 await this.loadStorageStats();
                 await this.loadBijlagen();
                 this.updateUI();
@@ -14589,9 +14589,9 @@ class BijlagenManager {
             if (error.message.includes('Maximum') || error.message.includes('Onvoldoende')) {
                 toast.error(error.message);
             } else if (error.message.includes('niet toegestaan')) {
-                toast.error('Bestandstype niet toegestaan');
+                toast.error('File type not allowed');
             } else {
-                toast.error('Upload gefaald. Probeer opnieuw.');
+                toast.error('Upload failed. Please try again.');
             }
         } finally {
             console.log('🏁 DEBUG: Upload process finished, hiding progress');
@@ -14641,11 +14641,11 @@ class BijlagenManager {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
 
-            toast.success('Download gestart');
+            toast.success('Download started');
 
         } catch (error) {
             console.error('Download error:', error);
-            toast.error('Download gefaald. Probeer opnieuw.');
+            toast.error('Download failed. Please try again.');
         }
     }
 
@@ -14663,7 +14663,7 @@ class BijlagenManager {
             const data = await response.json();
 
             if (data.success) {
-                toast.success('Bijlage verwijderd');
+                toast.success('Attachment deleted');
                 await this.loadStorageStats();
                 await this.loadBijlagen();
                 this.updateUI();
@@ -14673,12 +14673,12 @@ class BijlagenManager {
 
         } catch (error) {
             console.error('Delete error:', error);
-            toast.error('Verwijderen gefaald. Probeer opnieuw.');
+            toast.error('Delete failed. Please try again.');
         }
     }
 
     showUpgradeModal() {
-        toast.info('Premium upgrade functionaliteit komt binnenkort beschikbaar!');
+        toast.info('Premium upgrade functionality coming soon!');
     }
 
     showProgress(text) {
@@ -14758,14 +14758,14 @@ class BijlagenManager {
             const currentIndex = allBijlagen.findIndex(b => b.id === bijlageId);
             
             if (currentIndex === -1) {
-                toast.error('Bijlage niet gevonden');
+                toast.error('Attachment not found');
                 return;
             }
 
             const bijlage = allBijlagen[currentIndex];
             
             if (!this.canPreview(bijlage.mimetype)) {
-                toast.error('Preview niet ondersteund voor dit bestandstype');
+                toast.error('Preview not supported for this file type');
                 return;
             }
 
@@ -14782,7 +14782,7 @@ class BijlagenManager {
             
         } catch (error) {
             console.error('Preview error:', error);
-            toast.error('Fout bij laden preview');
+            toast.error('Error loading preview');
         }
     }
 

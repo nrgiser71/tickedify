@@ -137,8 +137,8 @@
         <!-- Version 0.19.186 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.19.186</span>
-                <span class="version-date">25 oktober 2025</span>
+                <span class="version-badge badge-fix">v0.19.186</span>
+                <span class="version-date">26 oktober 2025</span>
             </div>
             <div class="changes-list">
                 <div class="change-category">
@@ -149,6 +149,68 @@
                             <strong>Event Listener Accumulation Opgelost</strong>: Gefixte bug waarbij 7-10+ duplicate toast notificaties ("Task Moved To Uitgesteld Wekelijks") verschenen bij het slepen van taken naar postponed weekly lijsten. De root cause was event listener accumulation - setupUitgesteldDropZones() voegde bij elke render nieuwe event listeners toe zonder oude te verwijderen, waardoor meerdere drop handlers simultaan werden getriggerd bij een drop actie.
                         </div>
                     </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Element Cloning Pattern Geïmplementeerd</strong>: Nieuwe cleanupEventListeners() method gebruikt element cloning om alle oude event listeners gegarandeerd te verwijderen voordat nieuwe worden toegevoegd. Dit voorkomt listener accumulation en zorgt voor consistent gedrag ongeacht het aantal navigatie cycles of re-renders.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Consistent Gedrag Voor Alle Taken</strong>: Fix zorgt dat exact 1 toast bericht verschijnt per drag & drop actie, ongeacht taak ouderdom of navigatie historie. Alle 5 uitgesteld categories (wekelijks, maandelijks, 3-maandelijks, 6-maandelijks, jaarlijks) werken nu correct zonder duplicate berichten.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Geen Memory Leaks</strong>: De event listener accumulation veroorzaakte een klein memory leak (~4KB per sessie bij 10 renders). De nieuwe implementatie houdt memory gebruik constant door oude listeners te cleanen, wat resulteert in betere performance bij langdurig gebruik.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.187 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.19.187</span>
+                <span class="version-date">27 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🌍 TRANSLATION: All Toast Notifications Now in English</div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Complete UI Translation</strong>: All 100+ toast notification messages throughout the application have been translated from Dutch to English. This includes success messages, error messages, warnings, and info notifications across all features (task management, planning, contexts, priorities, attachments, subtasks, recurring tasks, etc.).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Consistent User Experience</strong>: All user-facing feedback messages now display in English, providing a consistent and professional experience. Error messages are clear and actionable (e.g., "Error completing task. Please try again."), success messages are encouraging (e.g., "Task completed! Next recurrence scheduled for..."), and warnings guide users effectively (e.g., "Maximum 3 Most Important Tasks reached").
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">•</div>
+                        <div class="change-content">
+                            <strong>Test Interface Localization</strong>: Test interface toast messages (test-herhalingen.js) also translated to English for consistency across all application interfaces. This ensures developers and testers work with unified English messaging throughout the development workflow.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.186 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.186</span>
+                <span class="version-date">26 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Duplicate Toast Berichten Bij Postponed Weekly Drag & Drop</div>
                     <div class="change-item">
                         <div class="change-icon">•</div>
                         <div class="change-content">
