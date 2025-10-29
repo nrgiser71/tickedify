@@ -1867,9 +1867,9 @@ class Taakbeheer {
         const herhalingTexts = {
             '': 'Geen herhaling',
             'dagelijks': 'Dagelijks',
-            'wekelijks': 'Wekelijks',
-            'maandelijks': 'Maandelijks',
-            'jaarlijks': 'Jaarlijks',
+            'wekelijks': 'Weekly',
+            'maandelijks': 'Monthly',
+            'jaarlijks': 'Yearly',
             'maandag': 'Elke maandag',
             'dinsdag': 'Elke dinsdag',
             'woensdag': 'Elke woensdag',
@@ -2098,7 +2098,7 @@ class Taakbeheer {
                             <div class="project-naam" title="${this.escapeHtml(project.naam)}">${project.naam}</div>
                             ${dueDateBadge}
                         </div>
-                        <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt</div>
+                        <div class="project-info">${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed</div>
                     </div>
                     <div class="project-acties" onclick="event.stopPropagation()">
                         <button onclick="app.bewerkProject('${project.id}')" class="bewerk-project-btn" title="Bewerk project">✏️</button>
@@ -2215,7 +2215,7 @@ class Taakbeheer {
         let bevestigingsTekst = `Weet je zeker dat je project "${project.naam}" wilt verwijderen?`;
         
         if (totaalActies > 0) {
-            bevestigingsTekst += `\n\nLet op: Er zijn nog ${totaalActies} ${totaalActies === 1 ? 'actie' : 'acties'} gekoppeld aan dit project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt). Deze zullen hun projectkoppeling verliezen.`;
+            bevestigingsTekst += `\n\nNote: There are still ${totaalActies} ${totaalActies === 1 ? 'action' : 'actions'} linked to this project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed). These will lose their project link.`;
         }
         
         const bevestiging = await confirmModal.show('Delete Project', bevestigingsTekst);
@@ -2307,7 +2307,7 @@ class Taakbeheer {
         // Open acties
         if (openActies.length > 0) {
             html += '<div class="project-taken-sectie">';
-            html += '<h4 class="project-taken-header">Open acties</h4>';
+            html += '<h4 class="project-taken-header">OPEN ACTIONS</h4>';
             openActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
                 const datum = new Date(actie.verschijndatum).toLocaleDateString('nl-NL');
@@ -2331,7 +2331,7 @@ class Taakbeheer {
         // Afgewerkte acties
         if (afgewerkteActies.length > 0) {
             html += '<div class="project-taken-sectie">';
-            html += '<h4 class="project-taken-header">Afgewerkte acties</h4>';
+            html += '<h4 class="project-taken-header">COMPLETED ACTIONS</h4>';
             afgewerkteActies.forEach(actie => {
                 const contextNaam = this.getContextNaam(actie.contextId);
                 const afgewerkDatum = new Date(actie.afgewerkt).toLocaleDateString('nl-NL');
@@ -2499,7 +2499,7 @@ class Taakbeheer {
             const actiesInfo = await this.telActiesPerProject(project.id);
             const projectElement = document.querySelector(`[data-id="${project.id}"] .project-info`);
             if (projectElement) {
-                projectElement.textContent = `${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt`;
+                projectElement.textContent = `${actiesInfo.open} open, ${actiesInfo.afgewerkt} completed`;
             }
         }
     }
@@ -3037,11 +3037,11 @@ class Taakbeheer {
         this.verplaatsTaak(lijst);
         const lijstNamen = {
             'opvolgen': 'Opvolgen',
-            'uitgesteld-wekelijks': 'Wekelijks',
-            'uitgesteld-maandelijks': 'Maandelijks',
-            'uitgesteld-3maandelijks': '3-maandelijks',
-            'uitgesteld-6maandelijks': '6-maandelijks',
-            'uitgesteld-jaarlijks': 'Jaarlijks'
+            'uitgesteld-wekelijks': 'Weekly',
+            'uitgesteld-maandelijks': 'Monthly',
+            'uitgesteld-3maandelijks': 'Quarterly',
+            'uitgesteld-6maandelijks': 'Semi-annually',
+            'uitgesteld-jaarlijks': 'Yearly'
         };
         this.showQuickTip(`Verplaatst naar ${lijstNamen[lijst]}`);
     }
@@ -3502,11 +3502,11 @@ class Taakbeheer {
     getVerplaatsOpties(taakId) {
         const alleOpties = [
             { key: 'inbox', label: 'Inbox' },
-            { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
-            { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
-            { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
-            { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
-            { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+            { key: 'uitgesteld-wekelijks', label: 'Weekly' },
+            { key: 'uitgesteld-maandelijks', label: 'Monthly' },
+            { key: 'uitgesteld-3maandelijks', label: 'Quarterly' },
+            { key: 'uitgesteld-6maandelijks', label: 'Semi-annually' },
+            { key: 'uitgesteld-jaarlijks', label: 'Yearly' }
         ];
 
         return alleOpties
@@ -3799,11 +3799,11 @@ class Taakbeheer {
                             <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdown('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
                             <div class="verplaats-menu" id="verplaats-${taak.id}" style="display: none;">
                                 <button onclick="app.verplaatsActie('${taak.id}', 'opvolgen')">Opvolgen</button>
-                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-wekelijks')">Wekelijks</button>
-                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-maandelijks')">Maandelijks</button>
-                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-3maandelijks')">3-maandelijks</button>
-                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-6maandelijks')">6-maandelijks</button>
-                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-jaarlijks')">Jaarlijks</button>
+                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-wekelijks')">Weekly</button>
+                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-maandelijks')">Monthly</button>
+                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-3maandelijks')">Quarterly</button>
+                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-6maandelijks')">Semi-annually</button>
+                                <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-jaarlijks')">Yearly</button>
                             </div>
                         </div>
                         <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
@@ -4603,11 +4603,11 @@ class Taakbeheer {
                 
                 <h3>Verplaats naar uitgesteld</h3>
                 <div class="menu-section">
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-wekelijks')" class="menu-item">Wekelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-maandelijks')" class="menu-item">Maandelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-3maandelijks')" class="menu-item">3-maandelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-6maandelijks')" class="menu-item">6-maandelijks</button>
-                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Jaarlijks</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-wekelijks')" class="menu-item">Weekly</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-maandelijks')" class="menu-item">Monthly</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-3maandelijks')" class="menu-item">Quarterly</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-6maandelijks')" class="menu-item">Semi-annually</button>
+                    <button onclick="app.verplaatsNaarUitgesteld('${taakId}', 'uitgesteld-jaarlijks')" class="menu-item">Yearly</button>
                 </div>
                 
                 <h3>Verplaats naar Opvolgen</h3>
@@ -4623,11 +4623,11 @@ class Taakbeheer {
         } else if (menuType === 'uitgesteld') {
             // Voor uitgesteld lijsten: inbox + andere uitgesteld lijsten (exclusief huidige) + opvolgen
             const uitgesteldOpties = [
-                { id: 'uitgesteld-wekelijks', naam: 'Wekelijks' },
-                { id: 'uitgesteld-maandelijks', naam: 'Maandelijks' },
-                { id: 'uitgesteld-3maandelijks', naam: '3-maandelijks' },
-                { id: 'uitgesteld-6maandelijks', naam: '6-maandelijks' },
-                { id: 'uitgesteld-jaarlijks', naam: 'Jaarlijks' }
+                { id: 'uitgesteld-wekelijks', naam: 'Weekly' },
+                { id: 'uitgesteld-maandelijks', naam: 'Monthly' },
+                { id: 'uitgesteld-3maandelijks', naam: 'Quarterly' },
+                { id: 'uitgesteld-6maandelijks', naam: 'Semi-annually' },
+                { id: 'uitgesteld-jaarlijks', naam: 'Yearly' }
             ];
             
             // Filter uit de huidige lijst
@@ -4951,11 +4951,11 @@ class Taakbeheer {
             await this.updateSidebarCounters();
             
             const weergaveNaam = lijstNaam.replace('uitgesteld-', '')
-                .replace('wekelijks', 'Wekelijks')
-                .replace('maandelijks', 'Maandelijks')
-                .replace('3maandelijks', '3-maandelijks')
-                .replace('6maandelijks', '6-maandelijks')
-                .replace('jaarlijks', 'Jaarlijks');
+                .replace('wekelijks', 'Weekly')
+                .replace('maandelijks', 'Monthly')
+                .replace('3maandelijks', 'Quarterly')
+                .replace('6maandelijks', 'Semi-annually')
+                .replace('jaarlijks', 'Yearly');
             toast.success(`Task moved to ${weergaveNaam}`);
         }, {
             operationId: 'verplaats-uitgesteld',
@@ -5057,7 +5057,7 @@ class Taakbeheer {
     }
 
     async maakNieuweContext() {
-        const naam = await inputModal.show('Nieuwe Context', 'Naam voor de nieuwe context:');
+        const naam = await inputModal.show('New Context', 'Name for the new context:');
         if (naam && naam.trim()) {
             const nieuweContext = {
                 id: this.generateId(),
@@ -7098,20 +7098,20 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="contexten-beheer">
                 <div class="beheer-header">
-                    <h3>🏷️ Contexten Beheer</h3>
+                    <h3>🏷️ Context Management</h3>
                     <button onclick="app.voegContextToe()" class="primary-btn">
-                        ➕ Nieuwe Context
+                        ➕ New Context
                     </button>
                 </div>
-                
+
                 <div class="contexten-lijst" id="contextenLijst">
-                    ${this.contexten.length === 0 ? 
-                        '<p class="geen-items">Nog geen contexten aangemaakt. Klik op "Nieuwe Context" om te beginnen.</p>' :
+                    ${this.contexten.length === 0 ?
+                        '<p class="geen-items">No contexts created yet. Click "New Context" to begin.</p>' :
                         this.contexten.map(context => `
                             <div class="context-item" data-id="${context.id}">
                                 <div class="context-content">
                                     <span class="context-naam">${context.naam}</span>
-                                    <small class="context-info">Aangemaakt: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
+                                    <small class="context-info">Created: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
                                 </div>
                                 <div class="context-acties">
                                     <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Edit"><i class="fas fa-edit"></i></button>
@@ -7252,7 +7252,7 @@ class Taakbeheer {
                         <div class="optimalisatie-item">
                             <input type="checkbox" id="bekijk-uitgesteld" class="optimalisatie-checkbox">
                             <label for="bekijk-uitgesteld">Bekijk je uitgesteld lijst</label>
-                            <button class="actie-knop dropdown-trigger" onclick="app.toggleUitgesteldDropdown()">Toon Uitgesteld Lijsten</button>
+                            <button class="actie-knop dropdown-trigger" onclick="app.toggleUitgesteldDropdown()">Show Postponed Lists</button>
                         </div>
                     </div>
                 </div>
@@ -7361,11 +7361,11 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-uitgesteld" checked>
-                                        <span>Uitgesteld</span>
+                                        <span>Postponed</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-afgewerkt">
-                                        <span>Afgewerkt</span>
+                                        <span>Completed</span>
                                     </label>
                                 </div>
                             </div>
@@ -7559,12 +7559,12 @@ class Taakbeheer {
             'inbox': '<i class="ti ti-inbox"></i> Inbox',
             'acties': '<i class="fas fa-clipboard"></i> Acties',
             'opvolgen': '⏳ Opvolgen',
-            'afgewerkte-taken': '<i class="fas fa-check"></i> Afgewerkt',
-            'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Wekelijks',
-            'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Maandelijks',
-            'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> 3-maandelijks',
-            'uitgesteld-6maandelijks': '<i class="ti ti-calendar"></i> 6-maandelijks',
-            'uitgesteld-jaarlijks': '<i class="ti ti-calendar"></i> Jaarlijks'
+            'afgewerkte-taken': '<i class="fas fa-check"></i> Completed',
+            'uitgesteld-wekelijks': '<i class="ti ti-calendar"></i> Weekly',
+            'uitgesteld-maandelijks': '<i class="ti ti-calendar"></i> Monthly',
+            'uitgesteld-3maandelijks': '<i class="ti ti-calendar"></i> Quarterly',
+            'uitgesteld-6maandelijks': '<i class="ti ti-calendar"></i> Semi-annually',
+            'uitgesteld-jaarlijks': '<i class="ti ti-calendar"></i> Yearly'
         };
         return labels[lijstNaam] || lijstNaam;
     }
@@ -7985,7 +7985,7 @@ class Taakbeheer {
     }
 
     async voegContextToe() {
-        const naam = await inputModal.show('Nieuwe Context', 'Contextnaam:', '');
+        const naam = await inputModal.show('New Context', 'Context name:', '');
         if (!naam || !naam.trim()) return;
 
         await loading.withLoading(async () => {
@@ -8200,9 +8200,9 @@ class Taakbeheer {
         
         if (herhalingType === 'dagelijks') return 'Elke dag';
         if (herhalingType === 'werkdagen') return 'Elke werkdag';
-        if (herhalingType.includes('weekly')) return 'Wekelijks';
-        if (herhalingType.includes('monthly')) return 'Maandelijks';
-        if (herhalingType.includes('yearly')) return 'Jaarlijks';
+        if (herhalingType.includes('weekly')) return 'Weekly';
+        if (herhalingType.includes('monthly')) return 'Monthly';
+        if (herhalingType.includes('yearly')) return 'Yearly';
         
         return herhalingType; // fallback
     }
@@ -10709,11 +10709,11 @@ class Taakbeheer {
                         <button class="verplaats-btn-small" onclick="app.toggleVerplaatsDropdown('${taak.id}')" title="Verplaats naar andere lijst">↗️</button>
                         <div class="verplaats-menu" id="verplaats-${taak.id}" style="display: none;">
                             <button onclick="app.verplaatsActie('${taak.id}', 'opvolgen')">Opvolgen</button>
-                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-wekelijks')">Wekelijks</button>
-                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-maandelijks')">Maandelijks</button>
-                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-3maandelijks')">3-maandelijks</button>
-                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-6maandelijks')">6-maandelijks</button>
-                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-jaarlijks')">Jaarlijks</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-wekelijks')">Weekly</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-maandelijks')">Monthly</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-3maandelijks')">Quarterly</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-6maandelijks')">Semi-annually</button>
+                            <button onclick="app.verplaatsActie('${taak.id}', 'uitgesteld-jaarlijks')">Yearly</button>
                         </div>
                     </div>
                     <button onclick="app.verwijderTaak('${taak.id}')" class="verwijder-btn" title="Verwijder taak">×</button>
@@ -10812,11 +10812,11 @@ class Taakbeheer {
 
         // Define the uitgesteld categories
         const uitgesteldCategories = [
-            { key: 'uitgesteld-wekelijks', name: 'Wekelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-maandelijks', name: 'Maandelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-3maandelijks', name: '3-maandelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-6maandelijks', name: '6-maandelijks', icon: 'fas fa-pause-circle' },
-            { key: 'uitgesteld-jaarlijks', name: 'Jaarlijks', icon: 'fas fa-pause-circle' }
+            { key: 'uitgesteld-wekelijks', name: 'Weekly', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-maandelijks', name: 'Monthly', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-3maandelijks', name: 'Quarterly', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-6maandelijks', name: 'Semi-annually', icon: 'fas fa-pause-circle' },
+            { key: 'uitgesteld-jaarlijks', name: 'Yearly', icon: 'fas fa-pause-circle' }
         ];
 
         // Load counts for each category
@@ -10838,7 +10838,7 @@ class Taakbeheer {
 
         container.innerHTML = `
             <header class="main-header">
-                <h1 id="page-title">Uitgesteld</h1>
+                <h1 id="page-title">Postponed</h1>
             </header>
 
             <div class="content-area">
@@ -11762,11 +11762,11 @@ class Taakbeheer {
     getListDisplayName(lijst) {
         const names = {
             'opvolgen': 'Opvolgen',
-            'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks',
-            'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks',
-            'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks',
-            'uitgesteld-6maandelijks': 'Uitgesteld - 6-maandelijks',
-            'uitgesteld-jaarlijks': 'Uitgesteld - Jaarlijks'
+            'uitgesteld-wekelijks': 'Postponed - Weekly',
+            'uitgesteld-maandelijks': 'Postponed - Monthly',
+            'uitgesteld-3maandelijks': 'Postponed - Quarterly',
+            'uitgesteld-6maandelijks': 'Postponed - Semi-annually',
+            'uitgesteld-jaarlijks': 'Postponed - Yearly'
         };
         return names[lijst] || lijst;
     }
@@ -12182,7 +12182,7 @@ class Taakbeheer {
         } else {
             actiesContainer.classList.remove('bulk-modus');
             bulkToolbar.style.display = 'none';
-            toggleButton.textContent = 'Bulk bewerken';
+            toggleButton.textContent = 'Bulk Edit';
             toggleButton.classList.remove('active');
         }
         
@@ -12352,11 +12352,11 @@ class Taakbeheer {
                 <button onclick="window.bulkDateAction(1)" class="bulk-action-btn">Morgen</button>
                 ${weekdagenHTML}
                 <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Opvolgen</button>
-                <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Wekelijks</button>
-                <button onclick="window.bulkVerplaatsNaar('uitgesteld-maandelijks')" class="bulk-action-btn">Maandelijks</button>
-                <button onclick="window.bulkVerplaatsNaar('uitgesteld-3maandelijks')" class="bulk-action-btn">3-maandelijks</button>
-                <button onclick="window.bulkVerplaatsNaar('uitgesteld-6maandelijks')" class="bulk-action-btn">6-maandelijks</button>
-                <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Jaarlijks</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Weekly</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-maandelijks')" class="bulk-action-btn">Monthly</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-3maandelijks')" class="bulk-action-btn">Quarterly</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-6maandelijks')" class="bulk-action-btn">Semi-annually</button>
+                <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Yearly</button>
             `;
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
             // For postponed lists: show options to move back to main lists
