@@ -4071,7 +4071,9 @@ class Taakbeheer {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    afgewerkt: taak.afgewerkt
+                    afgewerkt: taak.afgewerkt,
+                    completedViaCheckbox: true,
+                    lijst: 'afgewerkt'
                 })
             });
             
@@ -4095,27 +4097,32 @@ class Taakbeheer {
 
     async terugzettenNaarInbox(taakId) {
         return await loading.withLoading(async () => {
-            // Update task to move it back to inbox and clear completed status
-            const response = await fetch(`/api/taak/${taakId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lijst: 'inbox',
-                    afgewerkt: null  // Clear the completed timestamp
-                })
+            // Use new unarchive endpoint to restore task from archive
+            const response = await fetch(`/api/taak/${taakId}/unarchive`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
             });
-            
+
             if (response.ok) {
+                const result = await response.json();
+
                 // Remove from local array if we're on afgewerkte-taken page
                 if (this.huidigeLijst === 'afgewerkte-taken') {
                     this.taken = this.taken.filter(t => t.id !== taakId);
                     this.renderTaken();
                 }
-                
-                toast.success('Task restored to inbox');
+
+                // Show success message with subtask count if any were restored
+                let message = 'Task restored to inbox';
+                if (result.restored_subtaken_count > 0) {
+                    message += ` (including ${result.restored_subtaken_count} subtasks)`;
+                }
+
+                toast.success(message);
                 return true;
             } else {
-                toast.error('Error restoring task');
+                const error = await response.json();
+                toast.error(error.error || 'Error restoring task');
                 return false;
             }
         }, {
@@ -6565,21 +6572,14 @@ class Taakbeheer {
             document.getElementById('planningPopup').style.display = 'flex';
             document.getElementById('taakNaamInput').focus();
             
-            // Load subtaken for tasks - same logic as planTaak
+            // Load subtaken for tasks - always try to load subtaken regardless of lijst
+            // This handles unarchived tasks that were restored to inbox but have subtaken
             console.log('DEBUG: bewerkActie - huidigeLijst:', this.huidigeLijst, 'subtakenManager exists:', !!subtakenManager);
-            
+
             if (subtakenManager) {
-                if (this.huidigeLijst === 'acties') {
-                    console.log('DEBUG: bewerkActie - Loading existing subtaken for acties lijst');
-                    // Load existing subtaken for tasks from acties lijst
-                    await subtakenManager.loadSubtaken(id);
-                } else {
-                    console.log('DEBUG: bewerkActie - Showing empty subtaken sectie for inbox task');
-                    // Show empty subtaken sectie for new tasks from inbox
-                    subtakenManager.showSubtakenSectie();
-                    subtakenManager.currentSubtaken = [];
-                    subtakenManager.renderSubtaken();
-                }
+                console.log('DEBUG: bewerkActie - Loading subtaken for task (any lijst)');
+                // Always load subtaken - if task has none, it will show empty state
+                await subtakenManager.loadSubtaken(id);
             } else {
                 console.log('DEBUG: bewerkActie - Fallback - subtakenManager not available, showing sectie directly');
                 // Fallback: directly show subtaken sectie if manager not ready

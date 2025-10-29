@@ -4893,11 +4893,35 @@ app.get('/api/lijst/:naam', async (req, res) => {
         if (!db) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { naam } = req.params;
         const userId = getCurrentUserId(req);
-        const data = await db.getList(naam, userId);
-        
+
+        let data;
+
+        // Special handling for 'afgewerkt' and 'afgewerkte-taken' lijst - read from archive table
+        if (naam === 'afgewerkt' || naam === 'afgewerkte-taken') {
+            console.log(`📦 Reading ${naam} lijst from taken_archief for user ${userId}`);
+
+            try {
+                const result = await pool.query(
+                    'SELECT * FROM taken_archief WHERE user_id = $1 ORDER BY afgewerkt DESC, archived_at DESC',
+                    [userId]
+                );
+                data = result.rows;
+                console.log(`✅ Retrieved ${data.length} archived tasks from taken_archief for user ${userId}`);
+            } catch (archiveError) {
+                console.error(`❌ Error reading from taken_archief:`, archiveError);
+
+                // Fallback to regular table if archive doesn't exist yet (pre-migration)
+                console.log(`⚠️ Falling back to regular taken table for afgewerkt lijst`);
+                data = await db.getList(naam, userId);
+            }
+        } else {
+            // Normal list handling
+            data = await db.getList(naam, userId);
+        }
+
         // Add bijlagen counts for task lists (not for projecten-lijst or contexten)
         if (naam !== 'projecten-lijst' && naam !== 'contexten') {
             const taakIds = data.map(item => item.id).filter(id => id);
@@ -4913,7 +4937,7 @@ app.get('/api/lijst/:naam', async (req, res) => {
                 });
             }
         }
-        
+
         res.json(data);
     } catch (error) {
         console.error(`Error getting list ${req.params.naam}:`, error);
@@ -5180,63 +5204,123 @@ app.put('/api/taak/:id', async (req, res) => {
                 });
             }
 
-            // Update task to completed status
-            const success = await db.updateTask(id, updateData, userId);
+            // Archive task workflow
+            let archivedTaskId = null;
+            let newRecurringTaskId = null;
+            let archiveWarning = null;
 
-            if (!success) {
-                console.log(`Failed to update task ${id} to completed status`);
-                return res.status(500).json({
-                    success: false,
-                    error: 'Failed to update task status',
-                    code: 'UPDATE_FAILED'
-                });
-            }
+            try {
+                // BEGIN TRANSACTION for atomic archiving
+                await pool.query('BEGIN');
+                console.log(`📦 Starting archive transaction for task ${id}`);
 
-            // Get updated task for response
-            const updatedTask = await db.getTask(id, userId);
+                // 1. Archive task to taken_archief
+                await pool.query(`
+                    INSERT INTO taken_archief (
+                        id, tekst, aangemaakt, lijst, project_id, verschijndatum,
+                        context_id, duur, type, afgewerkt,
+                        herhaling_type, herhaling_waarde, herhaling_actief,
+                        opmerkingen, user_id, top_prioriteit, prioriteit_datum, prioriteit,
+                        archived_at
+                    )
+                    SELECT
+                        id, tekst, aangemaakt, lijst, project_id, verschijndatum,
+                        context_id, duur, type, CURRENT_TIMESTAMP,
+                        herhaling_type, herhaling_waarde, FALSE,
+                        opmerkingen, user_id, top_prioriteit, prioriteit_datum, prioriteit,
+                        CURRENT_TIMESTAMP
+                    FROM taken WHERE id = $1 AND user_id = $2
+                `, [id, userId]);
+                console.log(`✅ Task ${id} archived to taken_archief`);
 
-            // Check if task has recurring settings and needs a new instance
-            let recurringTaskCreated = false;
-            let nextTask = null;
+                // 2. Archive subtaken to subtaken_archief
+                const subtakenResult = await pool.query(`
+                    INSERT INTO subtaken_archief (
+                        id, parent_taak_id, titel, voltooid, volgorde, archived_at
+                    )
+                    SELECT
+                        id, parent_taak_id, titel, voltooid, volgorde, CURRENT_TIMESTAMP
+                    FROM subtaken
+                    WHERE parent_taak_id = $1
+                    RETURNING id
+                `, [id]);
+                console.log(`✅ Archived ${subtakenResult.rowCount} subtaken for task ${id}`);
 
-            if (currentTask.herhaling_actief && currentTask.herhaling_type) {
-                console.log(`🔄 Creating recurring task for completed task ${id} with pattern: ${currentTask.herhaling_type}`);
+                // 3. Handle recurring tasks - create new instance BEFORE deleting
+                if (currentTask.herhaling_actief && currentTask.herhaling_type) {
+                    console.log(`🔄 Creating recurring task for archived task ${id} with pattern: ${currentTask.herhaling_type}`);
 
-                try {
-                    // Create next recurring task instance
-                    const recurringResult = await db.createRecurringTask(currentTask);
-                    if (recurringResult && recurringResult.success) {
-                        recurringTaskCreated = true;
-                        nextTask = recurringResult.newTask;
-                        console.log(`✅ Created recurring task ${nextTask.id} for completed task ${id}`);
-                    } else {
-                        console.log(`⚠️ Failed to create recurring task for ${id}:`, recurringResult);
+                    try {
+                        const recurringResult = await db.createRecurringTask(currentTask);
+                        if (recurringResult && recurringResult.success) {
+                            newRecurringTaskId = recurringResult.newTask.id;
+                            console.log(`✅ Created new recurring instance ${newRecurringTaskId} for archived task ${id}`);
+                        } else {
+                            console.log(`⚠️ Failed to create recurring task for ${id}:`, recurringResult);
+                        }
+                    } catch (recurringError) {
+                        console.error(`❌ Error creating recurring task for ${id}:`, recurringError);
+                        // Continue with archiving even if recurring fails
                     }
-                } catch (recurringError) {
-                    console.error(`❌ Error creating recurring task for ${id}:`, recurringError);
-                    // Don't fail the main completion - just log the error
                 }
+
+                // 4. Delete from active tables
+                await pool.query('DELETE FROM subtaken WHERE parent_taak_id = $1', [id]);
+                await pool.query('DELETE FROM taken WHERE id = $1 AND user_id = $2', [id, userId]);
+                console.log(`✅ Deleted task ${id} and subtaken from active tables`);
+
+                // COMMIT TRANSACTION
+                await pool.query('COMMIT');
+                archivedTaskId = id;
+                console.log(`✅ Archive transaction committed successfully for task ${id}`);
+
+            } catch (archiveError) {
+                // ROLLBACK on any error
+                await pool.query('ROLLBACK');
+                console.error(`❌ Archive transaction failed for task ${id}, rolling back:`, archiveError);
+
+                // Fallback: Update task to completed status (old behavior)
+                archiveWarning = 'Archivering failed - taak gemarkeerd als afgewerkt (wordt later gearchiveerd)';
+                const success = await db.updateTask(id, updateData, userId);
+
+                if (!success) {
+                    console.log(`Failed to fallback update task ${id} to completed status`);
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Failed to update task status',
+                        code: 'UPDATE_FAILED'
+                    });
+                }
+
+                console.log(`⚠️ Fallback: Task ${id} marked as completed without archiving`);
             }
 
-            // Return success response with task data and recurring info
+            // Get updated task for response (only if fallback was used)
+            let updatedTask = null;
+            if (archiveWarning) {
+                updatedTask = await db.getTask(id, userId);
+            }
+
+            // Return success response with archive info
             console.log(`✅ Task ${id} completed successfully via checkbox`);
-            return res.json({
+            const response = {
                 success: true,
-                task: {
-                    id: updatedTask.id,
-                    tekst: updatedTask.tekst,
-                    lijst: updatedTask.lijst,
-                    afgewerkt: updatedTask.afgewerkt,
-                    herhaling_actief: updatedTask.herhaling_actief
-                },
-                recurringTaskCreated,
-                ...(nextTask && { nextTask: {
-                    id: nextTask.id,
-                    tekst: nextTask.tekst,
-                    lijst: nextTask.lijst,
-                    verschijndatum: nextTask.verschijndatum
-                }})
-            });
+                message: archivedTaskId ? 'Taak afgewerkt en gearchiveerd' : 'Taak afgewerkt',
+                archived_taak_id: archivedTaskId,
+                ...(newRecurringTaskId && { new_recurring_taak_id: newRecurringTaskId }),
+                ...(archiveWarning && { warning: archiveWarning }),
+                ...(updatedTask && {
+                    task: {
+                        id: updatedTask.id,
+                        tekst: updatedTask.tekst,
+                        lijst: updatedTask.lijst,
+                        afgewerkt: updatedTask.afgewerkt,
+                        herhaling_actief: updatedTask.herhaling_actief
+                    }
+                })
+            };
+
+            return res.json(response);
         } else {
             // Normal task update (existing functionality)
             const success = await db.updateTask(id, req.body, userId);
@@ -5252,6 +5336,155 @@ app.put('/api/taak/:id', async (req, res) => {
     } catch (error) {
         console.error(`Error updating task ${id}:`, error);
         res.status(500).json({ error: 'Fout bij updaten', details: error.message });
+    }
+});
+
+// Unarchive endpoint - restore task from archive back to inbox
+app.post('/api/taak/:id/unarchive', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const userId = getCurrentUserId(req);
+        console.log(`📤 Starting unarchive operation for task ${id}, user ${userId}`);
+        // Check if archive tables exist first
+        const archiveTablesExist = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'taken_archief'
+            )
+        `);
+
+        if (!archiveTablesExist.rows[0].exists) {
+            console.log(`⚠️ Archive tables don't exist yet - task likely in regular taken table`);
+
+            // Fallback: Try to update task in regular table
+            const success = await db.updateTask(id, { lijst: 'inbox', status: null, afgewerkt: null }, userId);
+
+            if (success) {
+                return res.json({
+                    success: true,
+                    message: 'Taak teruggezet naar inbox',
+                    fallback: true
+                });
+            } else {
+                return res.status(404).json({ error: 'Taak niet gevonden' });
+            }
+        }
+
+        // BEGIN TRANSACTION for atomic unarchive
+        await pool.query('BEGIN');
+        console.log(`🔄 Transaction started for unarchive operation`);
+
+        // 1. Get archived task data
+        const archivedTask = await pool.query(
+            'SELECT * FROM taken_archief WHERE id = $1 AND user_id = $2',
+            [id, userId]
+        );
+
+        if (archivedTask.rows.length === 0) {
+            await pool.query('ROLLBACK');
+            console.log(`❌ Task ${id} not found in archive for user ${userId}`);
+            return res.status(404).json({ error: 'Taak niet gevonden in archief' });
+        }
+
+        const taskData = archivedTask.rows[0];
+        console.log(`📦 Found archived task: ${taskData.tekst?.substring(0, 50)}`);
+
+        // 2. Restore task to taken table with inbox list (use EXACT column names from taken table)
+        await pool.query(`
+            INSERT INTO taken (
+                id, tekst, aangemaakt, lijst, project_id, verschijndatum,
+                context_id, duur, type, afgewerkt,
+                herhaling_type, herhaling_waarde, herhaling_actief,
+                opmerkingen, user_id, top_prioriteit, prioriteit_datum, prioriteit
+            ) VALUES (
+                $1, $2, $3, 'inbox', $4, $5,
+                $6, $7, $8, NULL,
+                $9, $10, $11,
+                $12, $13, $14, $15, $16
+            )
+        `, [
+            taskData.id,
+            taskData.tekst,
+            taskData.aangemaakt,
+            taskData.project_id,
+            taskData.verschijndatum,
+            taskData.context_id,
+            taskData.duur,
+            taskData.type,
+            taskData.herhaling_type,
+            taskData.herhaling_waarde,
+            taskData.herhaling_actief,
+            taskData.opmerkingen,
+            taskData.user_id,
+            taskData.top_prioriteit,
+            taskData.prioriteit_datum,
+            taskData.prioriteit
+        ]);
+
+        console.log(`✅ Task restored to taken table with lijst='inbox'`);
+
+        // 3. Restore subtaken if any exist in archive
+        const archivedSubtaken = await pool.query(
+            'SELECT * FROM subtaken_archief WHERE parent_taak_id = $1',
+            [id]
+        );
+
+        if (archivedSubtaken.rows.length > 0) {
+            console.log(`📋 Restoring ${archivedSubtaken.rows.length} subtaken`);
+
+            for (const subtaak of archivedSubtaken.rows) {
+                await pool.query(`
+                    INSERT INTO subtaken (
+                        parent_taak_id, titel, voltooid, volgorde, created_at
+                    ) VALUES ($1, $2, $3, $4, $5)
+                `, [
+                    subtaak.parent_taak_id,
+                    subtaak.titel,
+                    subtaak.voltooid,
+                    subtaak.volgorde,
+                    subtaak.created_at || new Date()
+                ]);
+            }
+        }
+
+        // 4. Delete from archive tables
+        await pool.query('DELETE FROM subtaken_archief WHERE parent_taak_id = $1', [id]);
+        await pool.query('DELETE FROM taken_archief WHERE id = $1 AND user_id = $2', [id, userId]);
+
+        console.log(`🗑️ Removed task and subtaken from archive tables`);
+
+        // COMMIT TRANSACTION
+        await pool.query('COMMIT');
+        console.log(`✅ Unarchive transaction committed successfully`);
+
+        res.json({
+            success: true,
+            message: 'Taak teruggezet naar inbox',
+            restored_task_id: id,
+            restored_subtaken_count: archivedSubtaken.rows.length
+        });
+
+    } catch (error) {
+        // ROLLBACK on any error
+        try {
+            await pool.query('ROLLBACK');
+        } catch (rollbackError) {
+            // Ignore rollback errors (transaction might not have started)
+        }
+
+        console.error(`❌ Unarchive error for task ${id}:`, error);
+
+        // Check if it's an authentication error
+        if (error.message && error.message.includes('Niet ingelogd')) {
+            return res.status(401).json({ error: 'Niet ingelogd' });
+        }
+
+        res.status(500).json({
+            error: 'Fout bij terugzetten van taak',
+            details: error.message
+        });
     }
 });
 
@@ -5332,12 +5565,34 @@ app.get('/api/subtaken/:parentId', async (req, res) => {
         if (!db) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { parentId } = req.params;
         console.log(`📋 Getting subtaken for parent task ${parentId}`);
-        
-        const subtaken = await db.getSubtaken(parentId);
-        res.json(subtaken);
+
+        // Try active table first
+        let subtaken = await db.getSubtaken(parentId);
+
+        // If empty, check archive table (for archived parent tasks)
+        if (!subtaken || subtaken.length === 0) {
+            console.log(`📦 No subtaken in active table, checking archive for parent ${parentId}`);
+
+            try {
+                const result = await pool.query(
+                    'SELECT * FROM subtaken_archief WHERE parent_taak_id = $1 ORDER BY volgorde',
+                    [parentId]
+                );
+
+                if (result.rows.length > 0) {
+                    subtaken = result.rows;
+                    console.log(`✅ Retrieved ${subtaken.length} archived subtaken for parent ${parentId}`);
+                }
+            } catch (archiveError) {
+                console.error(`❌ Error reading from subtaken_archief:`, archiveError);
+                // Continue with empty subtaken array from active table
+            }
+        }
+
+        res.json(subtaken || []);
     } catch (error) {
         console.error(`Error getting subtaken for parent ${parentId}:`, error);
         res.status(500).json({ error: 'Fout bij ophalen subtaken', details: error.message });
@@ -13884,3 +14139,394 @@ app.listen(PORT, () => {
     }, 1000);
 });
 
+// ============================================================================
+// Archive System Admin Endpoints
+// T006: POST /api/admin/migrate-archive - Archive migration endpoint
+// T007: GET /api/admin/archive-stats - Archive statistics endpoint
+// ============================================================================
+
+// T006: Migration endpoint for archiving existing completed tasks
+app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
+    try {
+        console.log('📦 Archive migration endpoint called');
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { dry_run } = req.body;
+        const startTime = Date.now();
+
+        // Dry run - just count what would be migrated
+        if (dry_run) {
+            console.log('🔍 Running dry-run migration (no data will be moved)');
+
+            const takenCount = await pool.query(
+                "SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkt'"
+            );
+
+            const subtakenCount = await pool.query(`
+                SELECT COUNT(*) FROM subtaken s
+                INNER JOIN taken t ON s.parent_taak_id = t.id
+                WHERE t.lijst = 'afgewerkt'
+            `);
+
+            return res.json({
+                success: true,
+                dry_run: true,
+                tasks_to_migrate: parseInt(takenCount.rows[0].count),
+                subtasks_to_migrate: parseInt(subtakenCount.rows[0].count),
+                estimated_duration_ms: parseInt(takenCount.rows[0].count) * 4
+            });
+        }
+
+        // Actual migration
+        console.log('🚀 Starting actual archive migration...');
+
+        await pool.query('BEGIN');
+
+        // Migrate taken to taken_archief
+        const takenResult = await pool.query(`
+            INSERT INTO taken_archief (
+                id, naam, lijst, status, datum, verschijndatum,
+                project_id, context_id, duur, opmerkingen,
+                top_prioriteit, prioriteit_datum,
+                herhaling_type, herhaling_waarde, herhaling_actief,
+                user_id, archived_at
+            )
+            SELECT
+                id, naam, lijst, status, datum, verschijndatum,
+                project_id, context_id, duur, opmerkingen,
+                top_prioriteit, prioriteit_datum,
+                herhaling_type, herhaling_waarde, herhaling_actief,
+                user_id, CURRENT_TIMESTAMP
+            FROM taken WHERE lijst = 'afgewerkt'
+        `);
+
+        console.log(`✅ Migrated ${takenResult.rowCount} taken to archive`);
+
+        // Migrate subtaken to subtaken_archief
+        const subtakenResult = await pool.query(`
+            INSERT INTO subtaken_archief (
+                id, parent_taak_id, titel, voltooid, volgorde, archived_at
+            )
+            SELECT
+                s.id, s.parent_taak_id, s.titel, s.voltooid, s.volgorde, CURRENT_TIMESTAMP
+            FROM subtaken s
+            INNER JOIN taken t ON s.parent_taak_id = t.id
+            WHERE t.lijst = 'afgewerkt'
+        `);
+
+        console.log(`✅ Migrated ${subtakenResult.rowCount} subtaken to archive`);
+
+        // Delete from active tables
+        await pool.query(`
+            DELETE FROM subtaken WHERE parent_taak_id IN
+                (SELECT id FROM taken WHERE lijst = 'afgewerkt')
+        `);
+
+        await pool.query("DELETE FROM taken WHERE lijst = 'afgewerkt'");
+
+        await pool.query('COMMIT');
+
+        const duration = Date.now() - startTime;
+
+        console.log(`✅ Migration completed successfully in ${duration}ms`);
+
+        res.json({
+            success: true,
+            tasks_migrated: takenResult.rowCount,
+            subtasks_migrated: subtakenResult.rowCount,
+            duration_ms: duration,
+            errors: []
+        });
+
+    } catch (error) {
+        await pool.query('ROLLBACK');
+
+        console.error('❌ Migration failed:', error);
+
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            tasks_migrated: 0,
+            rollback: true
+        });
+    }
+});
+
+// T007: Archive statistics endpoint
+app.get('/api/admin/archive-stats', requireAdmin, async (req, res) => {
+    try {
+        console.log('📊 Fetching archive statistics...');
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const stats = {
+            active_tasks: 0,
+            archived_tasks: 0,
+            active_subtasks: 0,
+            archived_subtasks: 0,
+            recent_archives: [],
+            oldest_active_completed_task: null,
+            archive_errors_24h: 0
+        };
+
+        // Get counts
+        const activeTasks = await pool.query('SELECT COUNT(*) FROM taken');
+        stats.active_tasks = parseInt(activeTasks.rows[0].count);
+
+        try {
+            const archivedTasks = await pool.query('SELECT COUNT(*) FROM taken_archief');
+            stats.archived_tasks = parseInt(archivedTasks.rows[0].count);
+        } catch (e) {
+            // Archive table doesn't exist yet
+            stats.archived_tasks = 0;
+        }
+
+        const activeSubtasks = await pool.query('SELECT COUNT(*) FROM subtaken');
+        stats.active_subtasks = parseInt(activeSubtasks.rows[0].count);
+
+        try {
+            const archivedSubtasks = await pool.query('SELECT COUNT(*) FROM subtaken_archief');
+            stats.archived_subtasks = parseInt(archivedSubtasks.rows[0].count);
+        } catch (e) {
+            // Archive table doesn't exist yet
+            stats.archived_subtasks = 0;
+        }
+
+        // Get recent archives
+        try {
+            const recentArchives = await pool.query(`
+                SELECT id, naam, archived_at, user_id
+                FROM taken_archief
+                ORDER BY archived_at DESC
+                LIMIT 10
+            `);
+            stats.recent_archives = recentArchives.rows;
+        } catch (e) {
+            // Archive table doesn't exist yet
+            stats.recent_archives = [];
+        }
+
+        // Check for oldest completed task still in active table (should be null after migration)
+        const oldestCompleted = await pool.query(`
+            SELECT id, naam
+            FROM taken
+            WHERE lijst = 'afgewerkt'
+            ORDER BY datum ASC
+            LIMIT 1
+        `);
+
+        stats.oldest_active_completed_task = oldestCompleted.rows[0] || null;
+
+        console.log('✅ Archive statistics fetched successfully');
+
+        res.json(stats);
+
+    } catch (error) {
+        console.error('❌ Archive stats error:', error);
+
+        res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+// T009: Copy to archive endpoint (Phase 2 of staged deployment)
+// ONLY copies completed tasks to archive, does NOT delete from active table
+app.post('/api/admin/copy-to-archive', requireAdmin, async (req, res) => {
+    try {
+        console.log('📋 Starting copy-to-archive operation...');
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Check if archive tables exist
+        const archiveTablesExist = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'taken_archief'
+            )
+        `);
+
+        if (!archiveTablesExist.rows[0].exists) {
+            return res.status(400).json({
+                error: 'Archive tables not found',
+                message: 'Run database schema setup (T001-T002) first'
+            });
+        }
+
+        const startTime = Date.now();
+
+        await pool.query('BEGIN');
+        console.log('🔄 Transaction started for copy operation');
+
+        // Copy completed tasks to archive (with ON CONFLICT to make idempotent)
+        const takenResult = await pool.query(`
+            INSERT INTO taken_archief (
+                id, naam, lijst, status, datum, verschijndatum,
+                project_id, context_id, duur, opmerkingen,
+                top_prioriteit, prioriteit_datum,
+                herhaling_type, herhaling_waarde, herhaling_actief,
+                user_id, archived_at, created_at
+            )
+            SELECT
+                id, naam, lijst, status, datum, verschijndatum,
+                project_id, context_id, duur, opmerkingen,
+                top_prioriteit, prioriteit_datum,
+                herhaling_type, herhaling_waarde, FALSE,
+                user_id, CURRENT_TIMESTAMP, created_at
+            FROM taken
+            WHERE lijst = 'afgewerkt'
+            ON CONFLICT (id) DO NOTHING
+        `);
+
+        console.log(`✅ Copied ${takenResult.rowCount} taken to archive (skipped existing)`);
+
+        // Copy subtaken for completed tasks (with ON CONFLICT to make idempotent)
+        const subtakenResult = await pool.query(`
+            INSERT INTO subtaken_archief (
+                id, parent_taak_id, titel, voltooid, volgorde, archived_at, created_at
+            )
+            SELECT
+                s.id, s.parent_taak_id, s.titel, s.voltooid, s.volgorde, CURRENT_TIMESTAMP, s.created_at
+            FROM subtaken s
+            INNER JOIN taken t ON s.parent_taak_id = t.id
+            WHERE t.lijst = 'afgewerkt'
+            ON CONFLICT (id) DO NOTHING
+        `);
+
+        console.log(`✅ Copied ${subtakenResult.rowCount} subtaken to archive (skipped existing)`);
+
+        await pool.query('COMMIT');
+        console.log('✅ Copy transaction committed');
+
+        const duration = Date.now() - startTime;
+
+        // Verify copy was successful
+        const verifyTaken = await pool.query(`
+            SELECT COUNT(*) FROM taken_archief
+        `);
+
+        const verifySubtaken = await pool.query(`
+            SELECT COUNT(*) FROM subtaken_archief
+        `);
+
+        res.json({
+            success: true,
+            message: 'Copy to archive completed successfully',
+            tasks_copied: takenResult.rowCount,
+            subtasks_copied: subtakenResult.rowCount,
+            total_in_archive: {
+                tasks: parseInt(verifyTaken.rows[0].count),
+                subtasks: parseInt(verifySubtaken.rows[0].count)
+            },
+            duration_ms: duration,
+            note: 'Tasks NOT deleted from active table - use /cleanup-archived endpoint after verification'
+        });
+
+    } catch (error) {
+        await pool.query('ROLLBACK');
+        console.error('❌ Copy-to-archive error:', error);
+
+        res.status(500).json({
+            error: 'Copy operation failed',
+            details: error.message
+        });
+    }
+});
+
+// T010: Cleanup archived endpoint (Phase 5 of staged deployment)
+// ONLY deletes completed tasks that exist in archive - safe cleanup after verification
+app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
+    try {
+        console.log('🧹 Starting cleanup of archived tasks...');
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Check if archive tables exist
+        const archiveTablesExist = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'taken_archief'
+            )
+        `);
+
+        if (!archiveTablesExist.rows[0].exists) {
+            return res.status(400).json({
+                error: 'Archive tables not found',
+                message: 'Cannot cleanup without archive tables'
+            });
+        }
+
+        const startTime = Date.now();
+
+        await pool.query('BEGIN');
+        console.log('🔄 Transaction started for cleanup operation');
+
+        // SAFETY CHECK: Only delete tasks that exist in archive
+        // This prevents data loss if archive copy failed
+        const deletedSubtaken = await pool.query(`
+            DELETE FROM subtaken
+            WHERE parent_taak_id IN (
+                SELECT id FROM taken WHERE lijst = 'afgewerkt'
+            )
+            AND id IN (
+                SELECT id FROM subtaken_archief
+            )
+        `);
+
+        console.log(`🗑️ Deleted ${deletedSubtaken.rowCount} subtaken from active table`);
+
+        const deletedTaken = await pool.query(`
+            DELETE FROM taken
+            WHERE lijst = 'afgewerkt'
+            AND id IN (
+                SELECT id FROM taken_archief
+            )
+        `);
+
+        console.log(`🗑️ Deleted ${deletedTaken.rowCount} taken from active table`);
+
+        await pool.query('COMMIT');
+        console.log('✅ Cleanup transaction committed');
+
+        const duration = Date.now() - startTime;
+
+        // Verify cleanup
+        const remainingCompleted = await pool.query(`
+            SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkt'
+        `);
+
+        res.json({
+            success: true,
+            message: 'Cleanup completed successfully',
+            tasks_deleted: deletedTaken.rowCount,
+            subtasks_deleted: deletedSubtaken.rowCount,
+            remaining_completed_tasks: parseInt(remainingCompleted.rows[0].count),
+            duration_ms: duration,
+            note: remainingCompleted.rows[0].count > 0
+                ? `Warning: ${remainingCompleted.rows[0].count} completed tasks remain (not in archive)`
+                : 'All completed tasks successfully cleaned up'
+        });
+
+    } catch (error) {
+        await pool.query('ROLLBACK');
+        console.error('❌ Cleanup error:', error);
+
+        res.status(500).json({
+            error: 'Cleanup operation failed',
+            details: error.message
+        });
+    }
+});
+
+// Force redeploy Sat Oct 18 23:52:24 CEST 2025
