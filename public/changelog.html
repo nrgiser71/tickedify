@@ -134,11 +134,42 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.19.186 -->
+        <!-- Version 0.19.191 -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-fix">v0.19.186</span>
-                <span class="version-date">26 oktober 2025</span>
+                <span class="version-badge badge-latest">v0.19.191</span>
+                <span class="version-date">29 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 BUGFIX: Detail Popup Checkbox Detection</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Popup Checkbox Now Works</strong>: The completion checkbox in the task detail popup is now correctly detected and processed. Previously the checkbox was ignored when saving - now the popup checkbox archives tasks identically to the grid checkbox. Fix implemented in maakActie() function.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔄</div>
+                        <div class="change-content">
+                            <strong>Recurring Tasks Support</strong>: Popup checkbox now correctly supports recurring tasks - completed task is archived and new instance is automatically created, exactly like the grid checkbox. Uses existing verplaatsTaakNaarAfgewerkt() function for consistent behavior.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Checkbox Initialization</strong>: Checkbox is now correctly initialized when opening the popup - unchecked for active tasks, checked for completed tasks. Prevents confusion about checkbox status.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.19.190 -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.19.190</span>
+                <span class="version-date">27 oktober 2025</span>
             </div>
             <div class="changes-list">
                 <div class="change-category">

@@ -4461,7 +4461,13 @@ class Taakbeheer {
             this.parseHerhalingValue(herhalingType);
             const herhalingDisplay = this.generateHerhalingDisplayText();
             document.getElementById('herhalingDisplay').value = herhalingDisplay;
-            
+
+            // BUGFIX #038: Initialize completion checkbox as unchecked for inbox tasks
+            const checkbox = document.getElementById('completeTaskCheckbox');
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+
             // Set button text for new action (from inbox)
             this.setActionButtonText(true);
             
@@ -5061,7 +5067,10 @@ class Taakbeheer {
 
     async maakActie() {
         if (!this.huidigeTaakId) return;
-        
+
+        // Check if completion checkbox is checked (bugfix #038)
+        const isAfgevinkt = document.getElementById('completeTaskCheckbox')?.checked || false;
+
         const taakNaam = document.getElementById('taakNaamInput').value.trim();
         const projectId = document.getElementById('projectSelect').value;
         const verschijndatum = document.getElementById('verschijndatum').value;
@@ -5083,11 +5092,33 @@ class Taakbeheer {
             return;
         }
 
+        // BUGFIX #038: If checkbox is checked, archive task instead of saving
+        if (isAfgevinkt) {
+            const taak = this.taken.find(t => t.id === this.huidigeTaakId);
+            if (!taak) {
+                toast.error('Taak niet gevonden');
+                return;
+            }
+
+            // Set completion timestamp
+            taak.afgewerkt = new Date().toISOString();
+
+            // Use existing archive function (same as grid checkbox)
+            const success = await this.verplaatsTaakNaarAfgewerkt(taak);
+
+            if (success) {
+                // Handle recurring tasks automatically (done by verplaatsTaakNaarAfgewerkt flow)
+                this.sluitPopup();
+                await this.laadHuidigeLijst();
+            }
+            return; // Exit - don't do normal save
+        }
+
         const maakActieBtn = document.getElementById('maakActieBtn');
-        
+
         // Voor inbox taken: hou loading actief tot volgende taak geladen is
         // isInboxTaak al gedeclareerd op regel 4817
-        
+
         return await loading.withLoading(async () => {
             if (this.huidigeLijst === 'acties') {
                 // Bewerk bestaande actie
@@ -6512,13 +6543,20 @@ class Taakbeheer {
             const herhalingType = actie.herhalingType || '';
             document.getElementById('herhalingSelect').value = herhalingType;
             console.log('bewerkActie - loaded herhalingType:', herhalingType, 'herhalingActief:', actie.herhalingActief);
-            
+
             // Update display text - eerst de popup vorm laden, dan de tekst genereren
             this.parseHerhalingValue(herhalingType);
             const herhalingDisplay = this.generateHerhalingDisplayText();
             document.getElementById('herhalingDisplay').value = herhalingDisplay;
             console.log('bewerkActie - generated display text:', herhalingDisplay);
-            
+
+            // BUGFIX #038: Initialize completion checkbox based on task status
+            const checkbox = document.getElementById('completeTaskCheckbox');
+            if (checkbox) {
+                // Check if task is already completed (shouldn't happen for active tasks, but be safe)
+                checkbox.checked = (actie.status === 'afgewerkt' || actie.lijst === 'afgewerkt');
+            }
+
             // Set button text - if in inbox, this is making a new action, otherwise editing existing
             const isInboxAction = this.huidigeLijst === 'inbox';
             this.setActionButtonText(isInboxAction);
