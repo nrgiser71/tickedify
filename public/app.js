@@ -2031,7 +2031,7 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="projecten-container">
                 <div class="projecten-header">
-                    <button id="nieuwProjectBtnLijst" class="nieuw-btn">+ Nieuw Project</button>
+                    <button id="nieuwProjectBtnLijst" class="nieuw-btn">+ New Project</button>
                 </div>
                 <div class="projecten-lijst" id="projecten-lijst"></div>
             </div>
@@ -2057,10 +2057,10 @@ class Taakbeheer {
             text = `${Math.abs(diffDays)} dagen te laat`;
         } else if (diffDays === 0) {
             badgeClass += ' today';
-            text = 'Vandaag';
+            text = 'Today';
         } else if (diffDays === 1) {
             badgeClass += ' tomorrow';
-            text = 'Morgen';
+            text = 'Tomorrow';
         } else if (diffDays <= 7) {
             badgeClass += ' soon';
             text = `Over ${diffDays} dagen`;
@@ -2169,7 +2169,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProjectViaLijst() {
-        const projectData = await projectModal.show('Nieuw Project');
+        const projectData = await projectModal.show('New Project');
         if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -3617,7 +3617,7 @@ class Taakbeheer {
             </div>
             <div class="bulk-controls-container">
                 <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
-                    Bulk bewerken
+                    Bulk Edit
                 </button>
             </div>
             <ul id="acties-lijst" class="taak-lijst"></ul>
@@ -4596,8 +4596,8 @@ class Taakbeheer {
             menuContentHTML = `
                 <h3>Plan op</h3>
                 <div class="menu-section">
-                    <button onclick="app.stelDatumIn('${taakId}', 0)" class="menu-item">Vandaag</button>
-                    <button onclick="app.stelDatumIn('${taakId}', 1)" class="menu-item">Morgen</button>
+                    <button onclick="app.stelDatumIn('${taakId}', 0)" class="menu-item">Today</button>
+                    <button onclick="app.stelDatumIn('${taakId}', 1)" class="menu-item">Tomorrow</button>
                     ${weekdagenHTML}
                 </div>
                 
@@ -5039,7 +5039,7 @@ class Taakbeheer {
     }
 
     async maakNieuwProject() {
-        const projectData = await projectModal.show('Nieuw Project');
+        const projectData = await projectModal.show('New Project');
         if (projectData) {
             const nieuwProject = {
                 id: this.generateId(),
@@ -7312,7 +7312,7 @@ class Taakbeheer {
         // Tools dropdown removed - Feature 009: no longer needed
 
         // Update page title
-        document.getElementById('page-title').textContent = 'Zoeken';
+        document.getElementById('page-title').textContent = 'Search';
 
         // Hide task input
         const taakInputContainer = document.getElementById('taak-input-container');
@@ -7331,21 +7331,21 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="zoek-interface">
                 <div class="zoek-container">
-                    <h2><i class="ti ti-search"></i> Zoeken in Taken</h2>
-                    <p>Zoek door al je taken in alle lijsten</p>
+                    <h2><i class="ti ti-search"></i> Search Tasks</h2>
+                    <p>Search through all your tasks in all lists</p>
                     
                     <div class="zoek-form">
                         <div class="zoek-input-container">
                             <input type="text" 
                                    id="zoek-input" 
-                                   placeholder="Zoek in taaknamen, opmerkingen, projecten..."
+                                   placeholder="Search task names, notes, projects..."
                                    class="zoek-input">
-                            <button id="zoek-btn" class="zoek-btn">Zoeken</button>
+                            <button id="zoek-btn" class="zoek-btn">Search</button>
                         </div>
                         
                         <div class="zoek-filters">
                             <div class="filter-group">
-                                <label>Zoek in:</label>
+                                <label>Search in:</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-inbox" checked>
@@ -7357,7 +7357,7 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-opvolgen" checked>
-                                        <span>Opvolgen</span>
+                                        <span>Follow-up</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-uitgesteld" checked>
@@ -7373,7 +7373,7 @@ class Taakbeheer {
                     </div>
                     
                     <div class="zoek-resultaten" id="zoek-resultaten" style="display: none;">
-                        <h3>Zoekresultaten</h3>
+                        <h3>Search Results</h3>
                         <div id="resultaten-lijst"></div>
                     </div>
                 </div>
@@ -7492,8 +7492,8 @@ class Taakbeheer {
         if (taken.length === 0) {
             resultatenLijst.innerHTML = `
                 <div class="geen-resultaten">
-                    <p>Geen taken gevonden voor "${zoekTerm}"</p>
-                    <p class="sub-text">Probeer een andere zoekterm of controleer je filters</p>
+                    <p>No tasks found for "${zoekTerm}"</p>
+                    <p class="sub-text">Try a different search term or check your filters</p>
                 </div>
             `;
             return;
@@ -7509,7 +7509,7 @@ class Taakbeheer {
             groepen[lijstNaam].push(taak);
         });
 
-        let html = `<div class="resultaten-summary">Gevonden: ${taken.length} taken</div>`;
+        let html = `<div class="resultaten-summary">Found: ${taken.length} tasks</div>`;
 
         // Display results grouped by list
         Object.entries(groepen).forEach(([lijstNaam, taken]) => {
@@ -7524,7 +7524,7 @@ class Taakbeheer {
                 const projectNaam = this.getProjectNaam(taak.projectId);
                 const contextNaam = this.getContextNaam(taak.contextId);
                 const datum = taak.verschijndatum ? 
-                    new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
+                    new Date(taak.verschijndatum).toLocaleDateString('en-US') : '';
                 const recurringIndicator = taak.herhalingActief ? 
                     ' <span class="recurring-indicator"><i class="fas fa-redo"></i></span>' : '';
 
@@ -8274,7 +8274,7 @@ class Taakbeheer {
         container.innerHTML = `
             <!-- Mobile header -->
             <header class="main-header">
-                <h1>Dagelijkse Planning</h1>
+                <h1>Daily Planning</h1>
             </header>
 
             <div class="dagelijkse-planning-layout">
@@ -8288,8 +8288,8 @@ class Taakbeheer {
                         </div>
                         <div class="section-content">
                             <div class="tijd-inputs">
-                                <label>Van: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
-                                <label>Tot: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
+                                <label>From: <input type="number" id="startUur" min="0" max="23" value="${startUur}"></label>
+                                <label>To: <input type="number" id="eindUur" min="1" max="24" value="${eindUur}"></label>
                             </div>
                         </div>
                     </div>
@@ -8297,11 +8297,11 @@ class Taakbeheer {
                     <!-- Templates - collapsible section -->
                     <div class="templates-sectie collapsible" id="templates-sectie">
                         <div class="section-header" onclick="app.toggleSection('templates')">
-                            <h3>🔒 Geblokkeerd & Pauzes</h3>
+                            <h3>🔒 Blocked & Breaks</h3>
                             <span class="chevron"><i class="fas fa-chevron-down"></i></span>
                         </div>
                         <div class="section-content">
-                            <h4>🔒 Geblokkeerd</h4>
+                            <h4>🔒 Blocked</h4>
                             <div class="template-items">
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="30">🔒 30min</div>
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="60">🔒 60min</div>
@@ -8309,7 +8309,7 @@ class Taakbeheer {
                             <div class="template-item" draggable="true" data-type="geblokkeerd" data-duur="120">🔒 120min</div>
                             </div>
                             
-                            <h4>☕ Pauzes</h4>
+                            <h4>☕ Breaks</h4>
                             <div class="template-items">
                                 <div class="template-item" draggable="true" data-type="pauze" data-duur="5">☕ 5min</div>
                                 <div class="template-item" draggable="true" data-type="pauze" data-duur="10">☕ 10min</div>
@@ -8322,7 +8322,7 @@ class Taakbeheer {
                     <div class="acties-sectie">
                         <h3><i class="fas fa-clipboard"></i> Acties</h3>
                         <div class="planning-acties-filters">
-                            <input type="text" id="planningTaakFilter" placeholder="Zoek taak..." class="filter-input">
+                            <input type="text" id="planningTaakFilter" placeholder="Search task..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
                                 <option value="">Alle projecten</option>
                             </select>
@@ -8355,14 +8355,14 @@ class Taakbeheer {
                 <!-- Right column: Day calendar -->
                 <div class="dag-kalender">
                     <div class="kalender-header">
-                        <h2>${new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                        <h2>${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
                         <div class="header-actions">
-                            <span id="totaalGeplandeTijd" class="totaal-tijd">Totaal: 0 min</span>
+                            <span id="totaalGeplandeTijd" class="totaal-tijd">Total: 0 min</span>
                             <button class="btn-focus-mode" id="btnFocusMode" onclick="app.toggleDagkalenderFocus()" title="Focus modus - alleen dagplanning tonen">
                                 📺 Focus
                             </button>
                             <button class="btn-clear-planning" id="btnClearPlanning" title="Planning leegmaken">
-                                🗑️ Leegmaken
+                                🗑️ Clear
                             </button>
                         </div>
                     </div>
@@ -8397,7 +8397,7 @@ class Taakbeheer {
             
             // Format date for display
             const datumString = actie.verschijndatum ? 
-                new Date(actie.verschijndatum).toLocaleDateString('nl-NL') : 'Geen datum';
+                new Date(actie.verschijndatum).toLocaleDateString('en-US') : 'No date';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(actie.verschijndatum);
@@ -9079,7 +9079,7 @@ class Taakbeheer {
             ghost.setAttribute('data-type', data.planningType);
             ghost.innerHTML = `
                 <div class="planning-icon">${data.planningType === 'geblokkeerd' ? '🔒' : '☕'}</div>
-                <div class="planning-tekst">${data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze'}</div>
+                <div class="planning-tekst">${data.planningType === 'geblokkeerd' ? 'Blocked' : 'Break'}</div>
                 <div class="planning-duur">${data.duurMinuten || 60}min</div>
             `;
         } else if (data.type === 'actie' || data.type === 'prioriteit') {
@@ -9278,7 +9278,7 @@ class Taakbeheer {
         };
         
         if (data.type === 'template') {
-            planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
+            planningItem.naam = data.planningType === 'geblokkeerd' ? 'Blocked' : 'Break';
         } else if (data.type === 'actie' || data.type === 'prioriteit') {
             planningItem.actieId = data.actieId;
             
@@ -9635,7 +9635,7 @@ class Taakbeheer {
             }
             
             if (data.type === 'template') {
-                planningItem.naam = data.planningType === 'geblokkeerd' ? 'Geblokkeerd' : 'Pauze';
+                planningItem.naam = data.planningType === 'geblokkeerd' ? 'Blocked' : 'Break';
             } else if (data.type === 'actie' || data.type === 'prioriteit') {
                 planningItem.actieId = data.actieId;
                 
@@ -11872,9 +11872,9 @@ class Taakbeheer {
             const minuten = totaalMinuten % 60;
             
             if (uren > 0) {
-                totaalElement.textContent = `Totaal: ${uren}u ${minuten}min`;
+                totaalElement.textContent = `Total: ${uren}h ${minuten}min`;
             } else {
-                totaalElement.textContent = `Totaal: ${minuten}min`;
+                totaalElement.textContent = `Total: ${minuten}min`;
             }
         }
     }
@@ -12348,8 +12348,8 @@ class Taakbeheer {
             );
 
             return `
-                <button onclick="window.bulkDateAction(0)" class="bulk-action-btn">Vandaag</button>
-                <button onclick="window.bulkDateAction(1)" class="bulk-action-btn">Morgen</button>
+                <button onclick="window.bulkDateAction(0)" class="bulk-action-btn">Today</button>
+                <button onclick="window.bulkDateAction(1)" class="bulk-action-btn">Tomorrow</button>
                 ${weekdagenHTML}
                 <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Opvolgen</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Weekly</button>
