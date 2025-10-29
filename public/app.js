@@ -7353,7 +7353,7 @@ class Taakbeheer {
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-acties" checked>
-                                        <span>Acties</span>
+                                        <span>Actions</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" id="filter-opvolgen" checked>
