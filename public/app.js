@@ -3420,23 +3420,23 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
-                    <label>Taak:</label>
-                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
+                    <label>Task:</label>
+                    <input type="text" id="taakFilter" placeholder="Search task text...">
                 </div>
                 <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
-                        <option value="">Alle projecten</option>
+                        <option value="">All projects</option>
                     </select>
                 </div>
                 <div class="filter-groep">
                     <label>Context:</label>
                     <select id="contextFilter">
-                        <option value="">Alle contexten</option>
+                        <option value="">All contexts</option>
                     </select>
                 </div>
                 <div class="filter-groep">
-                    <label>Datum:</label>
+                    <label>Date:</label>
                     <input type="date" id="datumFilter">
                 </div>
             </div>
@@ -3576,29 +3576,29 @@ class Taakbeheer {
         container.innerHTML = `
             <div class="acties-filters">
                 <div class="filter-groep">
-                    <label>Taak:</label>
-                    <input type="text" id="taakFilter" placeholder="Zoek in taak tekst...">
+                    <label>Task:</label>
+                    <input type="text" id="taakFilter" placeholder="Search task text...">
                 </div>
                 <div class="filter-groep">
                     <label>Project:</label>
                     <select id="projectFilter">
-                        <option value="">Alle projecten</option>
+                        <option value="">All projects</option>
                     </select>
                 </div>
                 <div class="filter-groep">
                     <label>Context:</label>
                     <select id="contextFilter">
-                        <option value="">Alle contexten</option>
+                        <option value="">All contexts</option>
                     </select>
                 </div>
                 <div class="filter-groep">
-                    <label>Datum:</label>
+                    <label>Date:</label>
                     <input type="date" id="datumFilter">
                 </div>
                 <div class="filter-groep">
-                    <label>Prioriteit:</label>
+                    <label>Priority:</label>
                     <select id="prioriteitFilter" class="prioriteit-filter">
-                        <option value="">Alle prioriteiten</option>
+                        <option value="">All priorities</option>
                         <option value="hoog">🔴 Hoog</option>
                         <option value="gemiddeld">🟠 Gemiddeld</option>
                         <option value="laag">⚪ Laag</option>
@@ -3606,7 +3606,7 @@ class Taakbeheer {
                 </div>
                 <label class="simple-checkbox">
                     <input type="checkbox" id="toonToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                    Toon toekomstige taken
+                    Show future tasks
                 </label>
                 <div class="filter-groep" style="display: none;">
                     <button onclick="deleteAllTasks()" 
@@ -8324,13 +8324,13 @@ class Taakbeheer {
                         <div class="planning-acties-filters">
                             <input type="text" id="planningTaakFilter" placeholder="Search task..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
-                                <option value="">Alle projecten</option>
+                                <option value="">All projects</option>
                             </select>
                             <select id="planningContextFilter" class="filter-select">
-                                <option value="">Alle contexten</option>
+                                <option value="">All contexts</option>
                             </select>
                             <select id="planningPrioriteitFilter" class="filter-select prioriteit-filter">
-                                <option value="">Alle prioriteiten</option>
+                                <option value="">All priorities</option>
                                 <option value="hoog">🔴 Hoog</option>
                                 <option value="gemiddeld">🟠 Gemiddeld</option>
                                 <option value="laag">⚪ Laag</option>
@@ -8338,7 +8338,7 @@ class Taakbeheer {
                             <input type="number" id="planningDuurFilter" placeholder="Max duur (min)" class="filter-input-number" min="0" step="5">
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" id="planningToekomstToggle" ${this.toonToekomstigeTaken ? 'checked' : ''}>
-                                <label for="planningToekomstToggle">Toon toekomstige taken</label>
+                                <label for="planningToekomstToggle">Show future tasks</label>
                             </div>
                         </div>
                         <div class="acties-container" id="planningActiesLijst">
@@ -11831,7 +11831,7 @@ class Taakbeheer {
         const projectFilter = document.getElementById('planningProjectFilter');
         if (projectFilter) {
             // Reset to default option first
-            projectFilter.innerHTML = '<option value="">Alle projecten</option>';
+            projectFilter.innerHTML = '<option value="">All projects</option>';
             this.projecten.forEach(project => {
                 const option = document.createElement('option');
                 option.value = project.id;
@@ -11844,7 +11844,7 @@ class Taakbeheer {
         const contextFilter = document.getElementById('planningContextFilter');
         if (contextFilter) {
             // Reset to default option first
-            contextFilter.innerHTML = '<option value="">Alle contexten</option>';
+            contextFilter.innerHTML = '<option value="">All contexts</option>';
             this.contexten.forEach(context => {
                 const option = document.createElement('option');
                 option.value = context.id;
