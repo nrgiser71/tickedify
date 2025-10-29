@@ -506,7 +506,7 @@ class LoadingManager {
     }
 
     // Global loading overlay
-    show(message = 'Laden...') {
+    show(message = 'Loading...') {
         this.overlay.classList.add('active');
         // Hide progress text when showing regular loading
         if (this.progressText) {
@@ -622,7 +622,7 @@ class LoadingManager {
     }
 
     // Operation-based loading (multiple concurrent operations)
-    startOperation(operationId, message = 'Laden...') {
+    startOperation(operationId, message = 'Loading...') {
         this.activeOperations.add(operationId);
         if (this.activeOperations.size === 1) {
             this.show(message);
@@ -719,7 +719,7 @@ class LoadingManager {
             showGlobal = true,
             button = null,
             section = null,
-            message = 'Laden...'
+            message = 'Loading...'
         } = options;
 
         try {
@@ -1935,20 +1935,20 @@ class Taakbeheer {
             listItem.classList.add('actief');
         }
 
-        // Update hoofdtitel
+        // Update main title
         const titles = {
             'inbox': 'Inbox',
-            'acties': 'Acties',
-            'projecten': 'Projecten',
-            'opvolgen': 'Opvolgen',
-            'afgewerkte-taken': 'Afgewerkt',
-            'dagelijkse-planning': 'Dagelijkse Planning',
-            'uitgesteld': 'Uitgesteld',
-            'uitgesteld-wekelijks': 'Wekelijks',
-            'uitgesteld-maandelijks': 'Maandelijks',
-            'uitgesteld-3maandelijks': '3-maandelijks',
-            'uitgesteld-6maandelijks': '6-maandelijks',
-            'uitgesteld-jaarlijks': 'Jaarlijks'
+            'acties': 'Actions',
+            'projecten': 'Projects',
+            'opvolgen': 'Follow-up',
+            'afgewerkte-taken': 'Completed',
+            'dagelijkse-planning': 'Daily Planning',
+            'uitgesteld': 'Postponed',
+            'uitgesteld-wekelijks': 'Weekly',
+            'uitgesteld-maandelijks': 'Monthly',
+            'uitgesteld-3maandelijks': 'Quarterly',
+            'uitgesteld-6maandelijks': 'Semi-annually',
+            'uitgesteld-jaarlijks': 'Yearly'
         };
         // Only update title if it wasn't already set by restoreNormalContainer
         if (!titleAlreadySet) {
@@ -2196,7 +2196,7 @@ class Taakbeheer {
             opmerkingen: project.opmerkingen || ''
         };
         
-        const projectData = await projectModal.show('Project Bewerken', defaultValues);
+        const projectData = await projectModal.show('Edit Project', defaultValues);
         if (projectData) {
             project.naam = projectData.naam;
             project.dueDate = projectData.dueDate;
@@ -2218,7 +2218,7 @@ class Taakbeheer {
             bevestigingsTekst += `\n\nLet op: Er zijn nog ${totaalActies} ${totaalActies === 1 ? 'actie' : 'acties'} gekoppeld aan dit project (${actiesInfo.open} open, ${actiesInfo.afgewerkt} afgewerkt). Deze zullen hun projectkoppeling verliezen.`;
         }
         
-        const bevestiging = await confirmModal.show('Project Verwijderen', bevestigingsTekst);
+        const bevestiging = await confirmModal.show('Delete Project', bevestigingsTekst);
         if (!bevestiging) return;
         
         this.projecten = this.projecten.filter(p => p.id !== id);
@@ -3629,7 +3629,7 @@ class Taakbeheer {
                     <div class="bulk-actions">
                         ${this.getBulkVerplaatsKnoppen()}
                     </div>
-                    <button onclick="window.toggleBulkModus()" class="bulk-cancel-btn">Annuleren</button>
+                    <button onclick="window.toggleBulkModus()" class="bulk-cancel-btn">Cancel</button>
                 </div>
             </div>
         `;
@@ -4192,7 +4192,7 @@ class Taakbeheer {
             return;
         }
         
-        const bevestiging = await confirmModal.show('Taak Verwijderen', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
+        const bevestiging = await confirmModal.show('Delete Task', `Weet je zeker dat je "${taak.tekst}" wilt verwijderen?`);
         if (!bevestiging) return;
         
         await loading.withLoading(async () => {
@@ -6937,20 +6937,20 @@ class Taakbeheer {
             if (contentArea) {
                 contentArea.innerHTML = '';
                 
-                // Update the title as well when cleaning up uitgesteld
+                // Update the title as well when cleaning up postponed
                 const titles = {
                     'inbox': 'Inbox',
-                    'acties': 'Acties',
-                    'projecten': 'Projecten',
-                    'opvolgen': 'Opvolgen',
-                    'afgewerkte-taken': 'Afgewerkt',
-                    'dagelijkse-planning': 'Dagelijkse Planning',
-                    'contextenbeheer': 'Contexten Beheer',
-                    'uitgesteld-wekelijks': 'Wekelijks',
-                    'uitgesteld-maandelijks': 'Maandelijks',
-                    'uitgesteld-3maandelijks': '3-maandelijks',
-                    'uitgesteld-6maandelijks': '6-maandelijks',
-                    'uitgesteld-jaarlijks': 'Jaarlijks'
+                    'acties': 'Actions',
+                    'projecten': 'Projects',
+                    'opvolgen': 'Follow-up',
+                    'afgewerkte-taken': 'Completed',
+                    'dagelijkse-planning': 'Daily Planning',
+                    'contextenbeheer': 'Context Management',
+                    'uitgesteld-wekelijks': 'Weekly',
+                    'uitgesteld-maandelijks': 'Monthly',
+                    'uitgesteld-3maandelijks': 'Quarterly',
+                    'uitgesteld-6maandelijks': 'Semi-annually',
+                    'uitgesteld-jaarlijks': 'Yearly'
                 };
                 
                 const pageTitle = document.getElementById('page-title');
@@ -6995,17 +6995,17 @@ class Taakbeheer {
                 // Get the correct title for the current list
                 const titles = {
                     'inbox': 'Inbox',
-                    'acties': 'Acties',
-                    'projecten': 'Projecten',
-                    'opvolgen': 'Opvolgen',
-                    'afgewerkte-taken': 'Afgewerkt',
-                    'dagelijkse-planning': 'Dagelijkse Planning',
-                    'contextenbeheer': 'Contexten Beheer',
-                    'uitgesteld-wekelijks': 'Wekelijks',
-                    'uitgesteld-maandelijks': 'Maandelijks',
-                    'uitgesteld-3maandelijks': '3-maandelijks',
-                    'uitgesteld-6maandelijks': '6-maandelijks',
-                    'uitgesteld-jaarlijks': 'Jaarlijks'
+                    'acties': 'Actions',
+                    'projecten': 'Projects',
+                    'opvolgen': 'Follow-up',
+                    'afgewerkte-taken': 'Completed',
+                    'dagelijkse-planning': 'Daily Planning',
+                    'contextenbeheer': 'Context Management',
+                    'uitgesteld-wekelijks': 'Weekly',
+                    'uitgesteld-maandelijks': 'Monthly',
+                    'uitgesteld-3maandelijks': 'Quarterly',
+                    'uitgesteld-6maandelijks': 'Semi-annually',
+                    'uitgesteld-jaarlijks': 'Yearly'
                 };
                 const currentTitle = titles[targetLijst || this.huidigeLijst] || 'Inbox';
                 
@@ -7114,8 +7114,8 @@ class Taakbeheer {
                                     <small class="context-info">Aangemaakt: ${new Date(context.aangemaakt).toLocaleDateString('nl-NL')}</small>
                                 </div>
                                 <div class="context-acties">
-                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Bewerken"><i class="fas fa-edit"></i></button>
-                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Verwijderen">×</button>
+                                    <button onclick="app.bewerkeContext('${context.id}')" class="edit-btn" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button onclick="app.verwijderContext('${context.id}')" class="delete-btn" title="Delete">×</button>
                                 </div>
                             </div>
                         `).join('')
@@ -7870,7 +7870,7 @@ class Taakbeheer {
                 <div class="config-actions">
                     <button class="config-btn" onclick="app.selectAllWords()">Alles selecteren</button>
                     <button class="config-btn" onclick="app.deselectAllWords()">Alles deselecteren</button>
-                    <button class="config-btn primary" onclick="app.saveMindDumpConfig()">Opslaan</button>
+                    <button class="config-btn primary" onclick="app.saveMindDumpConfig()">Save</button>
                 </div>
                 
                 <div class="words-grid" id="words-config-grid">
@@ -8014,7 +8014,7 @@ class Taakbeheer {
         const context = this.contexten.find(c => c.id === contextId);
         if (!context) return;
 
-        const nieuweNaam = await inputModal.show('Context Bewerken', 'Nieuwe naam:', context.naam);
+        const nieuweNaam = await inputModal.show('Edit Context', 'Nieuwe naam:', context.naam);
         if (!nieuweNaam || !nieuweNaam.trim() || nieuweNaam.trim() === context.naam) return;
 
         await loading.withLoading(async () => {
@@ -9293,8 +9293,8 @@ class Taakbeheer {
                 planningItem.naam = actie.tekst;
                 planningItem.actieTekst = actie.tekst;
             } else {
-                planningItem.naam = 'Taak wordt geladen...';
-                planningItem.actieTekst = 'Laden...';
+                planningItem.naam = 'Task is loading...';
+                planningItem.actieTekst = 'Loading...';
             }
         }
         
@@ -12318,7 +12318,7 @@ class Taakbeheer {
             }
             
             // Show finishing message
-            loading.show('Afronden...');
+            loading.show('Finishing...');
             
             toast.success(`${successCount} tasks updated to ${newDate}`);
 
@@ -12359,16 +12359,16 @@ class Taakbeheer {
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Jaarlijks</button>
             `;
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
-            // For uitgesteld lists: show options to move back to main lists
+            // For postponed lists: show options to move back to main lists
             const alleOpties = [
                 { key: 'inbox', label: 'Inbox' },
-                { key: 'acties', label: 'Acties' },
-                { key: 'opvolgen', label: 'Opvolgen' },
-                { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
-                { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
-                { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
-                { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
-                { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+                { key: 'acties', label: 'Actions' },
+                { key: 'opvolgen', label: 'Follow-up' },
+                { key: 'uitgesteld-wekelijks', label: 'Weekly' },
+                { key: 'uitgesteld-maandelijks', label: 'Monthly' },
+                { key: 'uitgesteld-3maandelijks', label: 'Quarterly' },
+                { key: 'uitgesteld-6maandelijks', label: 'Semi-annually' },
+                { key: 'uitgesteld-jaarlijks', label: 'Yearly' }
             ];
 
             return alleOpties
@@ -12378,13 +12378,13 @@ class Taakbeheer {
         } else {
             // For other lists: show basic move options
             const alleOpties = [
-                { key: 'acties', label: 'Acties' },
-                { key: 'opvolgen', label: 'Opvolgen' },
-                { key: 'uitgesteld-wekelijks', label: 'Wekelijks' },
-                { key: 'uitgesteld-maandelijks', label: 'Maandelijks' },
-                { key: 'uitgesteld-3maandelijks', label: '3-maandelijks' },
-                { key: 'uitgesteld-6maandelijks', label: '6-maandelijks' },
-                { key: 'uitgesteld-jaarlijks', label: 'Jaarlijks' }
+                { key: 'acties', label: 'Actions' },
+                { key: 'opvolgen', label: 'Follow-up' },
+                { key: 'uitgesteld-wekelijks', label: 'Weekly' },
+                { key: 'uitgesteld-maandelijks', label: 'Monthly' },
+                { key: 'uitgesteld-3maandelijks', label: 'Quarterly' },
+                { key: 'uitgesteld-6maandelijks', label: 'Semi-annually' },
+                { key: 'uitgesteld-jaarlijks', label: 'Yearly' }
             ];
 
             return alleOpties
@@ -12437,17 +12437,17 @@ class Taakbeheer {
             
             const lijstLabels = {
                 'inbox': 'Inbox',
-                'acties': 'Acties',
-                'opvolgen': 'Opvolgen',
-                'uitgesteld-wekelijks': 'Wekelijks',
-                'uitgesteld-maandelijks': 'Maandelijks',
-                'uitgesteld-3maandelijks': '3-maandelijks',
-                'uitgesteld-6maandelijks': '6-maandelijks',
-                'uitgesteld-jaarlijks': 'Jaarlijks'
+                'acties': 'Actions',
+                'opvolgen': 'Follow-up',
+                'uitgesteld-wekelijks': 'Weekly',
+                'uitgesteld-maandelijks': 'Monthly',
+                'uitgesteld-3maandelijks': 'Quarterly',
+                'uitgesteld-6maandelijks': 'Semi-annually',
+                'uitgesteld-jaarlijks': 'Yearly'
             };
             
             // Show finishing message
-            loading.show('Afronden...');
+            loading.show('Finishing...');
             
             toast.success(`${successCount} tasks moved to ${lijstLabels[lijstNaam]}`);
 
@@ -14063,10 +14063,10 @@ class SubtakenManager {
                 <input type="checkbox" class="subtaak-checkbox" ${subtaak.voltooid ? 'checked' : ''}>
                 <div class="subtaak-text ${subtaak.voltooid ? 'completed' : ''}">${this.escapeHtml(subtaak.titel)}</div>
                 <div class="subtaak-actions">
-                    <button class="subtaak-edit-btn" title="Bewerken">
+                    <button class="subtaak-edit-btn" title="Edit">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="subtaak-delete-btn" title="Verwijderen">
+                    <button class="subtaak-delete-btn" title="Delete">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
