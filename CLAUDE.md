@@ -36,6 +36,36 @@
 
 ---
 
+## 🚀 DEFAULT DEPLOYMENT TARGET: STAGING BRANCH
+
+**KRITIEK - STANDAARD DEPLOYMENT WORKFLOW:**
+- ✅ **ALTIJD deployen naar `staging` branch** - Dit is de default vanaf nu
+- ✅ **dev.tickedify.com** is gekoppeld aan staging branch via Vercel
+- ✅ **Elke push naar staging** triggert automatisch deployment op dev.tickedify.com
+- ✅ **Feature branches** eerst mergen naar staging voordat je test
+
+**DEPLOYMENT WORKFLOW:**
+```bash
+# Vanaf feature branch:
+git checkout staging
+git merge feature-branch-naam --no-edit
+git push origin staging
+
+# Vercel deployed automatisch naar dev.tickedify.com binnen 30-60 seconden
+```
+
+**VERCEL DOMAIN CONFIGURATIE:**
+- **dev.tickedify.com** → `staging` branch (Pre-Production environment)
+- **tickedify.com** → `main` branch (Production - BEVROREN tijdens bèta)
+
+**WAAROM STAGING FIRST:**
+- Veilig testen zonder productie impact
+- Bèta freeze vereist dat ALLE nieuwe code eerst via staging gaat
+- dev.tickedify.com heeft Vercel Authentication (toegang via MCP tools of browser)
+- Main branch blijft stabiel voor bèta gebruikers
+
+---
+
 ## BELANGRIJKE URL VOOR TESTING: tickedify.com/app ⚠️
 
 **KRITIEK**: Voor alle testing en development moet je naar **tickedify.com/app** navigeren, NIET naar:
@@ -234,12 +264,13 @@ Claude moet zo zelfstandig mogelijk werken op feature branches en staging enviro
 
 **MANDATORY DEPLOYMENT WORKFLOW:**
 - ALWAYS update version number in package.json before any commit
-- ALWAYS commit and push changes to git after implementing features
-- ALWAYS wait for deployment confirmation via /api/version endpoint
-- ALWAYS run regression tests after deployment confirmation
+- ALWAYS commit and push changes to `staging` branch (NOT main - bèta freeze actief!)
+- ALWAYS merge feature branch to staging before pushing
+- ALWAYS wait for deployment confirmation via dev.tickedify.com/api/version endpoint
+- ALWAYS run regression tests after deployment confirmation on dev.tickedify.com
 - ALWAYS report test results to user (success/failure)
 - ALWAYS update changelog with every code change
-- User tests live on production (tickedify.com via Vercel deployment)
+- User tests on staging environment (dev.tickedify.com via Vercel deployment)
 - Use descriptive commit messages following existing project style
 - Work autonomously - don't ask for permission to wait for deployments
 
@@ -263,8 +294,10 @@ Claude moet zo zelfstandig mogelijk werken op feature branches en staging enviro
 - `-L` = follow redirects automatically
 - `-k` = skip certificate verification
 - This prevents macOS security prompts that interrupt deployment workflow
-- Example: `curl -s -L -k https://tickedify.com/api/version`
+- Example staging: `curl -s -L -k https://dev.tickedify.com/api/version`
+- Example production: `curl -s -L -k https://tickedify.com/api/version`
 - NEVER use plain `curl` without these flags
+- NOTE: dev.tickedify.com vereist Vercel Authentication - gebruik Vercel MCP tools voor toegang
 
 **COMMAND SUBSTITUTION PREVENTION:**
 - AVOID `$(date +%Y-%m-%d)` directly in curl URLs - triggers security prompts
