@@ -11391,8 +11391,8 @@ class Taakbeheer {
         // Reset setup flag zodat event listeners opnieuw worden toegevoegd na DOM wijzigingen
         this.actiesFloatingDropZonesSetup = false;
 
-        // Nederlandse weekdag afkortingen
-        const weekdagen = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+        // English weekday abbreviations
+        const weekdagen = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'];
 
         // Bereken huidige week (maandag tot zondag)
         const vandaag = new Date();
