@@ -8274,8 +8274,8 @@ class Taakbeheer {
         }
         
         // Get saved time range preference
-        const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
-        const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+        const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '5');
+        const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '22');
         
         container.innerHTML = `
             <!-- Mobile header -->
