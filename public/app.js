@@ -3842,6 +3842,9 @@ class Taakbeheer {
         }
         console.log('🚨 DEBUG: acties-lijst element gevonden, gaat HTML genereren...');
 
+        // Feature 044: Sanitize selections after data load to remove stale IDs
+        this.sanitizeGeselecteerdeTaken();
+
         lijst.innerHTML = '';
 
         console.log('🔍 DEBUG renderActiesLijst: Total taken in this.taken:', this.taken.length);
@@ -12426,6 +12429,39 @@ class Taakbeheer {
 
         // Valid task ID
         return true;
+    }
+
+    /**
+     * Feature 044: Sanitize geselecteerdeTaken Set by removing stale/invalid IDs.
+     * Cleans up invalid task IDs that may have persisted from previous page loads
+     * or data refreshes. Called after data load and bulk mode activation.
+     */
+    sanitizeGeselecteerdeTaken() {
+        if (this.geselecteerdeTaken.size === 0) return; // No selections to clean
+
+        console.log('[SANITIZE] Cleaning geselecteerdeTaken Set...');
+        const invalidIds = [];
+
+        // Check alle IDs in de Set
+        this.geselecteerdeTaken.forEach(taakId => {
+            if (!this.validateTaskId(taakId)) {
+                invalidIds.push(taakId);
+            }
+        });
+
+        // Verwijder invalid IDs
+        invalidIds.forEach(id => {
+            this.geselecteerdeTaken.delete(id);
+            console.log('[SANITIZE] Removed invalid ID:', id);
+        });
+
+        if (invalidIds.length > 0) {
+            console.log(`[SANITIZE] Removed ${invalidIds.length} invalid task IDs from selection`);
+            // Update UI to reflect cleaned selections
+            if (this.bulkModus) {
+                this.updateBulkToolbar();
+            }
+        }
     }
 
     toggleTaakSelectie(taakId) {

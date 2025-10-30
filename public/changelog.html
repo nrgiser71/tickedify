@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.35 - BUGFIX: Sanitize Stale Selections -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.35</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Critical Bugfix: Stale Selection Cleanup</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Nieuwe sanitizeGeselecteerdeTaken() Functie</strong>: Lost het root cause probleem op waarom v0.20.34 niet werkte - validateTaskId() voorkwam nieuwe invalid selections, maar oude/stale IDs die AL in geselecteerdeTaken Set zaten werden niet verwijderd. Deze functie iterate over alle IDs in de Set en verwijdert invalid/test IDs. Wordt automatisch aangeroepen na elke data load.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🧹</div>
+                        <div class="change-content">
+                            <strong>Automatische Cleanup Na Data Load</strong>: sanitizeGeselecteerdeTaken() wordt aangeroepen in renderActiesLijst() (regel 3846), direct na data load maar vóór UI render. Dit garandeert dat stale IDs uit vorige page loads of data refreshes worden verwijderd voordat de UI selectie circles rendert.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Enhanced Debug Logging</strong>: Console toont nu <code>[SANITIZE]</code> berichten wanneer invalid IDs worden verwijderd, inclusief het aantal verwijderde IDs en welke specifieke IDs zijn gecleaned. Maakt troubleshooting van bulk selection issues veel transparanter.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Complete Defense in Depth</strong>: v0.20.35 combineert validateTaskId() (voorkomt nieuwe invalid selections) met sanitizeGeselecteerdeTaken() (verwijdert bestaande invalid selections). Dit elimineert 404 errors volledig, ongeacht of invalid IDs via nieuwe selecties of stale data in de Set terechtkomen.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.34 - BUGFIX: Enhanced Task ID Validation -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.34</span>
+                <span class="version-badge badge-fix">v0.20.34</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
