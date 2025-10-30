@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.32 - BUGFIX: Block Hidden Task Selection -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.32</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Prevent Selection of Hidden/Filtered Tasks</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>toggleTaakSelectie() Now Checks Visibility</strong>: Fixed THE root cause of the bulk edit 404 errors. When filterActies() hides tasks with display:none, the DOM elements remain in the page. Clicking on selectie-circles of hidden tasks was still adding their IDs to geselecteerdeTaken Set. Now toggleTaakSelectie() checks if parent element has display:'none' and ignores clicks on hidden tasks.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>selecteerAlleTaken() Now Skips Hidden Items</strong>: Also fixed "select all" functionality to only select visible (non-filtered) tasks. Both individual clicks and bulk select now respect filter visibility. This prevents the scenario where users thought they selected 2 visible tasks but actually selected 41 tasks (including all hidden ones).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Testing Agent Discovery</strong>: Playwright testing revealed that v0.20.31 fix (clearing Set on filter change) worked correctly, but old DOM circles remained clickable. Console logging showed 41 circles in DOM despite only 2 being visible. The fix ensures clicks on hidden elements are completely ignored.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.31 - BUGFIX: Clear Selections Bij Filter -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.31</span>
+                <span class="version-badge badge-fix">v0.20.31</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">

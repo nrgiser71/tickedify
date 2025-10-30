@@ -12398,21 +12398,30 @@ class Taakbeheer {
     }
 
     toggleTaakSelectie(taakId) {
+        // Find the task element first
+        const taakElement = document.querySelector(`[data-id="${taakId}"]`);
+        if (!taakElement) return;
+
+        // Check if element is visible (not filtered out)
+        // Elements hidden by filterActies() have display: 'none'
+        if (taakElement.style.display === 'none') {
+            console.log('[BULK SELECT] Ignoring click on hidden task:', taakId);
+            return; // Don't allow selection of hidden/filtered tasks
+        }
+
+        // Toggle selection
         if (this.geselecteerdeTaken.has(taakId)) {
             this.geselecteerdeTaken.delete(taakId);
         } else {
             this.geselecteerdeTaken.add(taakId);
         }
-        
+
         // Update visual selection
-        const taakElement = document.querySelector(`[data-id="${taakId}"]`);
-        if (taakElement) {
-            const selectieCircle = taakElement.querySelector('.selectie-circle');
-            if (selectieCircle) {
-                selectieCircle.classList.toggle('geselecteerd', this.geselecteerdeTaken.has(taakId));
-            }
+        const selectieCircle = taakElement.querySelector('.selectie-circle');
+        if (selectieCircle) {
+            selectieCircle.classList.toggle('geselecteerd', this.geselecteerdeTaken.has(taakId));
         }
-        
+
         // Update bulk toolbar count
         this.updateBulkToolbar();
     }
@@ -12420,6 +12429,9 @@ class Taakbeheer {
     selecteerAlleTaken() {
         const alleTaken = document.querySelectorAll('.actie-item[data-id]');
         alleTaken.forEach(item => {
+            // Skip hidden/filtered tasks
+            if (item.style.display === 'none') return;
+
             const taakId = item.dataset.id;
             this.geselecteerdeTaken.add(taakId);
             const selectieCircle = item.querySelector('.selectie-circle');
