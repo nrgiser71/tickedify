@@ -2866,6 +2866,14 @@ class Taakbeheer {
             
             // FIRST: Handle SHIFT + F combinations (to prevent normal F-key triggers)
             
+            // SHIFT + F9 for prioriteit instellen
+            if (e.shiftKey && e.key === 'F9') {
+                e.preventDefault();
+                e.stopPropagation(); // Stop verder event handling
+                app.focusAndOpenDropdown('prioriteitSelect');
+                return; // Exit completely
+            }
+
             // SHIFT + F10 for subtaak toevoegen
             if (e.shiftKey && e.key === 'F10') {
                 e.preventDefault();
@@ -2880,7 +2888,7 @@ class Taakbeheer {
                 }
                 return; // Exit completely
             }
-            
+
             // SHIFT + F1-F4, F6-F7 for quick moves (F5 is reserved for browser refresh)
             if (e.shiftKey && e.key.match(/^F([1-4]|6|7)$/)) {
                 e.preventDefault();
