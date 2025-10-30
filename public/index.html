@@ -1179,6 +1179,56 @@
       </div>
     </div>
 
+    <!-- Bulk Edit Modal -->
+    <div id="bulkEditModal" class="modal">
+        <div class="modal-content">
+            <h2 id="bulkEditHeader">Eigenschappen bewerken voor X taken</h2>
+
+            <div class="form-group">
+                <label for="bulkEditProject">Project:</label>
+                <select id="bulkEditProject">
+                    <option value="">-- Geen wijziging --</option>
+                    <option value="null">Geen project</option>
+                    <!-- Dynamically populated -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="bulkEditDatum">Datum:</label>
+                <input type="date" id="bulkEditDatum">
+            </div>
+
+            <div class="form-group">
+                <label for="bulkEditContext">Context:</label>
+                <select id="bulkEditContext">
+                    <option value="">-- Geen wijziging --</option>
+                    <option value="null">Geen context</option>
+                    <!-- Dynamically populated -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="bulkEditPriority">Prioriteit:</label>
+                <select id="bulkEditPriority">
+                    <option value="">-- Geen wijziging --</option>
+                    <option value="laag">Laag</option>
+                    <option value="normaal">Normaal</option>
+                    <option value="hoog">Hoog</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="bulkEditTime">Geschatte tijd (minuten):</label>
+                <input type="number" id="bulkEditTime" min="0" placeholder="Optioneel">
+            </div>
+
+            <div class="button-group">
+                <button onclick="window.bulkEditCancel()" class="secondary">Annuleren</button>
+                <button onclick="window.bulkEditSave()" class="primary">Opslaan</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script src="js/message-modal.js"></script>
 </body>

@@ -353,6 +353,143 @@ const inputModal = new InputModal();
 const confirmModal = new ConfirmModal();
 const projectModal = new ProjectModal();
 
+// Feature 043: Bulk Edit Helper Functions
+function populateBulkEditDropdowns() {
+    const taskManager = window.taskManager;
+
+    // Populate project dropdown
+    const projectSelect = document.getElementById('bulkEditProject');
+    projectSelect.innerHTML = '<option value="">-- Geen wijziging --</option>' +
+                              '<option value="null">Geen project</option>';
+
+    // Sort projects alfabetisch (consistent met bestaande pattern)
+    const gesorteerdeProjecten = [...taskManager.projecten].sort((a, b) =>
+        a.naam.toLowerCase().localeCompare(b.naam.toLowerCase(), 'nl')
+    );
+
+    gesorteerdeProjecten.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = project.naam;
+        projectSelect.appendChild(option);
+    });
+
+    // Populate context dropdown
+    const contextSelect = document.getElementById('bulkEditContext');
+    contextSelect.innerHTML = '<option value="">-- Geen wijziging --</option>' +
+                              '<option value="null">Geen context</option>';
+
+    // Sort contexts alfabetisch (consistent met existing vulContextSelect pattern)
+    const gesorteerdeContexten = [...taskManager.contexten].sort((a, b) =>
+        a.naam.toLowerCase().localeCompare(b.naam.toLowerCase(), 'nl')
+    );
+
+    gesorteerdeContexten.forEach(context => {
+        const option = document.createElement('option');
+        option.value = context.id;
+        option.textContent = context.naam;
+        contextSelect.appendChild(option);
+    });
+}
+
+function collectBulkEditUpdates() {
+    const updates = {};
+
+    // Project (optional)
+    const project = document.getElementById('bulkEditProject').value;
+    if (project) {
+        updates.project_id = project === 'null' ? null : parseInt(project);
+    }
+
+    // Datum (optional)
+    const datum = document.getElementById('bulkEditDatum').value;
+    if (datum) {
+        updates.verschijndatum = datum;
+    }
+
+    // Context (optional)
+    const context = document.getElementById('bulkEditContext').value;
+    if (context) {
+        updates.context = context === 'null' ? null : context;
+    }
+
+    // Priority (optional)
+    const priority = document.getElementById('bulkEditPriority').value;
+    if (priority) {
+        updates.prioriteit = priority;
+    }
+
+    // Estimated time (optional)
+    const time = document.getElementById('bulkEditTime').value;
+    if (time) {
+        updates.estimated_time_minutes = parseInt(time);
+    }
+
+    return updates;
+}
+
+function showBulkEditPopup() {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('bulkEditModal');
+        const taskCount = window.taskManager.geselecteerdeTaken.size;
+
+        // Update header with task count
+        document.getElementById('bulkEditHeader').textContent =
+            `Eigenschappen bewerken voor ${taskCount} taken`;
+
+        // Reset all form fields to empty (spec UX-004: no placeholders)
+        document.getElementById('bulkEditProject').value = '';
+        document.getElementById('bulkEditDatum').value = '';
+        document.getElementById('bulkEditContext').value = '';
+        document.getElementById('bulkEditPriority').value = '';
+        document.getElementById('bulkEditTime').value = '';
+
+        // Populate dropdowns with current data
+        populateBulkEditDropdowns();
+
+        // Show modal
+        modal.style.display = 'flex';
+
+        // Save button handler
+        window.bulkEditSave = () => {
+            const updates = collectBulkEditUpdates();
+
+            // Validation: at least one field filled (FR-013)
+            if (Object.keys(updates).length === 0) {
+                toast.warning('Geen eigenschappen geselecteerd');
+                return; // Keep popup open
+            }
+
+            modal.style.display = 'none';
+            resolve(updates);
+        };
+
+        // Cancel button handler
+        window.bulkEditCancel = () => {
+            modal.style.display = 'none';
+            resolve(null);
+        };
+
+        // Backdrop click handler (consistent with existing modals)
+        const backdropHandler = (e) => {
+            if (e.target === modal) {
+                window.bulkEditCancel();
+                modal.removeEventListener('click', backdropHandler);
+            }
+        };
+        modal.addEventListener('click', backdropHandler);
+
+        // Escape key handler (spec UX-007)
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                window.bulkEditCancel();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    });
+}
+
 // Feature 014: Onboarding Video Manager
 class OnboardingVideoManager {
     constructor() {
@@ -12377,6 +12514,11 @@ class Taakbeheer {
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-3maandelijks')" class="bulk-action-btn">Quarterly</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-6maandelijks')" class="bulk-action-btn">Semi-annually</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Yearly</button>
+                <button onclick="window.openBulkEditPopup()"
+                        class="bulk-action-btn"
+                        ${this.geselecteerdeTaken.size < 2 ? 'disabled' : ''}>
+                    Eigenschappen Bewerken
+                </button>
             `;
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
             // For postponed lists: show options to move back to main lists
@@ -12477,6 +12619,85 @@ class Taakbeheer {
 
             // Update sidebar counters after bulk operation - Feature 022
             this.debouncedUpdateCounters();
+
+        } finally {
+            loading.hide();
+        }
+    }
+
+    // Feature 043: Bulk Edit Properties
+    async bulkEditProperties(updates) {
+        // Pre-condition: minimum 2 tasks (FR-002)
+        if (this.geselecteerdeTaken.size < 2) {
+            toast.warning('Selecteer minimaal 2 taken');
+            return;
+        }
+
+        // Confirmation dialog (FR-007, FR-008)
+        const taskCount = this.geselecteerdeTaken.size;
+        const propertiesCount = Object.keys(updates).length;
+        const confirmed = confirm(`${taskCount} taken aanpassen met ${propertiesCount} eigenschap${propertiesCount > 1 ? 'pen' : ''}?`);
+        if (!confirmed) return;
+
+        const selectedIds = Array.from(this.geselecteerdeTaken);
+        const totalTasks = selectedIds.length;
+
+        // Progress tracking (consistent with existing bulk actions)
+        loading.showWithProgress('Eigenschappen aanpassen', 0, totalTasks);
+
+        try {
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+            let currentTask = 0;
+
+            // Sequential updates (research decision: simpler error handling)
+            for (const taakId of selectedIds) {
+                currentTask++;
+                loading.updateProgress('Eigenschappen aanpassen', currentTask, totalTasks);
+
+                try {
+                    const response = await fetch(`/api/taak/${taakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updates)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        const errorText = await response.text();
+                        errors.push({ taskId: taakId, error: errorText });
+                        console.error(`Failed to update task ${taakId}:`, errorText);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    errors.push({ taskId: taakId, error: error.message });
+                    console.error('Network error during bulk edit:', error);
+                }
+            }
+
+            loading.show('Finishing...');
+
+            // Result feedback (FR-009, FR-014)
+            if (errorCount > 0) {
+                // Partial or complete failure
+                toast.error(`${successCount} taken aangepast, ${errorCount} fouten`);
+                // Don't reload - preserve partial state (FR-014)
+            } else {
+                // Complete success
+                toast.success(`${successCount} taken aangepast`);
+
+                // Reset bulk mode and reload (FR-010, FR-011)
+                this.toggleBulkModus();
+                await this.preserveActionsFilters(() => this.laadHuidigeLijst());
+            }
+
+            // Update sidebar counters (consistent with existing bulk actions)
+            this.debouncedUpdateCounters();
+
+            return { successCount, errorCount, totalCount: totalTasks, errors };
 
         } finally {
             loading.hide();
@@ -13390,6 +13611,28 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
     if (app && app.bulkVerplaatsNaar) {
         app.bulkVerplaatsNaar(lijstNaam);
     }
+};
+
+// Feature 043: Bulk Edit Properties - Entry Point
+window.openBulkEditPopup = async function() {
+    const taskManager = window.taskManager;
+
+    // Pre-check (defensive, button should already be disabled)
+    if (taskManager.geselecteerdeTaken.size < 2) {
+        toast.warning('Selecteer minimaal 2 taken voor bulk bewerking');
+        return;
+    }
+
+    // Show popup and collect updates
+    const updates = await showBulkEditPopup();
+
+    // User cancelled
+    if (!updates) {
+        return;
+    }
+
+    // Execute bulk edit
+    await taskManager.bulkEditProperties(updates);
 };
 
 // Initialize mobile sidebar after DOM is loaded

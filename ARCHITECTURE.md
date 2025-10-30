@@ -618,9 +618,131 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Process**: `feature/highlighted-context-menu` branch → test → merge to main
 - **Rollback Strategy**: Easy revert capability voor complexe visual features
 
+## 📝 Bulk Eigenschappen Bewerking (Feature 043) - v0.20.22
+
+**OVERZICHT**: Complete bulk edit functionaliteit voor Acties lijst - pas meerdere eigenschappen tegelijk aan voor geselecteerde taken.
+
+### Global Functions (Helper Layer)
+**Locatie**: public/app.js regels 356-491
+
+- **populateBulkEditDropdowns()** - regel 357-393
+  - Vult project en context dropdowns met gesorteerde data
+  - Alfabetische sorting consistent met bestaande patterns
+  - Gebruikt taskManager.projecten en taskManager.contexten arrays
+
+- **collectBulkEditUpdates()** - regel 395-429
+  - Verzamelt form data naar updates object
+  - Optionele velden: project_id, verschijndatum, context, prioriteit, estimated_time_minutes
+  - Null handling voor "Geen project" en "Geen context" options
+
+- **showBulkEditPopup()** - regel 431-491
+  - Returns Promise<updates|null> voor async workflow
+  - Modal display met task count in header
+  - Validation: minimum 1 eigenschap vereist (FR-013)
+  - Event handlers: Save, Cancel, Backdrop click, Escape key
+  - Promise resolves met updates object of null bij cancel
+
+### TaskManager Methods (Core Logic)
+**Locatie**: public/app.js regels 12623-12700
+
+- **bulkEditProperties(updates)** - regel 12623
+  - Pre-validation: minimum 2 taken vereist (FR-002)
+  - Confirmation dialog met task count en properties count
+  - Sequential API updates via PUT /api/taak/:id
+  - Progress tracking met LoadingManager.showWithProgress()
+  - Error handling: partial success tracking
+  - Success: toast + toggleBulkModus + preserveActionsFilters + reload
+  - Failure: toast.error + geen reload (preserve state)
+  - Returns { successCount, errorCount, totalCount, errors }
+
+- **getBulkVerplaatsKnoppen()** - regel 12499 (modified)
+  - Toegevoegd: "Eigenschappen Bewerken" button op regel 12517-12521
+  - Disabled state wanneer geselecteerdeTaken.size < 2
+  - Button roept window.openBulkEditPopup() aan
+
+### Window Functions (Entry Points)
+**Locatie**: public/app.js regels 13616-13636
+
+- **window.openBulkEditPopup()** - regel 13616
+  - Entry point vanuit bulk actions button
+  - Pre-check: minimum 2 taken (defensive)
+  - Orchestrates: showBulkEditPopup → bulkEditProperties
+  - Async workflow met proper error handling
+
+### HTML Elements
+**Locatie**: public/index.html regels 1182-1230
+
+- **#bulkEditModal** - regel 1183 - Modal popup container
+- **#bulkEditHeader** - regel 1185 - Dynamic header met task count
+- **#bulkEditProject** - regel 1189 - Project dropdown (dynamically populated)
+- **#bulkEditDatum** - regel 1198 - Date input
+- **#bulkEditContext** - regel 1203 - Context dropdown (dynamically populated)
+- **#bulkEditPriority** - regel 1212 - Priority select (laag/normaal/hoog)
+- **#bulkEditTime** - regel 1222 - Estimated time input (minutes)
+- **Button handlers**: window.bulkEditCancel(), window.bulkEditSave()
+
+### CSS Styling
+**Locatie**: public/style.css regels 9597-9658
+
+- **#bulkEditModal .modal-content** - regel 9598 - Modal container (max-width 500px)
+- **#bulkEditModal .form-group** - regel 9603 - Form field spacing
+- **#bulkEditModal .form-group label** - regel 9607 - Label styling
+- **#bulkEditModal .form-group select/input** - regel 9614 - Form controls
+- **#bulkEditModal .button-group** - regel 9624 - Button container (flex)
+- **#bulkEditModal button** - regel 9631 - Base button styling
+- **button.secondary / button.primary** - regel 9640-9656 - Color variants
+
+### API Usage
+**Endpoint**: PUT /api/taak/:id (existing endpoint, no backend changes)
+
+**Request Body** (partial updates, alle velden optioneel):
+```javascript
+{
+  project_id: integer | null,
+  verschijndatum: "YYYY-MM-DD",
+  context: string | null,
+  prioriteit: "laag" | "normaal" | "hoog",
+  estimated_time_minutes: integer
+}
+```
+
+### User Workflow
+1. User activeert bulk mode in Acties lijst
+2. User selecteert 2+ taken via checkboxes
+3. User klikt "Eigenschappen Bewerken" button
+4. Popup opent met lege velden (geen placeholders - UX-004)
+5. User vult gewenste eigenschappen in (min 1 vereist)
+6. User klikt "Opslaan" → Confirmation dialog
+7. Sequential updates met progress indicator
+8. Success: bulk mode exit + lijst reload + toast
+9. Partial failure: toast error + geen reload (preserve state)
+
+### Feature Flags & Requirements
+- **FR-002**: Minimum 2 taken vereist voor bulk edit
+- **FR-007**: Confirmation dialog voor bulk operatie
+- **FR-013**: Minimum 1 eigenschap vereist in form
+- **FR-014**: Partial failures behouden state (geen reload)
+- **UX-004**: Geen placeholders in form (lege velden)
+- **UX-007**: Escape key closes popup
+
+### Integration Points
+- **Bulk Mode System**: Integreert met bestaande bulk actions (date, move)
+- **LoadingManager**: Progress tracking consistent met other bulk operations
+- **ToastManager**: Success/error feedback consistent met app patterns
+- **Modal System**: Consistent styling met recurring/priority popups
+- **API Layer**: Hergebruikt existing PUT /api/taak/:id endpoint
+
+### Testing Scenarios (Quickstart)
+1. **Happy Path**: 3 taken, context + priority wijzigen
+2. **Multiple Properties**: Alle 5 eigenschappen tegelijk aanpassen
+3. **Minimum Selection**: Button disabled bij <2 taken
+4. **Empty Form**: Warning "Geen eigenschappen geselecteerd"
+5. **Cancel Workflow**: Escape/Cancel/Confirm-cancel preserves state
+6. **Keyboard Navigation**: Tab through fields, Enter save, Escape close
+
 ---
 
-**LAATSTE UPDATE**: Oktober 18, 2025 - Subscription Flow Verbetering (v0.19.22)
+**LAATSTE UPDATE**: Oktober 30, 2025 - Bulk Eigenschappen Bewerking (v0.20.22)
 **BELANGRIJKSTE UPDATES**:
 - Oktober 18: Subscription Flow - Naadloze beta-naar-productie transitie met automatische redirect naar /app (v0.19.21-0.19.22)
 - Augustus 24: Tablet Resize Functionaliteit - Complete touch-friendly resize implementatie voor dagelijkse planning (v0.12.21-0.12.22)
