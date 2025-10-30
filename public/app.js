@@ -429,15 +429,20 @@ function collectBulkEditUpdates() {
 }
 
 function showBulkEditPopup() {
+    console.log('[BULK EDIT] showBulkEditPopup() called');
     return new Promise((resolve) => {
+        console.log('[BULK EDIT] Promise constructor started');
+
         // Defensive check: verify modal exists
         const modal = document.getElementById('bulkEditModal');
+        console.log('[BULK EDIT] Modal element:', modal);
         if (!modal) {
             console.error('Bulk edit modal not found in DOM (#bulkEditModal)');
             throw new Error('Bulk edit modal not found. Please refresh the page.');
         }
 
         const taskCount = window.app.geselecteerdeTaken.size;
+        console.log('[BULK EDIT] Task count:', taskCount);
 
         // Defensive check: verify all required elements exist
         const header = document.getElementById('bulkEditHeader');
@@ -446,6 +451,15 @@ function showBulkEditPopup() {
         const contextField = document.getElementById('bulkEditContext');
         const priorityField = document.getElementById('bulkEditPriority');
         const timeField = document.getElementById('bulkEditTime');
+
+        console.log('[BULK EDIT] Form elements check:', {
+            header: !!header,
+            projectField: !!projectField,
+            datumField: !!datumField,
+            contextField: !!contextField,
+            priorityField: !!priorityField,
+            timeField: !!timeField
+        });
 
         if (!header || !projectField || !datumField || !contextField || !priorityField || !timeField) {
             console.error('Missing bulk edit form elements:', {
@@ -459,6 +473,7 @@ function showBulkEditPopup() {
             throw new Error('Bulk edit form elements missing. Please refresh the page.');
         }
 
+        console.log('[BULK EDIT] All elements found, setting up form');
         // Update header with task count
         header.textContent = `Edit properties for ${taskCount} tasks`;
 
@@ -469,11 +484,14 @@ function showBulkEditPopup() {
         priorityField.value = '';
         timeField.value = '';
 
+        console.log('[BULK EDIT] Populating dropdowns');
         // Populate dropdowns with current data
         populateBulkEditDropdowns();
 
+        console.log('[BULK EDIT] Setting modal display to flex');
         // Show modal
         modal.style.display = 'flex';
+        console.log('[BULK EDIT] Modal display set, should be visible now');
 
         // Save button handler
         window.bulkEditSave = () => {
@@ -13645,24 +13663,31 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
 
 // Feature 043: Bulk Edit Properties - Async Implementation
 async function openBulkEditPopupAsync() {
+    console.log('[BULK EDIT] openBulkEditPopupAsync called');
     const taskManager = window.app;
 
     // Pre-check (defensive, button should already be disabled)
     if (taskManager.geselecteerdeTaken.size < 2) {
+        console.log('[BULK EDIT] Less than 2 tasks selected, showing warning');
         toast.warning('Select at least 2 tasks for bulk edit');
         return;
     }
 
+    console.log('[BULK EDIT] Calling showBulkEditPopup()...');
     // Show popup and collect updates
     const updates = await showBulkEditPopup();
+    console.log('[BULK EDIT] showBulkEditPopup returned:', updates);
 
     // User cancelled
     if (!updates) {
+        console.log('[BULK EDIT] User cancelled, no updates');
         return;
     }
 
+    console.log('[BULK EDIT] Executing bulkEditProperties with updates');
     // Execute bulk edit
     await taskManager.bulkEditProperties(updates);
+    console.log('[BULK EDIT] bulkEditProperties completed');
 }
 
 // Feature 043: Bulk Edit Properties - Entry Point (Sync Wrapper)
