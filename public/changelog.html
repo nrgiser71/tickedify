@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.34 - BUGFIX: Enhanced Task ID Validation -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.34</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Enhanced Task ID Validation</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Nieuwe validateTaskId() Utility Function</strong>: Voorkomt test/placeholder task IDs (pattern: test-*) en ongeldige task IDs om de bulk selection state in te komen. Validatie gebeurt nu bij selectie tijd in plaats van alleen bij bulk edit execution. Dit voorkomt 404 errors volledig in plaats van ze te detecteren achteraf.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Defense in Depth Approach</strong>: toggleTaakSelectie() en selecteerAlleTaken() roepen nu validateTaskId() aan voordat IDs worden toegevoegd aan geselecteerdeTaken Set. Dit voegt een extra validatie laag toe bovenop de bestaande v0.20.33 filtering in bulkEditProperties(). Ongeldige IDs kunnen nu nooit meer in de selectie state komen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Comprehensive Debug Logging</strong>: Uitgebreide logging in bulkEditProperties() toont nu: (1) Selected IDs before validation, (2) Loaded tasks count, (3) Detailed rejection reasons per invalid ID (test pattern vs not found in array), (4) Valid IDs after filtering. filterActies() logt nu ook hoeveel selections werden cleared bij filter change.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Technical Implementation</strong>: Nieuwe <code>validateTaskId()</code> functie gebruikt regex test (<code>/^test-/</code>) voor test pattern detectie en <code>this.taken.find()</code> voor existence verification. Console warnings met prefix <code>[VALIDATION]</code> maken probleem identificatie eenvoudig. Backwards compatible - valide taken werken identiek aan v0.20.33.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.33 - BUGFIX: Visual Feedback + Validation -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.33</span>
+                <span class="version-badge badge-fix">v0.20.33</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">

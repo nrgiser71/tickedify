@@ -6872,11 +6872,14 @@ class Taakbeheer {
         // This prevents selecting tasks before filter and then selecting different tasks after filter
         // which would result in bulk operations on tasks that are no longer visible
         if (this.bulkModus) {
+            const preFilterCount = this.geselecteerdeTaken.size;
             this.geselecteerdeTaken.clear();
             // CRITICAL: Also remove visual selection from ALL circles (v0.20.33 fix)
             document.querySelectorAll('.selectie-circle.geselecteerd').forEach(circle => {
                 circle.classList.remove('geselecteerd');
             });
+            // Feature 044: Log selection clear for debugging
+            console.log(`[FILTER] Cleared ${preFilterCount} selections due to filter change`);
             this.updateBulkToolbar();
         }
 
@@ -12401,7 +12404,36 @@ class Taakbeheer {
         this.renderActiesLijst();
     }
 
+    /**
+     * Feature 044: Validate task ID before allowing it to enter bulk selection state.
+     * Prevents 404 errors from test/placeholder IDs and stale task references.
+     * @param {string} taskId - Task ID to validate
+     * @returns {boolean} - true if valid, false if rejected
+     */
+    validateTaskId(taskId) {
+        // Rule 1: Reject test pattern IDs (never exist in database)
+        if (/^test-/.test(taskId)) {
+            console.warn('[VALIDATION] Test task ID rejected:', taskId);
+            return false;
+        }
+
+        // Rule 2: Verify task exists in loaded data
+        const taskExists = this.taken.find(t => t.id === taskId);
+        if (!taskExists) {
+            console.warn('[VALIDATION] Task not in loaded data:', taskId);
+            return false;
+        }
+
+        // Valid task ID
+        return true;
+    }
+
     toggleTaakSelectie(taakId) {
+        // Feature 044: Validate task ID before processing
+        if (!this.validateTaskId(taakId)) {
+            return; // Rejected - no state change
+        }
+
         // Find the task element first
         const taakElement = document.querySelector(`[data-id="${taakId}"]`);
         if (!taakElement) return;
@@ -12437,6 +12469,12 @@ class Taakbeheer {
             if (item.style.display === 'none') return;
 
             const taakId = item.dataset.id;
+
+            // Feature 044: Skip invalid task IDs
+            if (!this.validateTaskId(taakId)) {
+                return; // Validation failed, skip this task
+            }
+
             this.geselecteerdeTaken.add(taakId);
             const selectieCircle = item.querySelector('.selectie-circle');
             if (selectieCircle) {
@@ -12713,15 +12751,30 @@ class Taakbeheer {
 
         const selectedIds = Array.from(this.geselecteerdeTaken);
 
+        // Feature 044: Enhanced debug logging
+        console.log('[BULK EDIT DEBUG] Selected IDs before validation:', selectedIds);
+        console.log('[BULK EDIT DEBUG] Loaded tasks count:', this.taken.length);
+
         // CRITICAL: Filter out any IDs that don't exist in app.taken (v0.20.33 fix)
         // This prevents 404 errors from stale/invalid task IDs in geselecteerdeTaken Set
         const validIds = selectedIds.filter(id => this.taken.find(t => t.id === id));
         const invalidCount = selectedIds.length - validIds.length;
 
         if (invalidCount > 0) {
-            console.warn(`[BULK EDIT] Filtered out ${invalidCount} invalid task IDs:`,
-                selectedIds.filter(id => !this.taken.find(t => t.id === id)));
+            const invalidIds = selectedIds.filter(id => !this.taken.find(t => t.id === id));
+            console.warn(`[BULK EDIT] Filtered out ${invalidCount} invalid task IDs:`, invalidIds);
+
+            // Feature 044: Log which validation rule triggered
+            invalidIds.forEach(id => {
+                if (/^test-/.test(id)) {
+                    console.warn(`[BULK EDIT]   - ${id}: Test pattern detected`);
+                } else {
+                    console.warn(`[BULK EDIT]   - ${id}: Not found in this.taken array`);
+                }
+            });
         }
+
+        console.log('[BULK EDIT DEBUG] Valid IDs after filtering:', validIds);
 
         if (validIds.length < 2) {
             toast.warning('Less than 2 valid tasks selected');
