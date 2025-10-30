@@ -6873,6 +6873,10 @@ class Taakbeheer {
         // which would result in bulk operations on tasks that are no longer visible
         if (this.bulkModus) {
             this.geselecteerdeTaken.clear();
+            // CRITICAL: Also remove visual selection from ALL circles (v0.20.33 fix)
+            document.querySelectorAll('.selectie-circle.geselecteerd').forEach(circle => {
+                circle.classList.remove('geselecteerd');
+            });
             this.updateBulkToolbar();
         }
 
@@ -12708,7 +12712,23 @@ class Taakbeheer {
         if (!confirmed) return;
 
         const selectedIds = Array.from(this.geselecteerdeTaken);
-        const totalTasks = selectedIds.length;
+
+        // CRITICAL: Filter out any IDs that don't exist in app.taken (v0.20.33 fix)
+        // This prevents 404 errors from stale/invalid task IDs in geselecteerdeTaken Set
+        const validIds = selectedIds.filter(id => this.taken.find(t => t.id === id));
+        const invalidCount = selectedIds.length - validIds.length;
+
+        if (invalidCount > 0) {
+            console.warn(`[BULK EDIT] Filtered out ${invalidCount} invalid task IDs:`,
+                selectedIds.filter(id => !this.taken.find(t => t.id === id)));
+        }
+
+        if (validIds.length < 2) {
+            toast.warning('Less than 2 valid tasks selected');
+            return;
+        }
+
+        const totalTasks = validIds.length;
 
         // Progress tracking (consistent with existing bulk actions)
         loading.showWithProgress('Updating properties', 0, totalTasks);
@@ -12720,7 +12740,7 @@ class Taakbeheer {
             let currentTask = 0;
 
             // Sequential updates (research decision: simpler error handling)
-            for (const taakId of selectedIds) {
+            for (const taakId of validIds) {
                 currentTask++;
                 loading.updateProgress('Updating properties', currentTask, totalTasks);
 

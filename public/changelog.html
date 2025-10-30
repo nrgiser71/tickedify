@@ -134,10 +134,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.33 - BUGFIX: Visual Feedback + Validation -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.33</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Complete Bulk Edit Selection Sync Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Visual Circles Now Cleared on Filter Change</strong>: Fixed critical UX bug where filterActies() cleared the geselecteerdeTaken Set but left visual selection circles intact. Users saw circles with .geselecteerd class even though Set was empty, leading to confusion. Now filterActies() explicitly removes .geselecteerd class from ALL circles when clearing selections during bulk mode.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Defensive Validation in bulkEditProperties()</strong>: Added task ID validation before API calls. Any IDs in geselecteerdeTaken that don't exist in app.taken are now filtered out with console warning. This prevents 404 errors from stale/invalid IDs and provides clear diagnostics when issues occur. Function now uses validIds instead of raw selectedIds.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Root Cause Analysis Complete</strong>: The original 404 errors (xachag1c7mekd5yyn, etc) occurred because: (1) Users selected tasks before applying filter, (2) filterActies() cleared Set but not visual circles, (3) Users re-clicked "already selected" circles thinking they needed to re-select, (4) Old IDs were re-added to Set. This v0.20.33 fix ensures visual and data state remain perfectly synchronized.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.32 - BUGFIX: Block Hidden Task Selection -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.32</span>
+                <span class="version-badge badge-fix">v0.20.32</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
