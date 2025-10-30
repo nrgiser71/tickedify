@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.27 - BUGFIX: Bulk Edit Error Handling -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.27</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Click Handler - Error Handling</div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Try-Catch Error Handling Added</strong>: Fixed issue where "Edit Properties" button click did nothing. Added comprehensive error handling with try-catch wrapper in window.openBulkEditPopup() to catch and report any errors during popup opening. Errors now logged to console with user-friendly toast messages.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Defensive DOM Checks</strong>: Added defensive checks in showBulkEditPopup() to verify all required DOM elements exist before manipulation. If modal or form elements are missing, a clear error message is shown with instructions to refresh. Prevents silent failures and provides detailed console logging for debugging.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.26 - BUGFIX: Bulk Edit Button & Language Fix -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.26</span>
+                <span class="version-badge badge-fix">v0.20.26</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">

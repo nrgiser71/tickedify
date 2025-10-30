@@ -430,19 +430,44 @@ function collectBulkEditUpdates() {
 
 function showBulkEditPopup() {
     return new Promise((resolve) => {
+        // Defensive check: verify modal exists
         const modal = document.getElementById('bulkEditModal');
+        if (!modal) {
+            console.error('Bulk edit modal not found in DOM (#bulkEditModal)');
+            throw new Error('Bulk edit modal not found. Please refresh the page.');
+        }
+
         const taskCount = window.app.geselecteerdeTaken.size;
 
+        // Defensive check: verify all required elements exist
+        const header = document.getElementById('bulkEditHeader');
+        const projectField = document.getElementById('bulkEditProject');
+        const datumField = document.getElementById('bulkEditDatum');
+        const contextField = document.getElementById('bulkEditContext');
+        const priorityField = document.getElementById('bulkEditPriority');
+        const timeField = document.getElementById('bulkEditTime');
+
+        if (!header || !projectField || !datumField || !contextField || !priorityField || !timeField) {
+            console.error('Missing bulk edit form elements:', {
+                header: !!header,
+                projectField: !!projectField,
+                datumField: !!datumField,
+                contextField: !!contextField,
+                priorityField: !!priorityField,
+                timeField: !!timeField
+            });
+            throw new Error('Bulk edit form elements missing. Please refresh the page.');
+        }
+
         // Update header with task count
-        document.getElementById('bulkEditHeader').textContent =
-            `Edit properties for ${taskCount} tasks`;
+        header.textContent = `Edit properties for ${taskCount} tasks`;
 
         // Reset all form fields to empty (spec UX-004: no placeholders)
-        document.getElementById('bulkEditProject').value = '';
-        document.getElementById('bulkEditDatum').value = '';
-        document.getElementById('bulkEditContext').value = '';
-        document.getElementById('bulkEditPriority').value = '';
-        document.getElementById('bulkEditTime').value = '';
+        projectField.value = '';
+        datumField.value = '';
+        contextField.value = '';
+        priorityField.value = '';
+        timeField.value = '';
 
         // Populate dropdowns with current data
         populateBulkEditDropdowns();
@@ -13620,24 +13645,29 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
 
 // Feature 043: Bulk Edit Properties - Entry Point
 window.openBulkEditPopup = async function() {
-    const taskManager = window.app;
+    try {
+        const taskManager = window.app;
 
-    // Pre-check (defensive, button should already be disabled)
-    if (taskManager.geselecteerdeTaken.size < 2) {
-        toast.warning('Select at least 2 tasks for bulk edit');
-        return;
+        // Pre-check (defensive, button should already be disabled)
+        if (taskManager.geselecteerdeTaken.size < 2) {
+            toast.warning('Select at least 2 tasks for bulk edit');
+            return;
+        }
+
+        // Show popup and collect updates
+        const updates = await showBulkEditPopup();
+
+        // User cancelled
+        if (!updates) {
+            return;
+        }
+
+        // Execute bulk edit
+        await taskManager.bulkEditProperties(updates);
+    } catch (error) {
+        console.error('Bulk edit popup error:', error);
+        toast.error('Error opening bulk edit popup: ' + error.message);
     }
-
-    // Show popup and collect updates
-    const updates = await showBulkEditPopup();
-
-    // User cancelled
-    if (!updates) {
-        return;
-    }
-
-    // Execute bulk edit
-    await taskManager.bulkEditProperties(updates);
 };
 
 // Initialize mobile sidebar after DOM is loaded
