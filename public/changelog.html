@@ -134,25 +134,44 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.20.24 - BUGFIX: Bulk Edit Popup Crash -->
+        <!-- Version 0.20.25 - BUGFIX: Bulk Edit Popup Complete Fix -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.24</span>
+                <span class="version-badge badge-latest">v0.20.25</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
                 <div class="change-category">
-                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Popup Crash</div>
+                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Popup Complete Fix</div>
                     <div class="change-item">
                         <div class="change-icon">✅</div>
                         <div class="change-content">
-                            <strong>Bulk Edit Popup Opent Nu Correct</strong>: Opgelost kritieke bug waarbij klikken op "Eigenschappen Bewerken" button resulteerde in TypeError: Cannot read properties of undefined (reading 'geselecteerdeTaken'). Root cause was verkeerde variabele referentie in openBulkEditPopup() functie (window.taskManager vs window.app).
+                            <strong>Alle window.taskManager Referenties Gefixed</strong>: Opgelost kritieke bug waarbij de bulk edit popup crashte met TypeError. Gevonden en gefixed in 3 locaties: openBulkEditPopup() (regel 13624), showBulkEditPopup() (regel 434), en populateBulkEditDropdowns() (regel 358). Alle referenties zijn nu gewijzigd naar window.app.
                         </div>
                     </div>
                     <div class="change-item">
                         <div class="change-icon">🎯</div>
                         <div class="change-content">
-                            <strong>Correcte TaskManager Referentie</strong>: De functie gebruikt nu window.app (de werkelijke TaskManager instantie) in plaats van window.taskManager (undefined). Dit zorgt voor correcte toegang tot geselecteerdeTaken Set.
+                            <strong>Systematische Fix</strong>: v0.20.24 fixte alleen de entry point functie, maar de onderliggende helper functies gebruikten nog steeds window.taskManager. Deze release fixed alle 3 de locaties waar window.taskManager werd gebruikt in plaats van window.app.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.20.24 - BUGFIX: Bulk Edit Popup Crash (Incomplete) -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.20.24</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Popup Crash (Incomplete)</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚠️</div>
+                        <div class="change-content">
+                            <strong>Gedeeltelijke Fix</strong>: Fixte alleen openBulkEditPopup() functie, maar miste showBulkEditPopup() en populateBulkEditDropdowns(). Bug bleef bestaan. Volledig gefixed in v0.20.25.
                         </div>
                     </div>
                 </div>

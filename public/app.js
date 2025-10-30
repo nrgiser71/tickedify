@@ -355,7 +355,7 @@ const projectModal = new ProjectModal();
 
 // Feature 043: Bulk Edit Helper Functions
 function populateBulkEditDropdowns() {
-    const taskManager = window.taskManager;
+    const taskManager = window.app;
 
     // Populate project dropdown
     const projectSelect = document.getElementById('bulkEditProject');
@@ -431,7 +431,7 @@ function collectBulkEditUpdates() {
 function showBulkEditPopup() {
     return new Promise((resolve) => {
         const modal = document.getElementById('bulkEditModal');
-        const taskCount = window.taskManager.geselecteerdeTaken.size;
+        const taskCount = window.app.geselecteerdeTaken.size;
 
         // Update header with task count
         document.getElementById('bulkEditHeader').textContent =
