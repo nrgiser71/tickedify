@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.31 - BUGFIX: Clear Selections Bij Filter -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.31</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Filter Selection Mismatch</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Clear Selections on Filter Change</strong>: Fixed critical bug where applying a filter during bulk mode kept old selected task IDs in memory. When users selected tasks, applied a filter, and selected different tasks, the bulk edit would attempt to update BOTH old and new task IDs - causing 404 errors for old (now hidden) tasks. Solution: filterActies() now automatically clears geselecteerdeTaken Set when filter changes during bulk mode.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Root Cause Analysis</strong>: Debug logging revealed that selected IDs didn't match API response IDs. Investigation showed that filterActies() only modified display:none on DOM elements without clearing the selection Set. This caused additive selection behavior where old invisible task IDs remained in Set alongside new visible task selections.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.30 - BUGFIX: Modal CSS Position Fixed -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.30</span>
+                <span class="version-badge badge-fix">v0.20.30</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">

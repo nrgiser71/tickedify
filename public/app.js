@@ -6868,6 +6868,14 @@ class Taakbeheer {
         const datumFilter = document.getElementById('datumFilter')?.value || '';
         const prioriteitFilter = document.getElementById('prioriteitFilter')?.value || '';
 
+        // Clear selections when filter changes during bulk mode (Feature 043 fix)
+        // This prevents selecting tasks before filter and then selecting different tasks after filter
+        // which would result in bulk operations on tasks that are no longer visible
+        if (this.bulkModus) {
+            this.geselecteerdeTaken.clear();
+            this.updateBulkToolbar();
+        }
+
         // Support both .actie-row (table layout) and .taak-item (list layout)
         const elementsToFilter = document.querySelectorAll('.actie-row, .taak-item');
         elementsToFilter.forEach(row => {
