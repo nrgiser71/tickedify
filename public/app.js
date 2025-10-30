@@ -435,7 +435,7 @@ function showBulkEditPopup() {
 
         // Update header with task count
         document.getElementById('bulkEditHeader').textContent =
-            `Eigenschappen bewerken voor ${taskCount} taken`;
+            `Edit properties for ${taskCount} tasks`;
 
         // Reset all form fields to empty (spec UX-004: no placeholders)
         document.getElementById('bulkEditProject').value = '';
@@ -456,7 +456,7 @@ function showBulkEditPopup() {
 
             // Validation: at least one field filled (FR-013)
             if (Object.keys(updates).length === 0) {
-                toast.warning('Geen eigenschappen geselecteerd');
+                toast.warning('No properties selected');
                 return; // Keep popup open
             }
 
@@ -12521,9 +12521,8 @@ class Taakbeheer {
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-6maandelijks')" class="bulk-action-btn">Semi-annually</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Yearly</button>
                 <button onclick="window.openBulkEditPopup()"
-                        class="bulk-action-btn"
-                        disabled>
-                    Eigenschappen Bewerken
+                        class="bulk-action-btn">
+                    Edit Properties
                 </button>
             `;
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
@@ -12635,21 +12634,21 @@ class Taakbeheer {
     async bulkEditProperties(updates) {
         // Pre-condition: minimum 2 tasks (FR-002)
         if (this.geselecteerdeTaken.size < 2) {
-            toast.warning('Selecteer minimaal 2 taken');
+            toast.warning('Select at least 2 tasks');
             return;
         }
 
         // Confirmation dialog (FR-007, FR-008)
         const taskCount = this.geselecteerdeTaken.size;
         const propertiesCount = Object.keys(updates).length;
-        const confirmed = confirm(`${taskCount} taken aanpassen met ${propertiesCount} eigenschap${propertiesCount > 1 ? 'pen' : ''}?`);
+        const confirmed = confirm(`Update ${taskCount} tasks with ${propertiesCount} ${propertiesCount > 1 ? 'properties' : 'property'}?`);
         if (!confirmed) return;
 
         const selectedIds = Array.from(this.geselecteerdeTaken);
         const totalTasks = selectedIds.length;
 
         // Progress tracking (consistent with existing bulk actions)
-        loading.showWithProgress('Eigenschappen aanpassen', 0, totalTasks);
+        loading.showWithProgress('Updating properties', 0, totalTasks);
 
         try {
             let successCount = 0;
@@ -12660,7 +12659,7 @@ class Taakbeheer {
             // Sequential updates (research decision: simpler error handling)
             for (const taakId of selectedIds) {
                 currentTask++;
-                loading.updateProgress('Eigenschappen aanpassen', currentTask, totalTasks);
+                loading.updateProgress('Updating properties', currentTask, totalTasks);
 
                 try {
                     const response = await fetch(`/api/taak/${taakId}`, {
@@ -12689,11 +12688,11 @@ class Taakbeheer {
             // Result feedback (FR-009, FR-014)
             if (errorCount > 0) {
                 // Partial or complete failure
-                toast.error(`${successCount} taken aangepast, ${errorCount} fouten`);
+                toast.error(`${successCount} tasks updated, ${errorCount} errors`);
                 // Don't reload - preserve partial state (FR-014)
             } else {
                 // Complete success
-                toast.success(`${successCount} taken aangepast`);
+                toast.success(`${successCount} tasks updated`);
 
                 // Reset bulk mode and reload (FR-010, FR-011)
                 this.toggleBulkModus();
@@ -13625,7 +13624,7 @@ window.openBulkEditPopup = async function() {
 
     // Pre-check (defensive, button should already be disabled)
     if (taskManager.geselecteerdeTaken.size < 2) {
-        toast.warning('Selecteer minimaal 2 taken voor bulk bewerking');
+        toast.warning('Select at least 2 tasks for bulk edit');
         return;
     }
 
