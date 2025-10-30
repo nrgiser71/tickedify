@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.20.19 - FEATURE: Uitbreiding Planning Uren 05:00-22:00 -->
+        <!-- Version 0.20.21 - BUGFIX: Keyboard Shortcuts Focus Issue -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.20</span>
+                <span class="version-badge badge-latest">v0.20.21</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Keyboard Shortcuts</div>
+                    <div class="change-item">
+                        <div class="change-icon">⌨️</div>
+                        <div class="change-content">
+                            <strong>Keyboard Shortcuts Werken Nu Altijd</strong>: Opgelost probleem waarbij keyboard shortcuts (F2-F9, Shift+F9, Enter, Escape) niet meer werkten na het klikken op "Project toevoegen" of "Context toevoegen" knoppen. Shortcuts werken nu onafhankelijk van welk element focus heeft in de taak popup.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Technische Verbetering</strong>: Event listeners gebruiken nu capture phase om keyboard events op te vangen vóór child elements. Dit zorgt voor betrouwbare shortcut detectie in alle situaties.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.20.20 - FEATURE: SHIFT+F9 Keyboard Shortcut -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.20.20</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
