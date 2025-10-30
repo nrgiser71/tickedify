@@ -1443,8 +1443,13 @@ class Taakbeheer {
             });
         });
 
-        // Popup navigation
-        document.getElementById('planningPopup').addEventListener('keydown', (e) => {
+        // Popup navigation - Listen on document level for better event capture
+        document.addEventListener('keydown', (e) => {
+            const popup = document.getElementById('planningPopup');
+
+            // Only handle when popup is visible
+            if (!popup || popup.style.display === 'none') return;
+
             if (e.key === 'Escape') {
                 this.sluitPopup();
             }
@@ -1458,7 +1463,7 @@ class Taakbeheer {
                 e.preventDefault();
                 this.probeerOpslaan();
             }
-        }, { capture: true });
+        });
         
         // Initialize F-key shortcuts for planning popup
         this.initPlanningKeyboardShortcuts();
@@ -2856,9 +2861,10 @@ class Taakbeheer {
     initPlanningKeyboardShortcuts() {
         const popup = document.getElementById('planningPopup');
 
-        popup.addEventListener('keydown', (e) => {
-            
-            // Only handle F-keys when popup is visible
+        // Listen on document level so shortcuts work regardless of focus
+        document.addEventListener('keydown', (e) => {
+
+            // Only handle when popup is visible
             if (popup.style.display === 'none') return;
             
             // Skip if in textarea (except F9 which should focus textarea, and allow other useful F-keys)
