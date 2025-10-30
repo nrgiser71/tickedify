@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.36 - CRITICAL FIX: Bulk Edit Timing Bug -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.36</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 Critical Fix: Async Timing Bug in Bulk Edit</div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Root Cause Identificatie</strong>: v0.20.34 en v0.20.35 losten het verkeerde probleem op! De echte bug was een <strong>timing issue</strong>: Bulk edit heeft een popup die 10-30 seconden wacht op user input. Auto-refresh draait elke 5 seconden en ververst <code>this.taken</code> array. Tijdens popup wachttijd kunnen geselecteerde tasks uit database verdwijnen, maar <code>geselecteerdeTaken</code> Set wordt NIET bijgewerkt. Bij "Save" click zijn IDs stale → 404 errors.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Snapshot Validatie VOOR Popup</strong>: <code>openBulkEditPopupAsync()</code> maakt nu een validated snapshot van task IDs DIRECT bij popup open (regel 13808-13822). Dit snapshot wordt door gegeven aan nieuwe method <code>bulkEditPropertiesWithIds(validIds, updates)</code>. Auto-refresh tijdens popup kan nu <code>geselecteerdeTaken</code> niet meer bederven - we gebruiken het snapshot, niet de live Set.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>Nieuwe Method: bulkEditPropertiesWithIds()</strong>: Clone van <code>bulkEditProperties()</code> maar accepteert validated task IDs als parameter (regel 12887-12962). Gebruikt <code>taskIds</code> parameter ipv <code>this.geselecteerdeTaken</code> te lezen. Hierdoor blijft de data immutable tussen popup open en save - geen race conditions meer mogelijk.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Waarom Andere Bulk Operaties Werkten</strong>: Bulk Move en Bulk Delete hebben GEEN popup → immediate execution (< 100ms) → geen tijd voor auto-refresh om data te wijzigen → <code>geselecteerdeTaken</code> altijd fresh. Bulk Edit heeft WEL popup → 10-30 sec delay → auto-refresh kan tussendoor komen → stale data. Dit verklaart waarom alleen bulk edit properties faalde.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔧</div>
+                        <div class="change-content">
+                            <strong>Enhanced Debug Logging</strong>: Console toont nu <code>[BULK EDIT WITH IDS]</code> berichten voor de nieuwe snapshot-based flow, <code>[BULK EDIT]</code> voor snapshot creatie, en per-task success/failure logging. Timing van validatie is zichtbaar: snapshot validatie bij popup open, execution na popup close.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.35 - BUGFIX: Sanitize Stale Selections -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.35</span>
+                <span class="version-badge badge-fix">v0.20.35</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

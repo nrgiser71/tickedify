@@ -12880,6 +12880,86 @@ class Taakbeheer {
             loading.hide();
         }
     }
+
+    // Feature 044: Bulk Edit Properties with Explicit IDs
+    // This method accepts validated task IDs as parameter instead of using this.geselecteerdeTaken
+    // Prevents timing bug where auto-refresh makes geselecteerdeTaken stale during popup display
+    async bulkEditPropertiesWithIds(taskIds, updates) {
+        console.log(`[BULK EDIT WITH IDS] Called with ${taskIds.length} task IDs`);
+
+        // Confirmation dialog (FR-007, FR-008)
+        const taskCount = taskIds.length;
+        const propertiesCount = Object.keys(updates).length;
+        const confirmed = confirm(`Update ${taskCount} tasks with ${propertiesCount} ${propertiesCount > 1 ? 'properties' : 'property'}?`);
+        if (!confirmed) {
+            console.log('[BULK EDIT WITH IDS] User cancelled confirmation');
+            return;
+        }
+
+        // Progress tracking
+        loading.showWithProgress('Updating properties', 0, taskCount);
+
+        try {
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+            let currentTask = 0;
+
+            // Sequential updates
+            for (const taakId of taskIds) {
+                currentTask++;
+                loading.updateProgress('Updating properties', currentTask, taskCount);
+
+                try {
+                    const response = await fetch(`/api/taak/${taakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updates)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                        console.log(`[BULK EDIT WITH IDS] ✓ Updated task ${taakId}`);
+                    } else {
+                        errorCount++;
+                        const errorText = await response.text();
+                        errors.push({ taskId: taakId, error: errorText });
+                        console.error(`[BULK EDIT WITH IDS] ✗ Failed to update task ${taakId}:`, errorText);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    errors.push({ taskId: taakId, error: error.message });
+                    console.error('[BULK EDIT WITH IDS] Network error:', error);
+                }
+            }
+
+            loading.show('Finishing...');
+
+            // Result feedback (FR-009, FR-014)
+            if (errorCount > 0) {
+                // Partial or complete failure
+                toast.error(`${successCount} tasks updated, ${errorCount} errors`);
+                console.log('[BULK EDIT WITH IDS] Partial failure - preserving state');
+                // Don't reload - preserve partial state (FR-014)
+            } else {
+                // Complete success
+                toast.success(`${successCount} tasks updated`);
+                console.log('[BULK EDIT WITH IDS] Complete success - resetting bulk mode');
+
+                // Reset bulk mode and reload (FR-010, FR-011)
+                this.toggleBulkModus();
+                await this.preserveActionsFilters(() => this.laadHuidigeLijst());
+            }
+
+            // Update sidebar counters
+            this.debouncedUpdateCounters();
+
+            return { successCount, errorCount, totalCount: taskCount, errors };
+
+        } finally {
+            loading.hide();
+        }
+    }
 }
 
 // Authentication Manager
@@ -13791,6 +13871,7 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
 };
 
 // Feature 043: Bulk Edit Properties - Async Implementation
+// Feature 044: Fixed timing bug - snapshot IDs BEFORE popup to prevent stale data
 async function openBulkEditPopupAsync() {
     console.log('[BULK EDIT] openBulkEditPopupAsync called');
     const taskManager = window.app;
@@ -13802,8 +13883,33 @@ async function openBulkEditPopupAsync() {
         return;
     }
 
+    // Feature 044: CRITICAL FIX - Create validated snapshot BEFORE popup opens
+    // This prevents stale IDs from auto-refresh during popup display (10-30 sec wait)
+    const selectedIds = Array.from(taskManager.geselecteerdeTaken);
+    const validIds = selectedIds.filter(id => {
+        // Rule 1: Reject test pattern IDs
+        if (/^test-/.test(id)) {
+            console.warn('[BULK EDIT] Rejecting test ID from snapshot:', id);
+            return false;
+        }
+        // Rule 2: Verify task exists in current loaded data
+        const exists = taskManager.taken.find(t => t.id === id);
+        if (!exists) {
+            console.warn('[BULK EDIT] Rejecting non-existent ID from snapshot:', id);
+            return false;
+        }
+        return true;
+    });
+
+    console.log(`[BULK EDIT] Snapshot created: ${selectedIds.length} selected → ${validIds.length} valid`);
+
+    if (validIds.length < 2) {
+        toast.warning('Less than 2 valid tasks selected');
+        return;
+    }
+
     console.log('[BULK EDIT] Calling showBulkEditPopup()...');
-    // Show popup and collect updates
+    // Show popup and collect updates (may take 10-30 seconds - auto-refresh can run!)
     const updates = await showBulkEditPopup();
     console.log('[BULK EDIT] showBulkEditPopup returned:', updates);
 
@@ -13813,10 +13919,10 @@ async function openBulkEditPopupAsync() {
         return;
     }
 
-    console.log('[BULK EDIT] Executing bulkEditProperties with updates');
-    // Execute bulk edit
-    await taskManager.bulkEditProperties(updates);
-    console.log('[BULK EDIT] bulkEditProperties completed');
+    console.log('[BULK EDIT] Executing bulkEditPropertiesWithIds with validated snapshot');
+    // Feature 044: Use snapshot IDs, not this.geselecteerdeTaken (which may be stale now)
+    await taskManager.bulkEditPropertiesWithIds(validIds, updates);
+    console.log('[BULK EDIT] bulkEditPropertiesWithIds completed');
 }
 
 // Feature 043: Bulk Edit Properties - Entry Point (Sync Wrapper)
