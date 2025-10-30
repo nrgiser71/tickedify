@@ -9595,7 +9595,25 @@ body.dagkalender-focus-active {
 }
 
 /* Bulk Edit Modal Styling - Feature 043 */
+/* Base modal overlay - CRITICAL for visibility */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
 #bulkEditModal .modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     max-width: 500px;
     width: 90%;
 }

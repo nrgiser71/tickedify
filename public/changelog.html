@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.30 - BUGFIX: Modal CSS Position Fixed -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.30</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Modal Overlay CSS - FINALLY WORKING!</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Critical CSS Fix: position: fixed</strong>: Added missing base .modal class CSS with position: fixed, z-index: 10000, and full-screen overlay styling. This was THE root cause - JavaScript was working perfectly, but CSS was missing! Modal now displays as centered overlay with semi-transparent backdrop. Debug logging revealed modal.style.display was being set correctly, but DevTools showed position: static (default) instead of fixed.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎨</div>
+                        <div class="change-content">
+                            <strong>Enhanced Modal Content Styling</strong>: Added white background, padding, border-radius, and box-shadow to .modal-content for professional appearance. Modal now properly overlays entire screen with flexbox centering.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.29 - DEBUG: Extensive Logging Added -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.29</span>
+                <span class="version-badge badge-fix">v0.20.29</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
