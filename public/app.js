@@ -13621,7 +13621,7 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
 
 // Feature 043: Bulk Edit Properties - Entry Point
 window.openBulkEditPopup = async function() {
-    const taskManager = window.taskManager;
+    const taskManager = window.app;
 
     // Pre-check (defensive, button should already be disabled)
     if (taskManager.geselecteerdeTaken.size < 2) {

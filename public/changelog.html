@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.24 - BUGFIX: Bulk Edit Popup Crash -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.24</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Popup Crash</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Bulk Edit Popup Opent Nu Correct</strong>: Opgelost kritieke bug waarbij klikken op "Eigenschappen Bewerken" button resulteerde in TypeError: Cannot read properties of undefined (reading 'geselecteerdeTaken'). Root cause was verkeerde variabele referentie in openBulkEditPopup() functie (window.taskManager vs window.app).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Correcte TaskManager Referentie</strong>: De functie gebruikt nu window.app (de werkelijke TaskManager instantie) in plaats van window.taskManager (undefined). Dit zorgt voor correcte toegang tot geselecteerdeTaken Set.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.23 - BUGFIX: Bulk Edit Button Disabled Fix -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.23</span>
+                <span class="version-badge badge-fix">v0.20.23</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
