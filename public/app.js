@@ -12389,16 +12389,22 @@ class Taakbeheer {
 
     updateBulkToolbar() {
         const countElement = document.getElementById('bulk-selection-count');
-        const actionButtons = document.querySelectorAll('#bulk-toolbar .bulk-action-button');
-        
+        const actionButtons = document.querySelectorAll('#bulk-toolbar .bulk-action-btn');
+
         if (countElement) {
             const count = this.geselecteerdeTaken.size;
             countElement.textContent = count;
-            
+
             // Enable/disable action buttons based on selection
             actionButtons.forEach(button => {
                 button.disabled = count === 0;
             });
+        }
+
+        // Handle "Eigenschappen Bewerken" button - requires 2+ selections
+        const editButton = document.querySelector('#bulk-toolbar button[onclick*="openBulkEditPopup"]');
+        if (editButton) {
+            editButton.disabled = this.geselecteerdeTaken.size < 2;
         }
     }
 
@@ -12516,7 +12522,7 @@ class Taakbeheer {
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-jaarlijks')" class="bulk-action-btn">Yearly</button>
                 <button onclick="window.openBulkEditPopup()"
                         class="bulk-action-btn"
-                        ${this.geselecteerdeTaken.size < 2 ? 'disabled' : ''}>
+                        disabled>
                     Eigenschappen Bewerken
                 </button>
             `;

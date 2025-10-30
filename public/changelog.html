@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.23 - BUGFIX: Bulk Edit Button Disabled Fix -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.23</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Bulk Eigenschappen Bewerken Button</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Eigenschappen Bewerken Button Nu Werkend</strong>: Opgelost probleem waarbij de "Eigenschappen Bewerken" button disabled bleef ondanks dat meerdere taken geselecteerd waren. Root cause was verkeerde CSS selector in updateBulkToolbar() functie (.bulk-action-button vs .bulk-action-btn).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Real-time Button State Update</strong>: De button wordt nu correct enabled/disabled bij elke selectie wijziging. Vereist minimaal 2 geselecteerde taken om bulk eigenschappen te kunnen bewerken.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.22 - FEATURE: Bulk Eigenschappen Bewerking -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.22</span>
+                <span class="version-badge badge-feature">v0.20.22</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
