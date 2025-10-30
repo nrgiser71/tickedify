@@ -13643,31 +13643,35 @@ window.bulkVerplaatsNaar = function(lijstNaam) {
     }
 };
 
-// Feature 043: Bulk Edit Properties - Entry Point
-window.openBulkEditPopup = async function() {
-    try {
-        const taskManager = window.app;
+// Feature 043: Bulk Edit Properties - Async Implementation
+async function openBulkEditPopupAsync() {
+    const taskManager = window.app;
 
-        // Pre-check (defensive, button should already be disabled)
-        if (taskManager.geselecteerdeTaken.size < 2) {
-            toast.warning('Select at least 2 tasks for bulk edit');
-            return;
-        }
+    // Pre-check (defensive, button should already be disabled)
+    if (taskManager.geselecteerdeTaken.size < 2) {
+        toast.warning('Select at least 2 tasks for bulk edit');
+        return;
+    }
 
-        // Show popup and collect updates
-        const updates = await showBulkEditPopup();
+    // Show popup and collect updates
+    const updates = await showBulkEditPopup();
 
-        // User cancelled
-        if (!updates) {
-            return;
-        }
+    // User cancelled
+    if (!updates) {
+        return;
+    }
 
-        // Execute bulk edit
-        await taskManager.bulkEditProperties(updates);
-    } catch (error) {
+    // Execute bulk edit
+    await taskManager.bulkEditProperties(updates);
+}
+
+// Feature 043: Bulk Edit Properties - Entry Point (Sync Wrapper)
+// Note: Must be sync for inline onclick compatibility
+window.openBulkEditPopup = function() {
+    openBulkEditPopupAsync().catch(error => {
         console.error('Bulk edit popup error:', error);
         toast.error('Error opening bulk edit popup: ' + error.message);
-    }
+    });
 };
 
 // Initialize mobile sidebar after DOM is loaded

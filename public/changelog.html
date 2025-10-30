@@ -134,10 +134,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.28 - BUGFIX: Bulk Edit Async/Await Fix -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.28</span>
+                <span class="version-date">30 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Bugfix: Bulk Edit Button - Async/Await Incompatibility Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>Sync Wrapper for Inline Onclick</strong>: Fixed critical issue where "Edit Properties" button did nothing when clicked. Root cause was async/await incompatibility with inline onclick handlers. Refactored window.openBulkEditPopup into sync wrapper function that calls async implementation with proper error handling via .catch(). Button now works correctly.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Inline Onclick Compatibility</strong>: Split async logic into separate openBulkEditPopupAsync() function. The sync wrapper ensures onclick attribute can trigger the function without Promise issues. Other bulk buttons (Today, Tomorrow) work because they use sync functions - Edit Properties now uses same pattern.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.27 - BUGFIX: Bulk Edit Error Handling -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.27</span>
+                <span class="version-badge badge-fix">v0.20.27</span>
                 <span class="version-date">30 oktober 2025</span>
             </div>
             <div class="changes-list">
