@@ -4356,9 +4356,15 @@ class Taakbeheer {
     vulContextSelect() {
         const select = document.getElementById('contextSelect');
         if (!select) return;
-        
+
         select.innerHTML = '<option value="">Selecteer context...</option>';
-        this.contexten.forEach(context => {
+
+        // Sort alfabetisch (case-insensitive, Nederlandse locale)
+        const gesorteerdeContexten = [...this.contexten].sort((a, b) =>
+            a.naam.toLowerCase().localeCompare(b.naam.toLowerCase(), 'nl')
+        );
+
+        gesorteerdeContexten.forEach(context => {
             const option = document.createElement('option');
             option.value = context.id;
             option.textContent = context.naam;

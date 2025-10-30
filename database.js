@@ -581,7 +581,7 @@ const db = {
         query = 'SELECT * FROM projecten WHERE user_id = $1 ORDER BY aangemaakt DESC';
         params = [userId];
       } else if (listName === 'contexten') {
-        query = 'SELECT * FROM contexten WHERE user_id = $1 ORDER BY aangemaakt DESC';
+        query = 'SELECT * FROM contexten WHERE user_id = $1 ORDER BY LOWER(naam) ASC';
         params = [userId];
       } else if (listName === 'afgewerkte-taken') {
         query = 'SELECT * FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL ORDER BY afgewerkt DESC';
