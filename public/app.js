@@ -2855,7 +2855,7 @@ class Taakbeheer {
     // F-key shortcuts for planning popup
     initPlanningKeyboardShortcuts() {
         const popup = document.getElementById('planningPopup');
-        
+
         popup.addEventListener('keydown', (e) => {
             
             // Only handle F-keys when popup is visible
@@ -2966,9 +2966,9 @@ class Taakbeheer {
                         break;
                 }
             }
-        });
+        }, { capture: true });
     }
-    
+
     // Helper function to focus and open dropdown
     focusAndOpenDropdown(selectId) {
         const select = document.getElementById(selectId);
