@@ -1448,7 +1448,7 @@ class Taakbeheer {
             if (e.key === 'Escape') {
                 this.sluitPopup();
             }
-            
+
             if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
                 // Check if subtaak input is active - let subtaak handler deal with it
                 const subtaakInput = document.getElementById('subtaak-input');
@@ -1458,7 +1458,7 @@ class Taakbeheer {
                 e.preventDefault();
                 this.probeerOpslaan();
             }
-        });
+        }, { capture: true });
         
         // Initialize F-key shortcuts for planning popup
         this.initPlanningKeyboardShortcuts();
