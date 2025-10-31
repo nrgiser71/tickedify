@@ -1471,7 +1471,9 @@ function parseEmailToTask(emailData) {
         console.log('🔍 DEBUG: firstLine trimmed:', firstLine ? firstLine.trim() : 'null');
 
         if (firstLine) {
-            const atTriggerMatch = firstLine.match(/^@t\s*(.+)$/);
+            // Trim firstLine to remove \r and other whitespace
+            const trimmedFirstLine = firstLine.trim();
+            const atTriggerMatch = trimmedFirstLine.match(/^@t\s*(.+)$/);
             console.log('🔍 DEBUG: Regex test result:', atTriggerMatch ? 'MATCHED' : 'NO MATCH');
             console.log('🔍 DEBUG: Regex match details:', atTriggerMatch);
 
