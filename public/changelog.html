@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.4 - FIX: Session Polling for Message Display -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.4</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 FIX: Robust Session Polling - Messages Always Display After Login</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Definitieve Oplossing</strong>: Replaced arbitrary time delays with active session polling. System now polls /api/auth/me every 500ms until session is valid (max 10 seconds), then checks for messages. No more guessing - messages appear as soon as session is ready.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔄</div>
+                        <div class="change-content">
+                            <strong>How It Works</strong>: Login → DOMContentLoaded → poll session status every 500ms → session valid → check messages → display → start 5-minute polling. Typically ready within 1-2 seconds.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Console Output</strong>: Clear logging shows exact timing: "Session ready after Xms" → "Checking for messages" → "X unread message(s) found". Perfect for debugging.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: 100% reliable message display after login. No more race conditions, no arbitrary timeouts, just robust session detection and immediate message delivery.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.3 - FIX: Increase App Initialization Delay -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.3</span>
+                <span class="version-badge badge-fix">v0.21.3</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

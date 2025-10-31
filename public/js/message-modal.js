@@ -14,10 +14,36 @@ const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('📢 Message modal system initialized');
 
-  // Wait 5 seconds to let app fully initialize after login redirect
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  // Wait for session to be ready (poll /api/auth/me until valid)
+  console.log('📢 Waiting for session to be ready...');
+  let sessionReady = false;
+  let attempts = 0;
+  const maxAttempts = 20; // Max 10 seconds (20 x 500ms)
 
-  // Check for messages (app is now ready)
+  while (!sessionReady && attempts < maxAttempts) {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        console.log('📢 Session ready after', (attempts * 500), 'ms');
+        sessionReady = true;
+      } else {
+        // Session not ready yet, wait 500ms and try again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+    } catch (error) {
+      // Network error, wait and retry
+      await new Promise(resolve => setTimeout(resolve, 500));
+      attempts++;
+    }
+  }
+
+  if (!sessionReady) {
+    console.log('📢 Session timeout after', (maxAttempts * 500), 'ms - skipping message check');
+    return;
+  }
+
+  // Session is ready - NOW check for messages
   console.log('📢 Checking for messages...');
   await checkForMessages();
 
