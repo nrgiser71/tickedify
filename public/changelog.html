@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.12 - CLEANUP: Removed Debug Logging -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.12</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🧹 CLEANUP: Debug Logging Verwijderd</div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>Code Cleanup</strong>: Alle debug console.log statements verwijderd uit @t parsing logic. Deze waren toegevoegd tijdens bug troubleshooting (v0.21.8) en zijn nu niet meer nodig.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Performance</strong>: Schonere console output in productie. Alleen error logs blijven voor toekomstige debugging indien nodig.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.11 - FIX: Priority Database Constraint -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.11</span>
+                <span class="version-badge badge-fix">v0.21.11</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

@@ -1459,36 +1459,22 @@ function parseEmailToTask(emailData) {
 
     try {
         // T005: Check for @t trigger in first non-empty line
-        console.log('🔍 DEBUG: Starting @t detection...');
-        console.log('🔍 DEBUG: processedBody length:', processedBody.length);
-        console.log('🔍 DEBUG: processedBody first 200 chars:', processedBody.substring(0, 200));
-
         const bodyLines = processedBody.split('\n');
-        console.log('🔍 DEBUG: bodyLines count:', bodyLines.length);
-        console.log('🔍 DEBUG: First 3 lines:', bodyLines.slice(0, 3));
-
         const firstLine = bodyLines.find(line => line.trim().length > 0);
-        console.log('🔍 DEBUG: firstLine found:', firstLine);
-        console.log('🔍 DEBUG: firstLine trimmed:', firstLine ? firstLine.trim() : 'null');
 
         if (firstLine) {
             // Trim firstLine to remove \r and other whitespace
             const trimmedFirstLine = firstLine.trim();
             const atTriggerMatch = trimmedFirstLine.match(/^@t\s*(.+)$/);
-            console.log('🔍 DEBUG: Regex test result:', atTriggerMatch ? 'MATCHED' : 'NO MATCH');
-            console.log('🔍 DEBUG: Regex match details:', atTriggerMatch);
 
             if (atTriggerMatch) {
                 atInstructionDetected = true;
                 const instructionContent = atTriggerMatch[1];
-                console.log('📧 @t instruction detected:', instructionContent);
 
                 // T006: Split instruction into segments
                 const segments = instructionContent.split(';')
                     .map(s => s.trim())
                     .filter(s => s.length > 0);
-
-                console.log('📋 Parsed segments:', segments);
 
                 // T010: Track seen codes for duplicate detection
                 const seenCodes = new Set();
@@ -1499,29 +1485,18 @@ function parseEmailToTask(emailData) {
                     // T007: Check for defer code (absolute priority)
                     const deferLijst = parseDeferCode(segment);
                     if (deferLijst) {
-                        console.log('⏸️ Defer code detected:', segment, '→', deferLijst);
                         taskData.lijst = deferLijst;
                         deferDetected = true;
                         break; // Stop processing - defer has absolute priority
                     }
                 }
 
-                // T015: Log parsing decisions
-                console.log('📊 Parsing decisions:', {
-                    deferDetected,
-                    seenCodesBeforeProcessing: Array.from(seenCodes)
-                });
-
                 // If defer detected, ignore all other codes
                 if (!deferDetected) {
                     for (const segment of segments) {
-                        console.log('🔍 DEBUG: Processing segment:', JSON.stringify(segment));
-
                         // T008: Check for priority code
                         const priority = parsePriorityCode(segment);
-                        console.log('🔍 DEBUG: Priority check result:', priority);
                         if (priority && !seenCodes.has('priority')) {
-                            console.log('🎯 Priority detected:', segment, '→', priority);
                             taskData.prioriteit = priority;
                             seenCodes.add('priority');
                             continue;
@@ -1529,65 +1504,39 @@ function parseEmailToTask(emailData) {
 
                         // T009: Check for key-value pairs
                         const keyValue = parseKeyValue(segment);
-                        console.log('🔍 DEBUG: Key-value check result:', keyValue);
                         if (keyValue) {
                             const { key, value } = keyValue;
 
                             if (key === 'p' && !seenCodes.has('project')) {
-                                console.log('📁 Project detected:', value);
                                 taskData.projectName = value;
                                 seenCodes.add('project');
                             } else if (key === 'c' && !seenCodes.has('context')) {
-                                console.log('🏷️ Context detected:', value);
                                 taskData.contextName = value;
                                 seenCodes.add('context');
                             } else if (key === 'd' && !seenCodes.has('due')) {
-                                console.log('📅 Due date detected:', value);
                                 taskData.verschijndatum = value;
                                 seenCodes.add('due');
                             } else if (key === 't' && !seenCodes.has('duration')) {
-                                console.log('⏱️ Duration detected:', value);
                                 taskData.duur = value;
                                 seenCodes.add('duration');
                             }
-                        } else {
-                            console.log('⚠️ DEBUG: Segment not recognized as any code type:', segment);
                         }
                     }
-
-                    // T015: Log final parsed values
-                    console.log('✨ Final @t parsing result:', {
-                        project: taskData.projectName,
-                        context: taskData.contextName,
-                        due: taskData.verschijndatum,
-                        duration: taskData.duur,
-                        priority: taskData.prioriteit,
-                        lijst: taskData.lijst,
-                        codesApplied: Array.from(seenCodes)
-                    });
                 }
 
                 // T011: Remove @t instruction line from notes
                 remainingBody = bodyLines.slice(1).join('\n').trim();
-            } else {
-                console.log('⚠️ DEBUG: @t regex did NOT match - using standard mode');
             }
-        } else {
-            console.log('⚠️ DEBUG: No firstLine found - body might be empty');
         }
     } catch (error) {
         // T014: Error handling - fall back to standard parsing
         console.error('⚠️ Error parsing @t instruction, falling back to standard mode:', error.message);
-        console.error('⚠️ Error stack:', error.stack);
         atParsingFailed = true;
         atInstructionDetected = false; // Reset flag to use standard parsing
     }
 
-    console.log('🔍 DEBUG: Final atInstructionDetected value:', atInstructionDetected);
-
     // Parse body for structured data (original behavior - backwards compatible)
     if (processedBody && processedBody.length > 10 && !atInstructionDetected) {
-        console.log('📄 Parsing email body (standard mode)...');
 
         // Look for structured fields in body
         const bodyLinesForParsing = processedBody.split('\n');
