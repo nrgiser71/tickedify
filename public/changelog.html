@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.5 - IMPROVEMENT: Button Text Clarity -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.5</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 IMPROVEMENT: Message Modal Button Text - "Got it" → "Dismiss"</div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Changed message modal button text from "Got it" to "Dismiss" for better clarity. "Dismiss" is the industry standard for notifications and clearly indicates the action.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Why</strong>: "Dismiss" is more professional, clearer, and aligns with notification patterns in Gmail, Slack, and other productivity tools. Users immediately understand that clicking will mark the message as read and remove it.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📍</div>
+                        <div class="change-content">
+                            <strong>Technical Details</strong>: Updated button text in <code>public/js/message-modal.js:217</code>, <code>public/index.html:1171</code>, and <code>public/admin2.html:2947</code>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.4 - FIX: Session Polling for Message Display -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.4</span>
+                <span class="version-badge badge-fix">v0.21.4</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

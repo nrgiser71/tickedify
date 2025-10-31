@@ -214,7 +214,7 @@ function showMessage(message) {
   if (dismissBtn) {
     if (message.dismissible) {
       dismissBtn.style.display = 'inline-block';
-      dismissBtn.textContent = 'Got it';
+      dismissBtn.textContent = 'Dismiss';
     } else if (!message.button_label) {
       // Non-dismissible without action button: show "OK" that just closes
       dismissBtn.style.display = 'inline-block';
