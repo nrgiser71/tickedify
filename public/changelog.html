@@ -139,10 +139,65 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.13 - FEATURE: Email Attachment Processing -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.13</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚡ FEATURE: Email Bijlagen Verwerking via @t Syntax</div>
+                    <div class="change-item">
+                        <div class="change-icon">📎</div>
+                        <div class="change-content">
+                            <strong>Nieuwe Feature</strong>: Voeg <code>a:zoekterm;</code> toe aan je @t syntax om automatisch bijlagen te koppelen aan taken vanuit emails. Voorbeeld: <code>@t p: Contract Review; a:contract;</code> koppelt "contract.pdf" aan de taak.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Smart Matching</strong>: Slimme filename matching met 3 prioriteitsniveaus - Exact match > Starts-with > Contains. <code>a:contract;</code> vindt "contract.pdf", "contract-final.pdf", of "klant_contract_v2.pdf".
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛡️</div>
+                        <div class="change-content">
+                            <strong>Opt-In Bescherming</strong>: Bijlagen worden ALLEEN verwerkt met <code>a:</code> code. Voorkomt ongewenste signature images en beschermt je 100MB storage quota (gratis tier).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Type-Based Filtering</strong>: Zoek op bestandstype met <code>a:pdf;</code>, <code>a:docx;</code>, of <code>a:xlsx;</code> om het eerste bestand van dat type te matchen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📏</div>
+                        <div class="change-content">
+                            <strong>Limieten</strong>: Max 1 bijlage per email, max 4.5MB per bestand (Vercel serverless limit). Task creation faalt nooit - als bijlage te groot is, wordt taak toch aangemaakt.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📚</div>
+                        <div class="change-content">
+                            <strong>Documentatie</strong>: Uitgebreide bijlage sectie toegevoegd aan email import help met voorbeelden, troubleshooting tips, en best practices.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔄</div>
+                        <div class="change-content">
+                            <strong>Backwards Compatible</strong>: Emails zonder <code>a:</code> code werken exact zoals voorheen. 100% compatibiliteit met bestaande workflows.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.12 - CLEANUP: Removed Debug Logging -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.12</span>
+                <span class="version-badge badge-feature">v0.21.12</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

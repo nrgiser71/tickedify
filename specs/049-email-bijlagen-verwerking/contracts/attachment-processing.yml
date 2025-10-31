@@ -1,0 +1,345 @@
+openapi: 3.0.3
+info:
+  title: Email Import Attachment Processing API
+  description: Extension of existing email import endpoint to support attachment processing via @t syntax
+  version: 0.21.13
+  contact:
+    name: Tickedify Support
+    email: support@tickedify.com
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production (BEVROREN - bèta freeze actief)
+  - url: https://dev.tickedify.com/api
+    description: Staging (development testing)
+
+paths:
+  /email/import:
+    post:
+      summary: Import email to task with optional attachment
+      description: |
+        Mailgun webhook endpoint that creates a task from email content.
+        Extended to support attachment processing via @t a:searchterm; syntax.
+
+        **Opt-in Design**: Attachments only processed when @t syntax includes `a:` code.
+        **Error Handling**: Task always created, even if attachment processing fails.
+
+      tags:
+        - Email Import
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - sender
+                - recipient
+                - subject
+                - body-plain
+              properties:
+                sender:
+                  type: string
+                  format: email
+                  description: Email address of sender
+                  example: client@example.com
+
+                recipient:
+                  type: string
+                  format: email
+                  description: |
+                    Import email address with unique code
+                    Format: import+{code}@mg.tickedify.com
+                  example: import+abc123@mg.tickedify.com
+
+                subject:
+                  type: string
+                  description: |
+                    Email subject line, may contain @t syntax
+                    Can include [Project], @context, #tags
+                  example: "[Client X] Review contract @work"
+
+                body-plain:
+                  type: string
+                  description: |
+                    Email body (plain text). First line may contain @t syntax.
+                    Example: @t p: Client X; c: Work; a:contract;
+                  example: |
+                    @t p: Client X; c: Work; a:contract;
+
+                    Please review the attached contract and provide feedback.
+
+                    --END--
+                    Email signature here
+
+                file:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: |
+                    Attachment files from email (optional).
+                    Processed only if @t syntax includes `a:searchterm;` code.
+                    Max 1 attachment processed per email.
+                    Max file size: 4.5MB per file.
+
+            examples:
+              withAttachment:
+                summary: Email with attachment code
+                value:
+                  sender: client@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: Contract Review
+                  body-plain: |
+                    @t p: Client X; a:contract;
+
+                    Please review attached contract.
+                  file: <binary data: contract.pdf>
+
+              withoutAttachmentCode:
+                summary: Email with files but no a: code (opt-in protection)
+                value:
+                  sender: client@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: Quick question
+                  body-plain: |
+                    @t p: Client X;
+
+                    Quick question about project.
+                  file: <binary data: signature.png>
+
+              noAttachments:
+                summary: Email without files
+                value:
+                  sender: client@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: Task without files
+                  body-plain: |
+                    @t p: Client X;
+
+                    Task description here.
+
+      responses:
+        '200':
+          description: Email successfully processed and task created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - message
+                  - task
+                  - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  message:
+                    type: string
+                    example: Email imported successfully
+
+                  task:
+                    $ref: '#/components/schemas/CreatedTask'
+
+                  attachment:
+                    $ref: '#/components/schemas/AttachmentResult'
+                    nullable: true
+                    description: |
+                      Null if no attachment processed (opt-in or error).
+                      Object if attachment successfully processed.
+
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-01-31T10:00:00.000Z'
+
+              examples:
+                successWithAttachment:
+                  summary: Task created with attachment
+                  value:
+                    success: true
+                    message: Email imported successfully
+                    task:
+                      id: task_1738339100000_xyz789
+                      tekst: Contract Review
+                      lijst: inbox
+                      project: Client X
+                      context: null
+                    attachment:
+                      processed: true
+                      matched: contract.pdf
+                      bijlage_id: bijlage_1738339200000_abc123
+                      size: 245760
+                    timestamp: '2025-01-31T10:00:00.000Z'
+
+                successWithoutAttachment:
+                  summary: Task created without attachment (opt-in protection)
+                  value:
+                    success: true
+                    message: Email imported successfully
+                    task:
+                      id: task_1738339100000_xyz789
+                      tekst: Quick question
+                      lijst: inbox
+                      project: Client X
+                      context: null
+                    attachment: null
+                    timestamp: '2025-01-31T10:00:00.000Z'
+
+                successAttachmentFailed:
+                  summary: Task created, attachment failed (file too large)
+                  value:
+                    success: true
+                    message: Email imported successfully
+                    task:
+                      id: task_1738339100000_xyz789
+                      tekst: Contract Review
+                      lijst: inbox
+                      project: Client X
+                      context: null
+                    attachment: null
+                    timestamp: '2025-01-31T10:00:00.000Z'
+
+        '400':
+          description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: Missing required email fields (sender, subject)
+                receivedFields: ['recipient', 'body-plain']
+                timestamp: '2025-01-31T10:00:00.000Z'
+
+        '404':
+          description: Invalid import code - no user found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: 'Invalid import code: abc123'
+                hint: Check your personal import email address in Tickedify settings
+                timestamp: '2025-01-31T10:00:00.000Z'
+
+        '500':
+          description: Server error during task creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: Database connection failed
+                message: Email import failed
+                timestamp: '2025-01-31T10:00:00.000Z'
+
+components:
+  schemas:
+    CreatedTask:
+      type: object
+      required:
+        - id
+        - tekst
+        - lijst
+      properties:
+        id:
+          type: string
+          description: Unique task identifier
+          example: task_1738339100000_xyz789
+
+        tekst:
+          type: string
+          description: Task title (from email subject)
+          example: Contract Review
+
+        lijst:
+          type: string
+          description: Task list (inbox, acties, opvolgen, etc.)
+          example: inbox
+
+        project:
+          type: string
+          nullable: true
+          description: Project name (if parsed from @t syntax)
+          example: Client X
+
+        context:
+          type: string
+          nullable: true
+          description: Context name (if parsed from @t syntax)
+          example: Work
+
+    AttachmentResult:
+      type: object
+      description: |
+        Result of attachment processing. Only present if `a:` code in @t syntax.
+        Null if opt-in not triggered, file not found, or processing failed.
+      required:
+        - processed
+      properties:
+        processed:
+          type: boolean
+          description: Whether attachment was successfully processed
+          example: true
+
+        matched:
+          type: string
+          description: Filename that was matched and processed
+          example: contract.pdf
+
+        bijlage_id:
+          type: string
+          description: Unique bijlage record identifier
+          example: bijlage_1738339200000_abc123
+
+        size:
+          type: integer
+          description: File size in bytes
+          example: 245760
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: false
+
+        error:
+          type: string
+          description: Error message
+          example: Invalid import code
+
+        message:
+          type: string
+          description: Additional error context
+          example: Email import failed
+
+        hint:
+          type: string
+          description: User-friendly hint for resolution
+          example: Check your personal import email address
+
+        receivedFields:
+          type: array
+          items:
+            type: string
+          description: Fields that were received (for debugging)
+
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-01-31T10:00:00.000Z'
+
+tags:
+  - name: Email Import
+    description: Email-to-task conversion with attachment support

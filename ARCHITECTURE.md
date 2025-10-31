@@ -42,6 +42,17 @@ voltooid BOOLEAN DEFAULT FALSE
 volgorde INTEGER DEFAULT 0
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
+-- bijlagen (Feature 049 - Email attachment support)
+id VARCHAR(50) PRIMARY KEY
+taak_id VARCHAR(50) NOT NULL REFERENCES taken(id) ON DELETE CASCADE
+bestandsnaam VARCHAR(255) NOT NULL
+bestandsgrootte INTEGER NOT NULL
+mimetype VARCHAR(100) NOT NULL
+storage_type VARCHAR(20) NOT NULL DEFAULT 'backblaze'
+storage_path VARCHAR(500) NOT NULL
+geupload TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+user_id VARCHAR(50) REFERENCES users(id)
+
 -- users
 id SERIAL PRIMARY KEY
 username VARCHAR(255) UNIQUE NOT NULL
@@ -201,9 +212,18 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `POST /api/dagelijkse-planning` - regel ~3,900
 - `DELETE /api/planning/:id` - regel ~4,200
 
-**Email Import (regels 4,500-5,000)**
-- `/api/email/import` webhook - regel ~4,600
-- Email parsing logic - regels ~4,700-4,900
+**Email Import (regels 1,057-1,330)**
+- `/api/email/import` webhook - regel ~1,057 (Multer `upload.any()` middleware)
+- Task creation - regels ~1,160-1,200
+- Attachment processing (Feature 049) - regels ~1,208-1,293
+- Email parsing logic - regels ~1,310-1,700
+  - `truncateAtEndMarker()` - regel ~1,313
+  - `parseDeferCode()` - regel ~1,326
+  - `parsePriorityCode()` - regel ~1,345
+  - `parseKeyValue()` - regel ~1,362
+  - `parseAttachmentCode()` - regel ~1,394 (Feature 049)
+  - `findMatchingAttachment()` - regel ~1,414 (Feature 049)
+  - `parseEmailToTask()` - regel ~1,452 (hoofdfunctie)
 
 **Debug/Admin Endpoints (regels 5,000-6,253)**
 - `/api/debug/*` endpoints - regels ~5,100-5,800

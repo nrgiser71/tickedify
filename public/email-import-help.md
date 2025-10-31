@@ -40,6 +40,7 @@ Dit maakt een taak aan met:
 | `d:` | Due date (ISO formaat) | `d: 2025-12-01` |
 | `t:` | Duur in minuten | `t: 45` |
 | `p0-p9` | Prioriteit code | `p1` of `p2` of `p3` |
+| `a:` | **Bijlage (attachment)** | `a:contract` of `a:pdf` |
 | `df` | Defer to Follow-up | `df;` |
 | `dw` | Defer to Weekly | `dw;` |
 | `dm` | Defer to Monthly | `dm;` |
@@ -80,7 +81,44 @@ Boodschappen doen
 
 → Alleen context en prioriteit Medium
 
-### Voorbeeld 4: Zonder @t (Backwards Compatible)
+### Voorbeeld 4: Met Bijlage (Feature 049)
+
+```
+@t p: Contract Review; a:contract;
+
+Bijgevoegde contract nakijken en feedback geven.
+```
+
+**Bijlage**: contract.pdf (of contract-final.pdf, klant_contract.docx, etc.)
+→ Slimme matching: `a:contract` vindt bestanden met "contract" in de naam
+→ Prioriteit: Exact match > Begint met > Bevat
+
+### Voorbeeld 5: Type-Based Attachment Filtering
+
+```
+@t c: Admin; a:pdf;
+
+Verwerk de bijgevoegde factuur.
+```
+
+→ `a:pdf` matcht het **eerste PDF bestand** in de email
+→ Handig als je weet dat het om een PDF gaat maar de exacte naam niet weet
+
+### Voorbeeld 6: Email met Files maar ZONDER `a:` Code
+
+```
+@t p: Project X; c: Werk;
+
+Quick question over project.
+
+(Email bevat signature.png als bijlage)
+```
+
+→ **Geen bijlage verwerkt** - signature.png wordt NIET opgeslagen
+→ Opt-in bescherming: alleen `a:` code activeert bijlage verwerking
+→ Beschermt je storage quota tegen ongewenste signature images
+
+### Voorbeeld 7: Zonder @t (Backwards Compatible)
 
 ```
 [Project X] Nieuwe taak @werk
@@ -237,6 +275,113 @@ A: Je kunt meerdere codes gebruiken, maar alleen de eerste telt. `p1; p2; p3;` �
 
 **Q: Moet ik puntkomma na de laatste code?**
 A: Nee, maar het mag wel. `@t c: Werk;` en `@t c: Werk` werken beide.
+
+**Q: Hoeveel bijlagen kan ik per email versturen?**
+A: Maximum **1 bijlage** per email wordt verwerkt. Dit beschermt je storage quota.
+
+**Q: Welke bestandstypes worden ondersteund?**
+A: PDF, Word, Excel, afbeeldingen (JPG/PNG/GIF), ZIP, en plain text. Max **4.5MB** per bestand.
+
+**Q: Wat gebeurt er als ik geen `a:` code gebruik maar wel bijlagen verstuur?**
+A: Niets! De bijlagen worden genegeerd (opt-in protection). Alleen met `a:` code worden bijlagen verwerkt.
+
+## Bijlagen Verwerking (Feature 049)
+
+### Hoe Werkt Het?
+
+Voeg `a:zoekterm;` toe aan je @t syntax om een bijlage te koppelen aan de taak:
+
+```
+@t p: Contract Review; a:contract;
+
+Review de bijgevoegde contract en geef feedback.
+
+(Bijgevoegd: client_contract_final.pdf)
+```
+
+→ De bijlage wordt automatisch gekoppeld aan de taak
+→ Je kunt de bijlage later downloaden vanuit Tickedify
+
+### Smart Matching met Prioriteiten
+
+Tickedify gebruikt **slimme filename matching** met 3 prioriteitsniveaus:
+
+1. **Exact Match** (hoogste prioriteit):
+   - `a:contract;` matcht `contract.pdf` (exact)
+   - `a:invoice;` matcht `invoice.docx` (exact zonder extensie)
+
+2. **Starts-With Match**:
+   - `a:contract;` matcht `contract-final.pdf` (begint met "contract")
+   - `a:rapport;` matcht `rapport_2025_Q1.xlsx` (begint met "rapport")
+
+3. **Contains Match** (laagste prioriteit):
+   - `a:contract;` matcht `client_contract_v2.pdf` (bevat "contract")
+   - `a:factuur;` matcht `klant_factuur_dec.pdf` (bevat "factuur")
+
+**Als meerdere bestanden matchen**: Exact match wint altijd, daarna starts-with, en dan contains.
+
+### Type-Based Filtering
+
+Zoek op bestandstype in plaats van naam:
+
+```
+@t a:pdf;        → Eerste PDF bestand
+@t a:docx;       → Eerste Word document
+@t a:xlsx;       → Eerste Excel bestand
+@t a:png;        → Eerste PNG afbeelding
+```
+
+→ Handig als je de exacte bestandsnaam niet weet
+→ Matcht het **eerste** bestand van dat type
+
+### Opt-In Bescherming
+
+**Belangrijk**: Bijlagen worden ALLEEN verwerkt met `a:` code!
+
+```
+# MET a: code - bijlage wordt verwerkt
+@t p: Project; a:document;
+(Bijgevoegd: document.pdf)  ✅ Wordt opgeslagen
+
+# ZONDER a: code - bijlage wordt NIET verwerkt
+@t p: Project;
+(Bijgevoegd: signature.png)  ❌ Wordt NIET opgeslagen
+```
+
+→ Beschermt tegen ongewenste signature images
+→ Voorkomt onnodig storage quota verbruik
+→ Je hebt altijd controle
+
+### Bestandsgrootte Limieten
+
+- **Max bestand**: 4.5MB per bijlage
+- **Storage quota**: 100MB totaal (gratis tier)
+- **Aantal bijlagen**: Max 1 per email
+
+Als bestand te groot is:
+→ Taak wordt toch aangemaakt
+→ Bijlage wordt NIET opgeslagen
+→ Melding in server logs
+
+### Bijlage Troubleshooting
+
+**Bijlage wordt niet gekoppeld:**
+- ✅ Heb je `a:` code gebruikt in @t syntax?
+- ✅ Klopt de zoekterm met de bestandsnaam?
+- ✅ Is het bestand kleiner dan 4.5MB?
+- ✅ Check of het bestandstype ondersteund wordt
+
+**Verkeerde bijlage gekoppeld:**
+- ✅ Meerdere bestanden matchen? Gebruik specifiekere zoekterm
+- ✅ Exact match heeft voorrang - check bestandsnamen
+- ✅ Gebruik volledige bestandsnaam voor exact match
+
+**Voorbeelden van goede zoektermen:**
+```
+a:contract;        # Generiek, vindt veel bestanden
+a:contract_v3;     # Specifiek, vindt exacte versie
+a:2025-01-invoice; # Zeer specifiek met datum
+```
 
 ## Troubleshooting
 

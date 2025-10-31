@@ -1205,6 +1205,93 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
             lijst: createdTask.lijst
         });
 
+        // Feature 049: Process attachments if requested (T015)
+        let attachmentResult = null;
+
+        if (taskData.attachmentConfig?.processAttachments && req.files && req.files.length > 0) {
+            try {
+                const { targetFilename } = taskData.attachmentConfig;
+                console.log(`📎 Processing attachments: searching for "${targetFilename}" in ${req.files.length} file(s)`);
+
+                // T011: Find matching attachment with smart priority
+                const matchedFile = findMatchingAttachment(req.files, targetFilename);
+
+                if (matchedFile) {
+                    console.log(`✅ Matched attachment: "${targetFilename}" → ${matchedFile.originalname}`);
+
+                    // Log other matches that were skipped (FR-021)
+                    const otherMatches = req.files
+                        .filter(f => f !== matchedFile && f.originalname.toLowerCase().includes(targetFilename.toLowerCase()))
+                        .map(f => f.originalname);
+                    if (otherMatches.length > 0) {
+                        console.log(`ℹ️  Other matches skipped: ${otherMatches.join(', ')}`);
+                    }
+
+                    // T013: Validate file size (FR-011, FR-014)
+                    const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB
+                    if (matchedFile.size > MAX_FILE_SIZE) {
+                        const sizeMB = (matchedFile.size / 1024 / 1024).toFixed(2);
+                        console.log(`⚠️ File too large: ${matchedFile.originalname} (${sizeMB} MB, max 4.5 MB)`);
+                        console.log('   Task created without attachment');
+                    } else {
+                        // File size OK, proceed with upload
+                        const sizeKB = (matchedFile.size / 1024).toFixed(2);
+                        console.log(`📎 Uploading to B2: ${matchedFile.originalname} (${sizeKB} KB)`);
+
+                        // T014: Upload to B2 via StorageManager
+                        const storageManager = require('./storage-manager');
+                        const uploadResult = await storageManager.uploadFile(
+                            matchedFile.buffer,
+                            matchedFile.originalname,
+                            matchedFile.mimetype,
+                            userId
+                        );
+
+                        // T014: Insert bijlage record
+                        const bijlageId = 'bijlage_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        await pool.query(`
+                            INSERT INTO bijlagen (
+                                id, taak_id, bestandsnaam, bestandsgrootte, mimetype,
+                                storage_type, storage_path, user_id
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        `, [
+                            bijlageId,
+                            createdTask.id,
+                            matchedFile.originalname,
+                            matchedFile.size,
+                            matchedFile.mimetype,
+                            'backblaze',
+                            uploadResult.fileName,
+                            userId
+                        ]);
+
+                        console.log(`✅ Attachment saved: ${bijlageId}`);
+
+                        attachmentResult = {
+                            processed: true,
+                            matched: matchedFile.originalname,
+                            bijlage_id: bijlageId,
+                            size: matchedFile.size
+                        };
+                    }
+                } else {
+                    // No match found (FR-015, FR-020)
+                    console.log(`❌ No match for: "${targetFilename}"`);
+                    const availableFiles = req.files.map(f => f.originalname).join(', ');
+                    console.log(`   Available files: ${availableFiles}`);
+                }
+            } catch (attachmentError) {
+                // T021: Error handling - task creation continues (FR-006, FR-017)
+                console.error('❌ Attachment processing error:', attachmentError.message);
+                console.error('   Stack:', attachmentError.stack);
+                console.log('   Task created without attachment');
+                // attachmentResult remains null
+            }
+        } else if (req.files && req.files.length > 0 && !taskData.attachmentConfig?.processAttachments) {
+            // Files present but no a: code (FR-001 opt-in protection)
+            console.log(`ℹ️  Email has ${req.files.length} attachment(s) but no 'a:' code - skipping`);
+        }
+
         // Track email import in analytics table
         try {
             await pool.query(`
@@ -1218,7 +1305,7 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
 
         // Send confirmation (would need Mailgun sending setup)
         console.log('📤 Would send confirmation email to:', sender);
-        
+
         res.json({
             success: true,
             message: 'Email imported successfully',
@@ -1229,6 +1316,7 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
                 project: taskData.projectName,
                 context: taskData.contextName
             },
+            attachment: attachmentResult, // Feature 049: Attachment info or null
             timestamp: new Date().toISOString()
         });
         
@@ -1389,6 +1477,66 @@ function parseKeyValue(segment) {
     return null;
 }
 
+// Helper function: Parse attachment code from segment (Feature 049)
+// T005: Attachment code parser - a:searchterm; syntax
+function parseAttachmentCode(segment) {
+    const attMatch = segment.match(/^a\s*:\s*(.+)$/i);
+    if (!attMatch) return null;
+
+    const filename = attMatch[1].trim();
+    if (!filename) return null;
+
+    return {
+        processAttachments: true,
+        targetFilename: filename
+    };
+}
+
+// Helper function: Find matching attachment with priority (Feature 049)
+// T011: Smart filename matching - exact > starts-with > contains
+// Priority System:
+// 1. Exact match (highest): filename === searchterm
+// 2. Starts-with match: filename starts with searchterm
+// 3. Contains match (lowest): searchterm appears anywhere in filename
+// 4. First match wins when equal priority
+function findMatchingAttachment(files, searchTerm) {
+    if (!files || files.length === 0 || !searchTerm) {
+        return null;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+
+    // Sort files by priority
+    const sortedFiles = files.sort((a, b) => {
+        const aName = a.originalname.toLowerCase();
+        const bName = b.originalname.toLowerCase();
+
+        // Extract filename without extension for exact matching
+        const aBase = aName.replace(/\.[^.]+$/, '');
+        const bBase = bName.replace(/\.[^.]+$/, '');
+
+        // Exact match wins (including exact match without extension)
+        const aExact = (aName === term || aBase === term);
+        const bExact = (bName === term || bBase === term);
+        if (aExact && !bExact) return -1;
+        if (bExact && !aExact) return 1;
+
+        // Starts-with wins over contains
+        const aStartsWith = aName.startsWith(term);
+        const bStartsWith = bName.startsWith(term);
+        if (aStartsWith && !bStartsWith) return -1;
+        if (bStartsWith && !aStartsWith) return 1;
+
+        // Both contain or neither contain - keep original order
+        return 0;
+    });
+
+    // Find first file containing term
+    return sortedFiles.find(f =>
+        f.originalname.toLowerCase().includes(term)
+    ) || null;
+}
+
 /**
  * Parse email to task with @t instruction syntax support (Feature 048)
  *
@@ -1442,7 +1590,8 @@ function parseEmailToTask(emailData) {
         duur: null,
         prioriteit: null,
         originalSender: sender,
-        importedAt: timestamp
+        importedAt: timestamp,
+        attachmentConfig: null // Feature 049: Attachment processing configuration
     };
 
     // T014: Error handling wrapper for @t parsing
@@ -1534,6 +1683,14 @@ function parseEmailToTask(emailData) {
                         if (priority && !seenCodes.has('priority')) {
                             taskData.prioriteit = priority;
                             seenCodes.add('priority');
+                            continue;
+                        }
+
+                        // Feature 049: Check for attachment code
+                        const attachmentCode = parseAttachmentCode(segment);
+                        if (attachmentCode && !seenCodes.has('attachment')) {
+                            taskData.attachmentConfig = attachmentCode;
+                            seenCodes.add('attachment');
                             continue;
                         }
 
