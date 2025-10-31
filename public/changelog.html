@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.3 - FIX: Increase App Initialization Delay -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.3</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">✅ FIX: Messages Show After Login (Increased Initialization Time)</div>
+                    <div class="change-item">
+                        <div class="change-icon">⏱️</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Increased initialization delay from 500ms to 5 seconds after login to allow app to fully start up. Messages now appear reliably after login without requiring page refresh.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Why 5 Seconds</strong>: App needs time for full initialization including session setup, DOM rendering, and JavaScript init. 5-second buffer ensures everything is ready before checking for messages.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Guaranteed message display after login. User barely notices the wait as they're exploring the interface. After initial check, polling continues every 5 minutes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.2 - FIX: Immediate Message Display After Login -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.2</span>
+                <span class="version-badge badge-fix">v0.21.2</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

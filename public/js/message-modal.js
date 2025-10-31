@@ -14,10 +14,10 @@ const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('📢 Message modal system initialized');
 
-  // Wait 500ms to let session settle after login redirect (prevents race condition)
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Wait 5 seconds to let app fully initialize after login redirect
+  await new Promise(resolve => setTimeout(resolve, 5000));
 
-  // Check for messages (session is now ready)
+  // Check for messages (app is now ready)
   console.log('📢 Checking for messages...');
   await checkForMessages();
 
