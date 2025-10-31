@@ -244,20 +244,21 @@ async function findOrCreateContext(contextName, userId) {
 
 | Defer Code | Lijst Value | Description |
 |------------|-------------|-------------|
-| `df` | `followup` | Defer to Follow-up lijst |
-| `dw` | `weekly` | Defer to Weekly lijst |
-| `dm` | `monthly` | Defer to Monthly lijst |
-| `d3m` | `quarterly` | Defer to Quarterly lijst |
-| `d6m` | `biannual` | Defer to Bi-annual lijst |
-| `dy` | `yearly` | Defer to Yearly lijst |
+| `df` | `opvolgen` | Defer to Follow-up lijst |
+| `dw` | `uitgesteld-wekelijks` | Defer to Weekly lijst |
+| `dm` | `uitgesteld-maandelijks` | Defer to Monthly lijst |
+| `d3m` | `uitgesteld-3maandelijks` | Defer to Quarterly lijst |
+| `d6m` | `uitgesteld-6maandelijks` | Defer to Bi-annual lijst |
+| `dy` | `uitgesteld-jaarlijks` | Defer to Yearly lijst |
 
 **Database Verification:**
 
 ```sql
 -- Verify all lijst values are valid
 SELECT COUNT(*) FROM taken WHERE lijst IN (
-    'inbox', 'acties', 'followup', 'weekly',
-    'monthly', 'quarterly', 'biannual', 'yearly'
+    'inbox', 'acties', 'opvolgen', 'uitgesteld-wekelijks',
+    'uitgesteld-maandelijks', 'uitgesteld-3maandelijks',
+    'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks'
 );
 -- Returns: All existing tasks ✅
 ```

@@ -1328,12 +1328,12 @@ function parseDeferCode(segment) {
     if (!deferMatch) return null;
 
     const deferMapping = {
-        'df': 'followup',      // Defer to Follow-up
-        'dw': 'weekly',        // Defer to Weekly
-        'dm': 'monthly',       // Defer to Monthly
-        'd3m': 'quarterly',    // Defer to Quarterly
-        'd6m': 'biannual',     // Defer to Bi-annual
-        'dy': 'yearly'         // Defer to Yearly
+        'df': 'opvolgen',                 // Defer to Follow-up
+        'dw': 'uitgesteld-wekelijks',     // Defer to Weekly
+        'dm': 'uitgesteld-maandelijks',   // Defer to Monthly
+        'd3m': 'uitgesteld-3maandelijks', // Defer to Quarterly
+        'd6m': 'uitgesteld-6maandelijks', // Defer to Bi-annual
+        'dy': 'uitgesteld-jaarlijks'      // Defer to Yearly
     };
 
     const code = deferMatch[1].toLowerCase();
