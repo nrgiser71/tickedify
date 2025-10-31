@@ -1462,7 +1462,7 @@ function parseEmailToTask(emailData) {
         const firstLine = bodyLines.find(line => line.trim().length > 0);
 
         if (firstLine) {
-            const atTriggerMatch = firstLine.match(/^@t\s+(.+)$/);
+            const atTriggerMatch = firstLine.match(/^@t\s*(.+)$/);
 
             if (atTriggerMatch) {
                 atInstructionDetected = true;

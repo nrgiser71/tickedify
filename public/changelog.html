@@ -139,11 +139,36 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.7 - FIX: @t Syntax Spatie Bug -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.7</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: @t Syntax Parsing Bug</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: @t instructie werkt nu zonder spatie na @t. Voorheen werd <code>@tp:Project;</code> niet herkend, nu wel. Je kan nu schrijven <code>@t p:</code> of <code>@tp:</code> - beide werken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📝</div>
+                        <div class="change-content">
+                            <strong>Technical</strong>: Regex aangepast van <code>\s+</code> (vereist spatie) naar <code>\s*</code> (optionele spatie) in @t trigger detectie.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.5 - IMPROVEMENT: Button Text Clarity -->
         <!-- Version 0.21.6 - FEATURE: Email Import @t Syntax -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.6</span>
+                <span class="version-badge badge-feature">v0.21.6</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
