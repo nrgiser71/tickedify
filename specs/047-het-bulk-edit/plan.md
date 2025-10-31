@@ -1,8 +1,8 @@
 
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Translate Bulk Edit Properties Screen to English
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `047-het-bulk-edit` | **Date**: 2025-10-31 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/047-het-bulk-edit/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,23 +31,49 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+This feature translates the bulk edit properties modal from Dutch to English. The bulk edit screen allows users to select multiple tasks and edit their properties simultaneously. All UI elements (labels, buttons, placeholders, dropdown options, success/error messages) need to be translated while maintaining consistency with the rest of the English application interface. This is a pure UI translation task with no backend or data model changes required.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: JavaScript ES6+ (Vanilla JavaScript, no frameworks)
+**Primary Dependencies**: None (frontend-only translation task)
+**Storage**: N/A (no data storage changes)
+**Testing**: Manual UI testing via browser, Playwright for automated testing
+**Target Platform**: Modern browsers (Chrome, Firefox, Safari, Edge)
+**Project Type**: Web application (frontend-only for this feature)
+**Performance Goals**: N/A (translation does not impact performance)
+**Constraints**: Text must fit within existing UI layout, maintain visual consistency
+**Scale/Scope**: ~30-50 text strings in bulk edit modal (labels, buttons, messages, placeholders)
+
+**Additional Context from User**: (en niet /constitution) - Ensuring we follow correct workflow without constitutional changes.
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### I. Beta Freeze - Production Stability ✅ PASS
+- **Status**: COMPLIANT
+- **Rationale**: This is a UI translation task that will be developed on feature branch `047-het-bulk-edit`, merged to `staging` branch, and tested on dev.tickedify.com. No direct changes to `main` branch or production deployment during beta freeze. All testing will occur on staging environment first.
+
+### II. Staging-First Deployment ✅ PASS
+- **Status**: COMPLIANT
+- **Rationale**: Feature will be merged to `staging` branch, automatically deployed to dev.tickedify.com via Vercel, and tested there before any production consideration. This follows the mandatory staging-first workflow.
+
+### III. Gespecialiseerde Sub-Agents ✅ PASS
+- **Status**: COMPLIANT
+- **Rationale**: For implementation, will use **tickedify-feature-builder** for UI translation implementation. For testing, will use **tickedify-testing** for browser automation and visual verification. This is appropriate for a UI translation feature.
+
+### IV. Versioning & Changelog Discipline ✅ PASS
+- **Status**: COMPLIANT
+- **Rationale**: Will increment package.json version (patch level) and update public/changelog.html with translation completion entry in same commit. Changelog will use appropriate emoji category (🎯 improvement for translation).
+
+### V. Deployment Verification Workflow ✅ PASS
+- **Status**: COMPLIANT
+- **Rationale**: After staging deployment, will verify via `/api/version` endpoint using `curl -s -L -k` flags, checking every 15 seconds until version matches or 2-minute timeout. No long sleep commands will be used.
+
+### VI. Test-First via API ⚠️ ADAPTED
+- **Status**: COMPLIANT (Adapted for UI-only feature)
+- **Rationale**: This is a pure UI translation feature with no business logic or API changes. Testing MUST be done via browser/Playwright to verify visual correctness of translated text. No API endpoints are involved in this translation task. This is an acceptable exception to the API-first testing principle per constitution: "UI testing alleen voor UI-specifieke features".
+
+**Initial Gate Status**: ✅ ALL CHECKS PASSED - Proceeding to Phase 0
 
 ## Project Structure
 
@@ -99,7 +125,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Option 2 (Web application) - Tickedify has `public/` for frontend and `server.js` for backend. This is a frontend-only translation feature affecting `public/index.html` and `public/app.js`.
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -159,19 +185,37 @@ ios/ or android/
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
-- Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+This is a pure UI translation feature with no backend changes, so task generation will follow a simplified approach:
+
+1. **Translation Tasks** (from ui-translation.contract.md):
+   - HTML translation task (index.html)
+   - JavaScript translation task (app.js)
+
+2. **Verification Tasks** (from quickstart.md):
+   - Manual UI verification task
+   - Playwright automated test task (optional)
+
+3. **Deployment Tasks** (from constitution):
+   - Version bump and changelog update
+   - Staging deployment and verification
+   - Git commit and push to staging branch
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+1. HTML translation (index.html) [P]
+2. JavaScript translation (app.js) [P]
+3. Version bump and changelog update
+4. Git commit and push to staging
+5. Deployment verification
+6. Manual UI testing (quickstart.md)
+7. Playwright automated testing (optional)
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 7 numbered, ordered tasks in tasks.md
+
+**Key Differences from Standard Approach**:
+- No data model tasks (N/A for UI translation)
+- No API contract tasks (no backend changes)
+- No integration tests (pure frontend)
+- Simplified to translation → deploy → verify workflow
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -195,18 +239,18 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command)
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 3: Tasks generated (/tasks command)
+- [x] Phase 4: Implementation complete (/implement command)
+- [x] Phase 5: Validation passed (manual UI verification)
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented (N/A - no deviations)
 
 ---
 *Based on Constitution v1.0.1 - See `/memory/constitution.md`*

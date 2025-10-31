@@ -1,8 +1,8 @@
 
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Bulk Edit Translation to English
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `046-bij-een-bulk` | **Date**: 2025-10-31 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/046-bij-een-bulk/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,75 +31,80 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+Translate remaining Dutch text in bulk edit interface to English. Specifically: "Opvolgen" button and day-of-week names. This is a simple text translation task requiring only frontend changes to maintain consistent English UI across the application.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: JavaScript (Vanilla JS, ES6+)
+**Primary Dependencies**: None (existing Tickedify frontend code)
+**Storage**: N/A (text-only changes)
+**Testing**: Browser-based UI verification on dev.tickedify.com
+**Target Platform**: Web browser (Chrome, Firefox, Safari)
+**Project Type**: Web application (single structure: public/ for frontend, server.js for backend)
+**Performance Goals**: N/A (instant text display)
+**Constraints**: Must preserve all existing button functionality
+**Scale/Scope**: Very small - 2 translation items (1 button label + day names)
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+**I. Beta Freeze - Production Stability**: ✅ PASS
+- No main branch changes during freeze
+- All testing via staging branch (dev.tickedify.com)
+- No production deployment until freeze lifted
+
+**II. Staging-First Deployment**: ✅ PASS
+- Feature branch → staging → testing on dev.tickedify.com
+- No direct production deployment
+
+**III. Gespecialiseerde Sub-Agents**: ⚠️ RECOMMENDED
+- Consider tickedify-testing agent for UI verification after implementation
+- Not strictly required for this simple translation task
+
+**IV. Versioning & Changelog Discipline**: ✅ PASS
+- Version bump required (patch level)
+- Changelog update required with 🎯 improvement category
+
+**V. Deployment Verification Workflow**: ✅ PASS
+- Check /api/version endpoint after staging deployment
+- Verify version match before UI testing
+
+**VI. Test-First via API**: N/A
+- This is UI-only text change, no API logic involved
+- Visual verification on staging sufficient
+
+**Result**: No constitution violations. Feature compliant with all applicable principles.
 
 ## Project Structure
 
 ### Documentation (this feature)
 ```
-specs/[###-feature]/
-├── plan.md              # This file (/plan command output)
-├── research.md          # Phase 0 output (/plan command)
-├── data-model.md        # Phase 1 output (/plan command)
-├── quickstart.md        # Phase 1 output (/plan command)
-├── contracts/           # Phase 1 output (/plan command)
-└── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
+specs/046-bij-een-bulk/
+├── spec.md              # Feature specification (user requirements)
+├── plan.md              # This file (/plan command output) ✅
+├── research.md          # Phase 0 output (/plan command) ✅
+├── quickstart.md        # Phase 1 output (/plan command) ✅
+├── data-model.md        # NOT NEEDED (no entities)
+├── contracts/           # NOT NEEDED (no API changes)
+└── tasks.md             # Phase 2 output (/tasks command - NOT created yet)
 ```
 
 ### Source Code (repository root)
 ```
-# Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+Tickedify uses a web application structure:
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+public/
+├── app.js               # Main application file (TARGET FILE for changes)
+│   ├── Line 4757: dagenVanDeWeek array (Dutch → English)
+│   └── Line 12667: "Opvolgen" button (Dutch → English)
+├── index.html
+├── style.css
+└── changelog.html       # TARGET FILE for version documentation
 
-# Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure]
+server.js                # Backend (NO CHANGES needed)
+package.json            # TARGET FILE for version bump
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Web application with single structure (public/ for frontend, server.js for backend)
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -159,19 +164,29 @@ ios/ or android/
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
-- Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+This is a simple translation feature with minimal implementation tasks:
+1. Version bump in package.json (mandatory per constitution)
+2. Update day-of-week array in app.js (line 4757)
+3. Update "Opvolgen" button text in app.js (line 12667)
+4. Update changelog with improvement entry
+5. Visual verification on staging
+
+**No Tests Required**:
+- No API endpoints changed (no contract tests)
+- No database schema changes (no model tests)
+- No new functionality (no integration tests)
+- Visual verification via quickstart.md sufficient
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+Sequential execution (all changes in same file):
+1. Version bump (blocks deployment verification)
+2. Code changes in app.js
+3. Changelog update
+4. Git commit and push to staging
+5. Deployment verification
+6. UI testing via quickstart.md
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 5-7 numbered, sequential tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -195,18 +210,18 @@ ios/ or android/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved (none existed)
+- [x] Complexity deviations documented (none - feature is compliant)
 
 ---
 *Based on Constitution v1.0.1 - See `/memory/constitution.md`*

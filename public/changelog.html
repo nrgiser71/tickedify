@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.44 - FIX: Message Form Validation Bug -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.44</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Admin Message Form Validation Error</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Fixed form validation error "An invalid form control with name='' is not focusable" that prevented saving messages in admin panel. The nextPageSelect dropdown now has its required attribute managed dynamically by JavaScript instead of being hardcoded in HTML.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Technical Details</strong>: Removed hardcoded <code>required</code> attribute from nextPageSelect element in <code>public/admin2.html:1760</code>. JavaScript now fully controls validation based on trigger type - field is only required when "next_page_visit" trigger is selected and visible.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Admin users can now successfully save messages with any trigger type. Previously, hidden required fields caused browser validation to fail. This was blocking message creation workflow.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.43 - IMPROVEMENT: Bulk Edit Properties Modal Translation -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.43</span>
+                <span class="version-badge badge-improvement">v0.20.43</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
