@@ -45,6 +45,7 @@
                                     <span class="import-label">Email import:</span>
                                     <a href="#" class="import-email-link" id="import-email-link"></a>
                                     <button class="btn-copy" id="btn-copy-import" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
+                                    <button class="btn-help" id="btn-email-help" title="Email syntax help"><i class="fas fa-question-circle"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -318,6 +319,19 @@
             </div>
             <div class="popup-acties">
                 <button id="keyboardHelpClose" class="btn-primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Import Help Modal -->
+    <div id="emailHelpModal" class="popup-overlay" style="display: none;">
+        <div class="popup-content email-help-content">
+            <h3><i class="fas fa-envelope"></i> Email Import Syntax Help</h3>
+            <div id="emailHelpContent" class="markdown-content">
+                <p>Loading...</p>
+            </div>
+            <div class="popup-acties">
+                <button id="emailHelpClose" class="btn-primary">Close</button>
             </div>
         </div>
     </div>
