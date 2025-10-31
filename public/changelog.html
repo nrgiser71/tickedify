@@ -134,10 +134,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.39 - THE ACTUAL FIX: Property Name Mismatch -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.39</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 DE ÉCHTE FIX: Property Name Typo!</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Het Échte Probleem</strong>: Na 4+ uur debuggen bleek het een SIMPELE TYPO! De <code>collectBulkEditUpdates()</code> functie (regel 395-429) stuurde verkeerde property namen naar de server: <code>context</code> ipv <code>contextId</code> en <code>project_id</code> ipv <code>projectId</code>. De <code>database.updateTask()</code> verwacht camelCase property namen en maakt er database kolom namen van. Verkeerde property naam → SQL query met niet-bestaande kolom → 0 rows updated → 404 error!
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Hoe We Het Vonden</strong>: GET <code>/api/taak/{id}</code> werkte WEL, PUT <code>/api/taak/{id}</code> faalde met 404. Beide gebruiken exact dezelfde ID, maar GET heeft geen WHERE clause met property names, PUT WEL. Manual test: <code>PUT met contextId</code> → success! <code>PUT met context</code> → 404. Conclusie: property name mismatch.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>De Fix</strong>: <code>collectBulkEditUpdates()</code> gebruikt nu correcte property namen: <code>updates.projectId</code> (regel 401) en <code>updates.contextId</code> (regel 413). Dit matcht exact met de naming convention die <code>database.updateTask()</code> verwacht en die bulk move/delete al gebruikten.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📚</div>
+                        <div class="change-content">
+                            <strong>Waarom Andere Bulk Operaties Werkten</strong>: Bulk move stuurt <code>{lijst: 'opvolgen'}</code> → <code>lijst</code> is exact de database kolom naam, geen transformatie nodig. Bulk edit stuurde <code>{context: 'xyz'}</code> → <code>context</code> is NIET de kolom naam (moet <code>context_id</code> zijn), database.js verwacht <code>contextId</code> om de transformatie te doen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>Lesson Learned</strong>: v0.20.34-38 losten allemaal niet-bestaande problemen op. De echte bug was 1 regel code met verkeerde property naam. Debug methodologie: vergelijk werkende vs niet-werkende flows met EXACT dezelfde data → verschillen in de request payload worden zichtbaar. User's intuïtie was correct: "alle andere knoppen werken, waarom deze niet?"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.37 - THE REAL FIX: Data Source Inconsistency -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.37</span>
+                <span class="version-badge badge-fix">v0.20.37</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

@@ -395,10 +395,10 @@ function populateBulkEditDropdowns() {
 function collectBulkEditUpdates() {
     const updates = {};
 
-    // Project (optional)
+    // Project (optional) - FIXED: use camelCase projectId
     const project = document.getElementById('bulkEditProject').value;
     if (project) {
-        updates.project_id = project === 'null' ? null : parseInt(project);
+        updates.projectId = project === 'null' ? null : parseInt(project);
     }
 
     // Datum (optional)
@@ -407,10 +407,10 @@ function collectBulkEditUpdates() {
         updates.verschijndatum = datum;
     }
 
-    // Context (optional)
+    // Context (optional) - FIXED: use camelCase contextId
     const context = document.getElementById('bulkEditContext').value;
     if (context) {
-        updates.context = context === 'null' ? null : context;
+        updates.contextId = context === 'null' ? null : context;
     }
 
     // Priority (optional)
