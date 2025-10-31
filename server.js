@@ -1348,10 +1348,11 @@ function parsePriorityCode(segment) {
 
     const num = parseInt(priorityMatch[1]);
 
-    // Normalization: p0/p1 → High, p2 → Medium, p3/p4+ → Low
-    if (num === 0 || num === 1) return 'High';
-    if (num === 2) return 'Medium';
-    if (num === 3 || num >= 4) return 'Low';
+    // Normalization: p0/p1 → hoog, p2 → gemiddeld, p3/p4+ → laag
+    // Database expects lowercase Dutch values
+    if (num === 0 || num === 1) return 'hoog';
+    if (num === 2) return 'gemiddeld';
+    if (num === 3 || num >= 4) return 'laag';
 
     return null;
 }

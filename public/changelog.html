@@ -139,10 +139,104 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.11 - FIX: Priority Database Constraint -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.11</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Priority Database Constraint</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Priority codes (<code>p0</code>, <code>p1</code>, <code>p2</code>, etc.) werken nu correct. Database verwachtte lowercase Dutch namen (<code>hoog</code>, <code>gemiddeld</code>, <code>laag</code>) maar parser retourneerde English capitalized namen (<code>High</code>, <code>Medium</code>, <code>Low</code>).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Technical</strong>: Updated <code>parsePriorityCode()</code> function to return lowercase Dutch priority values that match database CHECK constraint.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.10 - FIX: Defer List Names -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.21.10</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Defer List Names Mismatch</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Defer codes (<code>dw</code>, <code>dm</code>, <code>d3m</code>, <code>d6m</code>, <code>dy</code>) werken nu correct. Taken werden aangemaakt met English lijst namen (<code>weekly</code>, <code>monthly</code>) terwijl UI Dutch prefixed namen verwacht (<code>uitgesteld-wekelijks</code>, <code>uitgesteld-maandelijks</code>).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📝</div>
+                        <div class="change-content">
+                            <strong>Technical</strong>: Updated <code>parseDeferCode()</code> mapping to use correct Dutch lijst names matching UI expectations.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.9 - FIX: Windows Line Endings -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.21.9</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Windows Line Endings Breaking @t Detection</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Critical Bug Fix</strong>: @t instructie wordt nu correct herkend. Mailgun stuurt emails met Windows line endings (<code>\r\n</code>) waardoor <code>\r</code> aan einde van regels bleef staan, wat regex matching brak. @t regel werd niet meer verwijderd uit notes.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Technical</strong>: Added <code>trim()</code> to firstLine before regex test to remove carriage return characters. Now handles both Unix (<code>\n</code>) and Windows (<code>\r\n</code>) line endings correctly.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.8 - DEBUG: Added Logging -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.21.8</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔍 DEBUG: Added Extensive Logging</div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Debug Enhancement</strong>: Added comprehensive debug logging to @t parsing logic for troubleshooting: body content, first line detection, regex matching, segment processing, key-value parsing results.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.7 - FIX: @t Syntax Spatie Bug -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.7</span>
+                <span class="version-badge badge-fix">v0.21.7</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
