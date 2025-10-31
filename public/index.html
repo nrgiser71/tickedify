@@ -1182,49 +1182,49 @@
     <!-- Bulk Edit Modal -->
     <div id="bulkEditModal" class="modal">
         <div class="modal-content">
-            <h2 id="bulkEditHeader">Eigenschappen bewerken voor X taken</h2>
+            <h2 id="bulkEditHeader">Edit properties for X tasks</h2>
 
             <div class="form-group">
                 <label for="bulkEditProject">Project:</label>
                 <select id="bulkEditProject">
-                    <option value="">-- Geen wijziging --</option>
-                    <option value="null">Geen project</option>
+                    <option value="">-- No change --</option>
+                    <option value="null">No project</option>
                     <!-- Dynamically populated -->
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="bulkEditDatum">Datum:</label>
+                <label for="bulkEditDatum">Date:</label>
                 <input type="date" id="bulkEditDatum">
             </div>
 
             <div class="form-group">
                 <label for="bulkEditContext">Context:</label>
                 <select id="bulkEditContext">
-                    <option value="">-- Geen wijziging --</option>
-                    <option value="null">Geen context</option>
+                    <option value="">-- No change --</option>
+                    <option value="null">No context</option>
                     <!-- Dynamically populated -->
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="bulkEditPriority">Prioriteit:</label>
+                <label for="bulkEditPriority">Priority:</label>
                 <select id="bulkEditPriority">
-                    <option value="">-- Geen wijziging --</option>
-                    <option value="laag">Laag</option>
-                    <option value="gemiddeld">Normaal</option>
-                    <option value="hoog">Hoog</option>
+                    <option value="">-- No change --</option>
+                    <option value="laag">Low</option>
+                    <option value="gemiddeld">Normal</option>
+                    <option value="hoog">High</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="bulkEditTime">Geschatte tijd (minuten):</label>
-                <input type="number" id="bulkEditTime" min="0" placeholder="Optioneel">
+                <label for="bulkEditTime">Estimated time (minutes):</label>
+                <input type="number" id="bulkEditTime" min="0" placeholder="Optional">
             </div>
 
             <div class="button-group">
-                <button onclick="window.bulkEditCancel()" class="secondary">Annuleren</button>
-                <button onclick="window.bulkEditSave()" class="primary">Opslaan</button>
+                <button onclick="window.bulkEditCancel()" class="secondary">Cancel</button>
+                <button onclick="window.bulkEditSave()" class="primary">Save</button>
             </div>
         </div>
     </div>

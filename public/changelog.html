@@ -86,7 +86,12 @@
             background: var(--macos-orange);
             color: white;
         }
-        
+
+        .badge-improvement {
+            background: var(--macos-purple);
+            color: white;
+        }
+
         .change-list {
             list-style: none;
             padding: 0;
@@ -134,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.43 - IMPROVEMENT: Bulk Edit Properties Modal Translation -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.43</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 IMPROVEMENT: Bulk Edit Properties Translation to English</div>
+                    <div class="change-item">
+                        <div class="change-icon">🌐</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Bulk edit properties modal now completely in English. All UI elements translated: form labels (Date, Priority, Estimated time), dropdown options (No change, No project/context, Low/Normal/High priority), placeholder text (Optional), and buttons (Cancel, Save).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Technical Details</strong>: Updated <code>public/index.html</code> modal structure (lines 1183-1230) and <code>public/app.js</code> populateBulkEditDropdowns() function (lines 357-393). Backend value attributes (laag/gemiddeld/hoog) preserved for database compatibility - only display text translated.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Complete language consistency in bulk edit workflow. Users can now edit multiple task properties with a fully English interface, matching the rest of the application language.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.42 - IMPROVEMENT: Bulk Edit Translation to English -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.42</span>
+                <span class="version-badge badge-improvement">v0.20.42</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

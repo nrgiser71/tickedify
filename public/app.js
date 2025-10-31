@@ -359,8 +359,8 @@ function populateBulkEditDropdowns() {
 
     // Populate project dropdown
     const projectSelect = document.getElementById('bulkEditProject');
-    projectSelect.innerHTML = '<option value="">-- Geen wijziging --</option>' +
-                              '<option value="null">Geen project</option>';
+    projectSelect.innerHTML = '<option value="">-- No change --</option>' +
+                              '<option value="null">No project</option>';
 
     // Sort projects alfabetisch (consistent met bestaande pattern)
     const gesorteerdeProjecten = [...taskManager.projecten].sort((a, b) =>
@@ -376,8 +376,8 @@ function populateBulkEditDropdowns() {
 
     // Populate context dropdown
     const contextSelect = document.getElementById('bulkEditContext');
-    contextSelect.innerHTML = '<option value="">-- Geen wijziging --</option>' +
-                              '<option value="null">Geen context</option>';
+    contextSelect.innerHTML = '<option value="">-- No change --</option>' +
+                              '<option value="null">No context</option>';
 
     // Sort contexts alfabetisch (consistent met existing vulContextSelect pattern)
     const gesorteerdeContexten = [...taskManager.contexten].sort((a, b) =>
