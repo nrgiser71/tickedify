@@ -12465,14 +12465,20 @@ class Taakbeheer {
     }
 
     toggleTaakSelectie(taakId) {
+        console.log('🔵 [TOGGLE] Called with ID:', taakId);
+
         // Feature 044: Validate task ID before processing
         if (!this.validateTaskId(taakId)) {
+            console.log('🔵 [TOGGLE] ID rejected by validation');
             return; // Rejected - no state change
         }
 
         // Find the task element first
         const taakElement = document.querySelector(`[data-id="${taakId}"]`);
-        if (!taakElement) return;
+        if (!taakElement) {
+            console.log('🔵 [TOGGLE] Element not found in DOM');
+            return;
+        }
 
         // Check if element is visible (not filtered out)
         // Elements hidden by filterActies() have display: 'none'
@@ -12484,9 +12490,12 @@ class Taakbeheer {
         // Toggle selection
         if (this.geselecteerdeTaken.has(taakId)) {
             this.geselecteerdeTaken.delete(taakId);
+            console.log('🔵 [TOGGLE] REMOVED from Set. Set size now:', this.geselecteerdeTaken.size);
         } else {
             this.geselecteerdeTaken.add(taakId);
+            console.log('🔵 [TOGGLE] ADDED to Set. Set size now:', this.geselecteerdeTaken.size);
         }
+        console.log('🔵 [TOGGLE] Current Set contents:', Array.from(this.geselecteerdeTaken));
 
         // Update visual selection
         const selectieCircle = taakElement.querySelector('.selectie-circle');
@@ -12885,7 +12894,10 @@ class Taakbeheer {
     // This method accepts validated task IDs as parameter instead of using this.geselecteerdeTaken
     // Prevents timing bug where auto-refresh makes geselecteerdeTaken stale during popup display
     async bulkEditPropertiesWithIds(taskIds, updates) {
-        console.log(`[BULK EDIT WITH IDS] Called with ${taskIds.length} task IDs`);
+        console.log('🟡 [BULK EDIT EXECUTE] ===== START EXECUTION =====');
+        console.log('🟡 [BULK EDIT EXECUTE] Received taskIds:', taskIds);
+        console.log('🟡 [BULK EDIT EXECUTE] Received updates:', updates);
+        console.log(`🟡 [BULK EDIT EXECUTE] Called with ${taskIds.length} task IDs`);
 
         // Confirmation dialog (FR-007, FR-008)
         const taskCount = taskIds.length;
@@ -12910,6 +12922,11 @@ class Taakbeheer {
                 currentTask++;
                 loading.updateProgress('Updating properties', currentTask, taskCount);
 
+                console.log(`🟡 [BULK EDIT EXECUTE] Processing task ${currentTask}/${taskCount}`);
+                console.log(`🟡 [BULK EDIT EXECUTE] Task ID: ${taakId}`);
+                console.log(`🟡 [BULK EDIT EXECUTE] URL: /api/taak/${taakId}`);
+                console.log(`🟡 [BULK EDIT EXECUTE] Updates payload:`, updates);
+
                 try {
                     const response = await fetch(`/api/taak/${taakId}`, {
                         method: 'PUT',
@@ -12917,21 +12934,26 @@ class Taakbeheer {
                         body: JSON.stringify(updates)
                     });
 
+                    console.log(`🟡 [BULK EDIT EXECUTE] Response status: ${response.status} ${response.statusText}`);
+
                     if (response.ok) {
                         successCount++;
-                        console.log(`[BULK EDIT WITH IDS] ✓ Updated task ${taakId}`);
+                        console.log(`🟡 [BULK EDIT EXECUTE] ✅ SUCCESS for task ${taakId}`);
                     } else {
                         errorCount++;
                         const errorText = await response.text();
                         errors.push({ taskId: taakId, error: errorText });
-                        console.error(`[BULK EDIT WITH IDS] ✗ Failed to update task ${taakId}:`, errorText);
+                        console.error(`🟡 [BULK EDIT EXECUTE] ❌ FAILED for task ${taakId}:`, errorText);
                     }
                 } catch (error) {
                     errorCount++;
                     errors.push({ taskId: taakId, error: error.message });
-                    console.error('[BULK EDIT WITH IDS] Network error:', error);
+                    console.error('🟡 [BULK EDIT EXECUTE] ❌ NETWORK ERROR:', error);
                 }
             }
+
+            console.log('🟡 [BULK EDIT EXECUTE] ===== END EXECUTION =====');
+            console.log(`🟡 [BULK EDIT EXECUTE] Results: ${successCount} success, ${errorCount} errors`);
 
             loading.show('Finishing...');
 
@@ -13887,25 +13909,36 @@ async function openBulkEditPopupAsync() {
     // This prevents stale IDs from auto-refresh during popup display (10-30 sec wait)
     // v0.20.37: Use CORRECT data source - planningActies for planning, taken for other lists
     const currentDataSource = taskManager.planningActies || taskManager.taken;
-    console.log(`[BULK EDIT] Using data source: ${taskManager.planningActies ? 'planningActies' : 'taken'} (${currentDataSource.length} tasks)`);
+
+    console.log('🟢 [BULK EDIT SNAPSHOT] ===== START SNAPSHOT CREATION =====');
+    console.log('🟢 [BULK EDIT SNAPSHOT] Using data source:', taskManager.planningActies ? 'planningActies' : 'taken');
+    console.log('🟢 [BULK EDIT SNAPSHOT] Data source size:', currentDataSource.length);
+    console.log('🟢 [BULK EDIT SNAPSHOT] Data source IDs:', currentDataSource.map(t => t.id));
+    console.log('🟢 [BULK EDIT SNAPSHOT] geselecteerdeTaken Set size:', taskManager.geselecteerdeTaken.size);
+    console.log('🟢 [BULK EDIT SNAPSHOT] geselecteerdeTaken Set contents:', Array.from(taskManager.geselecteerdeTaken));
 
     const selectedIds = Array.from(taskManager.geselecteerdeTaken);
+    console.log('🟢 [BULK EDIT SNAPSHOT] selectedIds array:', selectedIds);
+
     const validIds = selectedIds.filter(id => {
         // Rule 1: Reject test pattern IDs
         if (/^test-/.test(id)) {
-            console.warn('[BULK EDIT] Rejecting test ID from snapshot:', id);
+            console.warn('🟢 [BULK EDIT SNAPSHOT] ❌ Rejecting test ID:', id);
             return false;
         }
         // Rule 2: Verify task exists in CURRENT data source (not stale array!)
         const exists = currentDataSource.find(t => t.id === id);
         if (!exists) {
-            console.warn('[BULK EDIT] Rejecting non-existent ID from snapshot:', id);
+            console.warn('🟢 [BULK EDIT SNAPSHOT] ❌ Rejecting non-existent ID:', id);
             return false;
         }
+        console.log('🟢 [BULK EDIT SNAPSHOT] ✅ Accepting ID:', id);
         return true;
     });
 
-    console.log(`[BULK EDIT] Snapshot created: ${selectedIds.length} selected → ${validIds.length} valid`);
+    console.log('🟢 [BULK EDIT SNAPSHOT] Final validIds:', validIds);
+    console.log(`🟢 [BULK EDIT SNAPSHOT] Snapshot created: ${selectedIds.length} selected → ${validIds.length} valid`);
+    console.log('🟢 [BULK EDIT SNAPSHOT] ===== END SNAPSHOT CREATION =====');
 
     if (validIds.length < 2) {
         toast.warning('Less than 2 valid tasks selected');
