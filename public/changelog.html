@@ -134,10 +134,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.40 - SECOND FIX: parseInt on VARCHAR ID -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.40</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 TWEEDE BUG: parseInt() op VARCHAR Project ID!</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Het Probleem</strong>: Na v0.20.39 fix werkte context wijzigen WEL, maar project wijzigen NIET (zonder error). Console logs toonden <code>{projectId: NaN}</code>. Root cause: <code>collectBulkEditUpdates()</code> regel 401 deed <code>parseInt(project)</code> terwijl project IDs VARCHAR zijn (zoals <code>"abc123xyz"</code>). <code>parseInt("abc123xyz")</code> = <code>NaN</code> → database UPDATE faalt zonder error.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Database Schema Check</strong>: <code>CREATE TABLE projecten (id VARCHAR(50) PRIMARY KEY)</code> → project IDs zijn STRINGS, geen integers! Context code had GEEN parseInt (regel 413: <code>updates.contextId = context</code>) → daarom werkte context WEL. Project code had WEL parseInt → daarom werkte project NIET.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>De Fix</strong>: Verwijderd <code>parseInt()</code> van regel 401. Nu: <code>updates.projectId = project === 'null' ? null : project</code>. Project ID blijft string, precies zoals de database verwacht. Consistent met context handling die al correct was.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📚</div>
+                        <div class="change-content">
+                            <strong>Lesson Learned</strong>: v0.20.39 loste property NAME op (<code>context</code> → <code>contextId</code>), v0.20.40 lost property TYPE op (string → parseInt → NaN). Beide bugs in dezelfde functie, maar verschillende symptoms: v0.20.39 gaf 404 errors, v0.20.40 gaf stille failures. Test ALLE properties bij bulk edit testing!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.39 - THE ACTUAL FIX: Property Name Mismatch -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.39</span>
+                <span class="version-badge badge-fix">v0.20.39</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

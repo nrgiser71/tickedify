@@ -395,10 +395,10 @@ function populateBulkEditDropdowns() {
 function collectBulkEditUpdates() {
     const updates = {};
 
-    // Project (optional) - FIXED: use camelCase projectId
+    // Project (optional) - FIXED: use camelCase projectId, NO parseInt (ID is VARCHAR)
     const project = document.getElementById('bulkEditProject').value;
     if (project) {
-        updates.projectId = project === 'null' ? null : parseInt(project);
+        updates.projectId = project === 'null' ? null : project;
     }
 
     // Datum (optional)
