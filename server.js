@@ -1060,6 +1060,20 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
         console.log('Headers:', req.headers);
         console.log('Body keys:', Object.keys(req.body));
         console.log('Files:', req.files?.length || 0);
+
+        // DEBUG: Log exact req.files structure to understand Mailgun format
+        if (req.files && req.files.length > 0) {
+            console.log('🔍 [DEBUG] req.files array:', JSON.stringify(req.files.map(f => ({
+                fieldname: f.fieldname,
+                originalname: f.originalname,
+                encoding: f.encoding,
+                mimetype: f.mimetype,
+                size: f.size,
+                bufferType: Buffer.isBuffer(f.buffer) ? 'Buffer' : typeof f.buffer,
+                bufferLength: f.buffer?.length || f.buffer?.byteLength
+            })), null, 2));
+        }
+
         console.log('Full body:', req.body);
         
         // Log to a file we can check later
