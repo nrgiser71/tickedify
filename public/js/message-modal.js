@@ -14,31 +14,20 @@ const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('📢 Message modal system initialized');
 
-  // Initial check with retry logic (handles race conditions after login)
-  let retryCount = 0;
-  const maxRetries = 3;
+  // Wait 500ms to let session settle after login redirect (prevents race condition)
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  while (retryCount < maxRetries) {
-    const success = await checkForMessages();
-    if (success) {
-      console.log('📢 Initial message check successful');
-      break;
-    }
+  // Check for messages (session is now ready)
+  console.log('📢 Checking for messages...');
+  await checkForMessages();
 
-    retryCount++;
-    if (retryCount < maxRetries) {
-      console.log(`📢 Retry ${retryCount}/${maxRetries} in 2 seconds...`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-  }
-
+  // Start polling every 5 minutes
   startPolling();
-  console.log(`📢 Polling started - checking every ${POLLING_INTERVAL / 1000} seconds`);
+  console.log('📢 Polling started - checking every 5 minutes');
 });
 
 // Check for unread messages from backend
 // pageOverride: optional page identifier to override window.location.pathname (for SPA view switches)
-// Returns: true if check was successful (regardless of whether messages were found), false if error occurred
 async function checkForMessages(pageOverride = null) {
   try {
     // Get current page pathname for page-specific messages
@@ -48,8 +37,8 @@ async function checkForMessages(pageOverride = null) {
 
     const response = await fetch(url);
     if (!response.ok) {
-      console.log('No messages or auth required');
-      return false; // Auth failed or error - retry needed
+      console.log('📢 No messages or auth required');
+      return;
     }
 
     const data = await response.json();
@@ -59,14 +48,11 @@ async function checkForMessages(pageOverride = null) {
       currentMessages = data.messages;
       currentMessageIndex = 0;
       showMessage(currentMessages[0]);
-      return true;
     } else {
       console.log('📢 No unread messages');
-      return true; // Success, just no messages
     }
   } catch (error) {
-    console.error('Check messages error:', error);
-    return false; // Error occurred - retry needed
+    console.error('📢 Check messages error:', error);
   }
 }
 

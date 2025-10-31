@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.2 - FIX: Immediate Message Display After Login -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.2</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">✅ FIX: Messages Now Show Immediately After Login (Simplified Solution)</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Replaced complex retry logic with simple 500ms delay after DOMContentLoaded to let session settle. Messages now appear within ~800ms of login. Clean, simple solution that just works.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔧</div>
+                        <div class="change-content">
+                            <strong>Technical Approach</strong>: Login redirect → DOMContentLoaded → wait 500ms (session ready) → check messages → show if available → start 5-minute polling. No retries needed, no complexity, no race conditions.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Immediate message display as requested. Simple code, predictable behavior, low server load with 5-minute background polling.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.1 - FIX: Restore Polling Interval -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.1</span>
+                <span class="version-badge badge-fix">v0.21.1</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
