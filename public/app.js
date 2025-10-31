@@ -4754,7 +4754,7 @@ class Taakbeheer {
     getWeekdagKnoppen(dagenOffset, onclickCallback, btnClass = 'menu-item') {
         const vandaag = new Date();
         const weekdag = vandaag.getDay(); // 0 = zondag, 1 = maandag, etc.
-        const dagenVanDeWeek = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+        const dagenVanDeWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         let weekdagenHTML = '';
         const dagenTotZondag = weekdag === 0 ? 0 : (7 - weekdag);
@@ -12664,7 +12664,7 @@ class Taakbeheer {
                 <button onclick="window.bulkDateAction(0)" class="bulk-action-btn">Today</button>
                 <button onclick="window.bulkDateAction(1)" class="bulk-action-btn">Tomorrow</button>
                 ${weekdagenHTML}
-                <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Opvolgen</button>
+                <button onclick="window.bulkVerplaatsNaar('opvolgen')" class="bulk-action-btn">Follow-up</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-wekelijks')" class="bulk-action-btn">Weekly</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-maandelijks')" class="bulk-action-btn">Monthly</button>
                 <button onclick="window.bulkVerplaatsNaar('uitgesteld-3maandelijks')" class="bulk-action-btn">Quarterly</button>
