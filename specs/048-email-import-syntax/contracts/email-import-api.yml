@@ -1,0 +1,530 @@
+openapi: 3.0.0
+info:
+  title: Tickedify Email Import API
+  description: |
+    Email-to-task import endpoint met @t instructie syntax ondersteuning.
+
+    **Feature**: 048-email-import-syntax
+    **Modified Endpoint**: POST /api/email/import (existing endpoint - behavior extended)
+
+    ## Nieuwe Functionaliteit
+
+    - **@t Instructie Syntax**: Eerste regel van email body kan @t instructie bevatten
+    - **--end-- Marker**: Body truncatie bij --end-- marker (case-insensitive)
+    - **Defer Codes**: Absolute voorrang logica voor postponed lijsten
+    - **Priority Normalisatie**: p0-p9+ codes mappen naar High/Medium/Low
+    - **Backwards Compatible**: Emails zonder @t blijven exact hetzelfde werken
+
+  version: 1.0.0
+  contact:
+    name: Tickedify
+    email: jan@tickedify.com
+
+servers:
+  - url: https://tickedify.com
+    description: Production server
+  - url: https://dev.tickedify.com
+    description: Staging server
+  - url: http://localhost:3000
+    description: Local development
+
+paths:
+  /api/email/import:
+    post:
+      summary: Import email as task
+      description: |
+        Mailgun webhook endpoint that converts inbound emails to tasks.
+
+        **Nieuwe Behavior (Feature 048)**:
+        - Detecteert @t instructie in eerste niet-lege regel van body
+        - Parst semicolon-separated parameters
+        - Truncates body at --end-- marker (always, zelfs zonder @t)
+        - Mapped defer codes naar postponed lijsten
+        - Normaliseert priority codes naar High/Medium/Low
+        - Auto-creates projects en contexts
+
+        **Backwards Compatible**:
+        - Emails zonder @t gebruiken bestaande [Project] @context #tag parsing
+        - Alle bestaande functionaliteit blijft ongewijzigd
+
+      operationId: importEmail
+      tags:
+        - Email Import
+
+      requestBody:
+        description: |
+          Mailgun webhook payload met email data.
+          Format is Mailgun-specific multipart/form-data.
+
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - sender
+                - recipient
+                - subject
+              properties:
+                sender:
+                  type: string
+                  format: email
+                  description: Email address van afzender
+                  example: user@example.com
+
+                recipient:
+                  type: string
+                  format: email
+                  description: |
+                    Import email adres met unique code per user.
+                    Format: import+{unique_code}@mg.tickedify.com
+                  example: import+abc123@mg.tickedify.com
+
+                subject:
+                  type: string
+                  description: |
+                    Email subject line - wordt task titel.
+                    Kan [Project] @context #tags bevatten (bestaande parsing).
+                  example: "[Klant X] Volgende stappen bespreken @werk"
+                  maxLength: 500
+
+                body-plain:
+                  type: string
+                  description: |
+                    Plain text email body.
+
+                    **Nieuwe Processing (Feature 048)**:
+                    1. Eerste niet-lege regel checked voor @t instructie
+                    2. Als @t gevonden: parse parameters (p:, c:, d:, t:, p0-p9, defer codes)
+                    3. Body wordt truncated bij --end-- marker (case-insensitive)
+                    4. @t instructie regel wordt removed from task notes
+                    5. Resterende body wordt task opmerkingen
+
+                    **@t Syntax Example**:
+                    ```
+                    @t p: Klant X; c: Werk; d: 2025-11-03; p1; t: 30;
+
+                    Dit is de taak beschrijving.
+                    Meerdere regels zijn mogelijk.
+
+                    --END--
+                    Handtekening hier (wordt niet opgenomen)
+                    ```
+                  example: |
+                    @t p: Klant X; c: Werk; d: 2025-11-03; p1; t: 30;
+
+                    Bespreek volgende stappen voor project.
+
+                    --END--
+                    Met vriendelijke groet
+
+                stripped-text:
+                  type: string
+                  description: |
+                    Mailgun's stripped body (quotes verwijderd).
+                    Gebruikt als fallback als body-plain niet present.
+
+                body-html:
+                  type: string
+                  description: HTML email body (optioneel, niet gebruikt voor @t parsing)
+
+                from:
+                  type: string
+                  format: email
+                  description: Alternative field name voor sender
+
+                to:
+                  type: string
+                  format: email
+                  description: Alternative field name voor recipient
+
+            examples:
+              basic_at_syntax:
+                summary: Basic @t syntax met alle codes
+                value:
+                  sender: user@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: Volgende stappen bespreken
+                  body-plain: |
+                    @t p: Klant X; c: Werk; d: 2025-11-03; p1; t: 30;
+
+                    Bespreek project roadmap en deliverables.
+
+              defer_code:
+                summary: Defer code (absolute priority)
+                value:
+                  sender: user@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: Follow up volgende maand
+                  body-plain: |
+                    @t dm; p: Project Y; c: Werk;
+
+                    Dit wordt deferred to monthly lijst.
+                    Alle andere codes (project, context) worden genegeerd.
+
+              backwards_compatible:
+                summary: Zonder @t (bestaande parsing)
+                value:
+                  sender: user@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: "[Klant X] Nieuwe taak @werk"
+                  body-plain: |
+                    Taak beschrijving hier.
+
+                    Project: Klant Y
+                    Context: Thuiswerk
+                    Duur: 45
+
+              end_marker:
+                summary: --end-- marker truncatie
+                value:
+                  sender: user@example.com
+                  recipient: import+abc123@mg.tickedify.com
+                  subject: Meeting notes
+                  body-plain: |
+                    @t c: Werk; p2;
+
+                    Belangrijke meeting notes hier.
+
+                    --END--
+                    Met vriendelijke groet,
+                    Jan
+
+                    Deze handtekening wordt NIET opgenomen in task notes.
+
+      responses:
+        '200':
+          description: Email successfully processed and task created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - taskId
+                  - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+                  taskId:
+                    type: string
+                    description: Generated task ID
+                    example: "task_1730392800000_abc123def"
+
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Processing timestamp ISO 8601
+                    example: "2025-10-31T14:30:00.000Z"
+
+                  parsedInstruction:
+                    type: object
+                    description: Parsed @t instruction data (alleen als @t present)
+                    properties:
+                      project:
+                        type: string
+                        nullable: true
+                        example: "Klant X"
+
+                      context:
+                        type: string
+                        nullable: true
+                        example: "Werk"
+
+                      dueDate:
+                        type: string
+                        format: date
+                        nullable: true
+                        example: "2025-11-03"
+
+                      duration:
+                        type: integer
+                        nullable: true
+                        description: Minutes
+                        example: 30
+
+                      priority:
+                        type: string
+                        enum: [High, Medium, Low]
+                        nullable: true
+                        example: "High"
+
+                      lijst:
+                        type: string
+                        enum: [inbox, acties, followup, weekly, monthly, quarterly, biannual, yearly]
+                        description: List waar task naar gestuurd werd
+                        example: "inbox"
+
+                      deferCode:
+                        type: string
+                        enum: [df, dw, dm, d3m, d6m, dy]
+                        nullable: true
+                        description: Defer code als detected
+                        example: null
+
+              examples:
+                basic_success:
+                  summary: Succesvolle task creatie met @t
+                  value:
+                    success: true
+                    taskId: "task_1730392800000_abc123def"
+                    timestamp: "2025-10-31T14:30:00.000Z"
+                    parsedInstruction:
+                      project: "Klant X"
+                      context: "Werk"
+                      dueDate: "2025-11-03"
+                      duration: 30
+                      priority: "High"
+                      lijst: "inbox"
+                      deferCode: null
+
+                defer_success:
+                  summary: Succesvolle defer task creatie
+                  value:
+                    success: true
+                    taskId: "task_1730392800000_xyz789ghi"
+                    timestamp: "2025-10-31T14:30:00.000Z"
+                    parsedInstruction:
+                      project: null
+                      context: null
+                      dueDate: null
+                      duration: null
+                      priority: null
+                      lijst: "monthly"
+                      deferCode: "dm"
+
+        '400':
+          description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - error
+                  - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Missing required email fields (sender, subject)"
+
+                  receivedFields:
+                    type: array
+                    items:
+                      type: string
+                    description: List of fields die wel received waren
+                    example: ["recipient", "body-plain"]
+
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-10-31T14:30:00.000Z"
+
+              examples:
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    success: false
+                    error: "Missing required email fields (sender, subject)"
+                    receivedFields: ["recipient", "body-plain"]
+                    timestamp: "2025-10-31T14:30:00.000Z"
+
+        '404':
+          description: User not found for import code
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - error
+                  - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Invalid import code: abc123"
+
+                  hint:
+                    type: string
+                    description: Gebruiker-vriendelijke hint
+                    example: "Check your personal import email address in Tickedify settings"
+
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-10-31T14:30:00.000Z"
+
+              examples:
+                invalid_import_code:
+                  summary: Invalid import code
+                  value:
+                    success: false
+                    error: "Invalid import code: abc123"
+                    hint: "Check your personal import email address in Tickedify settings"
+                    timestamp: "2025-10-31T14:30:00.000Z"
+
+        '500':
+          description: Server error tijdens processing
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - error
+                  - timestamp
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+
+                  error:
+                    type: string
+                    description: Error message
+                    example: "Database error during task creation"
+
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-10-31T14:30:00.000Z"
+
+components:
+  schemas:
+    EmailInstruction:
+      type: object
+      description: |
+        Parsed @t instruction data.
+        Runtime model - niet persistent in database.
+      properties:
+        project:
+          type: string
+          nullable: true
+          description: Project naam uit p: code
+          example: "Klant X"
+
+        context:
+          type: string
+          nullable: true
+          description: Context naam uit c: code
+          example: "Werk"
+
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          description: ISO date YYYY-MM-DD uit d: code
+          example: "2025-11-03"
+
+        duration:
+          type: integer
+          nullable: true
+          description: Minutes uit t: code
+          example: 30
+          minimum: 1
+
+        priority:
+          type: string
+          enum: [High, Medium, Low]
+          nullable: true
+          description: Normalized priority uit p0-p9+ codes
+          example: "High"
+
+        lijst:
+          type: string
+          enum: [inbox, acties, followup, weekly, monthly, quarterly, biannual, yearly]
+          description: List destination (inbox or defer mapping)
+          example: "inbox"
+
+        deferCode:
+          type: string
+          enum: [df, dw, dm, d3m, d6m, dy]
+          nullable: true
+          description: Original defer code als detected
+          example: null
+
+        hasDefer:
+          type: boolean
+          description: True if defer code was detected (triggers short-circuit logic)
+          example: false
+
+  securitySchemes:
+    mailgunSignature:
+      type: apiKey
+      in: header
+      name: X-Mailgun-Signature
+      description: |
+        Mailgun webhook signature voor verification.
+        Currently niet geïmplementeerd - security via unique import code per user.
+
+security:
+  - mailgunSignature: []
+
+tags:
+  - name: Email Import
+    description: |
+      Email-to-task import endpoint met @t instructie syntax.
+
+      **Feature 048**: Email Import Syntax Uitbreiding
+
+      ## @t Instructie Syntax
+
+      Plaats @t instructie op eerste niet-lege regel van email body:
+
+      ```
+      @t p: Project naam; c: Context naam; d: YYYY-MM-DD; p1; t: 30;
+      ```
+
+      ### Ondersteunde Codes
+
+      - **p: naam** - Project naam
+      - **c: naam** - Context naam
+      - **d: YYYY-MM-DD** - Due date (ISO format)
+      - **t: minuten** - Duur in minuten
+      - **p0-p9** - Priority (p0/p1=High, p2=Medium, p3/p4+=Low)
+      - **df** - Defer to Follow-up
+      - **dw** - Defer to Weekly
+      - **dm** - Defer to Monthly
+      - **d3m** - Defer to Quarterly
+      - **d6m** - Defer to Bi-annual
+      - **dy** - Defer to Yearly
+
+      ### Defer Absolute Priority
+
+      Wanneer defer code detected wordt, worden ALLE andere codes genegeerd:
+
+      ```
+      @t dm; p: Project X; c: Werk;
+      # Result: Taak naar monthly lijst, project en context IGNORED
+      ```
+
+      ### --end-- Marker
+
+      Truncate body bij --end-- marker (case-insensitive):
+
+      ```
+      Taak beschrijving hier.
+
+      --END--
+
+      Handtekening hier (niet opgenomen in task notes)
+      ```
+
+      ## Backwards Compatibility
+
+      Emails zonder @t blijven exact hetzelfde werken:
+      - [Project] in subject
+      - @context in subject
+      - #tags in subject
+      - "Project:", "Context:", "Duur:", "Deadline:" in body

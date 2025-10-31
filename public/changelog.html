@@ -140,9 +140,65 @@
         </div>
 
         <!-- Version 0.21.5 - IMPROVEMENT: Button Text Clarity -->
+        <!-- Version 0.21.6 - FEATURE: Email Import @t Syntax -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.5</span>
+                <span class="version-badge badge-latest">v0.21.6</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚡ FEATURE: Email Import @t Instruction Syntax</div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>What's New</strong>: Email-to-task import ondersteunt nu een gestructureerde <code>@t</code> instructie syntax. Plaats <code>@t p: Project; c: Context; d: 2025-11-15; p1; t: 30;</code> op de eerste regel van je email om direct project, context, due date, prioriteit en duur in te stellen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Supported Codes</strong>: <code>p:</code> project, <code>c:</code> context, <code>d:</code> due date (ISO YYYY-MM-DD), <code>t:</code> duration (minutes), <code>p0-p9</code> priority normalization, <code>df/dw/dm/d3m/d6m/dy</code> defer shortcuts naar postponed lijsten.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">⏸️</div>
+                        <div class="change-content">
+                            <strong>Defer Priority</strong>: Defer codes hebben absolute voorrang - <code>@t dm;</code> stuurt taak naar Monthly lijst en negeert alle andere codes. Perfect voor "uit je hoofd krijgen" zonder details.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✂️</div>
+                        <div class="change-content">
+                            <strong>Body Truncation</strong>: Nieuwe <code>--end--</code> marker (case-insensitive) knipt email body af - ideaal voor handtekeningen. Werkt met én zonder @t syntax.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📚</div>
+                        <div class="change-content">
+                            <strong>Documentation</strong>: Comprehensive helpfile toegankelijk via <code>/email-import-help.md</code> met syntax reference, 10+ voorbeelden, FAQ en troubleshooting.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">↩️</div>
+                        <div class="change-content">
+                            <strong>Backwards Compatible</strong>: Emails zonder <code>@t</code> blijven exact hetzelfde werken - bestaande [Project] @context parsing blijft ongewijzigd.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📍</div>
+                        <div class="change-content">
+                            <strong>Technical Details</strong>: 3 nieuwe parser helper functies, ~150 regels @t parsing logic in <code>server.js:parseEmailToTask</code>, priority normalisatie (p0/p1→High, p2→Medium, p3+→Low), duplicate code handling, error tolerance met fallback, comprehensive logging.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.5 - IMPROVEMENT: Message Modal Button Text -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.21.5</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

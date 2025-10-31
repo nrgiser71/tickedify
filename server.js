@@ -1171,11 +1171,12 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
             }
         }
 
+        // T013: Update INSERT query to include prioriteit kolom
         const result = await pool.query(`
             INSERT INTO taken (
-                id, tekst, opmerkingen, lijst, aangemaakt, project_id, context_id, 
-                verschijndatum, duur, type, user_id
-            ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7, $8, $9, $10)
+                id, tekst, opmerkingen, lijst, aangemaakt, project_id, context_id,
+                verschijndatum, duur, prioriteit, type, user_id
+            ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `, [
             taskId,
@@ -1186,6 +1187,7 @@ app.post('/api/email/import', upload.any(), async (req, res) => {
             taskData.contextId,
             verschijndatumForDb,
             taskData.duur,
+            taskData.prioriteit || null,  // New: normalized priority (High/Medium/Low)
             'taak',
             userId
         ]);
@@ -1301,11 +1303,91 @@ async function findOrCreateContext(contextName, userId = 'default-user-001') {
 }
 
 // Email parsing helper function
+// Helper function: Truncate body at --end-- marker (case-insensitive)
+// T004: --end-- marker truncation - ALWAYS applied, even without @t
+function truncateAtEndMarker(body) {
+    const endMarkerRegex = /--end--/i;
+    const endIndex = body.search(endMarkerRegex);
+
+    if (endIndex !== -1) {
+        return body.substring(0, endIndex).trim();
+    }
+
+    return body;
+}
+
+// Helper function: Parse defer code from segment
+// T007: Defer code parser - df/dw/dm/d3m/d6m/dy mapping
+function parseDeferCode(segment) {
+    const deferMatch = segment.match(/^(df|dw|dm|d3m|d6m|dy)$/i);
+    if (!deferMatch) return null;
+
+    const deferMapping = {
+        'df': 'followup',      // Defer to Follow-up
+        'dw': 'weekly',        // Defer to Weekly
+        'dm': 'monthly',       // Defer to Monthly
+        'd3m': 'quarterly',    // Defer to Quarterly
+        'd6m': 'biannual',     // Defer to Bi-annual
+        'dy': 'yearly'         // Defer to Yearly
+    };
+
+    const code = deferMatch[1].toLowerCase();
+    return deferMapping[code] || null;
+}
+
+// Helper function: Parse priority code from segment
+// T008: Priority code parser - p0-p9+ normalization
+function parsePriorityCode(segment) {
+    const priorityMatch = segment.match(/^p(\d+)$/i);
+    if (!priorityMatch) return null;
+
+    const num = parseInt(priorityMatch[1]);
+
+    // Normalization: p0/p1 → High, p2 → Medium, p3/p4+ → Low
+    if (num === 0 || num === 1) return 'High';
+    if (num === 2) return 'Medium';
+    if (num === 3 || num >= 4) return 'Low';
+
+    return null;
+}
+
+// Helper function: Parse key-value pairs (p:, c:, d:, t:)
+// T009: Key-value parser with validation
+function parseKeyValue(segment) {
+    const kvMatch = segment.match(/^([pcdt])\s*:\s*(.+)$/i);
+    if (!kvMatch) return null;
+
+    const key = kvMatch[1].toLowerCase();
+    const value = kvMatch[2].trim();
+
+    if (!value) return null;
+
+    // Validation per key type
+    if (key === 'p' || key === 'c') {
+        // Project or Context: any non-empty string
+        return { key, value };
+    }
+
+    if (key === 'd') {
+        // Due date: must match ISO format YYYY-MM-DD
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+        return { key, value };
+    }
+
+    if (key === 't') {
+        // Duration: must be positive integer
+        if (!/^\d+$/.test(value)) return null;
+        return { key, value: parseInt(value) };
+    }
+
+    return null;
+}
+
 function parseEmailToTask(emailData) {
     const { sender, subject, body, timestamp } = emailData;
-    
+
     console.log('🔍 Parsing email content...');
-    
+
     // Initialize task data
     const taskData = {
         tekst: subject, // Will be cleaned up later to just task name
@@ -1317,9 +1399,14 @@ function parseEmailToTask(emailData) {
         contextName: null,
         verschijndatum: null,
         duur: null,
+        prioriteit: null,
         originalSender: sender,
         importedAt: timestamp
     };
+
+    // T014: Error handling wrapper for @t parsing
+    // If parsing fails, fall back to standard behavior (backwards compatible)
+    let atParsingFailed = false;
     
     // Parse subject line for project, context, and tags
     // Format: [Project] Task title @context #tag
@@ -1356,14 +1443,124 @@ function parseEmailToTask(emailData) {
         taskData.tekst = cleanTitle;
     }
     
-    // Parse body for structured data
-    if (body && body.length > 10) {
-        console.log('📄 Parsing email body...');
-        
+    // T004: Apply --end-- marker truncation FIRST (always, even without @t)
+    let processedBody = body || '';
+    processedBody = truncateAtEndMarker(processedBody);
+
+    // T014 & T015: Wrap @t parsing in try-catch for error handling
+    let atInstructionDetected = false;
+    let remainingBody = processedBody;
+
+    try {
+        // T005: Check for @t trigger in first non-empty line
+        const bodyLines = processedBody.split('\n');
+        const firstLine = bodyLines.find(line => line.trim().length > 0);
+
+        if (firstLine) {
+            const atTriggerMatch = firstLine.match(/^@t\s+(.+)$/);
+
+            if (atTriggerMatch) {
+                atInstructionDetected = true;
+                const instructionContent = atTriggerMatch[1];
+                console.log('📧 @t instruction detected:', instructionContent);
+
+                // T006: Split instruction into segments
+                const segments = instructionContent.split(';')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+
+                console.log('📋 Parsed segments:', segments);
+
+                // T010: Track seen codes for duplicate detection
+                const seenCodes = new Set();
+                let deferDetected = false;
+
+                // T012: Process segments - check for defer FIRST
+                for (const segment of segments) {
+                    // T007: Check for defer code (absolute priority)
+                    const deferLijst = parseDeferCode(segment);
+                    if (deferLijst) {
+                        console.log('⏸️ Defer code detected:', segment, '→', deferLijst);
+                        taskData.lijst = deferLijst;
+                        deferDetected = true;
+                        break; // Stop processing - defer has absolute priority
+                    }
+                }
+
+                // T015: Log parsing decisions
+                console.log('📊 Parsing decisions:', {
+                    deferDetected,
+                    seenCodesBeforeProcessing: Array.from(seenCodes)
+                });
+
+                // If defer detected, ignore all other codes
+                if (!deferDetected) {
+                    for (const segment of segments) {
+                        // T008: Check for priority code
+                        const priority = parsePriorityCode(segment);
+                        if (priority && !seenCodes.has('priority')) {
+                            console.log('🎯 Priority detected:', segment, '→', priority);
+                            taskData.prioriteit = priority;
+                            seenCodes.add('priority');
+                            continue;
+                        }
+
+                        // T009: Check for key-value pairs
+                        const keyValue = parseKeyValue(segment);
+                        if (keyValue) {
+                            const { key, value } = keyValue;
+
+                            if (key === 'p' && !seenCodes.has('project')) {
+                                console.log('📁 Project detected:', value);
+                                taskData.projectName = value;
+                                seenCodes.add('project');
+                            } else if (key === 'c' && !seenCodes.has('context')) {
+                                console.log('🏷️ Context detected:', value);
+                                taskData.contextName = value;
+                                seenCodes.add('context');
+                            } else if (key === 'd' && !seenCodes.has('due')) {
+                                console.log('📅 Due date detected:', value);
+                                taskData.verschijndatum = value;
+                                seenCodes.add('due');
+                            } else if (key === 't' && !seenCodes.has('duration')) {
+                                console.log('⏱️ Duration detected:', value);
+                                taskData.duur = value;
+                                seenCodes.add('duration');
+                            }
+                        }
+                    }
+
+                    // T015: Log final parsed values
+                    console.log('✨ Final @t parsing result:', {
+                        project: taskData.projectName,
+                        context: taskData.contextName,
+                        due: taskData.verschijndatum,
+                        duration: taskData.duur,
+                        priority: taskData.prioriteit,
+                        lijst: taskData.lijst,
+                        codesApplied: Array.from(seenCodes)
+                    });
+                }
+
+                // T011: Remove @t instruction line from notes
+                remainingBody = bodyLines.slice(1).join('\n').trim();
+            }
+        }
+    } catch (error) {
+        // T014: Error handling - fall back to standard parsing
+        console.error('⚠️ Error parsing @t instruction, falling back to standard mode:', error.message);
+        atParsingFailed = true;
+        atInstructionDetected = false; // Reset flag to use standard parsing
+    }
+
+    // Parse body for structured data (original behavior - backwards compatible)
+    if (processedBody && processedBody.length > 10 && !atInstructionDetected) {
+        console.log('📄 Parsing email body (standard mode)...');
+
         // Look for structured fields in body
-        const bodyLines = body.split('\n');
-        
-        for (const line of bodyLines) {
+        const bodyLinesForParsing = processedBody.split('\n');
+
+        for (const line of bodyLinesForParsing) {
             const trimmedLine = line.trim().toLowerCase();
             
             // Extract duration
@@ -1404,12 +1601,12 @@ function parseEmailToTask(emailData) {
         }
         
         // Extract body content as opmerkingen, excluding structured fields
-        const bodyWithoutStructured = body
+        const bodyWithoutStructured = processedBody
             .split('\n')
             .filter(line => {
                 const lower = line.trim().toLowerCase();
-                return !lower.startsWith('duur:') && 
-                       !lower.startsWith('deadline:') && 
+                return !lower.startsWith('duur:') &&
+                       !lower.startsWith('deadline:') &&
                        !lower.startsWith('datum:') &&
                        !lower.startsWith('project:') &&
                        !lower.startsWith('context:') &&
@@ -1418,21 +1615,29 @@ function parseEmailToTask(emailData) {
             })
             .join('\n')
             .trim();
-            
+
         if (bodyWithoutStructured) {
             taskData.opmerkingen = bodyWithoutStructured;
             console.log('📝 Found opmerkingen:', taskData.opmerkingen.substring(0, 50) + '...');
         }
     }
-    
+
+    // If @t was detected, use remainingBody (after @t line removal) as opmerkingen
+    if (atInstructionDetected && remainingBody) {
+        taskData.opmerkingen = remainingBody;
+        console.log('📝 @t mode - opmerkingen set to remaining body:', taskData.opmerkingen.substring(0, 50) + '...');
+    }
+
     console.log('✅ Parsed task data:', {
         tekst: taskData.tekst.substring(0, 50) + '...',
         project: taskData.projectName,
         context: taskData.contextName,
         duur: taskData.duur,
-        deadline: taskData.verschijndatum
+        deadline: taskData.verschijndatum,
+        prioriteit: taskData.prioriteit,
+        lijst: taskData.lijst
     });
-    
+
     return taskData;
 }
 
