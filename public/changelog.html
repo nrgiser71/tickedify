@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.22 - HOTFIX: Email Help API Route -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.22</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL HOTFIX: Email Help Route naar /api/ Namespace</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: Vercel heeft eigen static file serving die voorrang heeft op Express routes. Route <code>/email-import-help</code> wordt altijd eerst door Vercel static serving geprobeert, ook al bestaat het bestand niet.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Fix</strong>: Route verplaatst naar <code>/api/email-import-help</code>. API routes hebben voorrang en worden niet door static serving gecheckt. Frontend fetch updated naar nieuwe URL.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.21 - HOTFIX: Email Help Endpoint with fs.readFile -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.21</span>
+                <span class="version-badge badge-fix">v0.21.21</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

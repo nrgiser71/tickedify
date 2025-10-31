@@ -455,7 +455,7 @@ app.get('/api/status', (req, res) => {
 });
 
 // Email import help documentation
-app.get('/email-import-help', (req, res) => {
+app.get('/api/email-import-help', (req, res) => {
     const helpPath = path.join(__dirname, 'public', 'email-import-help.md');
     fs.readFile(helpPath, 'utf8', (err, data) => {
         if (err) {

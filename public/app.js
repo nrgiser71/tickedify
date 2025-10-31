@@ -14247,7 +14247,7 @@ class EmailHelpModal {
         if (this.contentLoaded) return;
 
         try {
-            const response = await fetch('/email-import-help');
+            const response = await fetch('/api/email-import-help');
             const markdown = await response.text();
             this.contentEl.innerHTML = this.renderMarkdown(markdown);
             this.contentLoaded = true;
