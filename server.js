@@ -1054,7 +1054,7 @@ async function getUserIdByEmail(email) {
 }
 
 // Email Import System - Mailgun Webhook Handler
-app.post('/api/email/import', upload.any(), async (req, res) => {
+app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
     try {
         console.log('📧 Email import request received');
         console.log('Headers:', req.headers);
