@@ -1458,11 +1458,22 @@ function parseEmailToTask(emailData) {
 
     try {
         // T005: Check for @t trigger in first non-empty line
+        console.log('🔍 DEBUG: Starting @t detection...');
+        console.log('🔍 DEBUG: processedBody length:', processedBody.length);
+        console.log('🔍 DEBUG: processedBody first 200 chars:', processedBody.substring(0, 200));
+
         const bodyLines = processedBody.split('\n');
+        console.log('🔍 DEBUG: bodyLines count:', bodyLines.length);
+        console.log('🔍 DEBUG: First 3 lines:', bodyLines.slice(0, 3));
+
         const firstLine = bodyLines.find(line => line.trim().length > 0);
+        console.log('🔍 DEBUG: firstLine found:', firstLine);
+        console.log('🔍 DEBUG: firstLine trimmed:', firstLine ? firstLine.trim() : 'null');
 
         if (firstLine) {
             const atTriggerMatch = firstLine.match(/^@t\s*(.+)$/);
+            console.log('🔍 DEBUG: Regex test result:', atTriggerMatch ? 'MATCHED' : 'NO MATCH');
+            console.log('🔍 DEBUG: Regex match details:', atTriggerMatch);
 
             if (atTriggerMatch) {
                 atInstructionDetected = true;
@@ -1501,8 +1512,11 @@ function parseEmailToTask(emailData) {
                 // If defer detected, ignore all other codes
                 if (!deferDetected) {
                     for (const segment of segments) {
+                        console.log('🔍 DEBUG: Processing segment:', JSON.stringify(segment));
+
                         // T008: Check for priority code
                         const priority = parsePriorityCode(segment);
+                        console.log('🔍 DEBUG: Priority check result:', priority);
                         if (priority && !seenCodes.has('priority')) {
                             console.log('🎯 Priority detected:', segment, '→', priority);
                             taskData.prioriteit = priority;
@@ -1512,6 +1526,7 @@ function parseEmailToTask(emailData) {
 
                         // T009: Check for key-value pairs
                         const keyValue = parseKeyValue(segment);
+                        console.log('🔍 DEBUG: Key-value check result:', keyValue);
                         if (keyValue) {
                             const { key, value } = keyValue;
 
@@ -1532,6 +1547,8 @@ function parseEmailToTask(emailData) {
                                 taskData.duur = value;
                                 seenCodes.add('duration');
                             }
+                        } else {
+                            console.log('⚠️ DEBUG: Segment not recognized as any code type:', segment);
                         }
                     }
 
@@ -1549,14 +1566,21 @@ function parseEmailToTask(emailData) {
 
                 // T011: Remove @t instruction line from notes
                 remainingBody = bodyLines.slice(1).join('\n').trim();
+            } else {
+                console.log('⚠️ DEBUG: @t regex did NOT match - using standard mode');
             }
+        } else {
+            console.log('⚠️ DEBUG: No firstLine found - body might be empty');
         }
     } catch (error) {
         // T014: Error handling - fall back to standard parsing
         console.error('⚠️ Error parsing @t instruction, falling back to standard mode:', error.message);
+        console.error('⚠️ Error stack:', error.stack);
         atParsingFailed = true;
         atInstructionDetected = false; // Reset flag to use standard parsing
     }
+
+    console.log('🔍 DEBUG: Final atInstructionDetected value:', atInstructionDetected);
 
     // Parse body for structured data (original behavior - backwards compatible)
     if (processedBody && processedBody.length > 10 && !atInstructionDetected) {
