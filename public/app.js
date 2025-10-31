@@ -13885,6 +13885,10 @@ async function openBulkEditPopupAsync() {
 
     // Feature 044: CRITICAL FIX - Create validated snapshot BEFORE popup opens
     // This prevents stale IDs from auto-refresh during popup display (10-30 sec wait)
+    // v0.20.37: Use CORRECT data source - planningActies for planning, taken for other lists
+    const currentDataSource = taskManager.planningActies || taskManager.taken;
+    console.log(`[BULK EDIT] Using data source: ${taskManager.planningActies ? 'planningActies' : 'taken'} (${currentDataSource.length} tasks)`);
+
     const selectedIds = Array.from(taskManager.geselecteerdeTaken);
     const validIds = selectedIds.filter(id => {
         // Rule 1: Reject test pattern IDs
@@ -13892,8 +13896,8 @@ async function openBulkEditPopupAsync() {
             console.warn('[BULK EDIT] Rejecting test ID from snapshot:', id);
             return false;
         }
-        // Rule 2: Verify task exists in current loaded data
-        const exists = taskManager.taken.find(t => t.id === id);
+        // Rule 2: Verify task exists in CURRENT data source (not stale array!)
+        const exists = currentDataSource.find(t => t.id === id);
         if (!exists) {
             console.warn('[BULK EDIT] Rejecting non-existent ID from snapshot:', id);
             return false;

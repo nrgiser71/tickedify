@@ -134,10 +134,59 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.37 - THE REAL FIX: Data Source Inconsistency -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.37</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🎯 EINDELIJK: Het Echte Probleem Opgelost</div>
+                    <div class="change-item">
+                        <div class="change-icon">💡</div>
+                        <div class="change-content">
+                            <strong>Root Cause Discovery</strong>: v0.20.34, v0.20.35 én v0.20.36 losten het VERKEERDE probleem op! Het echte issue: <strong>Data source inconsistentie</strong>. Bulk edit validation checkte <code>taskManager.taken</code> (stale data van actielijst), maar dagelijkse planning toont <code>taskManager.planningActies</code> (recente server data). Tasks die IN planningActies zaten werden gevalideerd tegen VERKEERDE array → valse positieve validatie → 404 errors bij PUT request.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>De Fix: Juiste Data Source</strong>: <code>openBulkEditPopupAsync()</code> gebruikt nu <code>taskManager.planningActies || taskManager.taken</code> voor validatie (regel 13889). Dit is PRECIES dezelfde fallback als de UI rendering gebruikt. Validatie checkt nu tegen de array die DAADWERKELIJK wordt getoond → geen out-of-sync meer mogelijk → geen 404 errors meer.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Hoe We Het Vonden</strong>: Console toonde <code>[BULK EDIT] Snapshot created: 2 selected → 2 valid</code> maar daarna 404 errors. Dit bewees: validatie zag tasks als "valid" die NIET in database bestonden. Task IDs zoals <code>task_1757165478375_pttiik976</code> waren GEEN test IDs. Ze zaten WEL in de verkeerde array, maar NIET in database → data source mismatch.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Waarom Andere Bulk Operaties Werkten</strong>: Bulk move/delete doen GEEN voorafgaande validatie - ze vertrouwen direct op geselecteerde IDs. Database geeft error als ID niet bestaat (expected behavior). Bulk edit deed WEL validatie maar tegen VERKEERDE array → 404s leken onverwacht. Nu checken we de JUISTE array → consistency.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Enhanced Logging</strong>: Console toont nu <code>[BULK EDIT] Using data source: planningActies (X tasks)</code> of <code>taken (Y tasks)</code>. Zo zie je exact welke array wordt gebruikt voor validatie. Dit maakt toekomstige debugging veel eenvoudiger.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>Lesson Learned</strong>: 4 versies (v0.20.34-37) nodig om het echte probleem te vinden. v0.20.34: preventie nieuwe invalid selections. v0.20.35: cleanup bestaande invalid selections. v0.20.36: snapshot tegen timing bug. v0.20.37: JUISTE data source check. Moral: debug met console data, niet aannames.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.36 - CRITICAL FIX: Bulk Edit Timing Bug -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.36</span>
+                <span class="version-badge badge-fix">v0.20.36</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
