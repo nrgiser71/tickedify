@@ -8,7 +8,7 @@
 let currentMessages = [];
 let currentMessageIndex = 0;
 let pollingInterval = null;
-const POLLING_INTERVAL = 30 * 1000; // 30 seconds (aligned with version polling)
+const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 // Auto-check on page load and start polling
 document.addEventListener('DOMContentLoaded', async () => {

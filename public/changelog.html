@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.1 - FIX: Restore Polling Interval -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.1</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Restore Message Polling Interval to 5 Minutes</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚙️</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Restored background message polling interval from 30 seconds back to 5 minutes. The retry logic (3 attempts with 2-second intervals) already ensures messages appear within 2-6 seconds after login, making frequent polling unnecessary.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Reduces server load while maintaining immediate message delivery after login. Background polling at 5-minute intervals is sufficient for users already logged in.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Technical Details</strong>: Changed POLLING_INTERVAL in <code>public/js/message-modal.js</code> from 30000ms back to 300000ms (5 minutes). Retry logic remains active for immediate display on login.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.0 - MAJOR RELEASE -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.0</span>
+                <span class="version-badge badge-feature">v0.21.0</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
