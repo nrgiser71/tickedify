@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.20.45 - FIX: Message Polling Timing Issue -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.20.45</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Messages Now Appear Immediately After Login</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>What Changed</strong>: Messages with "immediate" trigger now appear within 2-6 seconds after login instead of waiting 5 minutes. Polling interval reduced from 5 minutes to 30 seconds (aligned with version update polling).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔄</div>
+                        <div class="change-content">
+                            <strong>Retry Logic</strong>: Added intelligent retry mechanism (3 attempts with 2-second intervals) to handle race conditions during login. If initial check fails due to session timing, system automatically retries before falling back to polling.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Technical Details</strong>: Modified <code>public/js/message-modal.js</code> - changed POLLING_INTERVAL from 300000ms to 30000ms, added retry logic in DOMContentLoaded event, and modified checkForMessages() to return success boolean for retry detection.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Users see important announcements, tips, and notifications almost immediately after logging in. Real-time message delivery greatly improves user experience and ensures critical information reaches users promptly.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.20.44 - FIX: Message Form Validation Bug -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.20.44</span>
+                <span class="version-badge badge-fix">v0.20.44</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
