@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.20 - HOTFIX: Email Help Endpoint -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.20</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 HOTFIX: Email Help Modal NOT_FOUND Error</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Email help modal gaf "NOT_FOUND" error bij klikken op vraagteken icoon. Route <code>/email-import-help</code> serveerde .md bestand zonder juiste content-type header.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Route stuurt nu <code>text/plain</code> content-type header mee. Help modal laadt nu correct de volledige markdown content en rendert deze mooi geformatteerd.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.19 - Email Import Help Modal -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.19</span>
+                <span class="version-badge badge-feature">v0.21.19</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

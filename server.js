@@ -455,7 +455,9 @@ app.get('/api/status', (req, res) => {
 
 // Email import help documentation
 app.get('/email-import-help', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'email-import-help.md'));
+    const helpPath = path.join(__dirname, 'public', 'email-import-help.md');
+    res.type('text/plain');
+    res.sendFile(helpPath);
 });
 
 // Try to import and initialize database
