@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const multer = require('multer');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
@@ -456,8 +457,14 @@ app.get('/api/status', (req, res) => {
 // Email import help documentation
 app.get('/email-import-help', (req, res) => {
     const helpPath = path.join(__dirname, 'public', 'email-import-help.md');
-    res.type('text/plain');
-    res.sendFile(helpPath);
+    fs.readFile(helpPath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Failed to read email-import-help.md:', err);
+            return res.status(500).send('Failed to load help content');
+        }
+        res.type('text/plain');
+        res.send(data);
+    });
 });
 
 // Try to import and initialize database

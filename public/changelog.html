@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.21 - HOTFIX: Email Help Endpoint with fs.readFile -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.21</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL HOTFIX: Email Help Endpoint NOT_FOUND</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: Route <code>/email-import-help</code> werd nooit bereikt omdat <code>express.static('public')</code> middleware eerst probeerde het .md bestand te serveren maar Vercel kan .md bestanden niet als statische files serveren.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Fix</strong>: Route gebruikt nu <code>fs.readFile()</code> om het bestand direct te lezen en de content als <code>text/plain</code> terug te sturen. Dit bypassed de static file middleware en werkt altijd.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.20 - HOTFIX: Email Help Endpoint -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.20</span>
+                <span class="version-badge badge-fix">v0.21.20</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
