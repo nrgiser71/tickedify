@@ -1389,6 +1389,41 @@ function parseKeyValue(segment) {
     return null;
 }
 
+/**
+ * Parse email to task with @t instruction syntax support (Feature 048)
+ *
+ * Supports two parsing modes:
+ * 1. @t instruction syntax (NEW - v0.21.6+):
+ *    @t p: Project; c: Context; d: 2025-11-03; p1; t: 30; df/dw/dm/d3m/d6m/dy;
+ *
+ * 2. Legacy parsing (backwards compatible):
+ *    Subject: [Project] Task @context #tag
+ *    Body: Project: X\nContext: Y\nDuur: 30\nDeadline: 2025-11-03
+ *
+ * @t Instruction Codes:
+ * - p: Project name (auto-creates if not exists)
+ * - c: Context name (auto-creates if not exists)
+ * - d: Due date (ISO format YYYY-MM-DD)
+ * - t: Duration in minutes (positive integer)
+ * - p0-p9: Priority (p0/p1→hoog, p2→gemiddeld, p3+→laag)
+ * - df/dw/dm/d3m/d6m/dy: Defer codes (ABSOLUTE PRIORITY - ignores all other codes)
+ *
+ * Special Features:
+ * - --end-- marker: Truncates body (case-insensitive, works with/without @t)
+ * - Defer absolute priority: When defer code detected, ALL other codes ignored
+ * - Error tolerance: Invalid codes silently ignored, task created with valid codes
+ * - Duplicate handling: First occurrence wins, duplicates ignored
+ * - Windows line endings: Handles both \n and \r\n correctly
+ *
+ * Bug Fixes History:
+ * - v0.21.9: Fixed Windows line endings (\r\n) breaking @t detection
+ * - v0.21.10: Fixed defer lijst names (English → Dutch prefixed)
+ * - v0.21.11: Fixed priority values (English → Dutch lowercase)
+ * - v0.21.12: Removed debug logging after successful testing
+ *
+ * @param {Object} emailData - { sender, subject, body, timestamp }
+ * @returns {Object} taskData - Parsed task data ready for database insertion
+ */
 function parseEmailToTask(emailData) {
     const { sender, subject, body, timestamp } = emailData;
 
