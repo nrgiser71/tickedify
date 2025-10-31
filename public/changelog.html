@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.18 - HOTFIX: Bijlage ID Mismatch Bug -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.18</span>
+                <span class="version-date">31 oktober 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL HOTFIX: Bijlage Download Gefixed</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Gefixed 404 error bij downloaden van bijlagen. StorageManager genereert een bijlageId dat gebruikt wordt in B2 filename, maar server.js genereerde OPNIEUW een ID voor de database record. Dit zorgde voor een mismatch - B2 file had naam met ID_1, database record had ID_2. Download endpoint kon bijlage niet vinden.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Database INSERT gebruikt nu <code>uploadResult.id</code> (het ID van StorageManager) i.p.v. een nieuw gegenereerd ID. Bijlage ID in database matcht nu met B2 filename. Download endpoint kan bijlagen nu correct ophalen en downloaden.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.17 - HOTFIX: StorageManager Call Signature Bug -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.17</span>
+                <span class="version-badge badge-fix">v0.21.17</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">

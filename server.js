@@ -1245,30 +1245,30 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                             userId        // User ID for storage path
                         );
 
-                        // T014: Insert bijlage record
-                        const bijlageId = 'bijlage_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        // T014: Insert bijlage record using uploadResult metadata
                         await pool.query(`
                             INSERT INTO bijlagen (
                                 id, taak_id, bestandsnaam, bestandsgrootte, mimetype,
                                 storage_type, storage_path, user_id
                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                         `, [
-                            bijlageId,
-                            createdTask.id,
-                            matchedFile.originalname,
-                            matchedFile.size,
-                            matchedFile.mimetype,
-                            'backblaze',
-                            uploadResult.fileName,
-                            userId
+                            uploadResult.id,            // Use ID from StorageManager (matches B2 filename)
+                            uploadResult.taak_id,
+                            uploadResult.bestandsnaam,
+                            uploadResult.bestandsgrootte,
+                            uploadResult.mimetype,
+                            uploadResult.storage_type,
+                            uploadResult.storage_path,
+                            uploadResult.user_id
                         ]);
 
-                        console.log(`✅ Attachment saved: ${bijlageId}`);
+                        console.log(`✅ Bijlage uploaded to B2: ${uploadResult.storage_path}`);
+                        console.log(`💾 Bijlage record created: ${uploadResult.id}`);
 
                         attachmentResult = {
                             processed: true,
                             matched: matchedFile.originalname,
-                            bijlage_id: bijlageId,
+                            bijlage_id: uploadResult.id,
                             size: matchedFile.size
                         };
                     }
