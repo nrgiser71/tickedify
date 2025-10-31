@@ -438,7 +438,7 @@ app.get('/api/ping', (req, res) => {
 });
 
 app.get('/api/status', (req, res) => {
-    res.json({ 
+    res.json({
         status: 'running',
         timestamp: new Date().toISOString(),
         node_version: process.version,
@@ -451,6 +451,11 @@ app.get('/api/status', (req, res) => {
             has_postgres_url_non_pooling: !!process.env.POSTGRES_URL_NON_POOLING
         }
     });
+});
+
+// Email import help documentation
+app.get('/email-import-help', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'email-import-help.md'));
 });
 
 // Try to import and initialize database
