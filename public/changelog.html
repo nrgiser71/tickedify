@@ -139,10 +139,57 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.32 - FIX: Complete Filter Persistence for Recurring Tasks -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.32</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Volledige Filter Persistentie voor Herhalende Taken</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Probleem opgelost</strong>: v0.21.31 loste het filter persistentie probleem slechts gedeeltelijk op. Filter werd nog steeds vergeten bij calendar grid refresh en herhalende taak refresh.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: De <code>completePlanningTask()</code> functie heeft 3 aparte render flows, maar alleen de eerste had een filter call. De calendar grid refresh (regel 10808) en herhalende taak refresh (regel 10859) misten beiden de <code>filterPlanningActies()</code> call.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛠️</div>
+                        <div class="change-content">
+                            <strong>Oplossing</strong>: Twee extra <code>filterPlanningActies()</code> calls toegevoegd:
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Na calendar grid refresh (regel 10811)</li>
+                                <li>Na herhalende taak actions list refresh (regel 10862)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Resultaat</strong>: Filter blijft nu 100% persistent door de hele completion workflow: eerste refresh ✅, calendar grid rebuild ✅, herhalende taak creation ✅.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📍</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Gebruikers zien nu ALLEEN gefilterde taken na het afvinken van herhalende taken, consistent met het gedrag bij normale taken.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.31 - FIX: Filter Persistence for Recurring Tasks -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.31</span>
+                <span class="version-badge badge-fix">v0.21.31</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

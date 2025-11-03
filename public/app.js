@@ -10806,6 +10806,10 @@ class Taakbeheer {
                             
                             kalenderContainer.innerHTML = newHTML;
                             this.bindDragAndDropEvents(); // Re-bind events for calendar too
+
+                            // Re-apply filters after calendar grid refresh (Feature 052 - recurring task filter persistence)
+                            this.filterPlanningActies();
+
                             console.log('<i class="fas fa-check"></i> Calendar updated with filtered planning data');
                         } else {
                             console.error('<i class="ti ti-x"></i> Kalender container not found in DOM');
@@ -10853,6 +10857,9 @@ class Taakbeheer {
                                 const ingeplandeActies = ingeplandeResponse.ok ? await ingeplandeResponse.json() : [];
                                 actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies, ingeplandeActies);
                                 this.bindDragAndDropEvents();
+
+                                // Re-apply filters after recurring task refresh (Feature 052 - recurring task filter persistence)
+                                this.filterPlanningActies();
                             }
                         }
                     }
