@@ -735,13 +735,13 @@ class LoadingManager {
     showWithEntertainment(baseMessage, entertainmentMessages = [], minTime = 1500) {
         this.minLoadingStartTime = Date.now();
         this.entertainmentMessages = entertainmentMessages.length > 0 ? entertainmentMessages : [
-            '🎯 Je planning wordt voorbereid...',
-            '⚡ Productiviteit wordt geladen...',
-            '🧠 Slimme suggesties worden berekend...',
-            '🎨 Interface wordt geperfectioneerd...',
-            '🚀 Bijna klaar voor een geweldige dag!',
-            '✨ Magie gebeurt achter de schermen...',
-            '🔮 De perfecte dag wordt gecreëerd...'
+            '🎯 Your planning is being prepared...',
+            '⚡ Productivity is being loaded...',
+            '🧠 Smart suggestions are being calculated...',
+            '🎨 Interface is being perfected...',
+            '🚀 Almost ready for a great day!',
+            '✨ Magic is happening behind the scenes...',
+            '🔮 The perfect day is being created...'
         ];
         
         this.overlay.classList.add('active');
@@ -835,7 +835,7 @@ class LoadingManager {
             if (!element.querySelector('.loading-inline')) {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'loading-inline';
-                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Laden...</span>';
+                loadingDiv.innerHTML = '<div class="loading-spinner-small"></div><span>Loading...</span>';
                 element.appendChild(loadingDiv);
             }
         } else {
@@ -2291,7 +2291,7 @@ class Taakbeheer {
                     </div>
                 </div>
                 <div class="project-taken-container" id="taken-${project.id}" style="display: none;">
-                    <div class="project-taken-loading">Laden...</div>
+                    <div class="project-taken-loading">Loading...</div>
                 </div>
             `;
             container.appendChild(div);
@@ -3392,16 +3392,16 @@ class Taakbeheer {
         // Use entertainment loading for dagelijkse planning
         if (this.huidigeLijst === 'dagelijkse-planning') {
             const planningMessages = [
-                '🎯 Je dagplanning wordt voorbereid...',
-                '📅 Taken worden georganiseerd...',
-                '⏰ Tijdslots worden berekend...',
-                '🎨 De perfecte dag wordt ontworpen...',
-                '✨ Prioriteiten worden gerangschikt...',
-                '🚀 Productiviteitsmagie gebeurt...',
-                '🔮 Je ideale schema wordt gecreëerd...'
+                '🎯 Your daily plan is being prepared...',
+                '📅 Tasks are being organized...',
+                '⏰ Time slots are being calculated...',
+                '🎨 The perfect day is being designed...',
+                '✨ Priorities are being ranked...',
+                '🚀 Productivity magic is happening...',
+                '🔮 Your ideal schedule is being created...'
             ];
-            
-            loading.showWithEntertainment('🎯 Dagelijkse planning laden...', planningMessages);
+
+            loading.showWithEntertainment('🎯 Loading daily planning...', planningMessages);
             
             try {
                 const result = await this.loadPlanningData();
@@ -4125,19 +4125,19 @@ class Taakbeheer {
         
         // Instant toast voor directe feedback
         toast.info('Completing task...');
-        
+
         // Entertainment messages voor task completion in acties scherm
         const completionMessages = [
-            '✅ Taak wordt afgewerkt...',
-            '🎯 Voortgang wordt opgeslagen...',
-            '📊 Productiviteit wordt bijgewerkt...',
-            '⚡ Database wordt gesynchroniseerd...',
-            '🔄 Herhalende taken worden verwerkt...',
-            '🚀 Bijna klaar...'
+            '✅ Task is being completed...',
+            '🎯 Progress is being saved...',
+            '📊 Productivity is being updated...',
+            '⚡ Database is being synchronized...',
+            '🔄 Recurring tasks are being processed...',
+            '🚀 Almost done...'
         ];
-        
+
         // Start entertainment loading
-        loading.showWithEntertainment('✅ Taak afwerken...', completionMessages, 1200);
+        loading.showWithEntertainment('✅ Completing task...', completionMessages, 1200);
         
         try {
             taak.afgewerkt = new Date().toISOString();
@@ -11159,7 +11159,7 @@ class Taakbeheer {
 
         try {
             // Show loading state
-            content.innerHTML = '<div class="loading-state">Laden...</div>';
+            content.innerHTML = '<div class="loading-state">Loading...</div>';
             
             // Load data from API
             const response = await fetch(`/api/lijst/${categoryKey}`);

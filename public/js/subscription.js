@@ -538,7 +538,7 @@ function setupEventListeners() {
 /**
  * Show loading overlay
  */
-function showLoadingOverlay(message = 'Laden...') {
+function showLoadingOverlay(message = 'Loading...') {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
         const spinner = overlay.querySelector('.loading-spinner span');
