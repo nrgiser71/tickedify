@@ -12431,7 +12431,7 @@ class Taakbeheer {
         if (this.bulkModus) {
             actiesContainer.classList.add('bulk-modus');
             bulkToolbar.style.display = 'block';
-            toggleButton.textContent = 'Bulk modus actief (Annuleren)';
+            toggleButton.textContent = 'Bulk mode active (Cancel)';
             toggleButton.classList.add('active');
         } else {
             actiesContainer.classList.remove('bulk-modus');
@@ -12604,7 +12604,7 @@ class Taakbeheer {
         const totalTasks = selectedIds.length;
 
         // Show loading indicator with progress
-        loading.showWithProgress('Datum aanpassen taak', 0, totalTasks);
+        loading.showWithProgress('Adjusting task date', 0, totalTasks);
 
         try {
             let newDate;
@@ -12649,7 +12649,7 @@ class Taakbeheer {
             for (const taakId of selectedIds) {
                 currentTask++;
                 // Update progress before processing
-                loading.updateProgress('Datum aanpassen taak', currentTask, totalTasks);
+                loading.updateProgress('Adjusting task date', currentTask, totalTasks);
                 
                 try {
                     const response = await fetch(`/api/taak/${taakId}`, {
@@ -12762,7 +12762,7 @@ class Taakbeheer {
         const totalTasks = selectedIds.length;
 
         // Show loading indicator with progress
-        loading.showWithProgress('Verplaatsen taak', 0, totalTasks);
+        loading.showWithProgress('Moving task', 0, totalTasks);
 
         try {
             let successCount = 0;
@@ -12771,7 +12771,7 @@ class Taakbeheer {
             for (const taakId of selectedIds) {
                 currentTask++;
                 // Update progress before processing
-                loading.updateProgress('Verplaatsen taak', currentTask, totalTasks);
+                loading.updateProgress('Moving task', currentTask, totalTasks);
                 
                 try {
                     const response = await fetch(`/api/taak/${taakId}`, {
