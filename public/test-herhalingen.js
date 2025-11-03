@@ -301,36 +301,16 @@ class HerhalingenTestRunner {
     
     async calculateNextRecurringDate(baseDate, pattern, eventDate = null) {
         try {
-            // For event-based patterns, we need special handling
-            if (pattern.startsWith('event-')) {
-                if (!eventDate) return null;
-                
-                // Parse event pattern: event-days-direction-eventname
-                const parts = pattern.split('-');
-                const days = parseInt(parts[1]);
-                const direction = parts[2]; // 'before' or 'after'
-                
-                const event = new Date(eventDate);
-                const result = new Date(event);
-                
-                if (direction === 'before') {
-                    result.setDate(result.getDate() - days);
-                } else {
-                    result.setDate(result.getDate() + days);
-                }
-                
-                return result.toISOString().split('T')[0];
+            // v0.21.38: Use the REAL frontend code that users use (window.app from app.js)
+            // This ensures we test the actual production code, not a separate backend endpoint
+
+            if (!window.app || typeof window.app.calculateNextRecurringDate !== 'function') {
+                throw new Error('window.app.calculateNextRecurringDate not available - is app.js loaded?');
             }
-            
-            // Use the API endpoint for testing
-            const response = await fetch(`/api/debug/test-recurring/${encodeURIComponent(pattern)}/${baseDate}`);
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            return data.nextDate;
-            
+
+            // Call the frontend TaskManager's calculateNextRecurringDate method
+            return window.app.calculateNextRecurringDate(baseDate, pattern);
+
         } catch (error) {
             console.error('Error calculating recurring date:', error);
             throw error;
