@@ -14,14 +14,16 @@ window.RecurringDateCalculator = {
      * Calculate the next recurring date based on a base date and recurrence pattern
      * @param {string} baseDate - ISO date string (YYYY-MM-DD)
      * @param {string} herhalingType - Recurrence pattern type
+     * @param {boolean} ensureFuture - If true, ensures returned date is > today (default: true for production)
+     * @param {string} eventDate - For event-based patterns, the date of the event (ISO format YYYY-MM-DD)
      * @returns {string|null} - Next date in ISO format (YYYY-MM-DD) or null if invalid
      */
-    calculateNextRecurringDate(baseDate, herhalingType) {
+    calculateNextRecurringDate(baseDate, herhalingType, ensureFuture = true, eventDate = null) {
         let date = new Date(baseDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time for date comparison
 
-        console.log('🔄 calculateNextRecurringDate:', { baseDate, herhalingType, today: today.toISOString().split('T')[0] });
+        console.log('🔄 calculateNextRecurringDate:', { baseDate, herhalingType, ensureFuture, today: today.toISOString().split('T')[0] });
 
         switch (herhalingType) {
             case 'dagelijks':
@@ -265,7 +267,32 @@ window.RecurringDateCalculator = {
                         const interval = parseInt(parts[parts.length - 1]);
 
                         if (!isNaN(interval) && interval > 0) {
-                            // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing year
+                            // FIX v0.21.42: Check CURRENT year first before jumping to next interval
+                            const baseDate = new Date(date);
+
+                            // Try current year first
+                            const currentYearObj = new Date(date);
+
+                            if (specialType === 'first-workday') {
+                                currentYearObj.setMonth(0);
+                                currentYearObj.setDate(1);
+                                while (currentYearObj.getDay() === 0 || currentYearObj.getDay() === 6) {
+                                    currentYearObj.setDate(currentYearObj.getDate() + 1);
+                                }
+                            } else if (specialType === 'last-workday') {
+                                currentYearObj.setMonth(11);
+                                currentYearObj.setDate(31);
+                                while (currentYearObj.getDay() === 0 || currentYearObj.getDay() === 6) {
+                                    currentYearObj.setDate(currentYearObj.getDate() - 1);
+                                }
+                            }
+
+                            // If current year occurrence is still in the future, use it!
+                            if (currentYearObj > baseDate) {
+                                return currentYearObj.toISOString().split('T')[0];
+                            }
+
+                            // Otherwise, add interval year(s)
                             const nextDateObj = new Date(date);
                             nextDateObj.setDate(1);
                             nextDateObj.setFullYear(date.getFullYear() + interval);
@@ -290,13 +317,49 @@ window.RecurringDateCalculator = {
                 }
 
                 if (herhalingType.startsWith('event-')) {
+                    // FIX v0.21.42: Implement event-based recurring date calculation
+                    // Pattern format: event-{days}-{before|after}-{name}
+                    // Example: event-10-before-webinar with eventDate=2025-07-01 → 2025-06-21
+
+                    if (!eventDate) {
+                        console.warn('⚠️ Event-based pattern requires eventDate parameter');
+                        return null;
+                    }
+
+                    const parts = herhalingType.split('-');
+                    if (parts.length >= 3) {
+                        const days = parseInt(parts[1]);
+                        const direction = parts[2]; // 'before' or 'after'
+
+                        if (!isNaN(days) && (direction === 'before' || direction === 'after')) {
+                            const event = new Date(eventDate);
+
+                            if (direction === 'before') {
+                                event.setDate(event.getDate() - days);
+                            } else { // after
+                                event.setDate(event.getDate() + days);
+                            }
+
+                            return event.toISOString().split('T')[0];
+                        }
+                    }
+
+                    console.error('❌ Invalid event-based pattern format:', herhalingType);
                     return null;
                 }
                 return null;
         }
 
-        // Ensure the calculated date is in the future
+        // Ensure the calculated date is in the future (only if ensureFuture === true)
         let calculatedDate = date.toISOString().split('T')[0];
+
+        if (!ensureFuture) {
+            // For tests: just return the next occurrence without ensuring it's > today
+            console.log(`✅ Test mode: returning ${calculatedDate} (ensureFuture=false)`);
+            return calculatedDate;
+        }
+
+        // Production mode: ensure date is in the future
         let iterations = 0;
         const maxIterations = 100;
 
@@ -304,7 +367,7 @@ window.RecurringDateCalculator = {
             console.log(`🔄 Date ${calculatedDate} is in past, calculating next occurrence...`);
             iterations++;
 
-            const nextCalculation = this.calculateNextRecurringDate(calculatedDate, herhalingType);
+            const nextCalculation = this.calculateNextRecurringDate(calculatedDate, herhalingType, false, eventDate); // Don't recurse with ensureFuture
             if (!nextCalculation || nextCalculation === calculatedDate) {
                 console.log('⚠️ Could not calculate future date, breaking loop');
                 break;
@@ -346,9 +409,28 @@ window.RecurringDateCalculator = {
     },
 
     getNextMonthlyDay(date, dayNum, interval) {
-        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing month
+        // FIX v0.21.42: Check CURRENT month first before jumping to next interval
+        // Example: monthly-day-15-2 from 2025-06-01 should give 2025-06-15 (not 2025-08-15!)
+
+        const baseDate = new Date(date);
+
+        // Try current month first
+        const currentMonthDate = new Date(date);
+        currentMonthDate.setDate(dayNum);
+
+        // Handle edge case: day doesn't exist in month (e.g., day 31 in Feb)
+        if (currentMonthDate.getDate() !== dayNum) {
+            currentMonthDate.setDate(0); // Last day of month
+        }
+
+        // If current month occurrence is still in the future (> base date), use it!
+        if (currentMonthDate > baseDate) {
+            return currentMonthDate.toISOString().split('T')[0];
+        }
+
+        // Otherwise, add interval month(s)
         const nextDate = new Date(date);
-        nextDate.setDate(1);
+        nextDate.setDate(1); // Prevent date overflow
         nextDate.setMonth(date.getMonth() + interval);
         nextDate.setDate(dayNum);
 
@@ -360,9 +442,30 @@ window.RecurringDateCalculator = {
     },
 
     getNextYearlyDate(date, day, month, interval) {
-        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing year/month
+        // FIX v0.21.42: Check CURRENT year first before jumping to next interval
+        // Example: yearly-25-12-1 from 2025-06-01 should give 2025-12-25 (not 2026-12-25!)
+
+        const baseDate = new Date(date);
+
+        // Try current year first
+        const currentYearDate = new Date(date);
+        currentYearDate.setDate(1); // Prevent date overflow
+        currentYearDate.setMonth(month - 1);
+        currentYearDate.setDate(day);
+
+        // Handle edge case: day doesn't exist in month (e.g., Feb 31)
+        if (currentYearDate.getDate() !== day) {
+            currentYearDate.setDate(0); // Last day of previous month
+        }
+
+        // If current year occurrence is still in the future (> base date), use it!
+        if (currentYearDate > baseDate) {
+            return currentYearDate.toISOString().split('T')[0];
+        }
+
+        // Otherwise, add interval year(s)
         const nextDate = new Date(date);
-        nextDate.setDate(1);
+        nextDate.setDate(1); // Prevent date overflow
         nextDate.setFullYear(date.getFullYear() + interval);
         nextDate.setMonth(month - 1);
         nextDate.setDate(day);
@@ -448,6 +551,22 @@ window.RecurringDateCalculator = {
     },
 
     getLastDayOfNextYear(date) {
+        // FIX v0.21.42: Check CURRENT year first before jumping to next year
+        // Example: laatste-dag-jaar from 2025-06-15 should give 2025-12-31 (not 2026-12-31!)
+
+        const baseDate = new Date(date);
+
+        // Try current year first
+        const currentYear = new Date(date);
+        currentYear.setMonth(11); // December
+        currentYear.setDate(31);
+
+        // If current year's last day is still in the future, use it!
+        if (currentYear > baseDate) {
+            return currentYear.toISOString().split('T')[0];
+        }
+
+        // Otherwise, use next year
         const nextYear = new Date(date);
         nextYear.setFullYear(date.getFullYear() + 1);
         nextYear.setMonth(11);
@@ -479,9 +598,10 @@ window.RecurringDateCalculator = {
 };
 
 // Make it available as window.app for backward compatibility with test-herhalingen.js
+// For tests, we use ensureFuture=false to get the immediate next occurrence
 window.app = {
-    calculateNextRecurringDate: (baseDate, herhalingType) => {
-        return window.RecurringDateCalculator.calculateNextRecurringDate(baseDate, herhalingType);
+    calculateNextRecurringDate: (baseDate, herhalingType, ensureFuture = false, eventDate = null) => {
+        return window.RecurringDateCalculator.calculateNextRecurringDate(baseDate, herhalingType, ensureFuture, eventDate);
     }
 };
 

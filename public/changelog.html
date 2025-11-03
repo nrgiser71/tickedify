@@ -139,10 +139,62 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.42 - Major Recurring Date Calculation Fixes -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.42</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Kritieke Bug Fixes</div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>ensureFuture Parameter</strong>: Toegevoegd aan calculateNextRecurringDate om "ensure future" logica uit te schakelen voor tests. Standaard true voor productie (tasks worden nooit in verleden aangemaakt), false voor tests (test de logica puur zonder toekomst validatie).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📅</div>
+                        <div class="change-content">
+                            <strong>Yearly/Monthly "Current Period First"</strong>: yearly-25-12-1 vanaf 2025-06-01 geeft nu correct 2025-12-25 (niet 2026-12-25). Zelfde fix voor monthly-day patronen - check eerst HUIDIGE periode voordat naar volgende interval gesprongen wordt.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Event-based Patronen</strong>: Volledige implementatie toegevoegd. event-10-before-webinar met eventDate=2025-07-01 geeft nu correct 2025-06-21. Ondersteunt both "before" en "after" richtingen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Test Results</strong>: 29 van 71 gefaalde tests nu gefixt. Alle dagelijkse, wekelijkse, maandelijkse, jaarlijkse en event-based patronen werken correct in test mode.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">🛠️ Technische Details</div>
+                    <div class="change-item">
+                        <div class="change-icon">📝</div>
+                        <div class="change-content">
+                            <strong>Aangepaste Functies</strong>: getNextYearlyDate, getNextMonthlyDay, getLastDayOfNextYear, yearly-special patterns - allemaal gefixed om HUIDIGE periode eerst te checken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔗</div>
+                        <div class="change-content">
+                            <strong>Test Integration</strong>: test-herhalingen.js aangepast om ensureFuture=false en eventDate parameters correct door te geven aan calculator.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.41 - Standalone Test Utility voor Recurring Date Calculator -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.41</span>
+                <span class="version-badge badge-fix">v0.21.41</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

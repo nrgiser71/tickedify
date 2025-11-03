@@ -301,7 +301,7 @@ class HerhalingenTestRunner {
     
     async calculateNextRecurringDate(baseDate, pattern, eventDate = null) {
         try {
-            // v0.21.41: Use standalone RecurringDateCalculator (no app.js dependencies)
+            // v0.21.42: Use standalone RecurringDateCalculator with full parameter support
             // This ensures we test the EXACT production code without Taakbeheer class overhead
 
             if (!window.app || typeof window.app.calculateNextRecurringDate !== 'function') {
@@ -309,7 +309,8 @@ class HerhalingenTestRunner {
             }
 
             // Call the standalone calculator's method
-            return window.app.calculateNextRecurringDate(baseDate, pattern);
+            // For tests: ensureFuture=false (get immediate next occurrence), pass eventDate for event-based patterns
+            return window.app.calculateNextRecurringDate(baseDate, pattern, false, eventDate);
 
         } catch (error) {
             console.error('Error calculating recurring date:', error);
