@@ -7135,7 +7135,7 @@ class Taakbeheer {
         // Update page title
         const pageTitle = document.getElementById('page-title');
         if (pageTitle) {
-            pageTitle.textContent = 'Contexten Beheer';
+            pageTitle.textContent = 'Context Management';
         }
 
         // Hide input container
