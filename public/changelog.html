@@ -139,10 +139,51 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.34 - FIX: Monthly Recurring Last Workday Bug -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.34</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Maandelijkse Herhaling Laatste Werkdag Bug</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Herhalende taken met patroon "laatste werkdag van de maand" sloegen een maand over bij het aanmaken van de volgende instantie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Voorbeeld</strong>:
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>Voorheen (bug): 31 oktober → 31 december (slaat november over) ❌</li>
+                                <li>Nu (correct): 31 oktober → 28 november (laatste werkdag) ✅</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: JavaScript datum berekening voegde dubbel een maand toe in de "laatste werkdag" logica.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Alle toekomstige herhalende taken met "laatste werkdag van de maand" worden nu correct berekend. Bestaande taken behouden hun huidige datum.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.33 - IMPROVEMENT: English Bulk Edit Progress Messages -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.33</span>
+                <span class="version-badge badge-improvement">v0.21.33</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

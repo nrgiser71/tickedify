@@ -7641,7 +7641,7 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             nextDate = nextDateObj.toISOString().split('T')[0];
         } else if (pattern === 'laatste-werkdag-maand') {
             const nextDateObj = new Date(date);
-            nextDateObj.setMonth(date.getMonth() + 2);
+            nextDateObj.setMonth(date.getMonth() + 1); // FIX: Changed +2 to +1
             nextDateObj.setDate(0); // Last day of next month
             while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                 nextDateObj.setDate(nextDateObj.getDate() - 1);
@@ -7945,8 +7945,9 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
                             }
                         } else if (position === 'last') {
                             // Last workday of month
-                            const targetMonth = nextDateObj.getMonth();
-                            nextDateObj.setMonth(targetMonth + 1);
+                            // nextDateObj already has correct target month from line 7938 (+ interval)
+                            // To get last day, we need to go to NEXT month, then setDate(0)
+                            nextDateObj.setMonth(nextDateObj.getMonth() + 1);
                             nextDateObj.setDate(0); // Last day of target month
                             while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                                 nextDateObj.setDate(nextDateObj.getDate() - 1);
