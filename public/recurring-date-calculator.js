@@ -459,7 +459,8 @@ window.RecurringDateCalculator = {
     },
 
     getNextWeekday(date, targetDay) {
-        const currentDay = date.getDay();
+        // FIX v0.21.46: UTC-safe implementation to prevent timezone offset bugs
+        const currentDay = date.getUTCDay();
         let daysToAdd = targetDay - currentDay;
 
         if (daysToAdd <= 0) {
@@ -467,16 +468,17 @@ window.RecurringDateCalculator = {
         }
 
         const nextDate = new Date(date);
-        nextDate.setDate(date.getDate() + daysToAdd);
+        nextDate.setUTCDate(date.getUTCDate() + daysToAdd);
         return nextDate.toISOString().split('T')[0];
     },
 
     getNextWeekdayWithInterval(date, targetDay, interval) {
+        // FIX v0.21.46: UTC-safe implementation to prevent timezone offset bugs
         const nextDate = this.getNextWeekday(date, targetDay);
         const finalDate = new Date(nextDate);
 
         if (interval > 1) {
-            finalDate.setDate(finalDate.getDate() + (interval - 1) * 7);
+            finalDate.setUTCDate(finalDate.getUTCDate() + (interval - 1) * 7);
         }
 
         return finalDate.toISOString().split('T')[0];
@@ -485,17 +487,19 @@ window.RecurringDateCalculator = {
     getNextMonthlyDay(date, dayNum, interval) {
         // FIX v0.21.42: Check CURRENT month first before jumping to next interval
         // FIX v0.21.43: If target day doesn't exist in current month, skip to next interval
+        // FIX v0.21.46: UTC-safe implementation to prevent timezone offset bugs
         // Example: monthly-day-31-1 from 2025-02-15 should give 2025-03-31 (not 2025-02-28!)
 
         const baseDate = new Date(date);
 
-        // Try current month first
-        const currentMonthDate = new Date(date);
-        currentMonthDate.setDate(dayNum);
+        // Try current month first - use UTC to prevent timezone issues
+        const currentYear = baseDate.getUTCFullYear();
+        const currentMonth = baseDate.getUTCMonth();
+        const currentMonthDate = new Date(Date.UTC(currentYear, currentMonth, dayNum));
 
         // FIX v0.21.43: Only use current month if the EXACT day exists
         // If day overflowed (e.g., day 31 in Feb → Mar 3), skip current month entirely
-        if (currentMonthDate.getDate() === dayNum) {
+        if (currentMonthDate.getUTCDate() === dayNum) {
             // Day exists in current month - check if it's in the future
             if (currentMonthDate > baseDate) {
                 return currentMonthDate.toISOString().split('T')[0];
@@ -503,14 +507,18 @@ window.RecurringDateCalculator = {
         }
         // If day doesn't exist or is in the past, fall through to add interval
 
-        // Add interval month(s)
-        const nextDate = new Date(date);
-        nextDate.setDate(1); // Prevent date overflow
-        nextDate.setMonth(date.getMonth() + interval);
-        nextDate.setDate(dayNum);
+        // Add interval month(s) - use UTC-safe implementation
+        const targetMonth = baseDate.getUTCMonth() + interval;
+        const targetYear = baseDate.getUTCFullYear() + Math.floor(targetMonth / 12);
+        const normalizedMonth = targetMonth % 12;
 
-        if (nextDate.getDate() !== dayNum) {
-            nextDate.setDate(0);
+        const nextDate = new Date(Date.UTC(targetYear, normalizedMonth, dayNum));
+
+        // Check if day overflowed (doesn't exist in target month)
+        if (nextDate.getUTCDate() !== dayNum) {
+            // Use last day of target month instead
+            nextDate.setUTCMonth(normalizedMonth + 1);
+            nextDate.setUTCDate(0);
         }
 
         return nextDate.toISOString().split('T')[0];

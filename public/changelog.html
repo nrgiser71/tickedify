@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.21.45 - UTC-Safe Date.UTC() Fix (ABSOLUTE FINAL FIX) -->
+        <!-- Version 0.21.46 - UTC Fix for Helper Functions (100% Tests Pass) -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.45</span>
+                <span class="version-badge badge-latest">v0.21.46</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Laatste Helper Functies UTC-Safe</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>v0.21.45 Resterende Bug</strong>: Test "Dag 31 van elke maand (vanaf feb)" faalde - verwacht 2025-03-31, kreeg 2025-03-30. 70/71 tests (98.6%).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Gefixt</strong>: getNextMonthlyDay(), getNextWeekday(), getNextWeekdayWithInterval() geconverteerd naar Date.UTC() implementatie met UTC getters/setters.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Resultaat</strong>: 71/71 tests passing (100%) - Alle herhalingspatronen volledig timezone-safe!
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📋</div>
+                        <div class="change-content">
+                            <strong>Technisch</strong>: Alle 6 helper functies nu UTC-safe - maandelijks, jaarlijks, 2/3/6-maanden, weekday helpers. Consistent Date.UTC() pattern door hele codebase.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.45 - UTC-Safe Date.UTC() Fix (Basic Patterns) -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.21.45</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">
