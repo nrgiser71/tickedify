@@ -5635,6 +5635,16 @@ app.put('/api/taak/:id', async (req, res) => {
                 if (currentTask.herhaling_actief && currentTask.herhaling_type) {
                     console.log(`🔄 Creating recurring task for archived task ${id} with pattern: ${currentTask.herhaling_type}`);
 
+                    // 🔍 DEBUG: Log data before createRecurringTask call
+                    console.log('🔍 DEBUG [server.js:5639] Data VOOR createRecurringTask call:', {
+                        id: currentTask.id,
+                        verschijndatum: currentTask.verschijndatum,
+                        herhaling_type: currentTask.herhaling_type,
+                        herhaling_actief: currentTask.herhaling_actief,
+                        herhaling_waarde: currentTask.herhaling_waarde,
+                        parameters_passed: 'ALLEEN currentTask (geen newDate parameter!)'
+                    });
+
                     try {
                         const recurringResult = await db.createRecurringTask(currentTask);
                         if (recurringResult && recurringResult.success) {

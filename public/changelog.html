@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.35 - DEBUG: Logging voor datum berekening onderzoek -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.35</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔍 DEBUG: Datum Berekening Onderzoek</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Debug Logging</strong>: Uitgebreide logging toegevoegd in server.js en database.js om te onderzoeken waarom de datum berekening bug uit v0.21.34 niet werd opgelost.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Diagnose</strong>: Logging toont welke parameters worden doorgegeven aan createRecurringTask() functie en of de newDate parameter wel wordt berekend.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">⚠️</div>
+                        <div class="change-content">
+                            <strong>Status</strong>: Bug fix uit v0.21.34 werkte niet - onderzoek loopt om juiste locatie voor fix te vinden.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.34 - FIX: Monthly Recurring Last Workday Bug -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.34</span>
+                <span class="version-badge badge-fix">v0.21.34</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">
