@@ -7175,33 +7175,12 @@ class Taakbeheer {
                     indicator.parentNode.removeChild(indicator);
                 }
             });
-            
+
             // Remove the uitgesteld accordion container completely
             const contentArea = document.querySelector('.content-area');
             if (contentArea) {
                 contentArea.innerHTML = '';
-                
-                // Update the title as well when cleaning up postponed
-                const titles = {
-                    'inbox': 'Inbox',
-                    'acties': 'Actions',
-                    'projecten': 'Projects',
-                    'opvolgen': 'Follow-up',
-                    'afgewerkte-taken': 'Completed',
-                    'dagelijkse-planning': 'Daily Planning',
-                    'contextenbeheer': 'Context Management',
-                    'uitgesteld-wekelijks': 'Weekly',
-                    'uitgesteld-maandelijks': 'Monthly',
-                    'uitgesteld-3maandelijks': 'Quarterly',
-                    'uitgesteld-6maandelijks': 'Semi-annually',
-                    'uitgesteld-jaarlijks': 'Yearly'
-                };
-                
-                const pageTitle = document.getElementById('page-title');
-                if (pageTitle) {
-                    pageTitle.textContent = titles[targetLijst || this.huidigeLijst] || 'Inbox';
-                }
-                
+
                 // Create proper structure based on target list
                 const isInbox = (targetLijst || this.huidigeLijst) === 'inbox';
                 if (isInbox) {
@@ -7223,8 +7202,34 @@ class Taakbeheer {
                         </div>
                     `;
                 }
-                return;
             }
+        }
+
+        // ALWAYS update title when restoring (moved outside uitgesteld container check)
+        // This ensures title is updated when coming from any special section (contextenbeheer, dagelijkse-planning, etc.)
+        const titles = {
+            'inbox': 'Inbox',
+            'acties': 'Actions',
+            'projecten': 'Projects',
+            'opvolgen': 'Follow-up',
+            'afgewerkte-taken': 'Completed',
+            'dagelijkse-planning': 'Daily Planning',
+            'contextenbeheer': 'Context Management',
+            'uitgesteld-wekelijks': 'Weekly',
+            'uitgesteld-maandelijks': 'Monthly',
+            'uitgesteld-3maandelijks': 'Quarterly',
+            'uitgesteld-6maandelijks': 'Semi-annually',
+            'uitgesteld-jaarlijks': 'Yearly'
+        };
+
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle && targetLijst) {
+            pageTitle.textContent = titles[targetLijst] || targetLijst;
+        }
+
+        // If we restored uitgesteld container, return early
+        if (uitgesteldContainer) {
+            return;
         }
         
         // Restore the normal taken container structure

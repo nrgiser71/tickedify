@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.26 - FIX: Context Management Titel Persistentie -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.26</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Context Management Titel Persistentie Bug</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Titel "Contexten Beheer" blijft niet meer persistent staan wanneer je naar een ander menu item navigeert. De pagina titel wordt nu correct geupdatet naar de geselecteerde sectie (Inbox, Actions, Daily Planning, etc.).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: De <code>restoreNormalContainer()</code> functie updatede de titel alleen bij cleanup van uitgesteld views, niet bij navigatie vanuit Context Management. Dit zorgde dat de <code>titleAlreadySet</code> flag in <code>navigeerNaarLijst()</code> de titel update blokkeerde.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Fix Applied</strong>: Titel update logica verplaatst naar buiten de <code>if (uitgesteldContainer)</code> block in <code>restoreNormalContainer()</code>. De titel wordt nu ALTIJD correct geupdatet bij navigatie vanuit speciale secties (Context Management, Daily Planning, etc.).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Verbeterde gebruikerservaring - pagina titel is nu consistent en duidelijk bij alle navigatie scenarios. Geen regressie in andere menu items.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.25 - FINAL FIX: Dagelijkse Planning Filter -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.25</span>
+                <span class="version-badge badge-fix">v0.21.25</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">
