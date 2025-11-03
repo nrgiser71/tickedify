@@ -8569,7 +8569,7 @@ class Taakbeheer {
 
                     <!-- Actions - flexible section that takes remaining space -->
                     <div class="acties-sectie">
-                        <h3><i class="fas fa-clipboard"></i> Acties</h3>
+                        <h3><i class="fas fa-clipboard"></i> Actions</h3>
                         <div class="planning-acties-filters">
                             <input type="text" id="planningTaakFilter" placeholder="Search task..." class="filter-input">
                             <select id="planningProjectFilter" class="filter-select">
