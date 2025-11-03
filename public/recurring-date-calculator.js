@@ -42,28 +42,45 @@ window.RecurringDateCalculator = {
                 break;
 
             case 'maandelijks':
-                // FIX v0.21.43: Handle month-end overflow (31 Jan + 1 month → 28 Feb, not 3 Mar)
+                // FIX v0.21.44: Robust month-end handling using constructor method
                 {
-                    const originalDay = date.getDate();
-                    date.setMonth(date.getMonth() + 1);
+                    const targetMonth = date.getMonth() + 1; // 0-based, so +1 for next month
+                    const targetYear = date.getFullYear() + (targetMonth > 11 ? 1 : 0);
+                    const normalizedMonth = targetMonth > 11 ? 0 : targetMonth;
+                    const targetDay = date.getDate();
 
-                    // If day changed (overflow), set to last day of target month
-                    if (date.getDate() !== originalDay) {
-                        date.setDate(0); // Go back to last day of previous (= target) month
+                    // Try to create date with target day
+                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
+
+                    // Check if month overflowed (day doesn't exist in target month)
+                    if (newDate.getMonth() !== normalizedMonth) {
+                        // Day doesn't exist - use last day of target month
+                        newDate.setMonth(normalizedMonth + 1);
+                        newDate.setDate(0);
                     }
+
+                    date = newDate;
                 }
                 break;
 
             case 'jaarlijks':
-                // FIX v0.21.43: Handle leap year overflow (29 Feb 2024 → 28 Feb 2025, not 1 Mar)
+                // FIX v0.21.44: Robust leap year handling using constructor method
                 {
-                    const originalDay = date.getDate();
-                    date.setFullYear(date.getFullYear() + 1);
+                    const targetYear = date.getFullYear() + 1;
+                    const targetMonth = date.getMonth();
+                    const targetDay = date.getDate();
 
-                    // If day changed (overflow), set to last day of target month
-                    if (date.getDate() !== originalDay) {
-                        date.setDate(0); // Go back to last day of previous (= target) month
+                    // Try to create date with target day
+                    const newDate = new Date(targetYear, targetMonth, targetDay);
+
+                    // Check if month overflowed (leap year edge case: 29 Feb → 1 Mar)
+                    if (newDate.getMonth() !== targetMonth) {
+                        // Day doesn't exist - use last day of target month
+                        newDate.setMonth(targetMonth + 1);
+                        newDate.setDate(0);
                     }
+
+                    date = newDate;
                 }
                 break;
 
@@ -80,35 +97,53 @@ window.RecurringDateCalculator = {
                 break;
 
             case '2-maanden':
-                // FIX v0.21.43: Handle month-end overflow
+                // FIX v0.21.44: Robust month-end handling
                 {
-                    const originalDay = date.getDate();
-                    date.setMonth(date.getMonth() + 2);
-                    if (date.getDate() !== originalDay) {
-                        date.setDate(0);
+                    const targetMonth = date.getMonth() + 2;
+                    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+                    const normalizedMonth = targetMonth % 12;
+                    const targetDay = date.getDate();
+
+                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
+                    if (newDate.getMonth() !== normalizedMonth) {
+                        newDate.setMonth(normalizedMonth + 1);
+                        newDate.setDate(0);
                     }
+                    date = newDate;
                 }
                 break;
 
             case '3-maanden':
-                // FIX v0.21.43: Handle month-end overflow (31 Mar + 3 months → 30 Jun, not 1 Jul)
+                // FIX v0.21.44: Robust month-end handling (31 Mar + 3 months → 30 Jun, not 1 Jul)
                 {
-                    const originalDay = date.getDate();
-                    date.setMonth(date.getMonth() + 3);
-                    if (date.getDate() !== originalDay) {
-                        date.setDate(0);
+                    const targetMonth = date.getMonth() + 3;
+                    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+                    const normalizedMonth = targetMonth % 12;
+                    const targetDay = date.getDate();
+
+                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
+                    if (newDate.getMonth() !== normalizedMonth) {
+                        newDate.setMonth(normalizedMonth + 1);
+                        newDate.setDate(0);
                     }
+                    date = newDate;
                 }
                 break;
 
             case '6-maanden':
-                // FIX v0.21.43: Handle month-end overflow
+                // FIX v0.21.44: Robust month-end handling
                 {
-                    const originalDay = date.getDate();
-                    date.setMonth(date.getMonth() + 6);
-                    if (date.getDate() !== originalDay) {
-                        date.setDate(0);
+                    const targetMonth = date.getMonth() + 6;
+                    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+                    const normalizedMonth = targetMonth % 12;
+                    const targetDay = date.getDate();
+
+                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
+                    if (newDate.getMonth() !== normalizedMonth) {
+                        newDate.setMonth(normalizedMonth + 1);
+                        newDate.setDate(0);
                     }
+                    date = newDate;
                 }
                 break;
 

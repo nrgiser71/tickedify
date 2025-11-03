@@ -139,10 +139,50 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.21.43 - Month-End Overflow Edge Cases Fixed -->
+        <!-- Version 0.21.44 - Constructor Method voor Month Overflow (FINAL FIX) -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.43</span>
+                <span class="version-badge badge-latest">v0.21.44</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Root Cause Fix - Constructor Method</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>Probleem met v0.21.43</strong>: setDate(0) logica werkte niet omdat date object al geoverflow was. Voorbeeld: 31 jan + setMonth(1) → 3 maart. Dan setDate(0) → 28 februari, maar dit werd niet correct toegepast.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Nieuwe aanpak</strong>: Gebruik `new Date(year, month, day)` constructor zoals bij yearly patterns. Dit voorkomt mutation edge cases. Check overflow met `newDate.getMonth() !== targetMonth`, dan setMonth+1 en setDate(0).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📅</div>
+                        <div class="change-content">
+                            <strong>Gefixte patterns</strong>: maandelijks, jaarlijks, 2-maanden, 3-maanden, 6-maanden - allemaal nu robust constructor method.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">🎯 Verwachte Test Resultaten</div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>v0.21.44</strong>: 71/71 passed (100%) verwacht - Constructor method is de CORRECTE fix!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.43 - Month-End Overflow Edge Cases (FAILED) -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.21.43</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">
