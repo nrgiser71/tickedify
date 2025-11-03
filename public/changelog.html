@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.24 - CRITICAL FIX: Filter Persistentie Timing -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.24</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 CRITICAL FIX: Filter Persistentie Timing Race Condition</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: De filterActies() call werd aangeroepen VOORDAT het DOM element was verwijderd (tijdens fade-out animatie). Dit zorgde voor een race condition waarbij het opacity:0 element nog werd gevonden door filterActies(), maar de taak niet meer in de taken array bestond.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Fix Applied</strong>: Verplaatst filterActies() call BINNEN setTimeout (na DOM removal), toegevoegd filterActies() voor nieuwe recurring tasks, en bescherming tegen opacity:0 elements in filterActies() functie.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Filter persistentie werkt nu 100% correct zonder timing issues. Zowel normale taken als recurring tasks worden correct gefilterd na completion.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.23 - BUGFIX: Filter Persistentie -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.23</span>
+                <span class="version-badge badge-fix">v0.21.23</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

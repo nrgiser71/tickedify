@@ -4191,13 +4191,14 @@ class Taakbeheer {
                         if (rowElement.parentNode) {
                             rowElement.parentNode.removeChild(rowElement);
                         }
-                    }, 300);
-                }
 
-                // Re-apply filters after task removal to maintain filter state (Feature 050)
-                // This is needed because taakAfwerken() bypasses renderActiesLijst() for performance
-                if (this.huidigeLijst === 'acties') {
-                    this.filterActies();
+                        // Re-apply filters AFTER DOM removal to maintain filter state (Feature 050 - timing fix)
+                        // This ensures filterActies() only operates on elements that exist in DOM
+                        // Calling it here (after removeChild) prevents race condition with opacity:0 elements
+                        if (this.huidigeLijst === 'acties') {
+                            this.filterActies();
+                        }
+                    }, 300);
                 }
 
                 // Background updates (don't await these for faster response)
@@ -4229,9 +4230,15 @@ class Taakbeheer {
                                 if (this.planningActies) {
                                     this.planningActies.push(newTask);
                                 }
-                                
+
                                 // Add new recurring task to DOM without full refresh
                                 this.addNewTaskToDOM(newTask);
+
+                                // Re-apply filters after adding new recurring task (Feature 050 - recurring task filter)
+                                // This ensures the new task is also filtered according to active filter settings
+                                if (this.huidigeLijst === 'acties') {
+                                    this.filterActies();
+                                }
                             }
                         } catch (error) {
                             console.error('Error fetching new recurring task:', error);
@@ -6901,9 +6908,16 @@ class Taakbeheer {
         // Support both .actie-row (table layout) and .taak-item (list layout)
         const elementsToFilter = document.querySelectorAll('.actie-row, .taak-item');
         elementsToFilter.forEach(row => {
+            // Feature 050: Skip elements that are fading out (opacity 0)
+            // This prevents filter logic from interfering with fade-out animations
+            const computedOpacity = window.getComputedStyle(row).opacity;
+            if (computedOpacity === '0') {
+                return;  // Skip fading elements
+            }
+
             const actieId = row.dataset.id;
             const actie = this.taken.find(t => t.id === actieId);
-            
+
             // Skip if task not found in taken array
             if (!actie) {
                 row.style.display = 'none';
