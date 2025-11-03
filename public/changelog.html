@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.41 - Standalone Test Utility voor Recurring Date Calculator -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.41</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Architecture Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>Standalone Test Utility</strong>: Nieuwe <code>recurring-date-calculator.js</code> bevat ALLEEN de date calculation functies uit app.js (600+ regels) zonder Taakbeheer class dependencies. Test pagina laadt nu direct zonder app.js initialisatie overhead.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Test Pagina Refactor</strong>: test-herhalingen.html gebruikt nu recurring-date-calculator.js in plaats van volledige app.js (13900+ regels). Dit voorkomt initialisatie crashes door missende DOM elementen (OnboardingVideoManager, AuthManager, etc.).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>Directe Beschikbaarheid</strong>: window.app is nu synchronous beschikbaar - geen retry polling meer nodig. Test runner initialiseert direct bij DOMContentLoaded.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Productie Code Validatie</strong>: Standalone utility bevat EXACT dezelfde logica als app.js calculateNextRecurringDate (inclusief v0.21.36 date overflow fixes) - tests valideren echte productie code.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.40 - Timing Fix voor window.app Initialisatie -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.40</span>
+                <span class="version-badge badge-fix">v0.21.40</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

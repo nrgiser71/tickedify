@@ -301,14 +301,14 @@ class HerhalingenTestRunner {
     
     async calculateNextRecurringDate(baseDate, pattern, eventDate = null) {
         try {
-            // v0.21.38: Use the REAL frontend code that users use (window.app from app.js)
-            // This ensures we test the actual production code, not a separate backend endpoint
+            // v0.21.41: Use standalone RecurringDateCalculator (no app.js dependencies)
+            // This ensures we test the EXACT production code without Taakbeheer class overhead
 
             if (!window.app || typeof window.app.calculateNextRecurringDate !== 'function') {
-                throw new Error('window.app.calculateNextRecurringDate not available - is app.js loaded?');
+                throw new Error('window.app.calculateNextRecurringDate not available - is recurring-date-calculator.js loaded?');
             }
 
-            // Call the frontend TaskManager's calculateNextRecurringDate method
+            // Call the standalone calculator's method
             return window.app.calculateNextRecurringDate(baseDate, pattern);
 
         } catch (error) {
@@ -495,18 +495,13 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Initialize the test runner when DOM is ready AND app.js is fully loaded
+// Initialize the test runner when DOM is ready
+// v0.21.41: Simplified - recurring-date-calculator.js loads synchronously so window.app is immediately available
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait for window.app to be available (app.js might still be executing)
-    const initTestRunner = () => {
-        if (window.app && typeof window.app.calculateNextRecurringDate === 'function') {
-            console.log('✅ window.app is available, initializing test runner');
-            window.testRunner = new HerhalingenTestRunner();
-        } else {
-            console.log('⏳ Waiting for window.app to be available...');
-            setTimeout(initTestRunner, 100); // Retry after 100ms
-        }
-    };
-
-    initTestRunner();
+    if (window.app && typeof window.app.calculateNextRecurringDate === 'function') {
+        console.log('✅ Recurring Date Calculator loaded, initializing test runner');
+        window.testRunner = new HerhalingenTestRunner();
+    } else {
+        console.error('❌ ERROR: window.app.calculateNextRecurringDate not found - recurring-date-calculator.js failed to load');
+    }
 });
