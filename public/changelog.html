@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.25 - FINAL FIX: Dagelijkse Planning Filter -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.25</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FINAL FIX: Filter Persistentie in Dagelijkse Planning</div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: Het probleem zat in de <code>completePlanningTask()</code> functie. Na het afvinken van een taak werd de acties lijst volledig opnieuw gerenderd, maar <code>filterPlanningActies()</code> werd NIET aangeroepen. Dit was NIET in de standalone acties scherm, maar specifiek in het dagelijkse planning scherm.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Fix Applied</strong>: 1-line fix toegevoegd: <code>this.filterPlanningActies();</code> na regel 10774 in <code>completePlanningTask()</code>. Dit maakt het consistent met andere plekken zoals <code>removeActionFromList()</code> die dezelfde pattern gebruiken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Filters blijven nu 100% actief in het dagelijkse planning scherm. Simpele, elegante fix zonder side-effects.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.24 - CRITICAL FIX: Filter Persistentie Timing -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.24</span>
+                <span class="version-badge badge-fix">v0.21.24</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

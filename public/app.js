@@ -10772,6 +10772,10 @@ class Taakbeheer {
                         // Use local planningActies array which has been updated
                         actiesContainer.innerHTML = this.renderActiesVoorPlanning(this.planningActies || this.taken, ingeplandeActies);
                         this.bindDragAndDropEvents();
+
+                        // Re-apply filters after re-rendering acties list (Feature 050 - dagelijkse planning filter persistence)
+                        this.filterPlanningActies();
+
                         console.log('<i class="fas fa-check"></i> Actions list updated with local data');
                     }
                     
