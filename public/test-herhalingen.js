@@ -495,7 +495,18 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Initialize the test runner when DOM is ready
+// Initialize the test runner when DOM is ready AND app.js is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.testRunner = new HerhalingenTestRunner();
+    // Wait for window.app to be available (app.js might still be executing)
+    const initTestRunner = () => {
+        if (window.app && typeof window.app.calculateNextRecurringDate === 'function') {
+            console.log('✅ window.app is available, initializing test runner');
+            window.testRunner = new HerhalingenTestRunner();
+        } else {
+            console.log('⏳ Waiting for window.app to be available...');
+            setTimeout(initTestRunner, 100); // Retry after 100ms
+        }
+    };
+
+    initTestRunner();
 });

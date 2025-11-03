@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.40 - Timing Fix voor window.app Initialisatie -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.40</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⏱️ Timing Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">🔄</div>
+                        <div class="change-content">
+                            <strong>Retry Mechanisme</strong>: test-herhalingen.js wacht nu tot window.app volledig geïnitialiseerd is voordat de test runner start. app.js is 13000+ regels en kan nog bezig zijn met uitvoeren wanneer DOMContentLoaded fired.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Polling met 100ms interval</strong>: Controleert elke 100ms of window.app.calculateNextRecurringDate beschikbaar is, dan initialiseert de test runner.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.39 - App.js Dependency Fix voor Test Pagina -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.39</span>
+                <span class="version-badge badge-fix">v0.21.39</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">
