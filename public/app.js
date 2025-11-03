@@ -4626,7 +4626,7 @@ class Taakbeheer {
     setActionButtonText(isNewAction = true) {
         const button = document.getElementById('maakActieBtn');
         if (button) {
-            button.textContent = isNewAction ? 'Actie maken' : 'Aanpassingen opslaan';
+            button.textContent = isNewAction ? 'Create action' : 'Save changes';
         }
     }
 
