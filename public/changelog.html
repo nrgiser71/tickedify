@@ -139,10 +139,57 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.36 - FIX: JavaScript Date Overflow in ALL Recurring Patterns -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.36</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Systematisch Date Overflow Probleem in Herhalende Taken</div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Root Cause Gevonden</strong>: Bug zat in FRONTEND (app.js), niet in backend! Alle datum berekeningen gebeuren client-side. JavaScript Date overflow: 31 oktober + 1 maand = 1 DECEMBER (omdat 31 november niet bestaat).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔧</div>
+                        <div class="change-content">
+                            <strong>8 Functies Gefixed</strong>:
+                            <ul style="margin-top: 8px; padding-left: 20px; font-size: 13px; line-height: 1.6;">
+                                <li>✅ getNextMonthlyDay() - Maandelijkse patronen op specifieke dag</li>
+                                <li>✅ getNextYearlyDate() - Jaarlijkse patronen</li>
+                                <li>✅ getFirstDayOfNextMonth() - Eerste dag van maand</li>
+                                <li>✅ getLastDayOfNextMonth() - Laatste dag van maand</li>
+                                <li>✅ getLastWorkdayOfNextMonth() - Laatste werkdag van maand</li>
+                                <li>✅ getLastWeekdayOfNextMonth() - Laatste weekdag van maand</li>
+                                <li>✅ monthly-weekday pattern - Eerste/laatste weekdag patronen</li>
+                                <li>✅ yearly-special pattern - Speciale jaarlijkse patronen</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">💡</div>
+                        <div class="change-content">
+                            <strong>Oplossing</strong>: ALTIJD eerst dag op 1 zetten VOORDAT maand/jaar wordt gewijzigd. Dit voorkomt JavaScript overflow bij taken aangemaakt op dag 29, 30 of 31.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Alle herhalingspatronen werken nu correct, ongeacht of de originele taak op de 29e, 30e of 31e staat. Debug logging uit v0.21.35 verwijderd.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.35 - DEBUG: Logging voor datum berekening onderzoek -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.35</span>
+                <span class="version-badge badge-fix">v0.21.35</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

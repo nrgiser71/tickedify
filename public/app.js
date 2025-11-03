@@ -5830,25 +5830,27 @@ class Taakbeheer {
                         const validPositions = ['first', 'second', 'third', 'fourth', 'last'];
                         // Allow 'workday' as special case for targetDay
                         const isValidTargetDay = parts[3] === 'workday' || (!isNaN(targetDay) && targetDay >= 1 && targetDay <= 7);
-                        if (validPositions.includes(position) && 
-                            isValidTargetDay && 
+                        if (validPositions.includes(position) &&
+                            isValidTargetDay &&
                             !isNaN(interval) && interval > 0) {
-                            
+
+                            // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing month
                             const nextDateObj = new Date(date);
+                            nextDateObj.setDate(1); // Reset to day 1 to prevent overflow
                             nextDateObj.setMonth(date.getMonth() + interval);
-                            
+
                             // Special handling for workday patterns
                             if (parts[3] === 'workday') {
                                 if (position === 'first') {
-                                    // First workday of month
-                                    nextDateObj.setDate(1);
+                                    // First workday of month (already on day 1)
                                     while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                                         nextDateObj.setDate(nextDateObj.getDate() + 1);
                                     }
                                 } else if (position === 'last') {
                                     // Last workday of month
-                                    const targetMonth = nextDateObj.getMonth();
-                                    nextDateObj.setMonth(targetMonth + 1);
+                                    // nextDateObj already has correct target month
+                                    // To get last day, we need to go to NEXT month, then setDate(0)
+                                    nextDateObj.setMonth(nextDateObj.getMonth() + 1);
                                     nextDateObj.setDate(0); // Last day of target month
                                     while (nextDateObj.getDay() === 0 || nextDateObj.getDay() === 6) {
                                         nextDateObj.setDate(nextDateObj.getDate() - 1);
@@ -5857,11 +5859,11 @@ class Taakbeheer {
                             } else {
                                 // Normal weekday patterns
                                 const jsTargetDay = targetDay === 7 ? 0 : targetDay; // Convert to JS day numbering
-                                
+
                                 if (position === 'last') {
                                 // Find last occurrence of weekday in month
-                                const targetMonth = nextDateObj.getMonth();
-                                nextDateObj.setMonth(targetMonth + 1);
+                                // nextDateObj already has correct target month, no need to read it
+                                nextDateObj.setMonth(nextDateObj.getMonth() + 1);
                                 nextDateObj.setDate(0); // Last day of target month
                                 while (nextDateObj.getDay() !== jsTargetDay) {
                                     nextDateObj.setDate(nextDateObj.getDate() - 1);
@@ -5903,11 +5905,13 @@ class Taakbeheer {
                     if (parts.length >= 4) {
                         const specialType = parts.slice(2, -1).join('-'); // Everything except 'yearly', 'special' and interval
                         const interval = parseInt(parts[parts.length - 1]);
-                        
+
                         if (!isNaN(interval) && interval > 0) {
+                            // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing year
                             const nextDateObj = new Date(date);
+                            nextDateObj.setDate(1); // Reset to day 1 to prevent overflow
                             nextDateObj.setFullYear(date.getFullYear() + interval);
-                            
+
                             if (specialType === 'first-workday') {
                                 // First workday of the year
                                 nextDateObj.setMonth(0); // January
@@ -5923,7 +5927,7 @@ class Taakbeheer {
                                     nextDateObj.setDate(nextDateObj.getDate() - 1);
                                 }
                             }
-                            
+
                             return nextDateObj.toISOString().split('T')[0];
                         }
                     }
@@ -5994,44 +5998,52 @@ class Taakbeheer {
     }
 
     getNextMonthlyDay(date, dayNum, interval) {
+        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing month
         const nextDate = new Date(date);
+        nextDate.setDate(1); // Reset to day 1 to prevent overflow (e.g., 31 Oct + 1 month = 1 Dec instead of 30 Nov)
         nextDate.setMonth(date.getMonth() + interval);
         nextDate.setDate(dayNum);
-        
+
         // Handle months with fewer days (e.g., day 31 in February)
         if (nextDate.getDate() !== dayNum) {
             // Set to last day of month if target day doesn't exist
             nextDate.setDate(0);
         }
-        
+
         return nextDate.toISOString().split('T')[0];
     }
 
     getNextYearlyDate(date, day, month, interval) {
+        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing year/month
         const nextDate = new Date(date);
+        nextDate.setDate(1); // Reset to day 1 to prevent overflow
         nextDate.setFullYear(date.getFullYear() + interval);
         nextDate.setMonth(month - 1); // JavaScript months are 0-based
         nextDate.setDate(day);
-        
+
         // Handle leap year issues (e.g., Feb 29 in non-leap year)
         if (nextDate.getDate() !== day) {
             nextDate.setDate(0); // Last day of previous month
         }
-        
+
         return nextDate.toISOString().split('T')[0];
     }
 
     getFirstDayOfNextMonth(date) {
+        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing month
         const nextMonth = new Date(date);
+        nextMonth.setDate(1); // Reset to day 1 to prevent overflow
         nextMonth.setMonth(date.getMonth() + 1);
-        nextMonth.setDate(1);
+        // Day is already 1, no need to set again
         return nextMonth.toISOString().split('T')[0];
     }
 
     getLastDayOfNextMonth(date) {
+        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing month
         const nextMonth = new Date(date);
+        nextMonth.setDate(1); // Reset to day 1 to prevent overflow
         nextMonth.setMonth(date.getMonth() + 2);
-        nextMonth.setDate(0); // Last day of previous month
+        nextMonth.setDate(0); // Last day of previous month (= next month from original date)
         return nextMonth.toISOString().split('T')[0];
     }
 
@@ -6073,15 +6085,17 @@ class Taakbeheer {
     }
 
     getLastWeekdayOfNextMonth(date, targetWeekday) {
+        // FIX v0.21.36: Prevent date overflow - set day to 1 BEFORE changing month
         const nextMonth = new Date(date);
+        nextMonth.setDate(1); // Reset to day 1 to prevent overflow
         nextMonth.setMonth(date.getMonth() + 2);
         nextMonth.setDate(0); // Last day of the next month
-        
+
         // Go backwards to find the last occurrence of the target weekday
         while (nextMonth.getDay() !== targetWeekday) {
             nextMonth.setDate(nextMonth.getDate() - 1);
         }
-        
+
         return nextMonth.toISOString().split('T')[0];
     }
 

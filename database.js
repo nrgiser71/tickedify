@@ -886,18 +886,6 @@ const db = {
 
   // Create a new recurring task instance (simplified version without intensive logging)
   async createRecurringTask(originalTask, newDate, userId) {
-    // 🔍 DEBUG: Log ALL parameters received
-    console.log('🔍 DEBUG [database.js:888] createRecurringTask aangeroepen met:', {
-      originalTask_id: originalTask?.id,
-      originalTask_verschijndatum: originalTask?.verschijndatum,
-      originalTask_herhaling_type: originalTask?.herhaling_type,
-      originalTask_herhaling_actief: originalTask?.herhaling_actief,
-      newDate_parameter: newDate,
-      newDate_is_undefined: newDate === undefined,
-      userId_parameter: userId,
-      total_params_count: arguments.length
-    });
-
     if (!userId) {
       console.warn('⚠️ createRecurringTask called without userId - operation cancelled');
       return null;
