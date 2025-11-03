@@ -42,11 +42,29 @@ window.RecurringDateCalculator = {
                 break;
 
             case 'maandelijks':
-                date.setMonth(date.getMonth() + 1);
+                // FIX v0.21.43: Handle month-end overflow (31 Jan + 1 month → 28 Feb, not 3 Mar)
+                {
+                    const originalDay = date.getDate();
+                    date.setMonth(date.getMonth() + 1);
+
+                    // If day changed (overflow), set to last day of target month
+                    if (date.getDate() !== originalDay) {
+                        date.setDate(0); // Go back to last day of previous (= target) month
+                    }
+                }
                 break;
 
             case 'jaarlijks':
-                date.setFullYear(date.getFullYear() + 1);
+                // FIX v0.21.43: Handle leap year overflow (29 Feb 2024 → 28 Feb 2025, not 1 Mar)
+                {
+                    const originalDay = date.getDate();
+                    date.setFullYear(date.getFullYear() + 1);
+
+                    // If day changed (overflow), set to last day of target month
+                    if (date.getDate() !== originalDay) {
+                        date.setDate(0); // Go back to last day of previous (= target) month
+                    }
+                }
                 break;
 
             case 'om-de-dag':
@@ -62,15 +80,36 @@ window.RecurringDateCalculator = {
                 break;
 
             case '2-maanden':
-                date.setMonth(date.getMonth() + 2);
+                // FIX v0.21.43: Handle month-end overflow
+                {
+                    const originalDay = date.getDate();
+                    date.setMonth(date.getMonth() + 2);
+                    if (date.getDate() !== originalDay) {
+                        date.setDate(0);
+                    }
+                }
                 break;
 
             case '3-maanden':
-                date.setMonth(date.getMonth() + 3);
+                // FIX v0.21.43: Handle month-end overflow (31 Mar + 3 months → 30 Jun, not 1 Jul)
+                {
+                    const originalDay = date.getDate();
+                    date.setMonth(date.getMonth() + 3);
+                    if (date.getDate() !== originalDay) {
+                        date.setDate(0);
+                    }
+                }
                 break;
 
             case '6-maanden':
-                date.setMonth(date.getMonth() + 6);
+                // FIX v0.21.43: Handle month-end overflow
+                {
+                    const originalDay = date.getDate();
+                    date.setMonth(date.getMonth() + 6);
+                    if (date.getDate() !== originalDay) {
+                        date.setDate(0);
+                    }
+                }
                 break;
 
             // Specific weekdays
@@ -410,7 +449,8 @@ window.RecurringDateCalculator = {
 
     getNextMonthlyDay(date, dayNum, interval) {
         // FIX v0.21.42: Check CURRENT month first before jumping to next interval
-        // Example: monthly-day-15-2 from 2025-06-01 should give 2025-06-15 (not 2025-08-15!)
+        // FIX v0.21.43: If target day doesn't exist in current month, skip to next interval
+        // Example: monthly-day-31-1 from 2025-02-15 should give 2025-03-31 (not 2025-02-28!)
 
         const baseDate = new Date(date);
 
@@ -418,17 +458,17 @@ window.RecurringDateCalculator = {
         const currentMonthDate = new Date(date);
         currentMonthDate.setDate(dayNum);
 
-        // Handle edge case: day doesn't exist in month (e.g., day 31 in Feb)
-        if (currentMonthDate.getDate() !== dayNum) {
-            currentMonthDate.setDate(0); // Last day of month
+        // FIX v0.21.43: Only use current month if the EXACT day exists
+        // If day overflowed (e.g., day 31 in Feb → Mar 3), skip current month entirely
+        if (currentMonthDate.getDate() === dayNum) {
+            // Day exists in current month - check if it's in the future
+            if (currentMonthDate > baseDate) {
+                return currentMonthDate.toISOString().split('T')[0];
+            }
         }
+        // If day doesn't exist or is in the past, fall through to add interval
 
-        // If current month occurrence is still in the future (> base date), use it!
-        if (currentMonthDate > baseDate) {
-            return currentMonthDate.toISOString().split('T')[0];
-        }
-
-        // Otherwise, add interval month(s)
+        // Add interval month(s)
         const nextDate = new Date(date);
         nextDate.setDate(1); // Prevent date overflow
         nextDate.setMonth(date.getMonth() + interval);
@@ -443,19 +483,21 @@ window.RecurringDateCalculator = {
 
     getNextYearlyDate(date, day, month, interval) {
         // FIX v0.21.42: Check CURRENT year first before jumping to next interval
+        // FIX v0.21.43: Improved date construction to prevent off-by-one errors
         // Example: yearly-25-12-1 from 2025-06-01 should give 2025-12-25 (not 2026-12-25!)
 
         const baseDate = new Date(date);
 
-        // Try current year first
-        const currentYearDate = new Date(date);
-        currentYearDate.setDate(1); // Prevent date overflow
-        currentYearDate.setMonth(month - 1);
-        currentYearDate.setDate(day);
+        // Try current year first - construct date from scratch to avoid edge cases
+        const currentYear = baseDate.getFullYear();
+        const currentYearDate = new Date(currentYear, month - 1, day);
 
         // Handle edge case: day doesn't exist in month (e.g., Feb 31)
-        if (currentYearDate.getDate() !== day) {
-            currentYearDate.setDate(0); // Last day of previous month
+        // If overflow happened, use last day of target month
+        if (currentYearDate.getMonth() !== month - 1) {
+            // Overflow detected - set to last day of target month
+            currentYearDate.setMonth(month - 1 + 1); // Next month
+            currentYearDate.setDate(0); // Go back to last day of target month
         }
 
         // If current year occurrence is still in the future (> base date), use it!
@@ -464,13 +506,12 @@ window.RecurringDateCalculator = {
         }
 
         // Otherwise, add interval year(s)
-        const nextDate = new Date(date);
-        nextDate.setDate(1); // Prevent date overflow
-        nextDate.setFullYear(date.getFullYear() + interval);
-        nextDate.setMonth(month - 1);
-        nextDate.setDate(day);
+        const nextYear = baseDate.getFullYear() + interval;
+        const nextDate = new Date(nextYear, month - 1, day);
 
-        if (nextDate.getDate() !== day) {
+        // Handle edge case again for next year
+        if (nextDate.getMonth() !== month - 1) {
+            nextDate.setMonth(month - 1 + 1);
             nextDate.setDate(0);
         }
 
