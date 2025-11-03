@@ -42,21 +42,21 @@ window.RecurringDateCalculator = {
                 break;
 
             case 'maandelijks':
-                // FIX v0.21.44: Robust month-end handling using constructor method
+                // FIX v0.21.45: UTC-safe month-end handling using Date.UTC()
                 {
-                    const targetMonth = date.getMonth() + 1; // 0-based, so +1 for next month
-                    const targetYear = date.getFullYear() + (targetMonth > 11 ? 1 : 0);
+                    const targetMonth = date.getUTCMonth() + 1;
+                    const targetYear = date.getUTCFullYear() + (targetMonth > 11 ? 1 : 0);
                     const normalizedMonth = targetMonth > 11 ? 0 : targetMonth;
-                    const targetDay = date.getDate();
+                    const targetDay = date.getUTCDate();
 
-                    // Try to create date with target day
-                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
+                    // Use Date.UTC() to create UTC date (prevents timezone offset bugs)
+                    const newDate = new Date(Date.UTC(targetYear, normalizedMonth, targetDay));
 
                     // Check if month overflowed (day doesn't exist in target month)
-                    if (newDate.getMonth() !== normalizedMonth) {
+                    if (newDate.getUTCMonth() !== normalizedMonth) {
                         // Day doesn't exist - use last day of target month
-                        newDate.setMonth(normalizedMonth + 1);
-                        newDate.setDate(0);
+                        newDate.setUTCMonth(normalizedMonth + 1);
+                        newDate.setUTCDate(0);
                     }
 
                     date = newDate;
@@ -64,20 +64,20 @@ window.RecurringDateCalculator = {
                 break;
 
             case 'jaarlijks':
-                // FIX v0.21.44: Robust leap year handling using constructor method
+                // FIX v0.21.45: UTC-safe leap year handling using Date.UTC()
                 {
-                    const targetYear = date.getFullYear() + 1;
-                    const targetMonth = date.getMonth();
-                    const targetDay = date.getDate();
+                    const targetYear = date.getUTCFullYear() + 1;
+                    const targetMonth = date.getUTCMonth();
+                    const targetDay = date.getUTCDate();
 
-                    // Try to create date with target day
-                    const newDate = new Date(targetYear, targetMonth, targetDay);
+                    // Use Date.UTC() to prevent timezone offset bugs
+                    const newDate = new Date(Date.UTC(targetYear, targetMonth, targetDay));
 
                     // Check if month overflowed (leap year edge case: 29 Feb → 1 Mar)
-                    if (newDate.getMonth() !== targetMonth) {
+                    if (newDate.getUTCMonth() !== targetMonth) {
                         // Day doesn't exist - use last day of target month
-                        newDate.setMonth(targetMonth + 1);
-                        newDate.setDate(0);
+                        newDate.setUTCMonth(targetMonth + 1);
+                        newDate.setUTCDate(0);
                     }
 
                     date = newDate;
@@ -97,51 +97,51 @@ window.RecurringDateCalculator = {
                 break;
 
             case '2-maanden':
-                // FIX v0.21.44: Robust month-end handling
+                // FIX v0.21.45: UTC-safe month-end handling
                 {
-                    const targetMonth = date.getMonth() + 2;
-                    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+                    const targetMonth = date.getUTCMonth() + 2;
+                    const targetYear = date.getUTCFullYear() + Math.floor(targetMonth / 12);
                     const normalizedMonth = targetMonth % 12;
-                    const targetDay = date.getDate();
+                    const targetDay = date.getUTCDate();
 
-                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
-                    if (newDate.getMonth() !== normalizedMonth) {
-                        newDate.setMonth(normalizedMonth + 1);
-                        newDate.setDate(0);
+                    const newDate = new Date(Date.UTC(targetYear, normalizedMonth, targetDay));
+                    if (newDate.getUTCMonth() !== normalizedMonth) {
+                        newDate.setUTCMonth(normalizedMonth + 1);
+                        newDate.setUTCDate(0);
                     }
                     date = newDate;
                 }
                 break;
 
             case '3-maanden':
-                // FIX v0.21.44: Robust month-end handling (31 Mar + 3 months → 30 Jun, not 1 Jul)
+                // FIX v0.21.45: UTC-safe month-end handling (31 Mar + 3 months → 30 Jun, not 1 Jul)
                 {
-                    const targetMonth = date.getMonth() + 3;
-                    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+                    const targetMonth = date.getUTCMonth() + 3;
+                    const targetYear = date.getUTCFullYear() + Math.floor(targetMonth / 12);
                     const normalizedMonth = targetMonth % 12;
-                    const targetDay = date.getDate();
+                    const targetDay = date.getUTCDate();
 
-                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
-                    if (newDate.getMonth() !== normalizedMonth) {
-                        newDate.setMonth(normalizedMonth + 1);
-                        newDate.setDate(0);
+                    const newDate = new Date(Date.UTC(targetYear, normalizedMonth, targetDay));
+                    if (newDate.getUTCMonth() !== normalizedMonth) {
+                        newDate.setUTCMonth(normalizedMonth + 1);
+                        newDate.setUTCDate(0);
                     }
                     date = newDate;
                 }
                 break;
 
             case '6-maanden':
-                // FIX v0.21.44: Robust month-end handling
+                // FIX v0.21.45: UTC-safe month-end handling
                 {
-                    const targetMonth = date.getMonth() + 6;
-                    const targetYear = date.getFullYear() + Math.floor(targetMonth / 12);
+                    const targetMonth = date.getUTCMonth() + 6;
+                    const targetYear = date.getUTCFullYear() + Math.floor(targetMonth / 12);
                     const normalizedMonth = targetMonth % 12;
-                    const targetDay = date.getDate();
+                    const targetDay = date.getUTCDate();
 
-                    const newDate = new Date(targetYear, normalizedMonth, targetDay);
-                    if (newDate.getMonth() !== normalizedMonth) {
-                        newDate.setMonth(normalizedMonth + 1);
-                        newDate.setDate(0);
+                    const newDate = new Date(Date.UTC(targetYear, normalizedMonth, targetDay));
+                    if (newDate.getUTCMonth() !== normalizedMonth) {
+                        newDate.setUTCMonth(normalizedMonth + 1);
+                        newDate.setUTCDate(0);
                     }
                     date = newDate;
                 }
@@ -517,22 +517,20 @@ window.RecurringDateCalculator = {
     },
 
     getNextYearlyDate(date, day, month, interval) {
-        // FIX v0.21.42: Check CURRENT year first before jumping to next interval
-        // FIX v0.21.43: Improved date construction to prevent off-by-one errors
+        // FIX v0.21.45: UTC-safe implementation to prevent timezone offset bugs
         // Example: yearly-25-12-1 from 2025-06-01 should give 2025-12-25 (not 2026-12-25!)
 
         const baseDate = new Date(date);
 
-        // Try current year first - construct date from scratch to avoid edge cases
-        const currentYear = baseDate.getFullYear();
-        const currentYearDate = new Date(currentYear, month - 1, day);
+        // Try current year first - use Date.UTC() to prevent timezone issues
+        const currentYear = baseDate.getUTCFullYear();
+        const currentYearDate = new Date(Date.UTC(currentYear, month - 1, day));
 
         // Handle edge case: day doesn't exist in month (e.g., Feb 31)
-        // If overflow happened, use last day of target month
-        if (currentYearDate.getMonth() !== month - 1) {
+        if (currentYearDate.getUTCMonth() !== month - 1) {
             // Overflow detected - set to last day of target month
-            currentYearDate.setMonth(month - 1 + 1); // Next month
-            currentYearDate.setDate(0); // Go back to last day of target month
+            currentYearDate.setUTCMonth(month - 1 + 1);
+            currentYearDate.setUTCDate(0);
         }
 
         // If current year occurrence is still in the future (> base date), use it!
@@ -541,13 +539,13 @@ window.RecurringDateCalculator = {
         }
 
         // Otherwise, add interval year(s)
-        const nextYear = baseDate.getFullYear() + interval;
-        const nextDate = new Date(nextYear, month - 1, day);
+        const nextYear = baseDate.getUTCFullYear() + interval;
+        const nextDate = new Date(Date.UTC(nextYear, month - 1, day));
 
         // Handle edge case again for next year
-        if (nextDate.getMonth() !== month - 1) {
-            nextDate.setMonth(month - 1 + 1);
-            nextDate.setDate(0);
+        if (nextDate.getUTCMonth() !== month - 1) {
+            nextDate.setUTCMonth(month - 1 + 1);
+            nextDate.setUTCDate(0);
         }
 
         return nextDate.toISOString().split('T')[0];

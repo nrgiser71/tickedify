@@ -139,10 +139,50 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
-        <!-- Version 0.21.44 - Constructor Method voor Month Overflow (FINAL FIX) -->
+        <!-- Version 0.21.45 - UTC-Safe Date.UTC() Fix (ABSOLUTE FINAL FIX) -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.44</span>
+                <span class="version-badge badge-latest">v0.21.45</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Timezone Offset Bug Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">⚠️</div>
+                        <div class="change-content">
+                            <strong>v0.21.44 Bug</strong>: ALLE datums 1 dag te vroeg door timezone offset! new Date('2025-06-15') = UTC midnight = 02:00 local (CET). new Date(2025, 6, 15) = 00:00 local. toISOString() converteert naar UTC = 22:00 vorige dag → 2025-07-14 ipv 2025-07-15.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Oplossing</strong>: Date.UTC() gebruiken overal! `new Date(Date.UTC(year, month, day))` creëert UTC midnight date. Alle getters/setters nu UTC: getUTCFullYear(), setUTCMonth(), etc.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Gefixte patterns</strong>: maandelijks, jaarlijks, 2-maanden, 3-maanden, 6-maanden, getNextYearlyDate() - ALLEMAAL UTC-safe.
+                        </div>
+                    </div>
+                </div>
+                <div class="change-category">
+                    <div class="change-category-title">📊 Verwachte Resultaten</div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>v0.21.45</strong>: 71/71 passed (100%) - Date.UTC() is de ULTIEME oplossing! 🎉
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.44 - Constructor Method (FAILED - timezone bug) -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-fix">v0.21.44</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">
