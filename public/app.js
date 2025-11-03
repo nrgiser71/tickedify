@@ -3945,9 +3945,15 @@ class Taakbeheer {
 
         // Voeg context menu functionaliteit toe aan alle taak items
         this.addContextMenuToTaskItems();
-        
+
         // Setup drag & drop functionaliteit voor acties
         this.setupActiesDragFunctionality();
+
+        // Re-apply filters after list render (Feature 050 - filter persistence)
+        // Only apply if we're in the acties list context
+        if (this.huidigeLijst === 'acties') {
+            this.filterActies();
+        }
     }
 
     renderActiesRows() {
@@ -4187,7 +4193,13 @@ class Taakbeheer {
                         }
                     }, 300);
                 }
-                
+
+                // Re-apply filters after task removal to maintain filter state (Feature 050)
+                // This is needed because taakAfwerken() bypasses renderActiesLijst() for performance
+                if (this.huidigeLijst === 'acties') {
+                    this.filterActies();
+                }
+
                 // Background updates (don't await these for faster response)
                 // Note: We no longer use debouncedSave() to prevent data loss
                 // Individual task updates are handled directly via API

@@ -139,10 +139,35 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.23 - BUGFIX: Filter Persistentie -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.23</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 BUGFIX: Filter Persistentie bij Taak Completion</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Bug Fix</strong>: Gefixte bug waarbij filters werden gereset na het afvinken van een taak in de dagelijkse planning acties lijst. De filter UI bleef visueel wel actief, maar de lijst toonde weer alle taken in plaats van alleen de gefilterde taken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Filter state blijft nu 100% behouden tijdens taak completions, drag&drop operaties en bulk mode toggling. Gebruikers kunnen nu efficiënter werken met gefilterde taken lijsten zonder continue filter resets.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.22 - HOTFIX: Email Help API Route -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.22</span>
+                <span class="version-badge badge-fix">v0.21.22</span>
                 <span class="version-date">31 oktober 2025</span>
             </div>
             <div class="changes-list">
