@@ -139,10 +139,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.31 - FIX: Filter Persistence for Recurring Tasks -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.31</span>
+                <span class="version-date">3 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 FIX: Filter Persistentie voor Herhalende Taken</div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Probleem opgelost</strong>: Filter blijft nu correct actief na het afvinken van een herhalende taak in dagelijkse planning. Voorheen werd de filter state vergeten bij herhalende taken, terwijl normale taken wel werkten.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Root Cause</strong>: Dead code (regel 10759-10763) veroorzaakte dubbele render waarbij filter state verloren ging. De code riep een niet-bestaande <code>renderPlanningActies()</code> functie aan.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🛠️</div>
+                        <div class="change-content">
+                            <strong>Oplossing</strong>: Dead code verwijderd uit <code>completePlanningTask()</code> functie. De bestaande filter call (Feature 050) werkt nu correct voor zowel normale als herhalende taken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🚀</div>
+                        <div class="change-content">
+                            <strong>Performance</strong>: Bonus verbetering door eliminatie van dubbele render - één render pass in plaats van twee.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📍</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Gebruikers kunnen nu blijven werken met hun actieve filters (project, context, prioriteit) zonder deze opnieuw in te stellen na het afvinken van herhalende taken.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.30 - IMPROVEMENT: Context Management Title Translation -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.30</span>
+                <span class="version-badge badge-improvement">v0.21.30</span>
                 <span class="version-date">3 november 2025</span>
             </div>
             <div class="changes-list">

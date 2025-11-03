@@ -10755,12 +10755,6 @@ class Taakbeheer {
                                 if (this.planningActies) {
                                     this.planningActies.push(newTask);
                                 }
-                                
-                                // Update the actions list UI to show the new task with recurring indicator
-                                const actiesLijst = document.getElementById('planningActiesLijst');
-                                if (actiesLijst) {
-                                    this.renderPlanningActies();
-                                }
                             }
                         } catch (error) {
                             console.error('Error fetching new recurring task for daily planning:', error);
