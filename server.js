@@ -2905,13 +2905,80 @@ function getCurrentUserId(req) {
     return req.session.userId;
 }
 
+// T010: Daily cleanup trigger - runs once per day per user (Feature 055)
+// Permanently deletes soft-deleted tasks after 30-day retention period
+async function runDailyCleanupIfNeeded(userId) {
+    try {
+        // Environment check: only run cleanup on non-production environments
+        const environment = process.env.VERCEL_ENV || 'development';
+        if (environment === 'production') {
+            // Safety: never run automatic cleanup on production during beta freeze
+            return { skipped: true, reason: 'production_environment' };
+        }
+
+        // Check if cleanup already ran today for this user
+        const userResult = await pool.query(
+            'SELECT laatste_cleanup_op FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return { skipped: true, reason: 'user_not_found' };
+        }
+
+        const user = userResult.rows[0];
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+        // Skip if cleanup already ran today
+        if (user.laatste_cleanup_op === today) {
+            return { skipped: true, reason: 'already_ran_today' };
+        }
+
+        // Execute cleanup: permanently delete tasks past retention period
+        const deleteResult = await pool.query(
+            `DELETE FROM taken
+             WHERE user_id = $1
+             AND verwijderd_op IS NOT NULL
+             AND definitief_verwijderen_op < NOW()
+             RETURNING id`,
+            [userId]
+        );
+
+        const deletedCount = deleteResult.rows.length;
+
+        // Update last cleanup date for this user
+        await pool.query(
+            'UPDATE users SET laatste_cleanup_op = $1 WHERE id = $2',
+            [today, userId]
+        );
+
+        console.log(`♻️ Cleanup completed for user ${userId}: ${deletedCount} tasks permanently deleted`);
+
+        return {
+            success: true,
+            deleted_count: deletedCount,
+            environment: environment
+        };
+
+    } catch (error) {
+        console.error('❌ Daily cleanup error:', error);
+        // Don't throw - cleanup failure shouldn't block user actions
+        return { error: error.message };
+    }
+}
+
 // Beta subscription middleware - checks if user has access during/after beta period
 async function requireActiveSubscription(req, res, next) {
     if (!req.session.userId) {
         return res.redirect('/login');
     }
-    
+
     try {
+        // T010: Run daily cleanup for this user (lazy evaluation, non-blocking)
+        runDailyCleanupIfNeeded(req.session.userId).catch(err => {
+            console.error('⚠️ Background cleanup failed:', err);
+        });
+
         // Get beta config
         const betaConfig = await db.getBetaConfig();
         

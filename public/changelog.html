@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.68 - Cleanup Trigger Implementation -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.68</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">♻️ Cleanup Trigger - Automatische Verwijdering</div>
+                    <div class="change-item">
+                        <div class="change-icon">⏰</div>
+                        <div class="change-content">
+                            <strong>Daily Cleanup</strong>: Automatische cleanup van permanent te verwijderen taken, 1x per dag per gebruiker via lazy evaluation (non-blocking).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔒</div>
+                        <div class="change-content">
+                            <strong>Environment Check</strong>: Cleanup alleen op non-productie omgevingen - absolute safety tijdens bèta freeze periode.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📅</div>
+                        <div class="change-content">
+                            <strong>30-Day Retention</strong>: Taken verwijderen na 30 dagen retention period (definitief_verwijderen_op < NOW()).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Smart Scheduling</strong>: Cleanup tracking via users.laatste_cleanup_op voorkomt onnodige database queries.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.67 - Soft Delete API Endpoints -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.67</span>
+                <span class="version-badge badge-feature">v0.21.67</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
