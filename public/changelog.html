@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.66 - Soft Delete Database Schema -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.66</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🗄️ Database Schema - Soft Delete Foundation</div>
+                    <div class="change-item">
+                        <div class="change-icon">🔧</div>
+                        <div class="change-content">
+                            <strong>Soft Delete Kolommen</strong>: Taken tabel uitgebreid met verwijderd_op en definitief_verwijderen_op kolommen voor prullenbak functionaliteit (Feature 055).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">⏰</div>
+                        <div class="change-content">
+                            <strong>Cleanup Tracking</strong>: Users tabel uitgebreid met laatste_cleanup_op kolom voor dagelijkse automatische cleanup scheduling.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">⚡</div>
+                        <div class="change-content">
+                            <strong>Performance Indexes</strong>: Twee nieuwe indexes toegevoegd (idx_taken_verwijderd_op en idx_taken_user_verwijderd) voor optimale query performance.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Backwards Compatible</strong>: Alle kolommen hebben DEFAULT NULL - geen impact op bestaande functionaliteit, volledige backwards compatibility.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.65 - Email Gebruiker Button -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.65</span>
+                <span class="version-badge badge-feature">v0.21.65</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">

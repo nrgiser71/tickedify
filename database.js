@@ -170,6 +170,59 @@ const initDatabase = async () => {
       console.log('⚠️ Could not add selected_plan index:', indexError.message);
     }
 
+    // T001-T002: Add soft delete columns (Feature 055)
+    try {
+      await pool.query(`
+        ALTER TABLE taken
+        ADD COLUMN IF NOT EXISTS verwijderd_op TIMESTAMP DEFAULT NULL,
+        ADD COLUMN IF NOT EXISTS definitief_verwijderen_op TIMESTAMP DEFAULT NULL
+      `);
+      console.log('✅ Added soft delete columns to taken table');
+    } catch (softDeleteError) {
+      console.log('⚠️ Could not add soft delete columns, trying individually:', softDeleteError.message);
+      // Try individual column additions for databases that don't support multiple ADD COLUMN IF NOT EXISTS
+      const softDeleteColumns = [
+        { name: 'verwijderd_op', type: 'TIMESTAMP DEFAULT NULL' },
+        { name: 'definitief_verwijderen_op', type: 'TIMESTAMP DEFAULT NULL' }
+      ];
+
+      for (const col of softDeleteColumns) {
+        try {
+          await pool.query(`ALTER TABLE taken ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Added soft delete column ${col.name}`);
+        } catch (colError) {
+          console.log(`⚠️ Soft delete column ${col.name} might already exist:`, colError.message);
+        }
+      }
+    }
+
+    // T002: Add cleanup tracking column to users table
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS laatste_cleanup_op DATE DEFAULT NULL');
+      console.log('✅ Added laatste_cleanup_op column to users table');
+    } catch (cleanupError) {
+      console.log('⚠️ Could not add laatste_cleanup_op column:', cleanupError.message);
+    }
+
+    // T003: Add indexes for soft delete performance
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_taken_verwijderd_op ON taken(verwijderd_op)
+      `);
+      console.log('✅ Added index idx_taken_verwijderd_op');
+    } catch (indexError) {
+      console.log('⚠️ Could not add verwijderd_op index:', indexError.message);
+    }
+
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_taken_user_verwijderd ON taken(user_id, verwijderd_op)
+      `);
+      console.log('✅ Added composite index idx_taken_user_verwijderd');
+    } catch (indexError) {
+      console.log('⚠️ Could not add user_verwijderd composite index:', indexError.message);
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS projecten (
         id VARCHAR(50) PRIMARY KEY,
