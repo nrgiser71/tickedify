@@ -6242,7 +6242,7 @@ app.post('/api/taak/:id/restore', async (req, res) => {
 });
 
 // T006: Prullenbak Endpoint (Feature 055)
-app.get('/api/prullenbak', async (req, res) => {
+app.get('/api/prullenbak', requireAuth, async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });

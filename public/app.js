@@ -4035,7 +4035,8 @@ class Taakbeheer {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const verwijderdeTaken = await response.json();
+            const data = await response.json();
+            const verwijderdeTaken = data.taken || [];
 
             // Calculate days until deletion for each task
             const now = new Date();

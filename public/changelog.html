@@ -142,7 +142,7 @@
         <!-- Version 0.21.70 - Prullenbak Frontend UI -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.70</span>
+                <span class="version-badge badge-feature">v0.21.70</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
@@ -188,10 +188,41 @@
             </div>
         </div>
 
-        <!-- Version 0.21.69 - Query Filtering for Soft Delete -->
+        <!-- Version 0.21.71 - Prullenbak Bug Fix -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-feature">v0.21.69</span>
+                <span class="version-badge badge-latest">v0.21.71</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Prullenbak Bug Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Response Parsing Fix</strong>: Frontend verwachtte array maar API returned object {taken: [], total: n} - nu correct geparsed met data.taken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔒</div>
+                        <div class="change-content">
+                            <strong>Security Fix</strong>: requireAuth middleware toegevoegd aan /api/prullenbak endpoint voor authenticatie beveiliging.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Error Handling</strong>: Fallback naar lege array [] bij ontbrekende data.taken property - voorkomt crashes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Version 0.21.70 - Prullenbak UI Implementation -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-feature">v0.21.70</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
