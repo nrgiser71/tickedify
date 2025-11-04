@@ -8677,7 +8677,7 @@ class Taakbeheer {
             }
             
             const prioriteitIndicator = this.getPrioriteitIndicator(actie.prioriteit);
-            const herhalingIndicator = actie.herhalingActief ? ' 🔄' : '';
+            const herhalingIndicator = actie.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
 
             // Check if this task is a top priority
             const isTopPriority = actie.top_prioriteit !== null && actie.top_prioriteit !== undefined;
@@ -10961,7 +10961,7 @@ class Taakbeheer {
         // Create HTML for table row (actions table view)
         const projectNaam = this.getProjectNaam(taak.projectId);
         const contextNaam = this.getContextNaam(taak.contextId);
-        const herhalingIndicator = taak.herhalingActief ? ' 🔄' : '';
+        const herhalingIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
         const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
         
         return `
@@ -10996,7 +10996,7 @@ class Taakbeheer {
         // Create HTML for list item (actions list view)
         const projectNaam = this.getProjectNaam(taak.projectId);
         const contextNaam = this.getContextNaam(taak.contextId);
-        const herhalingIndicator = taak.herhalingActief ? ' 🔄' : '';
+        const herhalingIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
         
         // Build extra info
         const extraInfo = [];
