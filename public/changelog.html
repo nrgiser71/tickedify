@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.61 - Final Database Schema Fix: Dagelijkse Planning -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.61</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Final Database Schema Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Dagelijkse Planning Kolom Fix</strong>: Gecorrigeerd "taak_id" → "actie_id" in beide debug user inspector endpoints voor dagelijkse planning count query.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Oplossing voor "column taak_id does not exist" 500 error - alle debug queries nu volledig werkend zonder database schema errors.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Complete Fix</strong>: Dit completeert de database schema fix serie (v0.21.59-61) - alle kolom namen nu correct voor user debug inspector.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.60 - Kritieke Database Schema Fix voor Taken Tabel -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.60</span>
+                <span class="version-badge badge-fix">v0.21.60</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">

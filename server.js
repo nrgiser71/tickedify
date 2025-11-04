@@ -11636,7 +11636,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             pool.query(`
                 SELECT COUNT(*) as total
                 FROM dagelijkse_planning
-                WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)
+                WHERE actie_id IN (SELECT id FROM taken WHERE user_id = $1)
             `, [userId]),
 
             // 9. Herhalende taken count (actief)
@@ -11902,7 +11902,7 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
             pool.query(`
                 SELECT COUNT(*) as total
                 FROM dagelijkse_planning
-                WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)
+                WHERE actie_id IN (SELECT id FROM taken WHERE user_id = $1)
             `, [userId]),
 
             // 9. Herhalende taken count (actief)
