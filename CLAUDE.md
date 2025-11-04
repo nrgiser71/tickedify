@@ -241,6 +241,14 @@ feature branch → staging test (dev.tickedify.com) → PR aanmaken → WACHT OP
 - ✅ **Feature beschrijving**: Duidelijk beschrijven wat er geïmplementeerd/gefixed is
 - ✅ **Gebruiker feedback**: Changelog als communicatie tool naar gebruiker
 
+**CHANGELOG FORMAT REGELS (vanaf v0.21.78):**
+- 🌐 **ALLEEN ENGELS**: Alle changelog entries MOETEN in het Engels zijn
+- 📅 **PER DAG GROEPEREN**: Groepeer alle wijzigingen van één dag in één versie entry
+- 📋 **CATEGORISEREN**: Verdeel entries in ✨ Features, 🔧 Fixes, 🎯 Improvements
+- 🔢 **HOOGSTE VERSIE**: Gebruik het hoogste versie nummer van die dag
+- 🚫 **GEEN COMMITS**: Niet per commit een entry, maar per dag samenvatten
+- 🔒 **GEEN SECURITY DETAILS**: Vermijd API endpoints, database schema, file paths, SQL queries
+
 **WERK ZO ZELFSTANDIG MOGELIJK BINNEN STAGING:**
 Claude moet zo zelfstandig mogelijk werken op feature branches en staging environment. Productie deployments zijn GEBLOKKEERD tijdens de bèta freeze periode. De bèta fase vereist absolute productie stabiliteit - nieuwe features worden ontwikkeld en getest op staging, maar NIET naar productie gepusht tot de freeze wordt opgeheven.
 
