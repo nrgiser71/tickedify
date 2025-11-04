@@ -14266,7 +14266,6 @@ class EmailHelpModal {
         this.contentEl = document.getElementById('emailHelpContent');
         this.openBtn = document.getElementById('btn-email-help');
 
-        this.contentLoaded = false;
         this.setupEventListeners();
     }
 
@@ -14295,20 +14294,18 @@ class EmailHelpModal {
     }
 
     async loadContent() {
-        if (this.contentLoaded) return;
-
         try {
             // Load marked.js if not already loaded
             if (typeof marked === 'undefined') {
                 await this.loadMarked();
             }
 
-            const response = await fetch('/api/email-import-help');
+            // Always fetch fresh content (no caching)
+            const response = await fetch('/api/email-import-help?v=' + Date.now());
             const markdown = await response.text();
 
             // Use marked.js for professional markdown rendering
             this.contentEl.innerHTML = marked.parse(markdown);
-            this.contentLoaded = true;
         } catch (error) {
             console.error('Failed to load email help:', error);
             this.contentEl.innerHTML = '<p>Failed to load help content. Please try again later.</p>';
