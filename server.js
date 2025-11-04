@@ -456,12 +456,78 @@ app.get('/api/status', (req, res) => {
 
 // Email import help page (styled HTML)
 app.get('/email-import-help', (req, res) => {
-    const helpPath = path.join(__dirname, 'public', 'email-import-help.html');
-    res.sendFile(helpPath, (err) => {
+    const markdownPath = path.join(__dirname, 'public', 'email-import-help.md');
+    const cssPath = path.join(__dirname, 'public', 'email-import-help.css');
+
+    // Read markdown content
+    fs.readFile(markdownPath, 'utf8', (err, markdown) => {
         if (err) {
-            console.error('Failed to serve email-import-help.html:', err);
-            res.status(404).json({ error: 'Help page not found' });
+            console.error('Failed to read email-import-help.md:', err);
+            return res.status(404).send('Help content not found');
         }
+
+        // Parse markdown to HTML using marked
+        const { marked } = require('marked');
+        const contentHtml = marked.parse(markdown);
+
+        // Read CSS for inline styles
+        fs.readFile(cssPath, 'utf8', (cssErr, css) => {
+            if (cssErr) {
+                console.error('Failed to read CSS:', cssErr);
+                // Continue without CSS if it fails
+                css = '';
+            }
+
+            // Generate complete HTML page with server-rendered content
+            const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Import Help - Tickedify</title>
+  <style>${css}</style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+</head>
+<body>
+  <header role="banner">
+    <div class="header-container">
+      <h1>Email Import Help</h1>
+      <p class="subtitle">Learn how to import tasks via email using the @t syntax</p>
+    </div>
+  </header>
+
+  <main role="main" id="content">
+    ${contentHtml}
+  </main>
+
+  <footer role="contentinfo">
+    <p>Questions? Email <a href="mailto:jan@tickedify.com">jan@tickedify.com</a></p>
+  </footer>
+
+  <!-- Syntax highlighting -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script>
+    // Apply syntax highlighting to code blocks
+    document.addEventListener('DOMContentLoaded', () => {
+      Prism.highlightAll();
+
+      // Wrap tables in responsive containers
+      const tables = document.querySelectorAll('table');
+      tables.forEach(table => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-container';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      });
+    });
+  </script>
+</body>
+</html>`;
+
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+            res.send(html);
+        });
     });
 });
 
