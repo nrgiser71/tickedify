@@ -5488,6 +5488,61 @@ app.get('/api/debug/user-by-email/:email', async (req, res) => {
     }
 });
 
+// Debug endpoint to check user storage stats by user ID
+app.get('/api/debug/user-storage/:userId', async (req, res) => {
+    try {
+        if (!db || !pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { userId } = req.params;
+
+        // Get storage stats from user_storage_usage table
+        const storageResult = await pool.query(`
+            SELECT * FROM user_storage_usage WHERE user_id = $1
+        `, [userId]);
+
+        // Get all bijlagen for this user
+        const bijlagenResult = await pool.query(`
+            SELECT id, taak_id, bestandsnaam, bestandsgrootte, mimetype, aangemaakt
+            FROM bijlagen
+            WHERE user_id = $1
+            ORDER BY aangemaakt DESC
+        `, [userId]);
+
+        // Calculate actual total from bijlagen
+        const actualTotal = bijlagenResult.rows.reduce((sum, b) => sum + parseInt(b.bestandsgrootte || 0), 0);
+
+        // Get user plan info
+        const userResult = await pool.query('SELECT email, selected_plan, trial_end_date FROM users WHERE id = $1', [userId]);
+
+        const storageStats = await db.getUserStorageStats(userId);
+        const planType = await db.getUserPlanType(userId);
+
+        res.json({
+            userId: userId,
+            user: userResult.rows[0] || null,
+            planType: planType,
+            storageUsageTable: storageResult.rows[0] || null,
+            bijlagen: {
+                count: bijlagenResult.rows.length,
+                total_bytes_calculated: actualTotal,
+                total_formatted: storageManager.formatBytes(actualTotal),
+                files: bijlagenResult.rows
+            },
+            dbFunctionResult: storageStats,
+            formatted: {
+                used_formatted: storageManager.formatBytes(storageStats.used_bytes),
+                limit_formatted: storageManager.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT)
+            }
+        });
+
+    } catch (error) {
+        console.error('User storage lookup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // External API endpoint for adding tasks (for Keyboard Maestro, etc.)
 app.post('/api/external/add-task', async (req, res) => {
     try {
