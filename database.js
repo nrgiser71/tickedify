@@ -603,8 +603,9 @@ const db = {
         return null;
       }
 
+      // T016: Filter soft deleted tasks from getTask
       const result = await pool.query(
-        'SELECT * FROM taken WHERE id = $1 AND user_id = $2',
+        'SELECT * FROM taken WHERE id = $1 AND user_id = $2 AND verwijderd_op IS NULL',
         [taskId, userId]
       );
 
@@ -637,10 +638,12 @@ const db = {
         query = 'SELECT * FROM contexten WHERE user_id = $1 ORDER BY LOWER(naam) ASC';
         params = [userId];
       } else if (listName === 'afgewerkte-taken') {
-        query = 'SELECT * FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL ORDER BY afgewerkt DESC';
+        // T012: Filter soft deleted tasks from afgewerkte-taken lijst
+        query = 'SELECT * FROM taken WHERE user_id = $1 AND afgewerkt IS NOT NULL AND verwijderd_op IS NULL ORDER BY afgewerkt DESC';
         params = [userId];
       } else {
-        query = 'SELECT * FROM taken WHERE user_id = $1 AND lijst = $2 AND afgewerkt IS NULL ORDER BY aangemaakt DESC';
+        // T012: Filter soft deleted tasks from all other lists
+        query = 'SELECT * FROM taken WHERE user_id = $1 AND lijst = $2 AND afgewerkt IS NULL AND verwijderd_op IS NULL ORDER BY aangemaakt DESC';
         params = [userId, listName];
       }
       
@@ -1209,12 +1212,13 @@ const db = {
         triggeredBy: 'user_action'
       });
 
+      // T014: Filter soft deleted tasks from dagelijkse planning
       const result = await pool.query(`
         SELECT dp.*, t.tekst as actie_tekst, t.project_id, t.context_id, t.duur as actie_duur
         FROM dagelijkse_planning dp
         LEFT JOIN taken t ON dp.actie_id = t.id
         WHERE dp.datum = $1 AND dp.user_id = $2
-        AND (dp.actie_id IS NULL OR t.afgewerkt IS NULL)
+        AND (dp.actie_id IS NULL OR (t.afgewerkt IS NULL AND t.verwijderd_op IS NULL))
         ORDER BY dp.uur ASC, dp.positie ASC, dp.aangemaakt ASC
       `, [datum, userId]);
       

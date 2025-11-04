@@ -4075,8 +4075,8 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
             });
         }
 
-        // Check if task exists and belongs to user
-        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2', [taakId, userId]);
+        // Check if task exists and belongs to user (T017: filter soft deleted)
+        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2 AND verwijderd_op IS NULL', [taakId, userId]);
         if (existingTaak.rows.length === 0) {
             return res.status(404).json({ error: 'Taak niet gevonden' });
         }
@@ -4221,8 +4221,8 @@ app.get('/api/taak/:id/bijlagen', requireAuth, async (req, res) => {
         const { id: taakId } = req.params;
         const userId = req.session.userId;
 
-        // Check if task exists and belongs to user
-        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2', [taakId, userId]);
+        // Check if task exists and belongs to user (T017: filter soft deleted)
+        const existingTaak = await pool.query('SELECT id FROM taken WHERE id = $1 AND user_id = $2 AND verwijderd_op IS NULL', [taakId, userId]);
         if (existingTaak.rows.length === 0) {
             return res.status(404).json({ error: 'Taak niet gevonden' });
         }
@@ -6565,7 +6565,8 @@ app.get('/api/debug/find-task/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        // T017: Filter soft deleted tasks
+        const result = await pool.query('SELECT * FROM taken WHERE id = $1 AND verwijderd_op IS NULL', [id]);
         
         if (result.rows.length > 0) {
             res.json({ found: true, task: result.rows[0] });
@@ -7141,7 +7142,8 @@ app.get('/api/debug/lijst/:naam', async (req, res) => {
         }
         
         const { naam } = req.params;
-        const result = await pool.query('SELECT * FROM taken WHERE lijst = $1 AND afgewerkt IS NULL ORDER BY aangemaakt DESC', [naam]);
+        // T017: Filter soft deleted tasks
+        const result = await pool.query('SELECT * FROM taken WHERE lijst = $1 AND afgewerkt IS NULL AND verwijderd_op IS NULL ORDER BY aangemaakt DESC', [naam]);
         
         res.json({
             lijst: naam,
@@ -7166,8 +7168,9 @@ app.get('/api/taak/:id', async (req, res) => {
         console.log('🐛 DEBUG: Looking up task with ID:', id);
         
         // Use same pool as database module to avoid connection issues
+        // T015: Filter soft deleted tasks from individual task lookup
         const { pool: dbPool } = require('./database');
-        const result = await dbPool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        const result = await dbPool.query('SELECT * FROM taken WHERE id = $1 AND verwijderd_op IS NULL', [id]);
         console.log('🐛 DEBUG: Query result rows count:', result.rows.length);
         
         if (result.rows.length > 0) {
@@ -7582,8 +7585,8 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         const userId = getCurrentUserId(req);
         console.log('🔧 SINGLE ACTION: Using userId:', userId);
         
-        // First check if task already exists for this user
-        const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1 AND user_id = $2', [actionData.id, userId]);
+        // First check if task already exists for this user (T017: filter soft deleted)
+        const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1 AND user_id = $2 AND verwijderd_op IS NULL', [actionData.id, userId]);
 
         let result;
         if (existingCheck.rows.length > 0) {
@@ -14120,7 +14123,8 @@ app.get('/api/debug/find-task/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM taken WHERE id = $1', [id]);
+        // T017: Filter soft deleted tasks
+        const result = await pool.query('SELECT * FROM taken WHERE id = $1 AND verwijderd_op IS NULL', [id]);
         
         if (result.rows.length > 0) {
             res.json({

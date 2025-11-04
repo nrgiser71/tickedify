@@ -139,10 +139,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.69 - Query Filtering for Soft Delete -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.69</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔍 Query Filtering - Soft Deleted Taken Verbergen</div>
+                    <div class="change-item">
+                        <div class="change-icon">📋</div>
+                        <div class="change-content">
+                            <strong>Lijst Queries</strong>: db.getList() gefilterd - soft deleted taken verdwijnen uit alle lijstweergaven (acties, opvolgen, uitgesteld, etc.).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📅</div>
+                        <div class="change-content">
+                            <strong>Dagelijkse Planning</strong>: db.getDagelijksePlanning() gefilterd - soft deleted taken tonen niet meer in planning grid.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🔍</div>
+                        <div class="change-content">
+                            <strong>Task Lookups</strong>: GET /api/taak/:id en db.getTask() gefilterd - individuele taken niet toegankelijk na soft delete.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📎</div>
+                        <div class="change-content">
+                            <strong>Existence Checks</strong>: Bijlagen upload en planning endpoints gefilterd - voorkomt operaties op soft deleted taken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Completeness</strong>: 10+ query locaties gefilterd in database.js en server.js - comprehensive soft delete isolation.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.68 - Cleanup Trigger Implementation -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.68</span>
+                <span class="version-badge badge-feature">v0.21.68</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
