@@ -878,6 +878,42 @@
         #feedbackModal .modal-body {
             padding: 0;
         }
+
+        /* Modal Footer Styling */
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--macos-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background-color: var(--macos-bg-secondary);
+        }
+
+        .btn-primary {
+            padding: 10px 20px;
+            background-color: var(--macos-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0051a8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -3165,6 +3201,11 @@
                         <div id="feedbackContext" class="detail-content"></div>
                     </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="emailFeedbackUser()" class="btn-primary">
+                    📧 Email Gebruiker
+                </button>
             </div>
         </div>
     </div>

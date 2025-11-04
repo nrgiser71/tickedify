@@ -2389,6 +2389,51 @@ async function updateFeedbackStatus() {
     }
 }
 
+function emailFeedbackUser() {
+    if (!currentFeedbackId) return;
+
+    // Get feedback data from the table row
+    const row = document.querySelector(`[onclick="showFeedbackDetail('${currentFeedbackId}')"]`);
+    if (!row) return;
+
+    const feedback = JSON.parse(row.getAttribute('data-feedback'));
+
+    // Check if email is available
+    if (!feedback.gebruiker_email) {
+        alert('❌ Geen emailadres beschikbaar voor deze gebruiker');
+        return;
+    }
+
+    // Build email subject
+    const typeLabel = feedback.type === 'bug' ? 'Bug Report' : 'Feature Request';
+    const subject = `Re: ${typeLabel} - ${feedback.titel}`;
+
+    // Build email body
+    let body = `Hallo ${feedback.gebruiker_naam || 'gebruiker'},\n\n`;
+    body += `--- SCHRIJF JE BERICHT HIER BOVEN DEZE LIJN ---\n\n`;
+    body += `------------------------\n`;
+    body += `Referentie:\n`;
+    body += `Type: ${typeLabel}\n`;
+    body += `Titel: ${feedback.titel}\n`;
+    body += `Datum: ${new Date(feedback.aangemaakt).toLocaleString('nl-NL')}\n\n`;
+    body += `Oorspronkelijke beschrijving:\n${feedback.beschrijving}\n`;
+
+    if (feedback.stappen) {
+        body += `\nStappen om te reproduceren:\n${feedback.stappen}\n`;
+    }
+
+    body += `------------------------\n\n`;
+    body += `Met vriendelijke groet,\n`;
+    body += `Jan Buskens\n`;
+    body += `Tickedify Support`;
+
+    // URL encode the subject and body
+    const mailtoLink = `mailto:${encodeURIComponent(feedback.gebruiker_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    // Open mailto link
+    window.location.href = mailtoLink;
+}
+
 // ============================================================================
 // Initialize Application
 // ============================================================================
