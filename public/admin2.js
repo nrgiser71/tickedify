@@ -94,6 +94,17 @@ const API = {
             method: 'POST',
             body: JSON.stringify({ preview })
         })
+    },
+
+    // Feedback & Support endpoints (Note: uses /api/admin, not /api/admin2)
+    feedback: {
+        getAll: () => fetch('/api/admin/feedback').then(r => r.json()),
+        getStats: () => fetch('/api/admin/feedback/stats').then(r => r.json()),
+        updateStatus: (id, status) => fetch(`/api/admin/feedback/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        }).then(r => r.json())
     }
 };
 
@@ -177,6 +188,7 @@ const ScreenManager = {
             'database': '💾 Database Monitor',
             'revenue': '💰 Revenue Dashboard',
             'users': '👥 User Management',
+            'feedback': '💬 Feedback & Support',
             'system': '⚙️ System Settings',
             'dbtools': '🔧 Database Tools',
             'debug': '🔍 Debug Tools',
@@ -200,6 +212,7 @@ const ScreenManager = {
             'database': Screens.loadDatabase,
             'revenue': Screens.loadRevenue,
             'users': Screens.loadUsers,
+            'feedback': Screens.loadFeedback,
             'system': Screens.loadSystem,
             'dbtools': Screens.loadDBTools,
             'debug': Screens.loadDebug,
@@ -1394,6 +1407,102 @@ const Screens = {
         SecurityTools.updateSecurityStats();
         SecurityTools.refreshAuditLog();
         SecurityTools.refreshSessions();
+    },
+
+    /**
+     * Feedback & Support Screen
+     */
+    async loadFeedback() {
+        try {
+            // Fetch data in parallel
+            const [statsData, feedbackData] = await Promise.all([
+                API.feedback.getStats(),
+                API.feedback.getAll()
+            ]);
+
+            // Render stats cards
+            if (statsData && statsData.stats) {
+                const stats = statsData.stats;
+                document.getElementById('feedbackTotal').textContent = stats.totaal || 0;
+                document.getElementById('feedbackNieuw').textContent = stats.nieuw || 0;
+                document.getElementById('feedbackBugs').textContent = stats.bugs || 0;
+                document.getElementById('feedbackFeatures').textContent = stats.features || 0;
+            }
+
+            // Render feedback table
+            const container = document.getElementById('feedbackTable');
+            const feedback = feedbackData && feedbackData.feedback || [];
+
+            if (!feedback || feedback.length === 0) {
+                container.innerHTML = '<div class="loading">Geen feedback beschikbaar</div>';
+                return;
+            }
+
+            let html = '<table class="data-table"><thead><tr>';
+            html += '<th>Type</th><th>Titel</th><th>Gebruiker</th><th>Datum</th><th>Status</th>';
+            html += '</tr></thead><tbody>';
+
+            feedback.forEach(item => {
+                const typeLabel = item.type === 'bug' ? '🐛 Bug' : '💡 Feature';
+                const statusLabel = this.getStatusLabel(item.status);
+                const relativeTime = this.formatRelativeTime(item.aangemaakt);
+
+                html += `<tr class="feedback-row" onclick="showFeedbackDetail('${item.id}')" data-feedback='${JSON.stringify(item).replace(/'/g, '&#39;')}' style="cursor: pointer;">`;
+                html += `<td>${typeLabel}</td>`;
+                html += `<td>${this.escapeHtml(item.titel)}</td>`;
+                html += `<td>${this.escapeHtml(item.gebruiker_naam || 'Onbekend')}</td>`;
+                html += `<td>${relativeTime}</td>`;
+                html += `<td><span class="status-badge status-${item.status}">${statusLabel}</span></td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+        } catch (error) {
+            console.error('Error loading feedback:', error);
+            document.getElementById('feedbackTable').innerHTML = '<div class="error">❌ Error loading feedback</div>';
+        }
+    },
+
+    // Helper functions for feedback
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    getStatusLabel(status) {
+        const labels = {
+            'nieuw': '🆕 Nieuw',
+            'bekeken': '👁️ Bekeken',
+            'in_behandeling': '🔄 In behandeling',
+            'opgelost': '✅ Opgelost'
+        };
+        return labels[status] || status;
+    },
+
+    formatRelativeTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 7) {
+            return date.toLocaleDateString('nl-NL');
+        } else if (days > 0) {
+            return `${days}d geleden`;
+        } else if (hours > 0) {
+            return `${hours}u geleden`;
+        } else if (minutes > 0) {
+            return `${minutes}m geleden`;
+        } else {
+            return 'Zojuist';
+        }
     }
 };
 
@@ -2189,6 +2298,96 @@ document.addEventListener('keydown', (e) => {
         });
     }
 });
+
+// ============================================================================
+// Feedback Modal Functions (Global - called from onclick in HTML)
+// ============================================================================
+
+let currentFeedbackId = null;
+
+function showFeedbackDetail(feedbackId) {
+    const row = document.querySelector(`[onclick="showFeedbackDetail('${feedbackId}')"]`);
+    if (!row) return;
+
+    const feedback = JSON.parse(row.getAttribute('data-feedback'));
+    currentFeedbackId = feedbackId;
+
+    // Set modal content
+    document.getElementById('feedbackModalTitle').textContent =
+        `${feedback.type === 'bug' ? '🐛 Bug Report' : '💡 Feature Request'}`;
+
+    document.getElementById('feedbackType').textContent =
+        feedback.type === 'bug' ? '🐛 Bug' : '💡 Feature';
+
+    document.getElementById('feedbackUser').textContent =
+        `${feedback.gebruiker_naam || 'Onbekend'} (${feedback.gebruiker_email || '-'})`;
+
+    document.getElementById('feedbackDate').textContent =
+        new Date(feedback.aangemaakt).toLocaleString('nl-NL');
+
+    document.getElementById('feedbackStatus').value = feedback.status;
+
+    document.getElementById('feedbackTitel').textContent = feedback.titel;
+    document.getElementById('feedbackBeschrijving').textContent = feedback.beschrijving;
+
+    // Show/hide steps if available
+    const stappenRow = document.getElementById('feedbackStappenRow');
+    if (feedback.stappen) {
+        document.getElementById('feedbackStappen').textContent = feedback.stappen;
+        stappenRow.style.display = 'flex';
+    } else {
+        stappenRow.style.display = 'none';
+    }
+
+    // Format context
+    if (feedback.context) {
+        const contextDiv = document.getElementById('feedbackContext');
+        let contextHtml = '';
+        if (feedback.context.browser) contextHtml += `<div><strong>Browser:</strong> ${feedback.context.browser}</div>`;
+        if (feedback.context.scherm) contextHtml += `<div><strong>Scherm:</strong> ${feedback.context.scherm}</div>`;
+        if (feedback.context.huidigePagina) contextHtml += `<div><strong>Pagina:</strong> ${feedback.context.huidigePagina}</div>`;
+        contextDiv.innerHTML = contextHtml || '<div>Geen context beschikbaar</div>';
+    } else {
+        document.getElementById('feedbackContext').innerHTML = '<div>Geen context beschikbaar</div>';
+    }
+
+    // Show modal
+    document.getElementById('feedbackModal').style.display = 'block';
+}
+
+function closeFeedbackModal() {
+    document.getElementById('feedbackModal').style.display = 'none';
+    currentFeedbackId = null;
+}
+
+async function updateFeedbackStatus() {
+    if (!currentFeedbackId) return;
+
+    const newStatus = document.getElementById('feedbackStatus').value;
+
+    try {
+        const response = await API.feedback.updateStatus(currentFeedbackId, newStatus);
+
+        if (!response || response.error) {
+            throw new Error(response?.error || 'Failed to update status');
+        }
+
+        // Reload feedback screen to show updated data
+        await Screens.loadFeedback();
+
+        // Update the modal row data if still open
+        if (document.getElementById('feedbackModal').style.display === 'block') {
+            showFeedbackDetail(currentFeedbackId);
+        }
+
+        // Show success notification
+        console.log('✅ Feedback status updated successfully');
+
+    } catch (error) {
+        console.error('Error updating feedback status:', error);
+        alert('❌ Fout bij updaten status: ' + error.message);
+    }
+}
 
 // ============================================================================
 // Initialize Application

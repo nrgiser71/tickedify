@@ -761,6 +761,96 @@
             pointer-events: none;
             z-index: 1;
         }
+
+        /* Feedback & Support Specific Styling */
+        .feedback-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .feedback-row:hover {
+            background-color: var(--macos-blue) !important;
+            color: white;
+        }
+
+        .feedback-row:hover * {
+            color: white !important;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-nieuw {
+            background-color: #fecaca;
+            color: #991b1b;
+        }
+
+        .status-bekeken {
+            background-color: #bfdbfe;
+            color: #1e40af;
+        }
+
+        .status-in_behandeling {
+            background-color: #fed7aa;
+            color: #9a3412;
+        }
+
+        .status-opgelost {
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+
+        .feedback-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .feedback-detail .detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feedback-detail .detail-row label {
+            color: var(--macos-text-secondary);
+            font-size: 14px;
+        }
+
+        .feedback-detail .detail-content {
+            background: var(--macos-gray-6);
+            padding: 12px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--macos-text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background-color: var(--macos-gray-5);
+            color: var(--macos-text-primary);
+        }
     </style>
 </head>
 <body>
@@ -806,6 +896,12 @@
                     <a href="#users" class="admin-nav-link" data-screen="users">
                         <span class="admin-nav-icon">👥</span>
                         <span>User Management</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#feedback" class="admin-nav-link" data-screen="feedback">
+                        <span class="admin-nav-icon">💬</span>
+                        <span>Feedback</span>
                     </a>
                 </li>
                 <li class="admin-nav-item">
@@ -1453,6 +1549,46 @@
                                 <!-- Rows will be dynamically inserted here -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Feedback Screen -->
+            <section id="screen-feedback" class="admin-screen" data-screen="feedback">
+                <div class="admin-header">
+                    <h1 class="admin-header-title">💬 Feedback & Support</h1>
+                    <p class="admin-header-subtitle">Beheer gebruikersfeedback en feature requests</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Totaal</div>
+                        <div class="stat-value" id="feedbackTotal">-</div>
+                        <div class="stat-subtitle">Alle feedback items</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Nieuw</div>
+                        <div class="stat-value" id="feedbackNieuw">-</div>
+                        <div class="stat-subtitle">Nieuwe meldingen</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Bugs</div>
+                        <div class="stat-value" id="feedbackBugs">-</div>
+                        <div class="stat-subtitle">Bug reports</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Features</div>
+                        <div class="stat-value" id="feedbackFeatures">-</div>
+                        <div class="stat-subtitle">Feature requests</div>
+                    </div>
+                </div>
+
+                <!-- Feedback Table -->
+                <div class="admin-table">
+                    <h3 style="margin-bottom: 15px;">📋 Alle Feedback</h3>
+                    <div id="feedbackTable">
+                        <div class="loading">Laden...</div>
                     </div>
                 </div>
             </section>
@@ -2951,6 +3087,57 @@
             <div class="message-navigation">
                 <button class="btn-prev" style="display: none;" disabled>◀ Previous</button>
                 <button class="btn-next" style="display: none;" disabled>Next ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Detail Modal -->
+    <div id="feedbackModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="feedbackModalTitle">Feedback Details</h2>
+                <button onclick="closeFeedbackModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="feedback-detail">
+                    <div class="detail-row">
+                        <label><strong>Type:</strong></label>
+                        <span id="feedbackType"></span>
+                    </div>
+                    <div class="detail-row">
+                        <label><strong>Gebruiker:</strong></label>
+                        <span id="feedbackUser"></span>
+                    </div>
+                    <div class="detail-row">
+                        <label><strong>Datum:</strong></label>
+                        <span id="feedbackDate"></span>
+                    </div>
+                    <div class="detail-row">
+                        <label><strong>Status:</strong></label>
+                        <select id="feedbackStatus" onchange="updateFeedbackStatus()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--macos-border); font-size: 14px;">
+                            <option value="nieuw">🆕 Nieuw</option>
+                            <option value="bekeken">👁️ Bekeken</option>
+                            <option value="in_behandeling">🔄 In behandeling</option>
+                            <option value="opgelost">✅ Opgelost</option>
+                        </select>
+                    </div>
+                    <div class="detail-row">
+                        <label><strong>Titel:</strong></label>
+                        <div id="feedbackTitel" class="detail-content"></div>
+                    </div>
+                    <div class="detail-row">
+                        <label><strong>Beschrijving:</strong></label>
+                        <div id="feedbackBeschrijving" class="detail-content"></div>
+                    </div>
+                    <div class="detail-row" id="feedbackStappenRow" style="display: none;">
+                        <label><strong>Stappen om te reproduceren:</strong></label>
+                        <div id="feedbackStappen" class="detail-content"></div>
+                    </div>
+                    <div class="detail-row">
+                        <label><strong>Context:</strong></label>
+                        <div id="feedbackContext" class="detail-content"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
