@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelog - Tickedify</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.changelog-container {
+max-width: 800px;
+margin: 40px auto;
+padding: 20px;
+background: var(--macos-bg-primary);
+border-radius: var(--macos-radius-large);
+box-shadow: var(--macos-shadow-medium);
+}
+
+.changelog-header {
+text-align: center;
+margin-bottom: 40px;
+border-bottom: 1px solid var(--macos-gray-4);
+padding-bottom: 20px;
+}
+
+.changelog-title {
+font-size: 32px;
+font-weight: 700;
+color: var(--macos-text-primary);
+margin-bottom: 8px;
+}
+
+.changelog-subtitle {
+font-size: 16px;
+color: var(--macos-text-secondary);
+}
+
+.version-block {
+margin-bottom: 40px;
+padding: 24px;
+background: var(--macos-bg-secondary);
+border-radius: var(--macos-radius-medium);
+border-left: 4px solid var(--macos-blue);
+}
+
+.version-header {
+display: flex;
+align-items: center;
+margin-bottom: 20px;
+}
+
+.version-number {
+font-size: 24px;
+font-weight: 600;
+color: var(--macos-blue);
+margin-right: 16px;
+}
+
+.version-date {
+font-size: 14px;
+color: var(--macos-text-secondary);
+background: var(--macos-gray-5);
+padding: 4px 12px;
+border-radius: var(--macos-radius-small);
+}
+
+.version-badge {
+margin-left: auto;
+padding: 4px 12px;
+border-radius: var(--macos-radius-small);
+font-size: 12px;
+font-weight: 600;
+text-transform: uppercase;
+}
+
+.badge-latest {
+background: var(--macos-green);
+color: white;
+}
+
+.badge-feature {
+background: var(--macos-blue);
+color: white;
+}
+
+.badge-fix {
+background: var(--macos-orange);
+color: white;
+}
+
+.badge-improvement {
+background: var(--macos-purple);
+color: white;
+}
+
+.change-list {
+list-style: none;
+padding: 0;
+margin: 0;
+}
+
+.change-item {
+display: flex;
+align-items: flex-start;
+margin-bottom: 12px;
+padding: 12px;
+background: var(--macos-bg-primary);
+border-radius: var(--macos-radius-small);
+box-shadow: var(--macos-shadow-light);
+}
+
+.change-icon {
+margin-right: 12px;
+font-size: 16px;
+min-width: 20px;
+}
+
+.change-content {
+flex: 1;
+}
+
+.change-title {
+font-size: 14px;
+font-weight: 600;
+color: var(--macos-text-primary);
+margin-bottom: 4px;
+}
+
+.change-description {
+font-size: 13px;
+color: var(--macos-text-secondary);
+line-height: 1.4;
+}
+
+.change-category {
+margin-bottom: 20px;
+}
+
+.change-category-title {
+font-size: 16px;
+font-weight: 600;
+color: var(--macos-text-primary);
+margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+<div class="changelog-container">
+<div class="changelog-header">
+<h1 class="changelog-title">Tickedify Changelog</h1>
+<p class="changelog-subtitle">All new features, improvements, and bug fixes</p>
+</div>
+
+<!-- Version 0.21.74 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-latest">v0.21.77</span>
+<span class="version-date">November 4, 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Accessibility: Added WCAG AA compliant features including focus indicators, proper contrast ratios, and reduced motion support.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Admin2 Feedback Management: Volledige Feedback & Support functionality copied or admin.html to admin2.html - new menu item, stats cards, feedback table and detail modal.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Backwards Compatible: Oude user ID endpoint blijft beschikbaar, new email-based endpoint added as alternatief.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Beautiful Rendering: Added styled HTML page with markdown rendering (marked.js) and syntax highlighting (syntax highlighting library) for code examples.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Beide Endpoints Fixed: Zowel de oude ID-based endpoint (/debug/user-data/:id) as de new email-based endpoint (/debug/user-data-by-email) gebruiken now de correct database columns.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Completed Logic Fix: Gebruikt now "completed status IS NOT NULL" for completed tasks and "completed status IS NULL" for pending tasks (timestamp-based ipv boolean).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Database Schema Fix: Gecorrigeerd: "login timestamp column" column naam to "login timestamp column" in user data inspector endpoints - beide oude én new endpoint gebruiken now correct Nederlandse column naam.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Email Validatie: Added: basis email format validatie in frontend for betere gebruikerservaring and duidelijke foutmeldingen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">English Translation: Complete documentation translated from Dutch to English (450 lines) for better accessibility to international users.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Fixed 404 Error: Added /email-import-help route to hosting platform.json so Express route is properly executed on Vercel serverless platform.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Impact: Oplossing for "column task referentie does not exist" 500 error - all debug queries now complete werkend without database schema errors.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Performance Indexes: Twee new indexes added (database index and database index) for optimale query performance.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Security Fix: authentication middleware middleware added to API endpoint endpoint for authentication security.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Stats Dashboard: Overzicht with totaal feedback, new meldingen, bug reports and feature requests.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Status Management: Update feedback status via modal dropdown (new → bekeken → in behandeling → opgelost).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Taken Table Kolommen Fixed: Gecorrigeerd all foute column namen in beide debug user inspector endpoints - "completed status" → "completed status", "project" → "project referentie", "context" → "context referentie", "blocked status" deleted (column does not exist).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Trash Screen: Complete new screen added in sidebar for viewing or soft-deleted tasks.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Dagelijkse Planning Column Fix: Gecorrigeerd "task referentie" → "actie referentie" in beide debug user inspector endpoints for daily planning count query.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Email Lookup in Debug Screen: Het Admin2 debug screen accepteert now een emailadres in plaats or een user ID, wat gebruiksvriendelijker is for opzoeken or user informatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Fixed Popup Modal: Restored API endpoint route to return markdown content instead or redirect, fixing the help popup that was not opening when clicking the question mark icon.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Method Naam Fix: this.list load function does not exist - fixed to this.list refresh function for automatic UI refresh na task restore.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Professional Rendering: Replaced basic markdown renderer with markdown rendering library for clean, professional rendering without gray boxes and layout issues.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Response Parsing Fix: Frontend expected array but API returned object {tasks: [], total: n} - now correct parsed with data.tasks.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Fix: task verwijder function called API endpoint to (hard delete) in plaats or API endpoint - tasks werden permanent deleted i.p.v. to trash moved.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Toast Bug Fix: CRITICAL BUG - this.toast notification method does not exist in task management class. Fixed to toast notification / toast notification like rest or app uses.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Toast Messages: "Task moved to trash", "Task restored to list", "Error restoring" - all feedback in Engels for internationale users.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">30-Day Retention: Taken verwijderen na 30 dagen retention period (permanente verwijder timestamp column < NOW()).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Bulk Operaties: API endpoint and API endpoint - Verwerk meerdere tasks tegelijk (max 100 per operatie).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Clean Layout: Tables, code blocks, and headings now render properly with existing CSS styling from style.css, matching the standalone page design.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Cleanup Tracking: Users table extended with cleanup timestamp column column for dagelijkse automatic cleanup scheduling.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Countdown Timer: Live countdown display shows days until permanent deletion (30-day retention), with visual warning at &lt;3 dagen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Dagelijkse Planning: planning query gefilterd - soft-deleted tasks show niet more in planning grid.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Daily Cleanup: Automatische cleanup or permanent te verwijderen tasks, 1x per dag per user via lazy evaluation (non-blocking).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Date Formatting: toLocaleDateString('and-US') for consistente Engelse datumweergave in trash.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Dual Routes: Both routes now work: API endpoint for popup modal (markdown) and /email-import-help for standalone page (HTML).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Email User Button: Nieuwe button in feedback modal to direct een email te send to the user that feedback has submitted. Subject and body are automatic pre-filled with feedback details and een placeholder for je personal message.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Empty State: Friendly empty state when trash is empty - visual feedback for user.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">English UI Translations: Alle trash screen teksten vertaald to Engels - "Trash is empty", "Deleted:", "X days until permanent deletion", "Restore" button.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Enhanced Tables: Styled tables with borders, alternating row colors, and horizontal scroll on mobile for priority and defer code references.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Environment Check: Cleanup alleen on non-productie omgevingen - absolute safety tijdens bèta freeze periode.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Existence Checks: Bijlagen upload and planning endpoints gefilterd - prevents operaties on soft-deleted tasks.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Feedback Table: Table with all feedback items (type, titel, user, date, status) - klik on row for details.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Fresh Content: Removed content caching from email help popup modal - content is now always fetched fresh when popup opens, ensuring users see latest documentation updates.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">List Queries: list query gefilterd - soft-deleted tasks disappear from all lijstweergaven (acties, opvolgen, uitgesteld, etc.).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Mailto Link: Gebruikt mailto: protocol with URL-encoded subject and body for maximale compatibiliteit with all email clients.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Responsive Design: Implemented mobile-first responsive design with optimized layouts for mobile (375px), tablet (768px), and desktop (1440px) viewports.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Restore Endpoint: API endpoint - Herstel soft-deleted tasks to original list with all properties behouden.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Restore Functionaliteit: One-click restore button per task - restores tasks to original list with all properties intact.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Soft Delete Endpoint: API endpoint - Markeert tasks as deleted without permanent te verwijderen, stopt automatic recurring tasks.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Soft Delete Integration: Frontend verwijder API vervangen by soft delete endpoint - verwijderde tasks appear now correct in trash.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Soft Delete Kolommen: Taken table extended with verwijder timestamp column and permanente verwijder timestamp column columns for trash functionality (Feature 055).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Task Details: Trash shows task text, verwijder date and days until deletion countdown with color-coded warnings.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Task Lookups: API endpoint and task query gefilterd - individuele tasks niet toegankelijk na soft delete.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Trash Endpoint: API endpoint - Haal all verwijderde tasks on with countdown to permanent deletion.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Uniform icon library Icoon: Het herhalings-icoontje uses now overal hetzelfde professionele icon library icoon (herhaling icoon) in plaats or emoji, for consistente display tussen daily planning and acties screen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">User Feedback: Toast message updated to "Task moved to trash" for duidelijke communicatie dat tasks herstelbaar zijn.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Visuele Indicator: Het herhalings-icoontje 🔄 is now ook getoond at recurring tasks in het daily planning screen grid, consistent with het acties screen.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.21.46 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-feature">v0.21.46</span>
+<span class="version-date">3 November 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Context: De knoptekst wisselt dynamisch: "Create action" is getoond at het aanmaken or een new task vanuit inbox, "Save changes" at het bewerken or een existing task.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Debug Logging: Uitgebreide logging added in server.js and database laag to te onderzoeken waarom de date berekening bug from v0.21.34 niet werd opgelost.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Event-based Patronen: Volledige implementatie added. event-10-before-webinar with eventDate=2025-07-01 geeft now correct 2025-06-21. Ondersteunt both "before" and "after" richtingen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Fix Applied: 1-line fix added: this.filter function; na in task completion handler. Dit maakt het consistent with andere plekken like removeActionFromList() that dezelfde pattern gebruiken.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Fix Applied: Moved filter function call BINNEN tijdsvertraging (na DOM removal), added filter function for new recurring tasks, and bescherming tegen verborgen element elements in filter function function.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Month-End Overflow: 31 januari + 1 maand geeft now correct 28 februari (was: 3 maart). JavaScript Date overflow detection added to all maandelijkse and jaarlijkse patronen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Nieuwe aanpak: Gebruik `new Date(year, month, day)` constructor like at yearly patterns. Dit prevents mutation edge cases. Check overflow with `newDate.getMonth() !== targetMonth`, dan setMonth+1 and laatste dag berekening.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Oplossing: Twee extra filter function calls added:
+
+Na calendar grid refresh ()
+Na recurring task actions list refresh ()</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Resultaat: 71/71 tests passing (100%) - Alle herhalingspatronen complete timezone-safe!</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Retry Mechanisme: test utility wacht now until frontend application object complete geïnitialiseerd is voordat de test runner start. app.js is 13000+ regels and kan nog bezig zijn with uitvoeren when DOMContentLoaded fired.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Root Cause: Het probleem zat in the task completion handler function. Na het afvinken or een task werd de acties list complete opnieuw gerenderd, but filter function werd NIET aangeroepen. Dit was NIET in the standalone acties screen, but specifiek in het daily planning screen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Schrikkeljaar Fallback: 29 februari 2024 → 2025 geeft now correct 28 februari (was: 1 maart). Check added: if (date.getDate() !== originalDay) → laatste dag berekening.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">ensureFuture Parameter: Added to calculateNextRecurringDate to "ensure future" logica from te schakelen for tests. Standaard true for productie (tasks are nooit in verleden aangemaakt), false for tests (test de logica puur without toekomst validatie).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">v0.21.44 Bug: ALLE datums 1 dag te vroeg by timezone offset! new Date('2025-06-15') = UTC midnight = 02:00 local (CET). new Date = 00:00 local. ISO date conversie converteert to UTC = 22:00 vorige dag → 2025-07-14 ipv 2025-07-15.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">8 Functies Fixed: ✅ date helper function - Maandelijkse patronen on specifieke dag
+✅ date helper function - Jaarlijkse patronen
+✅ getFirstDayOfNextMonth() - Eerste dag or maand
+✅ laatste dag helper function - Laatste dag or maand
+✅ laatste werkdag helper function - Laatste werkdag or maand
+✅ getLastWeekdayOfNextMonth() - Laatste weekdag or maand
+✅ monthly-weekday pattern - Eerste/laatste weekdag patronen
+✅ yearly-special pattern - Speciale jaarlijkse patronen</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Gefixte bug waarbij filters werden gereset na het afvinken or een task in the daily planning acties list. De filter UI bleef visueel wel actief, but de list toonde weer all tasks in plaats or alleen de gefilterde tasks.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Recurring tasks with patroon "laatste werkdag or the maand" sloegen een maand over at het aanmaken or the volgende instantie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Titel "Contexten Beheer" blijft niet more persistent staan when je to een ander menu item navigeert. De pagina titel is now correct geupdatet to the geselecteerde sectie (Inbox, Actions, Daily Planning, etc.).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Fix Applied: Titel update logica moved to buiten de if (uitgesteldContainer) block in container restore function. De titel is now ALTIJD correct geupdatet at navigatie vanuit speciale secties (Context Management, Daily Planning, etc.).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Gefixt: date helper function, getNextWeekday(), getNextWeekdayWithInterval() geconverteerd to UTC date constructie implementatie with UTC getters/setters.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Gevonden: Bug zat in FRONTEND (app.js), niet in backend! Alle date berekeningen gebeuren client-side. JavaScript Date overflow: 31 oktober + 1 maand = 1 DECEMBER (omdat 31 november niet bestaat).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Test Pagina Fix: test utility test now de ECHTE frontend code (frontend application object.calculateNextRecurringDate) in plaats or een apart backend endpoint. Dit zorgt ervoor dat we testen wat users daadwerkelijk gebruiken.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Test Pagina Refactor: test utility uses now date calculator module in plaats or volledige app.js (13900+ regels). Dit prevents initialisatie crashes by missende DOM elementen (onboarding component, authentication component, etc.).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Voorbeeld: Voorheen (bug): 31 oktober → 31 december (slaat november over) ❌
+Nu (correct): 31 oktober → 28 november (laatste werkdag) ✅</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Yearly/Monthly "Current Period First": yearly-25-12-1 vanaf 2025-06-01 geeft now correct 2025-12-25 (niet 2026-12-25). Zelfde fix for monthly-day patronen - check eerst HUIDIGE periode voordat to volgende interval gesprongen is.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">v0.21.45 Resterende Bug: Test "Dag 31 or elke maand (vanaf feb)" faalde - expects 2025-03-31, kreeg 2025-03-30. 70/71 tests (98.6%).</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Bereik: Vertaald zijn: daily planning entertainment berichten (7 messages), default entertainment berichten (7 messages), task completion berichten (6 messages), inline loading teksten (3 locaties), and subscription loading overlay.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Diagnose: Logging shows welke parameters are doorgegeven to createRecurringTask() function and or de newDate parameter wel is berekend.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Directe Beschikbaarheid: frontend application object is now synchronous beschikbaar - no retry polling more nodig. Test runner initialiseert direct at DOMContentLoaded.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Internationalisatie: Alle loading entertainment berichten in the daily planning zijn vertaald or Nederlands to Engels. Dit bereidt Tickedify for on internationale users terwijl emoji's behouden blijven for een vriendelijke UX.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Locatie: Context Management pagina (public/frontend code) - de pagina titel that bovenaan appears at navigatie to Context Management.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Locatie: Daily planning screen (public/frontend code) - de heading boven de task filters and acties list.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Monthly-Day Edge Case: monthly-day-31-1 vanaf 15 februari geeft now correct 31 maart (was: 28 februari). Logica: skip huidige maand as exact day niet bestaat.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oplossing: ALTIJD eerst dag on 1 zetten VOORDAT maand/jaar is gewijzigd. Dit prevents JavaScript overflow at tasks aangemaakt on dag 29, 30 or 31.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oplossing: Dead code deleted from task completion handler function. De existing filter call (Feature 050) works now correct for both normale as recurring tasks.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oplossing: UTC date constructie gebruiken overal! `UTC date object` creëert UTC midnight date. Alle getters/setters now UTC: UTC date getter, UTC date setter, etc.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Performance: Bonus verbetering by eliminatie or dubbele render - één render pass in plaats or twee.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Probleem opgelost: Filter blijft now correct actief na het afvinken or een recurring task in daily planning. Voorheen werd de filter state vergeten at recurring tasks, terwijl normale tasks wel werkten.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Probleem opgelost: v0.21.31 loste het filter persistentie probleem slechts gedeeltelijk on. Filter werd nog steeds vergeten at calendar grid refresh and recurring task refresh.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Probleem with v0.21.43: laatste dag berekening logica werkte niet omdat date object al geoverflow was. Voorbeeld: 31 jan + setMonth(1) → 3 maart. Dan laatste dag berekening → 28 februari, but this werd niet correct toegepast.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Resultaat: Filter blijft now 100% persistent by de hele completion workflow: eerste refresh ✅, calendar grid rebuild ✅, recurring task creation ✅.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: De container restore function function updatede de titel alleen at cleanup or uitgesteld views, niet at navigatie vanuit Context Management. Dit zorgde dat de titleAlreadySet flag in navigeerNaarLijst() de titel update blokkeerde.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: De filter function call werd aangeroepen VOORDAT het DOM element was deleted (tijdens fade animatie). Dit zorgde for een race condition waarbij het verborgen element element nog werd gevonden by filter function, but de task niet more in the tasks array bestond.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: De task completion handler function has 3 aparte render flows, but alleen de eerste had een filter call. De calendar grid refresh () and recurring task refresh () misten beiden de filter function call.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: Dead code (-10763) veroorzaakte dubbele render waarbij filter state verloren ging. De code called een niet-existing render function function to.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: JavaScript date berekening voegde dubbel een maand toe in the "laatste werkdag" logica.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Standalone Test Utility: Nieuwe date calculator module bevat ALLEEN de date calculation functies from app.js (600+ regels) without task management class dependencies. Test pagina laadt now direct without app.js initialisatie overhead.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Verbetering: Alle bulk edit progress animatie teksten zijn vertaald to Engels for consistentie with de rest or the UI.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Vertaling: De bevestigingsknop in the task edit popup is vertaald or Nederlands to Engels. "Actie maken" → "Create action" and "Aanpassingen opslaan" → "Save changes".</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Vertaling: De pagina titel in Context Management is vertaald or "Contexten Beheer" to "Context Management" for betere internationale consistentie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Vertaling: De sectie titel "Acties" links bovenaan in het daily planning screen is vertaald to "Actions" for betere internationale consistentie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Vertalingen: "Datum aanpassen task" → "Adjusting task date"
+"Verplaatsen task" → "Moving task"
+"Bulk modus actief (Annuleren)" → "Bulk mode active (Cancel)"</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Voorbeelden: "🎯 Je dagplanning is voorbereid..." → "🎯 Your daily plan is being prepared...", "📅 Taken are georganiseerd..." → "📅 Tasks are being organized...", "⏰ Tijdslots are berekend..." → "⏰ Time slots are being calculated..."</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.21.22 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-feature">v0.21.22</span>
+<span class="version-date">31 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Code Cleanup: Alle debug console.log statements deleted from @t parsing logic. This waren added tijdens bug troubleshooting (v0.21.8) and zijn now niet more nodig.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Defense in Depth Approach: toggleTaakSelectie() and selecteerAlleTaken() roepen now validateTaskId() to voordat IDs are added to geselecteerdeTaken Set. Dit voegt een extra validatie laag toe bovenop de existing v0.20.33 filtering in bulkEditProperties(). Ongeldige IDs kunnen now nooit more in the selectie state komen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Documentatie: Uitgebreide attachment sectie added to email import help with voorbeelden, troubleshooting tips, and best practices.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Help Button: New vraagteken icoon () naast het email adres kopieer icoon in the sidebar. Klik erop to de volledige email import syntax help te show.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Help Modal: Complete gestylede modal with de complete email import syntax documentatie. Ondersteunt markdown formatting, code voorbeelden, tabellen and all syntax details. Perfect for quick reference tijdens het schrijven or emails.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">In-App Messaging Systeem: Ontvang belangrijke tips, updates and berichten direct in the applicatie. Complete admin interface with markdown support, smart targeting, and flexible triggers. Berichten appear binnen 2-6 seconden na login.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Nieuwe sanitizeGeselecteerdeTaken() Functie: Lost het root cause probleem on waarom v0.20.34 niet werkte - validateTaskId() voorkwam new invalid selections, but oude/stale IDs that AL in geselecteerdeTaken Set zaten werden niet deleted. This function iterate over all IDs in the Set and verwijdert invalid/test IDs. Wordt automatic aangeroepen na elke data load.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Nieuwe validateTaskId() Utility Function: Voorkomt test/placeholder task IDs (pattern: test-*) and ongeldige task IDs to de bulk selection state in te komen. Validatie gebeurt now at selectie tijd in plaats or alleen at bulk edit execution. Dit prevents 404 errors complete in plaats or ze te detecteren achteraf.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Retry Logic: Added intelligent retry mechanism (3 attempts with 2-second intervals) to handle race conditions during login. If initial check fails due to session timing, system automatically retries before falling back to polling.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Snapshot Validatie VOOR Popup: openBulkEditPopupAsync() maakt now een validated snapshot or task IDs DIRECT at popup open (-13822). Dit snapshot is by gegeven to new method bulkEditPropertiesWithIds(validIds, updates). Auto-refresh tijdens popup kan now geselecteerdeTaken niet more bederven - we gebruiken het snapshot, niet de live Set.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Technical Details: Modified public/js/message-modal.js - changed POLLING_INTERVAL from 300000ms to 30000ms, added retry logic in DOMContentLoaded event, and modified checkForMessages() to return success boolean for retry detection.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">What Changed: Bulk edit properties modal now completely in English. All UI elements translated: form labels (Date, Priority, Estimated time), dropdown options (No change, No project/context, Low/Normal/High priority), placeholder text (Optional), and buttons (Cancel, Save).</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Belangrijke Verbeteringen: SHIFT+F9 keyboard shortcut for prioriteit, planning uren extended (05:00-22:00), alfabetische sortering contexten, datumformaat standaardisatie (DD/MM/YYYY), and 40+ bugfixes for bulk edit stabiliteit, form validatie, and UI improvements.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: @t instructie works now without spatie na @t. Voorheen werd @tp:Project; niet herkend, now wel. Je kan now schrijven @t p: or @tp: - beide work.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Defer codes (dw, dm, d3m, d6m, dy) work now correct. Taken werden aangemaakt with English list namen (weekly, monthly) terwijl UI Dutch prefixed namen expects (uitgesteld-wekelijks, uitgesteld-maandelijks).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Email help modal gaf "NOT_FOUND" error at klikken on vraagteken icoon. Route /email-import-help serveerde .md file without juiste content-type header.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Fixed "Received an instance or ArrayBuffer" error at cloud storage. Email import route gebruikte verkeerde Multer configuratie (file upload handler without in-memory buffer) waardoor file buffers, originalname and mimetype undefined waren.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Fixed "Received an instance or ArrayBuffer" error in cloud storage. file upload function werd aangeroepen with individuele parameters (buffer, originalname, mimetype, userId) but expects het hele file object (file, taakId, userId). Debug logging toonde dat file properties WEL correct waren in req.files but undefined werden at upload by verkeerde parameter signature.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Fixed "storageManager.uploadFile is not a function" error that attachment upload blokkeerde in v0.21.13. Incorrect module import on deleted - uses now de correct geïmporteerde storageManager instance or .</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Fixed 404 error at downloaden or attachments. storage component genereert een bijlageId dat uses is in cloud storage filename, but server.js genereerde OPNIEUW een ID for the database record. Dit zorgde for een mismatch - cloud storage had naam with ID_1, database record had ID_2. Download endpoint kon attachment niet vinden.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug Fix: Priority codes (p0, p1, p2, etc.) work now correct. Database expected lowercase Dutch namen (hoog, gemiddeld, laag) but parser retourneerde English capitalized namen (High, Medium, Low).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Comprehensive Debug Logging: Uitgebreide logging in bulkEditProperties() shows now: (1) Selected IDs before validation, (2) Loaded tasks count, (3) Detailed rejection reasons per invalid ID (test pattern vs not found in array), (4) Valid IDs after filtering. filter function logt now ook hoeveel selections werden cleared at filter change.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Console Output: Clear logging shows exact timing: "Session ready after Xms" → "Checking for messages" → "X unread message(s) found". Perfect for debugging.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Critical Bug Fix: @t instructie is now correct herkend. email service stuurt emails with Windows line endings (\r\n) waardoor \r to einde or regels bleef staan, wat regex matching brak. @t regel werd niet more deleted from notes.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">De Fix: Changed &lt;option value="normaal"&gt; to &lt;option value="gemiddeld"&gt;. Nu consistent with database constraint and all andere dropdowns in the app (filter bar, task create/edit form). Display text blijft "Normaal" for user, but backend krijgt correct 'gemiddeld'.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">De Fix: Deleted nummer parsing or . Nu: updates.projectId = project === 'null' ? null : project. Project ID blijft string, precies like de database expects. Consistent with context handling that al correct was.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">De Fix: Juiste Data Source: openBulkEditPopupAsync() uses now taskManager.planningActies || taskManager.tasks for validatie (). Dit is PRECIES dezelfde fallback as de UI rendering uses. Validatie checkt now tegen de array that DAADWERKELIJK is getoond → no out-or-sync more mogelijk → no 404 errors more.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">De Fix: collectBulkEditUpdates() uses now correct property namen: updates.projectId () and updates.contextId (). Dit matcht exact with de naming convention that database.updateTask() expects and that bulk move/delete al gebruikten.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Enhanced Debug Logging: Console shows now [SANITIZE] berichten when invalid IDs are deleted, inclusief het aantal verwijderde IDs and welke specifieke IDs zijn gecleaned. Maakt troubleshooting or bulk selection issues veel transparanter.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Enhanced Logging: Console shows now [BULK EDIT] Using data source: planningActies (X tasks) or tasks (Y tasks). Zo zie je exact welke array is uses for validatie. Dit maakt toekomstige debugging veel eenvoudiger.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Het Probleem: Bulk edit or prioriteit faalde with 404 "Task niet gevonden" errors for ALLE geselecteerde tasks. Root cause: HTML dropdown in public/index.html () stuurde value="normaal", but database database validatie vereist IN ('laag', 'gemiddeld', 'hoog'). SQL database update ongeldige waarde → 0 rows affected → server stuurt 404.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Het Probleem: Na v0.20.39 fix werkte context wijzigen WEL, but project wijzigen NIET (without error). Console logs toonden {projectId: NaN}. Root cause: collectBulkEditUpdates() deed parseInt(project) terwijl project IDs VARCHAR zijn (zoals "abc123xyz"). parseInt("abc123xyz") = NaN → database database update without error.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Het Échte Probleem: Na 4+ uur debuggen bleek het een SIMPELE TYPO! De collectBulkEditUpdates() function (-429) stuurde verkeerde property namen to the server: context ipv contextId and project referentie ipv projectId. De database.updateTask() expects camelCase property namen and maakt er database column namen or. Verkeerde property naam → SQL query with niet-existing column → 0 rows updated → 404 error!</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Hoe We Het Vonden: Console toonde [BULK EDIT] Snapshot created: 2 selected → 2 valid but daarna 404 errors. Dit bewees: validatie zag tasks as "valid" that NIET in database bestonden. Task IDs like task_1757165478375_pttiik976 waren GEEN test IDs. Ze zaten WEL in the verkeerde array, but NIET in database → data source mismatch.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Discovery: v0.20.34, v0.20.35 én v0.20.36 losten het VERKEERDE probleem on! Het echte issue: Data source inconsistentie. Bulk edit validation checkte taskManager.tasks (stale data or actielijst), but daily planning shows taskManager.planningActies (recente server data). Tasks that IN planningActies zaten werden gevalideerd tegen VERKEERDE array → valse positieve validatie → 404 errors at PUT request.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Identificatie: v0.20.34 and v0.20.35 losten het verkeerde probleem on! De echte bug was een timing issue: Bulk edit has een popup that 10-30 seconden wacht on user input. Auto-refresh draait elke 5 seconden and ververst this.tasks array. Tijdens popup wachttijd kunnen geselecteerde tasks from database disappear, but geselecteerdeTaken Set is NIET bijgewerkt. Bij "Save" click zijn IDs stale → 404 errors.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Waarom Andere Bulk Operaties Werkten: Bulk move/delete doen GEEN voorafgaande validatie - ze vertrouwen direct on geselecteerde IDs. Database geeft error as ID niet bestaat (expected behavior). Bulk edit deed WEL validatie but tegen VERKEERDE array → 404s leken onverwacht. Nu checken we de JUISTE array → consistency.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">What Changed: Fixed form validation error "An invalid form control with name='' is not focusable" that prevented saving messages in admin panel. The nextPageSelect dropdown now has its required attribute managed dynamically by JavaScript instead or being hardcoded in HTML.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Automatische Cleanup Na Data Load: sanitizeGeselecteerdeTaken() is aangeroepen in renderActiesLijst() (), direct na data load but vóór UI render. Dit garandeert dat stale IDs from vorige page loads or data refreshes are deleted voordat de UI selectie circles rendert.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Backwards Compatible: Emails without @t blijven exact hetzelfde work - existing [Project] @context parsing blijft ongewijzigd.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Body Truncation: Nieuwe --end-- marker (case-insensitive) knipt email body af - ideaal for handtekeningen. Werkt with én without @t syntax.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Bulk Edit Functionaliteit: Selecteer meerdere tasks tegelijk and bewerk hun eigenschappen (prioriteit, project, context, date) in één keer. Perfect for grote opruim sessies and project reorganisatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Database Schema Check: CREATE TABLE projecten (id VARCHAR(50) PRIMARY KEY) → project IDs zijn STRINGS, no integers! Context code had GEEN parseInt (: updates.contextId = context) → daarom werkte context WEL. Project code had WEL parseInt → daarom werkte project NIET.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Defer Priority: Defer codes have absolute voorrang - @t dm; stuurt task to Monthly list and negeert all andere codes. Perfect for "from je hoofd krijgen" without details.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Definitieve Oplossing: Replaced arbitrary time delays with active session polling. System now polls API endpoint every 500ms until sessie gevalideerd is (max 10 seconds), then checks for messages. No more guessing - messages appear as soon as session is ready.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Documentation: Comprehensive helpfile toegankelijk via /email-import-help.md with syntax reference, 10+ voorbeelden, FAQ and troubleshooting.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Hoe We Het Vonden: API endpoint werkte WEL, API endpoint faalde with 404. Beide gebruiken exact dezelfde ID, but GET has no WHERE clause with property names, PUT WEL. Manual test: PUT with contextId → success! PUT with context → 404. Conclusie: property name mismatch.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">How It Works: Login → DOMContentLoaded → poll session status every 500ms → session valid → check messages → display → start 5-minute polling. Typically ready within 1-2 seconds.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Impact: Reduces server load while maintaining immediate message delivery after login. Background polling at 5-minute intervals is sufficient for users already logged in.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Limieten: Max 1 attachment per email, max 4.5MB per file (Vercel serverless limit). Task creation faalt nooit - as attachment te groot is, is task toch aangemaakt.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Nieuwe Feature: Voeg a:zoekterm; toe to je @t syntax to automatic attachments te koppelen to tasks vanuit emails. Voorbeeld: @t p: Contract Review; a:contract; koppelt "contract.pdf" to de task.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Nieuwe Method: bulkEditPropertiesWithIds(): Clone or bulkEditProperties() but accepteert validated task IDs as parameter (-12962). Gebruikt taskIds parameter ipv this.geselecteerdeTaken te lezen. Hierdoor blijft de data immutable tussen popup open and save - no race conditions more mogelijk.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Opt-In Bescherming: Bijlagen are ALLEEN verwerkt with a: code. Voorkomt ongewenste signature images and beschermt je 100MB storage quota (gratis tier).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: Route /email-import-help werd nooit bereikt omdat static file serving('public') middleware eerst probeerde het .md file te serveren but hosting platform kan .md files niet as statische files serveren.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: hosting platform has eigen static file serving that voorrang has on Express routes. Route /email-import-help is altijd eerst by hosting platform static serving geprobeert, ook al bestaat het file niet.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Smart Matching: Slimme filename matching with 3 prioriteitsniveaus - Exact match > Starts-with > Contains. a:contract; vindt "contract.pdf", "contract-final.pdf", or "klant_contract_v2.pdf".</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Supported Codes: p: project, c: context, d: due date (ISO YYYY-MM-DD), t: duration (minutes), p0-p9 priority normalization, df/dw/dm/d3m/d6m/dy defer shortcuts to postponed lists.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Technical Approach: Login redirect → DOMContentLoaded → wait 500ms (session ready) → check messages → show if available → start 5-minute polling. No retries needed, no complexity, no race conditions.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Technical Details: Removed hardcoded required attribute from nextPageSelect element in public/admin2.html:1760. JavaScript now fully controls validation based on trigger type - field is only required when "next_page_visit" trigger is selected and visible.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Technical Details: Updated public/index.html modal structure (lines 1183-1230) and public/app.js populateBulkEditDropdowns() function (lines 357-393). Backend value attributes (laag/gemiddeld/hoog) preserved for database compatibility - only display text translated.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Type-Based Filtering: Zoek on bestandstype with a:pdf;, a:docx;, or a:xlsx; to het eerste file or dat type te matchen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Volledige Engelse Versie: Tickedify is now 100% beschikbaar in het Engels. Alle schermen, knoppen, meldingen and interface elementen vertaald for internationale users.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Waarom Andere Bulk Operaties Werkten: Bulk Move and Bulk Delete have GEEN popup → immediate execution (geselecteerdeTaken altijd fresh. Bulk Edit has WEL popup → 10-30 sec delay → auto-refresh kan tussendoor komen → stale data. Dit verklaart waarom alleen bulk edit properties faalde.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Waarom Andere Bulk Operaties Werkten: Bulk move stuurt {list: 'opvolgen'} → list is exact de database column naam, no transformatie nodig. Bulk edit stuurde {context: 'xyz'} → context is NIET de column naam (moet context referentie zijn), database laag expects contextId to de transformatie te doen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What Changed: Bulk edit interface now fully in English. Translated day-or-week names (Maandag → Monday, etc.) and "Opvolgen" button to "Follow-up". Maintains consistent English UI across entire application.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What Changed: Changed message modal button text from "Got it" to "Dismiss" for better clarity. "Dismiss" is the industry standard for notifications and clearly indicates the action.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What Changed: Increased initialization delay from 500ms to 5 seconds after login to allow app to fully start up. Messages now appear reliably after login without requiring page refresh.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What Changed: Messages with "immediate" trigger now appear within 2-6 seconds after login instead or waiting 5 minutes. Polling interval reduced from 5 minutes to 30 seconds (aligned with version update polling).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What Changed: Replaced complex retry logic with simple 500ms delay after DOMContentLoaded to let session settle. Messages now appear within ~800ms or login. Clean, simple solution that just works.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What Changed: Restored background message polling interval from 30 seconds back to 5 minutes. The retry logic (3 attempts with 2-second intervals) already ensures messages appear within 2-6 seconds after login, making frequent polling unnecessary.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">What's New: Email-to-task import ondersteunt now een gestructureerde @t instructie syntax. Plaats @t p: Project; c: Context; d: 2025-11-15; p1; t: 30; on de eerste regel or je email to direct project, context, due date, prioriteit and duur in te stellen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Why 5 Seconds: App needs time for full initialization including session setup, DOM rendering, and JavaScript init. 5-second buffer ensures everything is ready before checking for messages.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Why: "Dismiss" is more professional, clearer, and aligns with notification patterns in Gmail, Slack, and other productivity tools. Users immediately understand that clicking will mark the message as read and remove it.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.20.33 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-feature">v0.20.33</span>
+<span class="version-date">30 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Clear Selections on Filter Change: Fixed critical bug where applying a filter during bulk mode kept old selected task IDs in memory. When users selected tasks, applied a filter, and selected different tasks, the bulk edit would attempt to update BOTH old and new task IDs - causing 404 errors for old (now hidden) tasks. Solution: filter function now automatically clears geselecteerdeTaken Set when filter changes during bulk mode.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Critical CSS Fix: position: fixed: Added missing base .modal class CSS with position: fixed, z-index: 10000, and full-screen overlay styling. This was THE root cause - JavaScript was working perfectly, but CSS was missing! Modal now displays as centered overlay with semi-transparent backdrop. Debug logging revealed modal.style.display was being set correctly, but DevTools showed position: static (default) instead or fixed.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Defensive Validation in bulkEditProperties(): Added task ID validation before API calls. Any IDs in geselecteerdeTaken that don't exist in app.tasks are now filtered out with console warning. This prevents 404 errors from stale/invalid IDs and provides clear diagnostics when issues occur. Function now uses validIds instead or raw selectedIds.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Eigenschappen Bewerken Button: In bulk mode (Acties screen) kun je now meerdere tasks tegelijk aanpassen via de new "Eigenschappen Bewerken" button. Selecteer 2 or more tasks and pas eigenschappen to in één keer.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Sync Wrapper for Inline Onclick: Fixed critical issue where "Edit Properties" button did nothing when clicked. Root cause was async/await incompatibility with inline onclick handlers. Refactored window.openBulkEditPopup into sync wrapper function that calls async implementation with proper error handling via .catch(). Button now works correctly.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Try-Catch Error Handling Added: Fixed issue where "Edit Properties" button click did nothing. Added comprehensive error handling with try-catch wrapper in window.openBulkEditPopup() to catch and report any errors during popup opening. Errors now logged to console with user-friendly toast messages.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Alle window.taskManager Referenties Fixed: Opgelost critical bug waarbij de bulk edit popup crashte with TypeError. Gevonden and fixed in 3 locaties: openBulkEditPopup() (), showBulkEditPopup() (), and populateBulkEditDropdowns() (). Alle referenties zijn now gewijzigd to frontend application object.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Hardcoded Disabled Attribute Removed: Fixed critical bug where "Edit Properties" button was unresponsive. The button template had a hardcoded `disabled` attribute that prevented clicks. Button now properly responds to user interaction when 2+ tasks are selected.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Visual Circles Now Cleared on Filter Change: Fixed critical UX bug where filter function cleared the geselecteerdeTaken Set but left visual selection circles intact. Users saw circles with .geselecteerd class even though Set was empty, leading to confusion. Now filter function explicitly removes .geselecteerd class from ALL circles when clearing selections during bulk mode.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">selecteerAlleTaken() Now Skips Hidden Items: Also fixed "select all" functionality to only select visible (non-filtered) tasks. Both individual clicks and bulk select now respect filter visibility. This prevents the scenario where users thought they selected 2 visible tasks but actually selected 41 tasks (including all hidden ones).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">toggleTaakSelectie() Now Checks Visibility: Fixed THE root cause or the bulk edit 404 errors. When filter function hides tasks with display:none, the DOM elements remain in the page. Clicking on selectie-circles or hidden tasks was still adding their IDs to geselecteerdeTaken Set. Now toggleTaakSelectie() checks if parent element has display:'none' and ignores clicks on hidden tasks.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">17 Uur Planning Venster: Het planning venster is extended or 10 uur (08:00-18:00) to 17 uur (05:00-22:00), wat 70% more flexibiliteit biedt for diverse werkschema's.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">5 Eigenschappen Beschikbaar: Pas Project, Datum, Context, Prioriteit and Geschatte tijd to for all geselecteerde tasks tegelijk. Vul alleen de eigenschappen in that je wilt wijzigen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Alfabetische Sortering (A-Z): Contexten in the dropdown at het aanmaken or bewerken or tasks are now alfabetisch gesorteerd in plaats or on aanmaakdatum. Dit maakt het sneller and intuïtiever to de gewenste context te vinden, vooral at users with veel contexten.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Eigenschappen Bewerken Button Nu Werkend: Opgelost probleem waarbij de "Eigenschappen Bewerken" button disabled bleef ondanks dat meerdere tasks geselecteerd waren. Root cause was verkeerde CSS selector in updateBulkToolbar() function (.bulk-action-button vs .bulk-action-btn).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Hoofdletterongevoelig: De sortering negeert hoofdletters and kleine letters - "admin" and "Admin" are as gelijk behandeld.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Keyboard Shortcuts Werken Nu Altijd: Opgelost probleem waarbij keyboard shortcuts (F2-F9, Shift+F9, Enter, Escape) niet more werkten na het klikken on "Project toevoegen" or "Context toevoegen" knoppen. Shortcuts work now onafhankelijk or welk element focus has in the task popup.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Late Avond Planning (18:00-22:00): Planning is now mogelijk until 22:00 's avonds. Ideaal for avondwerkers and degenen that rust vinden in late avond focus tijd.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Nederlandse Accenten Ondersteuning: Contexten with speciale tekens like é, ë, ï are correct gesorteerd volgens Nederlandse locale regels (bijv. "Café" komt for "Context").</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Productiviteit Boost: Bespaar tijd by eigenschappen for meerdere tasks in één keer in te stellen in plaats or tasks individueel te bewerken. Perfect for grote batch updates.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Progress Tracking: Tijdens bulk bewerking zie je een progress indicator with het aantal verwerkte tasks. Bij fouten blijven gedeeltelijk gelukte wijzigingen behouden.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">SHIFT+F9 Prioriteit Instellen: Je kunt now de prioriteit or een task snel instellen with de SHIFT+F9 keyboard shortcut in the task bewerk popup. De shortcut opent direct de prioriteit dropdown zodat je with de pijltjestoetsen een prioriteitsniveau kunt selecteren.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Vroege Ochtend Planning (05:00-08:00): Je kunt now tasks plannen vanaf 05:00 's ochtends. Perfect for vroege vogels that hun meest productieve uren in the vroege ochtend have.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.20.16 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-feature">v0.20.16</span>
+<span class="version-date">29 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Actions Screen Complete: Filter bar now fully in English, "Bulk Edit" button translated, all bulk mode buttons (Weekly, Monthly, Quarterly, Semi-annually, Yearly) now display English labels.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">All Title Mappings Translated: Fixed 4 locations with list titles (Actions, Projects, Follow-up, Completed, Weekly, Monthly, Quarterly, Semi-annually, Yearly). All page titles now display in English.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Archive System Merged: Complete archive system (v0.20.0-0.20.7) now integrated with all translation and feature work from branch 036. Includes archive tables, unarchive endpoints, and safe migration tools.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Context Management Complete: Page title shows "Context Management", "+ New Context" button translated, "Created" column header (was "Aangemaakt"), empty state message in English.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Daily Planning Complete: Title, time labels (From/To), sections (Blocked & Breaks), search placeholder, buttons (Clear), total time display, planning types (Blocked/Break), date locales (and-US), all Vandaag/Morgen → Today/Tomorrow.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Daily Planning Screen Complete: ENTIRE screen now in English - title, filter bar, date labels, all action buttons, and list options. No Dutch text remaining.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Postponed Screen Complete: Page title shows "Postponed", all 5 list names translated (Weekly, Monthly, Quarterly, Semi-annually, Yearly). Complete English throughout postponed workflow.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Projects Screen Complete: "+ New Project" button translated, project statistics show "X open, Y completed" (was "completed status"), expanded project view shows "OPEN ACTIONS" and "COMPLETED ACTIONS" headers.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Projects Screen Fixed: "+ New Project" → "+ New Project" (3 locations).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Recurring Tasks Support: Popup checkbox now correctly supports recurring tasks - completed task is archived and new instance is automatically created, exactly like the grid checkbox. Uses existing verplaatsTaakNaarAfgewerkt() function for consistent behavior.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Search Screen Complete: ENTIRE search interface now in English - all list labels, filter options, and search results display. Complete English coverage achieved.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Search Screen Complete: Page title, header, description, input placeholder, search button, filter labels, results section, no-results messages, summary display - ALL in English with and-US date locales.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Actions Screen Fixed: "Bulk bewerken" button → "Bulk Edit" ().</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Checkpoint Fix Integrated: Popup checkbox detection fix (v0.19.191) successfully merged with archive system. Checkbox now works correctly in English UI with full archive functionality.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Dropdown Options Translated: Fixed bulk action dropdowns and move-to options. All UI buttons and labels now in English (Cancel, Edit, Delete, Save, etc.).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Popup Checkbox Now Works: The completion checkbox in the task detail popup is now correctly detected and processed. Previously the checkbox was ignored when saving - now the popup checkbox archives tasks identically to the grid checkbox. Fix implemented in maakActie() function.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Fixed: Discovered that hotfix merge d83a29d on October 25th had reverted English translations back to Dutch. This merge was done to fix MacBook gray screen bug and explicitly stated "use Dutch translations" in conflict resolution.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">"Acties" Checkbox Translated: In the search screen "Search in:" filter section, the "Acties" checkbox now shows "Actions" ().</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Checkbox Labels Translated: "Toon toekomstige tasks" → "Show future tasks" (2 locations in Actions and Daily Planning).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Dropdown Defaults Translated: "Alle projecten" → "All projects", "Alle contexten" → "All contexts", "Alle prioriteiten" → "All priorities" (10 locations including dynamic filters).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Filter Labels Translated: "Task:" → "Task:", "Datum:" → "Date:", "Prioriteit:" → "Priority:" (5 locations total).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Free Plan Text Translated: Attachments limit now shows "1 attachment per task (free)" instead or "1 attachment per task (gratis)" ().</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Premium Plans Translated: Premium Plus shows "unlimited attachments and size", Standard shows "attachment per task" - all in English (lines 14524, 14526).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Recurrence Default Translated: In the task edit popup, the Recurrence dropdown now shows "No recurrence" instead or "Geen herhaling" when no recurrence is set (8 locations in app.js).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Search Placeholders Translated: "Zoek in task text..." → "Search task text..." (2 locations in filter bars).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Weekday Abbreviations Translated: When dragging tasks in Actions screen, the popup now shows English weekday abbreviations: mo, tu, we, th, fr, sa, su (was: ma, di, wo, do, vr, za, zo).</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.190 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-feature">v0.19.190</span>
+<span class="version-date">27 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Automatic Counter Updates: Sidebar counters (Inbox, Actions, Deferred, Follow-up, Projects) now update automatically after every task operation. No page refresh needed anymore. Counters update immediately when you process inbox items, complete tasks, move tasks between lists, delete tasks, or create new tasks.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Complete UI Translation: All 100+ toast notification messages throughout the application have been translated from Dutch to English. This includes success messages, error messages, warnings, and info notifications across all features (task management, planning, contexts, priorities, attachments, subtasks, recurring tasks, etc.).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Consistent User Experience: All user-facing feedback messages now display in English, providing a consistent and professional experience. Error messages are clear and actionable (e.g., "Error completing task. Please try again."), success messages are encouraging (e.g., "Task completed! Next recurrence scheduled for..."), and warnings guide users effectively (e.g., "Maximum 3 Most Important Tasks reached").</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Element Cloning Pattern Implemented: Nieuwe cleanupEventListeners() method uses element cloning to all oude event listeners gegarandeerd te verwijderen voordat new are added. Dit prevents listener accumulation and zorgt for consistent gedrag ongeacht het aantal navigatie cycles or re-renders.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Empty Inbox Background Translation: Translated the empty inbox state message from "Perfect! Je inbox is empty. Tijd for echte focus. Geweldig werk!" to "Perfect! Your inbox is empty. Time for real focus. Great work! 🎯". This message appears when the inbox is completely empty.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Event Listener Accumulation Opgelost: Gefixte bug waarbij 7-10+ duplicate toast notificaties ("Task Moved To Uitgesteld Wekelijks") verschenen at het slepen or tasks to postponed weekly lists. De root cause was event listener accumulation - setupUitgesteldDropZones() voegde at elke render new event listeners toe without oude te verwijderen, waardoor meerdere drop handlers simultaan werden getriggerd at een drop actie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Input Placeholder Translation: Translated the inbox input field placeholder from "Nieuwe task..." to "New task...". This placeholder appears in the text input at the top or the inbox screen where users add new tasks. Updated across all 3 occurrences in the codebase for complete consistency.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Consistent Gedrag Voor Alle Taken: Fix zorgt dat exact 1 toast message appears per drag & drop actie, ongeacht task ouderdom or navigatie historie. Alle 5 uitgesteld categories (wekelijks, maandelijks, 3-maandelijks, 6-maandelijks, jaarlijks) work now correct without duplicate berichten.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">All Operation Types Covered: Counter updates work for all 15 task operation locations including drag & drop, bulk operations, project creation/deletion, and task movements via context menu. The system uses the existing Feature 022 infrastructure (sidebar update function + API endpoint endpoint).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Inbox Zero Celebration Popup Translation: Translated the celebration popup that appears when completing the last inbox task from "🏆 Inbox Zero bereikt! Fantastisch! Je hebt het for elkaar! ⭐" to "🏆 Inbox Zero achieved! Fantastic! You did it! ⭐". This provides encouraging English feedback for this productivity milestone.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.186 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.186</span>
+<span class="version-date">26 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Element Cloning Pattern Implemented: Nieuwe cleanupEventListeners() method uses element cloning to all oude event listeners gegarandeerd te verwijderen voordat new are added. Dit prevents listener accumulation and zorgt for consistent gedrag ongeacht het aantal navigatie cycles or re-renders.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Consistent Gedrag Voor Alle Taken: Fix zorgt dat exact 1 toast message appears per drag & drop actie, ongeacht task ouderdom or navigatie historie. Alle 5 uitgesteld categories (wekelijks, maandelijks, 3-maandelijks, 6-maandelijks, jaarlijks) work now correct without duplicate berichten.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.185 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.185</span>
+<span class="version-date">25 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Complete Resize Handling: De handleLaptopSidebarResize() function is extended with drie scenarios: (1) Mobile range (≤1400px): sidebar is automatic zichtbaar gemaakt with sidebar-open class and mobile interface is geactiveerd. (2) Desktop range (>1600px): sidebar-open and collapsed classes are deleted for normale desktop display. (3) Laptop range (1201-1599px): laptop sidebar functionality is geïnitialiseerd.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Dubbele Event Listeners Opgelost: De resize event listener werd meerdere keren added (at page load, at resize to laptop range, etc). Dit veroorzaakte dat handleLaptopSidebarResize() meerdere keren simultaan werd uitgevoerd at elke resize. Fix: Resize listener is now EENMALIG added in init() with resizeListenerAdded flag, initializeLaptopSidebar() voegt GEEN listener more toe.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Geconsolideerd to Eén Toggle: Hamburger-menu complete deleted from HTML, CSS and JavaScript. Sidebar-toggle (rechts in sidebar) is now de enige toggle button and works on all narrow screens (&lt;1400px). This button is intuïtiever gepositioneerd and visueel consistenter with de rest or the interface.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Race Condition Fix Met Debouncing: Meerdere simultane calls to handleLaptopSidebarResize() creëerden race conditions waarbij sidebar-open class werd added EN deleted in dezelfde cycle. Fix: 150ms debounce timer zorgt dat resize handler max 1x per 150ms is uitgevoerd, wat race conditions elimineert. Clear logging shows exact welk scenario is getriggerd (mobile/desktop/laptop).</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Dubbele Toggle Buttons Opgelost: Na de narrow screen fix in v0.19.182 waren er twee sidebar toggle buttons zichtbaar on schermen tussen 1201-1400px breed: de hamburger-menu (links in header) and de sidebar-toggle (rechts in sidebar). Dit was verwarrend and onnodige UI clutter.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Idempotent Mobile Interface Setup: setupMobileInterface() werd at elke resize to mobile range opnieuw aangeroepen, wat CSS opnieuw injecteerde and event listeners dupliceerde. Fix: mobileInterfaceSetup flag zorgt dat setup slechts 1x is uitgevoerd. Bij resize to desktop is flag gereset for volgende mobile transition. Performance verbetering by redundante DOM manipulatie te voorkomen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">LoadingManager Global Fix: Kritieke bug opgelost waarbij users on MacBook Pro 13" een grijs screen zagen and niet konden registreren. De LoadingManager werd niet correct as window.loading beschikbaar gemaakt, waardoor de loading overlay na registratie niet werd verborgen. Fix zorgt for correct initialisatie and verberging or the loading indicator.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Logica Fix: Gewijzigd to `isNarrowScreen || (hasTouch && ...)`. Narrow screens (width <= 1400px) are now ALTIJD as mobiel behandeld, ongeacht touch capability. Dit zorgt for correct mobile UI setup on all narrow screen devices (laptops, resized browsers, etc).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Methode Naam Fix: De LoadingManager class had methoden show() and hide(), but de code called showGlobal() and hideGlobal() to. Dit veroorzaakte "loading.showGlobal is not a function" errors. Toegevoegde alias methoden lossen this on and zorgen for backwards compatibility.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Resize Bug Opgelost: Wanneer je on een groot screen (>1400px) begon and het browser venster kleiner maakte to mobile range (≤1400px), verdween de sidebar and bleef off-screen verstopt. Dit kwam doordat de resize handler alleen laptop range (1201-1599px) afhandelde and niet de desktop-to-mobile transition.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause or Grijs Screen: De isMobileDevice() function gebruikte `hasTouch && (... || isNarrowScreen)` logica. Dit betekende dat een MacBook Pro 13" (narrow screen without touch) NIET as mobiel werd gedetecteerd, wat leidde until incorrecte UI initialisatie and een permanent grijs screen at registratie/login.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.111 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.111</span>
+<span class="version-date">22 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Guard Check Mechanisme: De inbox task toevoeg function controleert now or er al een actieve submission bezig is voordat een new is gestart. Dit prevents race conditions and duplicate database inserts.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Rode Asterisk Added: Verplichte fields in the task planning popup (Verschijndatum, Context and Geschatte duur) have now een duidelijke rode asterisk (*) naast het label.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Betere User Experience: Gebruikers kunnen now meteen zien welke fields verplicht zijn voordat ze het form proberen on te slaan. Dit prevents onnodige validatie errors and verbetert de workflow.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Betere User Experience: Gebruikers that gewend zijn snel on Enter te drukken or ongeduldig on de button klikken krijgen now no duplicate tasks more. De bescherming works for both toetsenbord as muis input.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Duplicate Preventie: Bij snel meerdere keren on Enter drukken or de Toevoegen button klikken is now alleen de eerste submission uitgevoerd. Extra submissions are automatic blocked status tijdens het opslaan.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.99 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.99</span>
+<span class="version-date">20 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">500 Error Opgelost: Na v0.19.98 validatie fix kreeg DELETE nog 500 Internal Server Error by sessions queries that no quotes hadden rond userId in JSON matching. Sessions queries on 3 locaties fixed or `JSON patroon` to `JSON patroon`.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Consistent with GET Endpoint: Validatie pattern now aligned with API endpoint endpoint () that al correct string IDs accepteerde. verwijder API uses now dezelfde string validatie: check on niet-lege string.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Sessions Correcte Match: JSON pattern matching works now correct for string-format user IDs. Sessions COUNT, DELETE and query in user details endpoint accepteren now string IDs.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">String ID Support: API endpoint endpoint gebruikte nummer parsing waardoor string-format user IDs (bijv. user_1760531416053_qwljhrwxp) foutief werden gevalideerd as "User ID must be a positive number". Nu accepteert endpoint correct string IDs.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.96 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.96</span>
+<span class="version-date">19 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">COALESCE Pattern: Alle admin2 queries gebruiken now COALESCE(subscription_tier, selected_plan, 'free') to beide columns te checken with fallback to 'free'. Dit works for both new as legacy users.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Data Type Mismatch Opgelost: Task summary query gebruikte 'completed status = true/false' but completed status is een TIMESTAMP column, no BOOLEAN. Dit veroorzaakte "operator does not exist: timestamp = boolean" SQL errors.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Database Column Mismatch Opgelost: Admin2 user details endpoint gebruikte verkeerde kolomnaam 'completed status' terwijl de tasks database table 'completed status' has. Dit veroorzaakte "column completed status does not exist" SQL errors for ALLE users.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Database Monitor Rerender Pattern (admin2.js:848-908): Complete HTML rendering with stats-grid (Database Size/Tables/Total Rows), inline-styled table with thead/tbody for Tables by Size list, removed row_count field (was al from API deleted in v0.19.66), uses table.size i.p.v. table.size_mb, graceful empty state: "No table data available".</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Missing Column Added: payment_configurations table miste de price_monthly column that de server.js query probeerde te selecteren. Dit veroorzaakte 500 errors at het ophalen or user details.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Plug&Pay Webhook Extended (server-side logica): database update now with subscription_tier = $4 (zelfde waarde as selected_plan) - prevents toekomstige inconsistenties, new payments zetten now BEIDE fields correct, backwards compatible with oude queries that subscription_tier lezen, comment added: "set both selected_plan AND subscription_tier for consistency".</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Query Fix (server-side logica): Vervangen incomplete status filter with trial completion check - FROM users gefilterde database query AND trial_end_date < CURRENT_DATE (telt ALLE afgeronde trials ongeacht status), noemer deleted: FILTER (WHERE subscription_status IN ...), now simpele telling query or all completed trials, teller onveranderd: telling query FILTER (WHERE subscription_status = 'active').</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Query Fix: pc.price_monthly added to SELECT statement (). Fallback object extended with price_monthly: null ().</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Query Updated: Completed tasks now: WHERE completed status IS NOT NULL (was: = true). Active tasks: WHERE completed status IS NULL (was: = false). Correct gebruik or TIMESTAMP NULL checking.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Response Structuur Updated: Backend response now conform frontend contract with geneste summary objecten. tasks.summary bevat now: total, completed, completion_rate, pending, recurring. emails.summary bevat: total, recent_30d.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Revenue Dashboard Complete Rewrite (admin2.js:913-972): API compatibility layer for new response structure - data.mrr/arr i.p.v. data.mrr_total, data.by_tier array parsing (find premium/enterprise tiers), totalSubscriptions berekening via reduce over user_count, percentage calculations for tier contributions, HTML rendering with MRR/ARR/Active Subscriptions cards plus Revenue by Tier breakdown, pricing display in subtexts (€15/€30 per tier).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Revenue Dashboard Pricing Fix: Hardcoded pricing implemented to missing database columns te omzeilen - removed JOIN to payment_configurations table (tier/price_monthly columns bestaan niet), hardcoded pricing object: premium €15, enterprise €30, free €0, manual revenue calculation: userCount * pricing[tier], ARR berekening added: totalMrr * 12, Revenue screen now complete functioneel.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Root Cause: Incomplete Status Filter: Trial conversion rate query telde alleen users with subscription_status IN ('active', 'expired', 'cancelled') in the noemer - miste users with 'trialing' and 'beta_expired' statuses ondanks afgelopen trials, resulteerde in artificieel hoge 100% conversion rate terwijl werkelijke rate 33.33% is (1 or 3 trials geconverteerd).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">SQL Query Gecorrigeerd: Task summary query updated to correct kolomnamen: completed status (was: completed status). Geblokkeerd column deleted want does not exist in database schema.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">System Settings Graceful Fallback: Enhanced error logging and fallback for missing table - detailed error logging: message, code, detail and stack trace, graceful degradation: return empty array at query failure with warning message, debug field added for temporary diagnostics (te verwijderen na stabilisatie), Settings screen shows now lege state i.p.v. crashes.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Analytics API Contract Fix: Backend response updated to frontend verwachte structuur - added: total_tasks, completed (berekend via completion_rate), pending (total - completed), created_today/week/month (geflattened from created object), deleted: total field and geneste created object, DOM errors opgelost at Task Analytics screen load.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Analytics Rerender Pattern (admin2.js:744-803): Volledige HTML rendering implemented i.p.v. DOM element updates - stats-grid with Total Tasks/Completed/Pending/Completion Rate cards, tweede stats-grid for Task Creation Trends (Today/Week/Month), percentage calculations for completed/pending subtexts, emoji labels for visual distinctie (📊📅✅⏳🎯).</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">500 API Error Opgelost: Backend accepteert now string user IDs like 'user_1750513625687_5458i79dj' in plaats or alleen integer IDs. De nummer parsing validatie that NaN produceerde for string IDs is vervangen by een simple string empty check.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">CRITICAL BUG OPGELOST: Error handler in loadUserDetails() overschreef volledige innerHTML or panel, waardoor all detail-* elements PERMANENT verdwenen na eerste error. Dit veroorzaakte "Cannot set properties or null" cascade errors at elke volgende klik.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Database Column Mismatch Opgelost: Tasks by Project and Tasks by Context queries gebruikten verkeerde kolomnamen 'project' and 'context', but database has 'project referentie' and 'context referentie'. Dit veroorzaakte "column does not exist" SQL errors for ALLE user details requests.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Database Monitor Query Simplification: Neon database compatibiliteit improved - switched or pg_class to pg_tables system view, removed n_live_tup column (row count) that permission/compatibility issues veroorzaakte, simplified query: pg_total_relation_size with schemaname.tablename concatenatie, LIMIT 50 for performance, Database Monitor screen now stabiel.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Frontend/Backend Mismatch Opgelost: De backend API response structuur kwam niet overeen with wat de frontend expected. Frontend expected tasks.summary.total but backend stuurde tasks.total, wat leidde until "Cannot set properties or null" errors.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Home Dashboard Query Fix (server-side logica): Subscription distribution query gewijzigd or subscription_tier to COALESCE(selected_plan, 'free') - uses now dezelfde column that Plug&Pay webhook vult, recent registrations table ook updated for consistentie (), premium/enterprise users now correct zichtbaar in Subscription Distribution sectie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">JavaScript Error Opgelost: "Cannot set properties or null (setting 'textContent')" error gefixt that optrad at klikken on user in admin2 user management. De loadUsers() function creëerde een empty user-details-panel element without child elementen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Missing Column in Query: De subscription query selecteerde pc.price_monthly niet, but de response gebruikte wel subscription.price_monthly on . Dit veroorzaakte een undefined reference and mogelijk de 500 error.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Niet-Destructieve Error Overlay: Error is now getoond as overlay BOVEN existing HTML via insertBefore(), without innerHTML te overschrijven. Panel blijft functioneel and kan opnieuw uses are na errors.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Revenue Dashboard MRR Query Fix (server-side logica): MRR berekening uses now COALESCE(selected_plan, 'free') i.p.v. subscription_tier - prevents €0 MRR display ondanks actieve betalende users, WHERE clause updated: AND COALESCE(selected_plan, 'free') != 'free', GROUP BY and ORDER BY ook geüpdatet for consistentie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Fix: showLoading() DOM Destructie: ScreenManager.showLoading() verwijderde all HTML content with innerHTML clear, waarna JavaScript probeerde verwijderde DOM elementen te updaten → TypeError: Cannot set properties or null. Pattern geïdentificeerd: Email Analytics werkte WEL omdat het volledige HTML opnieuw renderde na API call. Alle gefaalde screens now geconverteerd to this pattern.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">SQL Query Fixes: Alle admin2 endpoints gebruiken now COALESCE(selected_plan, 'free') as subscription_tier for correct data ophaling. Gefixte endpoints: user search, change tier, user details.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">User Details Nu Werkend: Klikken on een user in admin2 user search results laadt now correct het user details panel without 500 errors. database matcht string user IDs correct via parameterized queries.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">User Search Fixed: Zoekfunctie in admin2 user management werkte niet omdat SQL queries een niet-existing column 'subscription_tier' probeerden te selecteren. Database has alleen 'selected_plan'.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Zondag Bug Opgelost: Op zondag toonde de planning popup volgende week + week erna, in plaats or huidige week + volgende week. Dit kwam doordat zondag (getDay()=0) verkeerd werd behandeld in the week berekening.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Correcte Berekening: Conversion Rate = (Users with subscription_status='active' NA trial) / (Alle users with trial_end_date < TODAY), inclusief statuses: 'trialing' (trial afgelopen but niet geconverteerd), 'beta_expired' (beta trial verlopen), 'active' (succesvol geconverteerd), 'expired'/'cancelled' (geconverteerd but daarna gestopt).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Correcte Week Berekening: Zondag is now correct behandeld as laatste dag or the huidige week. De popup shows altijd de juiste twee weken: huidige week (inclusief zondag) + volgende week.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Database Migratie: ALTER TABLE payment_configurations ADD COLUMN price_monthly DECIMAL(10,2). Automatische populatie with default prijzen: monthly_7 = €7.00, yearly_70 = €5.83, monthly_8 = €8.00, yearly_80 = €6.67.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Database Table Verificatie: email_imports table blijkt al te bestaan with 30 test records aangemaakt by testing agent. Migratie script gecreëerd and uitgevoerd to idempotentie te garanderen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Frontend Labels Update (admin2.js:570-577): Home Dashboard subscription distribution kaarten now "Standard" and "No Limit" labels in plaats or "Premium" and "Enterprise" - consistent with echte abonnement structuur.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Home Dashboard Tier Groepering (server-side logica): Subscription distribution shows now Standard (monthly_7 + yearly_70 gecombineerd) and No Limit (monthly_8 + yearly_80 gecombineerd) in plaats or premium/enterprise - map logica groept tier IDs to display namen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Juiste Data Bron: Alle admin2 queries gebruiken now LEFT JOIN to subscriptions table in plaats or users.subscription_tier column. Tier is berekend from subscription.status + plan_type + addon_storage fields.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oude Tier Namen Vervangen: Premium (€15) and Enterprise (€30) tiers waren niet-existing placeholders - vervangen with echte subscription tiers: Standard (monthly_7 €7/maand, yearly_70 €70/jaar) and No Limit (monthly_8 €8/maand, yearly_80 €80/jaar).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Revenue Dashboard Pricing (server-side logica): Pricing object geüpdatet or {'premium': 15, 'enterprise': 30} to {'monthly_7': 7, 'yearly_70': 70, 'monthly_8': 8, 'yearly_80': 80, 'free': 0} - MRR berekening now gebaseerd on correct tier IDs and prijzen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Revenue Dashboard Separate Tiers (admin2.js:926-980): Maandelijkse and jaarlijkse abonnementen apart getoond - 4 tier kaarten: Standard Maandelijks, Standard Jaarlijks, No Limit Maandelijks, No Limit Jaarlijks with correct prijzen (€7/mo, €70/yr, €8/mo, €80/yr).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: subscription_tier Column Niet Gezet Door Webhook: Plug&Pay webhook zette wel selected_plan but NIET subscription_tier, waardoor all Admin Dashboard subscription statistieken "free" toonden ondanks betaalde users. Dashboard queries keken to verkeerde column (subscription_tier i.p.v. selected_plan).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">SQL AS Aliasing Toegepast: Query 3 (Tasks by Project) now: SELECT project referentie AS project. Query 4 (Tasks by Context) now: SELECT context referentie AS context. AS aliasing behoudt backwards compatibility with frontend verwachtingen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Tier Data Restored: Tier column was empty in admin2 user search and home screen omdat queries alleen subscription_tier checkten, but de echte data staat in selected_plan column for existing users.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Tier Mapping Logic: CASE statement mappt active+monthly+basic→monthly_7, active+yearly+basic→yearly_70, active+monthly+(not basic)→monthly_8, active+yearly+(not basic)→yearly_80, trial→trial, anders→free.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">TierCounts Extended: tierCounts object now with trial property (). forEach loop now with else if for tier === 'trial' (-12012).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Trial Tier Ontbrak: Gebruikers with trial subscriptions werden niet geteld in the subscription distribution on admin2 home dashboard omdat de JavaScript mapping logic no case had for tier 'trial'.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Volledige Panel Structuur: user-details-panel now with volledige HTML structuur in admin2.js (-1149) inclusief all detail fields (email, naam, tier, tasks, emails, subscription details) and user action buttons.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.53 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.53</span>
+<span class="version-date">18 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API Integration: Connectie with API endpoint endpoint, verwerking or total_tasks, completed, pending, completion_rate, created_today, created_week, and created_month fields.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API Integration: Verwerking or new API response fields (total_imports, recent_30d, users_with_imports, percentage_with_imports) with formatNumber and formatPercentage helpers for consistente data formatting.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API endpoint Endpoint: Complete user data inspector with comprehensive breakdown or ALLE user data for debugging. Parallel queries via Promise.all for optimale performance (<500ms).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API endpoint Endpoint: Gedetailleerde user inspector endpoint implemented volgens API contract. Retourneert complete user data with 4 secties: user details, task statistics, email imports and subscription info.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API endpoint Endpoint: Implementatie or trial extension endpoint volgens API contract. Admins kunnen now via API de trial period or users verlengen by een new trial_end_date on te geven.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API endpoint Endpoint: Nieuwe API endpoint for ophalen or user growth data for the laatste 30 dagen. Toont new users per dag and cumulatief totaal.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API endpoint Endpoint: Update endpoint for payment checkout URLs with volledige validatie. Accepteert JSON body with checkout_url field, valideert HTTPS URL format and trusted payment provider domain (Mollie, Stripe, PayPal, Paddle), updated checkout URL in database and retourneert plan context with oude and new URL for confirmation.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">API endpoint Endpoint: Update endpoint for system settings with volledige validatie. Accepteert JSON body with value field, valideert input, updated setting in database and retourneert oude and new waarde for confirmation.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Action Buttons: 2 new buttons added to action-buttons-grid - 🔑 Reset Password (btn-primary), 🗑️ Delete User Account (btn-danger) - responsive grid blijft auto-fit minmax 200px, full width buttons, consistent spacing (15px gap).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Badge System: CSS classes added for tier badges - badge-primary (Premium blauw), badge-secondary (Free grijs), badge-gold (Enterprise gradient goud), plus badge-success/danger/warning for toekomstige use cases.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">CSS Additions: 3 new CSS rules - details summary with cursor pointer and user-select none, details[open] summary with margin-bottom 10px, pre tag with SF Mono font-family and font-size 12px, added to admin2.html style block for collapsible JSON display.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Complete Response: Response bevat success status, key, old_value, new_value and updated_at timestamp volgens API contract. Retourneert 404 Not Found as setting key niet bestaat.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Complete Response: Response bevat success status, user_id, old_tier, new_tier and updated_at timestamp volgens API contract specificatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Complete loadHome() Implementation: Volledige JavaScript implementatie or home dashboard with parallel API calls (Promise.all) for optimale performance. Laadt homeData + growthData tegelijk via API.stats endpoints.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Consistent Loading States (T043): Upgraded ScreenManager methods - showLoading() with centered 40px spinner, 60px padding and "Loading..." text, showError() with reload button, error details and console logging, hideLoading() placeholder method, all screens gebruiken new pattern: try-catch with ScreenManager.showLoading() start, ScreenManager.showError() in catch block.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Dagelijkse Groei Tracking: GROUP BY DATE(created_at) for nauwkeurige tracking or new registraties per dag.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Data Formatting: Gebruik or Helpers.formatNumber() for numerieke display with duizend-separator, Helpers.formatPercentage() for completion rate and percentages at Completed/Pending subteksten with "or total" labels.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">HTML Structure: Complete user-details-panel implementatie in admin2.html with Back to Search button, 4 stats-grids (User Info: Email/Naam/Account Type/Tier, Task Summary: Total/Completed/Pending/Recurring, Email Summary: Total/Recent 30d), and Subscription Details table (Status/Trial End/Created/Last Login).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">HTML Structuur: Complete HTML implementatie in admin2.html with twee stats-grids - MRR Stats (💰 Monthly Recurring Revenue + 👥 Active Subscriptions) and Revenue by Tier (🆓 Free / ⭐ Premium / 💎 Enterprise breakdown with subteksten).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">HTML Structuur: Volledige HTML implementatie in admin2.html with twee stats-grids - eerste grid with Total Tasks (📋), Completed (✅), Pending (⏳), and Completion Rate (📈), tweede grid with Creation Stats (🆕 Today, 📅 Week, 📆 Month).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Implementation: closeSuccessModal() in subscription.js checkt now eerst or trial activatie een specifiek redirect target has via sessionStorage, voordat het terugvalt on source-based routing.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Improved Chart.js Implementation: Dual-line chart with Cumulative Users (blauw #007AFF) én New Users (groen #34C759), chart instance destruction for memory management, enhanced tooltips with custom styling, 45° rotated labels for readability.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">JavaScript Implementation: Complete herschreven loadRevenue() function with try-catch error handling, formatEUR helper for currency formatting (€ + formatNumber), and dynamic updates via getElementById for all stat cards.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">JavaScript Implementation: Complete loadDatabase() function with try-catch error handling, loading states via ScreenManager.showLoading/hideLoading, dynamic table rendering with formatNumber helper, and null-safe table data handling.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">JavaScript Implementation: Complete loadTasks() function with try-catch error handling, loading states via ScreenManager.showLoading/hideLoading, and dynamic population or stat cards with document.getElementById updates.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Migration 015: Performance Indexes: 35 strategic database indexes added for dramatische versnelling or Admin Dashboard v2 queries. Complete coverage or all critical statistiek endpoints and user management operaties.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Premium Standard 4.5MB Limiet Added: Premium Standard (€7) users hadden no file size limiet, waardoor ze onbeperkt grote files konden uploaden. Nu correct beperkt until 4.5MB per file (Vercel serverless limiet).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Related Tables Indexes (18): Projecten (2), Contexten (2), Bijlagen (3 - storage statistics), Feedback (3), Forensic Logs (4 - audit trail), User Storage Usage (1), Subscription History (2), Session (1 - expire cleanup). Complete coverage for all Admin Dashboard data queries.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Reset Password Modal: Password generation modal with 🔑 icon, displays user email, yellow info box (#FFF8E1) warns about secure password delivery, "Generate New Password" button triggers API call, generates random 12-character password, new password display area (hidden until generated) with green background (#E8F5E9), monospace font display for password readability, copy to clipboard button (📋 Copy) with navigator.clipboard API, generate button hidden after success, success alert displays password.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Statistics: Summary (total, completed, pending, recurring, blocked, completion_rate), breakdown by project (top 20), breakdown by context (top 20). Percentage berekening with FILTER queries and ROUND for precise metrics.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Statistics: Uitgebreide task metrics with summary counts (total, completed, active, recurring, blocked) and top 10 breakdown by_project and by_context arrays with task counts.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Summary Grid: Total Tasks formatted with Helpers.formatNumber, Completed tasks with completion rate percentage in subtext, Pending tasks counter, Recurring tasks count (default 0 as undefined via || operator).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Task Summary Stats Grid: 4-column stats-grid with Total Tasks, Completed Tasks (with completion_rate percentage in subtext), Pending Tasks, Recurring Tasks (with || 0 fallback), all counts formatted via Helpers.formatNumber(), percentage via Helpers.formatPercentage(), data via data.tasks.summary object.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Toon/Verberg Wachtwoord: New oog-icoon at het wachtwoordveld laat je het wachtwoord tijdelijk zichtbaar maken to typefouten te voorkomen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">User Experience Flow: Na selectie or trial or betaald abonnement blijft de user on de subscription pagina, ziet een succes notification when all achtergrond tasks completed status zijn, and is daarna automatic doorgestuurd to /app. Geen extra clicks or pagina reloads tijdens processing.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">UserActions Object: Complete implementation in admin2.js - showChangeTierModal(), changeTier(), showExtendTrialModal(), extendTrial(), toggleBlockUser(), forceLogout(), closeModal(id) - window.currentUserData validation, confirmation dialogs, success/error alerts, auto refresh logic.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">loadUserDetails() Function: Complete implementatie - hide user-search-results + show user-details-panel, loading state ('Loading...') tijdens fetch, API.users.get(userId) call, data destructuring (user, tasks.summary, emails.summary, subscription), populate all detail fields via getElementById, window globals (currentUserId, currentUserData) for T035.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">API Client Methods: API.users.deleteUser(id) - verwijder API, API.users.resetPassword(id) - create API, consistent error handling via API.request wrapper, JSON response parsing for cascade_deleted details and new_password.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">API Client Updates: API.users object extended with changeTier(id, tier), extendTrial(id, trialEndDate), blockUser(id, blocked), forceLogout(id) - consistent REST conventions, JSON body formatting, error handling via API.request wrapper.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">API endpoint Endpoint (T023): Execute arbitrary SQL queries via admin dashboard with multi-layer safety checks. Gebruikt for database debugging, analytics and operational queries with bescherming tegen destructieve operaties.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Admin Audit Log Viewer: Table with recent admin actions - query admin_audit_log table (LIMIT 50), columns: Timestamp (formatted via Helpers.formatDate()), Admin User (email via API client methode), Action (code element for action string), Target (target_type + target_id with '#' prefix), Details (JSON.parse or details field, truncated na 50 chars with ellipsis, full text in title tooltip), refresh button for manual updates.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Audit Logging: Logs DATABASE_BACKUP_REQUEST action to admin_audit_log with metadata (size_mb, tables count, total rows). Graceful fallback to console log as audit table niet bestaat. Admin user tracking for compliance and debugging.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Comprehensive Response Format: Success response bevat query text, rows array (limited to 1000), row_count (totaal), execution_time_ms (performance), warnings array (indien applicable). Alle metadata for debugging and analysis.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">DebugTools.inspectUser() Method: JavaScript implementatie with validation check for empty user ID, loading state display "Loading user data...", API call to API.debug.getUserData(userId), comprehensive HTML template generation for results display, error handling with red error message display, try-catch block for all API calls.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Duidelijke Error Messages: Bij uploaden or te grote files krijgen users now een specifieke notification: "File te groot. Maximum 4.5MB for Standard plan. Upgrade to Premium Plus for onbeperkte bestandsgrootte."</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Error Handling: Try-catch wrapper rondom loadUserDetails, display error message with red border at failed fetch, error panel with Back to Search button for recovery, console.error logging for debugging.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Error Handling: Validatie or userId parameter (integer > 0). Returns 400 (invalid id), 404 (user not found), 500 (server error). Console logging with summary metrics for operational monitoring.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Error Handling: database error code detection - 57014 (query timeout), 42601 (syntax error), 42501 (permission denied). Returns detailed error messages with postgres_code for debugging. Validation errors for empty/invalid queries.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Execute Mode with Transaction Safety: preview=false mode voert DELETE queries from binnen database transaction. Automatic ROLLBACK at errors. COMMIT alleen as all enabled targets succesvol zijn. Return actual deletion counts per target. Audit logging or cleanup operaties with volledige details.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Fixed 404 Handler Position: Moved 404 handler to EINDE or all routes - debug endpoints (sql-query, database-backup, cleanup-orphaned-data, find-task, fix-user, migrate-to-pure-b2) stonden NA de 404 handler waardoor Express ze nooit kon matchen, resulteerde in "Route not found" errors for all admin2 debug endpoints, now staat 404 handler on (was 12487) with all 6 debug routes ervoor (regels 12485-12985).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Force Logout Functionaliteit: SecurityTools.terminateSession(userId, userEmail) method - confirmation dialog "Force logout {userEmail}?", API call to API.users.forceLogout(userId), success alert with "✅ {N} session(s) terminated", automatic refresh or sessions table and security stats, error handling with "❌ Failed to terminate session" message.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">JavaScript Refactor: Volledige herimplementatie or loadEmails() function with moderne error handling (try-catch), loading states via ScreenManager.showLoading/hideLoading, and emoji indicators (📧 🆕 👥 📊) for betere visualisatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Modal System: Professional modal styling - fixed position fullscreen overlay, centered modal-content (max-width 500px), rgba backdrop (0.5 opacity), box-shadow 10px 40px, keyboard-accessible form controls, ESC to close via closeModal(id) method.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Permanente Fix: Vervangen DELETE+INSERT by database update in API endpoint endpoint. De database update alleen de list or 'inbox' to 'acties' without de task te verwijderen, waardoor attachments behouden blijven.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Query Validatie: Minimum 2 karakters vereist for search query. Retourneert 400 Bad Request with clear error message at invalide input.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Security Features: Delete requires checkbox confirmation + double confirm dialog, reset password shows warning over secure delivery, copy to clipboard functionality prevents manual typing errors, delete button disabled by default (requires explicit checkbox check), checkbox event listener removal via clone to prevent duplicates.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Self-Block Prevention: Security check verhindert dat admins hun eigen account blokkeren. Retourneert 403 Forbidden with error message "Admins cannot block their own account" at self-block poging.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Three-Level Safety System: BLOCKED operations (DROP, TRUNCATE, ALTER) - geweigerd with 400 error. DESTRUCTIVE operations (DELETE, UPDATE) - vereisen confirm_destructive=true flag. SAFE operations (SELECT, EXPLAIN, ANALYZE) - direct toegestaan without confirmation.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Tier Validatie: Strict validation or tier parameter - alleen 'free', 'premium', or 'enterprise' toegestaan. Retourneert 400 Bad Request at invalide tier with duidelijke error message.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Trial Redirect Fix: Na activatie or gratis trial (14 dagen) is de user now correct doorgestuurd to /app in plaats or to the landing page. Dit zorgt for een naadloze onboarding experience na beta periode.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">User Data Inspector UI: HTML implementatie in screen-debug sectie with user ID input field (type number, placeholder "Enter User ID..."), "🔍 Inspect User" button, flex layout with gap 10px, results div (id="debug-user-results") initially hidden, admin-table wrapper with beschrijving "Deep inspection or user data for debugging purposes", input styling with macOS border and border-radius 8px.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">User Details Section: Alle fields from users database table - email, naam, account_type, subscription_tier, subscription_status, trial_end_date, actief, created_at, login timestamp column, onboarding status. Inclusief password_hash length for debugging (no hash zelf).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Vercel Serverless Limiet: Alle file size limieten verlaagd or 5MB to 4.5MB vanwege hosting platform's serverless function payload limiet or 4.5MB. Dit prevents cryptische 413 errors at grote uploads.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API Integration: Connectie with API endpoint endpoint, verwerking or database_size_formatted, table_count and tables array with name/row_count/size_mb fields.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API Integration: Connectie with API endpoint endpoint, verwerking or mrr_total, active_subscriptions and revenue_by_tier object (free/premium/enterprise breakdown with individuele revenue values).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint (T024): Database backup metadata collector for Neon database. Verzamelt database size (MB), table count, row counts per table and backup timestamp. Returns metadata + instructies for backup via database provider dashboard (automatic backups, branch creation, pg_dump export).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint (T025): Multi-level cleanup or orphaned database records with veilige preview mode as default. Ondersteunt 5 cleanup targets: orphaned_tasks, orphaned_email_imports, orphaned_planning_entries, expired_sessions (30+ dagen oud), and orphaned_audit_logs (optioneel).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint: Admin-initiated password reset functionality. Genereert automatic een random 12-character alphanumeric wachtwoord, hashed with bcrypt and updated in database.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint: Implementatie or subscription tier management endpoint. Admins kunnen now via API de subscription tier or users wijzigen to free, premium or enterprise.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint: Implementatie or user blocking endpoint volgens API contract. Admins kunnen now users blokkeren (prevent login) or deblokkeren via blocked parameter (boolean true/false).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint: Nieuwe API endpoint for ophalen or payment and revenue statistieken. Berekent Monthly Recurring Revenue (MRR) by users te joinen with payment_configurations on basis or subscription_tier.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint: Read-only endpoint to all payment configuraties on te halen. Retourneert array with id, plan_id, plan_name, plan_description, checkout_url, is_active, created_at and updated_at for elke payment config, gesorteerd on plan_id ASC.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">API endpoint Endpoint: Read-only endpoint to all system configuratie settings on te halen. Retourneert array with key, value, description and updated_at for elke setting, gesorteerd on key ASC.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Action Buttons Grid: 4 action buttons in responsive grid (repeat auto-fit, minmax 200px) - Change Subscription Tier ⭐, Extend Trial Date 🎯, Block/Unblock User 🔒, Force Logout 🚪 - full-width buttons with consistent styling.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Active Sessions Management: Session table with live data - query session table with expire > NOW() filter, parse JSON sess field for passport.user extraction, resolve userId to email via API client methode, columns: User Email, Session Created (calculated from cookie.originalMaxAge via Helpers.formatRelativeTime()), Expires (Helpers.formatRelativeTime()), Actions column with 🚪 Logout button per session.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Admin Authentication: Vereist requireAdmin middleware - alleen admins kunnen system settings ophalen. Retourneert 401 (not authenticated) or 403 (not admin) at unauthorized access.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Admin Security: Endpoint beveiligd with requireAdmin middleware - vereist admin account_type for toegang (401/403 at unauthorized).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Audit Logging: Logs SQL_QUERY_SAFE (SELECT), SQL_QUERY_DESTRUCTIVE (UPDATE/DELETE) and SQL_QUERY_BLOCKED (DROP/TRUNCATE/ALTER) to admin_audit_log. Bevat query preview, row count and execution time for compliance and security monitoring.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Audit Logging: Volledige audit trail in admin_audit_log table - logged admin_user_id, action='PASSWORD_RESET', target_user_id, timestamp, IP and user agent. Wachtwoord zelf is NIET gelogd for security.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Audit Logging: Volledige audit trail in admin_audit_log table - logged admin_user_id, action='USER_BLOCK'/'USER_UNBLOCK', target_user_id, old_value, new_value, timestamp, IP and user agent.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Audit Logging: Volledige audit trail logging in admin_audit_log table - logged admin_user_id, action, target_user_id, old_value, new_value, timestamp, ip_address and user_agent for elke tier wijziging.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Audit Logging: Volledige audit trail logging in admin_audit_log table - logged admin_user_id, action='TRIAL_EXTEND', target_user_id, old_value, new_value, timestamp, ip_address and user_agent.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Audit Trail: Volledige audit logging in admin_audit_log table - logged admin_user_id, action='SETTING_UPDATE', old_value, new_value, timestamp, IP and user agent. Graceful fallback at audit log failures.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Backup Metadata Collection: Queries pg_database_size for totale database size in MB, pg_catalog.pg_tables for all public schema tabellen, telling query per table for row statistics. Totaal rows berekening over all tabellen. Last backup timestamp from system_settings or NOW() as fallback.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Block/Unblock User: Dynamic button text (🔒 Block User / ✅ Unblock User) based on actief status, toggle functionality, confirmation dialog, API endpoint endpoint, displays sessions invalidated count in success message, button updates instantly na action.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">CSS Form Styling: .form-select and .form-input styling - full width, 10px padding, border-radius medium, focus state with blue border + shadow glow, .modal-buttons flex layout with 10px gap, macOS design consistency.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">CSS Styling: .btn-secondary with macos-bg-tertiary background + hover state, #user-details-panel h3 styling (margin-bottom 15px), .admin-table th/td left-align and width constraints, consistent with macOS design language.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Change Tier Modal: Professional modal popup with dropdown select (Free/Premium/Enterprise), pre-populated with current tier, display user email in modal header, confirmation dialog for tier change, API endpoint endpoint call, automatic user details refresh na succesvolle change.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Comprehensive JSON Response: Geneste structure with user, tasks, emails, subscription, sessions, planning and recurring secties. Alle dates as ISO strings, counts as integers, percentages as floats. Ready for data visualization in frontend.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Comprehensive Response Format: Returns cleanup_results array with per target: name, description, found count, deleted count, and query. Totaal records deleted, execution time in milliseconds, preview boolean. Perfect for frontend visualization and audit trails.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Configuration Context: Response bevat volledige plan context - config_id, plan_id, plan_name, tier, old_url, new_url and updated_at timestamp. Retourneert 404 Not Found as payment configuration niet bestaat.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Cumulatieve Berekening: Automatische berekening or cumulatief gebruikersaantal inclusief users or vóór de 30-dagen periode.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Dagelijkse Planning Indexes (4): database index, database index, database index (composite), database index. Optimalisatie for planning queries and user activity tracking.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Delete User Modal: Professional warning modal with red color scheme (#FF3B30), displays user email, red warning box (#FEE background) with cascade delete details (tasks, email imports, sessions), required checkbox confirmation "I understand this action is permanent", delete button disabled until checkbox checked, double confirmation dialog, API endpoint endpoint, success message shows cascade deleted counts, navigeert terug to search na delete.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Duidelijke Vereisten: De wachtwoordeisen are direct at het registratieformulier getoond, zodat je vooraf weet wat er expects is.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Email Import Analytics: Summary (total, recent_30d, oldest_import, newest_import, processed count, converted_to_task count), recent 10 imports with details (from_email, subject, imported_at, processed status, task_id).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Email Import History: Email section with total_imports, processed counts, first_import and last_import timestamps, plus recent array with laatste 10 emails (from, subject, imported_at).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Email Summary Grid: Total Email Imports counter via data.emails.summary.total, Recent (30d) imports via data.emails.summary.recent_30d, formatNumber for beide metrics for thousands separator.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Email, Subscription, Session, Planning Tables: 4 detail tabellen - Email Import Summary (Total Imports, Recent 30d, Oldest/Newest Import with Helpers.formatDate()), Subscription Details (Status, Trial End Date, Subscription Tier), Session Information (Active Sessions, Last Activity), Planning & Recurring (Planning Entries, Active Recurring Tasks) - all tables with consistent th/td structuur, 'N/A' fallback for missing data, formatNumber for counts.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Enhanced Navigation States (T042): Active nav link styling with font-weight 600, white text and inverted icons via filter: brightness(0) invert(1), hover states alleen on inactive links, breadcrumb navigation boven content area with emoji icons (🏠 Home Dashboard, 📊 Task Analytics, etc.), keyboard shortcuts Alt+1 t/m Alt+9 for snelle screen switching, Escape key sluit all open modals.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Enhanced Statistics Rendering: User statistics with contextual subtexts (percentage or total, time ranges), Trial statistics display (active trials + conversion rate %), automatic percentage calculations for all tier distributions.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Expected Performance Impact: User statistics 50-80% sneller, Task completion queries 60-90% sneller, Admin search 40-60% sneller, Storage queries 70-95% sneller. Kritisch for schaalbaarheid at groeiende user base.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Extend Trial Modal: Date picker modal with min date = tomorrow (prevents past dates), pre-populated with current trial_end_date or tomorrow, display user email, confirmation dialog, API endpoint endpoint, validation for empty date, auto refresh user details.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Flexible Limits: Optionele limit parameter (default 50) and retourneert total_users count for context in the UI.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Font Awesome Iconen: De emoji (👁️/🙈) for show/verbergen or wachtwoorden zijn vervangen by professionele Font Awesome iconen (fa-eye/fa-eye-slash), consistent with de rest or the applicatie like de sidebar.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Force Logout: API endpoint endpoint call, invalidates all active sessions for user, displays sessions invalidated count, confirmation dialog warns about session termination, no user details refresh (sessions remain terminated).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Future Date Validation: Strict validatie dat trial_end_date een geldige ISO date (YYYY-MM-DD) is én in the toekomst ligt. Retourneert 400 Bad Request with "Trial end date must be in the future" at past dates.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">HTML Structuur: Volledige HTML implementatie in admin2.html with stats-grid for Database Size and Total Tables, inclusief Tables Breakdown table with thead/tbody structuur.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Helper Functions Library: Nieuwe Helpers object with 6 utility functies - formatNumber() (thousands separator nl-NL), formatPercentage() (1 decimal), formatDate() (nl-NL short format), formatRelativeTime() ("2 hours ago"), getTierBadgeClass() + getTierDisplayName() for tier badges.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">MRR Berekening: Automatische berekening or totale Monthly Recurring Revenue gebaseerd on actieve users per tier and hun maandelijkse prijs.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Naadloze Beta-to-Productie Transitie: Wanneer de beta periode voorbij is, komt de user on een pagina to te kiezen for een trial or 14 dagen or een betalend abonnement. Alle achtergrond processing (database updates, trial activatie, payment setup) gebeurt transparant terwijl de user on de pagina blijft.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Payment Configurations Integratie: Gebruikt payment_configurations table for centralized payment plan management. Response format: { payment_configs: [...], count: number }. Basis for toekomstige payment management UI in Admin Dashboard v2.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Payment Configurations: Overzicht or all actieve payment configuraties with plan details, checkout URLs and prijzen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Payment Provider Validatie: URL moet HTTPS zijn and een bekende payment provider domain bevatten (mollie.com, stripe.com, paypal.com, paddle.com). Retourneert 400 Bad Request at invalide URL format or untrusted provider.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Preview Mode Safety: Default preview=true mode telt records without te verwijderen. Retourneert exact welke records zouden are deleted inclusief DELETE query for review. Safe for exploratie and impact assessment. Zero-risk operatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Query Execution Controls: 10 seconden statement_timeout for all queries. Uppercase keyword detection for safety checks. Query truncation to 500 chars for audit logging. Result limiting until 1000 rows with warning in response.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Raw JSON Data Collapsible: HTML details/summary element for raw JSON display - summary with cursor pointer styling, padding 10px, background var(--macos-bg-tertiary), border-radius 8px, "Click to view raw JSON" text, pre tag with monospace font (SF Mono, Monaco), font-size 12px, JSON.stringify(data, null, 2) for formatted output, overflow-x auto for long lines.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Real-time Wachtwoord Validatie: Bij registratie zie je direct feedback tijdens het typen or je wachtwoord to all beveiligingseisen voldoet. Visuele indicators (✓/✗) show de status or elke eis.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Recent Registrations Table: Dedicated renderRecentRegistrations() method with tier badges (badge-primary/secondary/gold), relative time tooltips with absolute date fallback, empty state handling, proper null checks for naam field.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Response Format: JSON response with settings array and count field. Elke setting bevat volledige metadata for transparent system configuration management.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Revenue Metrics: Automatische percentage berekening for elke tier (% or MRR), EUR currency formatting with Helpers.formatNumber for thousands separator, subtext displays with dynamische percentages per tier for Premium and Enterprise.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Revenue Per Tier: Gedetailleerde breakdown or revenue per subscription tier (premium, enterprise) with user counts and maandelijkse prijzen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause Opgelost: Bijlagen verdwenen when tasks or inbox to acties werden geconverteerd. Oorzaak: DELETE+INSERT patroon triggerde CASCADE DELETE on foreign key constraint, waardoor all attachments automatic werden deleted.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Secure Password Generation: 12-character random wachtwoorden with alleen alphanumeric characters (no verwarrende chars like 0/O or 1/l/I). Elke reset genereert een uniek, sterk wachtwoord.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Security Statistics Cards: 3-column stats grid with real-time metrics - 🔐 Active Sessions (count or session table waar expire > NOW()), 🚫 Blocked Users (count users waar actief = false), 👥 Total Users (count all users), all stats formatted via Helpers.formatNumber(), automatic refresh at screen load, live updates na session termination.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">SecurityTools Object Architecture: Gestructureerde JavaScript object with 4 core methods - refreshAuditLog() for audit log data loading with admin email resolution, refreshSessions() for session parsing and user email lookup, terminateSession() for force logout with confirmation, updateSecurityStats() for real-time statistics via 3 separate SQL queries, all methods gebruiken API client methode for direct database access.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Selective Cleanup via Targets Array: Optionele targets parameter to specifieke cleanup operations te kiezen (bijv. ["expired_sessions", "orphaned_tasks"]). Geen targets = all enabled targets. Flexible for granular cleanup control.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Session & Activity Tracking: Active sessions count via session table JSONB query, last_activity timestamp. Planning entries count (dagelijkse_planning). Recurring tasks count (herhaling_actief=true).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Session Invalidation: Bij blokkeren are automatic ALLE sessies or the user deleted from de session table. Response bevat sessions_invalidated count for audit transparency.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Smart Ranking: Resultaten gesorteerd on relevantie - email matches eerst, dan naam matches, dan ID matches. Binnen elke categorie gesorteerd on created_at DESC.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Sterke Wachtwoorden Verplicht: Nieuwe accounts vereisen minimaal 8 tekens, 1 hoofdletter, 1 cijfer and 1 speciaal teken. Dit beschermt je account beter tegen ongeautoriseerde toegang.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Subscription Details Table: Status row (data.subscription.status or 'N/A'), Trial End Date formatted via Helpers.formatDate (or 'N/A' as null), Created At date formatted, Last Login via formatRelativeTime ('Never' as null) - table with th width 200px left-aligned.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Subscription Details: Subscription section with status, tier, trial_end_date and payment config JOIN for plan_name and price_monthly or active payment configurations.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">System Settings Integratie: Gebruikt existing system_settings table for globale applicatie configuratie like onboarding_video_url and trial_duration_days. Basis for toekomstige system configuration management UI.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Taken Table Indexes (8): database index, database index, database index, database index, database index, database index, database index, database index (composite). 60-90% performance verbetering for completion rate queries and task statistics.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Tasks by Project/Context Tables: 2 tabellen with Project/Context breakdown - beide with thead (Project/Context + Count columns), tbody with map over data.tasks.by_project/by_context arrays, fallback "(No project)" / "(No context)" for null values, empty state "No projects/contexts" row as array empty, .join('') for HTML concatenation.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Tijdelijke Beta Maatregel: Voor de live launch is presigned URL upload implemented zodat files direct to cloud storage kunnen are geüpload without via hosting platform te gaan (dan weer onbeperkte grootte for Premium Plus).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">UI Enhancement: 4-kaart stats-grid layout with duidelijke labels and subteksten - Total Imports (all time), Recent Imports (30d), Users with Imports (with totaal count), and Adoption Rate (percentage users that email import gebruiken).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">User Info Grid: Email display with font-size 16px for readability, Naam (or '-' as empty), Account Type with 👑 Admin or 👤 User indicator, Subscription Tier with colored badge (Free/Premium/Enterprise) via getTierBadgeClass/getTierDisplayName helpers.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">User Information Display: Table with 8 user fields - ID, Email, Naam (with '-' fallback), Account Type, Subscription Tier, Status (with .status-active/.status-inactive class for color coding), Created At (formatted via Helpers.formatDate()), Last Login (formatted via Helpers.formatRelativeTime() or 'Never'), all data via data.user object or API response.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">User Search Endpoint: Nieuwe API endpoint endpoint implemented volgens API contract specificatie. Zoekt users on email, naam én user ID with ILIKE pattern matching.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">User Section: Volledige user data inclusief id, email, naam, account_type, subscription_tier, subscription_status, trial_end_date, actief, created_at, login timestamp column, onboarding_video_seen and onboarding_video_seen_at.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Users Table Indexes (5): database index, database index, database index, database index, database index. Optimalisatie for user statistics (registrations, active users, login tracking) and admin search operaties (LOWER email/naam for case-insensitive search).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Verbeterde Hover Effecten: De toggle button krijgt now een blauwe kleur at hover (consistent with Tickedify's design) and een subtiele scale animatie for betere visual feedback.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">YouTube/Vimeo URL Validatie: Speciale validatie for onboarding_video_url setting - vereist geldige YouTube (youtube.com, youtu.be, youtube-nocookie.com) or Vimeo URL. Retourneert 400 Bad Request at invalide URL format.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">closeUserDetails() Function: Toggle function - hide user-details-panel + show user-search-results, smooth transition terug to search view, no data cleanup (behoud search results).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">database provider Integration Approach: Neon database has automatic daily backups with point-in-time restore. Endpoint retourneert metadata + instructies in plaats or daadwerkelijke backup file. database provider dashboard URL generatie for manual branch creation (instant backup snapshot). pg_dump command template for SQL export.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Version 0.19.14 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-fix">v0.19.14</span>
+<span class="version-date">15 October 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="change-category-title">✨ Features</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Backend fix: Added req.session.save() in API endpoint endpoint to sessie expliciet on te slaan voordat response is verzonden (identiek to login flow).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Debug Tool: Added API endpoint endpoint for toekomstige diagnostiek or subscription status issues.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Frontend fix: Added await this.checkAuthStatus() in handleRegister() na succesvolle registratie (identiek to login flow).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">MIT Maximum Telling - Productie Test: Succesvol getest on productie with jan@buskens.be account. De fix or v0.19.3 works perfect - systeem blokkeert correct new MIT's when er al 3 or more MIT's in the daily planning staan (inclusief oude MIT's).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Migration Endpoint: Added API endpoint to existing beta users with 'expired' status te migreren to 'beta_expired' zodat ze plans kunnen selecteren.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Ontdekte Gaps: Tijdens review ontdekt dat 'beta_active' (new user tijdens actieve beta) and 'pending_payment' (new user tijdens gestopte beta) ook niet werden herkend by de validatie. Nieuwe users zouden dezelfde 400 errors krijgen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Validatie Uitbreiding: 'beta_active' case added (-218): Trial + all paid plans
+'pending_payment' case added (-236): Trial + all paid plans
+SUBSCRIPTION_STATES enum extended with beide statussen</div>
+</div>
+<div class="change-item">
+<div class="change-icon">✨</div>
+<div class="change-content">Volledige Dekking Nu Actief: ✅ 'beta' - oude beta users
+✅ 'beta_active' - new users tijdens actieve beta
+✅ 'beta_expired' - verlopen beta users
+✅ 'pending_payment' - new users tijdens gestopte beta
+✅ 'trialing' - users in trial
+✅ 'trial_expired' - users with verlopen trial</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🔧 Fixes</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug: Backend isTrialExpired() function retourneerde altijd false for users with een verlopen trial but subscription_status anders dan 'trialing' (bijvoorbeeld 'beta_expired').</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug: Gebruikers with een verlopen trial zagen nog steeds de optie to een gratis proefperiode te nemen on de subscription pagina.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Bug: Users with actieve trial ('trialing' status) werden na trial activatie teruggestuurd to subscription screen in plaats or toegang te krijgen until de app.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">CRITICAL BUG: Gebruikers with verlopen trials konden TOCH de app blijven gebruiken! De access controle checks keken alleen to subscription_status, but niet to trial_end_date.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Database Updates Gefixt: Beta toggle function: 'expired' → 'beta_expired' ()
+Nieuwe user registratie: 'expired' → 'beta_expired' ()
+Migratie function: now ook 'beta_expired' ondersteuning ()</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Fix Plan ID Mismatch: Opgelost bug waarbij bèta users with verlopen bèta periode no abonnement konden selecteren. De PLAN_IDS constante for trial abonnement was inconsistent (trial_14 vs trial_14_days) with de rest or the applicatie, waardoor all plan selecties werden geweigerd with 400 error "Ongeldige plan selectie for huidige status".</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Gefixt: PLAN_IDS.TRIAL_14 gewijzigd or 'trial_14' to 'trial_14_days' for consistentie with de volledige applicatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Nieuwe error handling: Bij ontbrekende sessie is now een error gegooid in plaats or een fallback to een andere user.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">ROOT CAUSE FIX: De v0.19.11 fix werkte NIET omdat trial_end_date niet werd opgehaald from de database. De isTrialExpired() function kreeg no data and returnde altijd FALSE. Nu fixed by trial_end_date toe te voegen to beide SQL queries (login flow and API endpoint).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🔧</div>
+<div class="change-content">Root Cause Bevestigd: Grondige analyse via debug endpoint toonde to dat beta users with verlopen periode status 'expired' kregen toegewezen, but de validatie checkt on 'beta_expired'. Status werd NERGENS herkend → all plan selecties faalden with 400 error.</div>
+</div>
+</div>
+
+<div class="change-category">
+<div class="change-category-title">🎯 Improvements</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Backend expiryType field: Login and API endpoint responses bevatten now expiryType: 'trial' | 'beta' zodat frontend correct kan redirecten.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">GEVAARLIJKE FALLBACK VERWIJDERD: De getCurrentUserId() function had een hardcoded fallback to een specifieke user ID. Als een user no geldige sessie had, kreeg that automatic de data or een andere user te zien. Dit is een ernstige privacy breach that now is opgelost.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Nieuwe trial-expired pagina: Trial users are now doorgestuurd to een dedicated /trial-expired.html pagina with trial-specifieke messaging (in plaats or beta-expired pagina).</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oplossing: Beide access controle checks updated to isTrialExpired(user) function te gebruiken. Check is now: (subscription_status !== 'trialing' || trialIsExpired)</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oplossing: Beide checks updated to ook 'trialing' status te accepteren. Trial users krijgen now direct toegang until de app na trial activatie.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Oplossing: Status check deleted. De function checkt now alleen or trial_end_date in het verleden ligt, ongeacht huidige subscription_status.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Poging: Frontend subscription.js updated to te checken on had_trial OF trial_expired.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: De function checkte eerst or subscription_status === 'trialing' and retourneerde false as this niet het geval was. Gebruikers with verlopen trials but een andere status kregen altijd trial_expired: false or the API.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: PLAN_IDS.TRIAL_14 was ingesteld on 'trial_14' but overal in the codebase (frontend, database, specificaties) is 'trial_14_days' uses. De validatePlanSelection function faalde omdat de waarden niet overeenkwamen.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: Twee access control checks accepteerden alleen 'paid' and 'active' statussen, but niet 'trialing':
+
+Login flow (-2554)
+API endpoint endpoint (-4158)</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Root Cause: Twee access controle locaties misten de check on verlopen trials:
+
+Login flow (-2557): Checkte niet or trial expired for 'trialing' status
+API endpoint endpoint (-4167): Checkte niet or trial expired for 'trialing' status</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Security Impact: Gebruikers with subscription_status = 'trialing' and trial_end_date in het verleden kregen ongeldige toegang until volledige app functionality without betaling.</div>
+</div>
+<div class="change-item">
+<div class="change-icon">🎯</div>
+<div class="change-content">Sessie persistence probleem opgelost: Nieuwe users leken ingelogd na registratie but sessie was niet persistent. Bij page refresh werden ze terug to login pagina gestuurd.</div>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+</body>
+</html>

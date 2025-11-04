@@ -93,7 +93,6 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
                 });
                 
                 if (tagResponse.ok) {
-                    console.log(`✅ GHL: Updated existing contact ${contactId} with tags: ${tags.join(', ')}`);
                 } else {
                     console.error(`⚠️ GHL: Failed to add tags to existing contact ${contactId}`);
                 }
@@ -123,7 +122,6 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
             if (createResponse.ok) {
                 const createData = await createResponse.json();
                 contactId = createData.contact?.id;
-                console.log(`✅ GHL: Created new contact ${contactId} with tags: ${tags.join(', ')}`);
             } else {
                 const errorText = await createResponse.text();
                 console.error(`⚠️ GHL: Failed to create contact: ${createResponse.status} - ${errorText}`);
@@ -354,15 +352,10 @@ async function logWebhookEvent(webhookData, pool) {
   }
 }
 
-// Debug: Check forensic logger status at startup
-console.log('🔍 DEBUG: FORENSIC_DEBUG environment variable:', process.env.FORENSIC_DEBUG);
-console.log('🔍 DEBUG: Forensic logger enabled status:', forensicLogger.enabled);
-
 // Force test log on startup
 if (forensicLogger.enabled) {
     setTimeout(() => {
         forensicLogger.log('SYSTEM', 'STARTUP_TEST', { message: 'Forensic logging system initialized' });
-        console.log('🧪 Startup test log written');
     }, 2000);
 }
 
@@ -410,8 +403,7 @@ app.use((req, res, next) => {
         
         return originalSend.call(this, data);
     };
-    
-    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+
     next();
 });
 
@@ -567,7 +559,6 @@ try {
     const dbModule = require('./database');
     db = dbModule.db;
     pool = dbModule.pool;
-    console.log('Database module imported successfully');
     
     // Configure session store immediately with pool
     app.use(session({
@@ -648,8 +639,6 @@ app.get('/api/db-test', async (req, res) => {
 // Debug endpoint for B2 storage status
 app.get('/api/debug/storage-status', async (req, res) => {
     try {
-        console.log('🔍 DEBUG: Testing storage manager initialization...');
-        
         const status = {
             timestamp: new Date().toISOString(),
             environment_vars: {
@@ -677,7 +666,6 @@ app.get('/api/debug/storage-status', async (req, res) => {
                 // Test B2 operations directly if client exists
                 if (storageManager.b2Client) {
                     try {
-                        console.log('🔍 Testing B2 listBuckets operation...');
                         const bucketsResponse = await storageManager.b2Client.listBuckets();
                         status.storage_manager.bucket_test = {
                             list_buckets_success: true,
@@ -704,11 +692,10 @@ app.get('/api/debug/storage-status', async (req, res) => {
             } catch (initError) {
                 status.storage_manager.initialization_error = initError.message;
                 status.storage_manager.b2_status = 'initialization_failed';
-                console.error('🔍 Initialization error details:', initError);
+                console.error('Initialization error details:', initError);
             }
         }
-        
-        console.log('🔍 DEBUG: Storage status:', status);
+
         res.json(status);
         
     } catch (error) {
@@ -723,8 +710,6 @@ app.get('/api/debug/storage-status', async (req, res) => {
 // Simple direct B2 test endpoint
 app.get('/api/debug/b2-direct-test', async (req, res) => {
     try {
-        console.log('🔍 Testing B2 directly with current environment vars');
-        
         const B2 = require('backblaze-b2');
         
         const result = {
@@ -789,9 +774,7 @@ app.get('/api/debug/b2-direct-test', async (req, res) => {
 app.get('/api/debug/bijlage/:id', async (req, res) => {
     try {
         const { id: bijlageId } = req.params;
-        
-        console.log('🔍 DEBUG: Looking for bijlage:', bijlageId);
-        
+
         if (!db) {
             return res.json({ error: 'Database not available', bijlageId });
         }
@@ -809,8 +792,7 @@ app.get('/api/debug/bijlage/:id', async (req, res) => {
         const allBijlagenQuery = await pool.query('SELECT id, bestandsnaam FROM bijlagen LIMIT 5');
         result.sample_bijlagen = allBijlagenQuery.rows;
         result.total_bijlagen = allBijlagenQuery.rows.length;
-        
-        console.log('🔍 DEBUG bijlage result:', result);
+
         res.json(result);
         
     } catch (error) {
@@ -850,7 +832,6 @@ app.post('/api/admin/create-default-user', async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
         `, [defaultUserId, defaultEmail, defaultNaam, 'temp-hash', 'admin', true]);
         
-        console.log('✅ Default user created successfully');
         
         res.json({ 
             success: true, 
@@ -872,12 +853,10 @@ app.post('/api/admin/init-database', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
-        console.log('🔧 Manual database initialization requested...');
         const { initDatabase } = require('./database');
         await initDatabase();
         dbInitialized = true;
         
-        console.log('✅ Manual database initialization completed');
         res.json({ 
             success: true, 
             message: 'Database initialized successfully',
@@ -902,7 +881,6 @@ app.post('/api/admin/make-jan-admin', async (req, res) => {
 
         await pool.query(`UPDATE users SET rol = 'admin' WHERE email = 'jan@buskens.be'`);
 
-        console.log('✅ jan@buskens.be is now admin');
         res.json({ success: true, message: 'jan@buskens.be is now admin' });
     } catch (error) {
         console.error('❌ Failed to make jan admin:', error);
@@ -917,7 +895,6 @@ app.post('/api/admin/reset-database', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
-        console.log('🚨 DATABASE RESET REQUESTED - This will delete ALL data!');
         
         // Get counts before deletion for confirmation
         const countQueries = [
@@ -933,12 +910,10 @@ app.post('/api/admin/reset-database', async (req, res) => {
                 const result = await pool.query(countQuery.query);
                 beforeCounts[countQuery.table] = parseInt(result.rows[0].count);
             } catch (error) {
-                console.log(`Could not count ${countQuery.table}:`, error.message);
                 beforeCounts[countQuery.table] = 0;
             }
         }
         
-        console.log('📊 Records before deletion:', beforeCounts);
         
         // Delete in correct order (foreign key constraints)
         const deleteQueries = [
@@ -955,15 +930,12 @@ app.post('/api/admin/reset-database', async (req, res) => {
                 const result = await pool.query(deleteQuery);
                 const tableName = deleteQuery.split(' ')[2]; // Extract table name
                 deletionResults[tableName] = result.rowCount;
-                console.log(`✅ Deleted ${result.rowCount} records from ${tableName}`);
             } catch (error) {
                 console.error(`❌ Error deleting from table:`, error);
                 throw error;
             }
         }
         
-        console.log('🧹 Database reset completed successfully');
-        console.log('📊 Deleted records:', deletionResults);
         
         res.json({
             success: true,
@@ -1071,7 +1043,6 @@ app.get('/api/debug/last-imports', (req, res) => {
 app.get('/api/debug/test-import-code/:recipient', async (req, res) => {
     try {
         const recipient = req.params.recipient;
-        console.log('Testing recipient:', recipient);
         
         const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@/);
         if (importCodeMatch) {
@@ -1124,28 +1095,24 @@ app.get('/api/debug/message/:title', async (req, res) => {
 async function getUserIdByEmail(email) {
     try {
         if (!email) {
-            console.log('getUserIdByEmail: empty email provided');
             return null;
         }
-        
+
         // Clean up email address (remove any brackets, spaces, etc.)
         const cleanEmail = email.trim().toLowerCase();
-        console.log(`🔍 Looking up user for email: ${cleanEmail}`);
-        
+
         const result = await pool.query(
             'SELECT id FROM users WHERE LOWER(email) = $1 AND actief = TRUE',
             [cleanEmail]
         );
-        
+
         if (result.rows.length === 0) {
-            console.log(`❌ No active user found for email: ${cleanEmail}`);
             return null;
         }
-        
+
         const userId = result.rows[0].id;
-        console.log(`✅ Found user ID: ${userId} for email: ${cleanEmail}`);
         return userId;
-        
+
     } catch (error) {
         console.error('Error looking up user by email:', error);
         return null;
@@ -1155,21 +1122,6 @@ async function getUserIdByEmail(email) {
 // Email Import System - Mailgun Webhook Handler
 app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
     try {
-        console.log('📧 Email import request received');
-        console.log('Headers:', req.headers);
-        console.log('Body keys:', Object.keys(req.body));
-        console.log('Files:', req.files?.length || 0);
-        console.log('Full body:', req.body);
-        
-        // Log to a file we can check later
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            headers: req.headers,
-            body: req.body,
-            bodyKeys: Object.keys(req.body)
-        };
-        console.log('IMPORT_LOG:', JSON.stringify(logEntry));
-        
         // Try multiple field name variations for Mailgun compatibility
         const sender = req.body.sender || req.body.from || req.body.From || '';
         const recipient = req.body.recipient || req.body.to || req.body.To || '';
@@ -1177,8 +1129,6 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
         const bodyPlain = req.body['body-plain'] || req.body.text || req.body.body || '';
         const bodyHtml = req.body['body-html'] || req.body.html || '';
         const strippedText = req.body['stripped-text'] || req.body['stripped-plain'] || bodyPlain;
-        
-        console.log('Extracted fields:', { sender, recipient, subject, bodyPlain: bodyPlain?.substring(0, 100) });
         
         if (!sender && !subject) {
             return res.status(400).json({
@@ -1188,19 +1138,14 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                 timestamp: new Date().toISOString()
             });
         }
-        
-        console.log(`📨 Processing email from: ${sender}`);
-        console.log(`📋 Subject: ${subject}`);
-        
+
         // Parse email content
-        console.log('🔄 About to parse email...');
         const taskData = parseEmailToTask({
             sender,
             subject,
             body: strippedText || bodyPlain || 'No body content',
             timestamp: new Date().toISOString()
         });
-        console.log('✅ Email parsed successfully:', taskData);
         
         // Get user ID based on import code in recipient address
         let userId = null;
@@ -1210,14 +1155,11 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
             const importCodeMatch = recipient.match(/import\+([a-zA-Z0-9]+)@mg\.tickedify\.com/);
             if (importCodeMatch) {
                 const importCode = importCodeMatch[1];
-                console.log(`🔍 Found import code: ${importCode}`);
-                
+
                 const user = await db.getUserByImportCode(importCode);
                 if (user) {
                     userId = user.id;
-                    console.log(`✅ Found user ID: ${userId} (${user.email}) for import code: ${importCode}`);
                 } else {
-                    console.log(`❌ No user found for import code: ${importCode}`);
                     return res.status(404).json({
                         success: false,
                         error: `Invalid import code: ${importCode}`,
@@ -1227,13 +1169,11 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                 }
             }
         }
-        
+
         // Fallback to sender email matching if no import code found
         if (!userId) {
-            console.log('⚠️ No import code found, falling back to sender email matching');
             userId = await getUserIdByEmail(sender);
             if (!userId) {
-                console.log(`❌ No user found for email: ${sender}`);
                 return res.status(404).json({
                     success: false,
                     error: `No user account found for email address: ${sender}`,
@@ -1241,29 +1181,21 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                     timestamp: new Date().toISOString()
                 });
             }
-            console.log(`✅ Found user ID: ${userId} for email: ${sender} (fallback method)`);
         }
-        console.log('🔄 Resolving project and context IDs for user:', userId);
         if (taskData.projectName) {
             taskData.projectId = await findOrCreateProject(taskData.projectName, userId);
         }
         if (taskData.contextName) {
             taskData.contextId = await findOrCreateContext(taskData.contextName, userId);
         }
-        
-        console.log('✅ Project/Context resolution completed:', {
-            project: taskData.projectName ? `${taskData.projectName} → ${taskData.projectId}` : 'none',
-            context: taskData.contextName ? `${taskData.contextName} → ${taskData.contextId}` : 'none'
-        });
-        
+
         // Create task in database
         if (!pool) {
             throw new Error('Database not available');
         }
-        console.log('🔄 About to create task in database...');
-        
+
         const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        
+
         // Convert verschijndatum to proper format for PostgreSQL DATE field
         let verschijndatumForDb = null;
         if (taskData.verschijndatum) {
@@ -1271,7 +1203,6 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
             const dateMatch = taskData.verschijndatum.match(/(\d{4}-\d{2}-\d{2})/);
             if (dateMatch) {
                 verschijndatumForDb = dateMatch[1];
-                console.log('📅 Converted deadline for database:', verschijndatumForDb);
             }
         }
 
@@ -1298,45 +1229,23 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
         
         const createdTask = result.rows[0];
 
-        console.log('✅ Task created successfully:', {
-            id: createdTask.id,
-            tekst: createdTask.tekst,
-            lijst: createdTask.lijst
-        });
-
         // Feature 049: Process attachments if requested (T015)
         let attachmentResult = null;
 
         if (taskData.attachmentConfig?.processAttachments && req.files && req.files.length > 0) {
             try {
                 const { targetFilename } = taskData.attachmentConfig;
-                console.log(`📎 Processing attachments: searching for "${targetFilename}" in ${req.files.length} file(s)`);
 
                 // T011: Find matching attachment with smart priority
                 const matchedFile = findMatchingAttachment(req.files, targetFilename);
 
                 if (matchedFile) {
-                    console.log(`✅ Matched attachment: "${targetFilename}" → ${matchedFile.originalname}`);
-
-                    // Log other matches that were skipped (FR-021)
-                    const otherMatches = req.files
-                        .filter(f => f !== matchedFile && f.originalname.toLowerCase().includes(targetFilename.toLowerCase()))
-                        .map(f => f.originalname);
-                    if (otherMatches.length > 0) {
-                        console.log(`ℹ️  Other matches skipped: ${otherMatches.join(', ')}`);
-                    }
-
                     // T013: Validate file size (FR-011, FR-014)
                     const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB
                     if (matchedFile.size > MAX_FILE_SIZE) {
-                        const sizeMB = (matchedFile.size / 1024 / 1024).toFixed(2);
-                        console.log(`⚠️ File too large: ${matchedFile.originalname} (${sizeMB} MB, max 4.5 MB)`);
-                        console.log('   Task created without attachment');
+                        // File too large, skip upload
                     } else {
                         // File size OK, proceed with upload
-                        const sizeKB = (matchedFile.size / 1024).toFixed(2);
-                        console.log(`📎 Uploading to B2: ${matchedFile.originalname} (${sizeKB} KB)`);
-
                         // T014: Upload to B2 via StorageManager
                         const uploadResult = await storageManager.uploadFile(
                             matchedFile,  // Pass entire file object (has buffer, originalname, mimetype, size)
@@ -1361,9 +1270,6 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                             uploadResult.user_id
                         ]);
 
-                        console.log(`✅ Bijlage uploaded to B2: ${uploadResult.storage_path}`);
-                        console.log(`💾 Bijlage record created: ${uploadResult.id}`);
-
                         attachmentResult = {
                             processed: true,
                             matched: matchedFile.originalname,
@@ -1371,22 +1277,12 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                             size: matchedFile.size
                         };
                     }
-                } else {
-                    // No match found (FR-015, FR-020)
-                    console.log(`❌ No match for: "${targetFilename}"`);
-                    const availableFiles = req.files.map(f => f.originalname).join(', ');
-                    console.log(`   Available files: ${availableFiles}`);
                 }
             } catch (attachmentError) {
                 // T021: Error handling - task creation continues (FR-006, FR-017)
                 console.error('❌ Attachment processing error:', attachmentError.message);
-                console.error('   Stack:', attachmentError.stack);
-                console.log('   Task created without attachment');
                 // attachmentResult remains null
             }
-        } else if (req.files && req.files.length > 0 && !taskData.attachmentConfig?.processAttachments) {
-            // Files present but no a: code (FR-001 opt-in protection)
-            console.log(`ℹ️  Email has ${req.files.length} attachment(s) but no 'a:' code - skipping`);
         }
 
         // Track email import in analytics table
@@ -1395,13 +1291,11 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
                 INSERT INTO email_imports (user_id, email_from, email_subject, task_id)
                 VALUES ($1, $2, $3, $4)
             `, [userId, sender, subject, createdTask.id]);
-            console.log('📊 Email import tracked for analytics');
         } catch (trackError) {
             console.error('⚠️ Failed to track email import (non-critical):', trackError.message);
         }
 
         // Send confirmation (would need Mailgun sending setup)
-        console.log('📤 Would send confirmation email to:', sender);
 
         res.json({
             success: true,
@@ -1440,7 +1334,6 @@ async function findOrCreateProject(projectName, userId = 'default-user-001') {
         );
         
         if (existingProject.rows.length > 0) {
-            console.log('📁 Found existing project:', projectName, '→', existingProject.rows[0].id);
             return existingProject.rows[0].id;
         }
         
@@ -1451,7 +1344,6 @@ async function findOrCreateProject(projectName, userId = 'default-user-001') {
             [projectId, projectName, userId]
         );
         
-        console.log('📁 Created new project:', projectName, '→', projectId);
         return projectId;
         
     } catch (error) {
@@ -1472,7 +1364,6 @@ async function findOrCreateContext(contextName, userId = 'default-user-001') {
         );
         
         if (existingContext.rows.length > 0) {
-            console.log('🏷️ Found existing context:', contextName, '→', existingContext.rows[0].id);
             return existingContext.rows[0].id;
         }
         
@@ -1483,7 +1374,6 @@ async function findOrCreateContext(contextName, userId = 'default-user-001') {
             [contextId, contextName, userId]
         );
         
-        console.log('🏷️ Created new context:', contextName, '→', contextId);
         return contextId;
         
     } catch (error) {
@@ -1672,8 +1562,6 @@ function findMatchingAttachment(files, searchTerm) {
 function parseEmailToTask(emailData) {
     const { sender, subject, body, timestamp } = emailData;
 
-    console.log('🔍 Parsing email content...');
-
     // Initialize task data
     const taskData = {
         tekst: subject, // Will be cleaned up later to just task name
@@ -1702,21 +1590,18 @@ function parseEmailToTask(emailData) {
     const projectMatch = subject.match(/\[([^\]]+)\]/);
     if (projectMatch) {
         taskData.projectName = projectMatch[1].trim();
-        console.log('📁 Found project:', taskData.projectName);
     }
-    
+
     // Extract context from @mentions
     const contextMatch = subject.match(/@([^\s#\]]+)/);
     if (contextMatch) {
         taskData.contextName = contextMatch[1].trim();
-        console.log('🏷️ Found context:', taskData.contextName);
     }
-    
+
     // Extract tags from #hashtags (for future use)
     const tagMatches = subject.match(/#([^\s@\]]+)/g);
     if (tagMatches) {
         const tags = tagMatches.map(tag => tag.substring(1));
-        console.log('🏷️ Found tags:', tags);
     }
     
     // Clean up task title (remove project, context, tags)
@@ -1838,34 +1723,30 @@ function parseEmailToTask(emailData) {
                 const duurMatch = line.match(/(\d+)/);
                 if (duurMatch) {
                     taskData.duur = parseInt(duurMatch[1]);
-                    console.log('⏱️ Found duration:', taskData.duur, 'minutes');
                 }
             }
-            
+
             // Extract deadline
             if (trimmedLine.startsWith('deadline:') || trimmedLine.startsWith('datum:')) {
                 const dateMatch = line.match(/(\d{4}-\d{2}-\d{2})/);
                 if (dateMatch) {
                     taskData.verschijndatum = dateMatch[1];
-                    console.log('📅 Found deadline:', taskData.verschijndatum);
                 }
             }
-            
+
             // Override project if specified in body
             if (trimmedLine.startsWith('project:')) {
                 const projectName = line.split(':')[1]?.trim();
                 if (projectName) {
                     taskData.projectName = projectName;
-                    console.log('📁 Found project in body:', taskData.projectName);
                 }
             }
-            
+
             // Override context if specified in body
             if (trimmedLine.startsWith('context:')) {
                 const contextName = line.split(':')[1]?.trim();
                 if (contextName) {
                     taskData.contextName = contextName;
-                    console.log('🏷️ Found context in body:', taskData.contextName);
                 }
             }
         }
@@ -1888,25 +1769,13 @@ function parseEmailToTask(emailData) {
 
         if (bodyWithoutStructured) {
             taskData.opmerkingen = bodyWithoutStructured;
-            console.log('📝 Found opmerkingen:', taskData.opmerkingen.substring(0, 50) + '...');
         }
     }
 
     // If @t was detected, use remainingBody (after @t line removal) as opmerkingen
     if (atInstructionDetected && remainingBody) {
         taskData.opmerkingen = remainingBody;
-        console.log('📝 @t mode - opmerkingen set to remaining body:', taskData.opmerkingen.substring(0, 50) + '...');
     }
-
-    console.log('✅ Parsed task data:', {
-        tekst: taskData.tekst.substring(0, 50) + '...',
-        project: taskData.projectName,
-        context: taskData.contextName,
-        duur: taskData.duur,
-        deadline: taskData.verschijndatum,
-        prioriteit: taskData.prioriteit,
-        lijst: taskData.lijst
-    });
 
     return taskData;
 }
@@ -2158,7 +2027,6 @@ app.post('/api/debug/run-subscription-migration', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        console.log('🔄 Running subscription column migration...');
 
         // Add subscription-related columns to users table if they don't exist
         await pool.query(`
@@ -2166,7 +2034,6 @@ app.post('/api/debug/run-subscription-migration', async (req, res) => {
             ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255)
         `);
 
-        console.log('✅ Users table subscription columns added');
 
         res.json({
             success: true,
@@ -2210,7 +2077,6 @@ app.get('/api/user/info', async (req, res) => {
         let importCode = user.email_import_code;
         if (!importCode) {
             importCode = await db.generateEmailImportCode(userId);
-            console.log(`📧 Generated missing import code for user ${userId}: ${importCode}`);
         }
         
         res.json({
@@ -2636,13 +2502,6 @@ app.post('/api/import/notion-recurring', async (req, res) => {
         const { taaknaam, project, context, herhalingType, herhalingActief, datum, duur } = req.body;
         
         // Debug logging
-        console.log('🔍 Notion import debug:', {
-            userId,
-            taaknaam,
-            herhalingType,
-            herhalingActief,
-            requestBody: req.body
-        });
         
         if (!taaknaam) {
             return res.status(400).json({ error: 'Taaknaam is verplicht' });
@@ -2662,7 +2521,6 @@ app.post('/api/import/notion-recurring', async (req, res) => {
                         const year = parts[2];
                         const isoDate = `${year}-${month}-${day}`;
                         verschijndatumISO = new Date(isoDate).toISOString();
-                        console.log('📅 Converted European date:', datum, '→', isoDate);
                     } else {
                         verschijndatumISO = new Date(datum).toISOString();
                     }
@@ -2755,7 +2613,6 @@ app.delete('/api/lijst/acties/delete-all', async (req, res) => {
             [userId, 'acties']
         );
         
-        console.log(`🗑️ TEMP DELETE ALL: Deleted ${result.rowCount} acties for user ${userId} (${userCheck.rows[0].email})`);
         
         res.json({
             success: true,
@@ -2814,20 +2671,11 @@ function convertNotionPatternServer(notionText) {
 
 // Authentication middleware
 function requireAuth(req, res, next) {
-    console.log('🔍 requireAuth check:', {
-        url: req.url,
-        method: req.method,
-        hasSession: !!req.session,
-        userId: req.session?.userId,
-        sessionId: req.sessionID
-    });
     
     if (!req.session.userId) {
-        console.log('❌ Authentication failed - no userId in session');
         return res.status(401).json({ error: 'Authentication required' });
     }
     
-    console.log('✅ Authentication passed for user:', req.session.userId);
     next();
 }
 
@@ -2839,23 +2687,14 @@ function optionalAuth(req, res, next) {
 
 // Admin middleware - requires auth + admin account
 async function requireAdmin(req, res, next) {
-    console.log('🔍 requireAdmin check:', {
-        url: req.url,
-        method: req.method,
-        userId: req.session?.userId,
-        isAdmin: req.session?.isAdmin,
-        adminAuthenticated: req.session?.adminAuthenticated
-    });
 
     // OPTION 1: Password-based admin authentication (for admin2.html)
     if (req.session.isAdmin || req.session.adminAuthenticated) {
-        console.log('✅ Admin check passed - password-based auth');
         return next();
     }
 
     // OPTION 2: User-based admin authentication (for user accounts with admin role)
     if (!req.session.userId) {
-        console.log('❌ Admin check failed - not authenticated');
         return res.status(401).json({
             error: 'Not authenticated',
             message: 'Please login as admin'
@@ -2870,7 +2709,6 @@ async function requireAdmin(req, res, next) {
         );
 
         if (result.rows.length === 0) {
-            console.log('❌ Admin check failed - user not found');
             return res.status(401).json({
                 error: 'Not authenticated',
                 message: 'User not found'
@@ -2878,14 +2716,12 @@ async function requireAdmin(req, res, next) {
         }
 
         if (result.rows[0].account_type !== 'admin') {
-            console.log('❌ Admin check failed - not admin account:', result.rows[0].account_type);
             return res.status(403).json({
                 error: 'Not authorized',
                 message: 'Admin access required'
             });
         }
 
-        console.log('✅ Admin check passed for user:', req.session.userId);
         next();
 
     } catch (error) {
@@ -2952,7 +2788,6 @@ async function runDailyCleanupIfNeeded(userId) {
             [today, userId]
         );
 
-        console.log(`♻️ Cleanup completed for user ${userId}: ${deletedCount} tasks permanently deleted`);
 
         return {
             success: true,
@@ -2996,7 +2831,6 @@ async function requireActiveSubscription(req, res, next) {
         }
         
         // Redirect to upgrade page
-        console.log(`❌ Access denied for user ${req.session.userId} - subscription required`);
         res.redirect('/upgrade');
         
     } catch (error) {
@@ -3008,10 +2842,8 @@ async function requireActiveSubscription(req, res, next) {
 
 // Synchrone B2 cleanup functie met retry logic en gedetailleerde logging
 async function cleanupB2Files(bijlagen, taskId = 'unknown') {
-    console.log(`🧹 Starting B2 cleanup for ${bijlagen.length} files (task: ${taskId})`);
     
     if (!bijlagen || bijlagen.length === 0) {
-        console.log(`ℹ️ No bijlagen to cleanup for task ${taskId}`);
         return { success: true, deleted: 0, failed: 0, errors: [] };
     }
     
@@ -3036,7 +2868,6 @@ async function cleanupB2Files(bijlagen, taskId = 'unknown') {
     
     // Sequential delete with retry logic voor betere betrouwbaarheid
     for (const bijlage of bijlagen) {
-        console.log(`🔄 Attempting to delete B2 file: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
         
         let deleteSuccess = false;
         let lastError = null;
@@ -3044,9 +2875,7 @@ async function cleanupB2Files(bijlagen, taskId = 'unknown') {
         // Retry logic - max 2 pogingen
         for (let attempt = 1; attempt <= 2; attempt++) {
             try {
-                console.log(`🔄 Delete attempt ${attempt}/2 for ${bijlage.bestandsnaam}`);
                 await storageManager.deleteFile(bijlage);
-                console.log(`✅ B2 file deleted successfully: ${bijlage.storage_path} (${bijlage.bestandsnaam})`);
                 deletedFiles.push(bijlage.bestandsnaam);
                 deleteSuccess = true;
                 break;
@@ -3056,7 +2885,6 @@ async function cleanupB2Files(bijlagen, taskId = 'unknown') {
                 
                 // Wait 1 second before retry
                 if (attempt < 2) {
-                    console.log(`⏳ Waiting 1 second before retry...`);
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
@@ -3082,11 +2910,6 @@ async function cleanupB2Files(bijlagen, taskId = 'unknown') {
         errors
     };
     
-    console.log(`🧹 B2 cleanup completed for task ${taskId}:`, {
-        deleted: deletedFiles.length,
-        failed: failedFiles.length,
-        success: result.success
-    });
     
     if (failedFiles.length > 0) {
         console.error(`⚠️ B2 cleanup had failures for task ${taskId}:`, failedFiles);
@@ -3184,7 +3007,6 @@ app.post('/api/auth/register', async (req, res) => {
         
         // Generate email import code for new user
         const importCode = await db.generateEmailImportCode(userId);
-        console.log(`📧 Generated import code for new user: ${importCode}`);
         
         // Sync to GHL with appropriate tag
         let ghlContactId = null;
@@ -3194,7 +3016,6 @@ app.post('/api/auth/register', async (req, res) => {
             
             if (ghlContactId) {
                 await pool.query('UPDATE users SET ghl_contact_id = $1 WHERE id = $2', [ghlContactId, userId]);
-                console.log(`✅ GHL: User synced with contact ID: ${ghlContactId}`);
             }
         } catch (ghlError) {
             console.error('⚠️ GHL sync failed during registration:', ghlError.message);
@@ -3203,7 +3024,6 @@ app.post('/api/auth/register', async (req, res) => {
         
         // If NOT in beta period, redirect to payment
         if (!betaConfig.beta_period_active) {
-            console.log(`📦 User registered during non-beta period: ${email} - requires payment`);
             return res.json({
                 success: true,
                 requiresPayment: true,
@@ -3234,7 +3054,6 @@ app.post('/api/auth/register', async (req, res) => {
                 });
             }
 
-            console.log(`✅ Beta user registered with session: ${email} (${userId}) with import code: ${importCode}`);
 
             res.json({
                 success: true,
@@ -3266,7 +3085,6 @@ app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, wachtwoord } = req.body;
 
-        console.log(`[LOGIN-START] Login attempt for: ${email} [v0.17.24]`);
 
         if (!email || !wachtwoord) {
             return res.status(400).json({ error: 'Email en wachtwoord zijn verplicht' });
@@ -3310,7 +3128,6 @@ app.post('/api/auth/login', async (req, res) => {
 
         const userDetails = userDetailsResult.rows[0];
 
-        console.log(`[BETA-CHECK] Login beta check for ${email}: betaPeriodActive=${betaConfig.beta_period_active}, accountType=${userDetails.account_type}, subscriptionStatus=${userDetails.subscription_status}`);
 
         // Check if trial is expired
         const trialIsExpired = isTrialExpired(userDetails);
@@ -3322,7 +3139,6 @@ app.post('/api/auth/login', async (req, res) => {
             userDetails.subscription_status !== 'active' &&
             (userDetails.subscription_status !== 'trialing' || trialIsExpired)) {
 
-            console.log(`[LIMITED-LOGIN] Limited login for user ${email} - ${trialIsExpired ? 'trial expired' : 'beta period ended'}, upgrade required`);
 
             // Create session for subscription selection (limited access)
             req.session.userId = user.id;
@@ -3337,7 +3153,6 @@ app.post('/api/auth/login', async (req, res) => {
                     return res.status(500).json({ error: 'Fout bij opslaan sessie' });
                 }
 
-                console.log(`✅ Session saved for beta user ${email} (userId: ${user.id})`);
 
                 return res.json({
                     success: true,
@@ -3357,7 +3172,6 @@ app.post('/api/auth/login', async (req, res) => {
             return;
         }
 
-        console.log(`[NORMAL-LOGIN] Normal login flow for ${email} - beta check passed or not applicable`);
 
         // Update last login
         await pool.query(
@@ -3370,7 +3184,6 @@ app.post('/api/auth/login', async (req, res) => {
         req.session.userEmail = user.email;
         req.session.userNaam = user.naam;
 
-        console.log(`✅ User logged in: ${email} (${user.id})`);
 
         res.json({
             success: true,
@@ -3398,7 +3211,6 @@ app.post('/api/auth/logout', (req, res) => {
             return res.status(500).json({ error: 'Fout bij uitloggen' });
         }
         
-        console.log(`✅ User logged out: ${userEmail}`);
         res.json({ success: true, message: 'Succesvol uitgelogd' });
     });
 });
@@ -3414,12 +3226,6 @@ app.post('/api/subscription/select', async (req, res) => {
     const { planId } = req.body;
     const userId = req.session.userId;
 
-    console.log(`📋 Subscription select request - planId: ${planId}, userId: ${userId}, session:`, {
-      userId: req.session.userId,
-      userEmail: req.session.userEmail,
-      requiresUpgrade: req.session.requiresUpgrade,
-      sessionID: req.sessionID
-    });
 
     if (!userId) {
       console.error('❌ Subscription select failed - no userId in session');
@@ -3459,7 +3265,6 @@ app.post('/api/subscription/select', async (req, res) => {
         [SUBSCRIPTION_STATES.TRIALING, trialEndDate, userId]
       );
 
-      console.log(`✅ Trial activated for user ${userId} - expires ${trialEndDate.toISOString().split('T')[0]}`);
 
       return res.json({
         success: true,
@@ -3498,7 +3303,6 @@ app.post('/api/subscription/select', async (req, res) => {
     // Build redirect URL with token
     const redirectUrl = `${checkoutUrl}${checkoutUrl.includes('?') ? '&' : '?'}return_token=${loginToken}`;
 
-    console.log(`💳 User ${userId} (${user.email}) selected plan ${planId} - redirecting to checkout`);
 
     res.json({
       success: true,
@@ -3519,16 +3323,6 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     const webhookData = req.body;
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-    console.log('🔔 Plug&Pay webhook received:', {
-      webhook_event: webhookData.webhook_event,
-      contract_id: webhookData.contract_id,
-      email: webhookData.email,
-      billing_cycle: webhookData.billing_cycle,
-      product: webhookData.product,
-      sku: webhookData.sku,
-      signup_token: webhookData.signup_token,
-      full_payload: JSON.stringify(webhookData, null, 2)
-    });
 
     // API key validation (DISABLED - PlugAndPay doesn't send API key automatically)
     // Based on Minddumper implementation analysis, Plug&Pay does not automatically
@@ -3539,10 +3333,8 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       if (!apiKeyValid) {
         console.error('❌ Invalid API key provided in webhook');
       } else {
-        console.log('✅ API key validation passed');
       }
     } else {
-      console.log('⚠️ No API key in webhook (expected behavior for Plug&Pay)');
     }
 
     // Check event type - Plug&Pay uses "webhook_event" field with "contracts.new" value
@@ -3557,7 +3349,6 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       webhookData.status === 'paid';
 
     if (!isSubscriptionActive) {
-      console.log(`ℹ️ Non-subscription webhook: ${webhookData.webhook_event || webhookData.event || webhookData.status}`);
       await logWebhookEvent({
         event_type: webhookData.webhook_event || webhookData.event || webhookData.status,
         order_id: webhookData.signup_token || webhookData.contract_id,
@@ -3595,13 +3386,6 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
 
     const subscriptionId = webhookData.contract_id || null; // Plug&Pay uses contract_id as subscription ID
 
-    console.log('📦 Subscription details extracted:', {
-      selected_plan: selectedPlan,
-      subscription_id: subscriptionId,
-      billing_cycle: webhookData.billing_cycle,
-      amount_cents: amountCents,
-      sku: webhookData.sku
-    });
 
     if (!orderId || !email) {
       console.error('❌ Missing signup_token/contract_id or email in webhook');
@@ -3621,7 +3405,6 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     // Check idempotency
     const alreadyProcessed = await checkWebhookIdempotency(orderId, pool);
     if (alreadyProcessed) {
-      console.log(`⚠️ Webhook already processed for order ${orderId}`);
       await logWebhookEvent({
         event_type: webhookData.event,
         order_id: orderId,
@@ -3683,18 +3466,11 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     // Sync to GoHighLevel
     try {
       await addContactToGHL(email, user.email, ['tickedify-paid-customer']);
-      console.log(`✅ GHL: Tagged user as paid customer: ${email}`);
     } catch (ghlError) {
       console.error('⚠️ GHL sync failed:', ghlError.message);
       // Don't fail webhook if GHL sync fails
     }
 
-    console.log(`✅ Payment confirmed for user ${user.id}:`, {
-      order_id: orderId,
-      amount_cents: amountCents,
-      selected_plan: selectedPlan,
-      subscription_id: subscriptionId
-    });
 
     res.json({ success: true, message: 'Payment processed successfully' });
 
@@ -3717,7 +3493,6 @@ app.get('/api/payment/success', async (req, res) => {
     // Validate token
     const tokenValidation = await validateLoginToken(return_token, pool);
     if (!tokenValidation.valid) {
-      console.log(`⚠️ Invalid/expired return token: ${tokenValidation.error}`);
       return res.redirect('/payment-success.html?token_error=true');
     }
 
@@ -3725,7 +3500,6 @@ app.get('/api/payment/success', async (req, res) => {
     req.session.userId = tokenValidation.userId;
     req.session.userEmail = tokenValidation.email;
 
-    console.log(`✅ Auto-login successful for user ${tokenValidation.email}`);
     res.redirect('/app?payment_success=true');
 
   } catch (error) {
@@ -3741,7 +3515,6 @@ app.get('/api/payment/cancelled', async (req, res) => {
 
     if (userId) {
       // Logged in - redirect to subscription page
-      console.log(`ℹ️ User ${userId} cancelled payment`);
       res.redirect('/subscription.html?cancelled=true');
     } else {
       // Not logged in - redirect to generic cancelled page
@@ -3805,14 +3578,12 @@ app.get('/api/admin/payment-configurations', async (req, res) => {
 
     // Allow access if admin password authenticated
     if (isAdminPasswordAuth) {
-      console.log('✅ Admin password authentication confirmed for payment-configurations');
     } else if (userId) {
       // Check admin role for user-based authentication
       const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
       if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
         return res.status(403).json({ error: 'Admin rechten vereist' });
       }
-      console.log('✅ User-based admin authentication confirmed for payment-configurations');
     } else {
       return res.status(401).json({ error: 'Niet ingelogd' });
     }
@@ -3846,14 +3617,12 @@ app.put('/api/admin/payment-configurations', async (req, res) => {
 
     // Allow access if admin password authenticated
     if (isAdminPasswordAuth) {
-      console.log('✅ Admin password authentication confirmed for PUT payment-configurations');
     } else if (userId) {
       // Check admin role for user-based authentication
       const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
       if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
         return res.status(403).json({ error: 'Admin rechten vereist' });
       }
-      console.log('✅ User-based admin authentication confirmed for PUT payment-configurations');
     } else {
       return res.status(401).json({ error: 'Niet ingelogd' });
     }
@@ -3878,7 +3647,6 @@ app.put('/api/admin/payment-configurations', async (req, res) => {
     }
 
     const adminIdentifier = userId || 'password-auth';
-    console.log(`✅ Admin ${adminIdentifier} updated payment config for plan ${plan_id}`);
 
     res.json({
       success: true,
@@ -3912,7 +3680,6 @@ app.post('/api/waitlist/signup', async (req, res) => {
             [email.toLowerCase().trim(), ipAddress, userAgent, referrer]
         );
         
-        console.log(`✅ New waitlist signup: ${email}`);
         
         // Add to GoHighLevel if API key is configured
         if (process.env.GHL_API_KEY) {
@@ -3937,7 +3704,6 @@ app.post('/api/waitlist/signup', async (req, res) => {
                     if (searchData.contact && searchData.contact.id) {
                         contactId = searchData.contact.id;
                         isExisting = true;
-                        console.log(`📍 Found existing contact: ${contactId}`);
                     }
                 }
 
@@ -3970,7 +3736,6 @@ app.post('/api/waitlist/signup', async (req, res) => {
                     if (createResponse.ok) {
                         const createData = await createResponse.json();
                         contactId = createData.contact?.id;
-                        console.log(`✅ New contact created: ${contactId}`);
                     } else {
                         const errorText = await createResponse.text();
                         console.error(`⚠️ GoHighLevel create error: ${createResponse.status} - ${errorText}`);
@@ -3990,7 +3755,6 @@ app.post('/api/waitlist/signup', async (req, res) => {
                     });
 
                     if (tagResponse.ok) {
-                        console.log(`✅ Tag added to existing contact: ${contactId}`);
                     } else {
                         const errorText = await tagResponse.text();
                         console.error(`⚠️ GoHighLevel tag error: ${tagResponse.status} - ${errorText}`);
@@ -4098,35 +3862,10 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
         }
 
         // DEBUG: Log file info before upload
-        console.log('🔍 [SERVER UPLOAD] File received:', {
-            originalname: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-            bufferType: Buffer.isBuffer(file.buffer) ? 'Buffer' : typeof file.buffer
-        });
 
         // CRITICAL: Check PNG signature IMMEDIATELY after multer processing
         if (file.buffer && file.buffer.length > 8) {
             const multerBuffer = Buffer.isBuffer(file.buffer) ? file.buffer : Buffer.from(file.buffer);
-            const multerFirstBytes = multerBuffer.slice(0, 8);
-            const multerHex = Array.from(multerFirstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-            
-            // Check if it's a PNG based on signature, regardless of MIME type
-            const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-            const isPNGSignature = expectedPNG.every((byte, index) => multerFirstBytes[index] === byte);
-            
-            console.log('🚨 [MULTER CHECK] File signature after multer:', multerHex);
-            console.log('🚨 [MULTER CHECK] MIME type from browser:   ', file.mimetype);
-            console.log('🚨 [MULTER CHECK] Original filename:       ', file.originalname);
-            console.log('🚨 [MULTER CHECK] Has PNG signature:       ', isPNGSignature);
-            
-            if (isPNGSignature && file.mimetype === 'image/png') {
-                console.log('✅ [MULTER CHECK] PNG with correct MIME type - normal path');
-            } else if (isPNGSignature && file.mimetype !== 'image/png') {
-                console.log('🔍 [MIME TEST] PNG with different MIME type - testing if this fixes corruption');
-            } else if (!isPNGSignature && file.mimetype === 'image/png') {
-                console.log('🚨 [CRITICAL] PNG MIME type but no PNG signature - already corrupt!');
-            }
         }
 
         // Upload file using storage manager
@@ -4134,15 +3873,13 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
 
         // Save to database
         const savedBijlage = await db.createBijlage(bijlageData);
-
-        console.log('✅ Bijlage uploaded successfully:', savedBijlage.id);
         
         // If it's a PNG (detect by signature), immediately verify the upload worked correctly
         let uploadVerification = null;
-        const isPNGFile = file.buffer && file.buffer.length > 8 && 
-                          file.buffer[0] === 0x89 && file.buffer[1] === 0x50 && 
+        const isPNGFile = file.buffer && file.buffer.length > 8 &&
+                          file.buffer[0] === 0x89 && file.buffer[1] === 0x50 &&
                           file.buffer[2] === 0x4E && file.buffer[3] === 0x47;
-                          
+
         if (isPNGFile) {
             try {
                 const fileBuffer = await storageManager.downloadFile(savedBijlage);
@@ -4151,16 +3888,14 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
                 const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
                 const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
                 const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
-                
+
                 uploadVerification = {
                     png_signature_valid: isValidPNG,
                     first_8_bytes: hexBytes,
                     expected: '89 50 4e 47 0d 0a 1a 0a'
                 };
-                
-                console.log('🔍 [UPLOAD VERIFICATION] PNG signature after upload:', hexBytes, 'Valid:', isValidPNG);
             } catch (verifyError) {
-                console.error('❌ [UPLOAD VERIFICATION] Failed to verify PNG after upload:', verifyError);
+                console.error('Failed to verify PNG after upload:', verifyError);
                 uploadVerification = { error: 'Verification failed' };
             }
         }
@@ -4254,15 +3989,13 @@ app.post('/api/debug/mime-test-upload', requireAuth, uploadAttachment.single('fi
     try {
         const { forceMimeType } = req.body;
         const file = req.file;
-        
+
         if (!file) {
             return res.status(400).json({ error: 'No file uploaded' });
         }
-        
+
         // Override MIME type for testing if provided
         if (forceMimeType) {
-            console.log('🔍 [MIME TEST] Original MIME type:', file.mimetype);
-            console.log('🔍 [MIME TEST] Forced MIME type:', forceMimeType);
             file.mimetype = forceMimeType;
         }
         
@@ -4346,54 +4079,40 @@ app.get('/api/bijlage/:id/png-debug', requireAuth, async (req, res) => {
 
 // DEBUG: Test route zonder authentication
 app.get('/api/bijlage/:id/download-debug', (req, res) => {
-    console.log('🐛 DEBUG ROUTE HIT!', { id: req.params.id });
     res.json({ message: 'Debug route werkt!', id: req.params.id });
 });
 
 // DEBUG: Test route met authentication
 app.get('/api/bijlage/:id/download-auth', requireAuth, (req, res) => {
-    console.log('🔐 AUTH DEBUG ROUTE HIT!', { id: req.params.id, userId: req.session.userId });
     res.json({ message: 'Auth debug route werkt!', id: req.params.id, userId: req.session.userId });
 });
 
 // Download attachment - step by step restoration
 app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
     const startTime = Date.now();
-    console.log('🔴 [BACKEND] Download request start:', new Date().toISOString(), { id: req.params.id });
     
     try {
         if (!db) {
-            console.log('❌ No database available');
             return res.status(503).json({ error: 'Database niet beschikbaar' });
         }
 
         const { id: bijlageId } = req.params;
         const userId = req.session.userId;
         
-        console.log('🔍 Download attempt:', { bijlageId, userId });
-        console.log('🔍 Database available:', !!db);
-        console.log('🔍 getBijlage function available:', typeof db.getBijlage);
 
         // Get attachment info first to determine storage type
         const dbStart = Date.now();
-        console.log('🔴 [BACKEND] About to call db.getBijlage...');
         const bijlage = await db.getBijlage(bijlageId, false);
-        console.log('🔴 [BACKEND] Database lookup completed in:', Date.now() - dbStart, 'ms');
         
-        console.log('🔍 Bijlage found:', !!bijlage);
-        console.log('🔍 Bijlage details:', bijlage ? { id: bijlage.id, storage_type: bijlage.storage_type, user_id: bijlage.user_id } : 'null');
         if (bijlage) {
-            console.log('🔍 Bijlage user_id:', bijlage.user_id, 'Request user_id:', userId);
         }
         
         if (!bijlage) {
-            console.log('❌ Bijlage not found in database');
             return res.status(404).json({ error: 'Bijlage niet gevonden' });
         }
 
         // Check if user owns this attachment
         if (bijlage.user_id !== userId) {
-            console.log('❌ User does not own bijlage');
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
         
@@ -4401,28 +4120,23 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             // File stored in database - fetch binary data separately
             const bijlageWithData = await db.getBijlage(bijlageId, true);
             if (bijlageWithData && bijlageWithData.bestand_data) {
-                console.log('📦 Serving file from database, size:', bijlageWithData.bestand_data.length);
                 const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
                 
                 // Set headers with actual buffer size
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
                 res.setHeader('Content-Length', buffer.length);
-                console.log('🔧 [BACKEND] Headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
                 
                 res.end(buffer, 'binary');
             } else {
-                console.log('❌ Binary data not found in database');
                 return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
             }
         } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
             // TEMPORARY BYPASS: Try database first, then B2
-            console.log('🔄 TEMPORARY BYPASS: Trying database first for Backblaze file');
             
             // Try to get file from database first (fallback)
             const bijlageWithData = await db.getBijlage(bijlageId, true);
             if (bijlageWithData && bijlageWithData.bestand_data) {
-                console.log('📦 BYPASS: Serving Backblaze file from database backup, size:', bijlageWithData.bestand_data.length);
                 
                 // Ensure we have a Buffer for binary data
                 const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
@@ -4431,31 +4145,22 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
                 res.setHeader('Content-Length', buffer.length);
-                console.log('🔧 [BACKEND] DB Backup headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
                 
                 res.end(buffer, 'binary');
                 return;
             }
             
             // File stored in Backblaze B2 (original logic)
-            console.log('☁️ Database backup not found, trying Backblaze B2, path:', bijlage.storage_path);
-            console.log('🔍 Storage manager available:', !!storageManager);
-            console.log('🔍 Storage manager initialized:', storageManager?.initialized);
             
             try {
                 const b2Start = Date.now();
-                console.log('🔴 [BACKEND] About to call storageManager.downloadFile...');
                 // Download file from B2 using storage manager
                 const fileBuffer = await storageManager.downloadFile(bijlage);
-                console.log('🔴 [BACKEND] B2 download completed in:', Date.now() - b2Start, 'ms, result:', !!fileBuffer);
                 
                 if (!fileBuffer) {
-                    console.log('❌ File not found in B2 storage');
                     return res.status(404).json({ error: 'Bestand niet gevonden in cloud storage' });
                 }
                 
-                console.log('📦 Serving file from B2, size:', fileBuffer.length);
-                console.log('📦 FileBuffer type:', typeof fileBuffer, 'isBuffer:', Buffer.isBuffer(fileBuffer));
                 
                 // Ensure we have a Buffer for binary data
                 const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
@@ -4464,21 +4169,16 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
                 if (bijlage.mimetype === 'image/png' && buffer.length > 8) {
                     const firstBytes = buffer.slice(0, 8);
                     const hexBytes = Array.from(firstBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-                    console.log('🔍 [PNG DEBUG] First 8 bytes:', hexBytes);
-                    console.log('🔍 [PNG DEBUG] Expected PNG signature: 89 50 4e 47 0d 0a 1a 0a');
                     
                     // Check if PNG signature is correct
                     const expectedPNG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
                     const isValidPNG = expectedPNG.every((byte, index) => firstBytes[index] === byte);
-                    console.log('🔍 [PNG DEBUG] Valid PNG signature:', isValidPNG);
                 }
                 
                 // Set headers with actual buffer size from B2
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `attachment; filename="${bijlage.bestandsnaam}"`);
                 res.setHeader('Content-Length', buffer.length);
-                console.log('🔧 [BACKEND] B2 headers set - Content-Length:', buffer.length, 'vs DB metadata:', bijlage.bestandsgrootte);
-                console.log('🔴 [BACKEND] Total request time:', Date.now() - startTime, 'ms');
                 
                 res.end(buffer, 'binary');
                 
@@ -4494,11 +4194,9 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
             }
         } else if (bijlage.storage_type === 'filesystem' && bijlage.storage_path) {
             // File stored in filesystem (future implementation)
-            console.log('📁 File system storage not implemented yet, path:', bijlage.storage_path);
             return res.status(501).json({ error: 'File system storage niet geïmplementeerd' });
         } else {
             // No valid storage found
-            console.log('❌ No valid storage found for bijlage, type:', bijlage.storage_type);
             return res.status(404).json({ error: 'Bijlage data niet gevonden' });
         }
         
@@ -4511,32 +4209,26 @@ app.get('/api/bijlage/:id/download', requireAuth, async (req, res) => {
 // Preview attachment - same as download but with inline content-disposition
 app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
     const startTime = Date.now();
-    console.log('🎯 [BACKEND] Preview request start:', new Date().toISOString(), { id: req.params.id });
     
     try {
         if (!db) {
-            console.log('❌ No database available');
             return res.status(503).json({ error: 'Database niet beschikbaar' });
         }
 
         const { id: bijlageId } = req.params;
         const userId = req.session.userId;
         
-        console.log('🎯 Preview attempt:', { bijlageId, userId });
 
         // Get attachment info first to determine storage type
         const dbStart = Date.now();
         const bijlage = await db.getBijlage(bijlageId, false);
-        console.log('🎯 [BACKEND] Database lookup completed in:', Date.now() - dbStart, 'ms');
         
         if (!bijlage) {
-            console.log('❌ Bijlage not found in database');
             return res.status(404).json({ error: 'Bijlage niet gevonden' });
         }
 
         // Check if user owns this attachment
         if (bijlage.user_id !== userId) {
-            console.log('❌ User does not own bijlage');
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
 
@@ -4545,7 +4237,6 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
         const isPdf = bijlage.mimetype === 'application/pdf';
         
         if (!isImage && !isPdf) {
-            console.log('❌ File type not supported for preview:', bijlage.mimetype);
             return res.status(400).json({ error: 'Bestandstype ondersteunt geen preview' });
         }
         
@@ -4553,27 +4244,22 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
             // File stored in database - fetch binary data separately
             const bijlageWithData = await db.getBijlage(bijlageId, true);
             if (bijlageWithData && bijlageWithData.bestand_data) {
-                console.log('📦 Serving preview from database, size:', bijlageWithData.bestand_data.length);
                 const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
                 
                 // Set headers for inline viewing
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
                 res.setHeader('Content-Length', buffer.length);
-                console.log('🎯 [BACKEND] Preview headers set - Content-Length:', buffer.length);
                 
                 res.end(buffer, 'binary');
             } else {
-                console.log('❌ Binary data not found in database');
                 return res.status(404).json({ error: 'Bijlage data niet gevonden in database' });
             }
         } else if (bijlage.storage_type === 'backblaze' && bijlage.storage_path) {
             // Try database first as fallback, then B2
-            console.log('🔄 Trying database first for Backblaze file preview');
             
             const bijlageWithData = await db.getBijlage(bijlageId, true);
             if (bijlageWithData && bijlageWithData.bestand_data) {
-                console.log('📦 Serving Backblaze preview from database backup, size:', bijlageWithData.bestand_data.length);
                 
                 const buffer = Buffer.isBuffer(bijlageWithData.bestand_data) ? bijlageWithData.bestand_data : Buffer.from(bijlageWithData.bestand_data);
                 
@@ -4581,7 +4267,6 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
                 res.setHeader('Content-Length', buffer.length);
-                console.log('🎯 [BACKEND] DB Backup preview headers set - Content-Length:', buffer.length);
                 
                 res.end(buffer, 'binary');
                 return;
@@ -4589,18 +4274,14 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
 
             // Fallback to B2 download
             try {
-                console.log('🔽 Falling back to B2 download for preview:', bijlage.storage_path);
                 
                 const storageStart = Date.now();
                 const fileBuffer = await storageManager.downloadFile(bijlage);
-                console.log('🎯 [BACKEND] B2 download completed in:', Date.now() - storageStart, 'ms');
                 
                 if (!fileBuffer) {
-                    console.log('❌ No file buffer returned from B2');
                     return res.status(404).json({ error: 'Bijlage niet gevonden in cloud storage' });
                 }
                 
-                console.log('📦 FileBuffer type:', typeof fileBuffer, 'isBuffer:', Buffer.isBuffer(fileBuffer));
                 
                 const buffer = Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer);
                 
@@ -4608,8 +4289,6 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
                 res.setHeader('Content-Type', bijlage.mimetype || 'application/octet-stream');
                 res.setHeader('Content-Disposition', `inline; filename="${bijlage.bestandsnaam}"`);
                 res.setHeader('Content-Length', buffer.length);
-                console.log('🎯 [BACKEND] B2 preview headers set - Content-Length:', buffer.length);
-                console.log('🎯 [BACKEND] Total preview request time:', Date.now() - startTime, 'ms');
                 
                 res.end(buffer, 'binary');
                 
@@ -4621,7 +4300,6 @@ app.get('/api/bijlage/:id/preview', requireAuth, async (req, res) => {
                 });
             }
         } else {
-            console.log('❌ No valid storage found for bijlage preview, type:', bijlage.storage_type);
             return res.status(404).json({ error: 'Bijlage data niet gevonden' });
         }
         
@@ -4644,28 +4322,19 @@ app.delete('/api/bijlage/:id', requireAuth, async (req, res) => {
         // Get attachment info first
         const bijlage = await db.getBijlage(bijlageId);
         
-        console.log(`🗑️ Deleting bijlage ${bijlageId}:`, {
-            bestandsnaam: bijlage?.bestandsnaam,
-            storage_path: bijlage?.storage_path,
-            user_id: bijlage?.user_id
-        });
         
         if (!bijlage) {
-            console.log(`❌ Bijlage ${bijlageId} not found`);
             return res.status(404).json({ error: 'Bijlage niet gevonden' });
         }
 
         // Check if user owns this attachment
         if (bijlage.user_id !== userId) {
-            console.log(`❌ User ${userId} does not own bijlage ${bijlageId} (owned by ${bijlage.user_id})`);
             return res.status(403).json({ error: 'Geen toegang tot bijlage' });
         }
 
         // Delete from B2 storage first
         try {
-            console.log(`🧹 Attempting B2 delete for: ${bijlage.bestandsnaam}`);
             await storageManager.deleteFile(bijlage);
-            console.log(`✅ B2 delete successful for: ${bijlage.bestandsnaam}`);
         } catch (error) {
             console.error(`⚠️ B2 delete failed for ${bijlage.bestandsnaam}:`, error.message);
             // Continue with database deletion even if B2 fails
@@ -4675,10 +4344,8 @@ app.delete('/api/bijlage/:id', requireAuth, async (req, res) => {
         const success = await db.deleteBijlage(bijlageId, userId);
 
         if (success) {
-            console.log(`✅ Bijlage deleted successfully: ${bijlageId} (${bijlage.bestandsnaam})`);
             res.json({ success: true });
         } else {
-            console.log(`❌ Database delete failed for bijlage ${bijlageId}`);
             res.status(500).json({ error: 'Fout bij verwijderen bijlage' });
         }
 
@@ -4804,7 +4471,6 @@ app.post('/api/test/ghl-tag', async (req, res) => {
 
         const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
         
-        console.log(`🧪 Testing GHL integration for: ${email}`);
         
         // First, search for existing contact by email
         const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
@@ -4947,7 +4613,6 @@ app.get('/api/auth/me', async (req, res) => {
                     ? 'Je gratis proefperiode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.'
                     : 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
 
-                console.log(`⚠️ /api/auth/me - User ${user.email} requires upgrade (${trialIsExpired ? 'trial expired' : 'beta expired'})`);
             }
         }
 
@@ -5009,7 +4674,6 @@ app.get('/api/admin/stats', async (req, res) => {
             const sessionStats = await pool.query('SELECT COUNT(*) as count FROM user_sessions');
             sessionCount = parseInt(sessionStats.rows[0].count) || 0;
         } catch (sessionError) {
-            console.log('Session table not available yet:', sessionError.message);
         }
         
         const result = stats.rows[0] || {};
@@ -5160,12 +4824,6 @@ app.post('/api/feedback', async (req, res) => {
         const result = await db.createFeedback(feedbackData);
         
         // Log feedback for monitoring
-        console.log('📝 New feedback received:', {
-            type: feedbackData.type,
-            titel: feedbackData.titel,
-            userId,
-            prioriteit: feedbackData.prioriteit
-        });
         
         res.json({ success: true, feedback: result });
     } catch (error) {
@@ -5239,7 +4897,6 @@ app.get('/api/debug/b2-status', async (req, res) => {
             timestamp: new Date().toISOString()
         };
         
-        console.log('🔍 B2 Status check:', status);
         res.json(status);
     } catch (error) {
         console.error('❌ B2 status check failed:', error);
@@ -5268,7 +4925,6 @@ app.get('/api/debug/b2-cleanup-test/:taskId', async (req, res) => {
             });
         }
         
-        console.log(`🧪 Testing B2 cleanup for task ${taskId} with ${bijlagen.length} bijlagen`);
         
         // Test B2 cleanup zonder echte verwijdering (dry run)
         const testResult = {
@@ -5313,7 +4969,6 @@ app.post('/api/debug/clean-database', async (req, res) => {
         await pool.query('DELETE FROM projecten');
         await pool.query('DELETE FROM contexten');
         
-        console.log('✅ Database cleaned - all task data removed');
         
         res.json({
             message: 'Database successfully cleaned',
@@ -5448,7 +5103,6 @@ app.get('/api/lijst/:naam', async (req, res) => {
 
         // Special handling for 'afgewerkt' and 'afgewerkte-taken' lijst - read from archive table
         if (naam === 'afgewerkt' || naam === 'afgewerkte-taken') {
-            console.log(`📦 Reading ${naam} lijst from taken_archief for user ${userId}`);
 
             try {
                 const result = await pool.query(
@@ -5456,12 +5110,10 @@ app.get('/api/lijst/:naam', async (req, res) => {
                     [userId]
                 );
                 data = result.rows;
-                console.log(`✅ Retrieved ${data.length} archived tasks from taken_archief for user ${userId}`);
             } catch (archiveError) {
                 console.error(`❌ Error reading from taken_archief:`, archiveError);
 
                 // Fallback to regular table if archive doesn't exist yet (pre-migration)
-                console.log(`⚠️ Falling back to regular taken table for afgewerkt lijst`);
                 data = await db.getList(naam, userId);
             }
         } else {
@@ -5696,7 +5348,6 @@ app.post('/api/lijst/:naam', async (req, res) => {
         
         // Temporary: Log the exact data being sent by UI to identify the issue
         if (naam === 'acties' && req.body.some(item => item.herhalingType)) {
-            console.log('🚨 UI DEBUG: Data causing 500 error:', JSON.stringify(req.body, null, 2));
         }
         
         const success = await db.saveList(naam, req.body, userId);
@@ -5721,7 +5372,6 @@ app.post('/api/taak/add-to-inbox', async (req, res) => {
         const userId = getCurrentUserId(req);
         const { tekst } = req.body;
         
-        console.log('🔍 SERVER: Adding single task to inbox:', { tekst, userId });
         
         if (!tekst) {
             return res.status(400).json({ error: 'Tekst is required' });
@@ -5729,7 +5379,6 @@ app.post('/api/taak/add-to-inbox', async (req, res) => {
         
         // Get current inbox first
         const currentInbox = await db.getList('inbox', userId);
-        console.log('🔍 SERVER: Current inbox has', currentInbox.length, 'tasks');
         
         // Create new task
         const newTask = {
@@ -5740,13 +5389,11 @@ app.post('/api/taak/add-to-inbox', async (req, res) => {
         
         // Add to current inbox
         const updatedInbox = [...currentInbox, newTask];
-        console.log('🔍 SERVER: Updated inbox will have', updatedInbox.length, 'tasks');
         
         // Save updated inbox
         const success = await db.saveList('inbox', updatedInbox, userId);
         
         if (success) {
-            console.log('✅ SERVER: Successfully added task to inbox');
             res.json({ success: true, taskId: newTask.id });
         } else {
             console.error('❌ SERVER: Failed to save updated inbox');
@@ -5768,16 +5415,13 @@ app.put('/api/taak/:id', async (req, res) => {
         const userId = getCurrentUserId(req);
         const { completedViaCheckbox, ...updateData } = req.body;
 
-        console.log(`🔄 Server: Updating task ${id} for user ${userId}:`, JSON.stringify(req.body, null, 2));
 
         // Check if this is a completion via checkbox
         if (completedViaCheckbox && updateData.lijst === 'afgewerkt') {
-            console.log(`✅ Processing task completion via checkbox for task ${id}`);
 
             // First, get the current task to check its status and recurring settings
             const currentTask = await db.getTask(id, userId);
             if (!currentTask) {
-                console.log(`Task ${id} not found`);
                 return res.status(404).json({
                     success: false,
                     error: 'Task not found',
@@ -5787,7 +5431,6 @@ app.put('/api/taak/:id', async (req, res) => {
 
             // Check if task is already completed
             if (currentTask.lijst === 'afgewerkt') {
-                console.log(`Task ${id} is already completed`);
                 return res.status(400).json({
                     success: false,
                     error: 'Task is already completed',
@@ -5798,7 +5441,6 @@ app.put('/api/taak/:id', async (req, res) => {
 
             // Validate required completion fields
             if (!updateData.afgewerkt) {
-                console.log(`Missing completion timestamp for task ${id}`);
                 return res.status(400).json({
                     success: false,
                     error: 'Completion timestamp (afgewerkt) is required',
@@ -5814,7 +5456,6 @@ app.put('/api/taak/:id', async (req, res) => {
             try {
                 // BEGIN TRANSACTION for atomic archiving
                 await pool.query('BEGIN');
-                console.log(`📦 Starting archive transaction for task ${id}`);
 
                 // 1. Archive task to taken_archief
                 await pool.query(`
@@ -5833,7 +5474,6 @@ app.put('/api/taak/:id', async (req, res) => {
                         CURRENT_TIMESTAMP
                     FROM taken WHERE id = $1 AND user_id = $2
                 `, [id, userId]);
-                console.log(`✅ Task ${id} archived to taken_archief`);
 
                 // 2. Archive subtaken to subtaken_archief
                 const subtakenResult = await pool.query(`
@@ -5846,19 +5486,15 @@ app.put('/api/taak/:id', async (req, res) => {
                     WHERE parent_taak_id = $1
                     RETURNING id
                 `, [id]);
-                console.log(`✅ Archived ${subtakenResult.rowCount} subtaken for task ${id}`);
 
                 // 3. Handle recurring tasks - create new instance BEFORE deleting
                 if (currentTask.herhaling_actief && currentTask.herhaling_type) {
-                    console.log(`🔄 Creating recurring task for archived task ${id} with pattern: ${currentTask.herhaling_type}`);
 
                     try {
                         const recurringResult = await db.createRecurringTask(currentTask);
                         if (recurringResult && recurringResult.success) {
                             newRecurringTaskId = recurringResult.newTask.id;
-                            console.log(`✅ Created new recurring instance ${newRecurringTaskId} for archived task ${id}`);
                         } else {
-                            console.log(`⚠️ Failed to create recurring task for ${id}:`, recurringResult);
                         }
                     } catch (recurringError) {
                         console.error(`❌ Error creating recurring task for ${id}:`, recurringError);
@@ -5869,12 +5505,10 @@ app.put('/api/taak/:id', async (req, res) => {
                 // 4. Delete from active tables
                 await pool.query('DELETE FROM subtaken WHERE parent_taak_id = $1', [id]);
                 await pool.query('DELETE FROM taken WHERE id = $1 AND user_id = $2', [id, userId]);
-                console.log(`✅ Deleted task ${id} and subtaken from active tables`);
 
                 // COMMIT TRANSACTION
                 await pool.query('COMMIT');
                 archivedTaskId = id;
-                console.log(`✅ Archive transaction committed successfully for task ${id}`);
 
             } catch (archiveError) {
                 // ROLLBACK on any error
@@ -5886,7 +5520,6 @@ app.put('/api/taak/:id', async (req, res) => {
                 const success = await db.updateTask(id, updateData, userId);
 
                 if (!success) {
-                    console.log(`Failed to fallback update task ${id} to completed status`);
                     return res.status(500).json({
                         success: false,
                         error: 'Failed to update task status',
@@ -5894,7 +5527,6 @@ app.put('/api/taak/:id', async (req, res) => {
                     });
                 }
 
-                console.log(`⚠️ Fallback: Task ${id} marked as completed without archiving`);
             }
 
             // Get updated task for response (only if fallback was used)
@@ -5904,7 +5536,6 @@ app.put('/api/taak/:id', async (req, res) => {
             }
 
             // Return success response with archive info
-            console.log(`✅ Task ${id} completed successfully via checkbox`);
             const response = {
                 success: true,
                 message: archivedTaskId ? 'Taak afgewerkt en gearchiveerd' : 'Taak afgewerkt',
@@ -5928,10 +5559,8 @@ app.put('/api/taak/:id', async (req, res) => {
             const success = await db.updateTask(id, req.body, userId);
 
             if (success) {
-                console.log(`Task ${id} updated successfully`);
                 res.json({ success: true });
             } else {
-                console.log(`Task ${id} not found or update failed`);
                 res.status(404).json({ error: 'Taak niet gevonden' });
             }
         }
@@ -5947,7 +5576,6 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
 
     try {
         const userId = getCurrentUserId(req);
-        console.log(`📤 Starting unarchive operation for task ${id}, user ${userId}`);
         // Check if archive tables exist first
         const archiveTablesExist = await pool.query(`
             SELECT EXISTS (
@@ -5958,7 +5586,6 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
         `);
 
         if (!archiveTablesExist.rows[0].exists) {
-            console.log(`⚠️ Archive tables don't exist yet - task likely in regular taken table`);
 
             // Fallback: Try to update task in regular table
             const success = await db.updateTask(id, { lijst: 'inbox', status: null, afgewerkt: null }, userId);
@@ -5976,7 +5603,6 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
 
         // BEGIN TRANSACTION for atomic unarchive
         await pool.query('BEGIN');
-        console.log(`🔄 Transaction started for unarchive operation`);
 
         // 1. Get archived task data
         const archivedTask = await pool.query(
@@ -5986,12 +5612,10 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
 
         if (archivedTask.rows.length === 0) {
             await pool.query('ROLLBACK');
-            console.log(`❌ Task ${id} not found in archive for user ${userId}`);
             return res.status(404).json({ error: 'Taak niet gevonden in archief' });
         }
 
         const taskData = archivedTask.rows[0];
-        console.log(`📦 Found archived task: ${taskData.tekst?.substring(0, 50)}`);
 
         // 2. Restore task to taken table with inbox list (use EXACT column names from taken table)
         await pool.query(`
@@ -6025,7 +5649,6 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
             taskData.prioriteit
         ]);
 
-        console.log(`✅ Task restored to taken table with lijst='inbox'`);
 
         // 3. Restore subtaken if any exist in archive
         const archivedSubtaken = await pool.query(
@@ -6034,7 +5657,6 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
         );
 
         if (archivedSubtaken.rows.length > 0) {
-            console.log(`📋 Restoring ${archivedSubtaken.rows.length} subtaken`);
 
             for (const subtaak of archivedSubtaken.rows) {
                 await pool.query(`
@@ -6055,11 +5677,9 @@ app.post('/api/taak/:id/unarchive', async (req, res) => {
         await pool.query('DELETE FROM subtaken_archief WHERE parent_taak_id = $1', [id]);
         await pool.query('DELETE FROM taken_archief WHERE id = $1 AND user_id = $2', [id, userId]);
 
-        console.log(`🗑️ Removed task and subtaken from archive tables`);
 
         // COMMIT TRANSACTION
         await pool.query('COMMIT');
-        console.log(`✅ Unarchive transaction committed successfully`);
 
         res.json({
             success: true,
@@ -6099,12 +5719,10 @@ app.delete('/api/taak/:id', async (req, res) => {
         
         const { id } = req.params;
         const userId = getCurrentUserId(req);
-        console.log(`🗑️ Deleting task ${id} for user ${userId}`);
         
         // Eerst bijlagen ophalen voor B2 cleanup (voor CASCADE ze verwijdert)
         const bijlagen = await db.getBijlagenForTaak(id);
         if (bijlagen && bijlagen.length > 0) {
-            console.log(`📎 Found ${bijlagen.length} bijlagen for task ${id}`);
         }
         
         const result = await pool.query(
@@ -6113,13 +5731,11 @@ app.delete('/api/taak/:id', async (req, res) => {
         );
         
         if (result.rows.length > 0) {
-            console.log(`✅ Task ${id} deleted successfully`);
             
             let cleanupResult = { success: true, deleted: 0, failed: 0 };
             
             // Synchrone B2 cleanup met timeout
             if (bijlagen && bijlagen.length > 0) {
-                console.log(`🧹 Starting synchronous B2 cleanup for task ${id}`);
                 try {
                     // Timeout van 8 seconden voor B2 cleanup
                     const timeoutPromise = new Promise((_, reject) => {
@@ -6131,7 +5747,6 @@ app.delete('/api/taak/:id', async (req, res) => {
                         timeoutPromise
                     ]);
                     
-                    console.log(`🧹 B2 cleanup completed for task ${id}:`, cleanupResult);
                 } catch (error) {
                     console.error(`⚠️ B2 cleanup failed for task ${id}:`, error.message);
                     cleanupResult = {
@@ -6151,7 +5766,6 @@ app.delete('/api/taak/:id', async (req, res) => {
                 b2Cleanup: cleanupResult
             });
         } else {
-            console.log(`❌ Task ${id} not found or not owned by user`);
             res.status(404).json({ error: 'Taak niet gevonden' });
         }
     } catch (error) {
@@ -6169,7 +5783,6 @@ app.put('/api/taak/:id/soft-delete', async (req, res) => {
 
         const { id } = req.params;
         const userId = getCurrentUserId(req);
-        console.log(`🗑️ Soft deleting task ${id} for user ${userId}`);
 
         const result = await pool.query(`
             UPDATE taken
@@ -6183,12 +5796,10 @@ app.put('/api/taak/:id/soft-delete', async (req, res) => {
         `, [id, userId]);
 
         if (result.rows.length === 0) {
-            console.log(`❌ Task ${id} not found or already soft deleted`);
             return res.status(404).json({ error: 'Taak niet gevonden' });
         }
 
         const taak = result.rows[0];
-        console.log(`✅ Task ${id} soft deleted successfully`);
 
         res.json({
             success: true,
@@ -6212,7 +5823,6 @@ app.post('/api/taak/:id/restore', async (req, res) => {
 
         const { id } = req.params;
         const userId = getCurrentUserId(req);
-        console.log(`↩️ Restoring task ${id} for user ${userId}`);
 
         const result = await pool.query(`
             UPDATE taken
@@ -6225,11 +5835,9 @@ app.post('/api/taak/:id/restore', async (req, res) => {
         `, [id, userId]);
 
         if (result.rows.length === 0) {
-            console.log(`❌ Soft deleted task ${id} not found`);
             return res.status(404).json({ error: 'Verwijderde taak niet gevonden' });
         }
 
-        console.log(`✅ Task ${id} restored successfully`);
         res.json({
             success: true,
             id: result.rows[0].id,
@@ -6249,7 +5857,6 @@ app.get('/api/prullenbak', requireAuth, async (req, res) => {
         }
 
         const userId = getCurrentUserId(req);
-        console.log(`🗑️ Getting prullenbak for user ${userId}`);
 
         const result = await pool.query(`
             SELECT
@@ -6261,7 +5868,6 @@ app.get('/api/prullenbak', requireAuth, async (req, res) => {
             ORDER BY verwijderd_op ASC
         `, [userId]);
 
-        console.log(`✅ Retrieved ${result.rows.length} soft deleted tasks`);
         res.json({
             taken: result.rows,
             total: result.rows.length
@@ -6290,7 +5896,6 @@ app.post('/api/bulk/soft-delete', async (req, res) => {
             return res.status(400).json({ error: 'Maximum 100 taken per bulk operatie' });
         }
 
-        console.log(`🗑️ Bulk soft deleting ${ids.length} tasks for user ${userId}`);
 
         const result = await pool.query(`
             UPDATE taken
@@ -6306,7 +5911,6 @@ app.post('/api/bulk/soft-delete', async (req, res) => {
         const deletedIds = result.rows.map(r => r.id);
         const failedIds = ids.filter(id => !deletedIds.includes(id));
 
-        console.log(`✅ Bulk soft deleted ${deletedIds.length} tasks, ${failedIds.length} failed`);
         res.json({
             success: true,
             deleted_count: deletedIds.length,
@@ -6336,7 +5940,6 @@ app.post('/api/bulk/restore', async (req, res) => {
             return res.status(400).json({ error: 'Maximum 100 taken per bulk operatie' });
         }
 
-        console.log(`↩️ Bulk restoring ${ids.length} tasks for user ${userId}`);
 
         const result = await pool.query(`
             UPDATE taken
@@ -6351,7 +5954,6 @@ app.post('/api/bulk/restore', async (req, res) => {
         const restoredIds = result.rows.map(r => r.id);
         const failedIds = ids.filter(id => !restoredIds.includes(id));
 
-        console.log(`✅ Bulk restored ${restoredIds.length} tasks, ${failedIds.length} failed`);
         res.json({
             success: true,
             restored_count: restoredIds.length,
@@ -6378,7 +5980,6 @@ app.get('/api/admin/cleanup-stats', async (req, res) => {
             return res.status(403).json({ error: 'Admin rechten vereist' });
         }
 
-        console.log(`📊 Getting cleanup stats for admin`);
 
         // Total soft deleted
         const totalResult = await pool.query(`
@@ -6428,14 +6029,12 @@ app.get('/api/subtaken/:parentId', async (req, res) => {
         }
 
         const { parentId } = req.params;
-        console.log(`📋 Getting subtaken for parent task ${parentId}`);
 
         // Try active table first
         let subtaken = await db.getSubtaken(parentId);
 
         // If empty, check archive table (for archived parent tasks)
         if (!subtaken || subtaken.length === 0) {
-            console.log(`📦 No subtaken in active table, checking archive for parent ${parentId}`);
 
             try {
                 const result = await pool.query(
@@ -6445,7 +6044,6 @@ app.get('/api/subtaken/:parentId', async (req, res) => {
 
                 if (result.rows.length > 0) {
                     subtaken = result.rows;
-                    console.log(`✅ Retrieved ${subtaken.length} archived subtaken for parent ${parentId}`);
                 }
             } catch (archiveError) {
                 console.error(`❌ Error reading from subtaken_archief:`, archiveError);
@@ -6468,7 +6066,6 @@ app.post('/api/subtaken', async (req, res) => {
         }
         
         const { parentTaakId, titel, volgorde } = req.body;
-        console.log(`➕ Creating subtaak for parent ${parentTaakId}: ${titel}`);
         
         if (!parentTaakId || !titel) {
             return res.status(400).json({ error: 'Parent taak ID en titel zijn verplicht' });
@@ -6490,7 +6087,6 @@ app.put('/api/subtaken/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        console.log(`📝 Updating subtaak ${id}:`, JSON.stringify(req.body, null, 2));
         
         const subtaak = await db.updateSubtaak(id, req.body);
         
@@ -6513,7 +6109,6 @@ app.delete('/api/subtaken/:id', async (req, res) => {
         }
         
         const { id } = req.params;
-        console.log(`🗑️ Deleting subtaak ${id}`);
         
         const success = await db.deleteSubtaak(id);
         
@@ -6538,7 +6133,6 @@ app.post('/api/subtaken/:parentId/reorder', async (req, res) => {
         const { parentId } = req.params;
         const { subtaakIds } = req.body;
         
-        console.log(`🔄 Reordering subtaken for parent ${parentId}:`, subtaakIds);
         
         if (!Array.isArray(subtaakIds)) {
             return res.status(400).json({ error: 'subtaakIds moet een array zijn' });
@@ -6588,7 +6182,6 @@ app.get('/api/version', (req, res) => {
     delete require.cache[require.resolve('./package.json')];
     const packageJson = require('./package.json');
 
-    console.log(`📋 Version check - code version: 0.17.23-FINAL`);
 
     res.json({
         version: packageJson.version,
@@ -6616,15 +6209,8 @@ app.get('/tests', (req, res) => {
 // Run full regression test suite
 app.get('/api/test/run-regression', async (req, res) => {
     try {
-        console.log('🚀 Starting full regression test suite...');
         const results = await testModule.runFullRegressionTests();
         
-        console.log('✅ Regression tests completed:', {
-            total: results.total_tests,
-            passed: results.passed,
-            failed: results.failed,
-            duration: results.duration_ms
-        });
         
         res.json(results);
     } catch (error) {
@@ -6794,7 +6380,6 @@ app.get('/api/test/run-performance', async (req, res) => {
         };
 
         await testRunner.cleanup();
-        console.log('✅ Performance tests completed successfully');
 
         res.json(summary);
     } catch (error) {
@@ -7060,7 +6645,6 @@ app.get('/api/ingeplande-acties/:datum', async (req, res) => {
 // Emergency cleanup endpoint
 app.post('/api/test/emergency-cleanup', async (req, res) => {
     try {
-        console.log('🧹 Emergency cleanup initiated...');
         
         // Delete all test records (by ID pattern and by test names)
         const deletedTasks = await pool.query("DELETE FROM taken WHERE id LIKE 'test_%' OR tekst IN ('Completion test', 'Test taak', 'Database CRUD Test', 'Updated Test Task', 'Rollback Test', 'FK Test Task', 'Dagelijkse test taak', 'Completion workflow test', 'List management test', 'Project context test', 'Email versturen naar klanten', 'Vergadering voorbereiden', 'Factuur email versturen', 'Taak voor vandaag', 'Taak voor morgen') RETURNING id");
@@ -7069,7 +6653,6 @@ app.post('/api/test/emergency-cleanup', async (req, res) => {
         
         const totalDeleted = deletedTasks.rows.length + deletedProjects.rows.length + deletedContexts.rows.length;
         
-        console.log(`✅ Emergency cleanup completed - ${totalDeleted} records deleted`);
         res.json({ 
             success: true, 
             message: `Emergency cleanup completed successfully - ${totalDeleted} records deleted`,
@@ -7098,7 +6681,6 @@ app.get('/api/admin/add-recurring-columns', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
         
-        console.log('🔧 Admin: Adding missing recurring columns...');
         
         // Add columns one by one to avoid conflicts
         const columns = [
@@ -7112,20 +6694,16 @@ app.get('/api/admin/add-recurring-columns', async (req, res) => {
         for (const col of columns) {
             try {
                 await pool.query(`ALTER TABLE taken ADD COLUMN ${col.name} ${col.type}`);
-                console.log(`✅ Added column ${col.name}`);
                 results.push({ column: col.name, status: 'added' });
             } catch (colError) {
                 if (colError.message.includes('already exists')) {
-                    console.log(`⚠️ Column ${col.name} already exists`);
                     results.push({ column: col.name, status: 'already_exists' });
                 } else {
-                    console.log(`❌ Failed to add column ${col.name}:`, colError.message);
                     results.push({ column: col.name, status: 'error', error: colError.message });
                 }
             }
         }
         
-        console.log('✅ Recurring columns setup complete');
         res.json({ success: true, results });
         
     } catch (error) {
@@ -7160,22 +6738,18 @@ app.get('/api/debug/lijst/:naam', async (req, res) => {
 app.get('/api/taak/:id', async (req, res) => {
     try {
         if (!db) {
-            console.log('🐛 DEBUG: Database not available for task lookup');
             return res.status(503).json({ error: 'Database not available' });
         }
         
         const { id } = req.params;
-        console.log('🐛 DEBUG: Looking up task with ID:', id);
         
         // Use same pool as database module to avoid connection issues
         // T015: Filter soft deleted tasks from individual task lookup
         const { pool: dbPool } = require('./database');
         const result = await dbPool.query('SELECT * FROM taken WHERE id = $1 AND verwijderd_op IS NULL', [id]);
-        console.log('🐛 DEBUG: Query result rows count:', result.rows.length);
         
         if (result.rows.length > 0) {
             const task = result.rows[0];
-            console.log('🐛 DEBUG: Found task:', task);
             
             // Convert database column names to frontend property names
             if (task.project_id !== undefined) {
@@ -7201,7 +6775,6 @@ app.get('/api/taak/:id', async (req, res) => {
             
             res.json(task);
         } else {
-            console.log('🐛 DEBUG: Task not found in database');
             res.status(404).json({ error: 'Task not found' });
         }
     } catch (error) {
@@ -7218,7 +6791,6 @@ app.post('/api/taak/recurring', async (req, res) => {
         
         const { originalTask, nextDate } = req.body;
         const userId = getCurrentUserId(req);
-        console.log('Creating recurring task for user', userId, ':', { originalTask, nextDate });
         
         const taskId = await db.createRecurringTask(originalTask, nextDate, userId);
         if (taskId) {
@@ -7226,16 +6798,11 @@ app.post('/api/taak/recurring', async (req, res) => {
             setTimeout(async () => {
                 try {
                     const actiesTasks = await db.getList('acties', userId);
-                    console.log('🔍 DEBUG: All tasks in acties after creation:', actiesTasks.length);
                     const newTask = actiesTasks.find(t => t.id === taskId);
                     if (newTask) {
-                        console.log('✅ DEBUG: New task found in acties list:', newTask);
                     } else {
-                        console.log('❌ DEBUG: New task NOT found in acties list');
-                        console.log('🔍 DEBUG: All task IDs in acties:', actiesTasks.map(t => t.id));
                     }
                 } catch (error) {
-                    console.log('Debug check failed:', error);
                 }
             }, 1000);
             
@@ -7261,7 +6828,6 @@ app.put('/api/taak/:id/prioriteit', async (req, res) => {
         const { prioriteit, datum } = req.body; // prioriteit: 1-3 of null, datum: YYYY-MM-DD
         const userId = getCurrentUserId(req);
         
-        console.log('Setting task priority:', { id, prioriteit, datum, userId });
         
         const { pool } = require('./database');
         
@@ -7391,8 +6957,6 @@ app.get('/api/debug/june16', async (req, res) => {
             ORDER BY aangemaakt DESC
         `);
         
-        console.log('🔍 DEBUG: All tasks for 2025-06-16:', result.rows);
-        console.log('🔍 DEBUG: Recent tasks (last hour):', recentResult.rows);
         res.json({ 
             june16_count: result.rows.length, 
             june16_tasks: result.rows,
@@ -7420,7 +6984,6 @@ app.get('/api/debug/acties', async (req, res) => {
             ORDER BY verschijndatum DESC
         `);
         
-        console.log('🔍 DEBUG: Raw acties from database:', result.rows);
         res.json(result.rows);
     } catch (error) {
         console.error('Debug acties error:', error);
@@ -7547,7 +7110,6 @@ app.post('/api/debug/test-save-recurring', async (req, res) => {
             herhalingActief: true
         }];
         
-        console.log('🔍 DEBUG ENDPOINT: Testing save with data:', testData);
         
         if (!db) {
             return res.json({ error: 'Database not available', success: false });
@@ -7580,17 +7142,14 @@ app.post('/api/debug/add-single-action', async (req, res) => {
         }
         
         const actionData = req.body;
-        console.log('🔧 SINGLE ACTION: Adding action:', actionData);
         
         const userId = getCurrentUserId(req);
-        console.log('🔧 SINGLE ACTION: Using userId:', userId);
         
         // First check if task already exists for this user (T017: filter soft deleted)
         const existingCheck = await pool.query('SELECT * FROM taken WHERE id = $1 AND user_id = $2 AND verwijderd_op IS NULL', [actionData.id, userId]);
 
         let result;
         if (existingCheck.rows.length > 0) {
-            console.log('🔧 SINGLE ACTION: Task already exists, UPDATE to preserve bijlagen');
 
             // UPDATE existing task instead of DELETE+INSERT
             // This preserves bijlagen due to CASCADE DELETE on foreign key
@@ -7628,9 +7187,7 @@ app.post('/api/debug/add-single-action', async (req, res) => {
                 userId
             ]);
 
-            console.log('🔧 SINGLE ACTION: Successfully updated to acties, bijlagen preserved');
         } else {
-            console.log('🔧 SINGLE ACTION: New task, inserting');
 
             // Insert new action (direct action creation, not from inbox)
             result = await pool.query(`
@@ -7656,10 +7213,8 @@ app.post('/api/debug/add-single-action', async (req, res) => {
                 userId
             ]);
 
-            console.log('🔧 SINGLE ACTION: Successfully inserted new action');
         }
 
-        console.log('🔧 SINGLE ACTION: Result ID:', result.rows[0].id);
         
         res.json({ 
             success: true, 
@@ -7685,12 +7240,10 @@ app.post('/api/debug/force-migration', async (req, res) => {
             return res.json({ error: 'Database pool not available', success: false });
         }
         
-        console.log('🔧 FORCE MIGRATION: Starting herhaling_type column migration');
         
         // Force migrate the column size
         await pool.query(`ALTER TABLE taken ALTER COLUMN herhaling_type TYPE VARCHAR(50)`);
         
-        console.log('✅ FORCE MIGRATION: Successfully migrated herhaling_type to VARCHAR(50)');
         
         res.json({ 
             success: true, 
@@ -7981,7 +7534,6 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
             return res.status(400).json({ error: 'Pattern and baseDate are required' });
         }
         
-        console.log('🧪 Testing pattern:', pattern, 'with base date:', baseDate);
         
         // Test date calculation logic directly (simulate frontend logic)
         let nextDate = null;
@@ -8522,7 +8074,6 @@ app.get('/api/debug/test-recurring/:pattern/:baseDate', async (req, res) => {
         
         // For test endpoint, we skip the "ensure future date" logic
         // so tests can get exact calculations regardless of current date
-        console.log(`✅ Server: Calculated date for testing: ${nextDate}`);
         
         // Special debug for monthly-weekday patterns
         let monthlyWeekdayDebug = null;
@@ -8596,7 +8147,6 @@ app.post('/api/debug/test-recurring', async (req, res) => {
             herhaling_actief: true
         };
         
-        console.log('🧪 Creating test task:', testTask);
         
         const insertResult = await pool.query(`
             INSERT INTO taken (tekst, verschijndatum, lijst, project_id, context_id, duur, herhaling_type, herhaling_actief)
@@ -8605,7 +8155,6 @@ app.post('/api/debug/test-recurring', async (req, res) => {
         `, [testTask.tekst, testTask.verschijndatum, testTask.lijst, testTask.project_id, testTask.context_id, testTask.duur, testTask.herhaling_type, testTask.herhaling_actief]);
         
         const taskId = insertResult.rows[0].id;
-        console.log('✅ Test task created with ID:', taskId);
         
         // Now test creating the next recurring task
         const nextDate = await createRecurringTask(testTask, baseDate);
@@ -8942,7 +8491,6 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
             const cleanedText = originalText.replace(/\s*Thuis\s*$/, '').trim();
             
             if (cleanedText !== originalText && cleanedText.length > 0) {
-                console.log(`Updating task ${task.id}: "${originalText}" -> "${cleanedText}"`);
                 
                 const updateResult = await pool.query(`
                     UPDATE taken 
@@ -8951,7 +8499,6 @@ app.get('/api/debug/clean-thuis', async (req, res) => {
                     RETURNING tekst
                 `, [cleanedText, task.id]);
                 
-                console.log(`Update result for ${task.id}:`, updateResult.rows[0]);
                 updatedCount++;
             }
         }
@@ -9016,7 +8563,6 @@ app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
         }
 
         const userId = req.session.user.id;
-        console.log('Mind dump GET: Loading preferences for user:', userId);
         
         // First ensure table exists
         await pool.query(`
@@ -9034,17 +8580,14 @@ app.get('/api/mind-dump/preferences', requireAuth, async (req, res) => {
             [userId]
         );
 
-        console.log('Mind dump GET: Query result rows:', result.rows.length);
         
         if (result.rows.length > 0) {
             const row = result.rows[0];
-            console.log('Mind dump GET: Found preferences for user');
             res.json({
                 preferences: row.preferences || {},
                 customWords: row.custom_words || []
             });
         } else {
-            console.log('Mind dump GET: No preferences found, returning defaults');
             // Return empty for new users
             res.json({
                 preferences: {},
@@ -9223,7 +8766,6 @@ app.get('/api/admin/system', async (req, res) => {
                 totalRecords += count;
                 tableDetails.push({ table_name: table.table_name, count });
             } catch (error) {
-                console.log(`Skipping table ${table.table_name}: ${error.message}`);
             }
         }
 
@@ -9620,7 +9162,6 @@ app.get('/api/admin/feedback', async (req, res) => {
             return res.status(403).json({ error: 'Admin access required' });
         }
 
-        console.log('Admin feedback request - fetching feedback data...');
 
         // Get all feedback with user information
         const feedback = await pool.query(`
@@ -9633,7 +9174,6 @@ app.get('/api/admin/feedback', async (req, res) => {
             ORDER BY f.aangemaakt DESC
         `);
 
-        console.log(`Found ${feedback.rows ? feedback.rows.length : 0} feedback items`);
 
         res.json({
             success: true,
@@ -9655,7 +9195,6 @@ app.get('/api/admin/feedback/stats', async (req, res) => {
             return res.status(403).json({ error: 'Admin access required' });
         }
 
-        console.log('Admin feedback stats request...');
 
         // Get feedback statistics
         const stats = await pool.query(`
@@ -9670,7 +9209,6 @@ app.get('/api/admin/feedback/stats', async (req, res) => {
             FROM feedback
         `);
 
-        console.log('Feedback stats:', stats.rows[0]);
 
         res.json({
             success: true,
@@ -10021,7 +9559,6 @@ app.put('/api/admin/user/:id/account-type', async (req, res) => {
             WHERE id = $3
         `, [account_type, newSubscriptionStatus, userId]);
         
-        console.log(`✅ Admin updated user ${currentUser.email} from ${currentUser.account_type} to ${account_type}`);
         
         res.json({
             success: true,
@@ -10043,7 +9580,6 @@ app.put('/api/admin/user/:id/account-type', async (req, res) => {
 // Force beta database migration endpoint
 app.get('/api/admin/force-beta-migration', async (req, res) => {
     try {
-        console.log('🔄 Starting forced beta migration...');
         
         // Add beta columns to users table if they don't exist
         await pool.query(`
@@ -10053,7 +9589,6 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
             ADD COLUMN IF NOT EXISTS ghl_contact_id VARCHAR(255),
             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         `);
-        console.log('✅ Users table beta columns added');
         
         // Create beta_config table if it doesn't exist
         await pool.query(`
@@ -10065,7 +9600,6 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        console.log('✅ Beta_config table created');
         
         // Insert default beta config if not exists
         await pool.query(`
@@ -10073,14 +9607,12 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
             VALUES (1, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ON CONFLICT (id) DO NOTHING
         `);
-        console.log('✅ Default beta config inserted');
 
         // Add subscription-related columns to users table if they don't exist
         await pool.query(`
             ALTER TABLE users
             ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255)
         `);
-        console.log('✅ Users table subscription columns added');
 
         // Set existing users to beta type if they were created recently (assuming they are beta testers)
         await pool.query(`
@@ -10089,7 +9621,6 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
                 subscription_status = 'beta_active'
             WHERE account_type IS NULL OR account_type = 'regular'
         `);
-        console.log('✅ Existing users converted to beta type');
         
         // Also reset any expired users back to active if beta period is active
         const betaConfig = await db.getBetaConfig();
@@ -10099,7 +9630,6 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
                 SET subscription_status = 'beta_active'
                 WHERE account_type = 'beta' AND (subscription_status = 'expired' OR subscription_status = 'beta_expired')
             `);
-            console.log('✅ Expired beta users reactivated');
         }
         
         res.json({
@@ -10121,7 +9651,6 @@ app.get('/api/admin/force-beta-migration', async (req, res) => {
 // Migration endpoint: Fix expired status to beta_expired
 app.get('/api/admin/migrate-expired-to-beta-expired', async (req, res) => {
     try {
-        console.log('🔄 Starting migration: expired → beta_expired for beta users');
 
         // Update all beta users with 'expired' status to 'beta_expired'
         const result = await pool.query(`
@@ -10131,7 +9660,6 @@ app.get('/api/admin/migrate-expired-to-beta-expired', async (req, res) => {
             RETURNING id, email, subscription_status
         `);
 
-        console.log(`✅ Migrated ${result.rows.length} beta users from 'expired' to 'beta_expired'`);
 
         res.json({
             success: true,
@@ -10323,7 +9851,6 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
             return res.status(400).json({ error: 'No user IDs provided' });
         }
         
-        console.log(`🗑️ Admin cleanup: Deleting ${userIds.length} test users...`);
         
         let deletedCount = 0;
         const results = [];
@@ -10345,7 +9872,6 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
                         continue;
                     }
                     
-                    console.log(`🗑️ Deleting user: ${user.email} (${userId})`);
                     
                     // First check what data this user has
                     const dataCheck = await client.query(`
@@ -10358,50 +9884,38 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
                     `, [userId]);
                     
                     const counts = dataCheck.rows[0];
-                    console.log(`📊 User ${user.email} has:`, counts);
                     
                     // Delete all related data first (in correct order to avoid FK violations)
-                    console.log(`🧹 Cleaning up related data for ${user.email}...`);
                     
                     // 1. Delete subtaken (depends on taken)
                     const subtakenDeleted = await client.query('DELETE FROM subtaken WHERE parent_taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
-                    console.log(`🗑️ Deleted ${subtakenDeleted.rowCount} subtaken`);
                     
                     // 2. Delete bijlagen (depends on taken)  
                     const bijlagenDeleted = await client.query('DELETE FROM bijlagen WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
-                    console.log(`🗑️ Deleted ${bijlagenDeleted.rowCount} bijlagen`);
                     
                     // 3. Delete dagelijkse_planning (references taken)
                     const planningDeleted = await client.query('DELETE FROM dagelijkse_planning WHERE user_id = $1', [userId]);
-                    console.log(`🗑️ Deleted ${planningDeleted.rowCount} planning items`);
                     
                     // 4. Delete taken (references projecten/contexten)
                     const takenDeleted = await client.query('DELETE FROM taken WHERE user_id = $1', [userId]);
-                    console.log(`🗑️ Deleted ${takenDeleted.rowCount} taken`);
                     
                     // 5. Delete projecten 
                     const projectenDeleted = await client.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
-                    console.log(`🗑️ Deleted ${projectenDeleted.rowCount} projecten`);
                     
                     // 6. Delete contexten
                     const contextenDeleted = await client.query('DELETE FROM contexten WHERE user_id = $1', [userId]);
-                    console.log(`🗑️ Deleted ${contextenDeleted.rowCount} contexten`);
                     
                     // 7. Delete feedback
                     const feedbackDeleted = await client.query('DELETE FROM feedback WHERE user_id = $1', [userId]);
-                    console.log(`🗑️ Deleted ${feedbackDeleted.rowCount} feedback`);
                     
                     // 8. Delete mind_dump_preferences if exists
                     try {
                         const mindDumpDeleted = await client.query('DELETE FROM mind_dump_preferences WHERE user_id = $1', [userId]);
-                        console.log(`🗑️ Deleted ${mindDumpDeleted.rowCount} mind dump preferences`);
                     } catch (mindDumpError) {
-                        console.log(`⚠️ Mind dump preferences table might not exist: ${mindDumpError.message}`);
                     }
                     
                     // 9. Finally delete the user
                     const deleteResult = await client.query('DELETE FROM users WHERE id = $1', [userId]);
-                    console.log(`🔄 DELETE user result: rowCount=${deleteResult.rowCount}`);
                     
                     if (deleteResult.rowCount > 0) {
                         deletedCount++;
@@ -10420,7 +9934,6 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
                                 feedback: feedbackDeleted.rowCount
                             }
                         });
-                        console.log(`✅ Successfully deleted user: ${user.email} and all related data`);
                     } else {
                         results.push({ 
                             userId, 
@@ -10429,7 +9942,6 @@ app.post('/api/admin/delete-test-users', async (req, res) => {
                             error: 'User delete failed after cleaning related data',
                             originalCounts: counts
                         });
-                        console.log(`❌ User delete failed for ${user.email} after cleaning related data`);
                     }
                     
                 } catch (userError) {
@@ -10527,7 +10039,6 @@ app.get('/api/admin/migrate-cascade-delete', async (req, res) => {
             return res.status(401).json({ error: 'Admin authentication required' });
         }
         
-        console.log('🔄 Starting CASCADE DELETE migration...');
         
         const client = await pool.connect();
         try {
@@ -10559,9 +10070,7 @@ app.get('/api/admin/migrate-cascade-delete', async (req, res) => {
             for (const migration of migrations) {
                 try {
                     await client.query(migration);
-                    console.log(`✅ Executed: ${migration.substring(0, 50)}...`);
                 } catch (migError) {
-                    console.log(`⚠️ Migration warning: ${migError.message}`);
                 }
             }
             
@@ -10598,7 +10107,6 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        console.log('📊 Fetching revenue statistics...');
 
         // Hardcoded pricing (TODO: migrate to payment_configurations table with pricing)
         const pricing = {
@@ -10659,11 +10167,6 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
             is_active: row.is_active
         }));
 
-        console.log('✅ Revenue statistics calculated:', {
-            mrr: totalMrr,
-            tiers: byTier.length,
-            configs: paymentConfigs.length
-        });
 
         res.json({
             mrr: totalMrr,
@@ -10702,7 +10205,6 @@ app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🔍 Searching users with query: "${query}"`);
 
         // Search in email, naam, and id (cast to text)
         const searchPattern = `%${query}%`;
@@ -10745,7 +10247,6 @@ app.get('/api/admin2/users/search', requireAdmin, async (req, res) => {
         const totalQuery = await pool.query('SELECT COUNT(*) as total FROM users');
         const totalUsers = parseInt(totalQuery.rows[0].total);
 
-        console.log(`✅ Found ${searchQuery.rows.length} users (total: ${totalUsers})`);
 
         res.json({
             query: query,
@@ -10780,7 +10281,6 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🔍 Getting details for user ID: ${userId}`);
 
         // 1. Get user details
         const userQuery = await pool.query(`
@@ -10917,7 +10417,6 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             price_monthly: null
         };
 
-        console.log(`✅ User details retrieved for ID ${userId}`);
 
         // Calculate completion rate and recent emails
         const totalTasks = parseInt(taskSummary.total_tasks) || 0;
@@ -11007,7 +10506,6 @@ app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🔄 Changing tier for user ${userId} to ${tier}`);
 
         // Get current user data before update
         const currentUserQuery = await pool.query(`
@@ -11059,10 +10557,8 @@ app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
             req.headers['user-agent'] || 'Unknown'
         ]).catch(err => {
             // If audit log table doesn't exist yet, log to console but don't fail the request
-            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
         });
 
-        console.log(`✅ Tier changed for user ${userId}: ${oldTier} → ${tier}`);
 
         res.json({
             success: true,
@@ -11128,7 +10624,6 @@ app.put('/api/admin2/users/:id/trial', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🔄 Updating trial for user ID: ${userId} to ${trial_end_date}`);
 
         // Check if user exists and get old value
         const userQuery = await pool.query(
@@ -11176,10 +10671,8 @@ app.put('/api/admin2/users/:id/trial', requireAdmin, async (req, res) => {
             req.headers['user-agent'] || 'Unknown'
         ]).catch(err => {
             // If audit log table doesn't exist yet, log to console but don't fail the request
-            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
         });
 
-        console.log(`✅ Trial extended for user ${userId}: ${oldTrialEnd} → ${trial_end_date}`);
 
         res.json({
             success: true,
@@ -11232,7 +10725,6 @@ app.put('/api/admin2/users/:id/block', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🔄 ${blocked ? 'Blocking' : 'Unblocking'} user ${userId}`);
 
         // Check if user exists
         const userQuery = await pool.query(
@@ -11266,7 +10758,6 @@ app.put('/api/admin2/users/:id/block', requireAdmin, async (req, res) => {
             `, [userId.toString()]);
 
             sessionsInvalidated = deleteResult.rowCount || 0;
-            console.log(`🗑️ Invalidated ${sessionsInvalidated} session(s) for user ${userId}`);
         }
 
         // Log audit trail
@@ -11292,10 +10783,8 @@ app.put('/api/admin2/users/:id/block', requireAdmin, async (req, res) => {
             req.headers['user-agent'] || 'Unknown'
         ]).catch(err => {
             // If audit log table doesn't exist yet, log to console but don't fail the request
-            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
         });
 
-        console.log(`✅ User ${userId} ${blocked ? 'blocked' : 'unblocked'} successfully`);
 
         res.json({
             success: true,
@@ -11332,11 +10821,9 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🗑️ Admin ${adminUserId} attempting to delete user ${userId}`);
 
         // Security Check 1: Prevent self-delete
         if (userId === adminUserId) {
-            console.log(`❌ Self-delete prevented for admin ${adminUserId}`);
             return res.status(403).json({
                 error: 'Cannot delete self',
                 message: 'Admins cannot delete their own account'
@@ -11350,7 +10837,6 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         );
 
         if (userResult.rows.length === 0) {
-            console.log(`❌ User ${userId} not found`);
             return res.status(404).json({
                 error: 'User not found',
                 message: `No user with ID ${userId}`
@@ -11367,7 +10853,6 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             const adminCount = parseInt(adminCountResult.rows[0].count);
 
             if (adminCount <= 1) {
-                console.log(`❌ Cannot delete last admin account (user ${userId})`);
                 return res.status(403).json({
                     error: 'Cannot delete last admin',
                     message: 'At least one admin account must remain'
@@ -11394,7 +10879,6 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         );
         const sessionsCount = parseInt(sessionsCountResult.rows[0].count);
 
-        console.log(`📊 Preparing to delete user ${targetUser.email} with ${tasksCount} tasks, ${emailsCount} emails, ${sessionsCount} sessions`);
 
         // Perform deletion (cascades handled by database foreign keys)
         // Database schema has ON DELETE CASCADE for:
@@ -11444,11 +10928,8 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             req.headers['user-agent'] || 'Unknown'
         ]).catch(err => {
             // If audit log table doesn't exist yet, log to console but don't fail the request
-            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
         });
 
-        console.log(`✅ User ${targetUser.email} (ID ${userId}) deleted successfully by admin ${adminUserId}`);
-        console.log(`   Cascade deleted: ${tasksCount} tasks, ${emailsCount} email imports, ${sessionsCount} sessions`);
 
         res.json({
             success: true,
@@ -11495,7 +10976,6 @@ app.post('/api/admin2/users/:id/reset-password', requireAdmin, async (req, res) 
             });
         }
 
-        console.log(`🔑 Resetting password for user ID: ${userId}`);
 
         // 1. Check if user exists
         const userQuery = await pool.query(`
@@ -11561,10 +11041,8 @@ app.post('/api/admin2/users/:id/reset-password', requireAdmin, async (req, res) 
             req.headers['user-agent'] || 'Unknown'
         ]).catch(err => {
             // If audit log table doesn't exist yet, log to console but don't fail the request
-            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
         });
 
-        console.log(`✅ Password reset for user ${userId} (${user.email}) by admin ${req.session.userId}`);
 
         // 6. Return success with new password
         res.json({
@@ -11601,7 +11079,6 @@ app.post('/api/admin2/users/:id/logout', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🚪 Force logout for user ID: ${userId} (requested by admin ID: ${req.session.userId})`);
 
         // Check if user exists
         const userCheck = await pool.query('SELECT email FROM users WHERE id = $1', [userId]);
@@ -11647,10 +11124,8 @@ app.post('/api/admin2/users/:id/logout', requireAdmin, async (req, res) => {
             req.headers['user-agent'] || 'Unknown'
         ]).catch(err => {
             // If audit log table doesn't exist yet, log to console but don't fail the request
-            console.log('⚠️ Audit log table not found (will be created in future migration):', err.message);
         });
 
-        console.log(`✅ Force logout completed: ${sessionsInvalidated} session(s) invalidated for user ${userId}`);
 
         res.json({
             success: true,
@@ -11679,7 +11154,6 @@ app.get('/api/admin2/system/settings', requireAdmin, async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        console.log(`⚙️ Fetching system settings (requested by admin ID: ${req.session.userId})`);
 
         // Query all settings from system_settings table
         const result = await pool.query(`
@@ -11688,7 +11162,6 @@ app.get('/api/admin2/system/settings', requireAdmin, async (req, res) => {
             ORDER BY key ASC
         `);
 
-        console.log(`✅ Retrieved ${result.rows.length} system settings`);
 
         res.json({
             settings: result.rows,
@@ -11723,7 +11196,6 @@ app.put('/api/admin2/system/settings/:key', requireAdmin, async (req, res) => {
         const { key } = req.params;
         const { value } = req.body;
 
-        console.log(`⚙️ Updating system setting: ${key} (requested by admin ID: ${req.session.userId})`);
 
         // Validation: value must be non-empty string
         if (!value || typeof value !== 'string' || value.trim().length === 0) {
@@ -11801,15 +11273,11 @@ app.put('/api/admin2/system/settings/:key', requireAdmin, async (req, res) => {
                 req.ip,
                 req.get('User-Agent') || 'Unknown'
             ]);
-            console.log(`✅ Audit log created for setting update: ${key}`);
         } catch (auditError) {
             // Graceful fallback - don't fail the entire operation
             console.error('⚠️ Failed to create audit log (non-critical):', auditError.message);
         }
 
-        console.log(`✅ System setting updated: ${key}`);
-        console.log(`   Old value: ${oldValue}`);
-        console.log(`   New value: ${value}`);
 
         res.json({
             success: true,
@@ -11849,7 +11317,6 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             });
         }
 
-        console.log(`🔍 Fetching complete user data for user ID: ${userId} (requested by admin ID: ${req.session.userId})`);
 
         // Parallel queries voor performance - gebruik Promise.all
         const [
@@ -12059,10 +11526,6 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             }
         };
 
-        console.log(`✅ User data inspector completed for user ${userId}`);
-        console.log(`   Tasks: ${tasks.total} total, ${tasks.completed} completed (${tasks.completion_rate}%)`);
-        console.log(`   Emails: ${emails.total} total, ${emails.recent_30d} last 30 days`);
-        console.log(`   Sessions: ${sessions.active_sessions} active`);
 
         res.json(responseData);
 
@@ -12101,7 +11564,6 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
             });
         }
 
-        console.log(`🔍 Fetching complete user data for email: ${userEmail} (requested by admin ID: ${req.session.userId})`);
 
         // First, get the user ID from email
         const userLookup = await pool.query(`
@@ -12317,10 +11779,6 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
             }
         };
 
-        console.log(`✅ User data inspector completed for email ${userEmail} (user ID: ${userId})`);
-        console.log(`   Tasks: ${tasks.total} total, ${tasks.completed} completed (${tasks.completion_rate}%)`);
-        console.log(`   Emails: ${emails.total} total, ${emails.recent_30d} last 30 days`);
-        console.log(`   Sessions: ${sessions.active_sessions} active`);
 
         res.json(responseData);
 
@@ -12485,7 +11943,6 @@ app.get('/api/admin2/stats/database', requireAdmin, async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        console.log('📊 Fetching database statistics...');
 
         // Get database size (pretty format)
         const dbSizeResult = await pool.query(`
@@ -12543,11 +12000,6 @@ app.get('/api/admin2/stats/database', requireAdmin, async (req, res) => {
         const databaseSize = dbSizeResult.rows[0].database_size;
         const tableCount = tables.length;
 
-        console.log('✅ Database statistics calculated:', {
-            database_size: databaseSize,
-            table_count: tableCount,
-            total_rows: totalRows
-        });
 
         res.json({
             database_size: databaseSize,
@@ -12587,11 +12039,6 @@ app.get('/api/v1/quick-add', async (req, res) => {
         }
 
         // Log incoming request for debugging
-        console.log('🔗 Quick-add request received:', {
-            url: req.url,
-            query: req.query,
-            headers: req.headers
-        });
 
         // Extract parameters from URL
         const { code, text, project, context, date, duur } = req.query;
@@ -12617,7 +12064,6 @@ app.get('/api/v1/quick-add', async (req, res) => {
         }
 
         const userId = user.id;
-        console.log(`🔗 Quick-add task via URL for user ${user.email}`);
 
         // Build task data
         const taskData = {
@@ -12646,7 +12092,6 @@ app.get('/api/v1/quick-add', async (req, res) => {
                     taskData.verschijndatum = parsedDate.toISOString().split('T')[0];
                 }
             } catch (e) {
-                console.log('Could not parse date:', date);
             }
         }
 
@@ -12672,7 +12117,6 @@ app.get('/api/v1/quick-add', async (req, res) => {
         ]);
 
         const createdTask = result.rows[0];
-        console.log(`✅ Task created via quick-add: ${taskId}`);
 
         // Return success with task details
         res.json({
@@ -13059,7 +12503,6 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
         if (!pool) return res.status(503).json({ error: 'Database not available' });
         
         const { taskId } = req.body;
-        console.log('🔧 Recovery request for taskId:', taskId);
         
         if (!taskId) {
             return res.status(400).json({ error: 'taskId required' });
@@ -13071,14 +12514,12 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
             [taskId]
         );
         
-        console.log('📋 Found task rows:', taskResult.rows.length);
         
         if (taskResult.rows.length === 0) {
             return res.status(404).json({ error: 'Task not found' });
         }
         
         const task = taskResult.rows[0];
-        console.log('✅ Task data:', { id: task.id, tekst: task.tekst, herhaling_type: task.herhaling_type });
         
         // Create new task with proper date calculation
         const newTask = {
@@ -13132,7 +12573,6 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
             `);
             
             const existingColumns = columnCheck.rows.map(r => r.column_name);
-            console.log('🔍 Available columns:', existingColumns);
             
             // Build dynamic insert query based on available columns
             const columns = ['id', 'tekst', 'lijst', 'project_id', 'context_id', 'verschijndatum', 'duur', 'user_id', 'aangemaakt'];
@@ -13163,8 +12603,6 @@ app.post('/api/taak/recover-recurring', async (req, res) => {
                 VALUES (${placeholders.join(', ')})
             `;
             
-            console.log('📝 Insert query:', insertQuery);
-            console.log('📊 Values:', values.slice(0, 8)); // Don't log all values for security
             
             await pool.query(insertQuery, values.slice(0, placeholders.filter(p => p.startsWith('$')).length));
             
@@ -13424,7 +12862,6 @@ app.post('/api/debug/switch-test-user', async (req, res) => {
 // GET /api/admin2/stats/home - All statistics for home dashboard
 app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
     try {
-        console.log('📊 Fetching admin home statistics...');
 
         // User statistics - all counts in parallel
         const [
@@ -13565,7 +13002,6 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
             }))
         };
 
-        console.log('✅ Admin home statistics fetched successfully');
         res.json(response);
 
     } catch (error) {
@@ -13583,7 +13019,6 @@ app.get('/api/admin2/stats/home', requireAdmin, async (req, res) => {
 
 app.get('/api/admin2/system/payments', requireAdmin, async (req, res) => {
     try {
-        console.log('💰 Fetching payment configurations...');
 
         // Simple SELECT van payment_configurations tabel
         const result = await pool.query(`
@@ -13600,7 +13035,6 @@ app.get('/api/admin2/system/payments', requireAdmin, async (req, res) => {
             ORDER BY plan_id ASC
         `);
 
-        console.log(`✅ Fetched ${result.rows.length} payment configurations`);
 
         res.json({
             payment_configs: result.rows,
@@ -13631,10 +13065,6 @@ app.get('/api/admin2/system/payments', requireAdmin, async (req, res) => {
 
 app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req, res) => {
     try {
-        console.log('🔗 Updating checkout URL for payment config:', {
-            config_id: req.params.id,
-            admin_user_id: req.session.userId
-        });
 
         const configId = parseInt(req.params.id);
         const { checkout_url } = req.body;
@@ -13696,7 +13126,6 @@ app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req
         `, [configId]);
 
         if (currentConfig.rows.length === 0) {
-            console.log('❌ Payment configuration not found:', configId);
             return res.status(404).json({
                 error: 'Payment configuration not found',
                 message: `No configuration with ID ${configId}`
@@ -13740,7 +13169,6 @@ app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req
                 req.ip,
                 req.get('User-Agent')
             ]);
-            console.log('✅ Audit log created for checkout URL update');
         } catch (auditError) {
             // Graceful fallback - log to console als audit tabel niet bestaat
             console.log('[AUDIT] Admin', req.session.userId, 'updated checkout URL for config', configId, ':', oldUrl, '→', checkout_url);
@@ -13757,10 +13185,6 @@ app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req
             updated_at: updatedAt
         };
 
-        console.log('✅ Checkout URL updated successfully:', {
-            config_id: configId,
-            plan_id: config.plan_id
-        });
 
         res.json(response);
 
@@ -13779,7 +13203,6 @@ app.put('/api/admin2/system/payments/:id/checkout-url', requireAdmin, async (req
 
 app.post('/api/admin2/debug/database-backup', requireAdmin, async (req, res) => {
     try {
-        console.log('💾 Collecting database backup metadata...');
 
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -13887,18 +13310,11 @@ app.post('/api/admin2/debug/database-backup', requireAdmin, async (req, res) => 
                 req.ip,
                 req.get('User-Agent')
             ]);
-            console.log('✅ Audit log created for backup request');
         } catch (auditError) {
             // Graceful fallback - log to console als audit tabel niet bestaat
             console.log('[AUDIT] Admin', req.session.userId, 'requested database backup metadata for', database_name);
         }
 
-        console.log('✅ Backup metadata collected:', {
-            database: database_name,
-            size_mb: database_size_mb,
-            tables: tables.length,
-            total_rows
-        });
 
         res.json({
             success: true,
@@ -14177,7 +13593,6 @@ app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
     try {
         const { migrateDatabaseFilesToB2 } = require('./migrate-to-pure-b2.js');
         
-        console.log('🚀 Starting migration to pure B2 storage via API...');
         await migrateDatabaseFilesToB2();
         
         res.json({
@@ -14200,11 +13615,6 @@ app.post('/api/admin/migrate-to-pure-b2', requireAuth, async (req, res) => {
 
 app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
     try {
-        console.log('🔍 SQL query execution request:', {
-            admin_user_id: req.session.userId,
-            has_query: !!req.body.query,
-            confirm_destructive: req.body.confirm_destructive
-        });
 
         const { query, confirm_destructive } = req.body;
 
@@ -14245,11 +13655,6 @@ app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
 
         for (const keyword of blockedKeywords) {
             if (upperQuery.includes(keyword)) {
-                console.log('🚫 BLOCKED query attempt:', {
-                    keyword,
-                    admin_user_id: req.session.userId,
-                    query_preview: trimmedQuery.substring(0, 100)
-                });
 
                 // Log blocked attempt to audit
                 try {
@@ -14291,11 +13696,6 @@ app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
 
         for (const keyword of destructiveKeywords) {
             if (upperQuery.includes(keyword) && !confirm_destructive) {
-                console.log('⚠️ Destructive query requires confirmation:', {
-                    keyword,
-                    admin_user_id: req.session.userId,
-                    query_preview: trimmedQuery.substring(0, 100)
-                });
 
                 return res.status(400).json({
                     error: `${keyword} operations require explicit confirmation`,
@@ -14307,11 +13707,6 @@ app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
         }
 
         // Execute query met timeout en timing
-        console.log('⏱️ Executing SQL query:', {
-            query_length: trimmedQuery.length,
-            query_preview: trimmedQuery.substring(0, 100),
-            is_destructive: confirm_destructive
-        });
 
         // Set statement timeout to 10 seconds
         await pool.query('SET statement_timeout = 10000');
@@ -14366,7 +13761,6 @@ app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
                 req.ip,
                 req.get('User-Agent')
             ]);
-            console.log('✅ Audit log created for SQL query execution');
         } catch (auditError) {
             console.log('[AUDIT] Admin', req.session.userId, 'executed SQL query:', trimmedQuery.substring(0, 100), '| Rows:', rowCount);
         }
@@ -14381,11 +13775,6 @@ app.post('/api/admin2/debug/sql-query', requireAdmin, async (req, res) => {
             warnings: warnings.length > 0 ? warnings : undefined
         };
 
-        console.log('✅ SQL query executed successfully:', {
-            row_count: rowCount,
-            execution_time_ms: executionTime,
-            had_warnings: warnings.length > 0
-        });
 
         res.json(response);
 
@@ -14451,7 +13840,6 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
             });
         }
 
-        console.log(`🧹 Admin ${adminUserId} initiating cleanup (preview=${preview}, targets=${targets ? targets.join(',') : 'all'})`);
 
         // Definieer alle cleanup targets met queries
         const allTargets = [
@@ -14503,7 +13891,6 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
 
         // PREVIEW MODE - alleen tellen, niet verwijderen
         if (preview) {
-            console.log('📊 Running in PREVIEW mode - no data will be deleted');
 
             for (const target of allTargets.filter(t => t.enabled)) {
                 try {
@@ -14518,16 +13905,13 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
                         query: target.deleteQuery
                     });
 
-                    console.log(`  ${target.name}: ${count} records found`);
                 } catch (error) {
                     // Graceful skip voor targets die niet bestaan (bijv. admin_audit_log)
-                    console.log(`  ${target.name}: skipped (table might not exist)`);
                 }
             }
         }
         // EXECUTE MODE - daadwerkelijk verwijderen
         else {
-            console.log('🗑️ Running in EXECUTE mode - data will be deleted');
 
             await pool.query('BEGIN');
 
@@ -14551,15 +13935,12 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
                         });
 
                         totalDeleted += deleted;
-                        console.log(`  ${target.name}: ${deleted} records deleted`);
                     } catch (error) {
                         // Graceful skip voor targets die niet bestaan
-                        console.log(`  ${target.name}: skipped (${error.message})`);
                     }
                 }
 
                 await pool.query('COMMIT');
-                console.log(`✅ Cleanup committed: ${totalDeleted} total records deleted`);
 
                 // Audit log voor execute mode
                 const cleanupTimestamp = new Date().toISOString();
@@ -14587,7 +13968,6 @@ app.post('/api/admin2/debug/cleanup-orphaned-data', requireAdmin, async (req, re
                     req.ip || req.connection.remoteAddress,
                     req.headers['user-agent'] || 'Unknown'
                 ]).catch(err => {
-                    console.log('⚠️ Audit log failed (table might not exist):', err.message);
                 });
 
             } catch (error) {
@@ -15007,7 +14387,6 @@ app.get('/api/messages/unread', async (req, res) => {
     const userCreatedAt = userResult.rows[0].created_at;
     const daysSinceSignup = Math.floor((now - new Date(userCreatedAt)) / (1000 * 60 * 60 * 24));
 
-    console.log(`📢 Evaluating messages for user ${userId}, page: ${pageIdentifier || 'any'}`);
 
     // Query voor immediate, days_after_signup, en next_time triggers
     const mainQuery = `
@@ -15231,7 +14610,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Tickedify server v2 running on port ${PORT}`);
     
     // Initialize database and storage manager after server starts
     setTimeout(async () => {
@@ -15240,9 +14618,7 @@ app.listen(PORT, () => {
                 const { initDatabase } = require('./database');
                 await initDatabase();
                 dbInitialized = true;
-                console.log('✅ Database initialized successfully');
             } else {
-                console.log('⚠️ Database module not available, skipping initialization');
             }
         } catch (error) {
             console.error('⚠️ Database initialization failed:', error.message);
@@ -15252,10 +14628,7 @@ app.listen(PORT, () => {
         try {
             if (storageManager) {
                 await storageManager.initialize();
-                console.log('✅ Storage manager initialized successfully');
-                console.log('🔧 B2 available:', storageManager.isB2Available());
             } else {
-                console.log('⚠️ Storage manager not available, skipping initialization');
             }
         } catch (error) {
             console.error('⚠️ Storage manager initialization failed:', error.message);
@@ -15272,7 +14645,6 @@ app.listen(PORT, () => {
 // T006: Migration endpoint for archiving existing completed tasks
 app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
     try {
-        console.log('📦 Archive migration endpoint called');
 
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -15283,7 +14655,6 @@ app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
 
         // Dry run - just count what would be migrated
         if (dry_run) {
-            console.log('🔍 Running dry-run migration (no data will be moved)');
 
             const takenCount = await pool.query(
                 "SELECT COUNT(*) FROM taken WHERE lijst = 'afgewerkt'"
@@ -15305,7 +14676,6 @@ app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
         }
 
         // Actual migration
-        console.log('🚀 Starting actual archive migration...');
 
         await pool.query('BEGIN');
 
@@ -15327,7 +14697,6 @@ app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
             FROM taken WHERE lijst = 'afgewerkt'
         `);
 
-        console.log(`✅ Migrated ${takenResult.rowCount} taken to archive`);
 
         // Migrate subtaken to subtaken_archief
         const subtakenResult = await pool.query(`
@@ -15341,7 +14710,6 @@ app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
             WHERE t.lijst = 'afgewerkt'
         `);
 
-        console.log(`✅ Migrated ${subtakenResult.rowCount} subtaken to archive`);
 
         // Delete from active tables
         await pool.query(`
@@ -15355,7 +14723,6 @@ app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
 
         const duration = Date.now() - startTime;
 
-        console.log(`✅ Migration completed successfully in ${duration}ms`);
 
         res.json({
             success: true,
@@ -15382,7 +14749,6 @@ app.post('/api/admin/migrate-archive', requireAdmin, async (req, res) => {
 // T007: Archive statistics endpoint
 app.get('/api/admin/archive-stats', requireAdmin, async (req, res) => {
     try {
-        console.log('📊 Fetching archive statistics...');
 
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -15446,7 +14812,6 @@ app.get('/api/admin/archive-stats', requireAdmin, async (req, res) => {
 
         stats.oldest_active_completed_task = oldestCompleted.rows[0] || null;
 
-        console.log('✅ Archive statistics fetched successfully');
 
         res.json(stats);
 
@@ -15463,7 +14828,6 @@ app.get('/api/admin/archive-stats', requireAdmin, async (req, res) => {
 // ONLY copies completed tasks to archive, does NOT delete from active table
 app.post('/api/admin/copy-to-archive', requireAdmin, async (req, res) => {
     try {
-        console.log('📋 Starting copy-to-archive operation...');
 
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -15488,7 +14852,6 @@ app.post('/api/admin/copy-to-archive', requireAdmin, async (req, res) => {
         const startTime = Date.now();
 
         await pool.query('BEGIN');
-        console.log('🔄 Transaction started for copy operation');
 
         // Copy completed tasks to archive (with ON CONFLICT to make idempotent)
         const takenResult = await pool.query(`
@@ -15510,7 +14873,6 @@ app.post('/api/admin/copy-to-archive', requireAdmin, async (req, res) => {
             ON CONFLICT (id) DO NOTHING
         `);
 
-        console.log(`✅ Copied ${takenResult.rowCount} taken to archive (skipped existing)`);
 
         // Copy subtaken for completed tasks (with ON CONFLICT to make idempotent)
         const subtakenResult = await pool.query(`
@@ -15525,10 +14887,8 @@ app.post('/api/admin/copy-to-archive', requireAdmin, async (req, res) => {
             ON CONFLICT (id) DO NOTHING
         `);
 
-        console.log(`✅ Copied ${subtakenResult.rowCount} subtaken to archive (skipped existing)`);
 
         await pool.query('COMMIT');
-        console.log('✅ Copy transaction committed');
 
         const duration = Date.now() - startTime;
 
@@ -15569,7 +14929,6 @@ app.post('/api/admin/copy-to-archive', requireAdmin, async (req, res) => {
 // ONLY deletes completed tasks that exist in archive - safe cleanup after verification
 app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
     try {
-        console.log('🧹 Starting cleanup of archived tasks...');
 
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
@@ -15594,7 +14953,6 @@ app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
         const startTime = Date.now();
 
         await pool.query('BEGIN');
-        console.log('🔄 Transaction started for cleanup operation');
 
         // SAFETY CHECK: Only delete tasks that exist in archive
         // This prevents data loss if archive copy failed
@@ -15608,7 +14966,6 @@ app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
             )
         `);
 
-        console.log(`🗑️ Deleted ${deletedSubtaken.rowCount} subtaken from active table`);
 
         const deletedTaken = await pool.query(`
             DELETE FROM taken
@@ -15618,10 +14975,8 @@ app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
             )
         `);
 
-        console.log(`🗑️ Deleted ${deletedTaken.rowCount} taken from active table`);
 
         await pool.query('COMMIT');
-        console.log('✅ Cleanup transaction committed');
 
         const duration = Date.now() - startTime;
 
