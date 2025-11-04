@@ -1,0 +1,474 @@
+/* ========================================
+   Email Import Help - CSS Styling
+   Tickedify Design System Integration
+   ======================================== */
+
+/* === Reset and Base Styles === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* === Color Variables (Tickedify Palette) === */
+:root {
+  --primary: #4F46E5; /* indigo-600 */
+  --primary-dark: #3730A3; /* indigo-800 */
+  --gray-900: #111827;
+  --gray-800: #1F2937;
+  --gray-500: #6B7280;
+  --gray-200: #E5E7EB;
+  --gray-100: #F3F4F6;
+  --gray-50: #F9FAFB;
+  --success: #059669; /* green-600 */
+  --white: #FFFFFF;
+}
+
+/* === Body and Typography Base === */
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--gray-900);
+  background: var(--white);
+}
+
+/* === Header === */
+header {
+  background: var(--primary);
+  color: var(--white);
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+/* === Main Content Container === */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem 2rem;
+  min-height: 60vh;
+}
+
+/* === Headings === */
+h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--gray-200);
+  padding-bottom: 0.5rem;
+}
+
+h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+h4 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* === Paragraphs and Lists === */
+p {
+  margin-bottom: 1rem;
+}
+
+ul, ol {
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+/* === Code Blocks === */
+pre {
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+
+code {
+  font-family: 'Monaco', 'Courier New', Consolas, monospace;
+  font-size: 16px;
+  color: var(--gray-800);
+}
+
+/* Inline code */
+:not(pre) > code {
+  background: var(--gray-100);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* Prism.js Custom Theme (Tickedify colors) */
+.token.keyword {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.token.string {
+  color: var(--success);
+}
+
+.token.comment {
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--gray-800);
+}
+
+.token.operator {
+  color: var(--gray-800);
+}
+
+.token.number {
+  color: var(--primary);
+}
+
+/* === Tables === */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.5rem 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--gray-200);
+  margin: 0;
+}
+
+thead th {
+  background: var(--gray-50);
+  color: var(--gray-900);
+  font-weight: 700;
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid var(--gray-200);
+  font-size: 15px;
+}
+
+tbody td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+tbody tr:nth-child(even) {
+  background: var(--gray-50);
+}
+
+tbody tr:nth-child(odd) {
+  background: var(--white);
+}
+
+tbody tr:hover {
+  background: rgba(79, 70, 229, 0.05);
+}
+
+/* === Links === */
+a {
+  color: var(--primary);
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-dark);
+}
+
+a:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* === Footer === */
+footer {
+  background: var(--gray-50);
+  padding: 2rem;
+  text-align: center;
+  border-top: 1px solid var(--gray-200);
+  margin-top: 4rem;
+}
+
+footer p {
+  margin: 0;
+  color: var(--gray-500);
+}
+
+footer a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* === Loading and Error States === */
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--gray-500);
+  font-size: 18px;
+}
+
+.error {
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.error h2 {
+  color: #991B1B;
+  margin-top: 0;
+}
+
+.error p {
+  color: #7F1D1D;
+}
+
+.error-details {
+  font-family: monospace;
+  font-size: 14px;
+  color: #991B1B;
+  margin-top: 1rem;
+}
+
+/* === Horizontal Rules === */
+hr {
+  border: none;
+  border-top: 1px solid var(--gray-200);
+  margin: 2rem 0;
+}
+
+/* === Blockquotes === */
+blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: var(--gray-800);
+  font-style: italic;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - Mobile First
+   ======================================== */
+
+/* === Tablet (768px - 1023px) === */
+@media (max-width: 1023px) {
+  header h1 {
+    font-size: 32px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  h2 {
+    font-size: 26px;
+  }
+
+  h3 {
+    font-size: 22px;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+
+  code {
+    font-size: 15px;
+  }
+
+  main {
+    padding: 0 1.5rem 3rem 1.5rem;
+  }
+
+  .header-container {
+    padding: 0 1.5rem;
+  }
+}
+
+/* === Mobile (<768px) === */
+@media (max-width: 767px) {
+  header {
+    padding: 1.5rem 0;
+  }
+
+  header h1 {
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  h2 {
+    font-size: 24px;
+    margin-top: 2rem;
+  }
+
+  h3 {
+    font-size: 20px;
+    margin-top: 1.5rem;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+
+  code {
+    font-size: 14px;
+  }
+
+  pre {
+    padding: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  main {
+    padding: 0 1rem 2rem 1rem;
+  }
+
+  .header-container {
+    padding: 0 1rem;
+  }
+
+  ul, ol {
+    padding-left: 1.5rem;
+  }
+
+  table {
+    min-width: 600px;
+    font-size: 14px;
+  }
+
+  thead th,
+  tbody td {
+    padding: 0.5rem;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY ENHANCEMENTS
+   ======================================== */
+
+/* === Focus Indicators === */
+button:focus,
+a:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* === Reduced Motion Support === */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* === High Contrast Mode Support === */
+@media (prefers-contrast: high) {
+  :root {
+    --primary: #0000FF;
+    --primary-dark: #000080;
+    --gray-900: #000000;
+  }
+
+  a {
+    text-decoration: underline;
+    font-weight: 600;
+  }
+}
+
+/* === Print Styles === */
+@media print {
+  header {
+    background: none;
+    color: var(--gray-900);
+    border-bottom: 2px solid var(--gray-900);
+  }
+
+  header h1 {
+    color: var(--gray-900);
+  }
+
+  main {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  pre {
+    border: 1px solid #000;
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  footer {
+    border-top: 1px solid #000;
+    background: none;
+  }
+}

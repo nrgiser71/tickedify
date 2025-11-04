@@ -2,45 +2,45 @@
 
 ## Quick Start
 
-Stuur een email door naar je persoonlijke import adres met een `@t` instructie op de eerste regel:
+Send an email to your personal import address with an `@t` instruction on the first line:
 
 ```
-@t p: Mijn Project; c: Werk; d: 2025-11-15; p1; t: 30;
+@t p: My Project; c: Work; d: 2025-11-15; p1; t: 30;
 
-Dit is de taak beschrijving.
-Meerdere regels zijn mogelijk.
+This is the task description.
+Multiple lines are possible.
 ```
 
-Dit maakt een taak aan met:
-- **Project**: Mijn Project
-- **Context**: Werk
-- **Due date**: 15 november 2025
-- **Prioriteit**: High
-- **Duur**: 30 minuten
+This creates a task with:
+- **Project**: My Project
+- **Context**: Work
+- **Due date**: November 15, 2025
+- **Priority**: High
+- **Duration**: 30 minutes
 
-## Syntax Overzicht
+## Syntax Overview
 
-### Basis Formaat
+### Basic Format
 
 ```
 @t code1; code2; code3;
 ```
 
-- Plaats `@t` op de **eerste niet-lege regel** van de email body
-- Scheid codes met puntkomma `;`
-- Volgorde is vrij
-- Spaties worden automatisch verwijderd
+- Place `@t` on the **first non-empty line** of the email body
+- Separate codes with semicolons `;`
+- Order is flexible
+- Spaces are automatically removed
 
-### Ondersteunde Codes
+### Supported Codes
 
-| Code | Beschrijving | Voorbeeld |
-|------|--------------|-----------|
-| `p:` | Project naam | `p: Klant X` |
-| `c:` | Context naam | `c: Werk` |
-| `d:` | Due date (ISO formaat) | `d: 2025-12-01` |
-| `t:` | Duur in minuten | `t: 45` |
-| `p0-p9` | Prioriteit code | `p1` of `p2` of `p3` |
-| `a:` | **Bijlage (attachment)** | `a:contract` of `a:pdf` |
+| Code | Description | Example |
+|------|-------------|---------|
+| `p:` | Project name | `p: Client X` |
+| `c:` | Context name | `c: Work` |
+| `d:` | Due date (ISO format) | `d: 2025-12-01` |
+| `t:` | Duration in minutes | `t: 45` |
+| `p0-p9` | Priority code | `p1` or `p2` or `p3` |
+| `a:` | **Attachment** | `a:contract` or `a:pdf` |
 | `df` | Defer to Follow-up | `df;` |
 | `dw` | Defer to Weekly | `dw;` |
 | `dm` | Defer to Monthly | `dm;` |
@@ -48,408 +48,408 @@ Dit maakt een taak aan met:
 | `d6m` | Defer to Bi-annual | `d6m;` |
 | `dy` | Defer to Yearly | `dy;` |
 
-## Voorbeelden
+## Examples
 
-### Voorbeeld 1: Complete Taak
+### Example 1: Complete Task
 
 ```
-@t p: Website Redesign; c: Werk; d: 2025-11-20; p1; t: 120;
+@t p: Website Redesign; c: Work; d: 2025-11-20; p1; t: 120;
 
-Bespreek nieuwe wireframes met designteam.
-Review feedback van stakeholders.
+Discuss new wireframes with design team.
+Review stakeholder feedback.
 ```
 
-→ Project, context, deadline, prioriteit High, 120 minuten
+→ Project, context, deadline, priority High, 120 minutes
 
-### Voorbeeld 2: Defer to Monthly
+### Example 2: Defer to Monthly
 
 ```
 @t dm;
 
-Follow up met klant over contract verlenging.
+Follow up with client about contract renewal.
 ```
 
-→ Taak naar Monthly lijst (alle andere codes worden genegeerd bij defer!)
+→ Task to Monthly list (all other codes are ignored with defer!)
 
-### Voorbeeld 3: Minimaal
+### Example 3: Minimal
 
 ```
-@t c: Thuis; p2;
+@t c: Home; p2;
 
-Boodschappen doen
+Grocery shopping
 ```
 
-→ Alleen context en prioriteit Medium
+→ Only context and priority Medium
 
-### Voorbeeld 4: Met Bijlage (Feature 049)
+### Example 4: With Attachment (Feature 049)
 
 ```
 @t p: Contract Review; a:contract;
 
-Bijgevoegde contract nakijken en feedback geven.
+Review attached contract and provide feedback.
 ```
 
-**Bijlage**: contract.pdf (of contract-final.pdf, klant_contract.docx, etc.)
-→ Slimme matching: `a:contract` vindt bestanden met "contract" in de naam
-→ Prioriteit: Exact match > Begint met > Bevat
+**Attachment**: contract.pdf (or contract-final.pdf, client_contract.docx, etc.)
+→ Smart matching: `a:contract` finds files with "contract" in the name
+→ Priority: Exact match > Starts with > Contains
 
-### Voorbeeld 5: Type-Based Attachment Filtering
+### Example 5: Type-Based Attachment Filtering
 
 ```
 @t c: Admin; a:pdf;
 
-Verwerk de bijgevoegde factuur.
+Process the attached invoice.
 ```
 
-→ `a:pdf` matcht het **eerste PDF bestand** in de email
-→ Handig als je weet dat het om een PDF gaat maar de exacte naam niet weet
+→ `a:pdf` matches the **first PDF file** in the email
+→ Useful when you know it's a PDF but not the exact name
 
-### Voorbeeld 6: Email met Files maar ZONDER `a:` Code
-
-```
-@t p: Project X; c: Werk;
-
-Quick question over project.
-
-(Email bevat signature.png als bijlage)
-```
-
-→ **Geen bijlage verwerkt** - signature.png wordt NIET opgeslagen
-→ Opt-in bescherming: alleen `a:` code activeert bijlage verwerking
-→ Beschermt je storage quota tegen ongewenste signature images
-
-### Voorbeeld 7: Zonder @t (Backwards Compatible)
+### Example 6: Email with Files but NO `a:` Code
 
 ```
-[Project X] Nieuwe taak @werk
+@t p: Project X; c: Work;
 
-Dit werkt nog steeds zoals voorheen.
-Project: Ander Project
-Duur: 30
+Quick question about project.
+
+(Email contains signature.png as attachment)
 ```
 
-→ Oude syntax blijft gewoon werken!
+→ **No attachment processed** - signature.png is NOT saved
+→ Opt-in protection: only `a:` code activates attachment processing
+→ Protects your storage quota against unwanted signature images
 
-## Prioriteit Codes
+### Example 7: Without @t (Backwards Compatible)
 
-| Code | Prioriteit | Kleur |
-|------|-----------|-------|
+```
+[Project X] New task @work
+
+This still works as before.
+Project: Other Project
+Duration: 30
+```
+
+→ Old syntax still works!
+
+## Priority Codes
+
+| Code | Priority | Color |
+|------|----------|-------|
 | `p0` | High | 🔴 |
 | `p1` | High | 🔴 |
 | `p2` | Medium | 🟡 |
 | `p3` | Low | 🟢 |
 | `p4+` | Low | 🟢 |
 
-**Voorbeeld**: `@t p1; d: 2025-11-10;` → High priority taak met deadline
+**Example**: `@t p1; d: 2025-11-10;` → High priority task with deadline
 
-## Defer Codes (Absolute Voorrang!)
+## Defer Codes (Absolute Priority!)
 
-**BELANGRIJK**: Wanneer je een defer code gebruikt, worden ALLE andere codes genegeerd.
-
-```
-@t dm; p: Project X; c: Werk; d: 2025-12-01;
-```
-
-→ Taak gaat naar **Monthly lijst**
-→ Project, context en due date worden **GENEGEERD**
-
-**Waarom?** Deferred taken hebben nog geen specifieke details nodig - je wilt ze gewoon uit je hoofd hebben tot een later moment.
-
-### Alle Defer Shortcuts
-
-| Code | Defer Lijst | Wanneer Reviewen |
-|------|-------------|------------------|
-| `df` | Follow-up | Volgende review moment |
-| `dw` | Weekly | Elke week |
-| `dm` | Monthly | Elke maand |
-| `d3m` | Quarterly | Elk kwartaal |
-| `d6m` | Bi-annual | Elk half jaar |
-| `dy` | Yearly | Elk jaar |
-
-## Body Truncatie met --end--
-
-Gebruik `--end--` om alles daarna weg te knippen (handig voor handtekeningen):
+**IMPORTANT**: When you use a defer code, ALL other codes are ignored.
 
 ```
-@t c: Werk; p2;
+@t dm; p: Project X; c: Work; d: 2025-12-01;
+```
 
-Meeting notes hier.
+→ Task goes to **Monthly list**
+→ Project, context and due date are **IGNORED**
+
+**Why?** Deferred tasks don't need specific details yet - you just want them out of your head until a later moment.
+
+### All Defer Shortcuts
+
+| Code | Defer List | When to Review |
+|------|------------|----------------|
+| `df` | Follow-up | Next review moment |
+| `dw` | Weekly | Every week |
+| `dm` | Monthly | Every month |
+| `d3m` | Quarterly | Every quarter |
+| `d6m` | Bi-annual | Every six months |
+| `dy` | Yearly | Every year |
+
+## Body Truncation with --end--
+
+Use `--end--` to cut everything after it (useful for signatures):
+
+```
+@t c: Work; p2;
+
+Meeting notes here.
 
 --END--
 
-Met vriendelijke groet,
+Best regards,
 Jan Buskens
 jan@tickedify.com
 ```
 
-→ Taak notes bevatten ALLEEN "Meeting notes hier."
-→ Handtekening wordt NIET opgenomen
+→ Task notes contain ONLY "Meeting notes here."
+→ Signature is NOT included
 
-**Let op**:
-- `--end--` werkt **case-insensitive**: `--END--`, `--End--`, `--end--` allemaal OK
-- Werkt **zonder @t**: Ook oude emails kunnen --end-- gebruiken
-- Alles **na** `--end--` wordt verwijderd
+**Note**:
+- `--end--` is **case-insensitive**: `--END--`, `--End--`, `--end--` all work
+- Works **without @t**: Old emails can also use --end--
+- Everything **after** `--end--` is removed
 
-## Validatie Regels
+## Validation Rules
 
 ### Due Date
 
-✅ **Geldig**: `d: 2025-12-01` (ISO formaat YYYY-MM-DD)
-❌ **Ongeldig**: `d: 01/12/2025`, `d: December 1`, `d: 2025-12`
+✅ **Valid**: `d: 2025-12-01` (ISO format YYYY-MM-DD)
+❌ **Invalid**: `d: 01/12/2025`, `d: December 1`, `d: 2025-12`
 
-→ Ongeldige dates worden **genegeerd** (taak wordt wel aangemaakt)
+→ Invalid dates are **ignored** (task is still created)
 
-### Duur
+### Duration
 
-✅ **Geldig**: `t: 30`, `t: 120`, `t: 5`
-❌ **Ongeldig**: `t: 30.5`, `t: half uur`, `t: -15`
+✅ **Valid**: `t: 30`, `t: 120`, `t: 5`
+❌ **Invalid**: `t: 30.5`, `t: half hour`, `t: -15`
 
-→ Ongeldige waardes worden **genegeerd**
+→ Invalid values are **ignored**
 
 ### Project & Context
 
-✅ **Altijd geldig**: Elke tekst is OK
-✅ **Spaties behouden**: `p: Klant X Project Y` → "Klant X Project Y"
-✅ **Auto-creatie**: Nieuwe projecten/contexten worden automatisch aangemaakt
+✅ **Always valid**: Any text is OK
+✅ **Spaces preserved**: `p: Client X Project Y` → "Client X Project Y"
+✅ **Auto-creation**: New projects/contexts are automatically created
 
-## Duplicaten
+## Duplicates
 
-Bij dubbele codes telt de **eerste**, rest wordt genegeerd:
+With duplicate codes, the **first** counts, rest are ignored:
 
 ```
 @t p: Project A; p: Project B; c: Context 1; c: Context 2;
 ```
 
-→ Project: **Project A** (eerste)
-→ Context: **Context 1** (eerste)
-→ Project B en Context 2 worden **genegeerd**
+→ Project: **Project A** (first)
+→ Context: **Context 1** (first)
+→ Project B and Context 2 are **ignored**
 
 ## Edge Cases
 
-### @t Zonder Parameters
+### @t Without Parameters
 
 ```
 @t
 
-Taak beschrijving
+Task description
 ```
 
-→ Wordt behandeld alsof er **geen** @t is
-→ Valt terug op standaard parsing
+→ Treated as if there is **no** @t
+→ Falls back to standard parsing
 
-### Lege Waardes
-
-```
-@t p: ; c: Werk;
-```
-
-→ Project wordt genegeerd (lege waarde)
-→ Context werkt wel
-
-### Onbekende Codes
+### Empty Values
 
 ```
-@t xyz: waarde; c: Werk;
+@t p: ; c: Work;
 ```
 
-→ `xyz:` wordt **genegeerd**
-→ Context werkt wel
-→ **Geen foutmelding** - taak wordt aangemaakt
+→ Project is ignored (empty value)
+→ Context works fine
 
-## Veelgestelde Vragen
+### Unknown Codes
 
-**Q: Kan ik @t ergens anders plaatsen dan de eerste regel?**
-A: Nee, @t moet op de eerste niet-lege regel staan.
+```
+@t xyz: value; c: Work;
+```
 
-**Q: Werken oude emails nog?**
-A: Ja! Emails zonder @t werken exact zoals voorheen. `[Project]` en `@context` in subject, `Project:` en `Context:` in body blijven werken.
+→ `xyz:` is **ignored**
+→ Context works fine
+→ **No error** - task is created
 
-**Q: Wat als ik een fout maak in de syntax?**
-A: De taak wordt gewoon aangemaakt met de codes die wél correct zijn. Ongeldige codes worden genegeerd.
+## Frequently Asked Questions
 
-**Q: Krijg ik een bevestiging dat het gelukt is?**
-A: Nee, Tickedify stuurt geen bevestigingsmails om je inbox niet te vervuilen. Check gewoon je Inbox in Tickedify.
+**Q: Can I place @t somewhere other than the first line?**
+A: No, @t must be on the first non-empty line.
 
-**Q: Kan ik meerdere prioriteiten opgeven?**
-A: Je kunt meerdere codes gebruiken, maar alleen de eerste telt. `p1; p2; p3;` → High (p1)
+**Q: Do old emails still work?**
+A: Yes! Emails without @t work exactly as before. `[Project]` and `@context` in subject, `Project:` and `Context:` in body still work.
 
-**Q: Moet ik puntkomma na de laatste code?**
-A: Nee, maar het mag wel. `@t c: Werk;` en `@t c: Werk` werken beide.
+**Q: What if I make a syntax error?**
+A: The task is created with the codes that ARE correct. Invalid codes are ignored.
 
-**Q: Hoeveel bijlagen kan ik per email versturen?**
-A: Maximum **1 bijlage** per email wordt verwerkt. Dit beschermt je storage quota.
+**Q: Do I get a confirmation that it worked?**
+A: No, Tickedify doesn't send confirmation emails to avoid cluttering your inbox. Just check your Inbox in Tickedify.
 
-**Q: Welke bestandstypes worden ondersteund?**
-A: PDF, Word, Excel, afbeeldingen (JPG/PNG/GIF), ZIP, en plain text. Max **4.5MB** per bestand.
+**Q: Can I specify multiple priorities?**
+A: You can use multiple codes, but only the first counts. `p1; p2; p3;` → High (p1)
 
-**Q: Wat gebeurt er als ik geen `a:` code gebruik maar wel bijlagen verstuur?**
-A: Niets! De bijlagen worden genegeerd (opt-in protection). Alleen met `a:` code worden bijlagen verwerkt.
+**Q: Do I need a semicolon after the last code?**
+A: No, but it's allowed. `@t c: Work;` and `@t c: Work` both work.
 
-## Bijlagen Verwerking (Feature 049)
+**Q: How many attachments can I send per email?**
+A: Maximum **1 attachment** per email is processed. This protects your storage quota.
 
-### Hoe Werkt Het?
+**Q: What file types are supported?**
+A: PDF, Word, Excel, images (JPG/PNG/GIF), ZIP, and plain text. Max **4.5MB** per file.
 
-Voeg `a:zoekterm;` toe aan je @t syntax om een bijlage te koppelen aan de taak:
+**Q: What happens if I don't use an `a:` code but send attachments?**
+A: Nothing! Attachments are ignored (opt-in protection). Only with `a:` code are attachments processed.
+
+## Attachment Processing (Feature 049)
+
+### How It Works
+
+Add `a:searchterm;` to your @t syntax to link an attachment to the task:
 
 ```
 @t p: Contract Review; a:contract;
 
-Review de bijgevoegde contract en geef feedback.
+Review the attached contract and provide feedback.
 
-(Bijgevoegd: client_contract_final.pdf)
+(Attached: client_contract_final.pdf)
 ```
 
-→ De bijlage wordt automatisch gekoppeld aan de taak
-→ Je kunt de bijlage later downloaden vanuit Tickedify
+→ The attachment is automatically linked to the task
+→ You can download the attachment later from Tickedify
 
-### Smart Matching met Prioriteiten
+### Smart Matching with Priorities
 
-Tickedify gebruikt **slimme filename matching** met 3 prioriteitsniveaus:
+Tickedify uses **smart filename matching** with 3 priority levels:
 
-1. **Exact Match** (hoogste prioriteit):
-   - `a:contract;` matcht `contract.pdf` (exact)
-   - `a:invoice;` matcht `invoice.docx` (exact zonder extensie)
+1. **Exact Match** (highest priority):
+   - `a:contract;` matches `contract.pdf` (exact)
+   - `a:invoice;` matches `invoice.docx` (exact without extension)
 
 2. **Starts-With Match**:
-   - `a:contract;` matcht `contract-final.pdf` (begint met "contract")
-   - `a:rapport;` matcht `rapport_2025_Q1.xlsx` (begint met "rapport")
+   - `a:contract;` matches `contract-final.pdf` (starts with "contract")
+   - `a:report;` matches `report_2025_Q1.xlsx` (starts with "report")
 
-3. **Contains Match** (laagste prioriteit):
-   - `a:contract;` matcht `client_contract_v2.pdf` (bevat "contract")
-   - `a:factuur;` matcht `klant_factuur_dec.pdf` (bevat "factuur")
+3. **Contains Match** (lowest priority):
+   - `a:contract;` matches `client_contract_v2.pdf` (contains "contract")
+   - `a:invoice;` matches `client_invoice_dec.pdf` (contains "invoice")
 
-**Als meerdere bestanden matchen**: Exact match wint altijd, daarna starts-with, en dan contains.
+**If multiple files match**: Exact match always wins, then starts-with, then contains.
 
 ### Type-Based Filtering
 
-Zoek op bestandstype in plaats van naam:
+Search by file type instead of name:
 
 ```
-@t a:pdf;        → Eerste PDF bestand
-@t a:docx;       → Eerste Word document
-@t a:xlsx;       → Eerste Excel bestand
-@t a:png;        → Eerste PNG afbeelding
+@t a:pdf;        → First PDF file
+@t a:docx;       → First Word document
+@t a:xlsx;       → First Excel file
+@t a:png;        → First PNG image
 ```
 
-→ Handig als je de exacte bestandsnaam niet weet
-→ Matcht het **eerste** bestand van dat type
+→ Useful when you don't know the exact filename
+→ Matches the **first** file of that type
 
-### Opt-In Bescherming
+### Opt-In Protection
 
-**Belangrijk**: Bijlagen worden ALLEEN verwerkt met `a:` code!
+**Important**: Attachments are ONLY processed with `a:` code!
 
 ```
-# MET a: code - bijlage wordt verwerkt
+# WITH a: code - attachment is processed
 @t p: Project; a:document;
-(Bijgevoegd: document.pdf)  ✅ Wordt opgeslagen
+(Attached: document.pdf)  ✅ Is saved
 
-# ZONDER a: code - bijlage wordt NIET verwerkt
+# WITHOUT a: code - attachment is NOT processed
 @t p: Project;
-(Bijgevoegd: signature.png)  ❌ Wordt NIET opgeslagen
+(Attached: signature.png)  ❌ Is NOT saved
 ```
 
-→ Beschermt tegen ongewenste signature images
-→ Voorkomt onnodig storage quota verbruik
-→ Je hebt altijd controle
+→ Protects against unwanted signature images
+→ Prevents unnecessary storage quota usage
+→ You always have control
 
-### Bestandsgrootte Limieten
+### File Size Limits
 
-- **Max bestand**: 4.5MB per bijlage
-- **Storage quota**: 100MB totaal (gratis tier)
-- **Aantal bijlagen**: Max 1 per email
+- **Max file**: 4.5MB per attachment
+- **Storage quota**: 100MB total (free tier)
+- **Number of attachments**: Max 1 per email
 
-Als bestand te groot is:
-→ Taak wordt toch aangemaakt
-→ Bijlage wordt NIET opgeslagen
-→ Melding in server logs
+If file is too large:
+→ Task is still created
+→ Attachment is NOT saved
+→ Notice in server logs
 
-### Bijlage Troubleshooting
+### Attachment Troubleshooting
 
-**Bijlage wordt niet gekoppeld:**
-- ✅ Heb je `a:` code gebruikt in @t syntax?
-- ✅ Klopt de zoekterm met de bestandsnaam?
-- ✅ Is het bestand kleiner dan 4.5MB?
-- ✅ Check of het bestandstype ondersteund wordt
+**Attachment not linked:**
+- ✅ Did you use `a:` code in @t syntax?
+- ✅ Does the search term match the filename?
+- ✅ Is the file smaller than 4.5MB?
+- ✅ Check if the file type is supported
 
-**Verkeerde bijlage gekoppeld:**
-- ✅ Meerdere bestanden matchen? Gebruik specifiekere zoekterm
-- ✅ Exact match heeft voorrang - check bestandsnamen
-- ✅ Gebruik volledige bestandsnaam voor exact match
+**Wrong attachment linked:**
+- ✅ Multiple files match? Use more specific search term
+- ✅ Exact match has priority - check filenames
+- ✅ Use full filename for exact match
 
-**Voorbeelden van goede zoektermen:**
+**Examples of good search terms:**
 ```
-a:contract;        # Generiek, vindt veel bestanden
-a:contract_v3;     # Specifiek, vindt exacte versie
-a:2025-01-invoice; # Zeer specifiek met datum
+a:contract;        # Generic, finds many files
+a:contract_v3;     # Specific, finds exact version
+a:2025-01-invoice; # Very specific with date
 ```
 
 ## Troubleshooting
 
-### Taak wordt niet aangemaakt
+### Task Not Created
 
-- ✅ Check je import email adres (moet je persoonlijke code bevatten)
-- ✅ Controleer of je vanaf het juiste email adres stuurt
-- ✅ Kijk in je Tickedify Inbox of de taak er staat
+- ✅ Check your import email address (must contain your personal code)
+- ✅ Verify you're sending from the correct email address
+- ✅ Look in your Tickedify Inbox to see if the task is there
 
-### @t wordt niet herkend
+### @t Not Recognized
 
-- ✅ Staat @t op de **eerste niet-lege regel**?
-- ✅ Is er een **spatie** na @t? (`@t ` niet `@t`)
-- ✅ Gebruik je puntkomma tussen codes?
+- ✅ Is @t on the **first non-empty line**?
+- ✅ Is there a **space** after @t? (`@t ` not `@t`)
+- ✅ Are you using semicolons between codes?
 
-### Codes worden genegeerd
+### Codes Ignored
 
-- ✅ Heb je een **defer code** gebruikt? (die negeert alle andere codes)
-- ✅ Check je syntax: `p: waarde` (met spatie na `:`)
-- ✅ Bij due date: gebruik ISO formaat `YYYY-MM-DD`
-- ✅ Bij duur: gebruik alleen cijfers (minuten)
+- ✅ Did you use a **defer code**? (those ignore all other codes)
+- ✅ Check your syntax: `p: value` (with space after `:`)
+- ✅ For due date: use ISO format `YYYY-MM-DD`
+- ✅ For duration: use only numbers (minutes)
 
-### Project/Context worden niet gekoppeld
+### Project/Context Not Linked
 
-- ✅ Controleer spelling (hoofdlettergevoelig)
-- ✅ Nieuwe projecten/contexten worden automatisch aangemaakt
-- ✅ Check in Tickedify of ze er zijn
+- ✅ Check spelling (case-sensitive)
+- ✅ New projects/contexts are automatically created
+- ✅ Check in Tickedify if they exist
 
 ## Tips & Tricks
 
-### Standaard Template
+### Standard Template
 
-Maak een email template in je email client:
+Create an email template in your email client:
 
 ```
 @t p: [PROJECT]; c: [CONTEXT]; p2;
 
-[TAAK BESCHRIJVING]
+[TASK DESCRIPTION]
 
 --END--
 ```
 
-### Mobile Gebruik
+### Mobile Usage
 
-Op mobiel: gebruik simpele codes om snel te zijn:
+On mobile: use simple codes to be quick:
 
 ```
-@t c: Werk; p1;
+@t c: Work; p1;
 
-Korte taak beschrijving
+Short task description
 ```
 
 ### Batch Import
 
-Doorsturen van meerdere emails werkt prima - elke email wordt een aparte taak.
+Forwarding multiple emails works fine - each email becomes a separate task.
 
 ### Signature Protection
 
-Voeg `--END--` toe aan je email signature om automatisch alles daarna weg te knippen:
+Add `--END--` to your email signature to automatically cut everything after it:
 
 ```
 Meeting notes
 
 --END--
-Met vriendelijke groet,
+Best regards,
 [Signature]
 ```
 
 ---
 
-**Vragen?** Email naar jan@tickedify.com of check de [Tickedify documentatie](https://tickedify.com).
+**Questions?** Email jan@tickedify.com or check the [Tickedify documentation](https://tickedify.com).

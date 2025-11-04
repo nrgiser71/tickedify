@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Import Help - Tickedify</title>
+  <link rel="stylesheet" href="/email-import-help.css">
+</head>
+<body>
+  <header role="banner">
+    <div class="header-container">
+      <h1>Email Import Help</h1>
+      <p class="subtitle">Learn how to import tasks via email using the @t syntax</p>
+    </div>
+  </header>
+
+  <main role="main" id="content">
+    <div class="loading">Loading help content...</div>
+  </main>
+
+  <footer role="contentinfo">
+    <p>Questions? Email <a href="mailto:jan@tickedify.com">jan@tickedify.com</a></p>
+  </footer>
+
+  <!-- Scripts loaded at end for performance -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script>
+    // Fetch and render markdown content
+    fetch('/api/email-import-help/content')
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.text();
+      })
+      .then(markdown => {
+        // Parse markdown to HTML
+        const html = marked.parse(markdown);
+
+        // Insert into content container
+        const contentEl = document.getElementById('content');
+        contentEl.innerHTML = html;
+
+        // Apply syntax highlighting
+        Prism.highlightAll();
+
+        // Wrap tables in responsive containers
+        const tables = contentEl.querySelectorAll('table');
+        tables.forEach(table => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'table-container';
+          table.parentNode.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        });
+      })
+      .catch(err => {
+        console.error('Failed to load help content:', err);
+        document.getElementById('content').innerHTML =
+          '<div class="error">' +
+          '<h2>Error Loading Help Content</h2>' +
+          '<p>Unable to load the help documentation. Please try again later or contact support.</p>' +
+          '<p class="error-details">Error: ' + err.message + '</p>' +
+          '</div>';
+      });
+  </script>
+</body>
+</html>

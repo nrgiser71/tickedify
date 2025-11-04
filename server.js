@@ -454,17 +454,33 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Email import help documentation
-app.get('/api/email-import-help', (req, res) => {
+// Email import help page (styled HTML)
+app.get('/email-import-help', (req, res) => {
+    const helpPath = path.join(__dirname, 'public', 'email-import-help.html');
+    res.sendFile(helpPath, (err) => {
+        if (err) {
+            console.error('Failed to serve email-import-help.html:', err);
+            res.status(404).json({ error: 'Help page not found' });
+        }
+    });
+});
+
+// Email import help content API (markdown)
+app.get('/api/email-import-help/content', (req, res) => {
     const helpPath = path.join(__dirname, 'public', 'email-import-help.md');
-    fs.readFile(helpPath, 'utf8', (err, data) => {
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(helpPath, (err) => {
         if (err) {
             console.error('Failed to read email-import-help.md:', err);
-            return res.status(500).send('Failed to load help content');
+            res.status(404).json({ error: 'Help content not found' });
         }
-        res.type('text/plain');
-        res.send(data);
     });
+});
+
+// Backwards compatibility redirect (old route → new HTML page)
+app.get('/api/email-import-help', (req, res) => {
+    res.redirect(301, '/email-import-help');
 });
 
 // Try to import and initialize database
