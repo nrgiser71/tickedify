@@ -4630,6 +4630,11 @@ app.get('/api/user/storage-stats', requireAuth, async (req, res) => {
 
         const userId = req.session.userId;
 
+        // CRITICAL FIX: Always recalculate storage usage before returning stats
+        // This ensures the user_storage_usage table is always synchronized with actual bijlagen data
+        // Fixes the "2MB always showing" bug where cached/stale data was returned
+        await db.updateUserStorageUsage(userId);
+
         const stats = await db.getUserStorageStats(userId);
         const planType = await db.getUserPlanType(userId);
         const isPremium = planType !== 'free';
