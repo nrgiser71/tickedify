@@ -4124,7 +4124,7 @@ class Taakbeheer {
             toast.success(`Task restored to list: ${result.lijst}`);
 
             // Reload prullenbak to update UI
-            await this.laadLijst();
+            await this.laadHuidigeLijst();
 
         } catch (error) {
             console.error('Error restoring task:', error);
