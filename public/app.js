@@ -4050,11 +4050,11 @@ class Taakbeheer {
             container.innerHTML = `
                 <div class="prullenbak-scherm">
                     <div class="prullenbak-info">
-                        <p><i class="fas fa-info-circle"></i> Tasks blijven 30 dagen bewaard voordat ze permanent worden verwijderd.</p>
+                        <p><i class="fas fa-info-circle"></i> Tasks are kept for 30 days before permanent deletion.</p>
                     </div>
                     <div class="prullenbak-lijst">
                         ${verwijderdeTaken.length === 0 ?
-                            '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Prullenbak is leeg</p></div>' :
+                            '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Trash is empty</p></div>' :
                             verwijderdeTaken.map(taak => this.renderPrullenbakItem(taak)).join('')
                         }
                     </div>
@@ -4074,7 +4074,7 @@ class Taakbeheer {
             container.innerHTML = `
                 <div class="error-message">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Fout bij laden van prullenbak: ${error.message}</p>
+                    <p>Error loading trash: ${error.message}</p>
                 </div>
             `;
         }
@@ -4083,22 +4083,22 @@ class Taakbeheer {
     // T024: Render individual prullenbak item
     renderPrullenbakItem(taak) {
         const countdownClass = taak.dagenTotVerwijdering <= 3 ? 'warning' : '';
-        const verwijderdOp = new Date(taak.verwijderd_op).toLocaleDateString('nl-NL');
+        const verwijderdOp = new Date(taak.verwijderd_op).toLocaleDateString('en-US');
 
         return `
             <div class="prullenbak-taak-item">
                 <div class="prullenbak-taak-info">
                     <div class="prullenbak-taak-tekst">${this.escapeHtml(taak.tekst)}</div>
                     <div class="prullenbak-taak-meta">
-                        <span><i class="fas fa-calendar"></i> Verwijderd: ${verwijderdOp}</span>
+                        <span><i class="fas fa-calendar"></i> Deleted: ${verwijderdOp}</span>
                         <span class="prullenbak-countdown ${countdownClass}">
                             <i class="fas fa-clock"></i>
-                            ${taak.dagenTotVerwijdering} ${taak.dagenTotVerwijdering === 1 ? 'dag' : 'dagen'} tot permanente verwijdering
+                            ${taak.dagenTotVerwijdering} ${taak.dagenTotVerwijdering === 1 ? 'day' : 'days'} until permanent deletion
                         </span>
                     </div>
                 </div>
                 <button class="restore-button" data-restore-id="${taak.id}">
-                    <i class="fas fa-undo"></i> Herstel
+                    <i class="fas fa-undo"></i> Restore
                 </button>
             </div>
         `;
@@ -4121,14 +4121,14 @@ class Taakbeheer {
             const result = await response.json();
 
             // Show success toast
-            this.toonToast(`Taak hersteld naar lijst: ${result.lijst}`, 'success');
+            toast.success(`Task restored to list: ${result.lijst}`);
 
             // Reload prullenbak to update UI
             await this.laadLijst();
 
         } catch (error) {
             console.error('Error restoring task:', error);
-            this.toonToast(`Fout bij herstellen: ${error.message}`, 'error');
+            toast.error(`Error restoring: ${error.message}`);
         }
     }
 
@@ -4537,7 +4537,7 @@ class Taakbeheer {
                     const result = await response.json();
 
                     // Soft delete success - task moved to trash
-                    const successMessage = 'Taak verplaatst naar prullenbak';
+                    const successMessage = 'Task moved to trash';
                     console.log(`✅ Task ${id} soft deleted successfully:`, result);
                     
                     if (categoryKey) {

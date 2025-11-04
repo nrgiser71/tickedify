@@ -3,6 +3,27 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## 🌐 UI Language Policy
+**CRITICAL**: All user-facing UI text, buttons, messages, and tooltips MUST be in **English**.
+
+This includes:
+- ✅ Toast notifications (success/error/info messages)
+- ✅ Button labels and link text
+- ✅ Screen titles and headings
+- ✅ Error messages and validation feedback
+- ✅ Info texts and help messages
+- ✅ Empty states and placeholder text
+- ✅ Confirmation dialogs and modals
+- ✅ Form labels and instructions
+
+**Exception**:
+- Internal code comments remain in Dutch for development clarity
+- This CLAUDE.md file itself remains in Dutch
+- Git commit messages remain in Dutch
+- Developer-facing documentation remains in Dutch
+
+**Rationale**: Tickedify is designed for international users and English is the standard UI language for the application.
+
 ## 🚨 BÈTA FREEZE - PRODUCTIE DEPLOYMENT ABSOLUTE BLOKKADE 🚨
 
 **KRITIEK - LEES DIT EERST**: Tickedify is IN BÈTA met ECHTE GEBRUIKERS sinds oktober 2025.

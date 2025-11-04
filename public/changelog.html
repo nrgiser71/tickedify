@@ -188,10 +188,53 @@
             </div>
         </div>
 
+        <!-- Version 0.21.73 - Toast Bug & English Translations -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.73</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Critical Toast Bug + UI Internationalization</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Toast Bug Fix</strong>: KRITIEKE BUG - this.toonToast() method bestaat niet in Taakbeheer class. Gefixed naar toast.success() / toast.error() zoals rest van app gebruikt.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🌐</div>
+                        <div class="change-content">
+                            <strong>English UI Translations</strong>: Alle prullenbak scherm teksten vertaald naar Engels - "Trash is empty", "Deleted:", "X days until permanent deletion", "Restore" button.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>Toast Messages</strong>: "Task moved to trash", "Task restored to list", "Error restoring" - alle feedback in Engels voor internationale gebruikers.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📅</div>
+                        <div class="change-content">
+                            <strong>Date Formatting</strong>: toLocaleDateString('en-US') voor consistente Engelse datumweergave in prullenbak.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📖</div>
+                        <div class="change-content">
+                            <strong>Documentation Update</strong>: CLAUDE.md bijgewerkt met "UI Language Policy" - alle toekomstige UI teksten moeten Engels zijn.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.72 - Soft Delete Integration Fix -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.72</span>
+                <span class="version-badge badge-fix">v0.21.72</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
