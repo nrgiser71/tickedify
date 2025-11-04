@@ -4121,7 +4121,7 @@ class Taakbeheer {
             const result = await response.json();
 
             // Show success toast
-            toast.success(`Task restored to list: ${result.lijst}`);
+            toast.success('Task restored');
 
             // Reload prullenbak to update UI
             await this.laadHuidigeLijst();
