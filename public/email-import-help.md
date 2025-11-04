@@ -388,7 +388,6 @@ a:2025-01-invoice; # Very specific with date
 ### Task Not Created
 
 - ✅ Check your import email address (must contain your personal code)
-- ✅ Verify you're sending from the correct email address
 - ✅ Look in your Tickedify Inbox to see if the task is there
 
 ### @t Not Recognized
