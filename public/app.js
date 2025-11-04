@@ -2128,6 +2128,7 @@ class Taakbeheer {
             'projecten': 'Projects',
             'opvolgen': 'Follow-up',
             'afgewerkte-taken': 'Completed',
+            'prullenbak': 'Trash',
             'dagelijkse-planning': 'Daily Planning',
             'uitgesteld': 'Postponed',
             'uitgesteld-wekelijks': 'Weekly',
@@ -3593,6 +3594,9 @@ class Taakbeheer {
                 await this.renderDagelijksePlanning(mainContainer);
             }
             // If we're already in daily planning, do nothing (items are updated locally)
+        } else if (this.huidigeLijst === 'prullenbak') {
+            // T022-T023: Render prullenbak scherm (Feature 055)
+            await this.renderPrullenbak(container);
         } else if (this.huidigeLijst === 'projecten') {
             await this.renderProjectenLijst(container);
         } else if (this.isUitgesteldLijst(this.huidigeLijst)) {
@@ -4016,6 +4020,115 @@ class Taakbeheer {
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    // T023: Render Prullenbak Scherm (Feature 055)
+    async renderPrullenbak(container) {
+        if (!container) {
+            console.error('renderPrullenbak: container is null');
+            return;
+        }
+
+        try {
+            // Fetch soft deleted tasks from API
+            const response = await fetch('/api/prullenbak');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const verwijderdeTaken = await response.json();
+
+            // Calculate days until deletion for each task
+            const now = new Date();
+            verwijderdeTaken.forEach(taak => {
+                const definitiefVerwijderen = new Date(taak.definitief_verwijderen_op);
+                const dagenTot = Math.ceil((definitiefVerwijderen - now) / (1000 * 60 * 60 * 24));
+                taak.dagenTotVerwijdering = Math.max(0, dagenTot);
+            });
+
+            // Render prullenbak UI
+            container.innerHTML = `
+                <div class="prullenbak-scherm">
+                    <div class="prullenbak-info">
+                        <p><i class="fas fa-info-circle"></i> Tasks blijven 30 dagen bewaard voordat ze permanent worden verwijderd.</p>
+                    </div>
+                    <div class="prullenbak-lijst">
+                        ${verwijderdeTaken.length === 0 ?
+                            '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Prullenbak is leeg</p></div>' :
+                            verwijderdeTaken.map(taak => this.renderPrullenbakItem(taak)).join('')
+                        }
+                    </div>
+                </div>
+            `;
+
+            // Add event listeners for restore buttons
+            verwijderdeTaken.forEach(taak => {
+                const restoreBtn = container.querySelector(`[data-restore-id="${taak.id}"]`);
+                if (restoreBtn) {
+                    restoreBtn.addEventListener('click', () => this.restoreTaak(taak.id));
+                }
+            });
+
+        } catch (error) {
+            console.error('Error loading prullenbak:', error);
+            container.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Fout bij laden van prullenbak: ${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // T024: Render individual prullenbak item
+    renderPrullenbakItem(taak) {
+        const countdownClass = taak.dagenTotVerwijdering <= 3 ? 'warning' : '';
+        const verwijderdOp = new Date(taak.verwijderd_op).toLocaleDateString('nl-NL');
+
+        return `
+            <div class="prullenbak-taak-item">
+                <div class="prullenbak-taak-info">
+                    <div class="prullenbak-taak-tekst">${this.escapeHtml(taak.tekst)}</div>
+                    <div class="prullenbak-taak-meta">
+                        <span><i class="fas fa-calendar"></i> Verwijderd: ${verwijderdOp}</span>
+                        <span class="prullenbak-countdown ${countdownClass}">
+                            <i class="fas fa-clock"></i>
+                            ${taak.dagenTotVerwijdering} ${taak.dagenTotVerwijdering === 1 ? 'dag' : 'dagen'} tot permanente verwijdering
+                        </span>
+                    </div>
+                </div>
+                <button class="restore-button" data-restore-id="${taak.id}">
+                    <i class="fas fa-undo"></i> Herstel
+                </button>
+            </div>
+        `;
+    }
+
+    // T025: Restore task from prullenbak
+    async restoreTaak(taakId) {
+        try {
+            const response = await fetch(`/api/taak/${taakId}/restore`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            // Show success toast
+            this.toonToast(`Taak hersteld naar lijst: ${result.lijst}`, 'success');
+
+            // Reload prullenbak to update UI
+            await this.laadLijst();
+
+        } catch (error) {
+            console.error('Error restoring task:', error);
+            this.toonToast(`Fout bij herstellen: ${error.message}`, 'error');
+        }
     }
 
     renderStandaardLijst(container) {
