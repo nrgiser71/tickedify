@@ -14298,9 +14298,16 @@ class EmailHelpModal {
         if (this.contentLoaded) return;
 
         try {
+            // Load marked.js if not already loaded
+            if (typeof marked === 'undefined') {
+                await this.loadMarked();
+            }
+
             const response = await fetch('/api/email-import-help');
             const markdown = await response.text();
-            this.contentEl.innerHTML = this.renderMarkdown(markdown);
+
+            // Use marked.js for professional markdown rendering
+            this.contentEl.innerHTML = marked.parse(markdown);
             this.contentLoaded = true;
         } catch (error) {
             console.error('Failed to load email help:', error);
@@ -14308,101 +14315,14 @@ class EmailHelpModal {
         }
     }
 
-    renderMarkdown(markdown) {
-        // Simple markdown to HTML converter
-        let html = markdown;
-
-        // Headers
-        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-        // Bold
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-        // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-        // Code blocks
-        html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
-
-        // Links
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-        // Tables - simple approach (detect | at start and end of lines)
-        const lines = html.split('\n');
-        let inTable = false;
-        let tableHtml = '';
-        let processedLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-
-            if (line.startsWith('|') && line.endsWith('|')) {
-                if (!inTable) {
-                    inTable = true;
-                    tableHtml = '<table>';
-                }
-
-                // Check if this is a separator line (contains only |, -, and spaces)
-                if (/^\|[\s\-|]+\|$/.test(line)) {
-                    continue; // Skip separator line
-                }
-
-                const cells = line.split('|').slice(1, -1); // Remove empty first/last
-                const isHeader = i === 0 || (i > 0 && /^\|[\s\-|]+\|$/.test(lines[i-1]));
-
-                if (isHeader && tableHtml === '<table>') {
-                    tableHtml += '<thead><tr>';
-                    cells.forEach(cell => {
-                        tableHtml += `<th>${cell.trim()}</th>`;
-                    });
-                    tableHtml += '</tr></thead><tbody>';
-                } else {
-                    tableHtml += '<tr>';
-                    cells.forEach(cell => {
-                        tableHtml += `<td>${cell.trim()}</td>`;
-                    });
-                    tableHtml += '</tr>';
-                }
-            } else {
-                if (inTable) {
-                    tableHtml += '</tbody></table>';
-                    processedLines.push(tableHtml);
-                    tableHtml = '';
-                    inTable = false;
-                }
-                processedLines.push(line);
-            }
-        }
-
-        if (inTable) {
-            tableHtml += '</tbody></table>';
-            processedLines.push(tableHtml);
-        }
-
-        html = processedLines.join('\n');
-
-        // Lists - unordered
-        html = html.replace(/^\- (.+)$/gim, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-        // Paragraphs
-        html = html.replace(/\n\n/g, '</p><p>');
-        html = '<p>' + html + '</p>';
-
-        // Clean up empty paragraphs
-        html = html.replace(/<p>\s*<\/p>/g, '');
-        html = html.replace(/<p>(<h[1-3]>)/g, '$1');
-        html = html.replace(/(<\/h[1-3]>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<table>)/g, '$1');
-        html = html.replace(/(<\/table>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<ul>)/g, '$1');
-        html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-        html = html.replace(/<p>(<pre>)/g, '$1');
-        html = html.replace(/(<\/pre>)<\/p>/g, '$1');
-
-        return html;
+    loadMarked() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load marked.js'));
+            document.head.appendChild(script);
+        });
     }
 
     async show() {
