@@ -2352,7 +2352,7 @@ function showFeedbackDetail(feedbackId) {
     }
 
     // Show modal
-    document.getElementById('feedbackModal').style.display = 'block';
+    document.getElementById('feedbackModal').style.display = 'flex';
 }
 
 function closeFeedbackModal() {
