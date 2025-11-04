@@ -139,10 +139,47 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.60 - Kritieke Database Schema Fix voor Taken Tabel -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.60</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Kritieke Database Schema Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Taken Tabel Kolommen Gefixed</strong>: Gecorrigeerd alle foute kolom namen in beide debug user inspector endpoints - "voltooid" → "afgewerkt", "project" → "project_id", "context" → "context_id", "geblokkeerd" verwijderd (kolom bestaat niet).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>Completed Logic Fix</strong>: Gebruikt nu "afgewerkt IS NOT NULL" voor completed tasks en "afgewerkt IS NULL" voor pending tasks (timestamp-based ipv boolean).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Beide Endpoints Gefixed</strong>: Zowel de oude ID-based endpoint (/debug/user-data/:id) als de nieuwe email-based endpoint (/debug/user-data-by-email) gebruiken nu de correcte database kolommen.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Impact</strong>: Oplossing voor "column voltooid does not exist" 500 error - alle debug user data queries werken nu correct.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.59 - Hotfix Database Schema Naam -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.59</span>
+                <span class="version-badge badge-fix">v0.21.59</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">

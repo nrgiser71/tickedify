@@ -11558,13 +11558,13 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             pool.query(`
                 SELECT
                     COUNT(*) as total,
-                    COUNT(*) FILTER (WHERE voltooid = true) as completed,
-                    COUNT(*) FILTER (WHERE voltooid = false) as pending,
+                    COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL) as completed,
+                    COUNT(*) FILTER (WHERE afgewerkt IS NULL) as pending,
                     COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring,
-                    COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked,
+                    0 as blocked,
                     CASE
                         WHEN COUNT(*) > 0 THEN
-                            ROUND((COUNT(*) FILTER (WHERE voltooid = true)::numeric / COUNT(*)::numeric) * 100, 1)
+                            ROUND((COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL)::numeric / COUNT(*)::numeric) * 100, 1)
                         ELSE 0
                     END as completion_rate
                 FROM taken
@@ -11574,11 +11574,11 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             // 3. Tasks by project
             pool.query(`
                 SELECT
-                    COALESCE(project, '(geen project)') as project,
+                    COALESCE(project_id::text, '(geen project)') as project,
                     COUNT(*) as count
                 FROM taken
                 WHERE user_id = $1
-                GROUP BY project
+                GROUP BY project_id
                 ORDER BY count DESC
                 LIMIT 20
             `, [userId]),
@@ -11586,11 +11586,11 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
             // 4. Tasks by context
             pool.query(`
                 SELECT
-                    COALESCE(context, '(geen context)') as context,
+                    COALESCE(context_id::text, '(geen context)') as context,
                     COUNT(*) as count
                 FROM taken
                 WHERE user_id = $1
-                GROUP BY context
+                GROUP BY context_id
                 ORDER BY count DESC
                 LIMIT 20
             `, [userId]),
@@ -11824,13 +11824,13 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
             pool.query(`
                 SELECT
                     COUNT(*) as total,
-                    COUNT(*) FILTER (WHERE voltooid = true) as completed,
-                    COUNT(*) FILTER (WHERE voltooid = false) as pending,
+                    COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL) as completed,
+                    COUNT(*) FILTER (WHERE afgewerkt IS NULL) as pending,
                     COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring,
-                    COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked,
+                    0 as blocked,
                     CASE
                         WHEN COUNT(*) > 0 THEN
-                            ROUND((COUNT(*) FILTER (WHERE voltooid = true)::numeric / COUNT(*)::numeric) * 100, 1)
+                            ROUND((COUNT(*) FILTER (WHERE afgewerkt IS NOT NULL)::numeric / COUNT(*)::numeric) * 100, 1)
                         ELSE 0
                     END as completion_rate
                 FROM taken
@@ -11840,11 +11840,11 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
             // 3. Tasks by project
             pool.query(`
                 SELECT
-                    COALESCE(project, '(geen project)') as project,
+                    COALESCE(project_id::text, '(geen project)') as project,
                     COUNT(*) as count
                 FROM taken
                 WHERE user_id = $1
-                GROUP BY project
+                GROUP BY project_id
                 ORDER BY count DESC
                 LIMIT 20
             `, [userId]),
@@ -11852,11 +11852,11 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
             // 4. Tasks by context
             pool.query(`
                 SELECT
-                    COALESCE(context, '(geen context)') as context,
+                    COALESCE(context_id::text, '(geen context)') as context,
                     COUNT(*) as count
                 FROM taken
                 WHERE user_id = $1
-                GROUP BY context
+                GROUP BY context_id
                 ORDER BY count DESC
                 LIMIT 20
             `, [userId]),
