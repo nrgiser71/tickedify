@@ -8677,6 +8677,7 @@ class Taakbeheer {
             }
             
             const prioriteitIndicator = this.getPrioriteitIndicator(actie.prioriteit);
+            const herhalingIndicator = actie.herhalingActief ? ' 🔄' : '';
 
             // Check if this task is a top priority
             const isTopPriority = actie.top_prioriteit !== null && actie.top_prioriteit !== undefined;
@@ -8693,7 +8694,7 @@ class Taakbeheer {
                                    title="Top prioriteit">
                             <label class="star-label">⭐</label>
                         </div>
-                        <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}</div>
+                        <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}${herhalingIndicator}</div>
                         <div class="actie-meta">
                             ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
                             ${contextNaam ? `<span class="meta-context">${contextNaam}</span>` : ''}
