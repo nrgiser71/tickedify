@@ -84,7 +84,7 @@ const API = {
 
     // Debug tools endpoints
     debug: {
-        getUserData: (id) => API.request(`/debug/user-data/${id}`),
+        getUserData: (email) => API.request(`/debug/user-data-by-email?email=${encodeURIComponent(email)}`),
         sqlQuery: (query, confirmDestructive = false) => API.request('/debug/sql-query', {
             method: 'POST',
             body: JSON.stringify({ query, confirm_destructive: confirmDestructive })
@@ -1875,10 +1875,16 @@ const DebugTools = {
      */
     async inspectUser() {
         try {
-            const userId = document.getElementById('debug-user-id').value.trim();
+            const userEmail = document.getElementById('debug-user-email').value.trim();
 
-            if (!userId) {
-                alert('❌ Please enter a user ID');
+            if (!userEmail) {
+                alert('❌ Please enter an email address');
+                return;
+            }
+
+            // Basic email format validation
+            if (!userEmail.includes('@') || !userEmail.includes('.')) {
+                alert('❌ Please enter a valid email address');
                 return;
             }
 
@@ -1886,7 +1892,7 @@ const DebugTools = {
             resultsDiv.style.display = 'block';
             resultsDiv.innerHTML = '<p>Loading user data...</p>';
 
-            const data = await API.debug.getUserData(userId);
+            const data = await API.debug.getUserData(userEmail);
 
             resultsDiv.innerHTML = `
                 <h4>👤 User Information</h4>

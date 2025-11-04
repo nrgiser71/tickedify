@@ -11747,6 +11747,264 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin2/debug/user-data-by-email - Complete user data inspector by email
+app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userEmail = req.query.email;
+
+        // Validate email
+        if (!userEmail || typeof userEmail !== 'string') {
+            return res.status(400).json({
+                error: 'Invalid email',
+                message: 'Email parameter is required'
+            });
+        }
+
+        // Basic email format validation
+        if (!userEmail.includes('@') || userEmail.length < 3) {
+            return res.status(400).json({
+                error: 'Invalid email format',
+                message: 'Please provide a valid email address'
+            });
+        }
+
+        console.log(`🔍 Fetching complete user data for email: ${userEmail} (requested by admin ID: ${req.session.userId})`);
+
+        // First, get the user ID from email
+        const userLookup = await pool.query(`
+            SELECT id FROM users WHERE LOWER(email) = LOWER($1)
+        `, [userEmail]);
+
+        if (userLookup.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with email ${userEmail}`
+            });
+        }
+
+        const userId = userLookup.rows[0].id;
+
+        // Parallel queries voor performance - gebruik Promise.all
+        const [
+            userResult,
+            taskSummary,
+            tasksByProject,
+            tasksByContext,
+            emailSummary,
+            recentEmails,
+            sessionInfo,
+            planningCount,
+            recurringCount
+        ] = await Promise.all([
+            // 1. User details - ALLE velden
+            pool.query(`
+                SELECT
+                    id,
+                    email,
+                    naam,
+                    LENGTH(wachtwoord_hash) as password_hash_length,
+                    account_type,
+                    subscription_tier,
+                    subscription_status,
+                    trial_end_date,
+                    actief,
+                    created_at,
+                    last_login,
+                    onboarding_video_seen,
+                    onboarding_video_seen_at
+                FROM users
+                WHERE id = $1
+            `, [userId]),
+
+            // 2. Task summary
+            pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE voltooid = true) as completed,
+                    COUNT(*) FILTER (WHERE voltooid = false) as pending,
+                    COUNT(*) FILTER (WHERE herhaling_actief = true) as recurring,
+                    COUNT(*) FILTER (WHERE geblokkeerd = true) as blocked,
+                    CASE
+                        WHEN COUNT(*) > 0 THEN
+                            ROUND((COUNT(*) FILTER (WHERE voltooid = true)::numeric / COUNT(*)::numeric) * 100, 1)
+                        ELSE 0
+                    END as completion_rate
+                FROM taken
+                WHERE user_id = $1
+            `, [userId]),
+
+            // 3. Tasks by project
+            pool.query(`
+                SELECT
+                    COALESCE(project, '(geen project)') as project,
+                    COUNT(*) as count
+                FROM taken
+                WHERE user_id = $1
+                GROUP BY project
+                ORDER BY count DESC
+                LIMIT 20
+            `, [userId]),
+
+            // 4. Tasks by context
+            pool.query(`
+                SELECT
+                    COALESCE(context, '(geen context)') as context,
+                    COUNT(*) as count
+                FROM taken
+                WHERE user_id = $1
+                GROUP BY context
+                ORDER BY count DESC
+                LIMIT 20
+            `, [userId]),
+
+            // 5. Email imports summary
+            pool.query(`
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE imported_at >= NOW() - INTERVAL '30 days') as recent_30d,
+                    MIN(imported_at) as oldest_import,
+                    MAX(imported_at) as newest_import,
+                    COUNT(*) FILTER (WHERE task_id IS NOT NULL) as processed,
+                    COUNT(*) FILTER (WHERE task_id IS NOT NULL) as converted_to_task
+                FROM email_imports
+                WHERE user_id = $1
+            `, [userId]),
+
+            // 6. Recent email imports (last 10)
+            pool.query(`
+                SELECT
+                    email_from,
+                    email_subject,
+                    imported_at,
+                    CASE WHEN task_id IS NOT NULL THEN true ELSE false END as processed,
+                    task_id
+                FROM email_imports
+                WHERE user_id = $1
+                ORDER BY imported_at DESC
+                LIMIT 10
+            `, [userId]),
+
+            // 7. Session info
+            pool.query(`
+                SELECT
+                    COUNT(*) as active_sessions,
+                    MAX(expire) as last_activity
+                FROM session
+                WHERE sess::text LIKE $1
+                AND expire > NOW()
+            `, [`%"userId":"${userId}"%`]),
+
+            // 8. Dagelijkse planning entries count
+            pool.query(`
+                SELECT COUNT(*) as total
+                FROM dagelijkse_planning
+                WHERE taak_id IN (SELECT id FROM taken WHERE user_id = $1)
+            `, [userId]),
+
+            // 9. Herhalende taken count (actief)
+            pool.query(`
+                SELECT COUNT(*) as total
+                FROM taken
+                WHERE user_id = $1
+                AND herhaling_actief = true
+            `, [userId])
+        ]);
+
+        const user = userResult.rows[0];
+        const tasks = taskSummary.rows[0];
+        const emails = emailSummary.rows[0];
+        const sessions = sessionInfo.rows[0];
+
+        // Build comprehensive response
+        const responseData = {
+            user: {
+                id: user.id,
+                email: user.email,
+                naam: user.naam,
+                password_hash_length: user.password_hash_length, // Voor debugging
+                account_type: user.account_type,
+                subscription_tier: user.subscription_tier,
+                subscription_status: user.subscription_status,
+                trial_end_date: user.trial_end_date,
+                actief: user.actief,
+                created_at: user.created_at,
+                last_login: user.last_login,
+                onboarding_video_seen: user.onboarding_video_seen,
+                onboarding_video_seen_at: user.onboarding_video_seen_at
+            },
+            tasks: {
+                summary: {
+                    total: parseInt(tasks.total),
+                    completed: parseInt(tasks.completed),
+                    pending: parseInt(tasks.pending),
+                    recurring: parseInt(tasks.recurring),
+                    blocked: parseInt(tasks.blocked),
+                    completion_rate: parseFloat(tasks.completion_rate)
+                },
+                by_project: tasksByProject.rows.map(row => ({
+                    project: row.project,
+                    count: parseInt(row.count)
+                })),
+                by_context: tasksByContext.rows.map(row => ({
+                    context: row.context,
+                    count: parseInt(row.count)
+                }))
+            },
+            emails: {
+                summary: {
+                    total: parseInt(emails.total),
+                    recent_30d: parseInt(emails.recent_30d),
+                    oldest_import: emails.oldest_import,
+                    newest_import: emails.newest_import,
+                    processed: parseInt(emails.processed),
+                    converted_to_task: parseInt(emails.converted_to_task)
+                },
+                recent: recentEmails.rows.map(email => ({
+                    from_email: email.email_from,
+                    subject: email.email_subject,
+                    imported_at: email.imported_at,
+                    processed: email.processed,
+                    task_id: email.task_id
+                }))
+            },
+            subscription: {
+                status: user.subscription_status,
+                tier: user.subscription_tier,
+                trial_end_date: user.trial_end_date
+            },
+            sessions: {
+                active_count: parseInt(sessions.active_sessions),
+                last_activity: sessions.last_activity
+            },
+            planning: {
+                total_entries: parseInt(planningCount.rows[0].total)
+            },
+            recurring: {
+                total_active: parseInt(recurringCount.rows[0].total)
+            }
+        };
+
+        console.log(`✅ User data inspector completed for email ${userEmail} (user ID: ${userId})`);
+        console.log(`   Tasks: ${tasks.total} total, ${tasks.completed} completed (${tasks.completion_rate}%)`);
+        console.log(`   Emails: ${emails.total} total, ${emails.recent_30d} last 30 days`);
+        console.log(`   Sessions: ${sessions.active_sessions} active`);
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.error('❌ Error in user data inspector (by email):', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to fetch user data',
+            details: error.message
+        });
+    }
+});
+
 // ========================================
 // ADMIN DASHBOARD V2 API ENDPOINTS
 // ========================================
