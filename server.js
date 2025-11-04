@@ -11547,7 +11547,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
                     trial_end_date,
                     actief,
                     created_at,
-                    last_login,
+                    laatste_login,
                     onboarding_video_seen,
                     onboarding_video_seen_at
                 FROM users
@@ -11674,7 +11674,7 @@ app.get('/api/admin2/debug/user-data/:id', requireAdmin, async (req, res) => {
                 trial_end_date: user.trial_end_date,
                 actief: user.actief,
                 created_at: user.created_at,
-                last_login: user.last_login,
+                last_login: user.laatste_login,
                 onboarding_video_seen: user.onboarding_video_seen,
                 onboarding_video_seen_at: user.onboarding_video_seen_at
             },
@@ -11813,7 +11813,7 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
                     trial_end_date,
                     actief,
                     created_at,
-                    last_login,
+                    laatste_login,
                     onboarding_video_seen,
                     onboarding_video_seen_at
                 FROM users
@@ -11932,7 +11932,7 @@ app.get('/api/admin2/debug/user-data-by-email', requireAdmin, async (req, res) =
                 trial_end_date: user.trial_end_date,
                 actief: user.actief,
                 created_at: user.created_at,
-                last_login: user.last_login,
+                last_login: user.laatste_login,
                 onboarding_video_seen: user.onboarding_video_seen,
                 onboarding_video_seen_at: user.onboarding_video_seen_at
             },
