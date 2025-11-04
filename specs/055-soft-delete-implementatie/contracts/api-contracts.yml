@@ -1,0 +1,463 @@
+openapi: 3.0.0
+info:
+  title: Tickedify Soft Delete API
+  description: API endpoints voor soft delete functionaliteit
+  version: 1.0.0
+  contact:
+    name: Tickedify Development
+    email: jan@tickedify.com
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production (BEVROREN tijdens bèta)
+  - url: https://dev.tickedify.com/api
+    description: Staging (development en testing)
+
+paths:
+  /taak/{id}/soft-delete:
+    put:
+      summary: Soft delete een taak
+      description: |
+        Markeert een taak als verwijderd zonder permanent te verwijderen.
+        Taak blijft 30 dagen beschikbaar voor restore.
+        Voor herhalende taken wordt herhaling_actief op false gezet.
+      operationId: softDeleteTask
+      tags:
+        - Soft Delete
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID van de taak
+          schema:
+            type: string
+            format: uuid
+            example: "abc-123-def-456"
+      responses:
+        '200':
+          description: Taak succesvol soft deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  id:
+                    type: string
+                    format: uuid
+                    example: "abc-123-def-456"
+                  verwijderd_op:
+                    type: string
+                    format: date-time
+                    example: "2025-11-04T14:30:00Z"
+                  definitief_verwijderen_op:
+                    type: string
+                    format: date-time
+                    example: "2025-12-04T14:30:00Z"
+                  herhaling_gestopt:
+                    type: boolean
+                    description: True als het een herhalende taak was
+                    example: false
+        '404':
+          description: Taak niet gevonden of al verwijderd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Taak niet gevonden"
+                code: "TASK_NOT_FOUND"
+        '401':
+          description: Niet geauthenticeerd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Geen toegang tot deze taak (andere gebruiker)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /taak/{id}/restore:
+    post:
+      summary: Herstel een soft deleted taak
+      description: |
+        Herstelt een soft deleted taak naar actieve status.
+        Taak komt terug in originele lijst met alle properties behouden.
+        Voor herhalende taken blijft herhaling_actief false (manual restart).
+      operationId: restoreTask
+      tags:
+        - Soft Delete
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID van de soft deleted taak
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Taak succesvol hersteld
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  id:
+                    type: string
+                    format: uuid
+                  taak:
+                    $ref: '#/components/schemas/Task'
+        '404':
+          description: Soft deleted taak niet gevonden (mogelijk al permanent verwijderd)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Niet geauthenticeerd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Geen toegang tot deze taak
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /prullenbak:
+    get:
+      summary: Haal alle soft deleted taken op
+      description: |
+        Retourneert alle soft deleted taken voor de ingelogde gebruiker.
+        Gesorteerd op verwijderd_op ASC (oudste eerst).
+        Inclusief berekend veld 'dagen_tot_verwijdering'.
+      operationId: getTrash
+      tags:
+        - Soft Delete
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lijst van soft deleted taken
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taken:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Task'
+                        - type: object
+                          properties:
+                            dagen_tot_verwijdering:
+                              type: integer
+                              description: Aantal dagen tot permanente verwijdering
+                              example: 25
+                  total:
+                    type: integer
+                    description: Totaal aantal soft deleted taken
+                    example: 12
+        '401':
+          description: Niet geauthenticeerd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /bulk/soft-delete:
+    post:
+      summary: Soft delete meerdere taken tegelijk
+      description: |
+        Bulk soft delete operatie voor geselecteerde taken.
+        Werkt alleen op taken van de ingelogde gebruiker.
+      operationId: bulkSoftDelete
+      tags:
+        - Soft Delete
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 100
+                  example:
+                    - "abc-123-def-456"
+                    - "xyz-789-uvw-012"
+      responses:
+        '200':
+          description: Bulk operatie succesvol
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deleted_count:
+                    type: integer
+                    description: Aantal taken soft deleted
+                    example: 2
+                  failed:
+                    type: array
+                    description: IDs van taken die niet verwijderd konden worden
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        reason:
+                          type: string
+                          example: "Taak niet gevonden"
+                    example: []
+        '400':
+          description: Ongeldige request (bijv. te veel IDs)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Niet geauthenticeerd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /bulk/restore:
+    post:
+      summary: Herstel meerdere taken tegelijk
+      description: |
+        Bulk restore operatie voor geselecteerde soft deleted taken.
+      operationId: bulkRestore
+      tags:
+        - Soft Delete
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                  maxItems: 100
+      responses:
+        '200':
+          description: Bulk restore succesvol
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  restored_count:
+                    type: integer
+                    example: 2
+                  failed:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        reason:
+                          type: string
+        '400':
+          description: Ongeldige request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Niet geauthenticeerd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/cleanup-stats:
+    get:
+      summary: Statistieken voor soft delete cleanup (admin only)
+      description: |
+        Retourneert statistieken over soft deleted taken en cleanup status.
+        Alleen toegankelijk voor admin gebruikers.
+      operationId: getCleanupStats
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cleanup statistieken
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_soft_deleted:
+                    type: integer
+                    description: Totaal aantal soft deleted taken
+                    example: 45
+                  ready_for_cleanup:
+                    type: integer
+                    description: Aantal taken ouder dan 30 dagen
+                    example: 5
+                  per_user:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                        email:
+                          type: string
+                        soft_deleted_count:
+                          type: integer
+                        laatste_cleanup_op:
+                          type: string
+                          format: date
+                          nullable: true
+        '401':
+          description: Niet geauthenticeerd
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Geen admin rechten
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "abc-123-def-456"
+        tekst:
+          type: string
+          example: "Belangrijke taak"
+        lijst:
+          type: string
+          enum: [inbox, acties, opvolgen, afgewerkt, uitgesteld-wekelijks, uitgesteld-maandelijks, uitgesteld-3maandelijks, uitgesteld-6maandelijks, uitgesteld-jaarlijks]
+          example: "acties"
+        project_id:
+          type: string
+          format: uuid
+          nullable: true
+        context_id:
+          type: string
+          format: uuid
+          nullable: true
+        verschijndatum:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-11-10"
+        duur:
+          type: integer
+          nullable: true
+          description: Duur in minuten
+          example: 60
+        prioriteit:
+          type: string
+          enum: [laag, gemiddeld, hoog]
+          example: "hoog"
+        herhaling_type:
+          type: string
+          nullable: true
+          example: "weekly-1-1,3,5"
+        herhaling_actief:
+          type: boolean
+          example: false
+        opmerkingen:
+          type: string
+          nullable: true
+        verwijderd_op:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-11-04T14:30:00Z"
+        definitief_verwijderen_op:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-04T14:30:00Z"
+        aangemaakt:
+          type: string
+          format: date-time
+          example: "2025-10-01T10:00:00Z"
+        user_id:
+          type: string
+          format: uuid
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: "Er is een fout opgetreden"
+        code:
+          type: string
+          example: "INTERNAL_ERROR"
+        details:
+          type: object
+          additionalProperties: true
+
+tags:
+  - name: Soft Delete
+    description: Soft delete en restore operaties
+  - name: Admin
+    description: Admin endpoints voor monitoring en beheer

@@ -6093,6 +6093,265 @@ app.delete('/api/taak/:id', async (req, res) => {
     }
 });
 
+// T004: Soft Delete Endpoint (Feature 055)
+app.put('/api/taak/:id/soft-delete', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { id } = req.params;
+        const userId = getCurrentUserId(req);
+        console.log(`🗑️ Soft deleting task ${id} for user ${userId}`);
+
+        const result = await pool.query(`
+            UPDATE taken
+            SET verwijderd_op = NOW(),
+                definitief_verwijderen_op = NOW() + INTERVAL '30 days',
+                herhaling_actief = false
+            WHERE id = $1
+              AND user_id = $2
+              AND verwijderd_op IS NULL
+            RETURNING id, verwijderd_op, definitief_verwijderen_op, herhaling_type
+        `, [id, userId]);
+
+        if (result.rows.length === 0) {
+            console.log(`❌ Task ${id} not found or already soft deleted`);
+            return res.status(404).json({ error: 'Taak niet gevonden' });
+        }
+
+        const taak = result.rows[0];
+        console.log(`✅ Task ${id} soft deleted successfully`);
+
+        res.json({
+            success: true,
+            id: taak.id,
+            verwijderd_op: taak.verwijderd_op,
+            definitief_verwijderen_op: taak.definitief_verwijderen_op,
+            herhaling_gestopt: taak.herhaling_type !== null
+        });
+    } catch (error) {
+        console.error(`Error soft deleting task ${id}:`, error);
+        res.status(500).json({ error: 'Database fout bij soft delete', details: error.message });
+    }
+});
+
+// T005: Restore Endpoint (Feature 055)
+app.post('/api/taak/:id/restore', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { id } = req.params;
+        const userId = getCurrentUserId(req);
+        console.log(`↩️ Restoring task ${id} for user ${userId}`);
+
+        const result = await pool.query(`
+            UPDATE taken
+            SET verwijderd_op = NULL,
+                definitief_verwijderen_op = NULL
+            WHERE id = $1
+              AND user_id = $2
+              AND verwijderd_op IS NOT NULL
+            RETURNING *
+        `, [id, userId]);
+
+        if (result.rows.length === 0) {
+            console.log(`❌ Soft deleted task ${id} not found`);
+            return res.status(404).json({ error: 'Verwijderde taak niet gevonden' });
+        }
+
+        console.log(`✅ Task ${id} restored successfully`);
+        res.json({
+            success: true,
+            id: result.rows[0].id,
+            taak: result.rows[0]
+        });
+    } catch (error) {
+        console.error(`Error restoring task ${id}:`, error);
+        res.status(500).json({ error: 'Database fout bij restore', details: error.message });
+    }
+});
+
+// T006: Prullenbak Endpoint (Feature 055)
+app.get('/api/prullenbak', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = getCurrentUserId(req);
+        console.log(`🗑️ Getting prullenbak for user ${userId}`);
+
+        const result = await pool.query(`
+            SELECT
+                *,
+                EXTRACT(DAY FROM (definitief_verwijderen_op - NOW())) as dagen_tot_verwijdering
+            FROM taken
+            WHERE user_id = $1
+              AND verwijderd_op IS NOT NULL
+            ORDER BY verwijderd_op ASC
+        `, [userId]);
+
+        console.log(`✅ Retrieved ${result.rows.length} soft deleted tasks`);
+        res.json({
+            taken: result.rows,
+            total: result.rows.length
+        });
+    } catch (error) {
+        console.error(`Error getting prullenbak:`, error);
+        res.status(500).json({ error: 'Database fout bij ophalen prullenbak', details: error.message });
+    }
+});
+
+// T007: Bulk Soft Delete Endpoint (Feature 055)
+app.post('/api/bulk/soft-delete', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { ids } = req.body;
+        const userId = getCurrentUserId(req);
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'ids array vereist' });
+        }
+
+        if (ids.length > 100) {
+            return res.status(400).json({ error: 'Maximum 100 taken per bulk operatie' });
+        }
+
+        console.log(`🗑️ Bulk soft deleting ${ids.length} tasks for user ${userId}`);
+
+        const result = await pool.query(`
+            UPDATE taken
+            SET verwijderd_op = NOW(),
+                definitief_verwijderen_op = NOW() + INTERVAL '30 days',
+                herhaling_actief = false
+            WHERE id = ANY($1::text[])
+              AND user_id = $2
+              AND verwijderd_op IS NULL
+            RETURNING id
+        `, [ids, userId]);
+
+        const deletedIds = result.rows.map(r => r.id);
+        const failedIds = ids.filter(id => !deletedIds.includes(id));
+
+        console.log(`✅ Bulk soft deleted ${deletedIds.length} tasks, ${failedIds.length} failed`);
+        res.json({
+            success: true,
+            deleted_count: deletedIds.length,
+            failed: failedIds.map(id => ({ id, reason: 'Taak niet gevonden of al verwijderd' }))
+        });
+    } catch (error) {
+        console.error(`Error bulk soft deleting:`, error);
+        res.status(500).json({ error: 'Database fout bij bulk soft delete', details: error.message });
+    }
+});
+
+// T008: Bulk Restore Endpoint (Feature 055)
+app.post('/api/bulk/restore', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { ids } = req.body;
+        const userId = getCurrentUserId(req);
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'ids array vereist' });
+        }
+
+        if (ids.length > 100) {
+            return res.status(400).json({ error: 'Maximum 100 taken per bulk operatie' });
+        }
+
+        console.log(`↩️ Bulk restoring ${ids.length} tasks for user ${userId}`);
+
+        const result = await pool.query(`
+            UPDATE taken
+            SET verwijderd_op = NULL,
+                definitief_verwijderen_op = NULL
+            WHERE id = ANY($1::text[])
+              AND user_id = $2
+              AND verwijderd_op IS NOT NULL
+            RETURNING id
+        `, [ids, userId]);
+
+        const restoredIds = result.rows.map(r => r.id);
+        const failedIds = ids.filter(id => !restoredIds.includes(id));
+
+        console.log(`✅ Bulk restored ${restoredIds.length} tasks, ${failedIds.length} failed`);
+        res.json({
+            success: true,
+            restored_count: restoredIds.length,
+            failed: failedIds.map(id => ({ id, reason: 'Taak niet gevonden' }))
+        });
+    } catch (error) {
+        console.error(`Error bulk restoring:`, error);
+        res.status(500).json({ error: 'Database fout bij bulk restore', details: error.message });
+    }
+});
+
+// T009: Admin Cleanup Stats Endpoint (Feature 055)
+app.get('/api/admin/cleanup-stats', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = getCurrentUserId(req);
+
+        // Check admin role
+        const userResult = await pool.query('SELECT rol FROM users WHERE id = $1', [userId]);
+        if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'admin') {
+            return res.status(403).json({ error: 'Admin rechten vereist' });
+        }
+
+        console.log(`📊 Getting cleanup stats for admin`);
+
+        // Total soft deleted
+        const totalResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE verwijderd_op IS NOT NULL
+        `);
+
+        // Ready for cleanup (>30 dagen)
+        const cleanupResult = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM taken
+            WHERE verwijderd_op IS NOT NULL
+              AND verwijderd_op < NOW() - INTERVAL '30 days'
+        `);
+
+        // Per user stats
+        const perUserResult = await pool.query(`
+            SELECT
+                u.id as user_id,
+                u.email,
+                COUNT(t.id) as soft_deleted_count,
+                u.laatste_cleanup_op
+            FROM users u
+            LEFT JOIN taken t ON t.user_id = u.id AND t.verwijderd_op IS NOT NULL
+            GROUP BY u.id, u.email, u.laatste_cleanup_op
+            ORDER BY soft_deleted_count DESC
+        `);
+
+        res.json({
+            total_soft_deleted: parseInt(totalResult.rows[0].count),
+            ready_for_cleanup: parseInt(cleanupResult.rows[0].count),
+            per_user: perUserResult.rows
+        });
+    } catch (error) {
+        console.error(`Error getting cleanup stats:`, error);
+        res.status(500).json({ error: 'Database fout bij ophalen statistieken', details: error.message });
+    }
+});
+
 // Subtaken API endpoints
 // Get all subtaken for a parent task
 app.get('/api/subtaken/:parentId', async (req, res) => {

@@ -139,10 +139,53 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.67 - Soft Delete API Endpoints -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.67</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">⚡ API Endpoints - Soft Delete Functionaliteit</div>
+                    <div class="change-item">
+                        <div class="change-icon">🗑️</div>
+                        <div class="change-content">
+                            <strong>Soft Delete Endpoint</strong>: PUT /api/taak/:id/soft-delete - Markeert taken als verwijderd zonder permanent te verwijderen, stopt automatisch herhalende taken.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">↩️</div>
+                        <div class="change-content">
+                            <strong>Restore Endpoint</strong>: POST /api/taak/:id/restore - Herstel soft deleted taken naar originele lijst met alle properties behouden.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📋</div>
+                        <div class="change-content">
+                            <strong>Prullenbak Endpoint</strong>: GET /api/prullenbak - Haal alle verwijderde taken op met countdown naar permanente verwijdering.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📦</div>
+                        <div class="change-content">
+                            <strong>Bulk Operaties</strong>: POST /api/bulk/soft-delete en POST /api/bulk/restore - Verwerk meerdere taken tegelijk (max 100 per operatie).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">📊</div>
+                        <div class="change-content">
+                            <strong>Admin Stats</strong>: GET /api/admin/cleanup-stats - Admin endpoint voor monitoring van soft deleted taken per gebruiker.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.66 - Soft Delete Database Schema -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.66</span>
+                <span class="version-badge badge-feature">v0.21.66</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
