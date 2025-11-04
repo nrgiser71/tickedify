@@ -544,9 +544,17 @@ app.get('/api/email-import-help/content', (req, res) => {
     });
 });
 
-// Backwards compatibility redirect (old route → new HTML page)
+// Email import help API (for popup modal in app.js)
 app.get('/api/email-import-help', (req, res) => {
-    res.redirect(301, '/email-import-help');
+    const helpPath = path.join(__dirname, 'public', 'email-import-help.md');
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.sendFile(helpPath, (err) => {
+        if (err) {
+            console.error('Failed to read email-import-help.md:', err);
+            res.status(404).json({ error: 'Help content not found' });
+        }
+    });
 });
 
 // Try to import and initialize database

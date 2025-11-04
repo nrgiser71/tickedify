@@ -139,10 +139,41 @@
             <p class="changelog-subtitle">Alle nieuwe features, verbeteringen en bugfixes</p>
         </div>
 
+        <!-- Version 0.21.50 - Popup Modal Fix for Email Import Help -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.50</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Email Import Help Popup Fix</div>
+                    <div class="change-item">
+                        <div class="change-icon">❓</div>
+                        <div class="change-content">
+                            <strong>Fixed Popup Modal</strong>: Restored <code>/api/email-import-help</code> route to return markdown content instead of redirect, fixing the help popup that was not opening when clicking the question mark icon.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🎯</div>
+                        <div class="change-content">
+                            <strong>Dual Routes</strong>: Both routes now work: <code>/api/email-import-help</code> for popup modal (markdown) and <code>/email-import-help</code> for standalone page (HTML).
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✅</div>
+                        <div class="change-content">
+                            <strong>User Experience</strong>: Question mark icon in admin interface now properly opens help modal with English documentation.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.48 - Vercel Route Fix for Email Import Help -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.48</span>
+                <span class="version-badge badge-fix">v0.21.48</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
