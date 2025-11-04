@@ -16,6 +16,10 @@
       "dest": "/server.js"
     },
     {
+      "src": "/email-import-help",
+      "dest": "/server.js"
+    },
+    {
       "src": "/admin/login",
       "dest": "/public/admin-login.html"
     },

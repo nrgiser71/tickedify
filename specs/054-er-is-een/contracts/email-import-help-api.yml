@@ -1,0 +1,232 @@
+openapi: 3.0.0
+info:
+  title: Email Import Help API
+  version: 1.0.0
+  description: API endpoints for serving email import help documentation with English translation and styled rendering
+
+servers:
+  - url: https://dev.tickedify.com
+    description: Staging server
+  - url: https://tickedify.com
+    description: Production server
+
+paths:
+  /email-import-help:
+    get:
+      summary: Get styled help page (HTML)
+      description: Returns the email import help documentation as a styled HTML page with markdown rendering and syntax highlighting
+      operationId: getHelpPage
+      responses:
+        '200':
+          description: HTML page with styled help documentation
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                  <html lang="en">
+                  <head>
+                    <title>Email Import Help - Tickedify</title>
+                    <link rel="stylesheet" href="/email-import-help.css">
+                  </head>
+                  <body>
+                    <main id="content"></main>
+                    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+                  </body>
+                  </html>
+        '404':
+          description: HTML file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/email-import-help/content:
+    get:
+      summary: Get markdown content (API)
+      description: Returns the raw English markdown content for client-side rendering
+      operationId: getMarkdownContent
+      responses:
+        '200':
+          description: Markdown content in English
+          content:
+            text/markdown:
+              schema:
+                type: string
+                example: |
+                  # Tickedify Email Import Syntax Help
+
+                  ## Quick Start
+
+                  Forward an email to your personal import address with an `@t` instruction on the first line:
+
+                  ```
+                  @t p: My Project; c: Work; d: 2025-11-15; p1; t: 30;
+
+                  This is the task description.
+                  Multiple lines are possible.
+                  ```
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/markdown; charset=utf-8
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=3600
+              description: Cache for 1 hour
+        '404':
+          description: Markdown file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/email-import-help:
+    get:
+      summary: Legacy endpoint (redirect)
+      description: Backwards compatibility redirect to new HTML page
+      operationId: legacyRedirect
+      deprecated: true
+      responses:
+        '301':
+          description: Permanent redirect to new HTML page
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /email-import-help
+
+  /email-import-help.css:
+    get:
+      summary: Get help page styles
+      description: Returns CSS stylesheet for help page styling
+      operationId: getStylesheet
+      responses:
+        '200':
+          description: CSS stylesheet
+          content:
+            text/css:
+              schema:
+                type: string
+                example: |
+                  body { font-family: system-ui, sans-serif; }
+                  h1 { color: #4F46E5; font-size: 36px; }
+                  pre code { background: #F3F4F6; }
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/css; charset=utf-8
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=86400
+              description: Cache for 24 hours
+        '404':
+          description: CSS file not found
+
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "File not found"
+        details:
+          type: string
+          description: Additional error details
+          example: "email-import-help.html does not exist"
+
+  examples:
+    EnglishMarkdownSample:
+      summary: Sample English markdown content
+      value: |
+        # Tickedify Email Import Syntax Help
+
+        ## Quick Start
+
+        Forward an email to your personal import address with an `@t` instruction on the first line:
+
+        ```
+        @t p: My Project; c: Work; d: 2025-11-15; p1; t: 30;
+
+        This is the task description.
+        Multiple lines are possible.
+        ```
+
+        This creates a task with:
+        - **Project**: My Project
+        - **Context**: Work
+        - **Due date**: November 15, 2025
+        - **Priority**: High
+        - **Duration**: 30 minutes
+
+        ## Syntax Overview
+
+        ### Basic Format
+
+        ```
+        @t code1; code2; code3;
+        ```
+
+        - Place `@t` on the **first non-empty line** of the email body
+        - Separate codes with semicolon `;`
+        - Order is flexible
+        - Spaces are automatically trimmed
+
+    StyledHTMLSample:
+      summary: Sample styled HTML output
+      value: |
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Email Import Help - Tickedify</title>
+          <link rel="stylesheet" href="/email-import-help.css">
+        </head>
+        <body>
+          <header role="banner">
+            <h1>Email Import Help</h1>
+          </header>
+          <main role="main" id="content">
+            <!-- Rendered markdown content -->
+          </main>
+          <footer role="contentinfo">
+            <p>Questions? Email <a href="mailto:jan@tickedify.com">jan@tickedify.com</a></p>
+          </footer>
+          <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+          <script>
+            fetch('/api/email-import-help/content')
+              .then(res => res.text())
+              .then(markdown => {
+                document.getElementById('content').innerHTML = marked.parse(markdown);
+                Prism.highlightAll();
+              });
+          </script>
+        </body>
+        </html>
+
+tags:
+  - name: Help Documentation
+    description: Email import syntax help and documentation endpoints
