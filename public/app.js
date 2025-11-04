@@ -4528,41 +4528,17 @@ class Taakbeheer {
         
         await loading.withLoading(async () => {
             try {
-                // Use DELETE endpoint for single task deletion
-                const response = await fetch(`/api/taak/${id}`, {
-                    method: 'DELETE'
+                // Use soft delete endpoint to move task to trash
+                const response = await fetch(`/api/taak/${id}/soft-delete`, {
+                    method: 'PUT'
                 });
-                
+
                 if (response.ok) {
                     const result = await response.json();
-                    
-                    // Check B2 cleanup status and provide user feedback
-                    let successMessage = 'Taak verwijderd';
-                    let hasB2Warning = false;
-                    
-                    if (result.b2Cleanup) {
-                        const cleanup = result.b2Cleanup;
-                        
-                        if (cleanup.failed > 0) {
-                            hasB2Warning = true;
-                            if (cleanup.configError) {
-                                console.warn(`⚠️ B2 configuratie probleem voor taak ${id}`);
-                                toast.warning(`Task deleted, but attachment deletion is not configured. Cloud storage cleanup skipped.`);
-                            } else if (cleanup.timeout) {
-                                console.warn(`⚠️ B2 bijlagen cleanup timeout voor taak ${id}`);
-                                toast.warning(`Task deleted, but attachment deletion took too long. Some files may not have been removed from cloud storage.`);
-                            } else if (cleanup.deleted > 0) {
-                                console.warn(`⚠️ Gedeeltelijke B2 cleanup voor taak ${id}: ${cleanup.deleted} gelukt, ${cleanup.failed} gefaald`);
-                                toast.warning(`Task deleted. ${cleanup.deleted} of ${cleanup.deleted + cleanup.failed} attachments removed from cloud storage.`);
-                            } else {
-                                console.error(`❌ Volledige B2 cleanup failure voor taak ${id}`);
-                                toast.error(`Task deleted, but attachments could not be removed from cloud storage. Check your internet connection.`);
-                            }
-                        } else if (cleanup.deleted > 0) {
-                            console.log(`✅ B2 cleanup succesvol voor taak ${id}: ${cleanup.deleted} bestanden verwijderd`);
-                            successMessage = `Task and ${cleanup.deleted} attachments deleted`;
-                        }
-                    }
+
+                    // Soft delete success - task moved to trash
+                    const successMessage = 'Taak verplaatst naar prullenbak';
+                    console.log(`✅ Task ${id} soft deleted successfully:`, result);
                     
                     if (categoryKey) {
                         // For uitgesteld interface: remove from DOM and update count
@@ -4581,9 +4557,7 @@ class Taakbeheer {
                         // Update sidebar counters after task delete - Feature 022
                         this.debouncedUpdateCounters();
 
-                        if (!hasB2Warning) {
-                            toast.success(successMessage);
-                        }
+                        toast.success(successMessage);
                     } else {
                         // Normal list interface
                         this.taken = this.taken.filter(taak => taak.id !== id);
@@ -4598,10 +4572,7 @@ class Taakbeheer {
                         // Update sidebar counters after task delete - Feature 022
                         this.debouncedUpdateCounters();
 
-                        if (!hasB2Warning) {
-                            toast.success(successMessage);
-                        }
-                        console.log(`✅ Task ${id} deleted successfully with B2 cleanup:`, result.b2Cleanup);
+                        toast.success(successMessage);
                     }
                 } else {
                     const error = await response.json();

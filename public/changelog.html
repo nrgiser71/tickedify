@@ -188,10 +188,47 @@
             </div>
         </div>
 
+        <!-- Version 0.21.72 - Soft Delete Integration Fix -->
+        <div class="version-block">
+            <div class="version-header">
+                <span class="version-badge badge-latest">v0.21.72</span>
+                <span class="version-date">4 november 2025</span>
+            </div>
+            <div class="changes-list">
+                <div class="change-category">
+                    <div class="change-category-title">🔧 Prullenbak Integration Fix - KRITIEKE BUG</div>
+                    <div class="change-item">
+                        <div class="change-icon">🐛</div>
+                        <div class="change-content">
+                            <strong>Soft Delete Integration</strong>: Frontend DELETE endpoint vervangen door soft delete endpoint - verwijderde taken verschijnen nu correct in prullenbak.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🗑️</div>
+                        <div class="change-content">
+                            <strong>Root Cause Fix</strong>: verwijderTaak() riep DELETE /api/taak/:id aan (hard delete) in plaats van PUT /api/taak/:id/soft-delete - taken werden permanent verwijderd i.p.v. naar prullenbak verplaatst.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">✨</div>
+                        <div class="change-content">
+                            <strong>User Feedback</strong>: Toast message aangepast naar "Taak verplaatst naar prullenbak" voor duidelijke communicatie dat taken herstelbaar zijn.
+                        </div>
+                    </div>
+                    <div class="change-item">
+                        <div class="change-icon">🧹</div>
+                        <div class="change-content">
+                            <strong>Code Cleanup</strong>: B2 attachment cleanup logica verwijderd uit verwijderTaak() - soft delete behoudt bijlagen, hard delete gebeurt later via cron job.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Version 0.21.71 - Prullenbak Bug Fix -->
         <div class="version-block">
             <div class="version-header">
-                <span class="version-badge badge-latest">v0.21.71</span>
+                <span class="version-badge badge-fix">v0.21.71</span>
                 <span class="version-date">4 november 2025</span>
             </div>
             <div class="changes-list">
