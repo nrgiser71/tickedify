@@ -4153,6 +4153,99 @@ app.post('/api/account/password-reset/confirm', async (req, res) => {
   }
 });
 
+// ========================================
+// DEBUG ENDPOINT - MAILGUN CONFIGURATION TEST
+// ========================================
+
+// DEBUG: GET /api/debug/mailgun-test - Test Mailgun configuration
+app.get('/api/debug/mailgun-test', requireLogin, async (req, res) => {
+  try {
+    const diagnostics = {
+      timestamp: new Date().toISOString(),
+      environment_variables: {},
+      mailgun_client: null,
+      test_email_result: null
+    };
+
+    // Check environment variables
+    diagnostics.environment_variables.MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
+      ? `Set (length: ${process.env.MAILGUN_API_KEY.length}, starts with: ${process.env.MAILGUN_API_KEY.substring(0, 10)}...)`
+      : 'NOT SET';
+
+    diagnostics.environment_variables.MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN
+      ? `Set (${process.env.MAILGUN_DOMAIN})`
+      : 'NOT SET';
+
+    // Try to initialize Mailgun client
+    if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN) {
+      try {
+        const formData = require('form-data');
+        const Mailgun = require('mailgun.js');
+        const mailgun = new Mailgun(formData);
+
+        const mg = mailgun.client({
+          username: 'api',
+          key: process.env.MAILGUN_API_KEY
+        });
+
+        diagnostics.mailgun_client = 'Successfully initialized';
+
+        // Try to send a test email to the current user
+        const userId = req.session.userId;
+        const userResult = await pool.query('SELECT email, email as name FROM users WHERE id = $1', [userId]);
+
+        if (userResult.rows.length > 0) {
+          const user = userResult.rows[0];
+
+          const messageData = {
+            from: 'Tickedify <noreply@mg.tickedify.com>',
+            to: user.email,
+            subject: 'Mailgun Test Email - Tickedify',
+            text: 'This is a test email to verify Mailgun configuration. If you receive this, Mailgun is working correctly!',
+            html: '<p>This is a test email to verify Mailgun configuration.</p><p>If you receive this, Mailgun is working correctly!</p>'
+          };
+
+          try {
+            const result = await mg.messages.create(process.env.MAILGUN_DOMAIN, messageData);
+            diagnostics.test_email_result = {
+              success: true,
+              message: `Test email sent to ${user.email}`,
+              mailgun_id: result.id,
+              mailgun_message: result.message
+            };
+          } catch (emailError) {
+            diagnostics.test_email_result = {
+              success: false,
+              error: emailError.message,
+              error_details: emailError.details || emailError.stack,
+              status: emailError.status || 'unknown'
+            };
+          }
+        }
+
+      } catch (clientError) {
+        diagnostics.mailgun_client = {
+          error: 'Failed to initialize',
+          message: clientError.message,
+          stack: clientError.stack
+        };
+      }
+    } else {
+      diagnostics.mailgun_client = 'Cannot initialize - environment variables missing';
+    }
+
+    res.json(diagnostics);
+
+  } catch (error) {
+    console.error('Mailgun test error:', error);
+    res.status(500).json({
+      error: 'Failed to run Mailgun diagnostics',
+      message: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // T014: GET /api/admin/payment-configurations - Admin: Get all payment configurations
 app.get('/api/admin/payment-configurations', async (req, res) => {
   try {
