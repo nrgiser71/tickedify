@@ -7982,8 +7982,11 @@ class Taakbeheer {
             <div class="settings-wrapper">
                 <p class="settings-description">Manage your Tickedify preferences</p>
 
-                <div class="settings-placeholder-box">
-                    <p class="settings-placeholder">Settings will be available here</p>
+                <div class="subscription-block" id="subscription-block">
+                    <div class="subscription-header">
+                        <h3>Subscription</h3>
+                    </div>
+                    <div class="subscription-loading">Loading subscription...</div>
                 </div>
 
                 <div class="settings-actions">
@@ -7994,6 +7997,9 @@ class Taakbeheer {
 
         // Load user settings
         this.loadUserSettings();
+
+        // Load and render subscription
+        this.loadSubscriptionBlock();
 
         // Bind events
         this.bindSettingsEvents();
@@ -8065,6 +8071,409 @@ class Taakbeheer {
             saveBtn.addEventListener('click', () => {
                 this.saveUserSettings();
             });
+        }
+    }
+
+    // ========================================
+    // SUBSCRIPTION MANAGEMENT FUNCTIONS
+    // Feature: 057-dan-gaan-we
+    // ========================================
+
+    // T024: Fetch user subscription from API
+    async fetchUserSubscription() {
+        try {
+            const response = await fetch('/api/subscription', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const subscription = await response.json();
+            return subscription;
+        } catch (error) {
+            console.error('Error fetching subscription:', error);
+            toast.error('Failed to load subscription');
+            return null;
+        }
+    }
+
+    // T024: Load and render subscription block
+    async loadSubscriptionBlock() {
+        const subscription = await this.fetchUserSubscription();
+        if (subscription) {
+            this.renderSubscriptionBlock(subscription);
+        }
+    }
+
+    // T025: Render subscription block based on status
+    renderSubscriptionBlock(subscription) {
+        const block = document.getElementById('subscription-block');
+        if (!block) return;
+
+        let html = '<div class="subscription-header"><h3>Subscription</h3></div>';
+
+        if (subscription.status === 'trial') {
+            html += this.renderTrialStatus(subscription);
+        } else if (subscription.status === 'active') {
+            html += this.renderActiveSubscription(subscription);
+        } else if (subscription.status === 'canceled') {
+            html += this.renderCanceledSubscription(subscription);
+        } else if (subscription.status === 'expired') {
+            html += `
+                <div class="subscription-info subscription-expired">
+                    <p class="subscription-status-text">Trial Expired</p>
+                    <p class="subscription-message">Your trial has ended. Upgrade to continue using Tickedify.</p>
+                </div>
+                <div class="subscription-actions">
+                    <button class="btn-subscription-primary" onclick="app.handleUpgradeFromTrial()">Upgrade Now</button>
+                </div>
+            `;
+        }
+
+        block.innerHTML = html;
+    }
+
+    // T026: Render trial status
+    renderTrialStatus(subscription) {
+        const daysRemaining = subscription.days_remaining || 0;
+        return `
+            <div class="subscription-info subscription-trial">
+                <p class="subscription-status-text">Free Trial</p>
+                <p class="subscription-trial-countdown">${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining</p>
+                <p class="subscription-message">Enjoy unlimited access during your trial period.</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-primary" onclick="app.handleUpgradeFromTrial()">Upgrade Now</button>
+            </div>
+        `;
+    }
+
+    // T027: Render active subscription
+    renderActiveSubscription(subscription) {
+        const renewalDate = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
+        const planName = subscription.plan_name || 'Unknown Plan';
+        const price = subscription.price || 0;
+        const cycle = subscription.cycle || 'month';
+
+        return `
+            <div class="subscription-info subscription-active">
+                <p class="subscription-plan-name">${planName}</p>
+                <p class="subscription-pricing">€${price}/${cycle}</p>
+                <p class="subscription-renewal">Renews on ${renewalDate}</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'upgrade')">Upgrade Plan</button>
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'downgrade')">Downgrade Plan</button>
+                <button class="btn-subscription-cancel" onclick="app.showCancelConfirmation()">Cancel Subscription</button>
+            </div>
+        `;
+    }
+
+    // T028: Render canceled subscription
+    renderCanceledSubscription(subscription) {
+        const accessUntil = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
+        const planName = subscription.plan_name || 'Unknown Plan';
+
+        return `
+            <div class="subscription-info subscription-canceled">
+                <p class="subscription-plan-name">${planName}</p>
+                <p class="subscription-cancels-on">Cancels on ${accessUntil}</p>
+                <p class="subscription-message">You will retain access until this date.</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-primary" onclick="app.handleReactivate()">Reactivate Subscription</button>
+            </div>
+        `;
+    }
+
+    // T029: Show plan comparison modal
+    async showPlanComparisonModal(currentTier, action) {
+        try {
+            const response = await fetch('/api/subscription/plans', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const plans = data.plans;
+
+            // Filter plans based on action
+            let filteredPlans = plans;
+            if (action === 'upgrade') {
+                filteredPlans = plans.filter(p => p.tier_level > currentTier);
+            } else if (action === 'downgrade') {
+                filteredPlans = plans.filter(p => p.tier_level < currentTier);
+            }
+
+            if (filteredPlans.length === 0) {
+                toast.info(`No ${action} options available`);
+                return;
+            }
+
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'plan-comparison-modal';
+            modal.innerHTML = `
+                <div class="modal-content modal-subscription-plans">
+                    <button class="modal-close" onclick="app.closePlanComparisonModal()">×</button>
+                    <h2>${action === 'upgrade' ? 'Upgrade' : 'Downgrade'} Your Plan</h2>
+                    <div class="plans-grid">
+                        ${filteredPlans.map(plan => this.renderPlanCard(plan, plan.is_current, action)).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        } catch (error) {
+            console.error('Error showing plan modal:', error);
+            toast.error('Failed to load plans');
+        }
+    }
+
+    // T030: Render plan card
+    renderPlanCard(plan, isCurrent, action) {
+        const features = plan.features ? JSON.parse(plan.features) : [];
+
+        return `
+            <div class="plan-card ${isCurrent ? 'current-plan' : ''}" data-plan-id="${plan.plan_id}">
+                <h3 class="plan-name">${plan.plan_name}</h3>
+                <div class="plan-pricing">
+                    <span class="plan-price">€${plan.price_monthly}</span>
+                    <span class="plan-cycle">/month</span>
+                </div>
+                <div class="plan-pricing-yearly">
+                    <span class="plan-price-yearly">€${plan.price_yearly}/year</span>
+                    <span class="plan-savings">(Save €${(plan.price_monthly * 12 - plan.price_yearly).toFixed(2)})</span>
+                </div>
+                <ul class="plan-features">
+                    ${features.map(feature => `<li class="plan-feature">${feature}</li>`).join('')}
+                </ul>
+                <button
+                    class="btn-plan-select ${isCurrent ? 'disabled' : ''}"
+                    ${isCurrent ? 'disabled' : ''}
+                    onclick="app.handlePlanSelection('${plan.plan_id}', '${action}', '${plan.plan_name}')"
+                >
+                    ${isCurrent ? 'Current Plan' : 'Select'}
+                </button>
+            </div>
+        `;
+    }
+
+    // Handle plan selection from modal
+    handlePlanSelection(planId, action, planName) {
+        this.closePlanComparisonModal();
+
+        if (action === 'upgrade') {
+            this.showUpgradeConfirmation(planId, planName);
+        } else if (action === 'downgrade') {
+            this.showDowngradeConfirmation(planId, planName);
+        }
+    }
+
+    closePlanComparisonModal() {
+        const modal = document.getElementById('plan-comparison-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // T031: Show upgrade confirmation
+    showUpgradeConfirmation(planId, planName) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'upgrade-confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-confirmation">
+                <h2>Confirm Upgrade</h2>
+                <p>Upgrade to <strong>${planName}</strong>?</p>
+                <p class="confirmation-note">You will be charged immediately with proration based on your current billing cycle.</p>
+                <div class="modal-actions">
+                    <button class="btn-subscription-secondary" onclick="app.closeUpgradeConfirmation()">Cancel</button>
+                    <button class="btn-subscription-primary" onclick="app.handleUpgrade('${planId}')">Confirm Upgrade</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    closeUpgradeConfirmation() {
+        const modal = document.getElementById('upgrade-confirmation-modal');
+        if (modal) modal.remove();
+    }
+
+    // T032: Show downgrade confirmation
+    async showDowngradeConfirmation(planId, planName) {
+        // Get renewal date from current subscription
+        const subscription = await this.fetchUserSubscription();
+        const renewalDate = subscription?.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'next billing date';
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'downgrade-confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-confirmation">
+                <h2>Confirm Downgrade</h2>
+                <p>Downgrade to <strong>${planName}</strong>?</p>
+                <p class="confirmation-note">Your plan will change on ${renewalDate}. You will continue to have access to your current plan until then.</p>
+                <div class="modal-actions">
+                    <button class="btn-subscription-secondary" onclick="app.closeDowngradeConfirmation()">Cancel</button>
+                    <button class="btn-subscription-primary" onclick="app.handleDowngrade('${planId}')">Confirm Downgrade</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    closeDowngradeConfirmation() {
+        const modal = document.getElementById('downgrade-confirmation-modal');
+        if (modal) modal.remove();
+    }
+
+    // T033: Handle upgrade from trial (creates checkout session)
+    async handleUpgradeFromTrial() {
+        // Show plan comparison modal for trial users
+        this.showPlanComparisonModal(0, 'upgrade');
+    }
+
+    // T034: Handle upgrade (for active subscriptions)
+    async handleUpgrade(planId) {
+        this.closeUpgradeConfirmation();
+
+        try {
+            const response = await fetch('/api/subscription/upgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ plan_id: planId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Upgrade failed');
+            }
+
+            toast.success(data.message || 'Plan upgraded successfully!');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Upgrade error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // T035: Handle downgrade
+    async handleDowngrade(planId) {
+        this.closeDowngradeConfirmation();
+
+        try {
+            const response = await fetch('/api/subscription/downgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ plan_id: planId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Downgrade failed');
+            }
+
+            toast.success(data.message || 'Downgrade scheduled successfully!');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Downgrade error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // T036: Show cancel confirmation
+    showCancelConfirmation() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'cancel-confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-confirmation">
+                <h2>Cancel Subscription?</h2>
+                <p>Are you sure you want to cancel your subscription?</p>
+                <p class="confirmation-note">You will retain access until your current billing period ends.</p>
+                <div class="modal-actions">
+                    <button class="btn-subscription-secondary" onclick="app.closeCancelConfirmation()">Keep Subscription</button>
+                    <button class="btn-subscription-cancel" onclick="app.handleCancel()">Confirm Cancellation</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    closeCancelConfirmation() {
+        const modal = document.getElementById('cancel-confirmation-modal');
+        if (modal) modal.remove();
+    }
+
+    // T037: Handle cancel
+    async handleCancel() {
+        this.closeCancelConfirmation();
+
+        try {
+            const response = await fetch('/api/subscription/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Cancellation failed');
+            }
+
+            toast.success(data.message || 'Subscription canceled successfully');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Cancel error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // T038: Handle reactivate
+    async handleReactivate() {
+        try {
+            const response = await fetch('/api/subscription/reactivate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Reactivation failed');
+            }
+
+            toast.success(data.message || 'Subscription reactivated successfully!');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Reactivate error:', error);
+            toast.error(error.message);
         }
     }
 

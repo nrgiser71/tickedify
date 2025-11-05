@@ -352,6 +352,144 @@ async function logWebhookEvent(webhookData, pool) {
   }
 }
 
+// ========================================
+// PLUG&PAY SUBSCRIPTION HELPER FUNCTIONS
+// Feature: 057-dan-gaan-we
+// ========================================
+
+// Call Plug&Pay API with proper error handling
+async function callPlugPayAPI(endpoint, method = 'GET', data = null) {
+  const PLUGPAY_API_KEY = process.env.PLUGPAY_API_KEY;
+  const PLUGPAY_API_URL = process.env.PLUGPAY_API_URL || 'https://api.plugandpay.com/v1';
+
+  if (!PLUGPAY_API_KEY) {
+    throw new Error('PLUGPAY_API_KEY not configured');
+  }
+
+  const url = `${PLUGPAY_API_URL}${endpoint}`;
+  const options = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${PLUGPAY_API_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  };
+
+  if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+    options.body = JSON.stringify(data);
+  }
+
+  try {
+    const response = await fetch(url, options);
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || `Plug&Pay API error: ${response.status}`);
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Plug&Pay API call failed:', error);
+    throw error;
+  }
+}
+
+// Validate Plug&Pay webhook signature
+function validatePlugPayWebhook(signature, payload, secret) {
+  const crypto = require('crypto');
+
+  if (!signature || !payload || !secret) {
+    return false;
+  }
+
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(JSON.stringify(payload));
+  const calculatedSignature = hmac.digest('hex');
+
+  return signature === calculatedSignature;
+}
+
+// Check if webhook event already processed (idempotency)
+async function isWebhookProcessed(eventId) {
+  try {
+    const result = await pool.query(
+      'SELECT id FROM webhook_events WHERE event_id = $1',
+      [eventId]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Webhook idempotency check error:', error);
+    return false;
+  }
+}
+
+// Update user subscription from webhook data
+async function updateUserSubscriptionFromWebhook(userId, subscriptionData) {
+  try {
+    await pool.query(
+      `UPDATE users SET
+        plugpay_subscription_id = $1,
+        subscription_status = $2,
+        subscription_plan = $3,
+        subscription_renewal_date = $4,
+        subscription_price = $5,
+        subscription_cycle = $6,
+        subscription_updated_at = NOW()
+      WHERE id = $7`,
+      [
+        subscriptionData.subscription_id,
+        subscriptionData.status,
+        subscriptionData.plan,
+        subscriptionData.renewal_date,
+        subscriptionData.price,
+        subscriptionData.cycle,
+        userId
+      ]
+    );
+    return true;
+  } catch (error) {
+    console.error('User subscription update error:', error);
+    throw error;
+  }
+}
+
+// Get plan tier level for upgrade/downgrade logic
+async function getPlanTierLevel(planId) {
+  try {
+    const result = await pool.query(
+      'SELECT tier_level FROM subscription_plans WHERE plan_id = $1',
+      [planId]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows[0].tier_level;
+  } catch (error) {
+    console.error('Get plan tier level error:', error);
+    return null;
+  }
+}
+
+// Calculate trial days remaining
+function calculateTrialDaysRemaining(trialEndDate) {
+  if (!trialEndDate) {
+    return 0;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(trialEndDate);
+  endDate.setHours(0, 0, 0, 0);
+
+  const diffTime = endDate - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return Math.max(0, diffDays);
+}
+
 // Force test log on startup
 if (forensicLogger.enabled) {
     setTimeout(() => {
@@ -15103,6 +15241,516 @@ app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
             details: error.message
         });
     }
+});
+
+// ========================================
+// SUBSCRIPTION MANAGEMENT API ENDPOINTS
+// Feature: 057-dan-gaan-we
+// ========================================
+
+// T015: GET /api/subscription - Fetch user subscription details
+app.get('/api/subscription', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+
+    const result = await pool.query(`
+      SELECT
+        u.subscription_status,
+        u.subscription_plan,
+        u.subscription_renewal_date,
+        u.subscription_price,
+        u.subscription_cycle,
+        u.trial_end_date,
+        u.plugpay_subscription_id,
+        p.plan_name,
+        p.tier_level,
+        p.features
+      FROM users u
+      LEFT JOIN subscription_plans p ON u.subscription_plan = p.plan_id
+      WHERE u.id = $1
+    `, [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = result.rows[0];
+    const subscription = {
+      status: user.subscription_status || 'trial',
+      plan: user.subscription_plan,
+      plan_name: user.plan_name,
+      tier_level: user.tier_level,
+      renewal_date: user.subscription_renewal_date,
+      price: user.subscription_price,
+      cycle: user.subscription_cycle,
+      trial_end_date: user.trial_end_date,
+      days_remaining: calculateTrialDaysRemaining(user.trial_end_date),
+      features: user.features || []
+    };
+
+    res.json(subscription);
+  } catch (error) {
+    console.error('Get subscription error:', error);
+    res.status(500).json({ error: 'Failed to fetch subscription' });
+  }
+});
+
+// T016: GET /api/subscription/plans - Fetch available subscription plans
+app.get('/api/subscription/plans', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+
+    // Get user's current tier level
+    const userResult = await pool.query(`
+      SELECT p.tier_level
+      FROM users u
+      LEFT JOIN subscription_plans p ON u.subscription_plan = p.plan_id
+      WHERE u.id = $1
+    `, [userId]);
+
+    const currentTierLevel = userResult.rows[0]?.tier_level || 0;
+
+    // Get all active plans
+    const plansResult = await pool.query(`
+      SELECT
+        plan_id,
+        plan_name,
+        price_monthly,
+        price_yearly,
+        tier_level,
+        features
+      FROM subscription_plans
+      WHERE is_active = TRUE
+      ORDER BY tier_level ASC
+    `);
+
+    const plans = plansResult.rows.map(plan => ({
+      ...plan,
+      is_current: plan.tier_level === currentTierLevel
+    }));
+
+    res.json({ plans, current_tier_level: currentTierLevel });
+  } catch (error) {
+    console.error('Get plans error:', error);
+    res.status(500).json({ error: 'Failed to fetch plans' });
+  }
+});
+
+// T017: POST /api/subscription/checkout - Create checkout session
+app.post('/api/subscription/checkout', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+    const { plan_id, cycle } = req.body;
+
+    if (!plan_id || !cycle) {
+      return res.status(400).json({ error: 'Missing plan_id or cycle' });
+    }
+
+    if (!['monthly', 'yearly'].includes(cycle)) {
+      return res.status(400).json({ error: 'Invalid cycle. Must be monthly or yearly' });
+    }
+
+    // Check user doesn't have active subscription
+    const userResult = await pool.query(
+      'SELECT subscription_status, email FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+    if (user.subscription_status === 'active') {
+      return res.status(409).json({ error: 'User already has active subscription' });
+    }
+
+    // Get plan details
+    const planResult = await pool.query(
+      'SELECT * FROM subscription_plans WHERE plan_id = $1',
+      [plan_id]
+    );
+
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    const plan = planResult.rows[0];
+    const price = cycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
+
+    // Call Plug&Pay API to create checkout session
+    const checkoutData = await callPlugPayAPI('/checkout/sessions', 'POST', {
+      customer_email: user.email,
+      plan_id: plan.plan_id,
+      cycle: cycle,
+      amount: price,
+      success_url: `${process.env.APP_URL || 'https://tickedify.com'}/app?checkout=success`,
+      cancel_url: `${process.env.APP_URL || 'https://tickedify.com'}/app?checkout=cancel`,
+      metadata: {
+        user_id: userId,
+        plan_id: plan_id,
+        cycle: cycle
+      }
+    });
+
+    res.json({
+      checkout_url: checkoutData.checkout_url,
+      session_id: checkoutData.session_id
+    });
+  } catch (error) {
+    console.error('Checkout creation error:', error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+// T018: POST /api/subscription/upgrade - Upgrade plan immediately
+app.post('/api/subscription/upgrade', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+    const { plan_id } = req.body;
+
+    if (!plan_id) {
+      return res.status(400).json({ error: 'Missing plan_id' });
+    }
+
+    // Get user's current subscription
+    const userResult = await pool.query(`
+      SELECT
+        u.subscription_status,
+        u.subscription_plan,
+        u.plugpay_subscription_id,
+        p.tier_level as current_tier
+      FROM users u
+      LEFT JOIN subscription_plans p ON u.subscription_plan = p.plan_id
+      WHERE u.id = $1
+    `, [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.subscription_status !== 'active') {
+      return res.status(400).json({ error: 'User must have active subscription to upgrade' });
+    }
+
+    // Get new plan tier level
+    const newTierLevel = await getPlanTierLevel(plan_id);
+    if (!newTierLevel) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    if (newTierLevel <= user.current_tier) {
+      return res.status(400).json({ error: 'Selected plan is not an upgrade' });
+    }
+
+    // Get plan details for pricing
+    const planResult = await pool.query(
+      'SELECT * FROM subscription_plans WHERE plan_id = $1',
+      [plan_id]
+    );
+    const plan = planResult.rows[0];
+
+    // Call Plug&Pay API to upgrade (immediate with proration)
+    const upgradeData = await callPlugPayAPI(
+      `/subscriptions/${user.plugpay_subscription_id}/change-plan`,
+      'POST',
+      {
+        plan_id: plan_id,
+        prorate: true,
+        effective_date: 'immediate'
+      }
+    );
+
+    // Update local database
+    await pool.query(
+      `UPDATE users SET
+        subscription_plan = $1,
+        subscription_price = $2,
+        subscription_updated_at = NOW()
+      WHERE id = $3`,
+      [plan_id, plan.price_monthly, userId]
+    );
+
+    res.json({
+      success: true,
+      message: `Upgraded to ${plan.plan_name}`,
+      prorated_charge: upgradeData.prorated_charge || 0
+    });
+  } catch (error) {
+    console.error('Upgrade error:', error);
+    res.status(500).json({ error: 'Failed to upgrade subscription' });
+  }
+});
+
+// T019: POST /api/subscription/downgrade - Schedule downgrade for next renewal
+app.post('/api/subscription/downgrade', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+    const { plan_id } = req.body;
+
+    if (!plan_id) {
+      return res.status(400).json({ error: 'Missing plan_id' });
+    }
+
+    // Get user's current subscription
+    const userResult = await pool.query(`
+      SELECT
+        u.subscription_status,
+        u.subscription_plan,
+        u.subscription_renewal_date,
+        u.plugpay_subscription_id,
+        p.tier_level as current_tier
+      FROM users u
+      LEFT JOIN subscription_plans p ON u.subscription_plan = p.plan_id
+      WHERE u.id = $1
+    `, [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.subscription_status !== 'active') {
+      return res.status(400).json({ error: 'User must have active subscription to downgrade' });
+    }
+
+    // Get new plan tier level
+    const newTierLevel = await getPlanTierLevel(plan_id);
+    if (!newTierLevel) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+
+    if (newTierLevel >= user.current_tier) {
+      return res.status(400).json({ error: 'Selected plan is not a downgrade' });
+    }
+
+    // Get plan name for response
+    const planResult = await pool.query(
+      'SELECT plan_name FROM subscription_plans WHERE plan_id = $1',
+      [plan_id]
+    );
+    const planName = planResult.rows[0].plan_name;
+
+    // Call Plug&Pay API to schedule downgrade
+    const downgradeData = await callPlugPayAPI(
+      `/subscriptions/${user.plugpay_subscription_id}/schedule-change`,
+      'POST',
+      {
+        plan_id: plan_id,
+        effective_date: user.subscription_renewal_date
+      }
+    );
+
+    // Insert scheduled change request
+    await pool.query(
+      `INSERT INTO subscription_change_requests
+        (user_id, current_plan, new_plan, change_type, effective_date, status, plugpay_change_id)
+      VALUES ($1, $2, $3, 'downgrade', $4, 'pending', $5)`,
+      [userId, user.subscription_plan, plan_id, user.subscription_renewal_date, downgradeData.change_id || null]
+    );
+
+    res.json({
+      success: true,
+      message: `Your plan will change to ${planName} on ${new Date(user.subscription_renewal_date).toLocaleDateString()}`,
+      effective_date: user.subscription_renewal_date
+    });
+  } catch (error) {
+    console.error('Downgrade error:', error);
+    res.status(500).json({ error: 'Failed to schedule downgrade' });
+  }
+});
+
+// T020: POST /api/subscription/cancel - Cancel subscription
+app.post('/api/subscription/cancel', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+
+    // Get user's current subscription
+    const userResult = await pool.query(
+      `SELECT subscription_status, subscription_renewal_date, plugpay_subscription_id
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.subscription_status !== 'active') {
+      return res.status(400).json({ error: 'No active subscription to cancel' });
+    }
+
+    // Call Plug&Pay API to cancel subscription
+    await callPlugPayAPI(
+      `/subscriptions/${user.plugpay_subscription_id}/cancel`,
+      'POST',
+      { at_period_end: true }
+    );
+
+    // Update local database
+    await pool.query(
+      `UPDATE users SET
+        subscription_status = 'canceled',
+        subscription_updated_at = NOW()
+      WHERE id = $1`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      message: `Subscription canceled. You retain access until ${new Date(user.subscription_renewal_date).toLocaleDateString()}`,
+      access_until: user.subscription_renewal_date
+    });
+  } catch (error) {
+    console.error('Cancel subscription error:', error);
+    res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// T021: POST /api/subscription/reactivate - Reactivate canceled subscription
+app.post('/api/subscription/reactivate', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+
+    // Get user's current subscription
+    const userResult = await pool.query(
+      `SELECT subscription_status, subscription_renewal_date, subscription_plan, plugpay_subscription_id
+       FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.subscription_status !== 'canceled') {
+      return res.status(400).json({ error: 'Subscription is not canceled' });
+    }
+
+    // Check if still in grace period
+    const now = new Date();
+    const renewalDate = new Date(user.subscription_renewal_date);
+    if (now > renewalDate) {
+      return res.status(400).json({ error: 'Subscription already expired. Please create a new subscription' });
+    }
+
+    // Call Plug&Pay API to reactivate
+    await callPlugPayAPI(
+      `/subscriptions/${user.plugpay_subscription_id}/reactivate`,
+      'POST',
+      {}
+    );
+
+    // Update local database
+    await pool.query(
+      `UPDATE users SET
+        subscription_status = 'active',
+        subscription_updated_at = NOW()
+      WHERE id = $1`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      message: `Subscription reactivated. Renews on ${renewalDate.toLocaleDateString()}`,
+      renewal_date: user.subscription_renewal_date
+    });
+  } catch (error) {
+    console.error('Reactivate subscription error:', error);
+    res.status(500).json({ error: 'Failed to reactivate subscription' });
+  }
+});
+
+// T022: POST /api/webhooks/plugpay - Plug&Pay webhook endpoint
+app.post('/api/webhooks/plugpay', async (req, res) => {
+  try {
+    const signature = req.headers['x-plugpay-signature'];
+    const payload = req.body;
+    const PLUGPAY_WEBHOOK_SECRET = process.env.PLUGPAY_WEBHOOK_SECRET;
+
+    // Validate webhook signature
+    if (!validatePlugPayWebhook(signature, payload, PLUGPAY_WEBHOOK_SECRET)) {
+      console.error('Invalid webhook signature');
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    const { event_id, event_type, data } = payload;
+
+    // Check idempotency
+    const alreadyProcessed = await isWebhookProcessed(event_id);
+    if (alreadyProcessed) {
+      console.log(`Webhook ${event_id} already processed, skipping`);
+      return res.status(200).json({ status: 'already_processed' });
+    }
+
+    // Handle different event types
+    let userId = null;
+
+    if (event_type === 'subscription.created' || event_type === 'subscription.updated') {
+      // Find user by subscription ID
+      const userResult = await pool.query(
+        'SELECT id FROM users WHERE plugpay_subscription_id = $1',
+        [data.subscription_id]
+      );
+
+      if (userResult.rows.length > 0) {
+        userId = userResult.rows[0].id;
+      } else if (data.metadata?.user_id) {
+        // First subscription creation - use metadata
+        userId = data.metadata.user_id;
+      }
+
+      if (userId) {
+        await updateUserSubscriptionFromWebhook(userId, {
+          subscription_id: data.subscription_id,
+          status: data.status || 'active',
+          plan: data.plan_id,
+          renewal_date: data.next_billing_date,
+          price: data.amount,
+          cycle: data.billing_cycle || 'monthly'
+        });
+      }
+    } else if (event_type === 'subscription.canceled' || event_type === 'subscription.expired') {
+      // Find user by subscription ID
+      const userResult = await pool.query(
+        'SELECT id FROM users WHERE plugpay_subscription_id = $1',
+        [data.subscription_id]
+      );
+
+      if (userResult.rows.length > 0) {
+        userId = userResult.rows[0].id;
+
+        const newStatus = event_type === 'subscription.canceled' ? 'canceled' : 'expired';
+        await pool.query(
+          `UPDATE users SET
+            subscription_status = $1,
+            subscription_updated_at = NOW()
+          WHERE id = $2`,
+          [newStatus, userId]
+        );
+      }
+    }
+
+    // Insert webhook event record
+    await pool.query(
+      `INSERT INTO webhook_events (event_id, event_type, subscription_id, payload)
+       VALUES ($1, $2, $3, $4)`,
+      [event_id, event_type, data.subscription_id, JSON.stringify(payload)]
+    );
+
+    res.status(200).json({ status: 'processed' });
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    // Return 500 to trigger Plug&Pay retry
+    res.status(500).json({ error: 'Processing failed' });
+  }
 });
 
 // Force redeploy Sat Oct 18 23:52:24 CEST 2025

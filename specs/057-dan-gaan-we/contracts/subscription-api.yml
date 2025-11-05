@@ -1,0 +1,647 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Subscription Management API
+  version: 0.21.83
+  description: |
+    API endpoints for managing user subscriptions with Plug&Pay integration.
+    All endpoints require authenticated user session.
+
+servers:
+  - url: https://dev.tickedify.com/api
+    description: Staging environment
+  - url: https://tickedify.com/api
+    description: Production environment (BETA FREEZE ACTIVE)
+
+security:
+  - sessionAuth: []
+
+paths:
+  /subscription:
+    get:
+      summary: Get current user subscription
+      description: |
+        Fetches the authenticated user's current subscription details including
+        plan information, renewal date, and trial status. Data is served from
+        local database (synchronized via webhooks).
+      operationId: getSubscription
+      tags:
+        - Subscription
+      responses:
+        '200':
+          description: Subscription details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+              examples:
+                active_subscription:
+                  summary: Active Pro subscription
+                  value:
+                    success: true
+                    subscription:
+                      status: active
+                      plan_id: pro
+                      plan_name: Pro Plan
+                      price: 9.99
+                      cycle: monthly
+                      renewal_date: '2025-03-15T00:00:00Z'
+                      plugpay_subscription_id: sub_abc123def456
+                      updated_at: '2025-11-05T10:30:00Z'
+                trial_user:
+                  summary: User in trial period
+                  value:
+                    success: true
+                    subscription:
+                      status: trial
+                      plan_id: null
+                      plan_name: Free Trial
+                      trial_end_date: '2025-11-19T00:00:00Z'
+                      trial_days_remaining: 5
+                      updated_at: '2025-11-05T10:30:00Z'
+                canceled_subscription:
+                  summary: Canceled subscription (grace period)
+                  value:
+                    success: true
+                    subscription:
+                      status: canceled
+                      plan_id: pro
+                      plan_name: Pro Plan
+                      price: 9.99
+                      cycle: monthly
+                      renewal_date: '2025-03-15T00:00:00Z'
+                      cancels_on: '2025-03-15T00:00:00Z'
+                      plugpay_subscription_id: sub_abc123def456
+                      updated_at: '2025-11-05T10:30:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/plans:
+    get:
+      summary: Get available subscription plans
+      description: |
+        Fetches all active subscription plans with pricing and feature details.
+        Used to populate upgrade/downgrade modal.
+      operationId: getPlans
+      tags:
+        - Subscription
+      responses:
+        '200':
+          description: Plans retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plan'
+                  current_plan_tier:
+                    type: integer
+                    description: User's current plan tier level (for UI highlighting)
+                    example: 2
+              example:
+                success: true
+                current_plan_tier: 2
+                plans:
+                  - plan_id: basic
+                    plan_name: Basic Plan
+                    price_monthly: 4.99
+                    price_yearly: 49.99
+                    tier_level: 1
+                    features:
+                      - Unlimited tasks
+                      - Email import
+                      - Daily planning
+                  - plan_id: pro
+                    plan_name: Pro Plan
+                    price_monthly: 9.99
+                    price_yearly: 99.99
+                    tier_level: 2
+                    features:
+                      - Everything in Basic
+                      - Recurring tasks
+                      - Priority support
+                      - Advanced analytics
+                  - plan_id: enterprise
+                    plan_name: Enterprise Plan
+                    price_monthly: 29.99
+                    price_yearly: 299.99
+                    tier_level: 3
+                    features:
+                      - Everything in Pro
+                      - Team collaboration
+                      - API access
+                      - Custom integrations
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/checkout:
+    post:
+      summary: Create Plug&Pay checkout session
+      description: |
+        Creates a Plug&Pay checkout session for new subscription or plan upgrade.
+        Returns checkout URL for user to complete payment.
+      operationId: createCheckout
+      tags:
+        - Subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - plan_id
+                - cycle
+              properties:
+                plan_id:
+                  type: string
+                  enum: [basic, pro, enterprise]
+                  example: pro
+                cycle:
+                  type: string
+                  enum: [monthly, yearly]
+                  example: monthly
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  checkout_url:
+                    type: string
+                    format: uri
+                    description: Plug&Pay checkout URL to redirect user
+                    example: https://checkout.plugandpay.com/session/abc123
+                  session_id:
+                    type: string
+                    description: Checkout session ID for tracking
+                    example: cs_abc123def456
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: User already has active subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: You already have an active subscription. Use upgrade/downgrade instead.
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/upgrade:
+    post:
+      summary: Upgrade subscription plan (immediate effect)
+      description: |
+        Upgrades user to a higher-tier plan with immediate effect and prorated billing.
+        Proration is calculated by Plug&Pay API.
+      operationId: upgradeSubscription
+      tags:
+        - Subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - plan_id
+              properties:
+                plan_id:
+                  type: string
+                  enum: [basic, pro, enterprise]
+                  description: Target plan (must be higher tier than current)
+                  example: pro
+      responses:
+        '200':
+          description: Upgrade successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Successfully upgraded to Pro Plan
+                  subscription:
+                    $ref: '#/components/schemas/SubscriptionResponse/properties/subscription'
+                  prorated_charge:
+                    type: number
+                    format: float
+                    description: Amount charged for remainder of billing period
+                    example: 5.12
+        '400':
+          description: Invalid upgrade (not a higher tier or invalid plan)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_upgrade:
+                  summary: Target plan is not an upgrade
+                  value:
+                    success: false
+                    error: Selected plan is not an upgrade from your current plan
+                invalid_plan:
+                  summary: Plan does not exist
+                  value:
+                    success: false
+                    error: Invalid plan_id specified
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Payment required (Plug&Pay charge failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: Payment failed. Please update your payment method.
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/downgrade:
+    post:
+      summary: Downgrade subscription plan (scheduled for next renewal)
+      description: |
+        Schedules a downgrade to a lower-tier plan effective at next renewal date.
+        User retains current plan features until renewal.
+      operationId: downgradeSubscription
+      tags:
+        - Subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - plan_id
+              properties:
+                plan_id:
+                  type: string
+                  enum: [basic, pro, enterprise]
+                  description: Target plan (must be lower tier than current)
+                  example: basic
+      responses:
+        '200':
+          description: Downgrade scheduled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Your plan will change to Basic Plan on March 15, 2025
+                  effective_date:
+                    type: string
+                    format: date-time
+                    description: When downgrade will take effect (renewal date)
+                    example: '2025-03-15T00:00:00Z'
+                  scheduled_plan:
+                    type: string
+                    example: basic
+        '400':
+          description: Invalid downgrade (not a lower tier or invalid plan)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_downgrade:
+                  summary: Target plan is not a downgrade
+                  value:
+                    success: false
+                    error: Selected plan is not a downgrade from your current plan
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/cancel:
+    post:
+      summary: Cancel subscription (effective at period end)
+      description: |
+        Cancels user subscription with access retained until end of current billing period.
+        User can reactivate before period ends.
+      operationId: cancelSubscription
+      tags:
+        - Subscription
+      responses:
+        '200':
+          description: Subscription canceled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Subscription canceled. You retain access until March 15, 2025
+                  cancels_on:
+                    type: string
+                    format: date-time
+                    description: When access will end
+                    example: '2025-03-15T00:00:00Z'
+        '400':
+          description: No active subscription to cancel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: No active subscription found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /subscription/reactivate:
+    post:
+      summary: Reactivate canceled subscription
+      description: |
+        Reactivates a canceled subscription before it expires. Only works during grace period.
+      operationId: reactivateSubscription
+      tags:
+        - Subscription
+      responses:
+        '200':
+          description: Subscription reactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Subscription reactivated. Renews on March 15, 2025
+                  subscription:
+                    $ref: '#/components/schemas/SubscriptionResponse/properties/subscription'
+        '400':
+          description: Cannot reactivate (not canceled or already expired)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_canceled:
+                  summary: Subscription not canceled
+                  value:
+                    success: false
+                    error: Subscription is not canceled
+                already_expired:
+                  summary: Grace period expired
+                  value:
+                    success: false
+                    error: Subscription has expired. Please create a new subscription.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /webhooks/plugpay:
+    post:
+      summary: Plug&Pay webhook endpoint
+      description: |
+        Receives subscription events from Plug&Pay (subscription.created, subscription.updated,
+        subscription.canceled, subscription.expired). Validates HMAC signature and processes
+        events idempotently.
+      operationId: handlePlugPayWebhook
+      tags:
+        - Webhooks
+      security: []
+      parameters:
+        - name: x-plugpay-signature
+          in: header
+          required: true
+          schema:
+            type: string
+          description: HMAC signature for webhook validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_id
+                - event_type
+                - subscription_id
+                - data
+              properties:
+                event_id:
+                  type: string
+                  description: Unique event identifier (for idempotency)
+                  example: evt_abc123def456
+                event_type:
+                  type: string
+                  enum:
+                    - subscription.created
+                    - subscription.updated
+                    - subscription.canceled
+                    - subscription.expired
+                  example: subscription.updated
+                subscription_id:
+                  type: string
+                  description: Plug&Pay subscription ID
+                  example: sub_abc123def456
+                data:
+                  type: object
+                  description: Subscription data from Plug&Pay
+                  properties:
+                    plan_id:
+                      type: string
+                      example: pro
+                    status:
+                      type: string
+                      example: active
+                    renewal_date:
+                      type: string
+                      format: date-time
+                      example: '2025-03-15T00:00:00Z'
+                    price:
+                      type: number
+                      format: float
+                      example: 9.99
+                    cycle:
+                      type: string
+                      example: monthly
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [processed, already_processed]
+                    example: processed
+        '401':
+          description: Invalid signature
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+        '500':
+          description: Processing error (triggers Plug&Pay retry)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal server error
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie
+
+  schemas:
+    SubscriptionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        subscription:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [trial, active, canceled, expired]
+            plan_id:
+              type: string
+              nullable: true
+            plan_name:
+              type: string
+            price:
+              type: number
+              format: float
+              nullable: true
+            cycle:
+              type: string
+              enum: [monthly, yearly]
+              nullable: true
+            renewal_date:
+              type: string
+              format: date-time
+              nullable: true
+            trial_end_date:
+              type: string
+              format: date-time
+              nullable: true
+            trial_days_remaining:
+              type: integer
+              nullable: true
+            cancels_on:
+              type: string
+              format: date-time
+              nullable: true
+            plugpay_subscription_id:
+              type: string
+              nullable: true
+            updated_at:
+              type: string
+              format: date-time
+
+    Plan:
+      type: object
+      properties:
+        plan_id:
+          type: string
+        plan_name:
+          type: string
+        price_monthly:
+          type: number
+          format: float
+        price_yearly:
+          type: number
+          format: float
+        tier_level:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: User not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Unauthorized. Please log in.
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: Missing required parameter 'plan_id'
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: An unexpected error occurred. Please try again.
