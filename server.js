@@ -353,6 +353,18 @@ async function logWebhookEvent(webhookData, pool) {
 }
 
 // ========================================
+// AUTHENTICATION MIDDLEWARE
+// ========================================
+
+// Middleware to require user login for protected routes
+function requireLogin(req, res, next) {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  next();
+}
+
+// ========================================
 // PLUG&PAY SUBSCRIPTION HELPER FUNCTIONS
 // Feature: 057-dan-gaan-we
 // ========================================
