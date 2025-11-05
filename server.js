@@ -3719,6 +3719,53 @@ app.get('/api/subscription/status', async (req, res) => {
   }
 });
 
+// T015: GET /api/subscription - Fetch user subscription details
+app.get('/api/subscription', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+
+    const result = await pool.query(`
+      SELECT
+        u.subscription_status,
+        u.subscription_plan,
+        u.subscription_renewal_date,
+        u.subscription_price,
+        u.subscription_cycle,
+        u.trial_end_date,
+        u.plugpay_subscription_id,
+        p.plan_name,
+        p.tier_level,
+        p.features
+      FROM users u
+      LEFT JOIN subscription_plans p ON u.subscription_plan = p.plan_id
+      WHERE u.id = $1
+    `, [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = result.rows[0];
+    const subscription = {
+      status: user.subscription_status || 'trial',
+      plan: user.subscription_plan,
+      plan_name: user.plan_name,
+      tier_level: user.tier_level,
+      renewal_date: user.subscription_renewal_date,
+      price: user.subscription_price,
+      cycle: user.subscription_cycle,
+      trial_end_date: user.trial_end_date,
+      days_remaining: calculateTrialDaysRemaining(user.trial_end_date),
+      features: user.features || []
+    };
+
+    res.json(subscription);
+  } catch (error) {
+    console.error('Get subscription error:', error);
+    res.status(500).json({ error: 'Failed to fetch subscription' });
+  }
+});
+
 // T014: GET /api/admin/payment-configurations - Admin: Get all payment configurations
 app.get('/api/admin/payment-configurations', async (req, res) => {
   try {
@@ -13543,72 +13590,6 @@ app.get('/api/debug/database-columns', async (req, res) => {
     }
 });
 
-// Subscription API Endpoints
-// GET /api/subscription/plans - Get available subscription plans
-app.get('/api/subscription/plans', (req, res) => {
-    try {
-        // Static subscription plans data as defined in data-model.md
-        const SUBSCRIPTION_PLANS = [
-            {
-                id: 'trial_14_days',
-                name: '14 dagen gratis',
-                description: 'Probeer alle functies gratis uit',
-                price: 0,
-                billing_cycle: 'trial',
-                trial_days: 14,
-                features: ['Alle functies', 'Onbeperkte taken', 'Email import']
-            },
-            {
-                id: 'monthly_7',
-                name: 'Maandelijks',
-                description: 'Per maand, stop wanneer je wilt',
-                price: 7,
-                billing_cycle: 'monthly',
-                trial_days: 0,
-                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support']
-            },
-            {
-                id: 'yearly_70',
-                name: 'Jaarlijks',
-                description: 'Bespaar €14 per jaar',
-                price: 70,
-                billing_cycle: 'yearly',
-                trial_days: 0,
-                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', '2 maanden gratis']
-            },
-            {
-                id: 'monthly_8',
-                name: 'No Limit Maandelijks',
-                description: 'Ongelimiteerde bijlages per maand',
-                price: 8,
-                billing_cycle: 'monthly',
-                trial_days: 0,
-                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte']
-            },
-            {
-                id: 'yearly_80',
-                name: 'No Limit Jaarlijks',
-                description: 'Ongelimiteerde bijlages - bespaar €16 per jaar',
-                price: 80,
-                billing_cycle: 'yearly',
-                trial_days: 0,
-                features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte', '2 maanden gratis']
-            }
-        ];
-
-        res.json({
-            success: true,
-            plans: SUBSCRIPTION_PLANS
-        });
-    } catch (error) {
-        console.error('Error fetching subscription plans:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Internal server error'
-        });
-    }
-});
-
 // POST /api/subscription/select - Select subscription plan
 app.post('/api/subscription/select', requireAuth, async (req, res) => {
     try {
@@ -15259,53 +15240,6 @@ app.post('/api/admin/cleanup-archived', requireAdmin, async (req, res) => {
 // SUBSCRIPTION MANAGEMENT API ENDPOINTS
 // Feature: 057-dan-gaan-we
 // ========================================
-
-// T015: GET /api/subscription - Fetch user subscription details
-app.get('/api/subscription', requireLogin, async (req, res) => {
-  try {
-    const userId = getCurrentUserId(req);
-
-    const result = await pool.query(`
-      SELECT
-        u.subscription_status,
-        u.subscription_plan,
-        u.subscription_renewal_date,
-        u.subscription_price,
-        u.subscription_cycle,
-        u.trial_end_date,
-        u.plugpay_subscription_id,
-        p.plan_name,
-        p.tier_level,
-        p.features
-      FROM users u
-      LEFT JOIN subscription_plans p ON u.subscription_plan = p.plan_id
-      WHERE u.id = $1
-    `, [userId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = result.rows[0];
-    const subscription = {
-      status: user.subscription_status || 'trial',
-      plan: user.subscription_plan,
-      plan_name: user.plan_name,
-      tier_level: user.tier_level,
-      renewal_date: user.subscription_renewal_date,
-      price: user.subscription_price,
-      cycle: user.subscription_cycle,
-      trial_end_date: user.trial_end_date,
-      days_remaining: calculateTrialDaysRemaining(user.trial_end_date),
-      features: user.features || []
-    };
-
-    res.json(subscription);
-  } catch (error) {
-    console.error('Get subscription error:', error);
-    res.status(500).json({ error: 'Failed to fetch subscription' });
-  }
-});
 
 // T016: GET /api/subscription/plans - Fetch available subscription plans
 app.get('/api/subscription/plans', requireLogin, async (req, res) => {
