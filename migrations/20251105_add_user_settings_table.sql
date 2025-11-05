@@ -7,7 +7,7 @@ BEGIN;
 -- Create user_settings table
 CREATE TABLE IF NOT EXISTS user_settings (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES gebruikers(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     settings JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),

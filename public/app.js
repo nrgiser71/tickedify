@@ -7958,36 +7958,36 @@ class Taakbeheer {
             settingsItem.classList.add('actief');
         }
 
-        // Update page title
-        document.getElementById('page-title').textContent = 'Settings';
+        // Restore normal container structure if needed
+        this.restoreNormalContainer();
 
-        // Hide task input
+        // Update page title
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = 'Settings';
+        }
+
+        // Hide task input container (not needed for Settings)
         const taakInputContainer = document.getElementById('taak-input-container');
         if (taakInputContainer) {
             taakInputContainer.style.display = 'none';
         }
 
-        // Restore normal container structure if needed
-        this.restoreNormalContainer();
-
         // Get content container
         const container = document.getElementById('takenLijst');
         if (!container) return;
 
-        // Show settings interface
+        // Show settings interface with simple Tickedify styling
         container.innerHTML = `
-            <div class="settings-interface">
-                <div class="settings-container">
-                    <h2><i class="fas fa-cog"></i> Settings</h2>
-                    <p class="settings-subtitle">Manage your Tickedify preferences</p>
+            <div class="settings-wrapper">
+                <p class="settings-description">Manage your Tickedify preferences</p>
 
-                    <div class="settings-content">
-                        <p class="settings-placeholder">Settings will be available here</p>
-                    </div>
+                <div class="settings-placeholder-box">
+                    <p class="settings-placeholder">Settings will be available here</p>
+                </div>
 
-                    <div class="settings-footer">
-                        <button id="save-settings-btn" class="btn-primary">Save</button>
-                    </div>
+                <div class="settings-actions">
+                    <button id="save-settings-btn" class="btn-primary-settings">Save</button>
                 </div>
             </div>
         `;

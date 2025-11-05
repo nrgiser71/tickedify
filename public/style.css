@@ -1722,105 +1722,84 @@ mark {
    Settings interface styling - Feature 056-je-mag-een
    ============================================================================ */
 
-.settings-interface {
-    padding: 20px;
+.settings-wrapper {
+    max-width: 700px;
 }
 
-.settings-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: var(--macos-gray-1);
-    border-radius: var(--macos-radius-card);
-    padding: 30px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.settings-container h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--macos-text-primary);
-    margin: 0 0 8px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.settings-container h2 i {
-    color: var(--soft-blue);
-}
-
-.settings-subtitle {
+.settings-description {
     font-size: 14px;
     color: var(--macos-text-secondary);
-    margin: 0 0 30px 0;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
 }
 
-.settings-content {
-    min-height: 200px;
-    padding: 20px;
-    background: white;
-    border-radius: var(--macos-radius-button);
-    border: 1px solid var(--macos-gray-4);
-    margin-bottom: 20px;
+.settings-placeholder-box {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--macos-bg-secondary);
+    border-radius: var(--macos-radius-medium);
+    padding: 40px 20px;
+    margin-bottom: 24px;
 }
 
 .settings-placeholder {
     text-align: center;
-    color: var(--macos-text-secondary);
-    font-size: 16px;
-    padding: 60px 20px;
+    color: var(--macos-text-tertiary);
+    font-size: 15px;
     font-style: italic;
 }
 
-.settings-footer {
+.settings-actions {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
 }
 
-.settings-footer .btn-primary {
-    background: var(--soft-blue);
+.btn-primary-settings {
+    background: var(--macos-blue);
     color: white;
     border: none;
-    padding: 10px 24px;
+    padding: 8px 20px;
     border-radius: var(--macos-radius-button);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
 }
 
-.settings-footer .btn-primary:hover {
-    background: var(--soft-blue-hover);
+.btn-primary-settings:hover {
+    background: var(--macos-blue-hover);
+    transform: translateY(-1px);
 }
 
-.settings-footer .btn-primary:active {
-    background: var(--soft-blue-active);
+.btn-primary-settings:active {
+    background: var(--macos-blue-hover);
+    transform: translateY(0);
 }
 
-.settings-footer .btn-primary:disabled {
+.btn-primary-settings:disabled {
     background: var(--macos-gray-5);
+    color: var(--macos-gray-2);
     cursor: not-allowed;
     opacity: 0.5;
 }
 
 /* Responsive adjustments for settings */
 @media (max-width: 768px) {
-    .settings-interface {
-        padding: 16px;
+    .settings-wrapper {
+        max-width: 100%;
     }
 
-    .settings-container {
-        padding: 20px;
-    }
-
-    .settings-container h2 {
-        font-size: 20px;
+    .settings-placeholder-box {
+        min-height: 200px;
+        padding: 30px 16px;
     }
 
     .settings-placeholder {
         font-size: 14px;
-        padding: 40px 16px;
     }
 }
 

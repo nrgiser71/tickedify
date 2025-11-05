@@ -211,7 +211,7 @@ This task list implements Settings screen infrastructure with:
   - Push: `git push origin 056-je-mag-een`
   - Verify: No uncommitted changes remain
 
-- [ ] **T020** Merge to staging and deploy
+- [x] **T020** Merge to staging and deploy
   - Checkout staging: `git checkout staging`
   - Merge: `git merge 056-je-mag-een --no-edit`
   - Push: `git push origin staging`
