@@ -10130,6 +10130,11 @@ body.dagkalender-focus-active {
     border-left: 4px solid #ff9800;
 }
 
+.subscription-info.subscription-beta {
+    background: #f3e5f5;
+    border-left: 4px solid #9c27b0;
+}
+
 .subscription-info.subscription-expired {
     background: #ffebee;
     border-left: 4px solid #f44336;

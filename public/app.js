@@ -8125,6 +8125,8 @@ class Taakbeheer {
             html += this.renderActiveSubscription(subscription);
         } else if (subscription.status === 'canceled') {
             html += this.renderCanceledSubscription(subscription);
+        } else if (subscription.status === 'beta_expired') {
+            html += this.renderBetaTesterStatus(subscription);
         } else if (subscription.status === 'expired') {
             html += `
                 <div class="subscription-info subscription-expired">
@@ -8189,6 +8191,17 @@ class Taakbeheer {
             </div>
             <div class="subscription-actions">
                 <button class="btn-subscription-primary" onclick="app.handleReactivate()">Reactivate Subscription</button>
+            </div>
+        `;
+    }
+
+    // T028a: Render beta tester status
+    renderBetaTesterStatus(subscription) {
+        return `
+            <div class="subscription-info subscription-beta">
+                <p class="subscription-status-text">Beta Tester Access</p>
+                <p class="subscription-message">You have full access to Tickedify as a beta tester. Thank you for helping us improve the platform!</p>
+                <p class="subscription-message" style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">When the subscription system launches, you'll be able to choose a plan from this settings page.</p>
             </div>
         `;
     }
