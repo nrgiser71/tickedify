@@ -8606,17 +8606,12 @@ class Taakbeheer {
         btn.disabled = true;
 
         try {
-            // Get user email from account data (already fetched)
-            const accountData = await this.fetchUserAccount();
-            if (!accountData || !accountData.name) {
-                throw new Error('Unable to fetch user email');
-            }
-
+            // User is authenticated via session - no need to send email
             const response = await fetch('/api/account/password-reset', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ email: accountData.name })
+                credentials: 'include'
+                // No body needed - user is authenticated via session
             });
 
             const data = await response.json();

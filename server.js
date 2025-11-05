@@ -3962,28 +3962,24 @@ app.get('/api/account', requireLogin, async (req, res) => {
 });
 
 // T017: POST /api/account/password-reset - Request password reset email
-app.post('/api/account/password-reset', async (req, res) => {
+app.post('/api/account/password-reset', requireLogin, async (req, res) => {
   try {
-    const { email } = req.body;
+    const userId = req.session.userId;
 
-    if (!email || !email.trim()) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
-    }
-
-    // Look up user by email (ALWAYS return 200 even if not found - security)
+    // Look up user by session user_id
     const userResult = await pool.query(
-      'SELECT id, email FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
+      'SELECT id, email FROM users WHERE id = $1',
+      [userId]
     );
 
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Check if user found (always true here since requireLogin checks session)
     if (userResult.rows.length > 0) {
-      const user = userResult.rows[0];
 
       // Rate limiting: Check count of pending tokens in last hour
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
