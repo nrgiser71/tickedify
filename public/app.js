@@ -7998,6 +7998,9 @@ class Taakbeheer {
         // Load user settings
         this.loadUserSettings();
 
+        // T025: Load account block (Feature 058 - Account Settings Block)
+        this.loadAccountBlock();
+
         // Load and render subscription
         this.loadSubscriptionBlock();
 
@@ -8509,6 +8512,149 @@ class Taakbeheer {
         } catch (error) {
             console.error('Reactivate error:', error);
             toast.error(error.message);
+        }
+    }
+
+    // ========================================
+    // ACCOUNT SETTINGS FUNCTIONS
+    // Feature: 058-dan-mag-je (Account Settings Block)
+    // ========================================
+
+    // T022: Fetch user account information
+    async fetchUserAccount() {
+        try {
+            const response = await fetch('/api/account', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const accountInfo = await response.json();
+            return accountInfo;
+        } catch (error) {
+            console.error('Error fetching account:', error);
+            return null;
+        }
+    }
+
+    // T023: Render account block HTML
+    renderAccountBlock(accountData) {
+        if (!accountData) {
+            return `
+                <div class="account-block">
+                    <div class="account-header">
+                        <h3>Account</h3>
+                    </div>
+                    <div class="account-error">
+                        <p>Failed to load account information</p>
+                        <button class="btn-account-retry" onclick="app.loadAccountBlock()">Retry</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="account-block">
+                <div class="account-header">
+                    <h3>Account</h3>
+                </div>
+                <div class="account-details">
+                    <div class="account-info-row">
+                        <span class="account-label">Name:</span>
+                        <span class="account-value">${accountData.name || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-row">
+                        <span class="account-label">Member since:</span>
+                        <span class="account-value">${accountData.member_since || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-row">
+                        <span class="account-label">Last login:</span>
+                        <span class="account-value">${accountData.last_login_relative || 'Never'}</span>
+                    </div>
+                    <div class="account-statistics">
+                        <div class="account-stat">
+                            <span class="stat-number">${accountData.total_tasks_created || 0}</span>
+                            <span class="stat-label">Tasks Created</span>
+                        </div>
+                        <div class="account-stat">
+                            <span class="stat-number">${accountData.total_tasks_completed || 0}</span>
+                            <span class="stat-label">Tasks Completed</span>
+                        </div>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn-reset-password" id="reset-password-btn">
+                            Reset Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // T024: Handle password reset click
+    async handlePasswordResetClick() {
+        const btn = document.getElementById('reset-password-btn');
+        if (!btn) return;
+
+        // Show loading state
+        const originalText = btn.textContent;
+        btn.textContent = 'Sending...';
+        btn.disabled = true;
+
+        try {
+            // Get user email from account data (already fetched)
+            const accountData = await this.fetchUserAccount();
+            if (!accountData || !accountData.name) {
+                throw new Error('Unable to fetch user email');
+            }
+
+            const response = await fetch('/api/account/password-reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email: accountData.name })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    const retryMinutes = Math.ceil(data.retry_after_seconds / 60);
+                    throw new Error(`Too many requests. Try again in ${retryMinutes} minutes.`);
+                }
+                throw new Error(data.error || 'Failed to send reset email');
+            }
+
+            toast.success('Password reset email sent. Check your inbox.');
+        } catch (error) {
+            console.error('Password reset error:', error);
+            toast.error(error.message);
+        } finally {
+            // Restore button state
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // Load account block into settings screen
+    async loadAccountBlock() {
+        const accountData = await this.fetchUserAccount();
+        const accountBlockHtml = this.renderAccountBlock(accountData);
+
+        // Insert BEFORE subscription block
+        const subscriptionBlock = document.getElementById('subscription-block');
+        if (subscriptionBlock) {
+            subscriptionBlock.insertAdjacentHTML('beforebegin', accountBlockHtml);
+
+            // Bind password reset button
+            const resetBtn = document.getElementById('reset-password-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => this.handlePasswordResetClick());
+            }
         }
     }
 

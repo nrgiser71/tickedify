@@ -150,10 +150,61 @@ margin-bottom: 12px;
 <p class="changelog-subtitle">All new features, improvements, and bug fixes</p>
 </div>
 
+<!-- Version 0.21.93 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-latest">v0.21.93</span>
+<span class="version-date">November 5, 2025</span>
+</div>
+<div class="changes-list">
+
+<div class="change-category">
+<div class="category-title">⚡ Features</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Account Settings Block: View comprehensive account information including name, member since date, last login timestamp, and task statistics directly from Settings screen</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Password Reset: Reset your password via email with secure token validation (24-hour expiration) - accessible from Settings Account block</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Task Statistics: Track total tasks created and completed with live counters displayed prominently in Account block</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Last Login Tracking: Automatic timestamp recording on each login with human-readable relative time display (e.g., "2 hours ago")</span>
+</div>
+</div>
+
+<div class="change-category">
+<div class="category-title">🎯 Improvements</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Database: Extended users table with last_login, total_tasks_created, and total_tasks_completed columns for comprehensive account tracking</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Security: Implemented password_reset_tokens table with SHA-256 hashing, expiration tracking, and single-use enforcement</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Rate Limiting: Protection against password reset abuse with maximum 3 requests per hour per user</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Email Templates: Professional HTML email with plain text fallback for password reset notifications via Mailgun</span>
+</div>
+</div>
+
+</div>
+</div>
+
 <!-- Version 0.21.92 -->
 <div class="version-block">
 <div class="version-header">
-<span class="version-badge badge-latest">v0.21.92</span>
+<span class="version-badge badge-fix">v0.21.92</span>
 <span class="version-date">November 5, 2025</span>
 </div>
 <div class="changes-list">

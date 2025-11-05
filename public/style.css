@@ -10088,6 +10088,158 @@ body.dagkalender-focus-active {
    ======================================== */
 
 /* T039: Subscription block styling */
+/* ========================================
+   ACCOUNT SETTINGS BLOCK
+   Feature: 058-dan-mag-je (Account Settings Block)
+   ======================================== */
+
+.account-block {
+    background: linear-gradient(135deg, #f5f7fa 0%, #fff 100%);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px 0;
+    border-left: 4px solid var(--macos-blue);
+}
+
+.account-header h3 {
+    margin: 0 0 20px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.account-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.account-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.account-info-row:last-of-type {
+    border-bottom: none;
+}
+
+.account-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.account-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+.account-statistics {
+    display: flex;
+    gap: 24px;
+    padding: 20px 0;
+    justify-content: center;
+    background: rgba(0, 122, 255, 0.05);
+    border-radius: 6px;
+    margin: 12px 0;
+}
+
+.account-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--macos-blue);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.account-actions {
+    padding-top: 12px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-reset-password {
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-reset-password:hover {
+    background: #005ecb;
+}
+
+.btn-reset-password:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.account-error {
+    padding: 20px;
+    text-align: center;
+    color: #f44336;
+}
+
+.account-error p {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+}
+
+.btn-account-retry {
+    background: var(--macos-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-account-retry:hover {
+    background: #005ecb;
+}
+
+/* Responsive adjustments for account block */
+@media (max-width: 768px) {
+    .account-statistics {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .stat-number {
+        font-size: 24px;
+    }
+}
+
 .subscription-block {
     background: white;
     border: 1px solid #e0e0e0;

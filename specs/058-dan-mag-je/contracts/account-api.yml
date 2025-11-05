@@ -1,0 +1,340 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Account Settings API
+  description: API endpoints for user account information and password reset functionality
+  version: 0.21.93
+  contact:
+    name: Tickedify Support
+    email: info@tickedify.com
+
+servers:
+  - url: https://dev.tickedify.com/api
+    description: Staging environment
+  - url: https://tickedify.com/api
+    description: Production environment
+
+tags:
+  - name: Account
+    description: User account information and statistics
+  - name: Password Reset
+    description: Password reset flow endpoints
+
+paths:
+  /account:
+    get:
+      summary: Get account information
+      description: Retrieve authenticated user's account details including name, creation date, last login, and task statistics
+      tags:
+        - Account
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Account information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountInfo'
+              examples:
+                active_user:
+                  summary: Active user with task history
+                  value:
+                    id: 42
+                    name: "Jan Buskens"
+                    created_at: "2025-10-01T10:30:00.000Z"
+                    member_since: "October 2025"
+                    last_login: "2025-11-05T08:15:00.000Z"
+                    last_login_relative: "3 hours ago"
+                    total_tasks_created: 128
+                    total_tasks_completed: 67
+                new_user:
+                  summary: Newly registered user
+                  value:
+                    id: 99
+                    name: "New User"
+                    created_at: "2025-11-05T11:00:00.000Z"
+                    member_since: "November 2025"
+                    last_login: null
+                    last_login_relative: "Never"
+                    total_tasks_created: 0
+                    total_tasks_completed: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /account/password-reset:
+    post:
+      summary: Request password reset
+      description: Generate password reset token and send email with reset link. Rate limited to 3 requests per hour per user.
+      tags:
+        - Password Reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+            examples:
+              valid_request:
+                summary: Valid reset request
+                value:
+                  email: "jan@buskens.be"
+      responses:
+        '200':
+          description: Password reset email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+              example:
+                message: "Password reset email sent. Check your inbox."
+                expires_in_hours: 24
+        '400':
+          description: Invalid request (missing/invalid email)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Email address is required"
+        '404':
+          description: User not found (returns same as 200 for security - prevent email enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetResponse'
+              example:
+                message: "Password reset email sent. Check your inbox."
+                expires_in_hours: 24
+        '429':
+          description: Too many reset requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+              example:
+                error: "Too many reset requests. Please wait before trying again."
+                retry_after_seconds: 1800
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /account/password-reset/confirm:
+    post:
+      summary: Confirm password reset
+      description: Validate reset token and update user's password. Token must be valid (not expired, not used).
+      tags:
+        - Password Reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+            examples:
+              valid_confirm:
+                summary: Valid token and new password
+                value:
+                  token: "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890"
+                  new_password: "NewSecurePassword123!"
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetConfirmResponse'
+              example:
+                message: "Password reset successful. You can now log in with your new password."
+        '400':
+          description: Invalid request (missing fields, weak password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_token:
+                  summary: Missing token
+                  value:
+                    error: "Reset token is required"
+                weak_password:
+                  summary: Password too weak
+                  value:
+                    error: "Password must be at least 8 characters"
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                expired_token:
+                  summary: Token expired
+                  value:
+                    error: "Reset token has expired. Please request a new one."
+                used_token:
+                  summary: Token already used
+                  value:
+                    error: "Reset token has already been used."
+                invalid_token:
+                  summary: Token not found
+                  value:
+                    error: "Invalid reset token."
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie
+
+  schemas:
+    AccountInfo:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - member_since
+        - total_tasks_created
+        - total_tasks_completed
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 42
+        name:
+          type: string
+          description: User's full name
+          example: "Jan Buskens"
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp (ISO 8601)
+          example: "2025-10-01T10:30:00.000Z"
+        member_since:
+          type: string
+          description: Human-readable account creation date
+          example: "October 2025"
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last login timestamp (ISO 8601), null if never logged in
+          example: "2025-11-05T08:15:00.000Z"
+        last_login_relative:
+          type: string
+          description: Human-readable relative time since last login
+          example: "3 hours ago"
+        total_tasks_created:
+          type: integer
+          minimum: 0
+          description: Lifetime count of tasks created
+          example: 128
+        total_tasks_completed:
+          type: integer
+          minimum: 0
+          description: Lifetime count of tasks completed
+          example: 67
+
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "jan@buskens.be"
+
+    PasswordResetResponse:
+      type: object
+      required:
+        - message
+        - expires_in_hours
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Password reset email sent. Check your inbox."
+        expires_in_hours:
+          type: integer
+          description: Token expiration time in hours
+          example: 24
+
+    PasswordResetConfirm:
+      type: object
+      required:
+        - token
+        - new_password
+      properties:
+        token:
+          type: string
+          minLength: 64
+          maxLength: 64
+          pattern: '^[a-f0-9]{64}$'
+          description: Password reset token (64 character hex string)
+          example: "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890"
+        new_password:
+          type: string
+          minLength: 8
+          description: New password (minimum 8 characters)
+          example: "NewSecurePassword123!"
+
+    PasswordResetConfirmResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Password reset successful. You can now log in with your new password."
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "An error occurred"
+
+    RateLimitError:
+      type: object
+      required:
+        - error
+        - retry_after_seconds
+      properties:
+        error:
+          type: string
+          description: Rate limit error message
+          example: "Too many reset requests. Please wait before trying again."
+        retry_after_seconds:
+          type: integer
+          description: Number of seconds until rate limit resets
+          example: 1800
+
+  responses:
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not authenticated"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "An unexpected error occurred"

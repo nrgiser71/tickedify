@@ -365,6 +365,115 @@ function requireLogin(req, res, next) {
 }
 
 // ========================================
+// PASSWORD RESET HELPER FUNCTIONS
+// Feature: 058-dan-mag-je (Account Settings Block)
+// ========================================
+
+// Generate cryptographically secure random token (64 hex characters)
+function generatePasswordResetToken() {
+  const crypto = require('crypto');
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// Hash token with SHA-256 for database storage (security best practice)
+function hashToken(token) {
+  const crypto = require('crypto');
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+// Send password reset email via Mailgun
+async function sendPasswordResetEmail(userEmail, userName, resetToken) {
+  try {
+    const formData = require('form-data');
+    const Mailgun = require('mailgun.js');
+    const mailgun = new Mailgun(formData);
+
+    const mg = mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY
+    });
+
+    const resetLink = `https://dev.tickedify.com/reset-password?token=${resetToken}`;
+
+    // HTML email template
+    const htmlBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #007aff 0%, #0051d5 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; }
+          .button { display: inline-block; background: #007aff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+          .footer { color: #666; font-size: 14px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0;">Reset Your Password</h1>
+          </div>
+          <div class="content">
+            <p>Hi ${userName},</p>
+            <p>You requested a password reset for your Tickedify account. Click the button below to create a new password:</p>
+            <p style="text-align: center;">
+              <a href="${resetLink}" class="button">Reset Password</a>
+            </p>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #007aff;">${resetLink}</p>
+            <div class="warning">
+              <strong>⏱ Important:</strong> This link will expire in 24 hours for security reasons.
+            </div>
+            <div class="footer">
+              <p><strong>Didn't request this?</strong> You can safely ignore this email. Your password won't be changed unless you click the link above.</p>
+              <p>If you're having trouble, contact support at info@tickedify.com</p>
+              <p style="color: #999; font-size: 12px;">Tickedify - Master Your Time</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Plain text fallback
+    const textBody = `
+Hi ${userName},
+
+You requested a password reset for your Tickedify account.
+
+To reset your password, visit this link:
+${resetLink}
+
+This link will expire in 24 hours for security reasons.
+
+If you didn't request this password reset, you can safely ignore this email. Your password won't be changed unless you click the link above.
+
+Need help? Contact us at info@tickedify.com
+
+Tickedify - Master Your Time
+    `.trim();
+
+    const messageData = {
+      from: 'Tickedify <noreply@mg.tickedify.com>',
+      to: userEmail,
+      subject: 'Reset your Tickedify password',
+      text: textBody,
+      html: htmlBody
+    };
+
+    const result = await mg.messages.create('mg.tickedify.com', messageData);
+    console.log(`✅ Password reset email sent to ${userEmail} (ID: ${result.id})`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send password reset email:', error);
+    throw new Error('Failed to send password reset email');
+  }
+}
+
+// ========================================
 // PLUG&PAY SUBSCRIPTION HELPER FUNCTIONS
 // Feature: 057-dan-gaan-we
 // ========================================
@@ -1376,8 +1485,14 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
             'taak',
             userId
         ]);
-        
+
         const createdTask = result.rows[0];
+
+        // T020: Increment total_tasks_created counter (Feature 058 - Account Settings Block)
+        await pool.query(
+            'UPDATE users SET total_tasks_created = total_tasks_created + 1 WHERE id = $1',
+            [userId]
+        );
 
         // Feature 049: Process attachments if requested (T015)
         let attachmentResult = null;
@@ -3323,9 +3438,9 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
 
-        // Update last login
+        // T019: Update last login (Feature 058 - Account Settings Block)
         await pool.query(
-            'UPDATE users SET laatste_login = CURRENT_TIMESTAMP WHERE id = $1',
+            'UPDATE users SET last_login = NOW() WHERE id = $1',
             [user.id]
         );
 
@@ -3763,6 +3878,260 @@ app.get('/api/subscription', requireLogin, async (req, res) => {
   } catch (error) {
     console.error('Get subscription error:', error);
     res.status(500).json({ error: 'Failed to fetch subscription' });
+  }
+});
+
+// ========================================
+// ACCOUNT SETTINGS API ENDPOINTS
+// Feature: 058-dan-mag-je (Account Settings Block)
+// ========================================
+
+// T016: GET /api/account - Fetch authenticated user's account information
+app.get('/api/account', requireLogin, async (req, res) => {
+  try {
+    const userId = getCurrentUserId(req);
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        email as name,
+        aangemaakt as created_at,
+        last_login,
+        total_tasks_created,
+        total_tasks_completed
+      FROM users
+      WHERE id = $1
+    `, [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = result.rows[0];
+
+    // Format member_since as human-readable (e.g., "June 2024")
+    const createdDate = new Date(user.created_at);
+    const memberSince = createdDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long'
+    });
+
+    // Format last_login_relative as human-readable time ago
+    let lastLoginRelative = 'Never';
+    if (user.last_login) {
+      const lastLoginDate = new Date(user.last_login);
+      const now = new Date();
+      const diffMs = now - lastLoginDate;
+      const diffMinutes = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffMinutes < 1) {
+        lastLoginRelative = 'Just now';
+      } else if (diffMinutes < 60) {
+        lastLoginRelative = `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+      } else if (diffHours < 24) {
+        lastLoginRelative = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      } else if (diffDays < 7) {
+        lastLoginRelative = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      } else {
+        lastLoginRelative = lastLoginDate.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    }
+
+    const accountInfo = {
+      id: user.id,
+      name: user.name,
+      created_at: user.created_at,
+      member_since: memberSince,
+      last_login: user.last_login,
+      last_login_relative: lastLoginRelative,
+      total_tasks_created: user.total_tasks_created || 0,
+      total_tasks_completed: user.total_tasks_completed || 0
+    };
+
+    res.json(accountInfo);
+  } catch (error) {
+    console.error('Get account error:', error);
+    res.status(500).json({ error: 'Failed to fetch account information' });
+  }
+});
+
+// T017: POST /api/account/password-reset - Request password reset email
+app.post('/api/account/password-reset', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Look up user by email (ALWAYS return 200 even if not found - security)
+    const userResult = await pool.query(
+      'SELECT id, email FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
+
+    if (userResult.rows.length > 0) {
+      const user = userResult.rows[0];
+
+      // Rate limiting: Check count of pending tokens in last hour
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const tokenCountResult = await pool.query(`
+        SELECT COUNT(*) as count
+        FROM password_reset_tokens
+        WHERE user_id = $1
+          AND created_at > $2
+          AND used_at IS NULL
+      `, [user.id, oneHourAgo]);
+
+      const pendingTokenCount = parseInt(tokenCountResult.rows[0].count);
+
+      if (pendingTokenCount >= 3) {
+        // Calculate retry_after_seconds
+        const oldestTokenResult = await pool.query(`
+          SELECT created_at
+          FROM password_reset_tokens
+          WHERE user_id = $1
+            AND created_at > $2
+            AND used_at IS NULL
+          ORDER BY created_at ASC
+          LIMIT 1
+        `, [user.id, oneHourAgo]);
+
+        const oldestTokenTime = new Date(oldestTokenResult.rows[0].created_at);
+        const retryAfterMs = (oldestTokenTime.getTime() + 60 * 60 * 1000) - Date.now();
+        const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+
+        return res.status(429).json({
+          error: 'Too many password reset requests. Please try again later.',
+          retry_after_seconds: retryAfterSeconds
+        });
+      }
+
+      // Generate token
+      const resetToken = generatePasswordResetToken();
+      const tokenHash = hashToken(resetToken);
+
+      // Store token in database (expires in 24 hours)
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const ipAddress = req.ip || req.connection.remoteAddress;
+      const userAgent = req.get('user-agent') || null;
+
+      await pool.query(`
+        INSERT INTO password_reset_tokens
+        (user_id, token_hash, expires_at, ip_address, user_agent)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [user.id, tokenHash, expiresAt, ipAddress, userAgent]);
+
+      // Send email
+      await sendPasswordResetEmail(user.email, user.email, resetToken);
+    }
+
+    // ALWAYS return 200 even if user not found (security - don't leak user existence)
+    res.json({
+      message: 'Password reset email sent. Check your inbox.',
+      expires_in_hours: 24
+    });
+
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+// T018: POST /api/account/password-reset/confirm - Confirm password reset with token
+app.post('/api/account/password-reset/confirm', async (req, res) => {
+  try {
+    const { token, new_password } = req.body;
+
+    // Validate token format (64 hex characters)
+    if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
+      return res.status(400).json({ error: 'Invalid token format' });
+    }
+
+    // Validate password strength (at least 8 characters)
+    if (!new_password || new_password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    // Hash token and lookup in database
+    const tokenHash = hashToken(token);
+
+    const tokenResult = await pool.query(`
+      SELECT
+        prt.id as token_id,
+        prt.user_id,
+        prt.expires_at,
+        prt.used_at,
+        u.email
+      FROM password_reset_tokens prt
+      JOIN users u ON prt.user_id = u.id
+      WHERE prt.token_hash = $1
+    `, [tokenHash]);
+
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid or expired reset token' });
+    }
+
+    const tokenData = tokenResult.rows[0];
+
+    // Check if token is expired
+    if (new Date(tokenData.expires_at) < new Date()) {
+      return res.status(401).json({ error: 'Reset token has expired. Please request a new one.' });
+    }
+
+    // Check if token has been used
+    if (tokenData.used_at) {
+      return res.status(401).json({ error: 'Reset token has already been used.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // Update password and mark token as used (in transaction)
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        'UPDATE users SET wachtwoord = $1 WHERE id = $2',
+        [hashedPassword, tokenData.user_id]
+      );
+
+      await client.query(
+        'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1',
+        [tokenData.token_id]
+      );
+
+      await client.query('COMMIT');
+
+      console.log(`✅ Password reset successful for user ${tokenData.email}`);
+
+      res.json({
+        message: 'Password reset successful. You can now log in with your new password.'
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+  } catch (error) {
+    console.error('Password reset confirmation error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 
@@ -5707,6 +6076,12 @@ app.put('/api/taak/:id', async (req, res) => {
                 await pool.query('COMMIT');
                 archivedTaskId = id;
 
+                // T021: Increment total_tasks_completed counter (Feature 058 - Account Settings Block)
+                await pool.query(
+                    'UPDATE users SET total_tasks_completed = total_tasks_completed + 1 WHERE id = $1',
+                    [userId]
+                );
+
             } catch (archiveError) {
                 // ROLLBACK on any error
                 await pool.query('ROLLBACK');
@@ -7412,9 +7787,14 @@ app.post('/api/debug/add-single-action', async (req, res) => {
 
         }
 
-        
-        res.json({ 
-            success: true, 
+        // T020: Increment total_tasks_created counter (Feature 058 - Account Settings Block)
+        await pool.query(
+            'UPDATE users SET total_tasks_created = total_tasks_created + 1 WHERE id = $1',
+            [userId]
+        );
+
+        res.json({
+            success: true,
             message: 'Action added successfully',
             insertedId: result.rows[0].id,
             timestamp: new Date().toISOString()
