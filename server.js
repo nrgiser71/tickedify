@@ -14604,6 +14604,103 @@ app.post('/api/page-visit/:pageIdentifier', async (req, res) => {
 // Force redeploy Sat Oct 18 23:52:24 CEST 2025
 // Force redeploy Thu Oct 23 11:51:27 CEST 2025
 
+// ============================================================================
+// User Settings API - Feature 056-je-mag-een
+// ============================================================================
+
+// GET /api/user-settings - Retrieve user settings
+app.get('/api/user-settings', async (req, res) => {
+  try {
+    // Authentication required
+    if (!req.session.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized - please log in'
+      });
+    }
+
+    const userId = req.session.userId;
+
+    // Query user settings
+    const result = await pool.query(
+      'SELECT id, user_id, settings, created_at, updated_at FROM user_settings WHERE user_id = $1',
+      [userId]
+    );
+
+    // Return null if no settings exist yet, otherwise return settings object
+    const settings = result.rows.length > 0 ? result.rows[0] : null;
+
+    res.json({
+      success: true,
+      settings: settings
+    });
+
+  } catch (error) {
+    console.error('GET /api/user-settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Database connection failed'
+    });
+  }
+});
+
+// POST /api/user-settings - Create or update user settings (upsert)
+app.post('/api/user-settings', async (req, res) => {
+  try {
+    // Authentication required
+    if (!req.session.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized - please log in'
+      });
+    }
+
+    const userId = req.session.userId;
+
+    // Validate request body
+    if (!req.body.hasOwnProperty('settings')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: settings'
+      });
+    }
+
+    const settings = req.body.settings;
+
+    // Validate settings is an object (not array, not null)
+    if (typeof settings !== 'object' || Array.isArray(settings) || settings === null) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid settings format - must be an object'
+      });
+    }
+
+    // Upsert settings (INSERT or UPDATE)
+    const result = await pool.query(
+      `INSERT INTO user_settings (user_id, settings, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         settings = $2,
+         updated_at = NOW()
+       RETURNING id, user_id, settings, created_at, updated_at`,
+      [userId, JSON.stringify(settings)]
+    );
+
+    res.json({
+      success: true,
+      settings: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('POST /api/user-settings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Database connection failed'
+    });
+  }
+});
+
 // 404 handler - MUST be after all routes!
 app.use((req, res) => {
     res.status(404).json({ error: `Route ${req.path} not found` });

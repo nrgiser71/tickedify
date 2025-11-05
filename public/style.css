@@ -253,6 +253,11 @@ body {
     margin-top: 20px;
 }
 
+/* Extra ruimte tussen Search en Settings - Feature 056 */
+.lijst-item.nav-section-gap {
+    margin-top: 20px;
+}
+
 .lijst-icon {
     width: 20px;
     height: 20px;
@@ -1695,21 +1700,127 @@ mark {
     .zoek-interface {
         padding: 16px;
     }
-    
+
     .checkbox-group {
         gap: 12px;
     }
-    
+
     .checkbox-label {
         font-size: 12px;
     }
-    
+
     .zoek-input-container {
         flex-direction: column;
     }
-    
+
     .zoek-btn {
         align-self: flex-start;
+    }
+}
+
+/* ============================================================================
+   Settings interface styling - Feature 056-je-mag-een
+   ============================================================================ */
+
+.settings-interface {
+    padding: 20px;
+}
+
+.settings-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--macos-gray-1);
+    border-radius: var(--macos-radius-card);
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.settings-container h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--macos-text-primary);
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-container h2 i {
+    color: var(--soft-blue);
+}
+
+.settings-subtitle {
+    font-size: 14px;
+    color: var(--macos-text-secondary);
+    margin: 0 0 30px 0;
+}
+
+.settings-content {
+    min-height: 200px;
+    padding: 20px;
+    background: white;
+    border-radius: var(--macos-radius-button);
+    border: 1px solid var(--macos-gray-4);
+    margin-bottom: 20px;
+}
+
+.settings-placeholder {
+    text-align: center;
+    color: var(--macos-text-secondary);
+    font-size: 16px;
+    padding: 60px 20px;
+    font-style: italic;
+}
+
+.settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.settings-footer .btn-primary {
+    background: var(--soft-blue);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: var(--macos-radius-button);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.settings-footer .btn-primary:hover {
+    background: var(--soft-blue-hover);
+}
+
+.settings-footer .btn-primary:active {
+    background: var(--soft-blue-active);
+}
+
+.settings-footer .btn-primary:disabled {
+    background: var(--macos-gray-5);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Responsive adjustments for settings */
+@media (max-width: 768px) {
+    .settings-interface {
+        padding: 16px;
+    }
+
+    .settings-container {
+        padding: 20px;
+    }
+
+    .settings-container h2 {
+        font-size: 20px;
+    }
+
+    .settings-placeholder {
+        font-size: 14px;
+        padding: 40px 16px;
     }
 }
 

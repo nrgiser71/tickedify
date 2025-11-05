@@ -7194,6 +7194,9 @@ class Taakbeheer {
             case 'zoeken':
                 this.showZoekInterface();
                 break;
+            case 'settings':
+                this.showSettings();
+                break;
             case 'test-herhalingen':
                 window.open('/test-herhalingen.html', '_blank');
                 break;
@@ -7937,6 +7940,132 @@ class Taakbeheer {
         this.huidigeLijst = lijst;
         this.saveCurrentList();
         this.laadHuidigeLijst();
+    }
+
+    // ============================================================================
+    // Settings Screen - Feature 056-je-mag-een
+    // ============================================================================
+
+    showSettings() {
+        // Update active list in sidebar - remove all actief classes
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+
+        // Highlight the settings tool item
+        const settingsItem = document.querySelector('[data-tool="settings"]');
+        if (settingsItem) {
+            settingsItem.classList.add('actief');
+        }
+
+        // Update page title
+        document.getElementById('page-title').textContent = 'Settings';
+
+        // Hide task input
+        const taakInputContainer = document.getElementById('taak-input-container');
+        if (taakInputContainer) {
+            taakInputContainer.style.display = 'none';
+        }
+
+        // Restore normal container structure if needed
+        this.restoreNormalContainer();
+
+        // Get content container
+        const container = document.getElementById('takenLijst');
+        if (!container) return;
+
+        // Show settings interface
+        container.innerHTML = `
+            <div class="settings-interface">
+                <div class="settings-container">
+                    <h2><i class="fas fa-cog"></i> Settings</h2>
+                    <p class="settings-subtitle">Manage your Tickedify preferences</p>
+
+                    <div class="settings-content">
+                        <p class="settings-placeholder">Settings will be available here</p>
+                    </div>
+
+                    <div class="settings-footer">
+                        <button id="save-settings-btn" class="btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Load user settings
+        this.loadUserSettings();
+
+        // Bind events
+        this.bindSettingsEvents();
+    }
+
+    async loadUserSettings() {
+        try {
+            const response = await fetch('/api/user-settings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Store settings globally
+                this.userSettings = data.settings ? data.settings.settings : {};
+                console.log('User settings loaded:', this.userSettings);
+            } else {
+                console.error('Failed to load settings:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading user settings:', error);
+        }
+    }
+
+    async saveUserSettings() {
+        try {
+            const response = await fetch('/api/user-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    settings: this.userSettings || {}
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('Settings saved successfully:', data.settings);
+                toast.success('Settings saved successfully');
+            } else {
+                console.error('Failed to save settings:', data.error);
+                toast.error('Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error saving user settings:', error);
+            toast.error('Error saving settings');
+        }
+    }
+
+    bindSettingsEvents() {
+        const saveBtn = document.getElementById('save-settings-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveUserSettings();
+            });
+        }
     }
 
     toggleUitgesteldDropdown() {
