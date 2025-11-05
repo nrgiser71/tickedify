@@ -396,7 +396,8 @@ async function sendPasswordResetEmail(userEmail, userName, resetToken) {
 
     const mg = mailgun.client({
       username: 'api',
-      key: process.env.MAILGUN_API_KEY
+      key: process.env.MAILGUN_API_KEY,
+      url: 'https://api.eu.mailgun.net' // EU region endpoint
     });
 
     const resetLink = `https://dev.tickedify.com/reset-password?token=${resetToken}`;
@@ -4185,10 +4186,11 @@ app.get('/api/debug/mailgun-test', requireLogin, async (req, res) => {
 
         const mg = mailgun.client({
           username: 'api',
-          key: process.env.MAILGUN_API_KEY
+          key: process.env.MAILGUN_API_KEY,
+          url: 'https://api.eu.mailgun.net' // EU region endpoint
         });
 
-        diagnostics.mailgun_client = 'Successfully initialized';
+        diagnostics.mailgun_client = 'Successfully initialized (EU region)';
 
         // Try to send a test email to the current user
         const userId = req.session.userId;
