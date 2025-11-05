@@ -10135,6 +10135,11 @@ body.dagkalender-focus-active {
     border-left: 4px solid #f44336;
 }
 
+.subscription-info.subscription-error {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+}
+
 .subscription-status-text {
     font-size: 14px;
     font-weight: 600;

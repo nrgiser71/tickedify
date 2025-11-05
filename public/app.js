@@ -8106,6 +8106,9 @@ class Taakbeheer {
         const subscription = await this.fetchUserSubscription();
         if (subscription) {
             this.renderSubscriptionBlock(subscription);
+        } else {
+            // Render error state when subscription data fails to load
+            this.renderSubscriptionError();
         }
     }
 
@@ -8186,6 +8189,25 @@ class Taakbeheer {
             </div>
             <div class="subscription-actions">
                 <button class="btn-subscription-primary" onclick="app.handleReactivate()">Reactivate Subscription</button>
+            </div>
+        `;
+    }
+
+    // T029a: Render subscription error state
+    renderSubscriptionError() {
+        const block = document.getElementById('subscription-block');
+        if (!block) return;
+
+        block.innerHTML = `
+            <div class="subscription-header">
+                <h3>Subscription</h3>
+            </div>
+            <div class="subscription-info subscription-error">
+                <p class="subscription-status-text">Unable to Load Subscription</p>
+                <p class="subscription-message">Failed to retrieve subscription information. Please try again later.</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-secondary" onclick="app.loadSubscriptionBlock()">Retry</button>
             </div>
         `;
     }
