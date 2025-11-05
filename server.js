@@ -384,6 +384,12 @@ function hashToken(token) {
 // Send password reset email via Mailgun
 async function sendPasswordResetEmail(userEmail, userName, resetToken) {
   try {
+    // Check if Mailgun is configured
+    if (!process.env.MAILGUN_API_KEY) {
+      console.error('❌ Mailgun not configured - cannot send password reset email');
+      throw new Error('Email service not configured. Please contact support.');
+    }
+
     const formData = require('form-data');
     const Mailgun = require('mailgun.js');
     const mailgun = new Mailgun(formData);
@@ -847,6 +853,13 @@ try {
     }).catch(error => {
         console.error('❌ Database initialization failed:', error);
     });
+
+    // Check Mailgun configuration for outgoing emails
+    const mailgunConfigured = !!(process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN);
+    if (!mailgunConfigured) {
+        console.warn('⚠️  WARNING: Mailgun not configured - password reset emails will not work');
+        console.warn('   Set MAILGUN_API_KEY and MAILGUN_DOMAIN environment variables');
+    }
 } catch (error) {
     console.error('Failed to import database module:', error);
     
@@ -4042,6 +4055,15 @@ app.post('/api/account/password-reset', requireLogin, async (req, res) => {
 
   } catch (error) {
     console.error('Password reset request error:', error);
+
+    // Check if error is due to Mailgun not being configured
+    if (error.message && error.message.includes('Email service not configured')) {
+      return res.status(503).json({
+        error: 'Password reset is temporarily unavailable. Please contact support at info@tickedify.com',
+        code: 'EMAIL_SERVICE_UNAVAILABLE'
+      });
+    }
+
     res.status(500).json({ error: 'Failed to process password reset request' });
   }
 });

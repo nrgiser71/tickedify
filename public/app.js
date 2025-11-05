@@ -8621,6 +8621,9 @@ class Taakbeheer {
                     const retryMinutes = Math.ceil(data.retry_after_seconds / 60);
                     throw new Error(`Too many requests. Try again in ${retryMinutes} minutes.`);
                 }
+                if (response.status === 503) {
+                    throw new Error('Password reset temporarily unavailable. Contact info@tickedify.com');
+                }
                 throw new Error(data.error || 'Failed to send reset email');
             }
 
