@@ -34,13 +34,12 @@ SET total_tasks_created = (
   WHERE t.user_id = u.id
 );
 
--- Backfill total_tasks_completed with existing data
+-- Backfill total_tasks_completed with existing data (from archief table)
 UPDATE users u
 SET total_tasks_completed = (
   SELECT COUNT(*)
-  FROM taken t
+  FROM taken_archief t
   WHERE t.user_id = u.id
-    AND t.afgewerkt IS NOT NULL
 );
 
 -- Note: last_login remains NULL for existing users until next login
