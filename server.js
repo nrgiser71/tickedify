@@ -480,6 +480,109 @@ Tickedify - Master Your Time
   }
 }
 
+// Send admin notification email when new customer completes payment
+async function sendNewCustomerNotification(customerEmail, customerName, planName) {
+  try {
+    // Check if Mailgun is configured
+    if (!process.env.MAILGUN_API_KEY) {
+      console.error('❌ Mailgun not configured - cannot send new customer notification');
+      throw new Error('Email service not configured');
+    }
+
+    const formData = require('form-data');
+    const Mailgun = require('mailgun.js');
+    const mailgun = new Mailgun(formData);
+
+    const mg = mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY,
+      url: 'https://api.eu.mailgun.net' // EU region endpoint
+    });
+
+    // HTML email template
+    const htmlBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #007aff 0%, #0051d5 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; }
+          .info-box { background: #f8f9fa; border-left: 4px solid #007aff; padding: 16px; margin: 20px 0; }
+          .info-row { margin: 8px 0; }
+          .info-label { font-weight: 600; color: #666; display: inline-block; min-width: 120px; }
+          .info-value { color: #333; }
+          .footer { color: #666; font-size: 14px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+          .success-badge { background: #34c759; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0;">🎉 Nieuwe Klant!</h1>
+          </div>
+          <div class="content">
+            <p><span class="success-badge">BETALING SUCCESVOL</span></p>
+            <p>Er heeft zich zojuist een nieuwe klant geregistreerd en een abonnement afgenomen op Tickedify.</p>
+
+            <div class="info-box">
+              <div class="info-row">
+                <span class="info-label">Naam:</span>
+                <span class="info-value">${customerName}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${customerEmail}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Abonnement:</span>
+                <span class="info-value"><strong>${planName}</strong></span>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p style="color: #999; font-size: 12px;">Tickedify Admin Notificatie</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Plain text fallback
+    const textBody = `
+NIEUWE KLANT VOOR TICKEDIFY
+============================
+
+Er heeft zich zojuist een nieuwe klant geregistreerd en een abonnement afgenomen.
+
+Klant gegevens:
+- Naam: ${customerName}
+- Email: ${customerEmail}
+- Abonnement: ${planName}
+
+Tickedify Admin Notificatie
+    `.trim();
+
+    const messageData = {
+      from: 'Tickedify <noreply@mg.tickedify.com>',
+      to: 'support@tickedify.com',
+      subject: 'Nieuwe klant voor Tickedify',
+      text: textBody,
+      html: htmlBody
+    };
+
+    const result = await mg.messages.create('mg.tickedify.com', messageData);
+    console.log(`✅ New customer notification sent to support@tickedify.com (Customer: ${customerEmail}, ID: ${result.id})`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send new customer notification:', error);
+    throw new Error('Failed to send new customer notification');
+  }
+}
+
 // ========================================
 // PLUG&PAY SUBSCRIPTION HELPER FUNCTIONS
 // Feature: 057-dan-gaan-we
@@ -3750,6 +3853,29 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
       // Don't fail webhook if GHL sync fails
     }
 
+    // Send admin notification email about new customer
+    try {
+      // Get plan name from payment_configurations
+      let planName = 'Unknown Plan';
+      if (selectedPlan) {
+        const planResult = await pool.query(
+          'SELECT plan_name FROM payment_configurations WHERE plan_id = $1',
+          [selectedPlan]
+        );
+        if (planResult.rows.length > 0) {
+          planName = planResult.rows[0].plan_name;
+        }
+      }
+
+      // Get user name from database
+      const userNameResult = await pool.query('SELECT naam FROM users WHERE id = $1', [user.id]);
+      const userName = userNameResult.rows.length > 0 ? userNameResult.rows[0].naam : 'Unknown';
+
+      await sendNewCustomerNotification(email, userName, planName);
+    } catch (emailError) {
+      console.error('⚠️ Admin notification email failed:', emailError.message);
+      // Don't fail webhook if email fails
+    }
 
     res.json({ success: true, message: 'Payment processed successfully' });
 
