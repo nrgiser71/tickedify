@@ -12624,58 +12624,101 @@ class Taakbeheer {
     }
 
     setupActiesFloatingDropZones() {
-        const dropZones = document.querySelectorAll('#actiesFloatingPanel .drop-zone-item');
+        console.log('🔧 DEBUG: setupActiesFloatingDropZones() called');
 
-        dropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                zone.classList.add('drag-over');
+        const panel = document.getElementById('actiesFloatingPanel');
+        if (!panel) {
+            console.warn('⚠️ DEBUG: actiesFloatingPanel not found');
+            return;
+        }
 
-                // Check Shift status en toggle derde week
-                if (e.shiftKey && !this.shiftKeyPressed) {
-                    this.shiftKeyPressed = true;
-                    this.toggleDerdeWeek(true);
-                } else if (!e.shiftKey && this.shiftKeyPressed) {
-                    this.shiftKeyPressed = false;
-                    this.toggleDerdeWeek(false);
-                }
-            });
-            
-            zone.addEventListener('dragleave', (e) => {
-                zone.classList.remove('drag-over');
-            });
-            
-            zone.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-                
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    
-                    if (dragData.type === 'actie-taak') {
-                        const dropType = zone.dataset.type;
-                        const target = zone.dataset.target;
-                        
-                        if (dropType === 'planning') {
-                            // Week dag - plan voor dagelijkse planning
-                            await this.handleActiesFloatingDrop(dragData, target);
-                        } else if (dropType === 'list') {
-                            // Lijst - verplaats naar lijst
-                            await this.handleActiesFloatingListDrop(dragData, target);
-                        }
+        // Remove old event listeners if they exist (cleanup)
+        if (this.actiesFloatingDragoverHandler) {
+            panel.removeEventListener('dragover', this.actiesFloatingDragoverHandler);
+            console.log('🧹 DEBUG: Removed old dragover handler');
+        }
+        if (this.actiesFloatingDragleaveHandler) {
+            panel.removeEventListener('dragleave', this.actiesFloatingDragleaveHandler);
+            console.log('🧹 DEBUG: Removed old dragleave handler');
+        }
+        if (this.actiesFloatingDropHandler) {
+            panel.removeEventListener('drop', this.actiesFloatingDropHandler);
+            console.log('🧹 DEBUG: Removed old drop handler');
+        }
+
+        // EVENT DELEGATION: Single dragover handler for all drop zones
+        this.actiesFloatingDragoverHandler = (e) => {
+            const zone = e.target.closest('.drop-zone-item');
+            if (!zone) return;
+
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            zone.classList.add('drag-over');
+
+            // Check Shift status en toggle derde week
+            if (e.shiftKey && !this.shiftKeyPressed) {
+                this.shiftKeyPressed = true;
+                this.toggleDerdeWeek(true);
+            } else if (!e.shiftKey && this.shiftKeyPressed) {
+                this.shiftKeyPressed = false;
+                this.toggleDerdeWeek(false);
+            }
+        };
+
+        // EVENT DELEGATION: Single dragleave handler for all drop zones
+        this.actiesFloatingDragleaveHandler = (e) => {
+            const zone = e.target.closest('.drop-zone-item');
+            if (!zone) return;
+
+            zone.classList.remove('drag-over');
+        };
+
+        // EVENT DELEGATION: Single drop handler for all drop zones
+        this.actiesFloatingDropHandler = async (e) => {
+            const zone = e.target.closest('.drop-zone-item');
+            if (!zone) return;
+
+            console.log('🎯 DEBUG: Drop event fired on zone:', zone.dataset.type, zone.dataset.target);
+
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            try {
+                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+
+                if (dragData.type === 'actie-taak') {
+                    const dropType = zone.dataset.type;
+                    const target = zone.dataset.target;
+
+                    console.log('📦 DEBUG: Processing drop - type:', dropType, 'target:', target);
+
+                    if (dropType === 'planning') {
+                        // Week dag - plan voor dagelijkse planning
+                        await this.handleActiesFloatingDrop(dragData, target);
+                    } else if (dropType === 'list') {
+                        // Lijst - verplaats naar lijst
+                        await this.handleActiesFloatingListDrop(dragData, target);
                     }
-                } catch (error) {
-                    console.error('Error processing drop:', error);
-                    toast.error('Error moving task');
                 }
-            });
-        });
+            } catch (error) {
+                console.error('Error processing drop:', error);
+                toast.error('Error moving task');
+            }
+        };
+
+        // Attach delegated event listeners to panel
+        panel.addEventListener('dragover', this.actiesFloatingDragoverHandler);
+        panel.addEventListener('dragleave', this.actiesFloatingDragleaveHandler);
+        panel.addEventListener('drop', this.actiesFloatingDropHandler);
+
+        console.log('✅ DEBUG: Event delegation handlers attached to panel');
     }
 
     async handleActiesFloatingListDrop(dragData, targetList) {
         const { taakId } = dragData;
-        
+
+        console.log('📥 DEBUG: handleActiesFloatingListDrop() called - taakId:', taakId, 'targetList:', targetList);
+
         await loading.withLoading(async () => {
             try {
                 // Verplaats de taak naar de gespecificeerde lijst
@@ -12695,13 +12738,14 @@ class Taakbeheer {
                     if (sourceItem) {
                         sourceItem.remove();
                     }
-                    
+
                     // Update local taken array
                     this.taken = this.taken.filter(t => t.id !== taakId);
-                    
+
                     const targetName = this.getListDisplayName(targetList);
+                    console.log('✅ DEBUG: About to show toast - Task moved to', targetName);
                     toast.success(`Task moved to ${targetName}`);
-                    
+
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
                 } else {
