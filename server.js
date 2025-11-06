@@ -7199,6 +7199,35 @@ app.get('/api/test/run-performance', async (req, res) => {
     }
 });
 
+// Test endpoint for new customer email notification
+app.get('/api/test/new-customer-email', async (req, res) => {
+    try {
+        const testCustomerEmail = 'test.customer@example.com';
+        const testCustomerName = 'Test Klant';
+        const testPlanName = 'Maandelijks €7';
+
+        await sendNewCustomerNotification(testCustomerEmail, testCustomerName, testPlanName);
+
+        res.json({
+            success: true,
+            message: 'Test email sent successfully',
+            details: {
+                to: 'support@tickedify.com',
+                customer_email: testCustomerEmail,
+                customer_name: testCustomerName,
+                plan_name: testPlanName
+            }
+        });
+    } catch (error) {
+        console.error('❌ Test email failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            details: 'Check server logs for more information'
+        });
+    }
+});
+
 // Clean project names from planning items
 app.post('/api/dagelijkse-planning/clean-project-names', async (req, res) => {
     try {
