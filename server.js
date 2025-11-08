@@ -8198,6 +8198,37 @@ app.get('/api/debug/subscription-data', async (req, res) => {
     }
 });
 
+// Debug endpoint to test getUserPlanType function
+app.get('/api/debug/plan-type', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const planType = await db.getUserPlanType(userId);
+
+        // Also get raw database data
+        const userResult = await pool.query(`
+            SELECT
+                email,
+                subscription_plan,
+                selected_plan,
+                trial_end_date,
+                subscription_status
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        res.json({
+            success: true,
+            userId: userId,
+            planType: planType,
+            rawData: userResult.rows[0],
+            expectedPremiumPlus: ['monthly_8', 'yearly_80'],
+            expectedPremiumStandard: ['monthly_7', 'yearly_70']
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Raw JSON test for debugging
 app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
