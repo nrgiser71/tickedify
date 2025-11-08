@@ -1614,12 +1614,25 @@ app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
         // Feature 049: Process attachments if requested (T015)
         let attachmentResult = null;
 
+        // Feature 059: Debug attachment processing
+        console.log('🔍 Attachment Debug:', {
+            hasConfig: !!taskData.attachmentConfig,
+            processAttachments: taskData.attachmentConfig?.processAttachments,
+            targetFilename: taskData.attachmentConfig?.targetFilename,
+            hasFiles: !!req.files,
+            filesCount: req.files?.length || 0,
+            fileNames: req.files?.map(f => f.originalname) || []
+        });
+
         if (taskData.attachmentConfig?.processAttachments && req.files && req.files.length > 0) {
             try {
                 const { targetFilename } = taskData.attachmentConfig;
 
+                console.log('📎 Processing attachment with targetFilename:', targetFilename);
+
                 // T011: Find matching attachment with smart priority
                 const matchedFile = findMatchingAttachment(req.files, targetFilename);
+                console.log('📎 Matched file:', matchedFile?.originalname || 'none');
 
                 if (matchedFile) {
                     // T013: Validate file size (FR-011, FR-014)
