@@ -8614,7 +8614,7 @@ class Taakbeheer {
                     </div>
                     <div class="account-actions">
                         <button class="btn-reset-password" id="reset-password-btn">
-                            Reset Password
+                            Change Password
                         </button>
                     </div>
                 </div>
