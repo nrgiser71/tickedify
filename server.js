@@ -2447,7 +2447,7 @@ app.post('/api/debug/run-subscription-migration', async (req, res) => {
 });
 
 // TEMPORARY: Debug endpoint to fix subscription_plan for test accounts
-app.post('/api/debug/fix-subscription-plan', async (req, res) => {
+app.get('/api/debug/fix-subscription-plan', async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
