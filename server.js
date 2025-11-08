@@ -4185,20 +4185,33 @@ app.get('/api/account', requireLogin, async (req, res) => {
 app.post('/api/account/password-reset', async (req, res) => {
   try {
     const { email } = req.body;
+    const sessionUserId = req.session?.userId;
 
-    // Validate email format
-    if (!email || typeof email !== 'string') {
-      return res.status(400).json({ error: 'Valid email is required' });
+    let user = null;
+
+    // Check if user is authenticated via session (Change Password from Settings)
+    if (sessionUserId) {
+      // User is logged in - use session
+      const userResult = await pool.query(
+        'SELECT id, email FROM users WHERE id = $1',
+        [sessionUserId]
+      );
+      user = userResult.rows.length > 0 ? userResult.rows[0] : null;
     }
+    // Otherwise, require email parameter (Forgot Password flow)
+    else {
+      // Validate email format
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Valid email is required' });
+      }
 
-    // Look up user by email
-    const userResult = await pool.query(
-      'SELECT id, email FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
-    );
-
-    // Store user if found (for processing below)
-    const user = userResult.rows.length > 0 ? userResult.rows[0] : null;
+      // Look up user by email
+      const userResult = await pool.query(
+        'SELECT id, email FROM users WHERE email = $1',
+        [email.toLowerCase().trim()]
+      );
+      user = userResult.rows.length > 0 ? userResult.rows[0] : null;
+    }
 
     // Only process password reset if user exists (but don't reveal this in response)
     if (user) {
@@ -4256,11 +4269,20 @@ app.post('/api/account/password-reset', async (req, res) => {
       await sendPasswordResetEmail(user.email, user.email, resetToken);
     }
 
-    // ALWAYS return 200 even if user not found (security - don't leak user existence)
-    res.json({
-      message: 'If an account exists with that email, you will receive a password reset link.',
-      expires_in_hours: 24
-    });
+    // Return appropriate message based on authentication method
+    if (sessionUserId) {
+      // User is logged in - can confirm email was sent
+      res.json({
+        message: 'Password reset email sent. Check your inbox.',
+        expires_in_hours: 24
+      });
+    } else {
+      // Public request - don't reveal if email exists (security)
+      res.json({
+        message: 'If an account exists with that email, you will receive a password reset link.',
+        expires_in_hours: 24
+      });
+    }
 
   } catch (error) {
     console.error('Password reset request error:', error);
