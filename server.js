@@ -8229,6 +8229,43 @@ app.get('/api/debug/plan-type', requireAuth, async (req, res) => {
     }
 });
 
+// Debug endpoint to update subscription plan
+app.get('/api/debug/update-subscription/:email/:newPlan', async (req, res) => {
+    try {
+        const { email, newPlan } = req.params;
+
+        // Validate plan
+        const validPlans = ['trial_14_days', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
+        if (!validPlans.includes(newPlan)) {
+            return res.status(400).json({
+                error: 'Invalid plan',
+                validPlans: validPlans
+            });
+        }
+
+        // Update subscription_plan
+        const result = await pool.query(`
+            UPDATE users
+            SET subscription_plan = $1,
+                plan_selected_at = NOW()
+            WHERE email = $2
+            RETURNING id, email, subscription_plan, subscription_status
+        `, [newPlan, email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            message: `Updated ${email} to plan ${newPlan}`,
+            user: result.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Raw JSON test for debugging
 app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
