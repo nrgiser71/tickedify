@@ -4710,14 +4710,14 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
         }
 
         // Check attachment limit based on plan type
-        // Premium Plus: unlimited attachments
-        // Premium Standard & Free: max 1 attachment per task
+        // Unlimited: unlimited attachments
+        // Standard & Free: max 1 attachment per task
         if (planType !== 'premium_plus') {
             const existingBijlagen = await db.getBijlagenForTaak(taakId);
             if (existingBijlagen.length >= STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE) {
                 const upgradeMessage = planType === 'premium_standard'
-                    ? 'Maximum 1 bijlage per taak voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bijlagen.'
-                    : `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.`;
+                    ? 'Maximum 1 attachment per task for Standard plan. Upgrade to Unlimited for unlimited attachments.'
+                    : `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} attachment per task for free users. Upgrade to Standard or Unlimited for more storage.`;
 
                 return res.status(400).json({
                     error: upgradeMessage
