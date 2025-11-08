@@ -2325,24 +2325,29 @@ const db = {
       const PREMIUM_PLUS_PLAN_IDS = ['monthly_8', 'yearly_80'];
       const PREMIUM_STANDARD_PLAN_IDS = ['monthly_7', 'yearly_70'];
 
-      // Check for active trial or paid subscription
-      if (selected_plan) {
-        // Check if trial is active or if it's a paid plan
-        if (trial_end_date) {
-          const now = new Date();
-          const trialEnds = new Date(trial_end_date);
-          if (trialEnds < now) {
-            // Trial expired without payment
-            return 'free';
-          }
-        }
+      // If no plan selected, return free
+      if (!selected_plan) {
+        return 'free';
+      }
 
-        // Determine tier based on selected_plan
-        if (PREMIUM_PLUS_PLAN_IDS.includes(selected_plan)) {
-          return 'premium_plus';
-        } else if (PREMIUM_STANDARD_PLAN_IDS.includes(selected_plan)) {
-          return 'premium_standard';
+      // FIRST: Check if it's a paid subscription (these are always valid regardless of trial_end_date)
+      if (PREMIUM_PLUS_PLAN_IDS.includes(selected_plan)) {
+        return 'premium_plus';
+      }
+      if (PREMIUM_STANDARD_PLAN_IDS.includes(selected_plan)) {
+        return 'premium_standard';
+      }
+
+      // SECOND: Check if it's a trial (trial_14_days) and if it's still active
+      if (selected_plan === 'trial_14_days' && trial_end_date) {
+        const now = new Date();
+        const trialEnds = new Date(trial_end_date);
+        if (trialEnds >= now) {
+          // Trial still active
+          return 'premium_plus'; // Trials get premium_plus features
         }
+        // Trial expired
+        return 'free';
       }
 
       return 'free'; // Default to free
