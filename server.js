@@ -1849,11 +1849,19 @@ function parseKeyValue(segment) {
 // Helper function: Parse attachment code from segment (Feature 049)
 // T005: Attachment code parser - a:searchterm; syntax
 function parseAttachmentCode(segment) {
-    const attMatch = segment.match(/^a\s*:\s*(.+)$/i);
+    // Feature 059: Support a; syntax (without filename) for single attachments
+    const attMatch = segment.match(/^a(?:\s*:\s*(.*))?$/i);
     if (!attMatch) return null;
 
-    const filename = attMatch[1].trim();
-    if (!filename) return null;
+    const filename = attMatch[1] ? attMatch[1].trim() : '';
+
+    // Return null targetFilename when no filename specified
+    if (!filename) {
+        return {
+            processAttachments: true,
+            targetFilename: null
+        };
+    }
 
     return {
         processAttachments: true,
@@ -1869,8 +1877,13 @@ function parseAttachmentCode(segment) {
 // 3. Contains match (lowest): searchterm appears anywhere in filename
 // 4. First match wins when equal priority
 function findMatchingAttachment(files, searchTerm) {
-    if (!files || files.length === 0 || !searchTerm) {
+    if (!files || files.length === 0) {
         return null;
+    }
+
+    // Feature 059: If no search term, return first attachment
+    if (!searchTerm || searchTerm.trim() === '') {
+        return files[0];
     }
 
     const term = searchTerm.toLowerCase().trim();
