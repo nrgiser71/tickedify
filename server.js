@@ -3906,7 +3906,23 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
 
     // Sync to GoHighLevel
     try {
-      await addContactToGHL(email, user.email, ['tickedify-paid-customer']);
+      const subscriptionTags = ['tickedify-paid-customer'];
+
+      // Add subscription-specific tag
+      const planTagMap = {
+        'trial_14_days': 'Tickedify-Trial',
+        'monthly_7': 'Tickedify-Monthly7',
+        'monthly_8': 'Tickedify-Monthly8',
+        'yearly_70': 'Tickedify-Yearly70',
+        'yearly_80': 'Tickedify-Yearly80'
+      };
+
+      const planTag = planTagMap[selectedPlan];
+      if (planTag) {
+        subscriptionTags.push(planTag);
+      }
+
+      await addContactToGHL(email, user.email, subscriptionTags);
     } catch (ghlError) {
       console.error('⚠️ GHL sync failed:', ghlError.message);
       // Don't fail webhook if GHL sync fails
