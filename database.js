@@ -2310,7 +2310,7 @@ const db = {
   async getUserPlanType(userId) {
     try {
       const userResult = await pool.query(`
-        SELECT selected_plan, trial_end_date
+        SELECT subscription_plan as selected_plan, trial_end_date
         FROM users
         WHERE id = $1
       `, [userId]);
