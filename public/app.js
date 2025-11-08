@@ -8163,19 +8163,43 @@ class Taakbeheer {
     // T027: Render active subscription
     renderActiveSubscription(subscription) {
         const renewalDate = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
-        const planName = subscription.plan_name || 'Unknown Plan';
-        const price = subscription.price || 0;
-        const cycle = subscription.cycle || 'month';
+
+        // Use subscription-data.js as single source of truth for display
+        const planData = window.SUBSCRIPTION_VALIDATION?.getPlanById(subscription.plan);
+
+        // Fallback if plan not found or subscription-data.js not loaded
+        if (!planData) {
+            console.warn('Plan not found in subscription-data.js:', subscription.plan);
+            return `
+                <div class="subscription-info subscription-active">
+                    <p class="subscription-plan-name">Unknown Plan</p>
+                    <p class="subscription-pricing">€0/month</p>
+                    <p class="subscription-renewal">Renews on ${renewalDate}</p>
+                </div>
+                <div class="subscription-actions">
+                    <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(1, 'upgrade')">Upgrade Plan</button>
+                    <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(1, 'downgrade')">Downgrade Plan</button>
+                    <button class="btn-subscription-cancel" onclick="app.showCancelConfirmation()">Cancel Subscription</button>
+                </div>
+            `;
+        }
+
+        // Use hardcoded data from subscription-data.js
+        const planName = planData.name;
+        const price = planData.price;
+        const cycleDisplay = planData.billing_cycle === 'monthly' ? 'month' :
+                             planData.billing_cycle === 'yearly' ? 'year' :
+                             planData.billing_cycle;
 
         return `
             <div class="subscription-info subscription-active">
                 <p class="subscription-plan-name">${planName}</p>
-                <p class="subscription-pricing">€${price}/${cycle}</p>
+                <p class="subscription-pricing">€${price}/${cycleDisplay}</p>
                 <p class="subscription-renewal">Renews on ${renewalDate}</p>
             </div>
             <div class="subscription-actions">
-                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'upgrade')">Upgrade Plan</button>
-                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'downgrade')">Downgrade Plan</button>
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level || 1}, 'upgrade')">Upgrade Plan</button>
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level || 1}, 'downgrade')">Downgrade Plan</button>
                 <button class="btn-subscription-cancel" onclick="app.showCancelConfirmation()">Cancel Subscription</button>
             </div>
         `;
@@ -8184,7 +8208,10 @@ class Taakbeheer {
     // T028: Render canceled subscription
     renderCanceledSubscription(subscription) {
         const accessUntil = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
-        const planName = subscription.plan_name || 'Unknown Plan';
+
+        // Use subscription-data.js as single source of truth for display
+        const planData = window.SUBSCRIPTION_VALIDATION?.getPlanById(subscription.plan);
+        const planName = planData ? planData.name : 'Unknown Plan';
 
         return `
             <div class="subscription-info subscription-canceled">
