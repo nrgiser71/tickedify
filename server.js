@@ -1498,6 +1498,13 @@ async function getUserIdByEmail(email) {
 // Email Import System - Mailgun Webhook Handler
 app.post('/api/email/import', uploadAttachment.any(), async (req, res) => {
     try {
+        // Feature 059: Debug incoming webhook
+        console.log('📧 Email webhook received:', {
+            bodyKeys: Object.keys(req.body),
+            filesCount: req.files?.length || 0,
+            filesInfo: req.files?.map(f => ({ name: f.fieldname, original: f.originalname, size: f.size })) || []
+        });
+
         // Try multiple field name variations for Mailgun compatibility
         const sender = req.body.sender || req.body.from || req.body.From || '';
         const recipient = req.body.recipient || req.body.to || req.body.To || '';
