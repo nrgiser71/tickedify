@@ -2446,6 +2446,52 @@ app.post('/api/debug/run-subscription-migration', async (req, res) => {
     }
 });
 
+// TEMPORARY: Debug endpoint to fix subscription_plan for test accounts
+app.post('/api/debug/fix-subscription-plan', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get current state
+        const beforeResult = await pool.query(`
+            SELECT email, subscription_plan, subscription_price, subscription_cycle
+            FROM users
+            WHERE email = 'jan@buskens.be'
+        `);
+
+        // Update to monthly_8 plan
+        await pool.query(`
+            UPDATE users
+            SET subscription_plan = 'monthly_8',
+                subscription_price = 8.00,
+                subscription_cycle = 'monthly'
+            WHERE email = 'jan@buskens.be'
+        `);
+
+        // Get updated state
+        const afterResult = await pool.query(`
+            SELECT email, subscription_plan, subscription_price, subscription_cycle
+            FROM users
+            WHERE email = 'jan@buskens.be'
+        `);
+
+        res.json({
+            success: true,
+            message: 'Updated jan@buskens.be to monthly_8 plan',
+            before: beforeResult.rows[0],
+            after: afterResult.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Fix subscription plan error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // API endpoint voor huidige gebruiker info inclusief import code
 app.get('/api/user/info', async (req, res) => {
     try {
