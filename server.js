@@ -8120,6 +8120,38 @@ app.post('/api/debug/force-migration', async (req, res) => {
     }
 });
 
+// Debug endpoint voor subscription data check
+app.get('/api/debug/subscription-data', async (req, res) => {
+    try {
+        const emails = ['info@baasoverjetijd.be', 'jan@buskens.be'];
+        const result = await pool.query(`
+            SELECT
+                email,
+                subscription_plan,
+                subscription_status,
+                account_type,
+                subscription_price,
+                subscription_cycle
+            FROM users
+            WHERE email = ANY($1::text[])
+        `, [emails]);
+
+        res.json({
+            success: true,
+            users: result.rows,
+            subscription_plans_defined: [
+                'trial_14_days',
+                'monthly_7',
+                'yearly_70',
+                'monthly_8',
+                'yearly_80'
+            ]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Raw JSON test for debugging
 app.get('/api/debug/raw-test/:pattern/:baseDate', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
