@@ -24,6 +24,14 @@
       "dest": "/server.js"
     },
     {
+      "src": "/forgot-password",
+      "dest": "/public/forgot-password.html"
+    },
+    {
+      "src": "/forgot-password-sent",
+      "dest": "/public/forgot-password-sent.html"
+    },
+    {
       "src": "/admin/login",
       "dest": "/public/admin-login.html"
     },

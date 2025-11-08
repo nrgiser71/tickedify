@@ -4182,24 +4182,26 @@ app.get('/api/account', requireLogin, async (req, res) => {
 });
 
 // T017: POST /api/account/password-reset - Request password reset email
-app.post('/api/account/password-reset', requireLogin, async (req, res) => {
+app.post('/api/account/password-reset', async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const { email } = req.body;
 
-    // Look up user by session user_id
-    const userResult = await pool.query(
-      'SELECT id, email FROM users WHERE id = $1',
-      [userId]
-    );
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    // Validate email format
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Valid email is required' });
     }
 
-    const user = userResult.rows[0];
+    // Look up user by email
+    const userResult = await pool.query(
+      'SELECT id, email FROM users WHERE email = $1',
+      [email.toLowerCase().trim()]
+    );
 
-    // Check if user found (always true here since requireLogin checks session)
-    if (userResult.rows.length > 0) {
+    // Store user if found (for processing below)
+    const user = userResult.rows.length > 0 ? userResult.rows[0] : null;
+
+    // Only process password reset if user exists (but don't reveal this in response)
+    if (user) {
 
       // Rate limiting: Check count of pending tokens in last hour
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -4256,7 +4258,7 @@ app.post('/api/account/password-reset', requireLogin, async (req, res) => {
 
     // ALWAYS return 200 even if user not found (security - don't leak user existence)
     res.json({
-      message: 'Password reset email sent. Check your inbox.',
+      message: 'If an account exists with that email, you will receive a password reset link.',
       expires_in_hours: 24
     });
 

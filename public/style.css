@@ -2189,6 +2189,25 @@ button:focus {
     padding: 8px 16px;
 }
 
+/* Forgot password link */
+.forgot-password-wrapper {
+    margin-top: 12px;
+    margin-bottom: 8px;
+    text-align: right;
+}
+
+.forgot-password-link {
+    font-size: 13px;
+    color: var(--macos-blue);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
 /* Recurring task indicator */
 .recurring-indicator {
     display: inline-block;
