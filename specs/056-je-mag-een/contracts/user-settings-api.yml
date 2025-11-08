@@ -1,0 +1,291 @@
+openapi: 3.0.0
+info:
+  title: Tickedify User Settings API
+  description: API endpoints for managing user-specific application settings
+  version: 1.0.0
+  contact:
+    name: Tickedify Development
+    email: jan@tickedify.com
+
+servers:
+  - url: https://dev.tickedify.com
+    description: Staging environment
+  - url: https://tickedify.com
+    description: Production environment
+
+paths:
+  /api/user-settings:
+    get:
+      summary: Get current user's settings
+      description: Retrieves the settings for the authenticated user. Returns null if no settings exist yet.
+      operationId: getUserSettings
+      tags:
+        - Settings
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UserSettingsResponse'
+                  - $ref: '#/components/schemas/NoSettingsResponse'
+              examples:
+                withSettings:
+                  summary: User has existing settings
+                  value:
+                    success: true
+                    settings:
+                      id: 123
+                      user_id: 45
+                      settings:
+                        ui:
+                          theme: "dark"
+                          language: "en"
+                      created_at: "2025-11-05T10:30:00Z"
+                      updated_at: "2025-11-05T10:35:00Z"
+                noSettings:
+                  summary: User has no settings yet
+                  value:
+                    success: true
+                    settings: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    post:
+      summary: Create or update user settings
+      description: Creates new settings or updates existing settings for the authenticated user (upsert operation). Replaces entire settings object.
+      operationId: saveUserSettings
+      tags:
+        - Settings
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveSettingsRequest'
+            examples:
+              emptySettings:
+                summary: Save empty settings (initial state)
+                value:
+                  settings: {}
+              themeSettings:
+                summary: Save UI theme preference
+                value:
+                  settings:
+                    ui:
+                      theme: "dark"
+                      language: "en"
+              complexSettings:
+                summary: Save multiple settings categories
+                value:
+                  settings:
+                    version: 1
+                    ui:
+                      theme: "light"
+                      language: "en"
+                      dateFormat: "YYYY-MM-DD"
+                    notifications:
+                      email: true
+                      reminders: false
+                    defaults:
+                      startScreen: "daily-planning"
+      responses:
+        '200':
+          description: Settings saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettingsResponse'
+              examples:
+                created:
+                  summary: Settings created for first time
+                  value:
+                    success: true
+                    settings:
+                      id: 123
+                      user_id: 45
+                      settings:
+                        ui:
+                          theme: "dark"
+                      created_at: "2025-11-05T10:30:00Z"
+                      updated_at: "2025-11-05T10:30:00Z"
+                updated:
+                  summary: Settings updated
+                  value:
+                    success: true
+                    settings:
+                      id: 123
+                      user_id: 45
+                      settings:
+                        ui:
+                          theme: "light"
+                      created_at: "2025-11-05T10:30:00Z"
+                      updated_at: "2025-11-05T10:45:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Session cookie authentication (automatically handled by Express session middleware)
+
+  schemas:
+    UserSettingsResponse:
+      type: object
+      required:
+        - success
+        - settings
+      properties:
+        success:
+          type: boolean
+          example: true
+        settings:
+          $ref: '#/components/schemas/UserSettings'
+
+    NoSettingsResponse:
+      type: object
+      required:
+        - success
+        - settings
+      properties:
+        success:
+          type: boolean
+          example: true
+        settings:
+          type: 'null'
+          example: null
+
+    UserSettings:
+      type: object
+      required:
+        - id
+        - user_id
+        - settings
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for settings record
+          example: 123
+        user_id:
+          type: integer
+          description: Foreign key to gebruikers table
+          example: 45
+        settings:
+          type: object
+          description: Flexible JSONB object containing user preferences. Structure is extensible and can contain any valid JSON object.
+          additionalProperties: true
+          example:
+            version: 1
+            ui:
+              theme: "dark"
+              language: "en"
+            notifications:
+              email: true
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when settings were first created
+          example: "2025-11-05T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when settings were last updated
+          example: "2025-11-05T10:35:00Z"
+
+    SaveSettingsRequest:
+      type: object
+      required:
+        - settings
+      properties:
+        settings:
+          type: object
+          description: Complete settings object to save. This replaces the entire existing settings object.
+          additionalProperties: true
+          example:
+            ui:
+              theme: "dark"
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Database connection failed"
+
+  responses:
+    UnauthorizedError:
+      description: User is not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Unauthorized - please log in"
+
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidJson:
+              summary: Invalid JSON in request body
+              value:
+                success: false
+                error: "Invalid JSON format"
+            missingSettings:
+              summary: Missing required 'settings' field
+              value:
+                success: false
+                error: "Missing required field: settings"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            databaseError:
+              summary: Database connection failure
+              value:
+                success: false
+                error: "Database connection failed"
+            unexpectedError:
+              summary: Unexpected server error
+              value:
+                success: false
+                error: "Internal server error"
+
+tags:
+  - name: Settings
+    description: User settings management endpoints
+
+externalDocs:
+  description: Full feature documentation
+  url: https://github.com/tickedify/tickedify/tree/main/specs/056-je-mag-een

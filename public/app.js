@@ -7194,6 +7194,9 @@ class Taakbeheer {
             case 'zoeken':
                 this.showZoekInterface();
                 break;
+            case 'settings':
+                this.showSettings();
+                break;
             case 'test-herhalingen':
                 window.open('/test-herhalingen.html', '_blank');
                 break;
@@ -7937,6 +7940,720 @@ class Taakbeheer {
         this.huidigeLijst = lijst;
         this.saveCurrentList();
         this.laadHuidigeLijst();
+    }
+
+    // ============================================================================
+    // Settings Screen - Feature 056-je-mag-een
+    // ============================================================================
+
+    showSettings() {
+        // Update active list in sidebar - remove all actief classes
+        document.querySelectorAll('.lijst-item').forEach(item => {
+            item.classList.remove('actief');
+        });
+
+        // Highlight the settings tool item
+        const settingsItem = document.querySelector('[data-tool="settings"]');
+        if (settingsItem) {
+            settingsItem.classList.add('actief');
+        }
+
+        // Restore normal container structure if needed
+        this.restoreNormalContainer();
+
+        // Update page title
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.textContent = 'Settings';
+        }
+
+        // Hide task input container (not needed for Settings)
+        const taakInputContainer = document.getElementById('taak-input-container');
+        if (taakInputContainer) {
+            taakInputContainer.style.display = 'none';
+        }
+
+        // Get content container
+        const container = document.getElementById('takenLijst');
+        if (!container) return;
+
+        // Show settings interface with simple Tickedify styling
+        container.innerHTML = `
+            <div class="settings-wrapper">
+                <p class="settings-description">Manage your Tickedify preferences</p>
+
+                <div class="subscription-block" id="subscription-block">
+                    <div class="subscription-header">
+                        <h3>Subscription</h3>
+                    </div>
+                    <div class="subscription-loading">Loading subscription...</div>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="save-settings-btn" class="btn-primary-settings">Save</button>
+                </div>
+            </div>
+        `;
+
+        // Load user settings
+        this.loadUserSettings();
+
+        // T025: Load account block (Feature 058 - Account Settings Block)
+        this.loadAccountBlock();
+
+        // Load and render subscription
+        this.loadSubscriptionBlock();
+
+        // Bind events
+        this.bindSettingsEvents();
+    }
+
+    async loadUserSettings() {
+        try {
+            const response = await fetch('/api/user-settings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Store settings globally
+                this.userSettings = data.settings ? data.settings.settings : {};
+                console.log('User settings loaded:', this.userSettings);
+            } else {
+                console.error('Failed to load settings:', data.error);
+            }
+        } catch (error) {
+            console.error('Error loading user settings:', error);
+        }
+    }
+
+    async saveUserSettings() {
+        try {
+            const response = await fetch('/api/user-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    settings: this.userSettings || {}
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('Settings saved successfully:', data.settings);
+                toast.success('Settings saved successfully');
+            } else {
+                console.error('Failed to save settings:', data.error);
+                toast.error('Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error saving user settings:', error);
+            toast.error('Error saving settings');
+        }
+    }
+
+    bindSettingsEvents() {
+        const saveBtn = document.getElementById('save-settings-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveUserSettings();
+            });
+        }
+    }
+
+    // ========================================
+    // SUBSCRIPTION MANAGEMENT FUNCTIONS
+    // Feature: 057-dan-gaan-we
+    // ========================================
+
+    // T024: Fetch user subscription from API
+    async fetchUserSubscription() {
+        try {
+            const response = await fetch('/api/subscription', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const subscription = await response.json();
+            return subscription;
+        } catch (error) {
+            console.error('Error fetching subscription:', error);
+            toast.error('Failed to load subscription');
+            return null;
+        }
+    }
+
+    // T024: Load and render subscription block
+    async loadSubscriptionBlock() {
+        const subscription = await this.fetchUserSubscription();
+        if (subscription) {
+            this.renderSubscriptionBlock(subscription);
+        } else {
+            // Render error state when subscription data fails to load
+            this.renderSubscriptionError();
+        }
+    }
+
+    // T025: Render subscription block based on status
+    renderSubscriptionBlock(subscription) {
+        const block = document.getElementById('subscription-block');
+        if (!block) return;
+
+        let html = '<div class="subscription-header"><h3>Subscription</h3></div>';
+
+        if (subscription.status === 'trial') {
+            html += this.renderTrialStatus(subscription);
+        } else if (subscription.status === 'active') {
+            html += this.renderActiveSubscription(subscription);
+        } else if (subscription.status === 'canceled') {
+            html += this.renderCanceledSubscription(subscription);
+        } else if (subscription.status === 'beta_expired') {
+            html += this.renderBetaTesterStatus(subscription);
+        } else if (subscription.status === 'expired') {
+            html += `
+                <div class="subscription-info subscription-expired">
+                    <p class="subscription-status-text">Trial Expired</p>
+                    <p class="subscription-message">Your trial has ended. Upgrade to continue using Tickedify.</p>
+                </div>
+                <div class="subscription-actions">
+                    <button class="btn-subscription-primary" onclick="app.handleUpgradeFromTrial()">Upgrade Now</button>
+                </div>
+            `;
+        }
+
+        block.innerHTML = html;
+    }
+
+    // T026: Render trial status
+    renderTrialStatus(subscription) {
+        const daysRemaining = subscription.days_remaining || 0;
+        return `
+            <div class="subscription-info subscription-trial">
+                <p class="subscription-status-text">Free Trial</p>
+                <p class="subscription-trial-countdown">${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining</p>
+                <p class="subscription-message">Enjoy unlimited access during your trial period.</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-primary" onclick="app.handleUpgradeFromTrial()">Upgrade Now</button>
+            </div>
+        `;
+    }
+
+    // T027: Render active subscription
+    renderActiveSubscription(subscription) {
+        const renewalDate = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
+        const planName = subscription.plan_name || 'Unknown Plan';
+        const price = subscription.price || 0;
+        const cycle = subscription.cycle || 'month';
+
+        return `
+            <div class="subscription-info subscription-active">
+                <p class="subscription-plan-name">${planName}</p>
+                <p class="subscription-pricing">€${price}/${cycle}</p>
+                <p class="subscription-renewal">Renews on ${renewalDate}</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'upgrade')">Upgrade Plan</button>
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'downgrade')">Downgrade Plan</button>
+                <button class="btn-subscription-cancel" onclick="app.showCancelConfirmation()">Cancel Subscription</button>
+            </div>
+        `;
+    }
+
+    // T028: Render canceled subscription
+    renderCanceledSubscription(subscription) {
+        const accessUntil = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
+        const planName = subscription.plan_name || 'Unknown Plan';
+
+        return `
+            <div class="subscription-info subscription-canceled">
+                <p class="subscription-plan-name">${planName}</p>
+                <p class="subscription-cancels-on">Cancels on ${accessUntil}</p>
+                <p class="subscription-message">You will retain access until this date.</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-primary" onclick="app.handleReactivate()">Reactivate Subscription</button>
+            </div>
+        `;
+    }
+
+    // T028a: Render beta tester status
+    renderBetaTesterStatus(subscription) {
+        return `
+            <div class="subscription-info subscription-beta">
+                <p class="subscription-status-text">Beta Tester Access</p>
+                <p class="subscription-message">You have full access to Tickedify as a beta tester. Thank you for helping us improve the platform!</p>
+                <p class="subscription-message" style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">When the subscription system launches, you'll be able to choose a plan from this settings page.</p>
+            </div>
+        `;
+    }
+
+    // T029a: Render subscription error state
+    renderSubscriptionError() {
+        const block = document.getElementById('subscription-block');
+        if (!block) return;
+
+        block.innerHTML = `
+            <div class="subscription-header">
+                <h3>Subscription</h3>
+            </div>
+            <div class="subscription-info subscription-error">
+                <p class="subscription-status-text">Unable to Load Subscription</p>
+                <p class="subscription-message">Failed to retrieve subscription information. Please try again later.</p>
+            </div>
+            <div class="subscription-actions">
+                <button class="btn-subscription-secondary" onclick="app.loadSubscriptionBlock()">Retry</button>
+            </div>
+        `;
+    }
+
+    // T029: Show plan comparison modal
+    async showPlanComparisonModal(currentTier, action) {
+        try {
+            const response = await fetch('/api/subscription/plans', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const plans = data.plans;
+
+            // Filter plans based on action
+            let filteredPlans = plans;
+            if (action === 'upgrade') {
+                filteredPlans = plans.filter(p => p.tier_level > currentTier);
+            } else if (action === 'downgrade') {
+                filteredPlans = plans.filter(p => p.tier_level < currentTier);
+            }
+
+            if (filteredPlans.length === 0) {
+                toast.info(`No ${action} options available`);
+                return;
+            }
+
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'plan-comparison-modal';
+            modal.innerHTML = `
+                <div class="modal-content modal-subscription-plans">
+                    <button class="modal-close" onclick="app.closePlanComparisonModal()">×</button>
+                    <h2>${action === 'upgrade' ? 'Upgrade' : 'Downgrade'} Your Plan</h2>
+                    <div class="plans-grid">
+                        ${filteredPlans.map(plan => this.renderPlanCard(plan, plan.is_current, action)).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        } catch (error) {
+            console.error('Error showing plan modal:', error);
+            toast.error('Failed to load plans');
+        }
+    }
+
+    // T030: Render plan card
+    renderPlanCard(plan, isCurrent, action) {
+        const features = plan.features ? JSON.parse(plan.features) : [];
+
+        return `
+            <div class="plan-card ${isCurrent ? 'current-plan' : ''}" data-plan-id="${plan.plan_id}">
+                <h3 class="plan-name">${plan.plan_name}</h3>
+                <div class="plan-pricing">
+                    <span class="plan-price">€${plan.price_monthly}</span>
+                    <span class="plan-cycle">/month</span>
+                </div>
+                <div class="plan-pricing-yearly">
+                    <span class="plan-price-yearly">€${plan.price_yearly}/year</span>
+                    <span class="plan-savings">(Save €${(plan.price_monthly * 12 - plan.price_yearly).toFixed(2)})</span>
+                </div>
+                <ul class="plan-features">
+                    ${features.map(feature => `<li class="plan-feature">${feature}</li>`).join('')}
+                </ul>
+                <button
+                    class="btn-plan-select ${isCurrent ? 'disabled' : ''}"
+                    ${isCurrent ? 'disabled' : ''}
+                    onclick="app.handlePlanSelection('${plan.plan_id}', '${action}', '${plan.plan_name}')"
+                >
+                    ${isCurrent ? 'Current Plan' : 'Select'}
+                </button>
+            </div>
+        `;
+    }
+
+    // Handle plan selection from modal
+    handlePlanSelection(planId, action, planName) {
+        this.closePlanComparisonModal();
+
+        if (action === 'upgrade') {
+            this.showUpgradeConfirmation(planId, planName);
+        } else if (action === 'downgrade') {
+            this.showDowngradeConfirmation(planId, planName);
+        }
+    }
+
+    closePlanComparisonModal() {
+        const modal = document.getElementById('plan-comparison-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // T031: Show upgrade confirmation
+    showUpgradeConfirmation(planId, planName) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'upgrade-confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-confirmation">
+                <h2>Confirm Upgrade</h2>
+                <p>Upgrade to <strong>${planName}</strong>?</p>
+                <p class="confirmation-note">You will be charged immediately with proration based on your current billing cycle.</p>
+                <div class="modal-actions">
+                    <button class="btn-subscription-secondary" onclick="app.closeUpgradeConfirmation()">Cancel</button>
+                    <button class="btn-subscription-primary" onclick="app.handleUpgrade('${planId}')">Confirm Upgrade</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    closeUpgradeConfirmation() {
+        const modal = document.getElementById('upgrade-confirmation-modal');
+        if (modal) modal.remove();
+    }
+
+    // T032: Show downgrade confirmation
+    async showDowngradeConfirmation(planId, planName) {
+        // Get renewal date from current subscription
+        const subscription = await this.fetchUserSubscription();
+        const renewalDate = subscription?.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'next billing date';
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'downgrade-confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-confirmation">
+                <h2>Confirm Downgrade</h2>
+                <p>Downgrade to <strong>${planName}</strong>?</p>
+                <p class="confirmation-note">Your plan will change on ${renewalDate}. You will continue to have access to your current plan until then.</p>
+                <div class="modal-actions">
+                    <button class="btn-subscription-secondary" onclick="app.closeDowngradeConfirmation()">Cancel</button>
+                    <button class="btn-subscription-primary" onclick="app.handleDowngrade('${planId}')">Confirm Downgrade</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    closeDowngradeConfirmation() {
+        const modal = document.getElementById('downgrade-confirmation-modal');
+        if (modal) modal.remove();
+    }
+
+    // T033: Handle upgrade from trial (creates checkout session)
+    async handleUpgradeFromTrial() {
+        // Show plan comparison modal for trial users
+        this.showPlanComparisonModal(0, 'upgrade');
+    }
+
+    // T034: Handle upgrade (for active subscriptions)
+    async handleUpgrade(planId) {
+        this.closeUpgradeConfirmation();
+
+        try {
+            const response = await fetch('/api/subscription/upgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ plan_id: planId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Upgrade failed');
+            }
+
+            toast.success(data.message || 'Plan upgraded successfully!');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Upgrade error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // T035: Handle downgrade
+    async handleDowngrade(planId) {
+        this.closeDowngradeConfirmation();
+
+        try {
+            const response = await fetch('/api/subscription/downgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ plan_id: planId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Downgrade failed');
+            }
+
+            toast.success(data.message || 'Downgrade scheduled successfully!');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Downgrade error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // T036: Show cancel confirmation
+    showCancelConfirmation() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'cancel-confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-content modal-confirmation">
+                <h2>Cancel Subscription?</h2>
+                <p>Are you sure you want to cancel your subscription?</p>
+                <p class="confirmation-note">You will retain access until your current billing period ends.</p>
+                <div class="modal-actions">
+                    <button class="btn-subscription-secondary" onclick="app.closeCancelConfirmation()">Keep Subscription</button>
+                    <button class="btn-subscription-cancel" onclick="app.handleCancel()">Confirm Cancellation</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    closeCancelConfirmation() {
+        const modal = document.getElementById('cancel-confirmation-modal');
+        if (modal) modal.remove();
+    }
+
+    // T037: Handle cancel
+    async handleCancel() {
+        this.closeCancelConfirmation();
+
+        try {
+            const response = await fetch('/api/subscription/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Cancellation failed');
+            }
+
+            toast.success(data.message || 'Subscription canceled successfully');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Cancel error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // T038: Handle reactivate
+    async handleReactivate() {
+        try {
+            const response = await fetch('/api/subscription/reactivate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Reactivation failed');
+            }
+
+            toast.success(data.message || 'Subscription reactivated successfully!');
+
+            // Reload subscription block
+            this.loadSubscriptionBlock();
+        } catch (error) {
+            console.error('Reactivate error:', error);
+            toast.error(error.message);
+        }
+    }
+
+    // ========================================
+    // ACCOUNT SETTINGS FUNCTIONS
+    // Feature: 058-dan-mag-je (Account Settings Block)
+    // ========================================
+
+    // T022: Fetch user account information
+    async fetchUserAccount() {
+        try {
+            const response = await fetch('/api/account', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const accountInfo = await response.json();
+            return accountInfo;
+        } catch (error) {
+            console.error('Error fetching account:', error);
+            return null;
+        }
+    }
+
+    // T023: Render account block HTML
+    renderAccountBlock(accountData) {
+        if (!accountData) {
+            return `
+                <div class="account-block">
+                    <div class="account-header">
+                        <h3>Account</h3>
+                    </div>
+                    <div class="account-error">
+                        <p>Failed to load account information</p>
+                        <button class="btn-account-retry" onclick="app.loadAccountBlock()">Retry</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="account-block">
+                <div class="account-header">
+                    <h3>Account</h3>
+                </div>
+                <div class="account-details">
+                    <div class="account-info-row">
+                        <span class="account-label">Name:</span>
+                        <span class="account-value">${accountData.name || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-row">
+                        <span class="account-label">Member since:</span>
+                        <span class="account-value">${accountData.member_since || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-row">
+                        <span class="account-label">Last login:</span>
+                        <span class="account-value">${accountData.last_login_relative || 'Never'}</span>
+                    </div>
+                    <div class="account-statistics">
+                        <div class="account-stat">
+                            <span class="stat-number">${accountData.total_tasks_created || 0}</span>
+                            <span class="stat-label">Tasks Created</span>
+                        </div>
+                        <div class="account-stat">
+                            <span class="stat-number">${accountData.total_tasks_completed || 0}</span>
+                            <span class="stat-label">Tasks Completed</span>
+                        </div>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn-reset-password" id="reset-password-btn">
+                            Reset Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // T024: Handle password reset click
+    async handlePasswordResetClick() {
+        const btn = document.getElementById('reset-password-btn');
+        if (!btn) return;
+
+        // Show loading state
+        const originalText = btn.textContent;
+        btn.textContent = 'Sending...';
+        btn.disabled = true;
+
+        try {
+            // User is authenticated via session - no need to send email
+            const response = await fetch('/api/account/password-reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+                // No body needed - user is authenticated via session
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    const retryMinutes = Math.ceil(data.retry_after_seconds / 60);
+                    throw new Error(`Too many requests. Try again in ${retryMinutes} minutes.`);
+                }
+                if (response.status === 503) {
+                    throw new Error('Password reset temporarily unavailable. Contact info@tickedify.com');
+                }
+                throw new Error(data.error || 'Failed to send reset email');
+            }
+
+            toast.success('Password reset email sent. Check your inbox.');
+        } catch (error) {
+            console.error('Password reset error:', error);
+            toast.error(error.message);
+        } finally {
+            // Restore button state
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // Load account block into settings screen
+    async loadAccountBlock() {
+        const accountData = await this.fetchUserAccount();
+        const accountBlockHtml = this.renderAccountBlock(accountData);
+
+        // Insert BEFORE subscription block
+        const subscriptionBlock = document.getElementById('subscription-block');
+        if (subscriptionBlock) {
+            subscriptionBlock.insertAdjacentHTML('beforebegin', accountBlockHtml);
+
+            // Bind password reset button
+            const resetBtn = document.getElementById('reset-password-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => this.handlePasswordResetClick());
+            }
+        }
     }
 
     toggleUitgesteldDropdown() {
@@ -11907,58 +12624,101 @@ class Taakbeheer {
     }
 
     setupActiesFloatingDropZones() {
-        const dropZones = document.querySelectorAll('#actiesFloatingPanel .drop-zone-item');
+        console.log('🔧 DEBUG: setupActiesFloatingDropZones() called');
 
-        dropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                zone.classList.add('drag-over');
+        const panel = document.getElementById('actiesFloatingPanel');
+        if (!panel) {
+            console.warn('⚠️ DEBUG: actiesFloatingPanel not found');
+            return;
+        }
 
-                // Check Shift status en toggle derde week
-                if (e.shiftKey && !this.shiftKeyPressed) {
-                    this.shiftKeyPressed = true;
-                    this.toggleDerdeWeek(true);
-                } else if (!e.shiftKey && this.shiftKeyPressed) {
-                    this.shiftKeyPressed = false;
-                    this.toggleDerdeWeek(false);
-                }
-            });
-            
-            zone.addEventListener('dragleave', (e) => {
-                zone.classList.remove('drag-over');
-            });
-            
-            zone.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-                
-                try {
-                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    
-                    if (dragData.type === 'actie-taak') {
-                        const dropType = zone.dataset.type;
-                        const target = zone.dataset.target;
-                        
-                        if (dropType === 'planning') {
-                            // Week dag - plan voor dagelijkse planning
-                            await this.handleActiesFloatingDrop(dragData, target);
-                        } else if (dropType === 'list') {
-                            // Lijst - verplaats naar lijst
-                            await this.handleActiesFloatingListDrop(dragData, target);
-                        }
+        // Remove old event listeners if they exist (cleanup)
+        if (this.actiesFloatingDragoverHandler) {
+            panel.removeEventListener('dragover', this.actiesFloatingDragoverHandler);
+            console.log('🧹 DEBUG: Removed old dragover handler');
+        }
+        if (this.actiesFloatingDragleaveHandler) {
+            panel.removeEventListener('dragleave', this.actiesFloatingDragleaveHandler);
+            console.log('🧹 DEBUG: Removed old dragleave handler');
+        }
+        if (this.actiesFloatingDropHandler) {
+            panel.removeEventListener('drop', this.actiesFloatingDropHandler);
+            console.log('🧹 DEBUG: Removed old drop handler');
+        }
+
+        // EVENT DELEGATION: Single dragover handler for all drop zones
+        this.actiesFloatingDragoverHandler = (e) => {
+            const zone = e.target.closest('.drop-zone-item');
+            if (!zone) return;
+
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            zone.classList.add('drag-over');
+
+            // Check Shift status en toggle derde week
+            if (e.shiftKey && !this.shiftKeyPressed) {
+                this.shiftKeyPressed = true;
+                this.toggleDerdeWeek(true);
+            } else if (!e.shiftKey && this.shiftKeyPressed) {
+                this.shiftKeyPressed = false;
+                this.toggleDerdeWeek(false);
+            }
+        };
+
+        // EVENT DELEGATION: Single dragleave handler for all drop zones
+        this.actiesFloatingDragleaveHandler = (e) => {
+            const zone = e.target.closest('.drop-zone-item');
+            if (!zone) return;
+
+            zone.classList.remove('drag-over');
+        };
+
+        // EVENT DELEGATION: Single drop handler for all drop zones
+        this.actiesFloatingDropHandler = async (e) => {
+            const zone = e.target.closest('.drop-zone-item');
+            if (!zone) return;
+
+            console.log('🎯 DEBUG: Drop event fired on zone:', zone.dataset.type, zone.dataset.target);
+
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+
+            try {
+                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+
+                if (dragData.type === 'actie-taak') {
+                    const dropType = zone.dataset.type;
+                    const target = zone.dataset.target;
+
+                    console.log('📦 DEBUG: Processing drop - type:', dropType, 'target:', target);
+
+                    if (dropType === 'planning') {
+                        // Week dag - plan voor dagelijkse planning
+                        await this.handleActiesFloatingDrop(dragData, target);
+                    } else if (dropType === 'list') {
+                        // Lijst - verplaats naar lijst
+                        await this.handleActiesFloatingListDrop(dragData, target);
                     }
-                } catch (error) {
-                    console.error('Error processing drop:', error);
-                    toast.error('Error moving task');
                 }
-            });
-        });
+            } catch (error) {
+                console.error('Error processing drop:', error);
+                toast.error('Error moving task');
+            }
+        };
+
+        // Attach delegated event listeners to panel
+        panel.addEventListener('dragover', this.actiesFloatingDragoverHandler);
+        panel.addEventListener('dragleave', this.actiesFloatingDragleaveHandler);
+        panel.addEventListener('drop', this.actiesFloatingDropHandler);
+
+        console.log('✅ DEBUG: Event delegation handlers attached to panel');
     }
 
     async handleActiesFloatingListDrop(dragData, targetList) {
         const { taakId } = dragData;
-        
+
+        console.log('📥 DEBUG: handleActiesFloatingListDrop() called - taakId:', taakId, 'targetList:', targetList);
+
         await loading.withLoading(async () => {
             try {
                 // Verplaats de taak naar de gespecificeerde lijst
@@ -11978,13 +12738,14 @@ class Taakbeheer {
                     if (sourceItem) {
                         sourceItem.remove();
                     }
-                    
+
                     // Update local taken array
                     this.taken = this.taken.filter(t => t.id !== taakId);
-                    
+
                     const targetName = this.getListDisplayName(targetList);
+                    console.log('✅ DEBUG: About to show toast - Task moved to', targetName);
                     toast.success(`Task moved to ${targetName}`);
-                    
+
                     // Verberg overlay onmiddellijk zonder animatie
                     this.hideActiesFloatingPanelImmediately();
                 } else {

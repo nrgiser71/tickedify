@@ -229,6 +229,14 @@ feature branch → staging test (dev.tickedify.com) → gebruiker approval → m
 - ✅ **Feature beschrijving**: Duidelijk beschrijven wat er geïmplementeerd/gefixed is
 - ✅ **Gebruiker feedback**: Changelog als communicatie tool naar gebruiker
 
+**CHANGELOG FORMAT REGELS (vanaf v0.21.78):**
+- 🌐 **ALLEEN ENGELS**: Alle changelog entries MOETEN in het Engels zijn
+- 📅 **PER DAG GROEPEREN**: Groepeer alle wijzigingen van één dag in één versie entry
+- 📋 **CATEGORISEREN**: Verdeel entries in ✨ Features, 🔧 Fixes, 🎯 Improvements
+- 🔢 **HOOGSTE VERSIE**: Gebruik het hoogste versie nummer van die dag
+- 🚫 **GEEN COMMITS**: Niet per commit een entry, maar per dag samenvatten
+- 🔒 **GEEN SECURITY DETAILS**: Vermijd API endpoints, database schema, file paths, SQL queries
+
 **WERK ZO ZELFSTANDIG MOGELIJK BINNEN STAGING:**
 Claude moet zo zelfstandig mogelijk werken op feature branches en staging environment. Productie deployments vereisen gebruiker approval na succesvolle staging tests. Nieuwe features worden ontwikkeld en getest op staging, en na goedkeuring naar productie gepusht.
 
