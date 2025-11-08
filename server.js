@@ -794,6 +794,11 @@ app.get('/', (req, res) => {
     res.redirect('/waitlist.html');
 });
 
+// Password reset page route
+app.get('/reset-password', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
+});
+
 // Test endpoints first
 app.get('/api/ping', (req, res) => {
     res.json({ message: 'pong', timestamp: new Date().toISOString(), version: '1.1' });
