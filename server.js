@@ -4330,7 +4330,7 @@ app.post('/api/account/password-reset/confirm', async (req, res) => {
       await client.query('BEGIN');
 
       await client.query(
-        'UPDATE users SET wachtwoord = $1 WHERE id = $2',
+        'UPDATE users SET wachtwoord_hash = $1 WHERE id = $2',
         [hashedPassword, tokenData.user_id]
       );
 
