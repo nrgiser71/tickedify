@@ -150,300 +150,79 @@ margin-bottom: 12px;
 <p class="changelog-subtitle">All new features, improvements, and bug fixes</p>
 </div>
 
-<!-- Version 1.0.12 - November 9, 2025 -->
+<!-- November 9, 2025 - Production Launch Day -->
 <div class="version-block">
 <div class="version-header">
-<span class="version-badge badge-latest">v1.0.12</span>
-<span class="version-date">November 9, 2025</span>
+<span class="version-badge badge-latest">November 9, 2025</span>
+<span class="version-date">v1.0.0 - v1.0.12</span>
 </div>
 <div class="changes-list">
 
 <div class="change-category">
-<div class="category-title">🔧 Critical Fix</div>
+<div class="category-title">🎉 Production Launch</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Payment Webhook - Fixed column name mismatch (plugandpay_subscription_id → plugpay_subscription_id) after November 5 migration</span>
+<span class="change-text">Official launch of Tickedify - Transition from beta to production</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Subscription Activation - Webhook now correctly updates user subscription status after payment</span>
+<span class="change-text">Payment integration fully operational for new subscriptions</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Registration and authentication flow optimized for production use</span>
 </div>
 </div>
-
-</div>
-</div>
-
-<!-- Version 1.0.11 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.11</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
 
 <div class="change-category">
-<div class="category-title">🔧 Fix</div>
+<div class="category-title">🔧 Critical Fixes</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Database Schema - Fixed foreign key constraint in payment_webhook_logs table creation</span>
+<span class="change-text">Fixed payment processing to correctly activate subscriptions after successful payment</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Resolved registration flow issues for users joining after beta period</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Fixed authentication errors that prevented user login</span>
+</div>
+<div class="change-item">
+<span class="change-bullet">•</span>
+<span class="change-text">Corrected app initialization errors that affected page loading</span>
 </div>
 </div>
-
-</div>
-</div>
-
-<!-- Version 1.0.10 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.10</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
 
 <div class="change-category">
-<div class="category-title">🔧 Critical Fix</div>
+<div class="category-title">✨ Features</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Database Migration - Added endpoint to create missing payment_webhook_logs table required for payment flow</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Webhook Infrastructure - Fixed webhook logging capability, enabling proper tracking of subscription payments</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.9 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.9</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Debug Tools</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Webhook Debugging - Added debug endpoint to inspect payment webhook logs for troubleshooting subscription activation issues</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.8 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.8</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Critical Fix</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Non-Beta Registration Flow - Fixed registration for users outside beta period (after beta ended)</span>
+<span class="change-text">Page Help System - Context-sensitive help icons with admin-configurable content</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Login Token Generation - Added automatic login token generation during registration for payment flow</span>
+<span class="change-text">Improved postponed list sorting by appearance date</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Session Management - Created user session during registration to maintain login state through payment process</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Payment Redirect - Frontend now correctly handles requiresPayment flag and redirects to subscription page</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">User Experience - Registration flow now seamless for both beta and paid subscription users</span>
+<span class="change-text">Streamlined UI with temporarily hidden tutorial elements during enhancement phase</span>
 </div>
 </div>
-
-</div>
-</div>
-
-<!-- Version 1.0.7 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.7</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Critical Fix</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">OnboardingVideoManager Initialization Error - Fixed "Cannot read properties of null" error that prevented app from loading</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Conditional Instantiation - Added DOM element existence check before creating OnboardingVideoManager instance</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Feature 063 Compatibility - Ensured app loads correctly when onboarding popup element is hidden</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.6 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.6</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Critical Fix</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Login Error Fix - Resolved "Cannot access 'app' before initialization" error that prevented login</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Variable Scope Fix - Changed all `app` references to `window.app` in AuthManager for correct initialization order</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.5 - June 19, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.5</span>
-<span class="version-date">June 19, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Fixes</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">HTML Comment Syntax Fix - Corrected nested HTML comments that caused instruction video link to remain visible</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Video Link Hiding - Fixed issue where "Instruction Video" link was still showing in navigation menu</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.4 - June 19, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.4</span>
-<span class="version-date">June 19, 2025</span>
-</div>
-<div class="changes-list">
 
 <div class="change-category">
 <div class="category-title">🎯 Improvements</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Temporarily Hidden Settings - Settings menu item hidden while feature is under development</span>
+<span class="change-text">Enhanced page help content caching with real-time cross-tab updates</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Temporarily Hidden Tutorial Video - Instruction video link and auto-play tutorial video disabled while features are being enhanced</span>
+<span class="change-text">Consolidated admin help selector for better content management</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Code Preservation - All hidden features preserved with clear restoration markers for future re-enablement</span>
-</div>
-</div>
-
-<div class="change-category">
-<div class="category-title">📝 Notes</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">These features are temporarily hidden and will be restored in a future release. This change has no impact on core task management functionality.</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.3 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-feature">v1.0.3</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🎯 Improvements</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Admin Page Help Selector - Consolidated all postponed list variations into single "Uitgesteld (Postponed)" option for simplified help content management</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Complete Page List - Added missing pages to admin selector: Projecten, Prullenbak, and Contextenbeheer for comprehensive help coverage</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.2 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.2</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Fixes</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Page Help Cache Debug Tool - Added clearAllCache() method to PageHelpManager for manual cache clearing via browser console</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Cache Troubleshooting - Users can now run window.pageHelpManager.clearAllCache() in browser console to force fresh help content fetch</span>
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- Version 1.0.1 - November 9, 2025 -->
-<div class="version-block">
-<div class="version-header">
-<span class="version-badge badge-fix">v1.0.1</span>
-<span class="version-date">November 9, 2025</span>
-</div>
-<div class="changes-list">
-
-<div class="change-category">
-<div class="category-title">🔧 Fixes</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Page Help Cache Invalidation - Fixed issue where admin-edited help content wasn't visible to users due to localStorage cache not being invalidated cross-tab</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Cross-Tab Communication - Implemented localStorage event broadcasting to automatically invalidate help content cache when admin saves changes in another browser tab</span>
-</div>
-<div class="change-item">
-<span class="change-bullet">•</span>
-<span class="change-text">Real-Time Updates - Help modals now automatically reload content when admin updates are saved, even if modal is currently open</span>
+<span class="change-text">Improved sidebar organization and layout</span>
 </div>
 </div>
 
