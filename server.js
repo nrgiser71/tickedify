@@ -7940,11 +7940,11 @@ app.get('/api/debug/webhook-logs', async (req, res) => {
 // TEMPORARY DEBUG: Create webhook logs table
 app.post('/api/debug/create-webhook-table', async (req, res) => {
     try {
-        // Create table
+        // Create table (without foreign key constraint for now)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS payment_webhook_logs (
               id SERIAL PRIMARY KEY,
-              user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+              user_id INTEGER,
               event_type VARCHAR(100),
               order_id VARCHAR(255),
               email VARCHAR(255),
