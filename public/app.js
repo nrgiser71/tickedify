@@ -1156,6 +1156,8 @@ class Taakbeheer {
         await this.laadProjecten();
         await this.laadContexten();
 
+        // TEMPORARILY DISABLED - Feature 063 - Restore by uncommenting
+        /*
         // Feature 014: Check if user needs to see onboarding video (first login)
         try {
             const response = await fetch('/api/user/onboarding-status');
@@ -1170,6 +1172,8 @@ class Taakbeheer {
             console.error('Fout bij controleren onboarding status:', error);
             // Continue loading app even if onboarding check fails
         }
+        */
+        // END TEMPORARILY DISABLED - Feature 063
 
         // Hide loading indicator after app is fully loaded
         if (window.loading) {
