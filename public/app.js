@@ -1,4 +1,4 @@
-// Tickedify App v0.21.36 - Build timestamp: 2025-11-03T22:30:00Z
+// Tickedify App v0.21.131 - Build timestamp: 2025-11-09T12:00:00Z
 // Toast Notification System
 class ToastManager {
     constructor() {
@@ -1003,14 +1003,55 @@ class Taakbeheer {
         // Sidebar counters are initialized in navigeerNaarLijst() - Feature 022
     }
 
+    // Page Help Icon Integration - Feature 062
+    addPageHelpIcon(pageId) {
+        // Map lijst names to pageId format
+        const lijstToPageId = {
+            'inbox': 'inbox',
+            'acties': 'acties',
+            'opvolgen': 'opvolgen',
+            'dagelijkse-planning': 'dagelijkse-planning',
+            // All uitgesteld variants map to single 'uitgesteld' help page
+            'uitgesteld-wekelijks': 'uitgesteld',
+            'uitgesteld-maandelijks': 'uitgesteld',
+            'uitgesteld-3maandelijks': 'uitgesteld',
+            'uitgesteld-6maandelijks': 'uitgesteld',
+            'uitgesteld-jaarlijks': 'uitgesteld',
+            'afgewerkte-taken': 'afgewerkt',
+            'email-import': 'email-import',
+            'projecten': 'projecten',
+            'prullenbak': 'prullenbak',
+            'contextenbeheer': 'contextenbeheer'
+        };
+
+        const mappedPageId = lijstToPageId[pageId] || pageId;
+
+        // Only add for eligible pages
+        const eligiblePages = ['inbox', 'acties', 'opvolgen', 'dagelijkse-planning',
+                              'uitgesteld', 'afgewerkt', 'email-import',
+                              'projecten', 'prullenbak', 'contextenbeheer'];
+
+        if (!eligiblePages.includes(mappedPageId)) {
+            return; // Skip ineligible pages
+        }
+
+        // Wait for PageHelpManager to be initialized
+        setTimeout(() => {
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle && window.pageHelpManager) {
+                window.pageHelpManager.addHelpIcon(mappedPageId, pageTitle);
+            }
+        }, 100); // Small delay to ensure DOM is ready
+    }
+
     // LocalStorage helpers for remembering current list
     restoreCurrentList() {
         try {
             const saved = localStorage.getItem('tickedify-current-list');
             if (saved) {
                 // Validate that it's a known list
-                const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks', 
-                                  'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
+                const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks',
+                                  'uitgesteld-maandelijks', 'uitgesteld-3maandelijks',
                                   'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen',
                                   'contextenbeheer', 'dagelijkse-planning'];
                 if (validLists.includes(saved)) {
@@ -1115,6 +1156,8 @@ class Taakbeheer {
         await this.laadProjecten();
         await this.laadContexten();
 
+        // TEMPORARILY DISABLED - Feature 063 - Restore by uncommenting
+        /*
         // Feature 014: Check if user needs to see onboarding video (first login)
         try {
             const response = await fetch('/api/user/onboarding-status');
@@ -1129,6 +1172,8 @@ class Taakbeheer {
             console.error('Fout bij controleren onboarding status:', error);
             // Continue loading app even if onboarding check fails
         }
+        */
+        // END TEMPORARILY DISABLED - Feature 063
 
         // Hide loading indicator after app is fully loaded
         if (window.loading) {
@@ -2167,6 +2212,9 @@ class Taakbeheer {
         // Update sidebar counters after list is loaded - Feature 022
         // This ensures counters update for ALL lists (dagelijkse-planning, uitgesteld, and normal lists)
         this.debouncedUpdateCounters();
+
+        // Add help icon for eligible pages - Feature 062
+        this.addPageHelpIcon(lijst);
     }
 
     async laadTellingen() {
@@ -7253,6 +7301,9 @@ class Taakbeheer {
 
         // Show contexten beheer interface
         this.renderContextenBeheer();
+
+        // Add help icon for context management
+        this.addPageHelpIcon('contextenbeheer');
     }
 
     restoreNormalContainer(targetLijst = null) {
@@ -8163,19 +8214,43 @@ class Taakbeheer {
     // T027: Render active subscription
     renderActiveSubscription(subscription) {
         const renewalDate = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
-        const planName = subscription.plan_name || 'Unknown Plan';
-        const price = subscription.price || 0;
-        const cycle = subscription.cycle || 'month';
+
+        // Use subscription-data.js as single source of truth for display
+        const planData = window.SUBSCRIPTION_VALIDATION?.getPlanById(subscription.plan);
+
+        // Fallback if plan not found or subscription-data.js not loaded
+        if (!planData) {
+            console.warn('Plan not found in subscription-data.js:', subscription.plan);
+            return `
+                <div class="subscription-info subscription-active">
+                    <p class="subscription-plan-name">Unknown Plan</p>
+                    <p class="subscription-pricing">€0/month</p>
+                    <p class="subscription-renewal">Renews on ${renewalDate}</p>
+                </div>
+                <div class="subscription-actions">
+                    <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(1, 'upgrade')">Upgrade Plan</button>
+                    <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(1, 'downgrade')">Downgrade Plan</button>
+                    <button class="btn-subscription-cancel" onclick="app.showCancelConfirmation()">Cancel Subscription</button>
+                </div>
+            `;
+        }
+
+        // Use hardcoded data from subscription-data.js
+        const planName = planData.name;
+        const price = planData.price;
+        const cycleDisplay = planData.billing_cycle === 'monthly' ? 'month' :
+                             planData.billing_cycle === 'yearly' ? 'year' :
+                             planData.billing_cycle;
 
         return `
             <div class="subscription-info subscription-active">
                 <p class="subscription-plan-name">${planName}</p>
-                <p class="subscription-pricing">€${price}/${cycle}</p>
+                <p class="subscription-pricing">€${price}/${cycleDisplay}</p>
                 <p class="subscription-renewal">Renews on ${renewalDate}</p>
             </div>
             <div class="subscription-actions">
-                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'upgrade')">Upgrade Plan</button>
-                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level}, 'downgrade')">Downgrade Plan</button>
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level || 1}, 'upgrade')">Upgrade Plan</button>
+                <button class="btn-subscription-secondary" onclick="app.showPlanComparisonModal(${subscription.tier_level || 1}, 'downgrade')">Downgrade Plan</button>
                 <button class="btn-subscription-cancel" onclick="app.showCancelConfirmation()">Cancel Subscription</button>
             </div>
         `;
@@ -8184,7 +8259,10 @@ class Taakbeheer {
     // T028: Render canceled subscription
     renderCanceledSubscription(subscription) {
         const accessUntil = subscription.renewal_date ? new Date(subscription.renewal_date).toLocaleDateString() : 'N/A';
-        const planName = subscription.plan_name || 'Unknown Plan';
+
+        // Use subscription-data.js as single source of truth for display
+        const planData = window.SUBSCRIPTION_VALIDATION?.getPlanById(subscription.plan);
+        const planName = planData ? planData.name : 'Unknown Plan';
 
         return `
             <div class="subscription-info subscription-canceled">
@@ -8587,7 +8665,7 @@ class Taakbeheer {
                     </div>
                     <div class="account-actions">
                         <button class="btn-reset-password" id="reset-password-btn">
-                            Reset Password
+                            Change Password
                         </button>
                     </div>
                 </div>
@@ -9340,7 +9418,7 @@ class Taakbeheer {
         container.innerHTML = `
             <!-- Mobile header -->
             <header class="main-header">
-                <h1>Daily Planning</h1>
+                <h1 id="page-title">Daily Planning</h1>
             </header>
 
             <div class="dagelijkse-planning-layout">
@@ -11987,11 +12065,23 @@ class Taakbeheer {
             }
             
             const taken = await response.json();
-            
+
             if (taken.length === 0) {
                 content.innerHTML = '<div class="empty-state">Geen taken in deze categorie</div>';
                 return;
             }
+
+            // Sort tasks by verschijndatum (descending) - tasks with furthest dates appear on top
+            taken.sort((a, b) => {
+                // Tasks without verschijndatum go to bottom
+                if (!a.verschijndatum && !b.verschijndatum) return 0;
+                if (!a.verschijndatum) return 1;
+                if (!b.verschijndatum) return -1;
+
+                // Compare dates as strings (YYYY-MM-DD format sorts correctly alphabetically)
+                // Reverse order for descending sort
+                return b.verschijndatum.localeCompare(a.verschijndatum);
+            });
 
             // Simple list - indicators will be added by JavaScript
             content.innerHTML = `
@@ -15105,6 +15195,377 @@ class KeyboardHelpModal {
     }
 }
 
+// ========================================
+// PAGE HELP SYSTEM - Feature 062
+// ========================================
+
+// Page Help Icon and Modal Manager
+class PageHelpManager {
+    constructor() {
+        this.helpCache = {}; // In-memory cache for help content
+        this.cacheTTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        this.modal = null;
+        this.currentPageId = null;
+
+        this.setupModal();
+        this.setupCrossTabCacheInvalidation();
+    }
+
+    // Listen for cache invalidation events from admin interface (cross-tab communication)
+    setupCrossTabCacheInvalidation() {
+        window.addEventListener('storage', (e) => {
+            // Only handle our broadcast events
+            if (e.key === 'page-help-broadcast' && e.newValue) {
+                try {
+                    const event = JSON.parse(e.newValue);
+                    if (event.type === 'page-help-updated' && event.pageId) {
+                        console.log(`[PageHelp] Cache invalidation received for page: ${event.pageId}`);
+                        this.invalidateCache(event.pageId);
+
+                        // If modal is currently showing this page, reload content
+                        if (this.currentPageId === event.pageId && this.modal && this.modal.style.display === 'flex') {
+                            console.log(`[PageHelp] Auto-reloading currently displayed help page: ${event.pageId}`);
+                            this.showHelp(event.pageId);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse page-help-broadcast event:', e);
+                }
+            }
+        });
+    }
+
+    // Setup help modal DOM (EXACT copy of information message structure)
+    setupModal() {
+        // Create modal if it doesn't exist
+        if (!document.getElementById('pageHelpModal')) {
+            const modalHTML = `
+                <div id="pageHelpModal" class="modal-overlay" style="display: none;">
+                    <div class="message-modal page-help-modal">
+                        <div class="message-header page-help-header">
+                            <button class="btn-close-modal" aria-label="Close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <i class="message-icon fas fa-info-circle"></i>
+                            <h3 class="message-title" id="pageHelpTitle">Help</h3>
+                        </div>
+                        <div class="message-body">
+                            <div class="message-content" id="pageHelpBody">
+                                <p>Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        this.modal = document.getElementById('pageHelpModal');
+        this.closeBtn = this.modal.querySelector('.btn-close-modal');
+        this.titleEl = document.getElementById('pageHelpTitle');
+        this.bodyEl = document.getElementById('pageHelpBody');
+
+        // Event listeners
+        this.closeBtn.addEventListener('click', () => this.hideModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.hideModal();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.style.display === 'flex') {
+                this.hideModal();
+            }
+        });
+    }
+
+    // Add help icon to page title
+    addHelpIcon(pageId, titleElement) {
+        // Don't add if already exists
+        if (titleElement.querySelector('.page-help-icon')) {
+            return;
+        }
+
+        const iconHTML = `
+            <span class="page-help-icon" data-page-id="${pageId}" title="View page help">
+                <i class="fas fa-question-circle"></i>
+            </span>
+        `;
+
+        titleElement.insertAdjacentHTML('beforeend', iconHTML);
+
+        const icon = titleElement.querySelector('.page-help-icon');
+        icon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showHelp(pageId);
+        });
+    }
+
+    // Fetch help content from API with caching
+    async getPageHelp(pageId) {
+        const cacheKey = `help-content-${pageId}`;
+
+        // Check in-memory cache
+        const cached = this.helpCache[cacheKey];
+        if (cached && (Date.now() - cached.timestamp < this.cacheTTL)) {
+            return cached.data;
+        }
+
+        // Check localStorage cache
+        try {
+            const localCached = localStorage.getItem(cacheKey);
+            if (localCached) {
+                const parsedCache = JSON.parse(localCached);
+                if (Date.now() - parsedCache.timestamp < this.cacheTTL) {
+                    // Update in-memory cache
+                    this.helpCache[cacheKey] = parsedCache;
+                    return parsedCache.data;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to read help cache from localStorage:', e);
+        }
+
+        // Fetch from API
+        try {
+            const response = await fetch(`/api/page-help/${pageId}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch help content: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Cache in memory and localStorage
+            const cacheData = {
+                data: data,
+                timestamp: Date.now()
+            };
+
+            this.helpCache[cacheKey] = cacheData;
+
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            } catch (e) {
+                console.warn('Failed to cache help content in localStorage:', e);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch page help:', error);
+            throw error;
+        }
+    }
+
+    // Invalidate cache for specific page (used after admin update)
+    invalidateCache(pageId) {
+        const cacheKey = `help-content-${pageId}`;
+        delete this.helpCache[cacheKey];
+        try {
+            localStorage.removeItem(cacheKey);
+        } catch (e) {
+            console.warn('Failed to remove cache from localStorage:', e);
+        }
+    }
+
+    // Clear ALL page help cache (for debugging/troubleshooting)
+    clearAllCache() {
+        console.log('[PageHelp] Clearing all help content cache...');
+
+        // Clear in-memory cache
+        this.helpCache = {};
+
+        // Clear localStorage cache for all pages
+        const eligiblePages = [
+            'inbox', 'acties', 'opvolgen', 'dagelijkse-planning',
+            'uitgesteld', 'afgewerkt', 'email-import',
+            'projecten', 'prullenbak', 'contextenbeheer'
+        ];
+
+        let clearedCount = 0;
+        eligiblePages.forEach(pageId => {
+            const cacheKey = `help-content-${pageId}`;
+            try {
+                if (localStorage.getItem(cacheKey)) {
+                    localStorage.removeItem(cacheKey);
+                    clearedCount++;
+                }
+            } catch (e) {
+                console.warn(`Failed to clear cache for ${pageId}:`, e);
+            }
+        });
+
+        console.log(`[PageHelp] ✅ Cleared ${clearedCount} cached entries from localStorage`);
+        console.log('[PageHelp] Next help icon click will fetch fresh content from server');
+
+        return clearedCount;
+    }
+
+    // Extract first H1 from markdown and use as title
+    stripFirstH1FromMarkdown(markdown) {
+        if (!markdown) return { title: '', content: '' };
+
+        const lines = markdown.split('\n');
+        let titleText = '';
+        let contentLines = [];
+        let foundFirstH1 = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+
+            // Check for H1 markdown: "# Title"
+            if (!foundFirstH1 && line.startsWith('# ')) {
+                titleText = line.substring(2).trim();  // Remove "# " prefix
+                foundFirstH1 = true;
+                continue;  // Skip this line
+            }
+
+            contentLines.push(lines[i]);
+        }
+
+        return {
+            title: titleText,
+            content: contentLines.join('\n').trim()
+        };
+    }
+
+    // Custom markdown parser (copied from message-modal.js for consistency)
+    parseMarkdownLinks(text) {
+        if (!text) return '';
+
+        // Escape HTML to prevent XSS
+        let html = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Horizontal rule: --- (must be on its own line)
+        html = html.replace(/^---$/gm, '<hr>');
+
+        // Headers (must be at start of line)
+        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+        // Highlight: ==text==
+        html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
+
+        // Bold: **text** or __text__
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+        // Italic: *text* or _text_ (but not in URLs or bold)
+        html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+        html = html.replace(/\b_([^_]+?)_\b/g, '<em>$1</em>');
+
+        // Code: `code`
+        html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+        // Links: [text](url)
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+        // Lists: Group consecutive list items properly
+        // Match consecutive lines starting with - or *
+        html = html.replace(/((?:^[*-] .+$\n?)+)/gm, function(match) {
+            // Convert each line to <li>
+            const items = match.trim().split('\n').map(line => {
+                const content = line.replace(/^[*-] /, '');
+                return `<li>${content}</li>`;
+            }).join('');
+            return `<ul>${items}</ul>`;
+        });
+
+        // Ordered lists: 1. item, 2. item
+        html = html.replace(/((?:^\d+\. .+$\n?)+)/gm, function(match) {
+            const items = match.trim().split('\n').map(line => {
+                const content = line.replace(/^\d+\. /, '');
+                return `<li>${content}</li>`;
+            }).join('');
+            return `<ol>${items}</ol>`;
+        });
+
+        // Line breaks: double newline = paragraph, single newline = <br>
+        // But preserve lists
+        html = html.replace(/\n\n+/g, '</p><p>');
+        html = html.replace(/\n/g, '<br>');
+        html = '<p>' + html + '</p>';
+
+        // Clean up paragraphs around lists
+        html = html.replace(/<p>(<[uo]l>)/g, '$1');
+        html = html.replace(/(<\/[uo]l>)<\/p>/g, '$1');
+
+        // Remove <br> tags around lists
+        html = html.replace(/<br>(<[uo]l>)/g, '$1');
+        html = html.replace(/(<\/[uo]l>)<br>/g, '$1');
+
+        // Clean up empty paragraphs
+        html = html.replace(/<p><\/p>/g, '');
+        html = html.replace(/<p><br><\/p>/g, '');
+
+        return html;
+    }
+
+    // Show help modal for specific page
+    async showHelp(pageId) {
+        this.currentPageId = pageId;
+        this.modal.style.display = 'flex';
+        this.bodyEl.innerHTML = '<p class="loading-text">Loading help content...</p>';
+
+        try {
+            // Fetch help content
+            const helpData = await this.getPageHelp(pageId);
+
+            // Extract first H1 as title, render rest as content
+            const { title, content } = this.stripFirstH1FromMarkdown(helpData.content);
+
+            // Update modal title - use extracted H1 or fallback to page name
+            this.titleEl.textContent = title || this.getPageName(pageId);
+
+            // Render markdown content WITHOUT first H1 (same as information messages)
+            this.bodyEl.innerHTML = this.parseMarkdownLinks(content);
+
+            // Add custom/default indicator
+            if (helpData.isDefault === false && helpData.modifiedBy) {
+                const indicator = document.createElement('div');
+                indicator.className = 'help-custom-indicator';
+                indicator.innerHTML = `<small><em>Custom content by ${helpData.modifiedBy}</em></small>`;
+                this.bodyEl.appendChild(indicator);
+            }
+        } catch (error) {
+            console.error('Failed to load help content:', error);
+            this.bodyEl.innerHTML = `
+                <div class="help-error">
+                    <p><strong>Failed to load help content</strong></p>
+                    <p>Please try again later or contact support if the problem persists.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Hide help modal
+    hideModal() {
+        this.modal.style.display = 'none';
+        this.currentPageId = null;
+    }
+
+    // Get human-readable page name
+    getPageName(pageId) {
+        const names = {
+            'inbox': 'Inbox',
+            'acties': 'Acties (Actions)',
+            'opvolgen': 'Opvolgen (Follow-up)',
+            'dagelijkse-planning': 'Dagelijkse Planning',
+            'uitgesteld': 'Uitgesteld (Postponed)',
+            'afgewerkt': 'Afgewerkt (Completed)',
+            'email-import': 'Email Import',
+            'projecten': 'Projecten (Projects)',
+            'prullenbak': 'Prullenbak (Trash)',
+            'contextenbeheer': 'Contextenbeheer (Context Management)'
+        };
+        return names[pageId] || pageId;
+    }
+}
+
 // Email Help Modal System
 class EmailHelpModal {
     constructor() {
@@ -16093,7 +16554,7 @@ class BijlagenManager {
             const planType = this.storageStats.plan_type || 'free';
 
             if (planType === 'premium_plus') {
-                uploadLimits.textContent = 'Premium Plus: unlimited attachments and size';
+                uploadLimits.textContent = 'Unlimited: unlimited attachments and size';
             } else if (planType === 'premium_standard') {
                 uploadLimits.textContent = `Standard: Max ${this.storageStats.limits.max_file_formatted}, ${this.storageStats.limits.max_attachments_per_task} attachment per task`;
             } else {
@@ -16502,9 +16963,10 @@ class BijlagenManager {
     }
 }
 
-// Initialize subtaken manager
+// Initialize managers
 let subtakenManager;
 let bijlagenManager;
+let pageHelpManager;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DEBUG: Initializing SubtakenManager...');
@@ -16523,6 +16985,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('DEBUG: BijlagenManager initialized successfully');
     } catch (error) {
         console.error('DEBUG: Error initializing BijlagenManager:', error);
+    }
+
+    console.log('DEBUG: Initializing PageHelpManager...');
+    try {
+        pageHelpManager = new PageHelpManager();
+        // Make globally accessible
+        window.pageHelpManager = pageHelpManager;
+        console.log('DEBUG: PageHelpManager initialized successfully');
+    } catch (error) {
+        console.error('DEBUG: Error initializing PageHelpManager:', error);
     }
 });
 

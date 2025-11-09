@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: Page Help API
+  description: API endpoints for managing page help content in Tickedify
+  version: 1.0.0
+
+servers:
+  - url: https://tickedify.com/api
+    description: Production server
+  - url: https://dev.tickedify.com/api
+    description: Staging server
+
+paths:
+  /page-help/{pageId}:
+    get:
+      summary: Get help content for a specific page
+      description: |
+        Returns markdown help content for the specified page.
+        If no custom content exists in database, returns default content from code.
+      operationId: getPageHelp
+      tags:
+        - Page Help
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: pageId
+          in: path
+          required: true
+          description: Page identifier (e.g., 'inbox', 'acties', 'dagelijkse-planning')
+          schema:
+            type: string
+            enum:
+              - inbox
+              - acties
+              - opvolgen
+              - dagelijkse-planning
+              - uitgesteld-wekelijks
+              - uitgesteld-maandelijks
+              - uitgesteld-3maandelijks
+              - uitgesteld-6maandelijks
+              - uitgesteld-jaarlijks
+              - afgewerkt
+              - email-import
+          example: inbox
+      responses:
+        '200':
+          description: Successfully retrieved help content
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - pageId
+                  - content
+                properties:
+                  pageId:
+                    type: string
+                    description: The page identifier
+                    example: inbox
+                  content:
+                    type: string
+                    description: Markdown-formatted help content
+                    example: |
+                      # Inbox
+
+                      The **Inbox** is where all new tasks arrive before being processed.
+
+                      ## How to use
+                      - Add tasks quickly without worrying about details
+                      - Process inbox regularly
+                  isDefault:
+                    type: boolean
+                    description: True if content is from default (not database)
+                    example: false
+                  modifiedAt:
+                    type: string
+                    format: date-time
+                    description: Timestamp of last modification (null if default)
+                    example: "2025-11-09T10:30:00Z"
+                  modifiedBy:
+                    type: string
+                    description: Admin user who last modified content (null if default)
+                    example: admin
+        '401':
+          description: Unauthorized - user not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid page ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Invalid page ID: invalid-page"
+
+    put:
+      summary: Update help content for a specific page (admin only)
+      description: |
+        Updates or creates help content for the specified page.
+        Requires admin authentication.
+      operationId: updatePageHelp
+      tags:
+        - Page Help
+      security:
+        - adminAuth: []
+      parameters:
+        - name: pageId
+          in: path
+          required: true
+          description: Page identifier
+          schema:
+            type: string
+            enum:
+              - inbox
+              - acties
+              - opvolgen
+              - dagelijkse-planning
+              - uitgesteld-wekelijks
+              - uitgesteld-maandelijks
+              - uitgesteld-3maandelijks
+              - uitgesteld-6maandelijks
+              - uitgesteld-jaarlijks
+              - afgewerkt
+              - email-import
+          example: inbox
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: Markdown-formatted help content
+                  minLength: 1
+                  maxLength: 10000
+                  example: |
+                    # Inbox - Custom Help
+
+                    **Updated** help content with custom instructions.
+            example:
+              content: "# Inbox\n\nCustom help content here."
+      responses:
+        '200':
+          description: Successfully updated help content
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - pageId
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pageId:
+                    type: string
+                    example: inbox
+                  message:
+                    type: string
+                    example: "Help content updated successfully"
+        '400':
+          description: Bad request - invalid content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Content cannot be empty"
+        '401':
+          description: Unauthorized - not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not an admin user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid page ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete help content for a specific page (admin only)
+      description: |
+        Deletes custom help content, reverting to default content.
+        Requires admin authentication.
+      operationId: deletePageHelp
+      tags:
+        - Page Help
+      security:
+        - adminAuth: []
+      parameters:
+        - name: pageId
+          in: path
+          required: true
+          description: Page identifier
+          schema:
+            type: string
+            enum:
+              - inbox
+              - acties
+              - opvolgen
+              - dagelijkse-planning
+              - uitgesteld-wekelijks
+              - uitgesteld-maandelijks
+              - uitgesteld-3maandelijks
+              - uitgesteld-6maandelijks
+              - uitgesteld-jaarlijks
+              - afgewerkt
+              - email-import
+          example: inbox
+      responses:
+        '200':
+          description: Successfully deleted help content (reverted to default)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - pageId
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  pageId:
+                    type: string
+                    example: inbox
+                  message:
+                    type: string
+                    example: "Help content deleted, reverted to default"
+        '401':
+          description: Unauthorized - not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not an admin user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid page ID or no content to delete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /page-help:
+    get:
+      summary: List all page help content (admin only)
+      description: |
+        Returns help content for all pages, including defaults.
+        Used by admin interface to show overview.
+        Requires admin authentication.
+      operationId: listPageHelp
+      tags:
+        - Page Help
+      security:
+        - adminAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved all help content
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - pages
+                properties:
+                  pages:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - pageId
+                        - pageName
+                        - hasCustomContent
+                      properties:
+                        pageId:
+                          type: string
+                          description: Page identifier
+                          example: inbox
+                        pageName:
+                          type: string
+                          description: Human-readable page name
+                          example: Inbox
+                        hasCustomContent:
+                          type: boolean
+                          description: True if custom content exists in database
+                          example: true
+                        contentPreview:
+                          type: string
+                          description: First 100 characters of content
+                          example: "# Inbox\n\nThe **Inbox** is where all new tasks..."
+                        modifiedAt:
+                          type: string
+                          format: date-time
+                          description: Last modification timestamp (null if default)
+                          example: "2025-11-09T10:30:00Z"
+                        modifiedBy:
+                          type: string
+                          description: Admin who last modified (null if default)
+                          example: admin
+        '401':
+          description: Unauthorized - not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not an admin user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Unauthorized"
+        details:
+          type: string
+          description: Additional error details
+          example: "Admin authentication required"
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: tickedify_session
+      description: Session cookie for authenticated users
+
+    adminAuth:
+      type: apiKey
+      in: cookie
+      name: tickedify_admin_session
+      description: Admin session cookie
+
+tags:
+  - name: Page Help
+    description: Operations for managing page help content

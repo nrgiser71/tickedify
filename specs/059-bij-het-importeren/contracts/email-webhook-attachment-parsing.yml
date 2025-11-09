@@ -1,0 +1,241 @@
+openapi: 3.0.0
+info:
+  title: Email Webhook Attachment Parsing Contract
+  version: 1.0.0
+  description: |
+    Contract test specification for email-to-task import with flexible attachment syntax.
+
+    This contract validates the parseEmailToTask() function behavior when processing
+    the new `a;` syntax (attachment without filename specified).
+
+paths:
+  /api/email-webhook:
+    post:
+      summary: Mailgun email webhook receiver
+      description: |
+        Receives email webhooks from Mailgun and creates tasks based on email content.
+        This endpoint processes @t syntax including the new flexible attachment syntax.
+      operationId: emailWebhook
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - recipient
+                - sender
+                - subject
+                - body-plain
+              properties:
+                recipient:
+                  type: string
+                  example: "import+abc123@mg.tickedify.com"
+                  description: Email recipient containing import code
+                sender:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                subject:
+                  type: string
+                  example: "Task to import"
+                body-plain:
+                  type: string
+                  example: "@t a;\n\nTask description here"
+                  description: Email body with @t instruction
+                attachment-count:
+                  type: integer
+                  minimum: 0
+                  example: 1
+                  description: Number of attachments (Mailgun parameter)
+                attachment-1:
+                  type: string
+                  format: binary
+                  description: First attachment file
+      responses:
+        '200':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Task imported successfully"
+                  taskId:
+                    type: integer
+                    example: 12345
+        '400':
+          description: Invalid request (e.g., invalid import code)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid import code"
+        '500':
+          description: Server error during task creation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Database error"
+
+components:
+  schemas:
+    AttachmentConfig:
+      type: object
+      description: Runtime attachment processing configuration
+      required:
+        - processAttachments
+      properties:
+        processAttachments:
+          type: boolean
+          description: Whether to process attachments
+        targetFilename:
+          type: string
+          nullable: true
+          description: |
+            Filename to match, or null to process first attachment.
+            - null: Use first available attachment
+            - "": Use first available attachment
+            - "filename": Find matching attachment by name
+          example: null
+
+    ParsedTaskData:
+      type: object
+      description: Internal task data structure from parseEmailToTask()
+      required:
+        - tekst
+        - lijst
+      properties:
+        tekst:
+          type: string
+          description: Task title
+        opmerkingen:
+          type: string
+          description: Task notes (email body without @t line)
+        lijst:
+          type: string
+          enum: [inbox, uitgesteld-wekelijks, uitgesteld-maandelijks]
+          default: inbox
+        attachmentConfig:
+          $ref: '#/components/schemas/AttachmentConfig'
+          nullable: true
+
+  examples:
+    EmailWithSingleAttachmentNoFilename:
+      summary: Email with a; syntax and one attachment
+      value:
+        recipient: "import+abc123@mg.tickedify.com"
+        sender: "user@example.com"
+        subject: "Invoice to process"
+        body-plain: "@t a;\n\nPlease review this invoice"
+        attachment-count: 1
+        # attachment-1: (binary file)
+
+    EmailWithMultipleAttachmentsNoFilename:
+      summary: Email with a; syntax and multiple attachments
+      value:
+        recipient: "import+abc123@mg.tickedify.com"
+        sender: "user@example.com"
+        subject: "Documents to review"
+        body-plain: "@t a;\n\nMultiple documents attached"
+        attachment-count: 3
+        # attachment-1, attachment-2, attachment-3: (binary files)
+
+    EmailWithNoAttachmentsButSyntax:
+      summary: Email with a; syntax but no attachments
+      value:
+        recipient: "import+abc123@mg.tickedify.com"
+        sender: "user@example.com"
+        subject: "Task without attachment"
+        body-plain: "@t a;\n\nForgot to attach file"
+        attachment-count: 0
+
+    EmailWithColonOnlyNoFilename:
+      summary: Email with a: syntax (colon but no filename)
+      value:
+        recipient: "import+abc123@mg.tickedify.com"
+        sender: "user@example.com"
+        subject: "Task with colon"
+        body-plain: "@t a: ;\n\nColon without filename"
+        attachment-count: 1
+
+    EmailWithFilenameBackwardsCompatible:
+      summary: Email with traditional a: filename syntax
+      value:
+        recipient: "import+abc123@mg.tickedify.com"
+        sender: "user@example.com"
+        subject: "Invoice task"
+        body-plain: "@t a: invoice.pdf;\n\nProcess this specific invoice"
+        attachment-count: 2
+        # attachment-1: invoice.pdf, attachment-2: notes.txt
+
+tests:
+  - name: Single attachment with a; syntax
+    description: Should process first (only) attachment when using a;
+    request:
+      $ref: '#/components/examples/EmailWithSingleAttachmentNoFilename'
+    expectedBehavior:
+      - parseEmailToTask returns attachmentConfig.processAttachments = true
+      - parseEmailToTask returns attachmentConfig.targetFilename = null
+      - findMatchingAttachment returns first attachment
+      - Task created with attachment linked
+
+  - name: Multiple attachments with a; syntax
+    description: Should process first attachment when using a; with multiple files
+    request:
+      $ref: '#/components/examples/EmailWithMultipleAttachmentsNoFilename'
+    expectedBehavior:
+      - parseEmailToTask returns attachmentConfig.targetFilename = null
+      - findMatchingAttachment returns files[0]
+      - Task created with first attachment only
+
+  - name: No attachments with a; syntax
+    description: Should silently skip attachment processing when no files present
+    request:
+      $ref: '#/components/examples/EmailWithNoAttachmentsButSyntax'
+    expectedBehavior:
+      - parseEmailToTask returns attachmentConfig.targetFilename = null
+      - findMatchingAttachment returns null
+      - Task created without attachment
+      - No error thrown
+
+  - name: Colon without filename (a:)
+    description: Should treat a: identically to a;
+    request:
+      $ref: '#/components/examples/EmailWithColonOnlyNoFilename'
+    expectedBehavior:
+      - parseEmailToTask returns attachmentConfig.targetFilename = null
+      - Behaves identically to a; syntax
+
+  - name: Backwards compatibility with filename
+    description: Should continue matching specific filename
+    request:
+      $ref: '#/components/examples/EmailWithFilenameBackwardsCompatible'
+    expectedBehavior:
+      - parseEmailToTask returns attachmentConfig.targetFilename = "invoice.pdf"
+      - findMatchingAttachment uses existing matching logic
+      - Task created with invoice.pdf attachment (not notes.txt)
+
+  - name: Case insensitivity
+    description: Should accept A; identically to a;
+    request:
+      recipient: "import+abc123@mg.tickedify.com"
+      sender: "user@example.com"
+      subject: "Test"
+      body-plain: "@t A;\n\nCapital A"
+      attachment-count: 1
+    expectedBehavior:
+      - parseEmailToTask recognizes A; as attachment code
+      - Case-insensitive regex matching works

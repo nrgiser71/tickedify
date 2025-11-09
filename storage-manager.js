@@ -147,25 +147,25 @@ class StorageManager {
     const errors = [];
 
     // Check file size limits
-    // Premium Plus: unlimited file size
-    // Premium Standard & Free: 5MB max per file
+    // Unlimited: unlimited file size
+    // Standard & Free: 5MB max per file
     if (planType !== 'premium_plus' && file.size > STORAGE_CONFIG.MAX_FILE_SIZE_FREE) {
       const maxSizeFormatted = this.formatBytes(STORAGE_CONFIG.MAX_FILE_SIZE_FREE);
 
       if (planType === 'premium_standard') {
-        errors.push(`Bestand te groot. Maximum ${maxSizeFormatted} voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bestandsgrootte.`);
+        errors.push(`File too large. Maximum ${maxSizeFormatted} for Standard plan. Upgrade to Unlimited for unlimited file size.`);
       } else {
-        errors.push(`Bestand te groot. Maximum ${maxSizeFormatted} voor gratis gebruikers. Upgrade naar Premium voor meer mogelijkheden.`);
+        errors.push(`File too large. Maximum ${maxSizeFormatted} for free users. Upgrade to Standard or Unlimited for more options.`);
       }
     }
 
     // Check total storage limit (only for free users)
-    // Premium users (Standard & Plus) have unlimited total storage
+    // Standard & Unlimited users have unlimited total storage
     if (planType === 'free') {
       const totalAfterUpload = userStats.used_bytes + file.size;
       if (totalAfterUpload > STORAGE_CONFIG.FREE_TIER_LIMIT) {
         const remaining = STORAGE_CONFIG.FREE_TIER_LIMIT - userStats.used_bytes;
-        errors.push(`Onvoldoende opslag. Nog ${this.formatBytes(remaining)} beschikbaar van ${this.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT)}.`);
+        errors.push(`Insufficient storage. ${this.formatBytes(remaining)} remaining of ${this.formatBytes(STORAGE_CONFIG.FREE_TIER_LIMIT)}.`);
       }
     }
 

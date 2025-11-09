@@ -794,6 +794,11 @@ app.get('/', (req, res) => {
     res.redirect('/waitlist.html');
 });
 
+// Password reset page route
+app.get('/reset-password', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
+});
+
 // Test endpoints first
 app.get('/api/ping', (req, res) => {
     res.json({ message: 'pong', timestamp: new Date().toISOString(), version: '1.1' });
@@ -2446,6 +2451,800 @@ app.post('/api/debug/run-subscription-migration', async (req, res) => {
     }
 });
 
+// TEMPORARY: Debug endpoint to fix subscription_plan for test accounts
+app.get('/api/debug/fix-subscription-plan', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get current state
+        const beforeResult = await pool.query(`
+            SELECT email, subscription_plan, subscription_price, subscription_cycle
+            FROM users
+            WHERE email = 'jan@buskens.be'
+        `);
+
+        // Update to monthly_8 plan
+        await pool.query(`
+            UPDATE users
+            SET subscription_plan = 'monthly_8',
+                subscription_price = 8.00,
+                subscription_cycle = 'monthly'
+            WHERE email = 'jan@buskens.be'
+        `);
+
+        // Get updated state
+        const afterResult = await pool.query(`
+            SELECT email, subscription_plan, subscription_price, subscription_cycle
+            FROM users
+            WHERE email = 'jan@buskens.be'
+        `);
+
+        res.json({
+            success: true,
+            message: 'Updated jan@buskens.be to monthly_8 plan',
+            before: beforeResult.rows[0],
+            after: afterResult.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Fix subscription plan error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ========================================
+// PAGE HELP API - Feature 062
+// ========================================
+
+// Default English help content for all eligible pages
+// Based on "Baas Over Je Tijd" methodology
+const DEFAULT_PAGE_HELP = {
+    'inbox': `# Inbox
+
+The **Inbox** is your central collection point for all new tasks, ideas, and to-dos that enter your world.
+
+## Purpose
+Capture everything quickly without worrying about organization. The Inbox ensures nothing slips through the cracks while you focus on what matters now.
+
+## How to Use
+- **Add tasks instantly** - Don't overthink it, just capture
+- **Process regularly** - Review your inbox daily and move tasks to the appropriate lists
+- **Keep it empty** - An empty inbox means you're in control of your commitments
+
+## Best Practices
+- Process inbox items during your daily planning session
+- Ask yourself: "What's the next action?" for each item
+- Move tasks to Acties (Actions) when you're ready to work on them
+- Use Opvolgen (Follow-up) for tasks waiting on others
+
+**Remember:** The Inbox is temporary storage, not a to-do list. Process it regularly to maintain clarity and control.`,
+
+    'acties': `# Acties (Actions)
+
+Your **Acties** list contains all tasks that are ready to be worked on right now. This is where execution happens.
+
+## Purpose
+This is your active work list - tasks that have a clear next action and don't depend on anyone else.
+
+## How to Use
+- **Review daily** - Start each day by reviewing your Acties
+- **Prioritize** - Use priority levels (High/Medium/Low) to focus on what matters
+- **Add context** - Tag tasks with contexts (@email, @phone, @computer) for batch processing
+- **Set deadlines** - Add due dates to time-sensitive tasks
+
+## Filters & Organization
+- Filter by **Project** to focus on specific initiatives
+- Filter by **Context** to work efficiently in batches
+- Sort by **Priority** to tackle high-impact items first
+- Use **Bulk Actions** to process multiple tasks at once
+
+## Best Practices
+- Limit your daily Acties to what's realistically achievable (5-7 key tasks)
+- Review weekly to ensure alignment with your goals
+- Move completed tasks to Afgewerkt (Completed) to track progress
+- Defer tasks that aren't urgent to Uitgesteld (Postponed) lists
+
+**Pro tip:** Your Acties list should energize you, not overwhelm you. Keep it focused and achievable.`,
+
+    'opvolgen': `# Opvolgen (Follow-up)
+
+The **Opvolgen** list is for tasks that are waiting on someone else or require follow-up action.
+
+## Purpose
+Track commitments you've delegated or tasks blocked by external dependencies. Never let delegated tasks fall through the cracks.
+
+## How to Use
+- **Add waiting tasks** - When you delegate something, add it here immediately
+- **Include contact info** - Note who you're waiting on and how to reach them
+- **Set review dates** - Schedule when you'll check back on the task
+- **Follow up proactively** - Review this list weekly and send reminders when needed
+
+## Examples of Follow-up Tasks
+- Waiting for email reply from colleague
+- Pending approval from manager
+- Awaiting delivery of materials
+- Scheduled meeting not yet held
+
+## Best Practices
+- Review your Opvolgen list during weekly planning
+- Set specific follow-up dates (not "someday")
+- Include names and contact methods in task notes
+- Move back to Acties when dependencies are resolved
+
+**Remember:** Just because you're waiting doesn't mean you should forget. Active follow-up ensures progress.`,
+
+    'dagelijkse-planning': `# Dagelijkse Planning (Daily Planning)
+
+Your **Daily Planning** calendar view helps you visualize and organize your day with time-blocked tasks.
+
+## Purpose
+Transform your task list into a realistic daily schedule. See at a glance what needs to happen and when.
+
+## How to Use
+- **Drag tasks** from your lists onto specific time slots
+- **Set duration** - Estimate how long each task will take (15/30/60/90/120 minutes)
+- **Block time** - Assign tasks to calendar slots throughout your day
+- **Adjust as needed** - Move tasks around if priorities shift
+
+## Time Blocking Benefits
+- **Realistic planning** - See if you've overcommitted
+- **Focus time** - Dedicated blocks for deep work
+- **Buffer time** - Schedule breaks between intense tasks
+- **Meeting prep** - Allocate time before important meetings
+
+## Best Practices
+- Plan your day the night before or first thing in the morning
+- Leave 30-40% of your day unscheduled for unexpected tasks
+- Group similar tasks (batch email processing, phone calls)
+- Include breaks and transition time
+- Review at end of day and adjust tomorrow's plan
+
+## Filters & Views
+- Filter by **Project** to plan project-specific work sessions
+- Use **Week view** to see patterns across multiple days
+- Toggle completed tasks to see what's already done
+
+**Pro tip:** A realistic daily plan reduces stress and increases accomplishment. Don't overload your calendar.`,
+
+    'uitgesteld': `# Uitgesteld (Postponed)
+
+The **Uitgesteld** (Postponed) lists help you manage tasks with different time horizons. Tickedify offers 6 postponement intervals to match your planning rhythm.
+
+## The 6 Postponement Intervals
+
+### Weekly (Wekelijks)
+**Review:** Every 1-4 weeks
+**Perfect for:**
+- Tasks you want to tackle "sometime this month"
+- Ideas that need incubation time
+- Projects waiting for prerequisite completion
+- Short-term seasonal tasks
+
+### Monthly (Maandelijks)
+**Review:** Every 1-3 months
+**Perfect for:**
+- Medium-term projects (1-3 month horizon)
+- Quarterly goals and initiatives
+- Professional development activities
+- Home improvement projects
+
+### Quarterly (3-maandelijks)
+**Review:** Every 3 months (Jan/Apr/Jul/Oct)
+**Perfect for:**
+- Quarterly business reviews
+- Seasonal activities (spring cleaning, holiday prep)
+- Professional development milestones
+- Financial check-ins
+
+### Bi-annual (6-maandelijks)
+**Review:** Twice a year (Jan/Jul)
+**Perfect for:**
+- Semi-annual business planning
+- Tax preparation activities
+- Major home projects
+- Health check-ups and reviews
+- Vacation planning
+
+### Yearly (Jaarlijks)
+**Review:** Once a year (January)
+**Perfect for:**
+- Annual recurring tasks (birthdays, renewals)
+- Yearly goal setting
+- Performance reviews
+- Major purchases
+- Insurance policy renewals
+
+## How to Use Postponed Lists
+
+### Moving Tasks
+- **From Inbox/Acties** - When a task isn't urgent but still important
+- **Set appearance date** - Choose when you want to see this task again
+- **Add context** - Note why you're deferring and what needs to happen first
+
+### Review Strategy
+- **Weekly lists** - Check during weekly planning session
+- **Monthly lists** - Review first Sunday of the month
+- **Quarterly lists** - Review at start of each quarter
+- **Bi-annual lists** - Review in January and July
+- **Yearly lists** - Comprehensive review each January
+
+### Best Practices
+- **Be selective** - Only activate 2-3 tasks per review cycle
+- **Add notes** - Explain why you're deferring and what triggers action
+- **Be realistic** - Consider your actual capacity and energy
+- **Archive outdated** - Remove tasks that are no longer relevant
+- **Align with goals** - Connect postponed tasks to bigger objectives
+
+## Benefits of Strategic Postponement
+
+1. **Reduced overwhelm** - Focus on what matters NOW without losing track of future tasks
+2. **Better planning** - Match task activation to your actual capacity
+3. **Seasonal alignment** - Schedule tasks when they make the most sense
+4. **Long-term vision** - Connect daily actions to yearly goals
+5. **Intentional focus** - Postponing isn't procrastinating when done strategically
+
+**Pro tip:** The right postponement interval depends on task urgency and your planning rhythm. When in doubt, start with weekly and adjust as needed.
+
+**Remember:** Your Acties list should energize you, not overwhelm you. Use postponed lists to maintain focus while preserving your long-term vision.`,
+
+    'afgewerkt': `# Afgewerkt (Completed)
+
+Your **Afgewerkt** list is a record of all completed tasks - your personal accomplishment archive.
+
+## Purpose
+Track what you've achieved, celebrate progress, and gain insights into your productivity patterns.
+
+## How It Works
+- Tasks automatically move here when marked complete
+- Full history of accomplishments with completion dates
+- Searchable archive for reference
+- Motivation booster when you need it
+
+## Why Keep Completed Tasks?
+- **Track progress** - See how much you've accomplished
+- **Find patterns** - Understand your productive rhythms
+- **Reference later** - Look up details from past projects
+- **Celebrate wins** - Motivation through visible achievement
+- **Time estimation** - Learn how long tasks actually take
+
+## Using Your Completed Tasks
+- **Filter by date** - See what you did this week, month, or year
+- **Filter by project** - Review project accomplishments
+- **Search** - Find specific completed tasks quickly
+- **Export** - Generate reports of your achievements
+
+## Best Practices
+- Review completed tasks weekly to celebrate progress
+- Use completion data to improve time estimates
+- Archive old tasks periodically to keep list manageable
+- Don't delete - your history is valuable
+
+**Pro tip:** On tough days, review your Afgewerkt list. You've accomplished more than you think!`,
+
+    'email-import': `# Email Import
+
+The **Email Import** feature lets you create tasks directly from your email inbox using a simple email-to-task workflow.
+
+## How It Works
+Every user has a unique import email address. Simply forward or send emails to this address, and they'll automatically become tasks in your Inbox.
+
+## Finding Your Import Address
+1. Click the **Import Email** button on this page
+2. Copy your personal import address (format: import+XXXXX@mg.tickedify.com)
+3. Add it to your email contacts for easy access
+
+## Basic Usage
+**Subject line** becomes the task name:
+\`\`\`
+Subject: Review quarterly report
+Result: Task named "Review quarterly report"
+\`\`\`
+
+**Email body** becomes task notes - everything up to your signature.
+
+## Advanced Syntax
+Use the **@t instruction syntax** for powerful task creation:
+
+\`\`\`
+@t p: Project Name; c: Context; d: 2025-11-15; t: 60; p1;
+
+Task description here.
+Multiple lines supported.
+
+--END--
+Email signature (ignored)
+\`\`\`
+
+### Supported Codes
+- **p:** Project name (auto-creates if needed)
+- **c:** Context name (auto-creates if needed)
+- **d:** Due date (YYYY-MM-DD format)
+- **t:** Duration in minutes
+- **p0-p9:** Priority (p0/p1=high, p2=medium, p3+=low)
+- **df/dw/dm/d3m/d6m/dy:** Defer to follow-up/weekly/monthly/quarterly/bi-annual/yearly
+
+## Best Practices
+- Use **--END--** marker to exclude email signatures
+- One task per email for clarity
+- Use @t syntax for tasks with specific properties
+- Keep import address private (unique to you)
+
+## Examples
+**Simple task:**
+\`\`\`
+Subject: Call dentist for appointment
+Body: Need to schedule annual cleaning
+\`\`\`
+
+**Advanced task with properties:**
+\`\`\`
+@t p: Health; c: Phone; d: 2025-11-20; t: 15; p1;
+
+Schedule dentist appointment for annual cleaning.
+Prefer morning slot if available.
+
+--END--
+Sent from my iPhone
+\`\`\`
+
+**Pro tip:** Set up email filters to auto-forward certain emails (newsletters, receipts) to your import address for automatic task creation.
+
+For complete syntax details and troubleshooting, visit the full [Email Import Help Guide](/email-import-help).`,
+
+    'projecten': `# Projecten (Projects)
+
+The **Projecten** (Projects) list helps you organize tasks by project or area of responsibility.
+
+## Purpose
+Group related tasks together under projects to maintain focus and track progress on multi-step initiatives.
+
+## What is a Project?
+In Tickedify, a project is any outcome that requires more than one action step. Examples:
+- **Work:** "Launch marketing campaign", "Client X website redesign"
+- **Home:** "Kitchen renovation", "Plan summer vacation"
+- **Personal:** "Learn Spanish", "Get in shape"
+
+## How to Use Projects
+
+### Creating Projects
+- Projects are created automatically when you assign a task to a project name
+- No need to pre-create projects - just start using them
+- Use clear, outcome-focused names (e.g., "Launch Q1 Product" not "Product stuff")
+
+### Organizing Tasks by Project
+1. When creating/editing a task, select or type a project name
+2. All tasks with the same project name are grouped together
+3. View all tasks for a specific project by clicking on it in the Projects list
+
+### Project Management
+- **Add new projects** - Simply assign a task to a new project name
+- **Rename projects** - Edit project names to keep them clear and current
+- **Archive projects** - Remove completed projects to keep your list focused
+- **Project overview** - See all active projects and their task counts
+
+## Best Practices
+
+### Project Naming
+- Use specific, measurable outcome language
+- Include timeline or version if relevant ("Q1 Marketing", "Website v2.0")
+- Keep names concise (3-5 words maximum)
+- Use consistent naming patterns across related projects
+
+### Project Organization
+- Limit active projects to 5-10 at a time for focus
+- One project per distinct outcome (don't combine unrelated work)
+- Use contexts within projects for location/tool-based batching
+- Review projects weekly to ensure alignment with goals
+
+### When to Use Projects vs. Contexts
+- **Use Projects** for outcome-based grouping (what you're working toward)
+- **Use Contexts** for tool/location-based batching (where/how you work)
+- Example: Task "Call vendor about proposal" → Project: "Office Redesign", Context: "@phone"
+
+## Project Views & Filters
+- Click any project to see only its tasks
+- Filter Acties list by project to focus work sessions
+- Sort by priority within projects to tackle high-impact work first
+- Track project completion percentage
+
+**Pro tip:** During weekly review, go through each active project and ensure it has a clear next action in your Acties list.`,
+
+    'prullenbak': `# Prullenbak (Trash)
+
+The **Prullenbak** (Trash) is where deleted tasks are temporarily stored before permanent removal.
+
+## Purpose
+Safely remove unwanted tasks while maintaining the ability to recover them if needed.
+
+## How It Works
+
+### Deleting Tasks
+When you delete a task from any list:
+1. Task is moved to Prullenbak (not permanently deleted)
+2. Task remains in Prullenbak for 30 days
+3. After 30 days, tasks are automatically purged
+4. You can manually empty Prullenbak at any time
+
+### Recovering Tasks
+**To restore a deleted task:**
+1. Navigate to Prullenbak list
+2. Find the task you want to recover
+3. Click the restore button (↶)
+4. Task returns to its original list
+
+### Permanently Deleting
+**To remove tasks permanently:**
+- **Single task:** Click permanent delete button (🗑️) on specific task
+- **All tasks:** Use "Empty Trash" button to clear entire Prullenbak
+- **Warning:** Permanent deletion cannot be undone!
+
+## What Gets Stored in Trash
+- Manually deleted tasks from any list
+- Completed tasks (optionally - see settings)
+- Abandoned recurring task instances
+- Tasks removed during bulk operations
+
+## What's NOT in Trash
+- Completed tasks moved to Afgewerkt (unless you change settings)
+- Tasks that were never saved (draft tasks cancelled)
+- Recurring task templates (only instances are deleted)
+
+## Best Practices
+
+### Regular Cleanup
+- Review Prullenbak monthly to ensure no important tasks were accidentally deleted
+- Empty trash after confirming no needed tasks remain
+- Use search to find specific deleted tasks quickly
+
+### Recovery Workflow
+If you accidentally deleted a task:
+1. Immediately check Prullenbak
+2. Use search if you have many deleted tasks
+3. Restore the task
+4. Review and correct any lost information
+
+### Storage Management
+- Prullenbak counts toward your task storage quota
+- Empty trash regularly to free up space
+- Consider exporting important deleted tasks before purging
+
+## Search & Filters
+- **Search deleted tasks** - Find specific tasks by name or project
+- **Sort by deletion date** - See recently deleted tasks first
+- **Filter by project** - View deleted tasks from specific projects
+- **Date range** - Show tasks deleted within a specific timeframe
+
+## Settings & Configuration
+- **Auto-purge interval** - Configure how long tasks remain in trash (default: 30 days)
+- **Confirm before delete** - Enable warnings before permanent deletion
+- **Include in search** - Choose whether to include trash in global search
+
+**Warning:** Once you permanently delete a task or empty the trash, recovery is impossible. Always double-check before purging.
+
+**Pro tip:** Before major cleanup operations, review your Prullenbak to ensure you haven't accidentally deleted anything important during recent bulk actions.`,
+
+    'contextenbeheer': `# Contextenbeheer (Context Management)
+
+**Contextenbeheer** (Context Management) helps you organize and batch tasks by the tools, locations, or mindsets required to complete them.
+
+## Purpose
+Group tasks by WHERE or HOW you'll do them, enabling efficient batch processing and context-based workflows.
+
+## What is a Context?
+A context describes the environment, tool, or mental state needed for a task. Common contexts:
+- **@computer** - Tasks requiring your computer
+- **@phone** - Calls to make
+- **@email** - Email-related tasks
+- **@home** - Tasks you can only do at home
+- **@office** - Office-specific work
+- **@errands** - Tasks to do while out
+- **@waiting** - Tasks blocked by others (similar to Opvolgen)
+- **@energy-high** - Deep work requiring focus
+- **@energy-low** - Simple tasks for tired moments
+
+## How Contexts Work
+
+### Creating Contexts
+- Contexts are created automatically when assigned to tasks
+- No need to pre-define - just start using them
+- Use **@** prefix by convention (not required, but helpful)
+
+### Assigning Contexts
+1. When creating/editing a task, select or type a context
+2. Tasks can have ONE context (keep it simple)
+3. Choose the MOST limiting factor (e.g., @phone beats @office if you need to call someone at work)
+
+### Using Contexts for Batching
+Filter your Acties list by context to:
+- **@phone** - Make all calls in one session
+- **@computer** - Tackle computer work during deep work blocks
+- **@errands** - Complete all errands in one trip
+- **@energy-low** - Quick wins when you're tired
+
+## Context Strategy
+
+### Location-Based Contexts
+Use when task can ONLY be done in specific place:
+- **@home** - Water plants, do laundry
+- **@office** - Use office printer, attend in-person meetings
+- **@gym** - Workout tasks
+
+### Tool-Based Contexts
+Use when specific tool/device is required:
+- **@computer** - Write reports, update spreadsheets
+- **@phone** - Make calls (can't do this via email)
+- **@email** - Send important messages, follow-ups
+
+### Energy-Based Contexts
+Use to match tasks to your energy levels:
+- **@focus** - Deep work requiring concentration
+- **@creative** - Brainstorming, writing, design
+- **@admin** - Simple administrative tasks
+- **@social** - Tasks requiring people interaction
+
+### Time-Based Contexts
+Use for tasks with timing constraints:
+- **@5min** - Quick tasks for spare moments
+- **@morning** - Tasks best done early
+- **@evening** - After-work tasks
+
+## Context Management Features
+
+### View by Context
+- Click any context to see all tasks requiring that context
+- Filter Acties by context during planning
+- See task counts per context
+
+### Context Operations
+- **Rename contexts** - Update context names for clarity
+- **Merge contexts** - Combine similar contexts
+- **Delete contexts** - Remove unused contexts
+- **Bulk assign** - Apply context to multiple tasks at once
+
+## Best Practices
+
+### Choosing Contexts
+- **Keep it simple** - 5-10 contexts maximum (more = decision fatigue)
+- **Be specific** - "@computer" is too broad if you have laptop AND desktop tasks
+- **Be consistent** - Use same naming pattern (@location, @tool, @energy)
+- **Think limiting factor** - What's the ONE thing preventing you from doing this now?
+
+### Batch Processing
+1. **Time block by context** - "1-2pm = @phone calls"
+2. **Location-based batching** - Do all @errands in one trip
+3. **Energy matching** - @focus tasks in morning, @admin in afternoon
+4. **Tool batching** - Open @email context, process all email tasks
+
+### Context vs. Project
+**Don't confuse contexts with projects:**
+- **Project** = WHAT outcome you're working toward ("Launch website")
+- **Context** = WHERE/HOW you'll do the work ("@computer", "@meeting")
+- Tasks can have both: "Review website mockups" → Project: Launch Website, Context: @computer
+
+### Common Mistakes
+- ❌ Too many contexts (20+ becomes overwhelming)
+- ❌ Using contexts as priority flags (use priority field instead)
+- ❌ Contexts that are too broad ("@work" - not helpful)
+- ❌ Creating contexts for single tasks (just use project instead)
+
+## Advanced Context Use
+
+### Context Hierarchies
+Some users create parent-child contexts:
+- @home-kitchen, @home-garage, @home-office
+- @computer-mac, @computer-windows
+- Only do this if you truly need this granularity
+
+### Waiting Contexts
+- **@waiting-boss** - Awaiting approval
+- **@waiting-vendor** - Waiting on external party
+- (Note: Opvolgen list may be better for tracking waiting tasks)
+
+### Agenda Contexts
+Create contexts for people you meet regularly:
+- **@agenda-manager** - Topics to discuss with manager
+- **@agenda-team** - Team meeting items
+- Useful for 1-on-1 meetings
+
+**Pro tip:** During daily planning, choose 2-3 contexts you'll have access to that day and filter your Acties list accordingly. This creates a focused, realistic daily plan.
+
+**Remember:** The goal of contexts is to make your work MORE efficient, not to create complex organizational overhead. Start simple and add complexity only if needed.`
+};
+
+// Whitelist of eligible page IDs
+const ELIGIBLE_PAGES = [
+    'inbox',
+    'acties',
+    'opvolgen',
+    'dagelijkse-planning',
+    'uitgesteld',
+    'afgewerkt',
+    'email-import',
+    'projecten',
+    'prullenbak',
+    'contextenbeheer'
+];
+
+// Human-readable page names for admin interface
+const PAGE_NAMES = {
+    'inbox': 'Inbox',
+    'acties': 'Acties (Actions)',
+    'opvolgen': 'Opvolgen (Follow-up)',
+    'dagelijkse-planning': 'Dagelijkse Planning (Daily Planning)',
+    'uitgesteld': 'Uitgesteld (Postponed)',
+    'afgewerkt': 'Afgewerkt (Completed)',
+    'email-import': 'Email Import',
+    'projecten': 'Projecten (Projects)',
+    'prullenbak': 'Prullenbak (Trash)',
+    'contextenbeheer': 'Contextenbeheer (Context Management)'
+};
+
+// GET /api/page-help/:pageId - Get help content for specific page
+app.get('/api/page-help/:pageId', requireAuth, async (req, res) => {
+    try {
+        const { pageId } = req.params;
+
+        // Validate page ID
+        if (!ELIGIBLE_PAGES.includes(pageId)) {
+            return res.status(404).json({ error: `Invalid page ID: ${pageId}` });
+        }
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Query database for custom content
+        const result = await pool.query(
+            'SELECT content, modified_at, modified_by FROM page_help WHERE page_id = $1',
+            [pageId]
+        );
+
+        if (result.rows.length > 0) {
+            // Custom content exists
+            const row = result.rows[0];
+            return res.json({
+                pageId: pageId,
+                content: row.content,
+                isDefault: false,
+                modifiedAt: row.modified_at,
+                modifiedBy: row.modified_by
+            });
+        } else {
+            // Return default content
+            return res.json({
+                pageId: pageId,
+                content: DEFAULT_PAGE_HELP[pageId],
+                isDefault: true,
+                modifiedAt: null,
+                modifiedBy: null
+            });
+        }
+    } catch (error) {
+        console.error('Get page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PUT /api/page-help/:pageId - Update help content (admin only)
+app.put('/api/page-help/:pageId', requireAdmin, async (req, res) => {
+    try {
+        const { pageId } = req.params;
+        const { content } = req.body;
+
+        // Validate page ID
+        if (!ELIGIBLE_PAGES.includes(pageId)) {
+            return res.status(404).json({ error: `Invalid page ID: ${pageId}` });
+        }
+
+        // Validate content
+        if (!content || content.trim().length === 0) {
+            return res.status(400).json({ error: 'Content cannot be empty' });
+        }
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get admin identifier
+        const userId = getCurrentUserId(req);
+        const userResult = await pool.query('SELECT naam FROM users WHERE id = $1', [userId]);
+        const modifiedBy = userResult.rows[0]?.naam || 'admin';
+
+        // UPSERT content
+        await pool.query(
+            `INSERT INTO page_help (page_id, content, modified_at, modified_by)
+             VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+             ON CONFLICT (page_id)
+             DO UPDATE SET
+                content = EXCLUDED.content,
+                modified_at = CURRENT_TIMESTAMP,
+                modified_by = EXCLUDED.modified_by`,
+            [pageId, content, modifiedBy]
+        );
+
+        res.json({
+            success: true,
+            pageId: pageId,
+            message: 'Help content updated successfully'
+        });
+    } catch (error) {
+        console.error('Update page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE /api/page-help/:pageId - Delete custom content, revert to default (admin only)
+app.delete('/api/page-help/:pageId', requireAdmin, async (req, res) => {
+    try {
+        const { pageId } = req.params;
+
+        // Validate page ID
+        if (!ELIGIBLE_PAGES.includes(pageId)) {
+            return res.status(404).json({ error: `Invalid page ID: ${pageId}` });
+        }
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Delete custom content (idempotent)
+        await pool.query('DELETE FROM page_help WHERE page_id = $1', [pageId]);
+
+        res.json({
+            success: true,
+            pageId: pageId,
+            message: 'Help content deleted, reverted to default'
+        });
+    } catch (error) {
+        console.error('Delete page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/page-help - List all page help content (admin only)
+app.get('/api/page-help', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get all custom content from database
+        const result = await pool.query(
+            'SELECT page_id, content, modified_at, modified_by FROM page_help ORDER BY page_id'
+        );
+
+        const customContent = {};
+        result.rows.forEach(row => {
+            customContent[row.page_id] = row;
+        });
+
+        // Build response with all pages
+        const pages = ELIGIBLE_PAGES.map(pageId => {
+            const isCustom = customContent.hasOwnProperty(pageId);
+            const content = isCustom ? customContent[pageId].content : DEFAULT_PAGE_HELP[pageId];
+
+            return {
+                pageId: pageId,
+                pageName: PAGE_NAMES[pageId],
+                hasCustomContent: isCustom,
+                contentPreview: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+                modifiedAt: isCustom ? customContent[pageId].modified_at : null,
+                modifiedBy: isCustom ? customContent[pageId].modified_by : null
+            };
+        });
+
+        res.json({ pages });
+    } catch (error) {
+        console.error('List page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // API endpoint voor huidige gebruiker info inclusief import code
 app.get('/api/user/info', async (req, res) => {
     try {
@@ -3860,7 +4659,23 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
 
     // Sync to GoHighLevel
     try {
-      await addContactToGHL(email, user.email, ['tickedify-paid-customer']);
+      const subscriptionTags = ['tickedify-paid-customer'];
+
+      // Add subscription-specific tag
+      const planTagMap = {
+        'trial_14_days': 'Tickedify-Trial',
+        'monthly_7': 'Tickedify-Monthly7',
+        'monthly_8': 'Tickedify-Monthly8',
+        'yearly_70': 'Tickedify-Yearly70',
+        'yearly_80': 'Tickedify-Yearly80'
+      };
+
+      const planTag = planTagMap[selectedPlan];
+      if (planTag) {
+        subscriptionTags.push(planTag);
+      }
+
+      await addContactToGHL(email, user.email, subscriptionTags);
     } catch (ghlError) {
       console.error('⚠️ GHL sync failed:', ghlError.message);
       // Don't fail webhook if GHL sync fails
@@ -4115,24 +4930,39 @@ app.get('/api/account', requireLogin, async (req, res) => {
 });
 
 // T017: POST /api/account/password-reset - Request password reset email
-app.post('/api/account/password-reset', requireLogin, async (req, res) => {
+app.post('/api/account/password-reset', async (req, res) => {
   try {
-    const userId = req.session.userId;
+    const { email } = req.body;
+    const sessionUserId = req.session?.userId;
 
-    // Look up user by session user_id
-    const userResult = await pool.query(
-      'SELECT id, email FROM users WHERE id = $1',
-      [userId]
-    );
+    let user = null;
 
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    // Check if user is authenticated via session (Change Password from Settings)
+    if (sessionUserId) {
+      // User is logged in - use session
+      const userResult = await pool.query(
+        'SELECT id, email FROM users WHERE id = $1',
+        [sessionUserId]
+      );
+      user = userResult.rows.length > 0 ? userResult.rows[0] : null;
+    }
+    // Otherwise, require email parameter (Forgot Password flow)
+    else {
+      // Validate email format
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Valid email is required' });
+      }
+
+      // Look up user by email
+      const userResult = await pool.query(
+        'SELECT id, email FROM users WHERE email = $1',
+        [email.toLowerCase().trim()]
+      );
+      user = userResult.rows.length > 0 ? userResult.rows[0] : null;
     }
 
-    const user = userResult.rows[0];
-
-    // Check if user found (always true here since requireLogin checks session)
-    if (userResult.rows.length > 0) {
+    // Only process password reset if user exists (but don't reveal this in response)
+    if (user) {
 
       // Rate limiting: Check count of pending tokens in last hour
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -4187,11 +5017,20 @@ app.post('/api/account/password-reset', requireLogin, async (req, res) => {
       await sendPasswordResetEmail(user.email, user.email, resetToken);
     }
 
-    // ALWAYS return 200 even if user not found (security - don't leak user existence)
-    res.json({
-      message: 'Password reset email sent. Check your inbox.',
-      expires_in_hours: 24
-    });
+    // Return appropriate message based on authentication method
+    if (sessionUserId) {
+      // User is logged in - can confirm email was sent
+      res.json({
+        message: 'Password reset email sent. Check your inbox.',
+        expires_in_hours: 24
+      });
+    } else {
+      // Public request - don't reveal if email exists (security)
+      res.json({
+        message: 'If an account exists with that email, you will receive a password reset link.',
+        expires_in_hours: 24
+      });
+    }
 
   } catch (error) {
     console.error('Password reset request error:', error);
@@ -4263,7 +5102,7 @@ app.post('/api/account/password-reset/confirm', async (req, res) => {
       await client.query('BEGIN');
 
       await client.query(
-        'UPDATE users SET wachtwoord = $1 WHERE id = $2',
+        'UPDATE users SET wachtwoord_hash = $1 WHERE id = $2',
         [hashedPassword, tokenData.user_id]
       );
 
@@ -4664,14 +5503,14 @@ app.post('/api/taak/:id/bijlagen', requireAuth, uploadAttachment.single('file'),
         }
 
         // Check attachment limit based on plan type
-        // Premium Plus: unlimited attachments
-        // Premium Standard & Free: max 1 attachment per task
+        // Unlimited: unlimited attachments
+        // Standard & Free: max 1 attachment per task
         if (planType !== 'premium_plus') {
             const existingBijlagen = await db.getBijlagenForTaak(taakId);
             if (existingBijlagen.length >= STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE) {
                 const upgradeMessage = planType === 'premium_standard'
-                    ? 'Maximum 1 bijlage per taak voor Standard plan. Upgrade naar Premium Plus voor onbeperkte bijlagen.'
-                    : `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} bijlage per taak voor gratis gebruikers. Upgrade naar Premium voor onbeperkte bijlagen.`;
+                    ? 'Maximum 1 attachment per task for Standard plan. Upgrade to Unlimited for unlimited attachments.'
+                    : `Maximum ${STORAGE_CONFIG.MAX_ATTACHMENTS_PER_TASK_FREE} attachment per task for free users. Upgrade to Standard or Unlimited for more storage.`;
 
                 return res.status(400).json({
                     error: upgradeMessage
@@ -8117,6 +8956,106 @@ app.post('/api/debug/force-migration', async (req, res) => {
             stack: error.stack,
             timestamp: new Date().toISOString()
         });
+    }
+});
+
+// Debug endpoint voor subscription data check
+app.get('/api/debug/subscription-data', async (req, res) => {
+    try {
+        const emails = ['info@baasoverjetijd.be', 'jan@buskens.be'];
+        const result = await pool.query(`
+            SELECT
+                email,
+                subscription_plan,
+                subscription_status,
+                account_type,
+                subscription_price,
+                subscription_cycle
+            FROM users
+            WHERE email = ANY($1::text[])
+        `, [emails]);
+
+        res.json({
+            success: true,
+            users: result.rows,
+            subscription_plans_defined: [
+                'trial_14_days',
+                'monthly_7',
+                'yearly_70',
+                'monthly_8',
+                'yearly_80'
+            ]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to test getUserPlanType function
+app.get('/api/debug/plan-type', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const planType = await db.getUserPlanType(userId);
+
+        // Also get raw database data
+        const userResult = await pool.query(`
+            SELECT
+                email,
+                subscription_plan,
+                selected_plan,
+                trial_end_date,
+                subscription_status
+            FROM users
+            WHERE id = $1
+        `, [userId]);
+
+        res.json({
+            success: true,
+            userId: userId,
+            planType: planType,
+            rawData: userResult.rows[0],
+            expectedPremiumPlus: ['monthly_8', 'yearly_80'],
+            expectedPremiumStandard: ['monthly_7', 'yearly_70']
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint to update subscription plan
+app.get('/api/debug/update-subscription/:email/:newPlan', async (req, res) => {
+    try {
+        const { email, newPlan } = req.params;
+
+        // Validate plan
+        const validPlans = ['trial_14_days', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
+        if (!validPlans.includes(newPlan)) {
+            return res.status(400).json({
+                error: 'Invalid plan',
+                validPlans: validPlans
+            });
+        }
+
+        // Update subscription_plan
+        const result = await pool.query(`
+            UPDATE users
+            SET subscription_plan = $1,
+                plan_selected_at = NOW()
+            WHERE email = $2
+            RETURNING id, email, subscription_plan, subscription_status
+        `, [newPlan, email]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            message: `Updated ${email} to plan ${newPlan}`,
+            user: result.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

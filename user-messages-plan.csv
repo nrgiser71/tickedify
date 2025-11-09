@@ -1,0 +1,21 @@
+Nummer,Titel,Categorie,Trigger_Type,Trigger_Waarde,Dag_Na_Registratie,Beschrijving,Prioriteit
+1,Welkom bij de Baas Over Je Tijd methodologie,Onboarding,eerste_bezoek,/app,1,Kort uitleggen dat dit GEEN GTD is maar een unieke methode - De kern: planning maken = commitment aan jezelf,Hoog
+2,Je eerste dagelijkse planning maken,Onboarding,n_bezoek,2,2,Uitleg verschil tussen actielijst en dagelijkse planning - Waarom sleepen naar kalender krachtig is,Hoog
+3,Context is koning,Onboarding,dagen_na_registratie,3,3,Uitleg @context systeem - Voorbeelden: @werk @thuis @onderweg @computer - Hoe contexten je helpen focussen,Hoog
+4,Projecten organiseren,Onboarding,dagen_na_registratie,5,5,Verschil tussen losse taken en projecttaken - Hoe projecten overview creëren,Hoog
+5,Prioriteiten die werken,Onboarding,dagen_na_registratie,7,7,Uitleg 3 niveaus: hoog/gemiddeld/laag - Wanneer welke prioriteit gebruiken - Waarom NIET alles hoog priority is,Hoog
+6,De kracht van duur inschatten,Intermediate,dagen_na_registratie,10,10,Waarom tijdsinschatting helpt bij realistische planning - Tip: begin met grove schattingen (30/60/90 min),Gemiddeld
+7,Herhalende taken automatiseren,Intermediate,eerste_taak_voltooid,,8,Intro tot herhaling functionaliteit - Voorbeelden: wekelijkse meetings maandelijkse admin,Hoog
+8,Email-to-task: Inbox Zero hack,Intermediate,dagen_na_registratie,14,14,Uitleg forward emails naar taken - @t syntax introductie voor power users,Gemiddeld
+9,Opvolgen vs Uitstellen: Het verschil,Intermediate,dagen_na_registratie,15,15,Wanneer gebruik je opvolgen lijst - Wanneer uitstellen naar wekelijks/maandelijks - Wacht op voor gedelegeerde taken,Gemiddeld
+10,Bulk acties voor snelheid,Intermediate,taak_aantal_min,20,12,Selecteer meerdere taken tegelijk - Verplaats wijzig prioriteit verwijder in bulk,Laag
+11,Verschijndatum: Toekomsttaken beheren,Advanced,dagen_na_registratie,21,21,Verschil verschijndatum vs vandaag beginnen - Hoe je kalm blijft met veel taken,Gemiddeld
+12,Weekoverzicht: De big picture,Advanced,dag_van_week,Maandag,28,Hoe je week vooruit plannen - Balance tussen focus en flexibiliteit,Gemiddeld
+13,Geavanceerde herhaling patronen,Advanced,eerste_herhaling_aangemaakt,,22,Werkdagen maandelijkse weekdag patronen - Gebeurtenis-gebaseerde herhaling,Laag
+14,Filters: Focus op wat nu telt,Advanced,taak_aantal_min,30,25,Project filters in dagplanning - Context filters voor gefocust werken,Laag
+15,Je planning evalueren,Advanced,dagen_na_registratie,30,30,Hoeveel plan je vs hoeveel lukt - Aanpassen voor realistische commitment,Gemiddeld
+16,Tip van de week,Recurring,dag_van_week,Maandag,7,Roteer door best practices - Keyboard shortcuts - Hidden features,Laag
+17,Motivatie: Waarom commitment werkt,Recurring,interval_dagen,14,14,Psychologie achter dagplanning - Success stories (anoniem),Laag
+18,Feature spotlight,Recurring,nieuwe_release,,0,Highlight nieuwe functionaliteit - Link naar changelog,Gemiddeld
+19,Je bent een tijdje weg geweest,Behavioral,dagen_inactief,7,7,Welkom terug bericht - Tip: begin klein vandaag,Hoog
+20,Wow productief bezig!,Behavioral,taken_voltooid_vandaag,10,1,Positieve reinforcement - Moedig consistentie aan,Laag
