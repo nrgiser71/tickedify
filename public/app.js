@@ -1003,14 +1003,52 @@ class Taakbeheer {
         // Sidebar counters are initialized in navigeerNaarLijst() - Feature 022
     }
 
+    // Page Help Icon Integration - Feature 062
+    addPageHelpIcon(pageId) {
+        // Map lijst names to pageId format
+        const lijstToPageId = {
+            'inbox': 'inbox',
+            'acties': 'acties',
+            'opvolgen': 'opvolgen',
+            'dagelijkse-planning': 'dagelijkse-planning',
+            'uitgesteld-wekelijks': 'uitgesteld-wekelijks',
+            'uitgesteld-maandelijks': 'uitgesteld-maandelijks',
+            'uitgesteld-3maandelijks': 'uitgesteld-3maandelijks',
+            'uitgesteld-6maandelijks': 'uitgesteld-6maandelijks',
+            'uitgesteld-jaarlijks': 'uitgesteld-jaarlijks',
+            'afgewerkte-taken': 'afgewerkt',
+            'email-import': 'email-import'
+        };
+
+        const mappedPageId = lijstToPageId[pageId] || pageId;
+
+        // Only add for eligible pages
+        const eligiblePages = ['inbox', 'acties', 'opvolgen', 'dagelijkse-planning',
+                              'uitgesteld-wekelijks', 'uitgesteld-maandelijks',
+                              'uitgesteld-3maandelijks', 'uitgesteld-6maandelijks',
+                              'uitgesteld-jaarlijks', 'afgewerkt', 'email-import'];
+
+        if (!eligiblePages.includes(mappedPageId)) {
+            return; // Skip ineligible pages
+        }
+
+        // Wait for PageHelpManager to be initialized
+        setTimeout(() => {
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle && window.pageHelpManager) {
+                window.pageHelpManager.addHelpIcon(mappedPageId, pageTitle);
+            }
+        }, 100); // Small delay to ensure DOM is ready
+    }
+
     // LocalStorage helpers for remembering current list
     restoreCurrentList() {
         try {
             const saved = localStorage.getItem('tickedify-current-list');
             if (saved) {
                 // Validate that it's a known list
-                const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks', 
-                                  'uitgesteld-maandelijks', 'uitgesteld-3maandelijks', 
+                const validLists = ['inbox', 'acties', 'afgewerkte-taken', 'uitgesteld-wekelijks',
+                                  'uitgesteld-maandelijks', 'uitgesteld-3maandelijks',
                                   'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'opvolgen',
                                   'contextenbeheer', 'dagelijkse-planning'];
                 if (validLists.includes(saved)) {
@@ -2167,6 +2205,9 @@ class Taakbeheer {
         // Update sidebar counters after list is loaded - Feature 022
         // This ensures counters update for ALL lists (dagelijkse-planning, uitgesteld, and normal lists)
         this.debouncedUpdateCounters();
+
+        // Add help icon for eligible pages - Feature 062
+        this.addPageHelpIcon(lijst);
     }
 
     async laadTellingen() {
@@ -15144,6 +15185,229 @@ class KeyboardHelpModal {
     }
 }
 
+// ========================================
+// PAGE HELP SYSTEM - Feature 062
+// ========================================
+
+// Page Help Icon and Modal Manager
+class PageHelpManager {
+    constructor() {
+        this.helpCache = {}; // In-memory cache for help content
+        this.cacheTTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        this.modal = null;
+        this.currentPageId = null;
+
+        this.setupModal();
+    }
+
+    // Setup help modal DOM
+    setupModal() {
+        // Create modal if it doesn't exist
+        if (!document.getElementById('pageHelpModal')) {
+            const modalHTML = `
+                <div id="pageHelpModal" class="page-help-modal" style="display: none;">
+                    <div class="page-help-overlay"></div>
+                    <div class="page-help-content">
+                        <div class="page-help-header">
+                            <h2 id="pageHelpTitle">Help</h2>
+                            <button id="pageHelpClose" class="page-help-close" aria-label="Close">&times;</button>
+                        </div>
+                        <div id="pageHelpBody" class="page-help-body">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        this.modal = document.getElementById('pageHelpModal');
+        this.closeBtn = document.getElementById('pageHelpClose');
+        this.titleEl = document.getElementById('pageHelpTitle');
+        this.bodyEl = document.getElementById('pageHelpBody');
+
+        // Event listeners
+        this.closeBtn.addEventListener('click', () => this.hideModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal || e.target.classList.contains('page-help-overlay')) {
+                this.hideModal();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.style.display === 'flex') {
+                this.hideModal();
+            }
+        });
+    }
+
+    // Add help icon to page title
+    addHelpIcon(pageId, titleElement) {
+        // Don't add if already exists
+        if (titleElement.querySelector('.page-help-icon')) {
+            return;
+        }
+
+        const iconHTML = `
+            <span class="page-help-icon" data-page-id="${pageId}" title="View page help">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </span>
+        `;
+
+        titleElement.insertAdjacentHTML('beforeend', iconHTML);
+
+        const icon = titleElement.querySelector('.page-help-icon');
+        icon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showHelp(pageId);
+        });
+    }
+
+    // Fetch help content from API with caching
+    async getPageHelp(pageId) {
+        const cacheKey = `help-content-${pageId}`;
+
+        // Check in-memory cache
+        const cached = this.helpCache[cacheKey];
+        if (cached && (Date.now() - cached.timestamp < this.cacheTTL)) {
+            return cached.data;
+        }
+
+        // Check localStorage cache
+        try {
+            const localCached = localStorage.getItem(cacheKey);
+            if (localCached) {
+                const parsedCache = JSON.parse(localCached);
+                if (Date.now() - parsedCache.timestamp < this.cacheTTL) {
+                    // Update in-memory cache
+                    this.helpCache[cacheKey] = parsedCache;
+                    return parsedCache.data;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to read help cache from localStorage:', e);
+        }
+
+        // Fetch from API
+        try {
+            const response = await fetch(`/api/page-help/${pageId}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch help content: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Cache in memory and localStorage
+            const cacheData = {
+                data: data,
+                timestamp: Date.now()
+            };
+
+            this.helpCache[cacheKey] = cacheData;
+
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            } catch (e) {
+                console.warn('Failed to cache help content in localStorage:', e);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch page help:', error);
+            throw error;
+        }
+    }
+
+    // Invalidate cache for specific page (used after admin update)
+    invalidateCache(pageId) {
+        const cacheKey = `help-content-${pageId}`;
+        delete this.helpCache[cacheKey];
+        try {
+            localStorage.removeItem(cacheKey);
+        } catch (e) {
+            console.warn('Failed to remove cache from localStorage:', e);
+        }
+    }
+
+    // Show help modal for specific page
+    async showHelp(pageId) {
+        this.currentPageId = pageId;
+        this.modal.style.display = 'flex';
+        this.bodyEl.innerHTML = '<p class="loading-text">Loading help content...</p>';
+
+        try {
+            // Load marked.js if not already loaded
+            if (typeof marked === 'undefined') {
+                await this.loadMarked();
+            }
+
+            // Fetch help content
+            const helpData = await this.getPageHelp(pageId);
+
+            // Update modal title
+            this.titleEl.textContent = `Help: ${this.getPageName(pageId)}`;
+
+            // Render markdown content
+            this.bodyEl.innerHTML = marked.parse(helpData.content);
+
+            // Add custom/default indicator
+            if (helpData.isDefault === false && helpData.modifiedBy) {
+                const indicator = document.createElement('div');
+                indicator.className = 'help-custom-indicator';
+                indicator.innerHTML = `<small><em>Custom content by ${helpData.modifiedBy}</em></small>`;
+                this.bodyEl.appendChild(indicator);
+            }
+        } catch (error) {
+            console.error('Failed to load help content:', error);
+            this.bodyEl.innerHTML = `
+                <div class="help-error">
+                    <p><strong>Failed to load help content</strong></p>
+                    <p>Please try again later or contact support if the problem persists.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Hide help modal
+    hideModal() {
+        this.modal.style.display = 'none';
+        this.currentPageId = null;
+    }
+
+    // Load Marked.js dynamically
+    loadMarked() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load marked.js'));
+            document.head.appendChild(script);
+        });
+    }
+
+    // Get human-readable page name
+    getPageName(pageId) {
+        const names = {
+            'inbox': 'Inbox',
+            'acties': 'Acties (Actions)',
+            'opvolgen': 'Opvolgen (Follow-up)',
+            'dagelijkse-planning': 'Dagelijkse Planning',
+            'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks',
+            'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks',
+            'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks',
+            'uitgesteld-6maandelijks': 'Uitgesteld - 6-maandelijks',
+            'uitgesteld-jaarlijks': 'Uitgesteld - Jaarlijks',
+            'afgewerkt': 'Afgewerkt (Completed)',
+            'email-import': 'Email Import'
+        };
+        return names[pageId] || pageId;
+    }
+}
+
 // Email Help Modal System
 class EmailHelpModal {
     constructor() {
@@ -16541,9 +16805,10 @@ class BijlagenManager {
     }
 }
 
-// Initialize subtaken manager
+// Initialize managers
 let subtakenManager;
 let bijlagenManager;
+let pageHelpManager;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DEBUG: Initializing SubtakenManager...');
@@ -16562,6 +16827,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('DEBUG: BijlagenManager initialized successfully');
     } catch (error) {
         console.error('DEBUG: Error initializing BijlagenManager:', error);
+    }
+
+    console.log('DEBUG: Initializing PageHelpManager...');
+    try {
+        pageHelpManager = new PageHelpManager();
+        // Make globally accessible
+        window.pageHelpManager = pageHelpManager;
+        console.log('DEBUG: PageHelpManager initialized successfully');
+    } catch (error) {
+        console.error('DEBUG: Error initializing PageHelpManager:', error);
     }
 });
 

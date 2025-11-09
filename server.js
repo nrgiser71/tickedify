@@ -2497,6 +2497,560 @@ app.get('/api/debug/fix-subscription-plan', async (req, res) => {
     }
 });
 
+// ========================================
+// PAGE HELP API - Feature 062
+// ========================================
+
+// Default English help content for all eligible pages
+// Based on "Baas Over Je Tijd" methodology
+const DEFAULT_PAGE_HELP = {
+    'inbox': `# Inbox
+
+The **Inbox** is your central collection point for all new tasks, ideas, and to-dos that enter your world.
+
+## Purpose
+Capture everything quickly without worrying about organization. The Inbox ensures nothing slips through the cracks while you focus on what matters now.
+
+## How to Use
+- **Add tasks instantly** - Don't overthink it, just capture
+- **Process regularly** - Review your inbox daily and move tasks to the appropriate lists
+- **Keep it empty** - An empty inbox means you're in control of your commitments
+
+## Best Practices
+- Process inbox items during your daily planning session
+- Ask yourself: "What's the next action?" for each item
+- Move tasks to Acties (Actions) when you're ready to work on them
+- Use Opvolgen (Follow-up) for tasks waiting on others
+
+**Remember:** The Inbox is temporary storage, not a to-do list. Process it regularly to maintain clarity and control.`,
+
+    'acties': `# Acties (Actions)
+
+Your **Acties** list contains all tasks that are ready to be worked on right now. This is where execution happens.
+
+## Purpose
+This is your active work list - tasks that have a clear next action and don't depend on anyone else.
+
+## How to Use
+- **Review daily** - Start each day by reviewing your Acties
+- **Prioritize** - Use priority levels (High/Medium/Low) to focus on what matters
+- **Add context** - Tag tasks with contexts (@email, @phone, @computer) for batch processing
+- **Set deadlines** - Add due dates to time-sensitive tasks
+
+## Filters & Organization
+- Filter by **Project** to focus on specific initiatives
+- Filter by **Context** to work efficiently in batches
+- Sort by **Priority** to tackle high-impact items first
+- Use **Bulk Actions** to process multiple tasks at once
+
+## Best Practices
+- Limit your daily Acties to what's realistically achievable (5-7 key tasks)
+- Review weekly to ensure alignment with your goals
+- Move completed tasks to Afgewerkt (Completed) to track progress
+- Defer tasks that aren't urgent to Uitgesteld (Postponed) lists
+
+**Pro tip:** Your Acties list should energize you, not overwhelm you. Keep it focused and achievable.`,
+
+    'opvolgen': `# Opvolgen (Follow-up)
+
+The **Opvolgen** list is for tasks that are waiting on someone else or require follow-up action.
+
+## Purpose
+Track commitments you've delegated or tasks blocked by external dependencies. Never let delegated tasks fall through the cracks.
+
+## How to Use
+- **Add waiting tasks** - When you delegate something, add it here immediately
+- **Include contact info** - Note who you're waiting on and how to reach them
+- **Set review dates** - Schedule when you'll check back on the task
+- **Follow up proactively** - Review this list weekly and send reminders when needed
+
+## Examples of Follow-up Tasks
+- Waiting for email reply from colleague
+- Pending approval from manager
+- Awaiting delivery of materials
+- Scheduled meeting not yet held
+
+## Best Practices
+- Review your Opvolgen list during weekly planning
+- Set specific follow-up dates (not "someday")
+- Include names and contact methods in task notes
+- Move back to Acties when dependencies are resolved
+
+**Remember:** Just because you're waiting doesn't mean you should forget. Active follow-up ensures progress.`,
+
+    'dagelijkse-planning': `# Dagelijkse Planning (Daily Planning)
+
+Your **Daily Planning** calendar view helps you visualize and organize your day with time-blocked tasks.
+
+## Purpose
+Transform your task list into a realistic daily schedule. See at a glance what needs to happen and when.
+
+## How to Use
+- **Drag tasks** from your lists onto specific time slots
+- **Set duration** - Estimate how long each task will take (15/30/60/90/120 minutes)
+- **Block time** - Assign tasks to calendar slots throughout your day
+- **Adjust as needed** - Move tasks around if priorities shift
+
+## Time Blocking Benefits
+- **Realistic planning** - See if you've overcommitted
+- **Focus time** - Dedicated blocks for deep work
+- **Buffer time** - Schedule breaks between intense tasks
+- **Meeting prep** - Allocate time before important meetings
+
+## Best Practices
+- Plan your day the night before or first thing in the morning
+- Leave 30-40% of your day unscheduled for unexpected tasks
+- Group similar tasks (batch email processing, phone calls)
+- Include breaks and transition time
+- Review at end of day and adjust tomorrow's plan
+
+## Filters & Views
+- Filter by **Project** to plan project-specific work sessions
+- Use **Week view** to see patterns across multiple days
+- Toggle completed tasks to see what's already done
+
+**Pro tip:** A realistic daily plan reduces stress and increases accomplishment. Don't overload your calendar.`,
+
+    'uitgesteld-wekelijks': `# Uitgesteld - Wekelijks (Postponed - Weekly)
+
+Tasks in **Uitgesteld - Wekelijks** are scheduled to appear in your weekly review for reconsideration.
+
+## Purpose
+Defer tasks that aren't urgent right now but should be reviewed within the next 1-4 weeks.
+
+## How to Use
+- **Move from Inbox/Acties** - When a task isn't urgent but still important
+- **Set appearance date** - Choose when you want to see this task again
+- **Add context** - Note why you're deferring and what needs to happen first
+- **Review weekly** - Check this list during your weekly planning session
+
+## When to Use Weekly Postponement
+- Tasks you want to tackle "sometime this month"
+- Ideas that need incubation time
+- Projects waiting for prerequisite completion
+- Seasonal or recurring tasks (1-4 week cycles)
+
+## Best Practices
+- Review during weekly planning to decide what moves to Acties
+- Be realistic about when you'll actually have capacity
+- Don't use this as a "someday/maybe" dumping ground
+- Add notes about why you're waiting
+
+**Remember:** Postponing isn't procrastinating when done intentionally. It's strategic focus management.`,
+
+    'uitgesteld-maandelijks': `# Uitgesteld - Maandelijks (Postponed - Monthly)
+
+Tasks in **Uitgesteld - Maandelijks** appear in your monthly review cycle for evaluation.
+
+## Purpose
+Store tasks that are important but not time-sensitive - things you want to address in the next 1-3 months.
+
+## How to Use
+- **Monthly review** - Set aside time each month to review this list
+- **Choose selectively** - Move only the most relevant tasks to Acties
+- **Update notes** - Refresh your thinking on why this task matters
+- **Archive old ideas** - Remove tasks that are no longer relevant
+
+## Perfect For
+- Medium-term projects (1-3 month horizon)
+- Quarterly goals and initiatives
+- Professional development activities
+- Home improvement projects
+- Personal growth goals
+
+## Best Practices
+- Schedule a monthly planning session (first Sunday of the month)
+- Limit how many tasks you activate each month (2-3 max)
+- Consider energy and resource availability
+- Align with quarterly goals
+
+**Pro tip:** Monthly postponement helps you maintain long-term vision without cluttering your immediate focus.`,
+
+    'uitgesteld-3maandelijks': `# Uitgesteld - 3-maandelijks (Postponed - Quarterly)
+
+Tasks in **Uitgesteld - 3-maandelijks** are reviewed every three months during your quarterly planning.
+
+## Purpose
+Track medium-term goals and projects that require quarterly attention or seasonal timing.
+
+## How to Use
+- **Quarterly review** - Review this list at the start of each quarter
+- **Align with goals** - Select tasks that support your quarterly objectives
+- **Update priorities** - Circumstances change - adjust accordingly
+- **Archive outdated tasks** - Remove what's no longer relevant
+
+## Ideal For
+- Quarterly business reviews
+- Seasonal activities (spring cleaning, holiday prep)
+- Professional development milestones
+- Home maintenance cycles
+- Financial check-ins
+
+## Quarterly Planning Tips
+- Review in January, April, July, October
+- Link tasks to your bigger vision and yearly goals
+- Consider seasonal factors (weather, holidays, fiscal calendar)
+- Limit activated tasks to maintain focus
+
+**Remember:** Quarterly rhythm helps you balance short-term execution with long-term strategy.`,
+
+    'uitgesteld-6maandelijks': `# Uitgesteld - 6-maandelijks (Postponed - Bi-annual)
+
+Tasks in **Uitgesteld - 6-maandelijks** appear during your bi-annual review for consideration.
+
+## Purpose
+Store tasks with a 6-month horizon - goals and projects that need longer lead time or seasonal timing.
+
+## How to Use
+- **Bi-annual review** - Review in January and July
+- **Long-term vision** - Connect tasks to your yearly goals
+- **Plan ahead** - Some tasks need months of preparation
+- **Seasonal alignment** - Winter vs. summer activities
+
+## Perfect For
+- Semi-annual business planning
+- Tax preparation activities
+- Major home projects
+- Career development milestones
+- Health check-ups and reviews
+- Vacation planning
+- Wardrobe transitions
+
+## Review Strategy
+- January review: Plan for first half of year
+- July review: Plan for second half of year
+- Consider resource availability months ahead
+- Account for major life events and commitments
+
+**Pro tip:** Bi-annual planning helps you anticipate needs and avoid last-minute scrambles.`,
+
+    'uitgesteld-jaarlijks': `# Uitgesteld - Jaarlijks (Postponed - Yearly)
+
+Tasks in **Uitgesteld - Jaarlijks** are annual activities reviewed during your yearly planning session.
+
+## Purpose
+Track annual recurring tasks, yearly goals, and long-term projects that happen once per year.
+
+## How to Use
+- **Annual review** - Comprehensive planning session each January
+- **Recurring tasks** - Tasks that repeat yearly (birthdays, tax filing, renewals)
+- **Big goals** - Major projects requiring 12-month horizons
+- **Archive & reflect** - Review what you accomplished this year
+
+## Annual Task Examples
+- Tax preparation and filing
+- Annual health check-ups
+- Insurance policy renewals
+- Birthday and anniversary planning
+- Yearly goal setting
+- Performance reviews
+- Major purchases (car, appliances)
+
+## Yearly Review Best Practices
+- Block dedicated time for annual review (2-3 hours)
+- Reflect on previous year's achievements
+- Set clear, measurable goals for the new year
+- Identify recurring tasks and schedule them
+- Archive completed yearly tasks for future reference
+
+**Remember:** Annual planning connects your daily actions to your long-term life vision.`,
+
+    'afgewerkt': `# Afgewerkt (Completed)
+
+Your **Afgewerkt** list is a record of all completed tasks - your personal accomplishment archive.
+
+## Purpose
+Track what you've achieved, celebrate progress, and gain insights into your productivity patterns.
+
+## How It Works
+- Tasks automatically move here when marked complete
+- Full history of accomplishments with completion dates
+- Searchable archive for reference
+- Motivation booster when you need it
+
+## Why Keep Completed Tasks?
+- **Track progress** - See how much you've accomplished
+- **Find patterns** - Understand your productive rhythms
+- **Reference later** - Look up details from past projects
+- **Celebrate wins** - Motivation through visible achievement
+- **Time estimation** - Learn how long tasks actually take
+
+## Using Your Completed Tasks
+- **Filter by date** - See what you did this week, month, or year
+- **Filter by project** - Review project accomplishments
+- **Search** - Find specific completed tasks quickly
+- **Export** - Generate reports of your achievements
+
+## Best Practices
+- Review completed tasks weekly to celebrate progress
+- Use completion data to improve time estimates
+- Archive old tasks periodically to keep list manageable
+- Don't delete - your history is valuable
+
+**Pro tip:** On tough days, review your Afgewerkt list. You've accomplished more than you think!`,
+
+    'email-import': `# Email Import
+
+The **Email Import** feature lets you create tasks directly from your email inbox using a simple email-to-task workflow.
+
+## How It Works
+Every user has a unique import email address. Simply forward or send emails to this address, and they'll automatically become tasks in your Inbox.
+
+## Finding Your Import Address
+1. Click the **Import Email** button on this page
+2. Copy your personal import address (format: import+XXXXX@mg.tickedify.com)
+3. Add it to your email contacts for easy access
+
+## Basic Usage
+**Subject line** becomes the task name:
+\`\`\`
+Subject: Review quarterly report
+Result: Task named "Review quarterly report"
+\`\`\`
+
+**Email body** becomes task notes - everything up to your signature.
+
+## Advanced Syntax
+Use the **@t instruction syntax** for powerful task creation:
+
+\`\`\`
+@t p: Project Name; c: Context; d: 2025-11-15; t: 60; p1;
+
+Task description here.
+Multiple lines supported.
+
+--END--
+Email signature (ignored)
+\`\`\`
+
+### Supported Codes
+- **p:** Project name (auto-creates if needed)
+- **c:** Context name (auto-creates if needed)
+- **d:** Due date (YYYY-MM-DD format)
+- **t:** Duration in minutes
+- **p0-p9:** Priority (p0/p1=high, p2=medium, p3+=low)
+- **df/dw/dm/d3m/d6m/dy:** Defer to follow-up/weekly/monthly/quarterly/bi-annual/yearly
+
+## Best Practices
+- Use **--END--** marker to exclude email signatures
+- One task per email for clarity
+- Use @t syntax for tasks with specific properties
+- Keep import address private (unique to you)
+
+## Examples
+**Simple task:**
+\`\`\`
+Subject: Call dentist for appointment
+Body: Need to schedule annual cleaning
+\`\`\`
+
+**Advanced task with properties:**
+\`\`\`
+@t p: Health; c: Phone; d: 2025-11-20; t: 15; p1;
+
+Schedule dentist appointment for annual cleaning.
+Prefer morning slot if available.
+
+--END--
+Sent from my iPhone
+\`\`\`
+
+**Pro tip:** Set up email filters to auto-forward certain emails (newsletters, receipts) to your import address for automatic task creation.
+
+For complete syntax details and troubleshooting, visit the full [Email Import Help Guide](/email-import-help).`
+};
+
+// Whitelist of eligible page IDs
+const ELIGIBLE_PAGES = [
+    'inbox',
+    'acties',
+    'opvolgen',
+    'dagelijkse-planning',
+    'uitgesteld-wekelijks',
+    'uitgesteld-maandelijks',
+    'uitgesteld-3maandelijks',
+    'uitgesteld-6maandelijks',
+    'uitgesteld-jaarlijks',
+    'afgewerkt',
+    'email-import'
+];
+
+// Human-readable page names for admin interface
+const PAGE_NAMES = {
+    'inbox': 'Inbox',
+    'acties': 'Acties (Actions)',
+    'opvolgen': 'Opvolgen (Follow-up)',
+    'dagelijkse-planning': 'Dagelijkse Planning (Daily Planning)',
+    'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks (Weekly)',
+    'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks (Monthly)',
+    'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks (Quarterly)',
+    'uitgesteld-6maandelijks': 'Uitgesteld - 6-maandelijks (Bi-annual)',
+    'uitgesteld-jaarlijks': 'Uitgesteld - Jaarlijks (Yearly)',
+    'afgewerkt': 'Afgewerkt (Completed)',
+    'email-import': 'Email Import'
+};
+
+// GET /api/page-help/:pageId - Get help content for specific page
+app.get('/api/page-help/:pageId', requireAuth, async (req, res) => {
+    try {
+        const { pageId } = req.params;
+
+        // Validate page ID
+        if (!ELIGIBLE_PAGES.includes(pageId)) {
+            return res.status(404).json({ error: `Invalid page ID: ${pageId}` });
+        }
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Query database for custom content
+        const result = await pool.query(
+            'SELECT content, modified_at, modified_by FROM page_help WHERE page_id = $1',
+            [pageId]
+        );
+
+        if (result.rows.length > 0) {
+            // Custom content exists
+            const row = result.rows[0];
+            return res.json({
+                pageId: pageId,
+                content: row.content,
+                isDefault: false,
+                modifiedAt: row.modified_at,
+                modifiedBy: row.modified_by
+            });
+        } else {
+            // Return default content
+            return res.json({
+                pageId: pageId,
+                content: DEFAULT_PAGE_HELP[pageId],
+                isDefault: true,
+                modifiedAt: null,
+                modifiedBy: null
+            });
+        }
+    } catch (error) {
+        console.error('Get page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PUT /api/page-help/:pageId - Update help content (admin only)
+app.put('/api/page-help/:pageId', requireAdmin, async (req, res) => {
+    try {
+        const { pageId } = req.params;
+        const { content } = req.body;
+
+        // Validate page ID
+        if (!ELIGIBLE_PAGES.includes(pageId)) {
+            return res.status(404).json({ error: `Invalid page ID: ${pageId}` });
+        }
+
+        // Validate content
+        if (!content || content.trim().length === 0) {
+            return res.status(400).json({ error: 'Content cannot be empty' });
+        }
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get admin identifier
+        const userId = getCurrentUserId(req);
+        const userResult = await pool.query('SELECT naam FROM users WHERE id = $1', [userId]);
+        const modifiedBy = userResult.rows[0]?.naam || 'admin';
+
+        // UPSERT content
+        await pool.query(
+            `INSERT INTO page_help (page_id, content, modified_at, modified_by)
+             VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+             ON CONFLICT (page_id)
+             DO UPDATE SET
+                content = EXCLUDED.content,
+                modified_at = CURRENT_TIMESTAMP,
+                modified_by = EXCLUDED.modified_by`,
+            [pageId, content, modifiedBy]
+        );
+
+        res.json({
+            success: true,
+            pageId: pageId,
+            message: 'Help content updated successfully'
+        });
+    } catch (error) {
+        console.error('Update page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE /api/page-help/:pageId - Delete custom content, revert to default (admin only)
+app.delete('/api/page-help/:pageId', requireAdmin, async (req, res) => {
+    try {
+        const { pageId } = req.params;
+
+        // Validate page ID
+        if (!ELIGIBLE_PAGES.includes(pageId)) {
+            return res.status(404).json({ error: `Invalid page ID: ${pageId}` });
+        }
+
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Delete custom content (idempotent)
+        await pool.query('DELETE FROM page_help WHERE page_id = $1', [pageId]);
+
+        res.json({
+            success: true,
+            pageId: pageId,
+            message: 'Help content deleted, reverted to default'
+        });
+    } catch (error) {
+        console.error('Delete page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/page-help - List all page help content (admin only)
+app.get('/api/page-help', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get all custom content from database
+        const result = await pool.query(
+            'SELECT page_id, content, modified_at, modified_by FROM page_help ORDER BY page_id'
+        );
+
+        const customContent = {};
+        result.rows.forEach(row => {
+            customContent[row.page_id] = row;
+        });
+
+        // Build response with all pages
+        const pages = ELIGIBLE_PAGES.map(pageId => {
+            const isCustom = customContent.hasOwnProperty(pageId);
+            const content = isCustom ? customContent[pageId].content : DEFAULT_PAGE_HELP[pageId];
+
+            return {
+                pageId: pageId,
+                pageName: PAGE_NAMES[pageId],
+                hasCustomContent: isCustom,
+                contentPreview: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+                modifiedAt: isCustom ? customContent[pageId].modified_at : null,
+                modifiedBy: isCustom ? customContent[pageId].modified_by : null
+            };
+        });
+
+        res.json({ pages });
+    } catch (error) {
+        console.error('List page help error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // API endpoint voor huidige gebruiker info inclusief import code
 app.get('/api/user/info', async (req, res) => {
     try {
