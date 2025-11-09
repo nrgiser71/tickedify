@@ -7937,6 +7937,39 @@ app.get('/api/debug/webhook-logs', async (req, res) => {
     }
 });
 
+// TEMPORARY DEBUG: Create webhook logs table
+app.post('/api/debug/create-webhook-table', async (req, res) => {
+    try {
+        // Create table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS payment_webhook_logs (
+              id SERIAL PRIMARY KEY,
+              user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+              event_type VARCHAR(100),
+              order_id VARCHAR(255),
+              email VARCHAR(255),
+              amount_cents INTEGER,
+              payload JSONB,
+              signature_valid BOOLEAN,
+              processed_at TIMESTAMP DEFAULT NOW(),
+              error_message TEXT,
+              ip_address VARCHAR(45)
+            )
+        `);
+
+        // Create indexes
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_webhook_logs_user_id ON payment_webhook_logs(user_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_webhook_logs_order_id ON payment_webhook_logs(order_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_webhook_logs_processed_at ON payment_webhook_logs(processed_at)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_webhook_logs_event_type ON payment_webhook_logs(event_type)');
+
+        res.json({ success: true, message: 'payment_webhook_logs table created successfully' });
+    } catch (error) {
+        console.error('Debug create-webhook-table error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test Dashboard Endpoints
 const testModule = require('./test-runner');
 
