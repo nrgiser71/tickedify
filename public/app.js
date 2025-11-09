@@ -7297,6 +7297,9 @@ class Taakbeheer {
 
         // Show contexten beheer interface
         this.renderContextenBeheer();
+
+        // Add help icon for context management
+        this.addPageHelpIcon('contextenbeheer');
     }
 
     restoreNormalContainer(targetLijst = null) {
