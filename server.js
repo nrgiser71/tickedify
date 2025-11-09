@@ -2611,149 +2611,86 @@ Transform your task list into a realistic daily schedule. See at a glance what n
 
 **Pro tip:** A realistic daily plan reduces stress and increases accomplishment. Don't overload your calendar.`,
 
-    'uitgesteld-wekelijks': `# Uitgesteld - Wekelijks (Postponed - Weekly)
+    'uitgesteld': `# Uitgesteld (Postponed)
 
-Tasks in **Uitgesteld - Wekelijks** are scheduled to appear in your weekly review for reconsideration.
+The **Uitgesteld** (Postponed) lists help you manage tasks with different time horizons. Tickedify offers 6 postponement intervals to match your planning rhythm.
 
-## Purpose
-Defer tasks that aren't urgent right now but should be reviewed within the next 1-4 weeks.
+## The 6 Postponement Intervals
 
-## How to Use
-- **Move from Inbox/Acties** - When a task isn't urgent but still important
-- **Set appearance date** - Choose when you want to see this task again
-- **Add context** - Note why you're deferring and what needs to happen first
-- **Review weekly** - Check this list during your weekly planning session
-
-## When to Use Weekly Postponement
+### Weekly (Wekelijks)
+**Review:** Every 1-4 weeks
+**Perfect for:**
 - Tasks you want to tackle "sometime this month"
 - Ideas that need incubation time
 - Projects waiting for prerequisite completion
-- Seasonal or recurring tasks (1-4 week cycles)
+- Short-term seasonal tasks
 
-## Best Practices
-- Review during weekly planning to decide what moves to Acties
-- Be realistic about when you'll actually have capacity
-- Don't use this as a "someday/maybe" dumping ground
-- Add notes about why you're waiting
-
-**Remember:** Postponing isn't procrastinating when done intentionally. It's strategic focus management.`,
-
-    'uitgesteld-maandelijks': `# Uitgesteld - Maandelijks (Postponed - Monthly)
-
-Tasks in **Uitgesteld - Maandelijks** appear in your monthly review cycle for evaluation.
-
-## Purpose
-Store tasks that are important but not time-sensitive - things you want to address in the next 1-3 months.
-
-## How to Use
-- **Monthly review** - Set aside time each month to review this list
-- **Choose selectively** - Move only the most relevant tasks to Acties
-- **Update notes** - Refresh your thinking on why this task matters
-- **Archive old ideas** - Remove tasks that are no longer relevant
-
-## Perfect For
+### Monthly (Maandelijks)
+**Review:** Every 1-3 months
+**Perfect for:**
 - Medium-term projects (1-3 month horizon)
 - Quarterly goals and initiatives
 - Professional development activities
 - Home improvement projects
-- Personal growth goals
 
-## Best Practices
-- Schedule a monthly planning session (first Sunday of the month)
-- Limit how many tasks you activate each month (2-3 max)
-- Consider energy and resource availability
-- Align with quarterly goals
-
-**Pro tip:** Monthly postponement helps you maintain long-term vision without cluttering your immediate focus.`,
-
-    'uitgesteld-3maandelijks': `# Uitgesteld - 3-maandelijks (Postponed - Quarterly)
-
-Tasks in **Uitgesteld - 3-maandelijks** are reviewed every three months during your quarterly planning.
-
-## Purpose
-Track medium-term goals and projects that require quarterly attention or seasonal timing.
-
-## How to Use
-- **Quarterly review** - Review this list at the start of each quarter
-- **Align with goals** - Select tasks that support your quarterly objectives
-- **Update priorities** - Circumstances change - adjust accordingly
-- **Archive outdated tasks** - Remove what's no longer relevant
-
-## Ideal For
+### Quarterly (3-maandelijks)
+**Review:** Every 3 months (Jan/Apr/Jul/Oct)
+**Perfect for:**
 - Quarterly business reviews
 - Seasonal activities (spring cleaning, holiday prep)
 - Professional development milestones
-- Home maintenance cycles
 - Financial check-ins
 
-## Quarterly Planning Tips
-- Review in January, April, July, October
-- Link tasks to your bigger vision and yearly goals
-- Consider seasonal factors (weather, holidays, fiscal calendar)
-- Limit activated tasks to maintain focus
-
-**Remember:** Quarterly rhythm helps you balance short-term execution with long-term strategy.`,
-
-    'uitgesteld-6maandelijks': `# Uitgesteld - 6-maandelijks (Postponed - Bi-annual)
-
-Tasks in **Uitgesteld - 6-maandelijks** appear during your bi-annual review for consideration.
-
-## Purpose
-Store tasks with a 6-month horizon - goals and projects that need longer lead time or seasonal timing.
-
-## How to Use
-- **Bi-annual review** - Review in January and July
-- **Long-term vision** - Connect tasks to your yearly goals
-- **Plan ahead** - Some tasks need months of preparation
-- **Seasonal alignment** - Winter vs. summer activities
-
-## Perfect For
+### Bi-annual (6-maandelijks)
+**Review:** Twice a year (Jan/Jul)
+**Perfect for:**
 - Semi-annual business planning
 - Tax preparation activities
 - Major home projects
-- Career development milestones
 - Health check-ups and reviews
 - Vacation planning
-- Wardrobe transitions
 
-## Review Strategy
-- January review: Plan for first half of year
-- July review: Plan for second half of year
-- Consider resource availability months ahead
-- Account for major life events and commitments
-
-**Pro tip:** Bi-annual planning helps you anticipate needs and avoid last-minute scrambles.`,
-
-    'uitgesteld-jaarlijks': `# Uitgesteld - Jaarlijks (Postponed - Yearly)
-
-Tasks in **Uitgesteld - Jaarlijks** are annual activities reviewed during your yearly planning session.
-
-## Purpose
-Track annual recurring tasks, yearly goals, and long-term projects that happen once per year.
-
-## How to Use
-- **Annual review** - Comprehensive planning session each January
-- **Recurring tasks** - Tasks that repeat yearly (birthdays, tax filing, renewals)
-- **Big goals** - Major projects requiring 12-month horizons
-- **Archive & reflect** - Review what you accomplished this year
-
-## Annual Task Examples
-- Tax preparation and filing
-- Annual health check-ups
-- Insurance policy renewals
-- Birthday and anniversary planning
+### Yearly (Jaarlijks)
+**Review:** Once a year (January)
+**Perfect for:**
+- Annual recurring tasks (birthdays, renewals)
 - Yearly goal setting
 - Performance reviews
-- Major purchases (car, appliances)
+- Major purchases
+- Insurance policy renewals
 
-## Yearly Review Best Practices
-- Block dedicated time for annual review (2-3 hours)
-- Reflect on previous year's achievements
-- Set clear, measurable goals for the new year
-- Identify recurring tasks and schedule them
-- Archive completed yearly tasks for future reference
+## How to Use Postponed Lists
 
-**Remember:** Annual planning connects your daily actions to your long-term life vision.`,
+### Moving Tasks
+- **From Inbox/Acties** - When a task isn't urgent but still important
+- **Set appearance date** - Choose when you want to see this task again
+- **Add context** - Note why you're deferring and what needs to happen first
+
+### Review Strategy
+- **Weekly lists** - Check during weekly planning session
+- **Monthly lists** - Review first Sunday of the month
+- **Quarterly lists** - Review at start of each quarter
+- **Bi-annual lists** - Review in January and July
+- **Yearly lists** - Comprehensive review each January
+
+### Best Practices
+- **Be selective** - Only activate 2-3 tasks per review cycle
+- **Add notes** - Explain why you're deferring and what triggers action
+- **Be realistic** - Consider your actual capacity and energy
+- **Archive outdated** - Remove tasks that are no longer relevant
+- **Align with goals** - Connect postponed tasks to bigger objectives
+
+## Benefits of Strategic Postponement
+
+1. **Reduced overwhelm** - Focus on what matters NOW without losing track of future tasks
+2. **Better planning** - Match task activation to your actual capacity
+3. **Seasonal alignment** - Schedule tasks when they make the most sense
+4. **Long-term vision** - Connect daily actions to yearly goals
+5. **Intentional focus** - Postponing isn't procrastinating when done strategically
+
+**Pro tip:** The right postponement interval depends on task urgency and your planning rhythm. When in doubt, start with weekly and adjust as needed.
+
+**Remember:** Your Acties list should energize you, not overwhelm you. Use postponed lists to maintain focus while preserving your long-term vision.`,
 
     'afgewerkt': `# Afgewerkt (Completed)
 
@@ -2857,7 +2794,266 @@ Sent from my iPhone
 
 **Pro tip:** Set up email filters to auto-forward certain emails (newsletters, receipts) to your import address for automatic task creation.
 
-For complete syntax details and troubleshooting, visit the full [Email Import Help Guide](/email-import-help).`
+For complete syntax details and troubleshooting, visit the full [Email Import Help Guide](/email-import-help).`,
+
+    'projecten': `# Projecten (Projects)
+
+The **Projecten** (Projects) list helps you organize tasks by project or area of responsibility.
+
+## Purpose
+Group related tasks together under projects to maintain focus and track progress on multi-step initiatives.
+
+## What is a Project?
+In Tickedify, a project is any outcome that requires more than one action step. Examples:
+- **Work:** "Launch marketing campaign", "Client X website redesign"
+- **Home:** "Kitchen renovation", "Plan summer vacation"
+- **Personal:** "Learn Spanish", "Get in shape"
+
+## How to Use Projects
+
+### Creating Projects
+- Projects are created automatically when you assign a task to a project name
+- No need to pre-create projects - just start using them
+- Use clear, outcome-focused names (e.g., "Launch Q1 Product" not "Product stuff")
+
+### Organizing Tasks by Project
+1. When creating/editing a task, select or type a project name
+2. All tasks with the same project name are grouped together
+3. View all tasks for a specific project by clicking on it in the Projects list
+
+### Project Management
+- **Add new projects** - Simply assign a task to a new project name
+- **Rename projects** - Edit project names to keep them clear and current
+- **Archive projects** - Remove completed projects to keep your list focused
+- **Project overview** - See all active projects and their task counts
+
+## Best Practices
+
+### Project Naming
+- Use specific, measurable outcome language
+- Include timeline or version if relevant ("Q1 Marketing", "Website v2.0")
+- Keep names concise (3-5 words maximum)
+- Use consistent naming patterns across related projects
+
+### Project Organization
+- Limit active projects to 5-10 at a time for focus
+- One project per distinct outcome (don't combine unrelated work)
+- Use contexts within projects for location/tool-based batching
+- Review projects weekly to ensure alignment with goals
+
+### When to Use Projects vs. Contexts
+- **Use Projects** for outcome-based grouping (what you're working toward)
+- **Use Contexts** for tool/location-based batching (where/how you work)
+- Example: Task "Call vendor about proposal" → Project: "Office Redesign", Context: "@phone"
+
+## Project Views & Filters
+- Click any project to see only its tasks
+- Filter Acties list by project to focus work sessions
+- Sort by priority within projects to tackle high-impact work first
+- Track project completion percentage
+
+**Pro tip:** During weekly review, go through each active project and ensure it has a clear next action in your Acties list.`,
+
+    'prullenbak': `# Prullenbak (Trash)
+
+The **Prullenbak** (Trash) is where deleted tasks are temporarily stored before permanent removal.
+
+## Purpose
+Safely remove unwanted tasks while maintaining the ability to recover them if needed.
+
+## How It Works
+
+### Deleting Tasks
+When you delete a task from any list:
+1. Task is moved to Prullenbak (not permanently deleted)
+2. Task remains in Prullenbak for 30 days
+3. After 30 days, tasks are automatically purged
+4. You can manually empty Prullenbak at any time
+
+### Recovering Tasks
+**To restore a deleted task:**
+1. Navigate to Prullenbak list
+2. Find the task you want to recover
+3. Click the restore button (↶)
+4. Task returns to its original list
+
+### Permanently Deleting
+**To remove tasks permanently:**
+- **Single task:** Click permanent delete button (🗑️) on specific task
+- **All tasks:** Use "Empty Trash" button to clear entire Prullenbak
+- **Warning:** Permanent deletion cannot be undone!
+
+## What Gets Stored in Trash
+- Manually deleted tasks from any list
+- Completed tasks (optionally - see settings)
+- Abandoned recurring task instances
+- Tasks removed during bulk operations
+
+## What's NOT in Trash
+- Completed tasks moved to Afgewerkt (unless you change settings)
+- Tasks that were never saved (draft tasks cancelled)
+- Recurring task templates (only instances are deleted)
+
+## Best Practices
+
+### Regular Cleanup
+- Review Prullenbak monthly to ensure no important tasks were accidentally deleted
+- Empty trash after confirming no needed tasks remain
+- Use search to find specific deleted tasks quickly
+
+### Recovery Workflow
+If you accidentally deleted a task:
+1. Immediately check Prullenbak
+2. Use search if you have many deleted tasks
+3. Restore the task
+4. Review and correct any lost information
+
+### Storage Management
+- Prullenbak counts toward your task storage quota
+- Empty trash regularly to free up space
+- Consider exporting important deleted tasks before purging
+
+## Search & Filters
+- **Search deleted tasks** - Find specific tasks by name or project
+- **Sort by deletion date** - See recently deleted tasks first
+- **Filter by project** - View deleted tasks from specific projects
+- **Date range** - Show tasks deleted within a specific timeframe
+
+## Settings & Configuration
+- **Auto-purge interval** - Configure how long tasks remain in trash (default: 30 days)
+- **Confirm before delete** - Enable warnings before permanent deletion
+- **Include in search** - Choose whether to include trash in global search
+
+**Warning:** Once you permanently delete a task or empty the trash, recovery is impossible. Always double-check before purging.
+
+**Pro tip:** Before major cleanup operations, review your Prullenbak to ensure you haven't accidentally deleted anything important during recent bulk actions.`,
+
+    'contextenbeheer': `# Contextenbeheer (Context Management)
+
+**Contextenbeheer** (Context Management) helps you organize and batch tasks by the tools, locations, or mindsets required to complete them.
+
+## Purpose
+Group tasks by WHERE or HOW you'll do them, enabling efficient batch processing and context-based workflows.
+
+## What is a Context?
+A context describes the environment, tool, or mental state needed for a task. Common contexts:
+- **@computer** - Tasks requiring your computer
+- **@phone** - Calls to make
+- **@email** - Email-related tasks
+- **@home** - Tasks you can only do at home
+- **@office** - Office-specific work
+- **@errands** - Tasks to do while out
+- **@waiting** - Tasks blocked by others (similar to Opvolgen)
+- **@energy-high** - Deep work requiring focus
+- **@energy-low** - Simple tasks for tired moments
+
+## How Contexts Work
+
+### Creating Contexts
+- Contexts are created automatically when assigned to tasks
+- No need to pre-define - just start using them
+- Use **@** prefix by convention (not required, but helpful)
+
+### Assigning Contexts
+1. When creating/editing a task, select or type a context
+2. Tasks can have ONE context (keep it simple)
+3. Choose the MOST limiting factor (e.g., @phone beats @office if you need to call someone at work)
+
+### Using Contexts for Batching
+Filter your Acties list by context to:
+- **@phone** - Make all calls in one session
+- **@computer** - Tackle computer work during deep work blocks
+- **@errands** - Complete all errands in one trip
+- **@energy-low** - Quick wins when you're tired
+
+## Context Strategy
+
+### Location-Based Contexts
+Use when task can ONLY be done in specific place:
+- **@home** - Water plants, do laundry
+- **@office** - Use office printer, attend in-person meetings
+- **@gym** - Workout tasks
+
+### Tool-Based Contexts
+Use when specific tool/device is required:
+- **@computer** - Write reports, update spreadsheets
+- **@phone** - Make calls (can't do this via email)
+- **@email** - Send important messages, follow-ups
+
+### Energy-Based Contexts
+Use to match tasks to your energy levels:
+- **@focus** - Deep work requiring concentration
+- **@creative** - Brainstorming, writing, design
+- **@admin** - Simple administrative tasks
+- **@social** - Tasks requiring people interaction
+
+### Time-Based Contexts
+Use for tasks with timing constraints:
+- **@5min** - Quick tasks for spare moments
+- **@morning** - Tasks best done early
+- **@evening** - After-work tasks
+
+## Context Management Features
+
+### View by Context
+- Click any context to see all tasks requiring that context
+- Filter Acties by context during planning
+- See task counts per context
+
+### Context Operations
+- **Rename contexts** - Update context names for clarity
+- **Merge contexts** - Combine similar contexts
+- **Delete contexts** - Remove unused contexts
+- **Bulk assign** - Apply context to multiple tasks at once
+
+## Best Practices
+
+### Choosing Contexts
+- **Keep it simple** - 5-10 contexts maximum (more = decision fatigue)
+- **Be specific** - "@computer" is too broad if you have laptop AND desktop tasks
+- **Be consistent** - Use same naming pattern (@location, @tool, @energy)
+- **Think limiting factor** - What's the ONE thing preventing you from doing this now?
+
+### Batch Processing
+1. **Time block by context** - "1-2pm = @phone calls"
+2. **Location-based batching** - Do all @errands in one trip
+3. **Energy matching** - @focus tasks in morning, @admin in afternoon
+4. **Tool batching** - Open @email context, process all email tasks
+
+### Context vs. Project
+**Don't confuse contexts with projects:**
+- **Project** = WHAT outcome you're working toward ("Launch website")
+- **Context** = WHERE/HOW you'll do the work ("@computer", "@meeting")
+- Tasks can have both: "Review website mockups" → Project: Launch Website, Context: @computer
+
+### Common Mistakes
+- ❌ Too many contexts (20+ becomes overwhelming)
+- ❌ Using contexts as priority flags (use priority field instead)
+- ❌ Contexts that are too broad ("@work" - not helpful)
+- ❌ Creating contexts for single tasks (just use project instead)
+
+## Advanced Context Use
+
+### Context Hierarchies
+Some users create parent-child contexts:
+- @home-kitchen, @home-garage, @home-office
+- @computer-mac, @computer-windows
+- Only do this if you truly need this granularity
+
+### Waiting Contexts
+- **@waiting-boss** - Awaiting approval
+- **@waiting-vendor** - Waiting on external party
+- (Note: Opvolgen list may be better for tracking waiting tasks)
+
+### Agenda Contexts
+Create contexts for people you meet regularly:
+- **@agenda-manager** - Topics to discuss with manager
+- **@agenda-team** - Team meeting items
+- Useful for 1-on-1 meetings
+
+**Pro tip:** During daily planning, choose 2-3 contexts you'll have access to that day and filter your Acties list accordingly. This creates a focused, realistic daily plan.
+
+**Remember:** The goal of contexts is to make your work MORE efficient, not to create complex organizational overhead. Start simple and add complexity only if needed.`
 };
 
 // Whitelist of eligible page IDs
@@ -2866,13 +3062,12 @@ const ELIGIBLE_PAGES = [
     'acties',
     'opvolgen',
     'dagelijkse-planning',
-    'uitgesteld-wekelijks',
-    'uitgesteld-maandelijks',
-    'uitgesteld-3maandelijks',
-    'uitgesteld-6maandelijks',
-    'uitgesteld-jaarlijks',
+    'uitgesteld',
     'afgewerkt',
-    'email-import'
+    'email-import',
+    'projecten',
+    'prullenbak',
+    'contextenbeheer'
 ];
 
 // Human-readable page names for admin interface
@@ -2881,13 +3076,12 @@ const PAGE_NAMES = {
     'acties': 'Acties (Actions)',
     'opvolgen': 'Opvolgen (Follow-up)',
     'dagelijkse-planning': 'Dagelijkse Planning (Daily Planning)',
-    'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks (Weekly)',
-    'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks (Monthly)',
-    'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks (Quarterly)',
-    'uitgesteld-6maandelijks': 'Uitgesteld - 6-maandelijks (Bi-annual)',
-    'uitgesteld-jaarlijks': 'Uitgesteld - Jaarlijks (Yearly)',
+    'uitgesteld': 'Uitgesteld (Postponed)',
     'afgewerkt': 'Afgewerkt (Completed)',
-    'email-import': 'Email Import'
+    'email-import': 'Email Import',
+    'projecten': 'Projecten (Projects)',
+    'prullenbak': 'Prullenbak (Trash)',
+    'contextenbeheer': 'Contextenbeheer (Context Management)'
 };
 
 // GET /api/page-help/:pageId - Get help content for specific page

@@ -1011,22 +1011,25 @@ class Taakbeheer {
             'acties': 'acties',
             'opvolgen': 'opvolgen',
             'dagelijkse-planning': 'dagelijkse-planning',
-            'uitgesteld-wekelijks': 'uitgesteld-wekelijks',
-            'uitgesteld-maandelijks': 'uitgesteld-maandelijks',
-            'uitgesteld-3maandelijks': 'uitgesteld-3maandelijks',
-            'uitgesteld-6maandelijks': 'uitgesteld-6maandelijks',
-            'uitgesteld-jaarlijks': 'uitgesteld-jaarlijks',
+            // All uitgesteld variants map to single 'uitgesteld' help page
+            'uitgesteld-wekelijks': 'uitgesteld',
+            'uitgesteld-maandelijks': 'uitgesteld',
+            'uitgesteld-3maandelijks': 'uitgesteld',
+            'uitgesteld-6maandelijks': 'uitgesteld',
+            'uitgesteld-jaarlijks': 'uitgesteld',
             'afgewerkte-taken': 'afgewerkt',
-            'email-import': 'email-import'
+            'email-import': 'email-import',
+            'projecten': 'projecten',
+            'prullenbak': 'prullenbak',
+            'contextenbeheer': 'contextenbeheer'
         };
 
         const mappedPageId = lijstToPageId[pageId] || pageId;
 
         // Only add for eligible pages
         const eligiblePages = ['inbox', 'acties', 'opvolgen', 'dagelijkse-planning',
-                              'uitgesteld-wekelijks', 'uitgesteld-maandelijks',
-                              'uitgesteld-3maandelijks', 'uitgesteld-6maandelijks',
-                              'uitgesteld-jaarlijks', 'afgewerkt', 'email-import'];
+                              'uitgesteld', 'afgewerkt', 'email-import',
+                              'projecten', 'prullenbak', 'contextenbeheer'];
 
         if (!eligiblePages.includes(mappedPageId)) {
             return; // Skip ineligible pages
@@ -15249,11 +15252,7 @@ class PageHelpManager {
 
         const iconHTML = `
             <span class="page-help-icon" data-page-id="${pageId}" title="View page help">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
+                <i class="fas fa-question-circle"></i>
             </span>
         `;
 
