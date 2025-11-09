@@ -4669,7 +4669,7 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
            amount_paid_cents = $3,
            selected_plan = $4,
            subscription_tier = $4,
-           plugandpay_subscription_id = $5
+           plugpay_subscription_id = $5
        WHERE id = $6`,
       [SUBSCRIPTION_STATES.ACTIVE, orderId, amountCents, selectedPlan, subscriptionId, user.id]
     );
@@ -7933,6 +7933,29 @@ app.get('/api/debug/webhook-logs', async (req, res) => {
         });
     } catch (error) {
         console.error('Debug webhook-logs error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// TEMPORARY DEBUG: Add missing payment columns to users table
+app.post('/api/debug/add-payment-columns', async (req, res) => {
+    try {
+        // Add missing columns for payment tracking
+        await pool.query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS plugandpay_order_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS amount_paid_cents INTEGER,
+            ADD COLUMN IF NOT EXISTS plugandpay_subscription_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS payment_confirmed_at TIMESTAMP
+        `);
+
+        // Create indexes for performance
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_users_plugandpay_order_id ON users(plugandpay_order_id)');
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_users_plugandpay_subscription_id ON users(plugandpay_subscription_id)');
+
+        res.json({ success: true, message: 'Payment columns added successfully to users table' });
+    } catch (error) {
+        console.error('Debug add-payment-columns error:', error);
         res.status(500).json({ error: error.message });
     }
 });
