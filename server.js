@@ -4201,13 +4201,24 @@ app.post('/api/auth/register', async (req, res) => {
         
         // Generate email import code for new user
         const importCode = await db.generateEmailImportCode(userId);
-        
+
+        // Generate login token for auto-login after payment (non-beta users)
+        const loginToken = generateLoginToken();
+        const tokenExpiry = calculateTokenExpiry();
+
+        await pool.query(
+            `UPDATE users
+             SET login_token = $1, login_token_expires = $2, login_token_used = FALSE
+             WHERE id = $3`,
+            [loginToken, tokenExpiry, userId]
+        );
+
         // Sync to GHL with appropriate tag
         let ghlContactId = null;
         try {
             const tag = betaConfig.beta_period_active ? 'tickedify-beta-tester' : 'tickedify-user-needs-payment';
             ghlContactId = await addContactToGHL(email, naam, [tag]);
-            
+
             if (ghlContactId) {
                 await pool.query('UPDATE users SET ghl_contact_id = $1 WHERE id = $2', [ghlContactId, userId]);
             }
@@ -4215,22 +4226,40 @@ app.post('/api/auth/register', async (req, res) => {
             console.error('⚠️ GHL sync failed during registration:', ghlError.message);
             // Don't fail registration if GHL sync fails
         }
-        
-        // If NOT in beta period, redirect to payment
+
+        // If NOT in beta period, create session and redirect to payment
         if (!betaConfig.beta_period_active) {
-            return res.json({
-                success: true,
-                requiresPayment: true,
-                message: 'Account aangemaakt. Betaling vereist voor toegang.',
-                redirect: '/upgrade',
-                user: {
-                    id: userId,
-                    email,
-                    naam,
-                    account_type: accountType,
-                    subscription_status: subscriptionStatus
+            // Create session so user stays logged in during payment flow
+            req.session.userId = userId;
+            req.session.userEmail = email;
+            req.session.userNaam = naam;
+
+            // Save session before sending response
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error during non-beta registration:', err);
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Fout bij opslaan sessie'
+                    });
                 }
+
+                return res.json({
+                    success: true,
+                    requiresPayment: true,
+                    message: 'Account aangemaakt. Betaling vereist voor toegang.',
+                    redirect: '/subscription.html',
+                    user: {
+                        id: userId,
+                        email,
+                        naam,
+                        account_type: accountType,
+                        subscription_status: subscriptionStatus
+                    }
+                });
             });
+
+            return; // Prevent continuing to beta flow
         }
         
         // Beta period - start session and give access

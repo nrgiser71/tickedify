@@ -14175,6 +14175,20 @@ class AuthManager {
             const data = await response.json();
 
             if (response.ok) {
+                // Check if payment is required
+                if (data.requiresPayment) {
+                    console.log('Registration successful - payment required');
+                    this.hideRegisterModal();
+                    toast.info('Account created! Please select a subscription plan to continue.');
+
+                    // Redirect to subscription page after short delay
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '/subscription.html';
+                    }, 1500);
+                    return;
+                }
+
+                // Beta user flow - direct access
                 this.currentUser = data.user;
                 this.isAuthenticated = true;
                 this.updateUI();
