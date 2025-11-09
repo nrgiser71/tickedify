@@ -15364,6 +15364,40 @@ class PageHelpManager {
         }
     }
 
+    // Clear ALL page help cache (for debugging/troubleshooting)
+    clearAllCache() {
+        console.log('[PageHelp] Clearing all help content cache...');
+
+        // Clear in-memory cache
+        this.helpCache = {};
+
+        // Clear localStorage cache for all pages
+        const eligiblePages = [
+            'inbox', 'acties', 'opvolgen', 'dagelijkse-planning',
+            'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks',
+            'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'prioriteiten',
+            'projecten', 'contexten', 'labels'
+        ];
+
+        let clearedCount = 0;
+        eligiblePages.forEach(pageId => {
+            const cacheKey = `help-content-${pageId}`;
+            try {
+                if (localStorage.getItem(cacheKey)) {
+                    localStorage.removeItem(cacheKey);
+                    clearedCount++;
+                }
+            } catch (e) {
+                console.warn(`Failed to clear cache for ${pageId}:`, e);
+            }
+        });
+
+        console.log(`[PageHelp] ✅ Cleared ${clearedCount} cached entries from localStorage`);
+        console.log('[PageHelp] Next help icon click will fetch fresh content from server');
+
+        return clearedCount;
+    }
+
     // Extract first H1 from markdown and use as title
     stripFirstH1FromMarkdown(markdown) {
         if (!markdown) return { title: '', content: '' };
