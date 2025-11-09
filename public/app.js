@@ -14265,21 +14265,21 @@ class AuthManager {
                 }
                 
                 // Load user-specific data
-                if (app) {
-                    await app.loadUserData();
+                if (window.app) {
+                    await window.app.loadUserData();
                 }
             } else {
                 this.currentUser = null;
                 this.isAuthenticated = false;
                 
                 // Clear data for unauthenticated state
-                if (app) {
-                    app.taken = [];
-                    app.renderTaken();
+                if (window.app) {
+                    window.app.taken = [];
+                    window.app.renderTaken();
                     
                     // Load basic UI for mobile devices without authentication
-                    if (app.isMobileDevice()) {
-                        app.loadBasicMobileUI();
+                    if (window.app.isMobileDevice()) {
+                        window.app.loadBasicMobileUI();
                     }
                 }
                 
@@ -14393,7 +14393,7 @@ class AuthManager {
             if (userImportEmail) userImportEmail.style.display = 'none';
             
             // For mobile devices, keep main content visible for basic UI
-            if (app && app.isMobileDevice()) {
+            if (window.app && window.app.isMobileDevice()) {
                 // Mobile: Show sidebar and main content for basic UI
                 if (sidebarContent) sidebarContent.style.display = 'block';
                 if (mainContent) mainContent.style.display = 'block';
