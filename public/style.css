@@ -10506,14 +10506,14 @@ body.dagkalender-focus-active {
 /* Note: Reuses .modal-overlay and .message-modal classes from message-modal.js */
 /* This ensures EXACT visual consistency with information messages */
 
-.page-help-modal {
-    /* Additional specific styling for page help if needed */
-    /* Base styling comes from .message-modal class */
+/* Page Help Modal - Information Blue Theme (matches information message type) */
+.page-help-modal .message-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 }
 
-.page-help-header {
-    /* Override gradient to use information blue (same as information messages) */
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+.page-help-modal .message-icon,
+.page-help-modal .btn-close-modal {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .page-help-body {
