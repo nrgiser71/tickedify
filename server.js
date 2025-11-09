@@ -4733,6 +4733,14 @@ app.get('/api/payment/success', async (req, res) => {
     req.session.userId = tokenValidation.userId;
     req.session.userEmail = tokenValidation.email;
 
+    // TEMPORARY DEBUG: Log what's being set in session
+    console.log('🔐 PAYMENT SUCCESS - Setting session:', {
+        userId: tokenValidation.userId,
+        email: tokenValidation.email,
+        token: return_token,
+        timestamp: new Date().toISOString()
+    });
+
     res.redirect('/app?payment_success=true');
 
   } catch (error) {
@@ -6225,10 +6233,19 @@ app.post('/api/test/ghl-tag', async (req, res) => {
 });
 
 app.get('/api/auth/me', async (req, res) => {
+    // TEMPORARY DEBUG: Log session contents
+    console.log('🔍 AUTH/ME called - Session:', {
+        userId: req.session.userId,
+        userEmail: req.session.userEmail,
+        userNaam: req.session.userNaam,
+        sessionID: req.sessionID,
+        timestamp: new Date().toISOString()
+    });
+
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
-    
+
     try {
         // Get user information including beta status
         const userResult = await pool.query(`
@@ -7832,6 +7849,26 @@ app.get('/api/debug/find-task/:id', async (req, res) => {
         }
     } catch (error) {
         console.error('Error searching for task:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// TEMPORARY DEBUG: Check registration flow issue
+app.get('/api/debug/check-user/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        const result = await pool.query(
+            'SELECT id, email, naam, subscription_status, trial_end_date, created_at, login_token FROM users WHERE email = $1',
+            [email]
+        );
+
+        if (result.rows.length > 0) {
+            res.json({ found: true, user: result.rows[0] });
+        } else {
+            res.json({ found: false, email });
+        }
+    } catch (error) {
+        console.error('Debug check-user error:', error);
         res.status(500).json({ error: error.message });
     }
 });
