@@ -7873,6 +7873,21 @@ app.get('/api/debug/check-user/:email', async (req, res) => {
     }
 });
 
+// TEMPORARY DEBUG: Check beta config status
+app.get('/api/debug/beta-config', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM beta_config WHERE id = 1');
+        if (result.rows.length > 0) {
+            res.json({ found: true, config: result.rows[0] });
+        } else {
+            res.json({ found: false });
+        }
+    } catch (error) {
+        console.error('Debug beta-config error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test Dashboard Endpoints
 const testModule = require('./test-runner');
 
