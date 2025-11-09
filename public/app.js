@@ -15374,9 +15374,8 @@ class PageHelpManager {
         // Clear localStorage cache for all pages
         const eligiblePages = [
             'inbox', 'acties', 'opvolgen', 'dagelijkse-planning',
-            'uitgesteld-wekelijks', 'uitgesteld-maandelijks', 'uitgesteld-3maandelijks',
-            'uitgesteld-6maandelijks', 'uitgesteld-jaarlijks', 'prioriteiten',
-            'projecten', 'contexten', 'labels'
+            'uitgesteld', 'afgewerkt', 'email-import',
+            'projecten', 'prullenbak', 'contextenbeheer'
         ];
 
         let clearedCount = 0;
@@ -15552,13 +15551,12 @@ class PageHelpManager {
             'acties': 'Acties (Actions)',
             'opvolgen': 'Opvolgen (Follow-up)',
             'dagelijkse-planning': 'Dagelijkse Planning',
-            'uitgesteld-wekelijks': 'Uitgesteld - Wekelijks',
-            'uitgesteld-maandelijks': 'Uitgesteld - Maandelijks',
-            'uitgesteld-3maandelijks': 'Uitgesteld - 3-maandelijks',
-            'uitgesteld-6maandelijks': 'Uitgesteld - 6-maandelijks',
-            'uitgesteld-jaarlijks': 'Uitgesteld - Jaarlijks',
+            'uitgesteld': 'Uitgesteld (Postponed)',
             'afgewerkt': 'Afgewerkt (Completed)',
-            'email-import': 'Email Import'
+            'email-import': 'Email Import',
+            'projecten': 'Projecten (Projects)',
+            'prullenbak': 'Prullenbak (Trash)',
+            'contextenbeheer': 'Contextenbeheer (Context Management)'
         };
         return names[pageId] || pageId;
     }
