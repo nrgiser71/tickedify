@@ -72,6 +72,12 @@ prioriteit VARCHAR(20) DEFAULT 'normaal'
 context JSONB -- browser, scherm, pagina info
 aangemaakt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+-- page_help (Feature 062 - Page Help Icons)
+page_id VARCHAR(50) PRIMARY KEY
+content TEXT NOT NULL
+modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+modified_by VARCHAR(50)
 ```
 
 ## 🗂️ File Structuur & Belangrijke Locaties
@@ -127,6 +133,17 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `openFeedbackModal()` - regel ~11,270 - Open bug/feature modal
 - `submitFeedback()` - regel ~11,327 - Verzend feedback naar server
 - `collectContextInfo()` - regel ~11,296 - Verzamel browser/scherm info
+
+**Page Help System (regels 15,193-15,409)** - Feature 062
+- `PageHelpManager` class - regel 15,193 - Complete help systeem management
+- `setupModal()` - regel 15,204 - Modal DOM setup en event listeners
+- `addHelpIcon()` - regel 15,244 - Voeg help icon toe aan page titles
+- `getPageHelp()` - regel 15,271 - Fetch help content met dubbele caching (memory + localStorage)
+- `invalidateCache()` - regel 15,326 - Cache invalidatie na admin update
+- `showHelp()` - regel 15,337 - Toon help modal met markdown rendering
+- `loadMarked()` - regel 15,382 - Dynamisch laden van Marked.js library
+- `getPageName()` - regel 15,393 - Human-readable page namen mapping
+- `window.pageHelpManager` - regel ~16,836 - Global instance voor admin access
 
 **Context Menu & Highlighting System (regels 3,700-3,800)**
 - `addContextMenuToTaskItems()` - regel ~3,687 - Voegt right-click listeners toe aan alle taak items
@@ -225,6 +242,13 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   - `findMatchingAttachment()` - regel ~1,414 (Feature 049)
   - `parseEmailToTask()` - regel ~1,452 (hoofdfunctie)
 
+**Page Help Endpoints (regels 2,771-3,081)** - Feature 062
+- DEFAULT_PAGE_HELP object - regels 2,771-2,891 - Default English content for 11 pages
+- `GET /api/page-help/:pageId` - regel 2,893 - Fetch help content with default fallback
+- `PUT /api/page-help/:pageId` - regel 2,945 - Update/create custom content (admin only)
+- `DELETE /api/page-help/:pageId` - regel 2,998 - Delete custom content (admin only)
+- `GET /api/page-help` - regel 3,015 - List all pages with custom/default indicator (admin only)
+
 **Debug/Admin Endpoints (regels 5,000-6,253)**
 - `/api/debug/*` endpoints - regels ~5,100-5,800
 - `/api/admin/*` endpoints - regels ~5,800-6,253
@@ -285,6 +309,12 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - `POST /api/email/import` - Email webhook (mg.tickedify.com subdomein)
 - `POST /api/email/import-real` - CSV import endpoint
 
+### Page Help (Feature 062)
+- `GET /api/page-help/:pageId` - Fetch help content for specific page
+- `PUT /api/page-help/:pageId` - Update/create custom help content (admin only)
+- `DELETE /api/page-help/:pageId` - Delete custom content, revert to default (admin only)
+- `GET /api/page-help` - List all page help content with custom/default indicator (admin only)
+
 ## 🎯 Belangrijke Features & Locaties
 
 ### Herhalende Taken Systeem
@@ -316,6 +346,24 @@ bijgewerkt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 - **Toggle**: `toggleBulkMode()` in app.js:6600
 - **Execute**: `executeBulkAction()` in app.js:7000
 - **UI**: `renderBulkToolbar()` in app.js:7300
+
+### Page Help Icons (Feature 062 - v0.21.128+)
+- **PageHelpManager Class**: Complete help system management in app.js:15193-15409
+- **Help Icon Component**: `addHelpIcon()` in app.js:15244 - SVG help icons next to page titles
+- **Modal UI**: Help modal with markdown rendering via Marked.js
+- **Caching System**:
+  - In-memory cache + localStorage with 24-hour TTL
+  - `getPageHelp()` in app.js:15271 - Fetch with caching
+  - `invalidateCache()` in app.js:15326 - Cache invalidation on admin update
+- **Admin Interface**:
+  - Page Help screen in admin2.html:1625-1745
+  - Side-by-side editor/preview with live markdown rendering
+  - JavaScript functions in admin2.html:3341-3588
+- **API Endpoints**: 4 RESTful endpoints in server.js:2893-3081
+- **Database**: `page_help` table with custom content storage
+- **Default Content**: English help content for 11 eligible pages (DEFAULT_PAGE_HELP object in server.js:2771-2891)
+- **Eligible Pages**: inbox, acties, opvolgen, dagelijkse-planning, uitgesteld-* (5 variants), afgewerkt, email-import
+- **Excluded Pages**: CSV Import, Settings (per requirements)
 
 ### Subscription & Beta-naar-Productie Flow (v0.19.21+)
 - **Beta Expired Page**: `/public/beta-expired.html` - Toon wanneer beta periode afgelopen is

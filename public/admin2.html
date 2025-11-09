@@ -997,6 +997,12 @@
                         <span>Berichten</span>
                     </a>
                 </li>
+                <li class="admin-nav-item">
+                    <a href="#page-help" class="admin-nav-link" data-screen="page-help">
+                        <span class="admin-nav-icon">❓</span>
+                        <span>Page Help</span>
+                    </a>
+                </li>
             </ul>
         </nav>
 
@@ -1612,6 +1618,128 @@
                                 <!-- Rows will be dynamically inserted here -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Page Help Screen -->
+            <section id="screen-page-help" class="admin-screen" data-screen="page-help">
+                <div class="admin-header">
+                    <h1 class="admin-header-title">❓ Page Help Configuration</h1>
+                    <p class="admin-header-subtitle">Manage help content for application pages</p>
+                </div>
+
+                <div style="max-width: 1200px;">
+                    <!-- Page Selector -->
+                    <div style="margin-bottom: 30px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--macos-text-primary);">
+                            Select Page
+                        </label>
+                        <select id="page-help-selector" class="form-select" style="width: 100%; max-width: 400px; padding: 10px; font-size: 14px; border: 1px solid var(--macos-border); border-radius: var(--macos-radius-medium); background: white;">
+                            <option value="">-- Choose a page --</option>
+                            <option value="inbox">Inbox</option>
+                            <option value="acties">Acties</option>
+                            <option value="opvolgen">Opvolgen</option>
+                            <option value="dagelijkse-planning">Dagelijkse Planning</option>
+                            <option value="uitgesteld-wekelijks">Uitgesteld - Wekelijks</option>
+                            <option value="uitgesteld-maandelijks">Uitgesteld - Maandelijks</option>
+                            <option value="uitgesteld-3maandelijks">Uitgesteld - 3-maandelijks</option>
+                            <option value="uitgesteld-6maandelijks">Uitgesteld - 6-maandelijks</option>
+                            <option value="uitgesteld-jaarlijks">Uitgesteld - Jaarlijks</option>
+                            <option value="afgewerkt">Afgewerkt</option>
+                            <option value="email-import">Email Import</option>
+                        </select>
+                    </div>
+
+                    <!-- Content Editor Container (shown when page selected) -->
+                    <div id="page-help-editor-container" style="display: none;">
+                        <!-- Status Indicator -->
+                        <div style="margin-bottom: 20px; padding: 12px; background: var(--macos-bg-secondary); border-radius: var(--macos-radius-medium); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>Content Status:</strong>
+                                <span id="page-help-status-badge" class="badge-feature" style="margin-left: 8px;">Default</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--macos-text-secondary);" id="page-help-modified-info">
+                                <!-- Modified date/user info will appear here -->
+                            </div>
+                        </div>
+
+                        <!-- Editor Layout: Side-by-side Editor and Preview -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <!-- Left: Content Editor -->
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--macos-text-primary);">
+                                    Help Content (Markdown)
+                                </label>
+                                <textarea
+                                    id="page-help-content"
+                                    style="width: 100%; height: 400px; padding: 12px; font-family: 'Monaco', 'Courier New', monospace; font-size: 13px; border: 1px solid var(--macos-border); border-radius: var(--macos-radius-medium); resize: vertical;"
+                                    placeholder="Enter help content in Markdown format...
+
+Examples:
+# Main Heading
+## Sub Heading
+
+**Bold text** and *italic text*
+
+- Bullet list item 1
+- Bullet list item 2
+
+1. Numbered list item 1
+2. Numbered list item 2
+
+[Link text](https://example.com)"
+                                ></textarea>
+                                <div style="margin-top: 8px; font-size: 12px; color: var(--macos-text-secondary);">
+                                    Supports Markdown: headings, bold, italic, lists, links (no images)
+                                </div>
+                            </div>
+
+                            <!-- Right: Live Preview -->
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--macos-text-primary);">
+                                    Preview
+                                </label>
+                                <div
+                                    id="page-help-preview"
+                                    style="width: 100%; height: 400px; padding: 12px; border: 1px solid var(--macos-border); border-radius: var(--macos-radius-medium); background: white; overflow-y: auto;"
+                                >
+                                    <p style="color: var(--macos-text-secondary); font-style: italic;">Preview will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <button class="btn btn-primary" onclick="savePageHelpContent()" id="page-help-save-btn">
+                                💾 Save Content
+                            </button>
+                            <button class="btn btn-secondary" onclick="revertToDefault()" id="page-help-revert-btn" style="display: none;">
+                                ↩️ Revert to Default
+                            </button>
+                            <button class="btn btn-secondary" onclick="refreshPageHelpEditor()" style="margin-left: auto;">
+                                🔄 Refresh
+                            </button>
+                        </div>
+
+                        <!-- Help Text -->
+                        <div style="padding: 15px; background: #e8f4fd; border-left: 4px solid var(--macos-blue); border-radius: var(--macos-radius-medium); font-size: 13px;">
+                            <strong>💡 Tips:</strong>
+                            <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                                <li>Keep content concise and helpful (200-500 words recommended)</li>
+                                <li>Use headings to organize sections clearly</li>
+                                <li>Preview updates in real-time as you type</li>
+                                <li>Save custom content or revert to default at any time</li>
+                                <li>All content must be in English (per UI policy)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- No Page Selected State -->
+                    <div id="page-help-no-selection" style="text-align: center; padding: 60px 20px; color: var(--macos-text-secondary);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">❓</div>
+                        <h3 style="margin: 0 0 8px 0; color: var(--macos-text-primary);">No Page Selected</h3>
+                        <p style="margin: 0;">Select a page from the dropdown above to view and edit its help content.</p>
                     </div>
                 </div>
             </section>
@@ -3209,6 +3337,269 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // ============================================================================
+        // PAGE HELP CONFIGURATION - Feature 062
+        // ============================================================================
+
+        // State voor page help editor
+        let currentPageId = null;
+        let currentPageHelpData = null;
+        let previewDebounce = null;
+
+        // Initialize page help event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const pageSelector = document.getElementById('page-help-selector');
+            if (pageSelector) {
+                pageSelector.addEventListener('change', handlePageSelection);
+            }
+
+            // Live preview op content textarea
+            const contentTextarea = document.getElementById('page-help-content');
+            if (contentTextarea) {
+                contentTextarea.addEventListener('input', handleContentInput);
+            }
+        });
+
+        // Handle page selection change
+        function handlePageSelection(event) {
+            const pageId = event.target.value;
+
+            if (!pageId) {
+                // No page selected - show empty state
+                document.getElementById('page-help-editor-container').style.display = 'none';
+                document.getElementById('page-help-no-selection').style.display = 'block';
+                currentPageId = null;
+                currentPageHelpData = null;
+                return;
+            }
+
+            // Load page help content
+            loadPageHelpContent(pageId);
+        }
+
+        // Load page help content voor selected page
+        async function loadPageHelpContent(pageId) {
+            try {
+                // Show loading state
+                document.getElementById('page-help-editor-container').style.display = 'none';
+                document.getElementById('page-help-no-selection').innerHTML = '<p style="text-align:center; padding: 40px;">Loading...</p>';
+                document.getElementById('page-help-no-selection').style.display = 'block';
+
+                const response = await fetch(`/api/page-help/${pageId}`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load page help: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentPageId = pageId;
+                currentPageHelpData = data;
+
+                // Update UI met loaded data
+                updatePageHelpUI(data);
+
+                // Hide no-selection state, show editor
+                document.getElementById('page-help-no-selection').style.display = 'none';
+                document.getElementById('page-help-editor-container').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading page help:', error);
+                alert('Failed to load page help content. Please try again.');
+
+                // Reset selection
+                document.getElementById('page-help-selector').value = '';
+                document.getElementById('page-help-editor-container').style.display = 'none';
+                document.getElementById('page-help-no-selection').style.display = 'block';
+            }
+        }
+
+        // Update UI met page help data
+        function updatePageHelpUI(data) {
+            // Update status badge
+            const statusBadge = document.getElementById('page-help-status-badge');
+            if (data.isDefault) {
+                statusBadge.textContent = 'Default';
+                statusBadge.className = 'badge-feature';
+            } else {
+                statusBadge.textContent = 'Custom';
+                statusBadge.className = 'badge-fix';
+            }
+
+            // Update modified info
+            const modifiedInfo = document.getElementById('page-help-modified-info');
+            if (data.modifiedAt && data.modifiedBy) {
+                const date = new Date(data.modifiedAt);
+                modifiedInfo.textContent = `Last modified: ${date.toLocaleDateString()} ${date.toLocaleTimeString()} by ${data.modifiedBy}`;
+            } else {
+                modifiedInfo.textContent = '';
+            }
+
+            // Update content textarea
+            document.getElementById('page-help-content').value = data.content || '';
+
+            // Update preview
+            updatePreview(data.content || '');
+
+            // Show/hide revert button (alleen tonen bij custom content)
+            const revertBtn = document.getElementById('page-help-revert-btn');
+            revertBtn.style.display = data.isDefault ? 'none' : 'inline-block';
+        }
+
+        // Handle content input (live preview met debounce)
+        function handleContentInput(event) {
+            const content = event.target.value;
+
+            // Debounce preview update (500ms)
+            clearTimeout(previewDebounce);
+            previewDebounce = setTimeout(() => {
+                updatePreview(content);
+            }, 500);
+        }
+
+        // Update markdown preview
+        function updatePreview(content) {
+            const previewDiv = document.getElementById('page-help-preview');
+
+            if (!content || content.trim() === '') {
+                previewDiv.innerHTML = '<p style="color: var(--macos-text-secondary); font-style: italic;">Preview will appear here...</p>';
+                return;
+            }
+
+            // Render markdown using marked.js (should be available globally)
+            if (typeof marked !== 'undefined') {
+                try {
+                    const html = marked.parse(content);
+                    previewDiv.innerHTML = html;
+                } catch (error) {
+                    console.error('Markdown parsing error:', error);
+                    previewDiv.innerHTML = '<p style="color: red;">Error rendering markdown preview</p>';
+                }
+            } else {
+                // Fallback: plain text met line breaks
+                previewDiv.textContent = content;
+            }
+        }
+
+        // Save page help content
+        async function savePageHelpContent() {
+            if (!currentPageId) {
+                alert('No page selected');
+                return;
+            }
+
+            const content = document.getElementById('page-help-content').value;
+
+            // Validation: content moet niet leeg zijn
+            if (!content || content.trim() === '') {
+                alert('Content cannot be empty. Please enter help content or revert to default.');
+                return;
+            }
+
+            // Disable save button tijdens save
+            const saveBtn = document.getElementById('page-help-save-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Saving...';
+
+            try {
+                const response = await fetch(`/api/page-help/${currentPageId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ content })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `Save failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Success feedback
+                alert('✅ Page help content saved successfully!');
+
+                // Invalidate cache in main app (indien beschikbaar)
+                if (window.opener && window.opener.pageHelpManager) {
+                    window.opener.pageHelpManager.invalidateCache(currentPageId);
+                } else if (window.pageHelpManager) {
+                    window.pageHelpManager.invalidateCache(currentPageId);
+                }
+
+                // Reload content om updated data te tonen
+                await loadPageHelpContent(currentPageId);
+
+            } catch (error) {
+                console.error('Error saving page help:', error);
+                alert(`Failed to save page help content: ${error.message}`);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        }
+
+        // Revert to default content
+        async function revertToDefault() {
+            if (!currentPageId) {
+                alert('No page selected');
+                return;
+            }
+
+            if (!currentPageHelpData || currentPageHelpData.isDefault) {
+                alert('This page is already using default content.');
+                return;
+            }
+
+            // Confirm dialog
+            const confirmed = confirm(`Are you sure you want to revert "${currentPageId}" help content to default?\n\nThis will delete your custom content and cannot be undone.`);
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/page-help/${currentPageId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Revert failed: ${response.status}`);
+                }
+
+                // Success feedback
+                alert('✅ Reverted to default content successfully!');
+
+                // Invalidate cache in main app (indien beschikbaar)
+                if (window.opener && window.opener.pageHelpManager) {
+                    window.opener.pageHelpManager.invalidateCache(currentPageId);
+                } else if (window.pageHelpManager) {
+                    window.pageHelpManager.invalidateCache(currentPageId);
+                }
+
+                // Reload content
+                await loadPageHelpContent(currentPageId);
+
+            } catch (error) {
+                console.error('Error reverting to default:', error);
+                alert(`Failed to revert to default: ${error.message}`);
+            }
+        }
+
+        // Refresh page help editor (reload current page)
+        function refreshPageHelpEditor() {
+            if (!currentPageId) {
+                return;
+            }
+            loadPageHelpContent(currentPageId);
+        }
+
+    </script>
 
 </body>
 </html>
