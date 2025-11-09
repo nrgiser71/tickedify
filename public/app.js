@@ -975,7 +975,15 @@ class Taakbeheer {
         this.eventsAlreadyBound = false;
 
         // Feature 014: Onboarding Video Manager
-        this.onboardingVideo = new OnboardingVideoManager();
+        // TEMPORARILY DISABLED - Feature 063 - Restore by uncommenting
+        // Only instantiate if the onboarding popup element exists in DOM
+        const onboardingPopup = document.getElementById('onboardingVideoPopup');
+        if (onboardingPopup) {
+            this.onboardingVideo = new OnboardingVideoManager();
+        } else {
+            this.onboardingVideo = null;  // Element hidden, skip initialization
+        }
+        // END TEMPORARILY DISABLED - Feature 063
 
         // Resize handler flags to prevent duplicate listeners
         this.resizeListenerAdded = false;
