@@ -7917,6 +7917,26 @@ app.get('/api/debug/beta-config', async (req, res) => {
     }
 });
 
+// TEMPORARY DEBUG: Check webhook logs
+app.get('/api/debug/webhook-logs', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 20;
+        const result = await pool.query(
+            'SELECT * FROM payment_webhook_logs ORDER BY processed_at DESC LIMIT $1',
+            [limit]
+        );
+
+        res.json({
+            found: result.rows.length > 0,
+            count: result.rows.length,
+            logs: result.rows
+        });
+    } catch (error) {
+        console.error('Debug webhook-logs error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Test Dashboard Endpoints
 const testModule = require('./test-runner');
 
