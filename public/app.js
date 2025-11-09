@@ -12020,7 +12020,7 @@ class Taakbeheer {
                 return;
             }
 
-            // Sort tasks by verschijndatum (ascending) - tasks that should return first appear on top
+            // Sort tasks by verschijndatum (descending) - tasks with furthest dates appear on top
             taken.sort((a, b) => {
                 // Tasks without verschijndatum go to bottom
                 if (!a.verschijndatum && !b.verschijndatum) return 0;
@@ -12028,7 +12028,8 @@ class Taakbeheer {
                 if (!b.verschijndatum) return -1;
 
                 // Compare dates as strings (YYYY-MM-DD format sorts correctly alphabetically)
-                return a.verschijndatum.localeCompare(b.verschijndatum);
+                // Reverse order for descending sort
+                return b.verschijndatum.localeCompare(a.verschijndatum);
             });
 
             // Simple list - indicators will be added by JavaScript
