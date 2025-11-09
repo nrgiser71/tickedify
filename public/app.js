@@ -15217,7 +15217,7 @@ class PageHelpManager {
                             <button class="btn-close-modal" aria-label="Close">
                                 <i class="fas fa-times"></i>
                             </button>
-                            <i class="message-icon fas fa-question-circle"></i>
+                            <i class="message-icon fas fa-info-circle"></i>
                             <h3 class="message-title" id="pageHelpTitle">Help</h3>
                         </div>
                         <div class="message-body">
