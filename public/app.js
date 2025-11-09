@@ -12014,11 +12014,22 @@ class Taakbeheer {
             }
             
             const taken = await response.json();
-            
+
             if (taken.length === 0) {
                 content.innerHTML = '<div class="empty-state">Geen taken in deze categorie</div>';
                 return;
             }
+
+            // Sort tasks by verschijndatum (ascending) - tasks that should return first appear on top
+            taken.sort((a, b) => {
+                // Tasks without verschijndatum go to bottom
+                if (!a.verschijndatum && !b.verschijndatum) return 0;
+                if (!a.verschijndatum) return 1;
+                if (!b.verschijndatum) return -1;
+
+                // Compare dates as strings (YYYY-MM-DD format sorts correctly alphabetically)
+                return a.verschijndatum.localeCompare(b.verschijndatum);
+            });
 
             // Simple list - indicators will be added by JavaScript
             content.innerHTML = `
