@@ -3533,6 +3533,20 @@ Examples:
                     window.pageHelpManager.invalidateCache(currentPageId);
                 }
 
+                // Broadcast cache invalidation via localStorage (werkt cross-tab)
+                try {
+                    const event = {
+                        type: 'page-help-updated',
+                        pageId: currentPageId,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('page-help-broadcast', JSON.stringify(event));
+                    // Immediately remove it (we only need the storage event)
+                    localStorage.removeItem('page-help-broadcast');
+                } catch (e) {
+                    console.warn('Failed to broadcast cache invalidation:', e);
+                }
+
                 // Reload content om updated data te tonen
                 await loadPageHelpContent(currentPageId);
 

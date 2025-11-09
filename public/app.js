@@ -15204,6 +15204,31 @@ class PageHelpManager {
         this.currentPageId = null;
 
         this.setupModal();
+        this.setupCrossTabCacheInvalidation();
+    }
+
+    // Listen for cache invalidation events from admin interface (cross-tab communication)
+    setupCrossTabCacheInvalidation() {
+        window.addEventListener('storage', (e) => {
+            // Only handle our broadcast events
+            if (e.key === 'page-help-broadcast' && e.newValue) {
+                try {
+                    const event = JSON.parse(e.newValue);
+                    if (event.type === 'page-help-updated' && event.pageId) {
+                        console.log(`[PageHelp] Cache invalidation received for page: ${event.pageId}`);
+                        this.invalidateCache(event.pageId);
+
+                        // If modal is currently showing this page, reload content
+                        if (this.currentPageId === event.pageId && this.modal && this.modal.style.display === 'flex') {
+                            console.log(`[PageHelp] Auto-reloading currently displayed help page: ${event.pageId}`);
+                            this.showHelp(event.pageId);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse page-help-broadcast event:', e);
+                }
+            }
+        });
     }
 
     // Setup help modal DOM (EXACT copy of information message structure)
