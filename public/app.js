@@ -1,4 +1,4 @@
-// Tickedify App v0.21.36 - Build timestamp: 2025-11-03T22:30:00Z
+// Tickedify App v0.21.131 - Build timestamp: 2025-11-09T12:00:00Z
 // Toast Notification System
 class ToastManager {
     constructor() {
@@ -9414,7 +9414,7 @@ class Taakbeheer {
         container.innerHTML = `
             <!-- Mobile header -->
             <header class="main-header">
-                <h1>Daily Planning</h1>
+                <h1 id="page-title">Daily Planning</h1>
             </header>
 
             <div class="dagelijkse-planning-layout">
