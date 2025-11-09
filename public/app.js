@@ -15195,6 +15195,82 @@ class KeyboardHelpModal {
 // PAGE HELP SYSTEM - Feature 062
 // ========================================
 
+// Custom markdown parser (copied from message-modal.js for consistency)
+function parseMarkdownLinks(text) {
+  if (!text) return '';
+
+  // Escape HTML to prevent XSS
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Horizontal rule: --- (must be on its own line)
+  html = html.replace(/^---$/gm, '<hr>');
+
+  // Headers (must be at start of line)
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Highlight: ==text==
+  html = html.replace(/==(.+?)==/g, '<mark>$1</mark>');
+
+  // Bold: **text** or __text__
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Italic: *text* or _text_ (but not in URLs or bold)
+  html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+  html = html.replace(/\b_([^_]+?)_\b/g, '<em>$1</em>');
+
+  // Code: `code`
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+  // Links: [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Lists: Group consecutive list items properly
+  // Match consecutive lines starting with - or *
+  html = html.replace(/((?:^[*-] .+$\n?)+)/gm, function(match) {
+    // Convert each line to <li>
+    const items = match.trim().split('\n').map(line => {
+      const content = line.replace(/^[*-] /, '');
+      return `<li>${content}</li>`;
+    }).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Ordered lists: 1. item, 2. item
+  html = html.replace(/((?:^\d+\. .+$\n?)+)/gm, function(match) {
+    const items = match.trim().split('\n').map(line => {
+      const content = line.replace(/^\d+\. /, '');
+      return `<li>${content}</li>`;
+    }).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // Line breaks: double newline = paragraph, single newline = <br>
+  // But preserve lists
+  html = html.replace(/\n\n+/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  html = '<p>' + html + '</p>';
+
+  // Clean up paragraphs around lists
+  html = html.replace(/<p>(<[uo]l>)/g, '$1');
+  html = html.replace(/(<\/[uo]l>)<\/p>/g, '$1');
+
+  // Remove <br> tags around lists
+  html = html.replace(/<br>(<[uo]l>)/g, '$1');
+  html = html.replace(/(<\/[uo]l>)<br>/g, '$1');
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<p><br><\/p>/g, '');
+
+  return html;
+}
+
 // Page Help Icon and Modal Manager
 class PageHelpManager {
     constructor() {
@@ -15206,19 +15282,21 @@ class PageHelpManager {
         this.setupModal();
     }
 
-    // Setup help modal DOM
+    // Setup help modal DOM (using information message structure)
     setupModal() {
         // Create modal if it doesn't exist
         if (!document.getElementById('pageHelpModal')) {
             const modalHTML = `
-                <div id="pageHelpModal" class="page-help-modal" style="display: none;">
-                    <div class="page-help-overlay"></div>
-                    <div class="page-help-content">
-                        <div class="page-help-header">
-                            <h2 id="pageHelpTitle">Help</h2>
-                            <button id="pageHelpClose" class="page-help-close" aria-label="Close">&times;</button>
+                <div id="pageHelpModal" class="modal-overlay" style="display: none;">
+                    <div class="message-modal page-help-modal">
+                        <div class="message-header page-help-header">
+                            <i class="fas fa-question-circle message-icon"></i>
+                            <h2 id="pageHelpTitle" class="message-title">Help</h2>
+                            <button id="pageHelpClose" class="message-close" aria-label="Close">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
-                        <div id="pageHelpBody" class="page-help-body">
+                        <div id="pageHelpBody" class="message-content page-help-body">
                             <p>Loading...</p>
                         </div>
                     </div>
@@ -15235,7 +15313,7 @@ class PageHelpManager {
         // Event listeners
         this.closeBtn.addEventListener('click', () => this.hideModal());
         this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal || e.target.classList.contains('page-help-overlay')) {
+            if (e.target === this.modal) {
                 this.hideModal();
             }
         });
@@ -15342,19 +15420,14 @@ class PageHelpManager {
         this.bodyEl.innerHTML = '<p class="loading-text">Loading help content...</p>';
 
         try {
-            // Load marked.js if not already loaded
-            if (typeof marked === 'undefined') {
-                await this.loadMarked();
-            }
-
             // Fetch help content
             const helpData = await this.getPageHelp(pageId);
 
             // Update modal title
-            this.titleEl.textContent = `Help: ${this.getPageName(pageId)}`;
+            this.titleEl.textContent = `${this.getPageName(pageId)}`;
 
-            // Render markdown content
-            this.bodyEl.innerHTML = marked.parse(helpData.content);
+            // Render markdown content using custom parser (same as information messages)
+            this.bodyEl.innerHTML = parseMarkdownLinks(helpData.content);
 
             // Add custom/default indicator
             if (helpData.isDefault === false && helpData.modifiedBy) {
@@ -15378,17 +15451,6 @@ class PageHelpManager {
     hideModal() {
         this.modal.style.display = 'none';
         this.currentPageId = null;
-    }
-
-    // Load Marked.js dynamically
-    loadMarked() {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js';
-            script.onload = () => resolve();
-            script.onerror = () => reject(new Error('Failed to load marked.js'));
-            document.head.appendChild(script);
-        });
     }
 
     // Get human-readable page name
