@@ -16646,7 +16646,7 @@ app.get('/api/admin/test-db/verify', requireAdmin, async (req, res) => {
   }
 });
 
-// 2. Copy schema from production to test
+// 2. Copy schema from production to test (SQL-based, no pg_dump required)
 app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
   if (!req.body.confirm) {
     return res.status(400).json({
@@ -16664,33 +16664,142 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 
   try {
     const startTime = Date.now();
-    const { exec } = require('child_process');
-    const util = require('util');
-    const execPromise = util.promisify(exec);
 
-    // Step 1: Export production schema to temp file
-    const dumpFile = '/tmp/tickedify_schema.sql';
-    const prodUrl = process.env.DATABASE_URL;
-    const testUrl = process.env.DATABASE_URL_TEST;
+    console.log('📋 Getting production schema...');
 
-    console.log('📤 Exporting production schema...');
-    await execPromise(`pg_dump --schema-only "${prodUrl}" > ${dumpFile}`);
+    // Step 1: Get all table definitions from production
+    const tables = await pool.query(`
+      SELECT
+        table_name,
+        (
+          SELECT string_agg(
+            column_name || ' ' ||
+            CASE
+              WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
+              WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
+              ELSE UPPER(data_type)
+            END ||
+            CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
+            CASE WHEN column_default IS NOT NULL THEN ' DEFAULT ' || column_default ELSE '' END,
+            ', '
+            ORDER BY ordinal_position
+          )
+          FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = t.table_name
+        ) as columns,
+        (
+          SELECT string_agg(
+            'CONSTRAINT ' || constraint_name || ' ' ||
+            CASE constraint_type
+              WHEN 'PRIMARY KEY' THEN 'PRIMARY KEY (' || (
+                SELECT string_agg(column_name, ', ' ORDER BY ordinal_position)
+                FROM information_schema.key_column_usage
+                WHERE constraint_name = tc.constraint_name
+              ) || ')'
+              WHEN 'UNIQUE' THEN 'UNIQUE (' || (
+                SELECT string_agg(column_name, ', ' ORDER BY ordinal_position)
+                FROM information_schema.key_column_usage
+                WHERE constraint_name = tc.constraint_name
+              ) || ')'
+              WHEN 'CHECK' THEN (
+                SELECT check_clause
+                FROM information_schema.check_constraints
+                WHERE constraint_name = tc.constraint_name
+              )
+              ELSE ''
+            END,
+            ', '
+          )
+          FROM information_schema.table_constraints tc
+          WHERE tc.table_schema = 'public'
+            AND tc.table_name = t.table_name
+            AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'CHECK')
+        ) as constraints
+      FROM information_schema.tables t
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+      ORDER BY table_name
+    `);
 
-    // Step 2: Clear test database
-    console.log('🗑️ Clearing test database...');
+    // Step 2: Get foreign keys separately (to add after tables exist)
+    const foreignKeys = await pool.query(`
+      SELECT
+        tc.table_name,
+        tc.constraint_name,
+        kcu.column_name,
+        ccu.table_name AS foreign_table_name,
+        ccu.column_name AS foreign_column_name,
+        rc.update_rule,
+        rc.delete_rule
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = tc.constraint_name
+      JOIN information_schema.referential_constraints rc
+        ON rc.constraint_name = tc.constraint_name
+      WHERE tc.constraint_type = 'FOREIGN KEY'
+      ORDER BY tc.table_name
+    `);
+
+    console.log(`🗑️ Clearing test database...`);
+
+    // Step 3: Clear test database
     await testPool.query('DROP SCHEMA IF EXISTS public CASCADE');
     await testPool.query('CREATE SCHEMA public');
     await testPool.query('GRANT ALL ON SCHEMA public TO neondb_owner');
     await testPool.query('GRANT ALL ON SCHEMA public TO public');
 
-    // Step 3: Import schema to test database
-    console.log('📥 Importing schema to test database...');
-    await execPromise(`psql "${testUrl}" < ${dumpFile}`);
+    console.log(`📦 Creating ${tables.rows.length} tables...`);
 
-    // Step 4: Clean up temp file
-    await execPromise(`rm -f ${dumpFile}`);
+    // Step 4: Create all tables (without foreign keys)
+    for (const table of tables.rows) {
+      const createSQL = `
+        CREATE TABLE ${table.table_name} (
+          ${table.columns}
+          ${table.constraints ? ', ' + table.constraints : ''}
+        )
+      `;
 
-    // Count tables in test database
+      await testPool.query(createSQL);
+      console.log(`  ✓ Created table: ${table.table_name}`);
+    }
+
+    console.log(`🔗 Adding ${foreignKeys.rows.length} foreign keys...`);
+
+    // Step 5: Add foreign keys
+    const fkMap = new Map();
+    for (const fk of foreignKeys.rows) {
+      const key = `${fk.table_name}_${fk.constraint_name}`;
+      if (!fkMap.has(key)) {
+        fkMap.set(key, {
+          table: fk.table_name,
+          name: fk.constraint_name,
+          columns: [],
+          foreignTable: fk.foreign_table_name,
+          foreignColumns: [],
+          onUpdate: fk.update_rule,
+          onDelete: fk.delete_rule
+        });
+      }
+      fkMap.get(key).columns.push(fk.column_name);
+      fkMap.get(key).foreignColumns.push(fk.foreign_column_name);
+    }
+
+    for (const [, fk] of fkMap) {
+      const alterSQL = `
+        ALTER TABLE ${fk.table}
+        ADD CONSTRAINT ${fk.name}
+        FOREIGN KEY (${fk.columns.join(', ')})
+        REFERENCES ${fk.foreignTable} (${fk.foreignColumns.join(', ')})
+        ON UPDATE ${fk.onUpdate}
+        ON DELETE ${fk.onDelete}
+      `;
+
+      await testPool.query(alterSQL);
+      console.log(`  ✓ Added FK: ${fk.table} → ${fk.foreignTable}`);
+    }
+
+    // Step 6: Get final table count
     const tableCount = await testPool.query(`
       SELECT COUNT(*) FROM information_schema.tables
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
@@ -16698,13 +16807,14 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 
     const duration = Date.now() - startTime;
 
-    console.log(`✅ Schema copied successfully - ${tableCount.rows[0].count} tables`);
+    console.log(`✅ Schema copied successfully - ${tableCount.rows[0].count} tables in ${duration}ms`);
 
     res.json({
       success: true,
       tablesCreated: parseInt(tableCount.rows[0].count),
+      foreignKeysAdded: fkMap.size,
       duration,
-      details: 'Schema copied successfully with all constraints and indexes'
+      details: 'Schema copied successfully with all constraints and foreign keys'
     });
 
   } catch (error) {
@@ -16712,7 +16822,7 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
     res.status(500).json({
       error: 'SchemaCopyFailed',
       message: error.message,
-      details: error.stderr || error.stdout
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
