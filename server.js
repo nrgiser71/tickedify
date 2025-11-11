@@ -16746,14 +16746,15 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
         fn.nspname AS foreign_table_schema,
         ft.relname AS foreign_table_name,
         fa.attname AS foreign_column_name,
-        CASE confupdtype
+        u.attposition AS position,
+        CASE tc.confupdtype
           WHEN 'a' THEN 'NO ACTION'
           WHEN 'r' THEN 'RESTRICT'
           WHEN 'c' THEN 'CASCADE'
           WHEN 'n' THEN 'SET NULL'
           WHEN 'd' THEN 'SET DEFAULT'
         END AS update_rule,
-        CASE confdeltype
+        CASE tc.confdeltype
           WHEN 'a' THEN 'NO ACTION'
           WHEN 'r' THEN 'RESTRICT'
           WHEN 'c' THEN 'CASCADE'
@@ -16765,9 +16766,14 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
       JOIN pg_namespace tn ON t.relnamespace = tn.oid
       JOIN pg_class ft ON tc.confrelid = ft.oid
       JOIN pg_namespace fn ON ft.relnamespace = fn.oid
-      JOIN LATERAL unnest(tc.conkey) WITH ORDINALITY AS u(attnum, attposition) ON true
-      JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = u.attnum
-      JOIN pg_attribute fa ON fa.attrelid = ft.oid AND fa.attnum = tc.confkey[u.attposition]
+      JOIN LATERAL (
+        SELECT
+          unnest(tc.conkey) AS local_attnum,
+          unnest(tc.confkey) AS foreign_attnum,
+          generate_series(1, array_length(tc.conkey, 1)) AS attposition
+      ) u ON true
+      JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = u.local_attnum
+      JOIN pg_attribute fa ON fa.attrelid = ft.oid AND fa.attnum = u.foreign_attnum
       WHERE tc.contype = 'f'
         AND tn.nspname = 'public'
       ORDER BY t.relname, u.attposition
