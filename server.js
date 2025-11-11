@@ -3085,7 +3085,7 @@ const PAGE_NAMES = {
 };
 
 // GET /api/page-help/:pageId - Get help content for specific page
-app.get('/api/page-help/:pageId', requireAuth, async (req, res) => {
+app.get('/api/page-help/:pageId', async (req, res) => {
     try {
         const { pageId } = req.params;
 
