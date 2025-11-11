@@ -16722,7 +16722,21 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
       ORDER BY table_name
     `);
 
-    // Step 2: Get foreign keys separately (to add after tables exist)
+    // Step 2: Get all sequences
+    const sequences = await pool.query(`
+      SELECT
+        sequencename as sequence_name,
+        start_value,
+        increment_by,
+        max_value,
+        min_value,
+        cache_size,
+        cycle
+      FROM pg_sequences
+      WHERE schemaname = 'public'
+    `);
+
+    // Step 3: Get foreign keys separately (to add after tables exist)
     const foreignKeys = await pool.query(`
       SELECT
         tc.table_name,
@@ -16745,11 +16759,28 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 
     console.log(`🗑️ Clearing test database...`);
 
-    // Step 3: Clear test database
+    // Step 4: Clear test database
     await testPool.query('DROP SCHEMA IF EXISTS public CASCADE');
     await testPool.query('CREATE SCHEMA public');
     await testPool.query('GRANT ALL ON SCHEMA public TO neondb_owner');
     await testPool.query('GRANT ALL ON SCHEMA public TO public');
+
+    console.log(`🔢 Creating ${sequences.rows.length} sequences...`);
+
+    // Step 5: Create sequences
+    for (const seq of sequences.rows) {
+      const createSeqSQL = `
+        CREATE SEQUENCE "${seq.sequence_name}"
+        START WITH ${seq.start_value}
+        INCREMENT BY ${seq.increment_by}
+        MINVALUE ${seq.min_value}
+        MAXVALUE ${seq.max_value}
+        CACHE ${seq.cache_size}
+        ${seq.cycle ? 'CYCLE' : 'NO CYCLE'}
+      `;
+      await testPool.query(createSeqSQL);
+      console.log(`  ✓ Created sequence: ${seq.sequence_name}`);
+    }
 
     console.log(`📦 Creating ${tables.rows.length} tables...`);
 
