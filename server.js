@@ -16739,25 +16739,38 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
     // Step 3: Get foreign keys separately (to add after tables exist)
     const foreignKeys = await pool.query(`
       SELECT
-        kcu.table_name,
-        kcu.constraint_name,
-        kcu.column_name,
-        ccu.table_name AS foreign_table_name,
-        ccu.column_name AS foreign_column_name,
-        rc.update_rule,
-        rc.delete_rule
-      FROM information_schema.key_column_usage kcu
-      JOIN information_schema.referential_constraints rc
-        ON kcu.constraint_name = rc.constraint_name
-      JOIN information_schema.key_column_usage ccu
-        ON ccu.constraint_name = rc.unique_constraint_name
-        AND ccu.ordinal_position = kcu.position_in_unique_constraint
-      WHERE EXISTS (
-        SELECT 1 FROM information_schema.table_constraints tc
-        WHERE tc.constraint_name = kcu.constraint_name
-        AND tc.constraint_type = 'FOREIGN KEY'
-      )
-      ORDER BY kcu.table_name, kcu.ordinal_position
+        tc.conname AS constraint_name,
+        tn.nspname AS table_schema,
+        t.relname AS table_name,
+        a.attname AS column_name,
+        fn.nspname AS foreign_table_schema,
+        ft.relname AS foreign_table_name,
+        fa.attname AS foreign_column_name,
+        CASE confupdtype
+          WHEN 'a' THEN 'NO ACTION'
+          WHEN 'r' THEN 'RESTRICT'
+          WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL'
+          WHEN 'd' THEN 'SET DEFAULT'
+        END AS update_rule,
+        CASE confdeltype
+          WHEN 'a' THEN 'NO ACTION'
+          WHEN 'r' THEN 'RESTRICT'
+          WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL'
+          WHEN 'd' THEN 'SET DEFAULT'
+        END AS delete_rule
+      FROM pg_constraint tc
+      JOIN pg_class t ON tc.conrelid = t.oid
+      JOIN pg_namespace tn ON t.relnamespace = tn.oid
+      JOIN pg_class ft ON tc.confrelid = ft.oid
+      JOIN pg_namespace fn ON ft.relnamespace = fn.oid
+      JOIN LATERAL unnest(tc.conkey) WITH ORDINALITY AS u(attnum, attposition) ON true
+      JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = u.attnum
+      JOIN pg_attribute fa ON fa.attrelid = ft.oid AND fa.attnum = tc.confkey[u.attposition]
+      WHERE tc.contype = 'f'
+        AND tn.nspname = 'public'
+      ORDER BY t.relname, u.attposition
     `);
 
     console.log(`🗑️ Clearing test database...`);
