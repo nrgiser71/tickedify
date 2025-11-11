@@ -3808,6 +3808,9 @@ Examples:
             const confirmed = confirm(`Copy user "${userEmail}" to test database?\n\nThis will copy all their tasks, projects, contexts, attachments, and feedback.`);
             if (!confirmed) return;
 
+            // Show loading indicator
+            showToast('📋 Copying user to test database...', 'info', 0);
+
             try {
                 const response = await fetch('/api/admin/test-db/copy-user', {
                     method: 'POST',
@@ -3829,29 +3832,15 @@ Examples:
 
                 const result = await response.json();
 
-                let message = `✅ User copied successfully!\n\nUser: ${result.userEmail}\n`;
-                message += `Users: ${result.stats.users}\n`;
-                message += `Tasks: ${result.stats.taken}\n`;
-                message += `Projects: ${result.stats.projecten}\n`;
-                message += `Contexts: ${result.stats.contexten}\n`;
-                message += `Subtasks: ${result.stats.subtaken}\n`;
-                message += `Attachments: ${result.stats.bijlagen}\n`;
-                message += `Feedback: ${result.stats.feedback}\n`;
-                message += `Duration: ${(result.duration / 1000).toFixed(2)}s`;
-
-                if (result.hasErrors) {
-                    message += `\n\n⚠️ ${result.stats.errors.length} error(s) occurred during copy. Check console for details.`;
-                    console.error('Copy errors:', result.stats.errors);
-                }
-
-                alert(message);
+                // Show success toast
+                showToast(`✅ User copied successfully! (${result.stats.taken} tasks, ${result.stats.projecten} projects, ${result.stats.contexten} contexts)`, 'success', 5000);
 
                 // Refresh test users list
                 await loadTestUsers();
 
             } catch (error) {
                 console.error('Copy user error:', error);
-                alert(`❌ Copy user failed:\n${error.message}`);
+                showToast(`❌ Copy user failed: ${error.message}`, 'error', 5000);
             }
         }
 
@@ -3859,6 +3848,9 @@ Examples:
         async function deleteTestUser(userId, userEmail) {
             const confirmed = confirm(`⚠️ Delete user "${userEmail}" from test database?\n\nThis will delete the user and all their related data (tasks, attachments, feedback, etc.).\n\nThis action cannot be undone.`);
             if (!confirmed) return;
+
+            // Show loading indicator
+            showToast('🗑️ Deleting user from test database...', 'info', 0);
 
             try {
                 const response = await fetch(`/api/admin/test-db/user/${userId}`, {
@@ -3872,14 +3864,16 @@ Examples:
                 }
 
                 const result = await response.json();
-                alert(`✅ User deleted from test database!\n\nTasks deleted: ${result.deletedTasks}\nAttachments deleted: ${result.deletedAttachments}\nFeedback deleted: ${result.deletedFeedback}`);
+
+                // Show success toast
+                showToast(`✅ User deleted from test database! (${result.deletedTasks} tasks, ${result.deletedAttachments} attachments, ${result.deletedFeedback} feedback)`, 'success', 5000);
 
                 // Refresh test users list
                 await loadTestUsers();
 
             } catch (error) {
                 console.error('Delete user error:', error);
-                alert(`❌ Delete user failed:\n${error.message}`);
+                showToast(`❌ Delete user failed: ${error.message}`, 'error', 5000);
             }
         }
 
