@@ -16677,6 +16677,8 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
             CASE
               WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
               WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
+              WHEN data_type = 'ARRAY' THEN udt_name
+              WHEN data_type = 'USER-DEFINED' THEN udt_name
               ELSE UPPER(data_type)
             END ||
             CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
