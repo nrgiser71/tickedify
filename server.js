@@ -3131,7 +3131,7 @@ app.get('/api/page-help/:pageId', async (req, res) => {
 });
 
 // PUT /api/page-help/:pageId - Update help content (admin only)
-app.put('/api/page-help/:pageId', async (req, res) => {
+app.put('/api/page-help/:pageId', requireAdmin, async (req, res) => {
     try {
         const { pageId } = req.params;
         const { content } = req.body;
@@ -3150,8 +3150,18 @@ app.put('/api/page-help/:pageId', async (req, res) => {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        // Get admin identifier (default to 'Admin' if no session)
-        const modifiedBy = 'Admin';
+        // Get admin identifier - supports both password-based and user-based admin auth
+        let modifiedBy = 'Admin';
+        if (req.session.userId) {
+            // User-based admin - get their name from database
+            try {
+                const userResult = await pool.query('SELECT naam FROM users WHERE id = $1', [req.session.userId]);
+                modifiedBy = userResult.rows[0]?.naam || 'Admin';
+            } catch (error) {
+                console.log('Could not fetch user name, using default');
+            }
+        }
+        // For password-based admin (admin2.html), modifiedBy stays 'Admin'
 
         // UPSERT content
         await pool.query(
@@ -3177,7 +3187,7 @@ app.put('/api/page-help/:pageId', async (req, res) => {
 });
 
 // DELETE /api/page-help/:pageId - Delete custom content, revert to default (admin only)
-app.delete('/api/page-help/:pageId', async (req, res) => {
+app.delete('/api/page-help/:pageId', requireAdmin, async (req, res) => {
     try {
         const { pageId } = req.params;
 
