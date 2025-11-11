@@ -3729,7 +3729,7 @@ Examples:
                             <div style="font-weight: 600;">${escapeHtml(user.email)}</div>
                             <div style="font-size: 12px; color: var(--macos-text-secondary);">User ID: ${user.id}</div>
                         </div>
-                        <button class="btn btn-primary" onclick="copyUserToTest(${user.id}, '${escapeHtml(user.email)}')" style="font-size: 12px; padding: 6px 12px;">
+                        <button class="btn btn-primary" onclick="copyUserToTest('${escapeHtml(user.id)}', '${escapeHtml(user.email)}')" style="font-size: 12px; padding: 6px 12px;">
                             📋 Copy to Test
                         </button>
                     </div>
@@ -3793,7 +3793,7 @@ Examples:
                             <div style="font-weight: 600;">${escapeHtml(user.email)}</div>
                             <div style="font-size: 12px; color: var(--macos-text-secondary);">User ID: ${user.id}</div>
                         </div>
-                        <button class="btn btn-danger" onclick="deleteTestUser(${user.id}, '${escapeHtml(user.email)}')" style="font-size: 12px; padding: 6px 12px;">
+                        <button class="btn btn-danger" onclick="deleteTestUser('${escapeHtml(user.id)}', '${escapeHtml(user.email)}')" style="font-size: 12px; padding: 6px 12px;">
                             🗑️ Delete
                         </button>
                     </div>
