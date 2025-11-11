@@ -16762,6 +16762,9 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
         )
       `;
 
+      console.log(`  📝 Creating table ${table.table_name}:`);
+      console.log(createSQL);
+
       await testPool.query(createSQL);
       console.log(`  ✓ Created table: ${table.table_name}`);
     }
