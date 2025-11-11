@@ -1004,6 +1004,12 @@
                         <span>Page Help</span>
                     </a>
                 </li>
+                <li class="admin-nav-item">
+                    <a href="#test-env" class="admin-nav-link" data-screen="test-env">
+                        <span class="admin-nav-icon">🧪</span>
+                        <span>Test Environment</span>
+                    </a>
+                </li>
             </ul>
         </nav>
 
@@ -1740,6 +1746,113 @@ Examples:
                         <div style="font-size: 48px; margin-bottom: 16px;">❓</div>
                         <h3 style="margin: 0 0 8px 0; color: var(--macos-text-primary);">No Page Selected</h3>
                         <p style="margin: 0;">Select a page from the dropdown above to view and edit its help content.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Environment Screen -->
+            <section id="screen-test-env" class="admin-screen" data-screen="test-env">
+                <div class="admin-header">
+                    <h1 class="admin-header-title">🧪 Test Environment</h1>
+                    <p class="admin-header-subtitle">Manage test database with production data isolation</p>
+                </div>
+
+                <div style="max-width: 1400px;">
+                    <!-- Database Status Cards -->
+                    <div class="stats-grid" style="margin-bottom: 30px;">
+                        <div class="stat-card">
+                            <div class="stat-label">Production Database</div>
+                            <div class="stat-value" id="prod-db-status">--</div>
+                            <div class="stat-subtitle" id="prod-db-latency">Checking...</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Test Database</div>
+                            <div class="stat-value" id="test-db-status">--</div>
+                            <div class="stat-subtitle" id="test-db-latency">Checking...</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Environment</div>
+                            <div class="stat-value" id="current-env">--</div>
+                            <div class="stat-subtitle">Current deployment</div>
+                        </div>
+                    </div>
+
+                    <!-- Database Operations Section -->
+                    <div style="margin-bottom: 30px; padding: 20px; background: var(--macos-bg-secondary); border-radius: var(--macos-radius-large);">
+                        <h2 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">Database Operations</h2>
+
+                        <div style="display: grid; gap: 15px;">
+                            <!-- Copy Schema Button -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: white; border-radius: var(--macos-radius-medium); border: 1px solid var(--macos-border);">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">📋 Copy Schema to Test DB</div>
+                                    <div style="font-size: 12px; color: var(--macos-text-secondary);">Copy production database structure (tables, constraints, indexes) to test database</div>
+                                </div>
+                                <button class="btn btn-primary" onclick="copySchemaToTest()" id="copy-schema-btn">
+                                    Copy Schema
+                                </button>
+                            </div>
+
+                            <!-- Clear Test Database Button -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: white; border-radius: var(--macos-radius-medium); border: 1px solid var(--macos-border);">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">🗑️ Clear Test Database</div>
+                                    <div style="font-size: 12px; color: var(--macos-text-secondary);">Delete all data from test database (preserves schema)</div>
+                                </div>
+                                <button class="btn btn-danger" onclick="clearTestDatabase()" id="clear-db-btn">
+                                    Clear Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Management Section -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Production Users List -->
+                        <div style="padding: 20px; background: var(--macos-bg-secondary); border-radius: var(--macos-radius-large);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 style="margin: 0; font-size: 18px; font-weight: 600;">👥 Production Users</h2>
+                                <button class="btn btn-secondary" onclick="loadProductionUsers()" id="refresh-prod-users-btn">
+                                    🔄 Refresh
+                                </button>
+                            </div>
+
+                            <div id="production-users-list" style="background: white; border-radius: var(--macos-radius-medium); border: 1px solid var(--macos-border); max-height: 400px; overflow-y: auto;">
+                                <div style="padding: 30px; text-align: center; color: var(--macos-text-secondary);">
+                                    <div style="font-size: 32px; margin-bottom: 10px;">👤</div>
+                                    <div>Loading users...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Users List -->
+                        <div style="padding: 20px; background: var(--macos-bg-secondary); border-radius: var(--macos-radius-large);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 style="margin: 0; font-size: 18px; font-weight: 600;">🧪 Test Database Users</h2>
+                                <button class="btn btn-secondary" onclick="loadTestUsers()" id="refresh-test-users-btn">
+                                    🔄 Refresh
+                                </button>
+                            </div>
+
+                            <div id="test-users-list" style="background: white; border-radius: var(--macos-radius-medium); border: 1px solid var(--macos-border); max-height: 400px; overflow-y: auto;">
+                                <div style="padding: 30px; text-align: center; color: var(--macos-text-secondary);">
+                                    <div style="font-size: 32px; margin-bottom: 10px;">🧪</div>
+                                    <div>Loading test users...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Help Text -->
+                    <div style="margin-top: 30px; padding: 15px; background: #e8f4fd; border-left: 4px solid var(--macos-blue); border-radius: var(--macos-radius-medium); font-size: 13px;">
+                        <strong>💡 Usage Guide:</strong>
+                        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
+                            <li><strong>Copy Schema:</strong> Creates database structure in test DB (required before copying users)</li>
+                            <li><strong>Copy User:</strong> Click "Copy to Test" next to a production user to copy all their data</li>
+                            <li><strong>Delete User:</strong> Click "Delete" next to a test user to remove them from test DB</li>
+                            <li><strong>Clear Database:</strong> Removes all data from test DB while preserving schema</li>
+                            <li><strong>Environment:</strong> Test DB is only accessible on dev.tickedify.com (preview environment)</li>
+                        </ul>
                     </div>
                 </div>
             </section>
@@ -3339,6 +3452,341 @@ Examples:
     </div>
 
     <script>
+        // ============================================================================
+        // TEST ENVIRONMENT MANAGEMENT - Feature 064
+        // ============================================================================
+
+        // Initialize test environment when screen loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add screen change listener for test-env
+            const testEnvLink = document.querySelector('a[data-screen="test-env"]');
+            if (testEnvLink) {
+                testEnvLink.addEventListener('click', () => {
+                    setTimeout(initTestEnvironment, 100);
+                });
+            }
+        });
+
+        // Initialize test environment screen
+        async function initTestEnvironment() {
+            await verifyDatabaseConnections();
+            await loadProductionUsers();
+            await loadTestUsers();
+        }
+
+        // Verify both database connections
+        async function verifyDatabaseConnections() {
+            try {
+                const response = await fetch('/api/admin/test-db/verify', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Verification failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update production database status
+                const prodStatus = document.getElementById('prod-db-status');
+                const prodLatency = document.getElementById('prod-db-latency');
+                if (data.production.connected) {
+                    prodStatus.textContent = '✅ Connected';
+                    prodStatus.style.color = 'var(--macos-green)';
+                    prodLatency.textContent = `Latency: ${data.production.latency}ms`;
+                } else {
+                    prodStatus.textContent = '❌ Disconnected';
+                    prodStatus.style.color = 'var(--macos-red)';
+                    prodLatency.textContent = 'Connection failed';
+                }
+
+                // Update test database status
+                const testStatus = document.getElementById('test-db-status');
+                const testLatency = document.getElementById('test-db-latency');
+                if (data.test.configured) {
+                    if (data.test.connected) {
+                        testStatus.textContent = '✅ Connected';
+                        testStatus.style.color = 'var(--macos-green)';
+                        testLatency.textContent = `Latency: ${data.test.latency}ms`;
+                    } else {
+                        testStatus.textContent = '❌ Disconnected';
+                        testStatus.style.color = 'var(--macos-red)';
+                        testLatency.textContent = 'Connection failed';
+                    }
+                } else {
+                    testStatus.textContent = '⚠️ Not Configured';
+                    testStatus.style.color = 'var(--macos-yellow)';
+                    testLatency.textContent = 'DATABASE_URL_TEST missing';
+                }
+
+                // Update environment indicator
+                const envIndicator = document.getElementById('current-env');
+                const env = data.environment || 'unknown';
+                envIndicator.textContent = env.charAt(0).toUpperCase() + env.slice(1);
+
+                if (env === 'production') {
+                    envIndicator.style.color = 'var(--macos-red)';
+                } else if (env === 'preview') {
+                    envIndicator.style.color = 'var(--macos-blue)';
+                } else {
+                    envIndicator.style.color = 'var(--macos-text-secondary)';
+                }
+
+            } catch (error) {
+                console.error('Database verification error:', error);
+                alert('Failed to verify database connections. Please check console for details.');
+            }
+        }
+
+        // Copy schema from production to test
+        async function copySchemaToTest() {
+            const confirmed = confirm('⚠️ WARNING: This will DROP and recreate the test database schema.\n\nAll test data will be lost. Continue?');
+            if (!confirmed) return;
+
+            const btn = document.getElementById('copy-schema-btn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Copying schema...';
+
+            try {
+                const response = await fetch('/api/admin/test-db/copy-schema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ confirm: true })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `Schema copy failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert(`✅ Schema copied successfully!\n\nTables created: ${result.tablesCreated}\nDuration: ${(result.duration / 1000).toFixed(2)}s`);
+
+                // Refresh database status
+                await verifyDatabaseConnections();
+
+            } catch (error) {
+                console.error('Schema copy error:', error);
+                alert(`❌ Schema copy failed:\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // Clear test database
+        async function clearTestDatabase() {
+            const confirmed = confirm('⚠️ WARNING: This will delete ALL data from the test database.\n\nThe schema will be preserved, but all users, tasks, projects, etc. will be deleted.\n\nContinue?');
+            if (!confirmed) return;
+
+            const btn = document.getElementById('clear-db-btn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Clearing database...';
+
+            try {
+                const response = await fetch('/api/admin/test-db/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ confirm: true })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `Clear database failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert(`✅ Test database cleared!\n\nTables cleared: ${result.tablesCleared}\nRows deleted: ${result.totalRowsDeleted}`);
+
+                // Refresh user lists
+                await loadTestUsers();
+
+            } catch (error) {
+                console.error('Clear database error:', error);
+                alert(`❌ Clear database failed:\n${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // Load production users
+        async function loadProductionUsers() {
+            const container = document.getElementById('production-users-list');
+            container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--macos-text-secondary);">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/admin/production-users', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load users: ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderProductionUsers(data.users);
+
+            } catch (error) {
+                console.error('Load production users error:', error);
+                container.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--macos-red);">Failed to load users: ${error.message}</div>`;
+            }
+        }
+
+        // Render production users list
+        function renderProductionUsers(users) {
+            const container = document.getElementById('production-users-list');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--macos-text-secondary);">No production users found</div>';
+                return;
+            }
+
+            let html = '<div style="padding: 0;">';
+            users.forEach((user, index) => {
+                const borderBottom = index < users.length - 1 ? 'border-bottom: 1px solid var(--macos-border);' : '';
+                html += `
+                    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; ${borderBottom}">
+                        <div>
+                            <div style="font-weight: 600;">${escapeHtml(user.email)}</div>
+                            <div style="font-size: 12px; color: var(--macos-text-secondary);">User ID: ${user.id}</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="copyUserToTest(${user.id}, '${escapeHtml(user.email)}')" style="font-size: 12px; padding: 6px 12px;">
+                            📋 Copy to Test
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Load test database users
+        async function loadTestUsers() {
+            const container = document.getElementById('test-users-list');
+            container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--macos-text-secondary);">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/admin/test-users', {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load test users: ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderTestUsers(data.users);
+
+            } catch (error) {
+                console.error('Load test users error:', error);
+                container.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--macos-red);">Failed to load users: ${error.message}</div>`;
+            }
+        }
+
+        // Render test users list
+        function renderTestUsers(users) {
+            const container = document.getElementById('test-users-list');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--macos-text-secondary);"><div style="font-size: 32px; margin-bottom: 10px;">🧪</div><div>No users in test database</div></div>';
+                return;
+            }
+
+            let html = '<div style="padding: 0;">';
+            users.forEach((user, index) => {
+                const borderBottom = index < users.length - 1 ? 'border-bottom: 1px solid var(--macos-border);' : '';
+                html += `
+                    <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; ${borderBottom}">
+                        <div>
+                            <div style="font-weight: 600;">${escapeHtml(user.email)}</div>
+                            <div style="font-size: 12px; color: var(--macos-text-secondary);">User ID: ${user.id}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteTestUser(${user.id}, '${escapeHtml(user.email)}')" style="font-size: 12px; padding: 6px 12px;">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Copy user from production to test
+        async function copyUserToTest(userId, userEmail) {
+            const confirmed = confirm(`Copy user "${userEmail}" to test database?\n\nThis will copy all their tasks, projects, contexts, attachments, and feedback.`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/admin/test-db/copy-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userId, confirm: true })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+
+                    if (response.status === 409) {
+                        alert(`⚠️ User already exists in test database.\n\n${error.message}\n\nDelete the existing test user first before copying again.`);
+                        return;
+                    }
+
+                    throw new Error(error.message || `Copy user failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert(`✅ User copied successfully!\n\nUser: ${result.userEmail}\nTasks: ${result.tasksCopied}\nProjects: ${result.projectsCopied}\nContexts: ${result.contextsCopied}\nAttachments: ${result.attachmentsCopied}\nDuration: ${(result.duration / 1000).toFixed(2)}s`);
+
+                // Refresh test users list
+                await loadTestUsers();
+
+            } catch (error) {
+                console.error('Copy user error:', error);
+                alert(`❌ Copy user failed:\n${error.message}`);
+            }
+        }
+
+        // Delete user from test database
+        async function deleteTestUser(userId, userEmail) {
+            const confirmed = confirm(`⚠️ Delete user "${userEmail}" from test database?\n\nThis will delete the user and all their related data (tasks, attachments, feedback, etc.).\n\nThis action cannot be undone.`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/admin/test-db/user/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `Delete user failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert(`✅ User deleted from test database!\n\nTasks deleted: ${result.deletedTasks}\nAttachments deleted: ${result.deletedAttachments}\nFeedback deleted: ${result.deletedFeedback}`);
+
+                // Refresh test users list
+                await loadTestUsers();
+
+            } catch (error) {
+                console.error('Delete user error:', error);
+                alert(`❌ Delete user failed:\n${error.message}`);
+            }
+        }
+
+        // HTML escape helper
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // ============================================================================
         // PAGE HELP CONFIGURATION - Feature 062
         // ============================================================================

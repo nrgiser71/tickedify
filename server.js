@@ -926,6 +926,9 @@ app.get('/api/email-import-help', (req, res) => {
 // Try to import and initialize database
 let db = null;
 let pool = null;
+let testPool = null;
+let getPool = null;
+let useTestDatabase = null;
 let dbInitialized = false;
 
 // Initialize database immediately
@@ -933,6 +936,9 @@ try {
     const dbModule = require('./database');
     db = dbModule.db;
     pool = dbModule.pool;
+    testPool = dbModule.testPool;
+    getPool = dbModule.getPool;
+    useTestDatabase = dbModule.useTestDatabase;
     
     // Configure session store immediately with pool
     app.use(session({
@@ -16596,6 +16602,437 @@ app.post('/api/user-settings', async (req, res) => {
     });
   }
 });
+
+// ============================================================================
+// ADMIN TEST ENVIRONMENT MANAGEMENT ENDPOINTS
+// Feature 064: Separate Test Environment with Database Isolation
+// ============================================================================
+
+// 1. Verify database connections
+app.get('/api/admin/test-db/verify', requireAdmin, async (req, res) => {
+  try {
+    const startTime = Date.now();
+
+    // Test production connection
+    const prodCheck = await pool.query('SELECT 1 as test');
+    const prodLatency = Date.now() - startTime;
+
+    // Test test database connection (if available)
+    let testCheck = null;
+    let testLatency = 0;
+    if (testPool) {
+      const testStartTime = Date.now();
+      testCheck = await testPool.query('SELECT 1 as test');
+      testLatency = Date.now() - testStartTime;
+    }
+
+    res.json({
+      production: {
+        connected: prodCheck.rowCount === 1,
+        latency: prodLatency
+      },
+      test: {
+        connected: testCheck ? testCheck.rowCount === 1 : false,
+        configured: testPool !== null,
+        latency: testLatency
+      }
+    });
+  } catch (error) {
+    console.error('Database verification error:', error);
+    res.status(500).json({
+      error: 'DatabaseVerificationFailed',
+      message: error.message
+    });
+  }
+});
+
+// 2. Copy schema from production to test
+app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
+  if (!req.body.confirm) {
+    return res.status(400).json({
+      error: 'BadRequest',
+      message: 'Confirmation required for destructive operation'
+    });
+  }
+
+  if (!testPool) {
+    return res.status(500).json({
+      error: 'TestDatabaseNotConfigured',
+      message: 'DATABASE_URL_TEST environment variable not set'
+    });
+  }
+
+  try {
+    const startTime = Date.now();
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execPromise = util.promisify(exec);
+
+    // Step 1: Export production schema to temp file
+    const dumpFile = '/tmp/tickedify_schema.sql';
+    const prodUrl = process.env.DATABASE_URL;
+    const testUrl = process.env.DATABASE_URL_TEST;
+
+    console.log('📤 Exporting production schema...');
+    await execPromise(`pg_dump --schema-only "${prodUrl}" > ${dumpFile}`);
+
+    // Step 2: Clear test database
+    console.log('🗑️ Clearing test database...');
+    await testPool.query('DROP SCHEMA IF EXISTS public CASCADE');
+    await testPool.query('CREATE SCHEMA public');
+    await testPool.query('GRANT ALL ON SCHEMA public TO neondb_owner');
+    await testPool.query('GRANT ALL ON SCHEMA public TO public');
+
+    // Step 3: Import schema to test database
+    console.log('📥 Importing schema to test database...');
+    await execPromise(`psql "${testUrl}" < ${dumpFile}`);
+
+    // Step 4: Clean up temp file
+    await execPromise(`rm -f ${dumpFile}`);
+
+    // Count tables in test database
+    const tableCount = await testPool.query(`
+      SELECT COUNT(*) FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+    `);
+
+    const duration = Date.now() - startTime;
+
+    console.log(`✅ Schema copied successfully - ${tableCount.rows[0].count} tables`);
+
+    res.json({
+      success: true,
+      tablesCreated: parseInt(tableCount.rows[0].count),
+      duration,
+      details: 'Schema copied successfully with all constraints and indexes'
+    });
+
+  } catch (error) {
+    console.error('Schema copy error:', error);
+    res.status(500).json({
+      error: 'SchemaCopyFailed',
+      message: error.message,
+      details: error.stderr || error.stdout
+    });
+  }
+});
+
+// 3. List production users
+app.get('/api/admin/production-users', requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, username, email
+      FROM users
+      ORDER BY id
+    `);
+
+    res.json({ users: result.rows });
+  } catch (error) {
+    console.error('List production users error:', error);
+    res.status(500).json({
+      error: 'QueryFailed',
+      message: error.message
+    });
+  }
+});
+
+// 4. Copy user from production to test
+app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
+  const { userId, confirm } = req.body;
+
+  if (!confirm) {
+    return res.status(400).json({
+      error: 'BadRequest',
+      message: 'Confirmation required'
+    });
+  }
+
+  if (!testPool) {
+    return res.status(500).json({
+      error: 'TestDatabaseNotConfigured',
+      message: 'DATABASE_URL_TEST not set'
+    });
+  }
+
+  try {
+    const startTime = Date.now();
+
+    // Get user from production
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'UserNotFound',
+        message: `User ID ${userId} not found in production database`
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Check for duplicate in test
+    const testUserCheck = await testPool.query('SELECT id FROM users WHERE email = $1', [user.email]);
+    if (testUserCheck.rows.length > 0) {
+      return res.status(409).json({
+        error: 'UserAlreadyExists',
+        message: `User ${user.email} already exists in test database`,
+        details: 'Delete existing user from test database before retrying copy'
+      });
+    }
+
+    // Begin transaction in test database
+    const client = await testPool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Copy user
+      await client.query(`
+        INSERT INTO users (id, username, password_hash, email, email_import_code)
+        VALUES ($1, $2, $3, $4, $5)
+      `, [user.id, user.username, user.password_hash, user.email, user.email_import_code]);
+
+      // Copy taken (tasks)
+      const taken = await pool.query('SELECT * FROM taken WHERE user_id = $1', [userId]);
+      for (const taak of taken.rows) {
+        await client.query(`
+          INSERT INTO taken (id, naam, lijst, status, datum, verschijndatum, project_id, context_id,
+                             duur, type, afgewerkt, user_id, herhaling_type, herhaling_waarde,
+                             herhaling_actief, opmerkingen, top_prioriteit, prioriteit_datum, prioriteit)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        `, [taak.id, taak.naam, taak.lijst, taak.status, taak.datum, taak.verschijndatum,
+            taak.project_id, taak.context_id, taak.duur, taak.type, taak.afgewerkt, taak.user_id,
+            taak.herhaling_type, taak.herhaling_waarde, taak.herhaling_actief, taak.opmerkingen,
+            taak.top_prioriteit, taak.prioriteit_datum, taak.prioriteit]);
+      }
+
+      // Copy projecten
+      const projecten = await pool.query('SELECT * FROM projecten');
+      let projectsCopied = 0;
+      for (const project of projecten.rows) {
+        try {
+          await client.query(`
+            INSERT INTO projecten (id, naam, omschrijving, kleur, volgorde, archief, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [project.id, project.naam, project.omschrijving, project.kleur,
+              project.volgorde, project.archief, project.user_id]);
+          projectsCopied++;
+        } catch (err) {
+          // Skip if already exists
+          if (!err.message.includes('duplicate key')) throw err;
+        }
+      }
+
+      // Copy contexten
+      const contexten = await pool.query('SELECT * FROM contexten');
+      let contextsCopied = 0;
+      for (const context of contexten.rows) {
+        try {
+          await client.query(`
+            INSERT INTO contexten (id, naam, volgorde, user_id)
+            VALUES ($1, $2, $3, $4)
+          `, [context.id, context.naam, context.volgorde, context.user_id]);
+          contextsCopied++;
+        } catch (err) {
+          if (!err.message.includes('duplicate key')) throw err;
+        }
+      }
+
+      // Copy subtaken
+      const subtaken = await pool.query(`
+        SELECT s.* FROM subtaken s
+        JOIN taken t ON s.parent_taak_id = t.id
+        WHERE t.user_id = $1
+      `, [userId]);
+      for (const subtaak of subtaken.rows) {
+        await client.query(`
+          INSERT INTO subtaken (id, parent_taak_id, titel, voltooid, volgorde, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `, [subtaak.id, subtaak.parent_taak_id, subtaak.titel, subtaak.voltooid,
+            subtaak.volgorde, subtaak.created_at]);
+      }
+
+      // Copy bijlagen (attachments)
+      const bijlagen = await pool.query('SELECT * FROM bijlagen WHERE user_id = $1', [userId]);
+      for (const bijlage of bijlagen.rows) {
+        await client.query(`
+          INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, mimetype,
+                                storage_type, storage_path, geupload, user_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, [bijlage.id, bijlage.taak_id, bijlage.bestandsnaam, bijlage.bestandsgrootte,
+            bijlage.mimetype, bijlage.storage_type, bijlage.storage_path,
+            bijlage.geupload, bijlage.user_id]);
+      }
+
+      // Copy feedback
+      const feedback = await pool.query('SELECT * FROM feedback WHERE user_id = $1', [userId]);
+      for (const fb of feedback.rows) {
+        await client.query(`
+          INSERT INTO feedback (id, user_id, type, titel, beschrijving, stappen, status,
+                                prioriteit, context, aangemaakt, bijgewerkt)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `, [fb.id, fb.user_id, fb.type, fb.titel, fb.beschrijving, fb.stappen,
+            fb.status, fb.prioriteit, fb.context, fb.aangemaakt, fb.bijgewerkt]);
+      }
+
+      await client.query('COMMIT');
+
+      const duration = Date.now() - startTime;
+
+      res.json({
+        success: true,
+        userEmail: user.email,
+        tasksCopied: taken.rows.length,
+        projectsCopied,
+        contextsCopied,
+        attachmentsCopied: bijlagen.rows.length,
+        duration
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+  } catch (error) {
+    console.error('Copy user error:', error);
+    res.status(500).json({
+      error: 'CopyFailed',
+      message: error.message
+    });
+  }
+});
+
+// 5. List test database users
+app.get('/api/admin/test-users', requireAdmin, async (req, res) => {
+  if (!testPool) {
+    return res.json({ users: [] });
+  }
+
+  try {
+    const result = await testPool.query(`
+      SELECT id, username, email
+      FROM users
+      ORDER BY id
+    `);
+
+    res.json({ users: result.rows });
+  } catch (error) {
+    console.error('List test users error:', error);
+    res.status(500).json({
+      error: 'QueryFailed',
+      message: error.message
+    });
+  }
+});
+
+// 6. Delete user from test database
+app.delete('/api/admin/test-db/user/:userId', requireAdmin, async (req, res) => {
+  const userId = req.params.userId;
+
+  if (!testPool) {
+    return res.status(500).json({
+      error: 'TestDatabaseNotConfigured',
+      message: 'DATABASE_URL_TEST not set'
+    });
+  }
+
+  try {
+    // Check if user exists
+    const userCheck = await testPool.query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({
+        error: 'UserNotFound',
+        message: 'User not found in test database'
+      });
+    }
+
+    // Count related data before delete
+    const taskCount = await testPool.query('SELECT COUNT(*) FROM taken WHERE user_id = $1', [userId]);
+
+    // Delete user (cascades via foreign keys where applicable)
+    await testPool.query('DELETE FROM feedback WHERE user_id = $1', [userId]);
+    await testPool.query('DELETE FROM bijlagen WHERE user_id = $1', [userId]);
+    await testPool.query(`
+      DELETE FROM subtaken WHERE parent_taak_id IN (
+        SELECT id FROM taken WHERE user_id = $1
+      )
+    `, [userId]);
+    await testPool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
+    await testPool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    res.json({
+      success: true,
+      deletedTasks: parseInt(taskCount.rows[0].count)
+    });
+
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({
+      error: 'DeleteFailed',
+      message: error.message
+    });
+  }
+});
+
+// 7. Clear test database
+app.post('/api/admin/test-db/clear', requireAdmin, async (req, res) => {
+  if (!req.body.confirm) {
+    return res.status(400).json({
+      error: 'BadRequest',
+      message: 'Confirmation required for destructive operation'
+    });
+  }
+
+  if (!testPool) {
+    return res.status(500).json({
+      error: 'TestDatabaseNotConfigured',
+      message: 'DATABASE_URL_TEST not set'
+    });
+  }
+
+  try {
+    // Delete in correct order (respect foreign keys)
+    const tables = [
+      'feedback',
+      'bijlagen',
+      'subtaken',
+      'taken',
+      'users',
+      'projecten',
+      'contexten',
+      'page_help',
+      'user_sessions'
+    ];
+
+    let totalDeleted = 0;
+    for (const table of tables) {
+      try {
+        const result = await testPool.query(`DELETE FROM ${table}`);
+        totalDeleted += result.rowCount || 0;
+      } catch (err) {
+        // Table might not exist, continue
+        console.log(`⚠️ Could not clear table ${table}:`, err.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      tablesCleared: tables.length,
+      totalRowsDeleted: totalDeleted
+    });
+
+  } catch (error) {
+    console.error('Clear database error:', error);
+    res.status(500).json({
+      error: 'ClearFailed',
+      message: error.message
+    });
+  }
+});
+
+// ============================================================================
+// END OF TEST ENVIRONMENT ENDPOINTS
+// ============================================================================
 
 // 404 handler - MUST be after all routes!
 app.use((req, res) => {

@@ -1,11 +1,45 @@
 const { Pool } = require('pg');
 const forensicLogger = require('./forensic-logger');
 
-// Database connection
+// Production database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING,
   ssl: { rejectUnauthorized: false }
 });
+
+// Test database connection (only if DATABASE_URL_TEST exists)
+let testPool = null;
+if (process.env.DATABASE_URL_TEST) {
+  testPool = new Pool({
+    connectionString: process.env.DATABASE_URL_TEST,
+    max: 10, // Smaller pool for test environment
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  console.log('✅ Test database pool initialized');
+}
+
+// Helper function to get correct pool based on context
+function getPool(useTest = false) {
+  if (useTest && !testPool) {
+    throw new Error('Test database not configured - DATABASE_URL_TEST missing');
+  }
+  return useTest ? testPool : pool;
+}
+
+// Environment detection helper
+function getEnvironment() {
+  return process.env.VERCEL_ENV || 'development';
+}
+
+// Determine which database to use for admin operations
+function useTestDatabase() {
+  const env = getEnvironment();
+  // Admin operations on staging (preview) use test database
+  return env === 'preview' && testPool !== null;
+}
 
 // Initialize database tables
 const initDatabase = async () => {
@@ -2477,4 +2511,12 @@ const db = {
   }
 };
 
-module.exports = { initDatabase, db, pool };
+module.exports = {
+  initDatabase,
+  db,
+  pool,
+  testPool,
+  getPool,
+  getEnvironment,
+  useTestDatabase
+};

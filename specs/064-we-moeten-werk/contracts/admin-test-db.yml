@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Test Environment Management API
+  description: |
+    Admin API endpoints for managing the isolated test database environment.
+    All endpoints require admin authentication via requireAdmin middleware.
+  version: 1.0.0
+  contact:
+    name: Tickedify Admin
+    email: jan@tickedify.com
+
+servers:
+  - url: https://dev.tickedify.com/api
+    description: Staging environment (test database management)
+
+security:
+  - AdminSession: []
+
+paths:
+  /admin/test-db/verify:
+    get:
+      summary: Verify database connections
+      description: Check connectivity to both production and test databases
+      operationId: verifyDatabases
+      tags:
+        - Test Environment
+      responses:
+        '200':
+          description: Connection status for both databases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseVerifyResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /admin/test-db/copy-schema:
+    post:
+      summary: Copy schema from production to test
+      description: |
+        Clears test database and copies complete schema structure from production.
+        Includes tables, columns, indexes, constraints, sequences, triggers.
+        NO data is copied - schema only.
+      operationId: copySchema
+      tags:
+        - Test Environment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRequest'
+      responses:
+        '200':
+          description: Schema copied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaCopyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /admin/production-users:
+    get:
+      summary: List all production users
+      description: Retrieve list of all users from production database for copy selection
+      operationId: listProductionUsers
+      tags:
+        - User Management
+      responses:
+        '200':
+          description: List of production users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /admin/test-users:
+    get:
+      summary: List all test database users
+      description: Retrieve list of all users currently in test database
+      operationId: listTestUsers
+      tags:
+        - User Management
+      responses:
+        '200':
+          description: List of test database users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /admin/test-db/copy-user:
+    post:
+      summary: Copy user from production to test
+      description: |
+        Copy single user and all related data from production to test database.
+        Includes: user record, tasks, projects, contexts, subtasks, attachments, feedback.
+        Returns 409 Conflict if user already exists in test (based on email).
+      operationId: copyUser
+      tags:
+        - User Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopyUserRequest'
+      responses:
+        '200':
+          description: User copied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CopyUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '409':
+          $ref: '#/components/responses/UserAlreadyExists'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /admin/test-db/user/{userId}:
+    delete:
+      summary: Delete user from test database
+      description: |
+        Delete single user and all related data from test database.
+        Cascades to tasks, subtasks, attachments, feedback.
+        Does NOT delete shared projects/contexts.
+      operationId: deleteTestUser
+      tags:
+        - User Management
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of user to delete from test database
+          schema:
+            type: integer
+            example: 5
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUserResponse'
+        '404':
+          $ref: '#/components/responses/UserNotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /admin/test-db/clear:
+    post:
+      summary: Clear all data from test database
+      description: |
+        Delete all data from test database while preserving schema structure.
+        Clears all tables in correct order (respects foreign keys).
+        Schema remains intact for future operations.
+      operationId: clearTestDatabase
+      tags:
+        - Test Environment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRequest'
+      responses:
+        '200':
+          description: Test database cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearDatabaseResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  securitySchemes:
+    AdminSession:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Admin session cookie (requireAdmin middleware)
+
+  schemas:
+    ConfirmRequest:
+      type: object
+      required:
+        - confirm
+      properties:
+        confirm:
+          type: boolean
+          description: Explicit confirmation for destructive operation
+          example: true
+
+    DatabaseVerifyResponse:
+      type: object
+      required:
+        - production
+        - test
+      properties:
+        production:
+          type: object
+          required:
+            - connected
+          properties:
+            connected:
+              type: boolean
+              description: Production database connection status
+              example: true
+            latency:
+              type: integer
+              description: Connection latency in milliseconds
+              example: 45
+        test:
+          type: object
+          required:
+            - connected
+          properties:
+            connected:
+              type: boolean
+              description: Test database connection status
+              example: true
+            latency:
+              type: integer
+              description: Connection latency in milliseconds
+              example: 52
+            configured:
+              type: boolean
+              description: Whether DATABASE_URL_TEST is configured
+              example: true
+
+    SchemaCopyResponse:
+      type: object
+      required:
+        - success
+        - tablesCreated
+        - duration
+      properties:
+        success:
+          type: boolean
+          example: true
+        tablesCreated:
+          type: integer
+          description: Number of tables created in test database
+          example: 12
+        duration:
+          type: integer
+          description: Operation duration in milliseconds
+          example: 28000
+        details:
+          type: string
+          description: Additional operation details
+          example: "Schema copied successfully with all constraints and indexes"
+
+    UserListResponse:
+      type: object
+      required:
+        - users
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+
+    UserSummary:
+      type: object
+      required:
+        - id
+        - username
+        - email
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 5
+        username:
+          type: string
+          description: Username
+          example: "jan@buskens.be"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "jan@buskens.be"
+
+    CopyUserRequest:
+      type: object
+      required:
+        - userId
+        - confirm
+      properties:
+        userId:
+          type: integer
+          description: ID of user to copy from production
+          example: 5
+        confirm:
+          type: boolean
+          description: Explicit confirmation
+          example: true
+
+    CopyUserResponse:
+      type: object
+      required:
+        - success
+        - userEmail
+      properties:
+        success:
+          type: boolean
+          example: true
+        userEmail:
+          type: string
+          format: email
+          description: Email of copied user
+          example: "jan@buskens.be"
+        tasksCopied:
+          type: integer
+          description: Number of tasks copied for this user
+          example: 150
+        projectsCopied:
+          type: integer
+          description: Number of projects copied
+          example: 5
+        contextsCopied:
+          type: integer
+          description: Number of contexts copied
+          example: 3
+        attachmentsCopied:
+          type: integer
+          description: Number of attachments copied
+          example: 12
+        duration:
+          type: integer
+          description: Operation duration in milliseconds
+          example: 8500
+
+    DeleteUserResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        deletedTasks:
+          type: integer
+          description: Number of tasks deleted (cascaded)
+          example: 150
+        deletedAttachments:
+          type: integer
+          description: Number of attachments deleted (cascaded)
+          example: 12
+        deletedFeedback:
+          type: integer
+          description: Number of feedback items deleted
+          example: 2
+
+    ClearDatabaseResponse:
+      type: object
+      required:
+        - success
+        - tablesCleared
+      properties:
+        success:
+          type: boolean
+          example: true
+        tablesCleared:
+          type: integer
+          description: Number of tables cleared
+          example: 12
+        totalRowsDeleted:
+          type: integer
+          description: Total rows deleted across all tables
+          example: 1523
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "UserAlreadyExists"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "User jan@buskens.be already exists in test database"
+        details:
+          type: string
+          description: Additional error context
+          example: "Use delete button to remove existing user before retry"
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "BadRequest"
+            message: "Confirmation required for destructive operation"
+
+    UserNotFound:
+      description: User not found in specified database
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "UserNotFound"
+            message: "User ID 999 not found in production database"
+
+    UserAlreadyExists:
+      description: User already exists in test database (duplicate prevention)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "UserAlreadyExists"
+            message: "User jan@buskens.be already exists in test database"
+            details: "Delete existing user from test database before retrying copy"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "InternalServerError"
+            message: "Database operation failed"
+            details: "Connection timeout to test database"
+
+tags:
+  - name: Test Environment
+    description: Database infrastructure operations
+  - name: User Management
+    description: User data copy and delete operations
