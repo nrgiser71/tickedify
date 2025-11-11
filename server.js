@@ -16691,7 +16691,7 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
         ) as columns,
         (
           SELECT string_agg(
-            'CONSTRAINT ' || constraint_name || ' ' ||
+            'CONSTRAINT "' || constraint_name || '" ' ||
             CASE constraint_type
               WHEN 'PRIMARY KEY' THEN 'PRIMARY KEY (' || (
                 SELECT string_agg(column_name, ', ' ORDER BY ordinal_position)
@@ -16790,7 +16790,7 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
     for (const [, fk] of fkMap) {
       const alterSQL = `
         ALTER TABLE ${fk.table}
-        ADD CONSTRAINT ${fk.name}
+        ADD CONSTRAINT "${fk.name}"
         FOREIGN KEY (${fk.columns.join(', ')})
         REFERENCES ${fk.foreignTable} (${fk.foreignColumns.join(', ')})
         ON UPDATE ${fk.onUpdate}
