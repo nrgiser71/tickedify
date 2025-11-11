@@ -17258,34 +17258,34 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
 // DEBUG: Check what schema copy query returns for specific tables
 app.get('/api/admin/test-db/debug-schema', async (req, res) => {
   try {
-    const tables = await pool.query(`
+    // Get individual column details
+    const columns = await pool.query(`
       SELECT
         table_name,
-        (
-          SELECT string_agg(
-            '"' || column_name || '" ' ||
-            CASE
-              WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
-              WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
-              WHEN data_type = 'ARRAY' THEN udt_name
-              WHEN data_type = 'USER-DEFINED' THEN udt_name
-              ELSE UPPER(data_type)
-            END ||
-            CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
-            CASE WHEN column_default IS NOT NULL THEN ' DEFAULT ' || column_default ELSE '' END,
-            ', '
-            ORDER BY ordinal_position
-          )
-          FROM information_schema.columns
-          WHERE table_schema = 'public' AND table_name = t.table_name
-        ) as columns
-      FROM information_schema.tables t
-      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        column_name,
+        ordinal_position,
+        data_type,
+        character_maximum_length,
+        is_nullable,
+        column_default,
+        '"' || column_name || '" ' ||
+        CASE
+          WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
+          WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
+          WHEN data_type = 'ARRAY' THEN udt_name
+          WHEN data_type = 'USER-DEFINED' THEN udt_name
+          ELSE UPPER(data_type)
+        END ||
+        CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
+        CASE WHEN column_default IS NOT NULL THEN ' DEFAULT ' || column_default ELSE '' END
+        as column_definition
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
         AND table_name IN ('password_reset_tokens', 'session', 'user_sessions')
-      ORDER BY table_name
+      ORDER BY table_name, ordinal_position
     `);
 
-    res.json({ tables: tables.rows });
+    res.json({ columns: columns.rows });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
