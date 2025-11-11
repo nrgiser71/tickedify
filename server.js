@@ -16690,60 +16690,48 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
           WHERE table_schema = 'public' AND table_name = t.table_name
         ) as columns,
         (
-          SELECT string_agg(
-            'CONSTRAINT "' || constraint_name || '" ' ||
-            CASE constraint_type
-              WHEN 'PRIMARY KEY' THEN 'PRIMARY KEY (' || (
-                SELECT string_agg('"' || column_name || '"', ', ' ORDER BY ordinal_position)
-                FROM information_schema.key_column_usage kcu
-                WHERE kcu.constraint_name = tc.constraint_name
-                  AND EXISTS (
-                    SELECT 1 FROM information_schema.columns c
-                    WHERE c.table_schema = 'public'
-                      AND c.table_name = t.table_name
-                      AND c.column_name = kcu.column_name
-                  )
-              ) || ')'
-              WHEN 'UNIQUE' THEN 'UNIQUE (' || (
-                SELECT string_agg('"' || column_name || '"', ', ' ORDER BY ordinal_position)
-                FROM information_schema.key_column_usage kcu
-                WHERE kcu.constraint_name = tc.constraint_name
-                  AND EXISTS (
-                    SELECT 1 FROM information_schema.columns c
-                    WHERE c.table_schema = 'public'
-                      AND c.table_name = t.table_name
-                      AND c.column_name = kcu.column_name
-                  )
-              ) || ')'
-              WHEN 'CHECK' THEN 'CHECK (' || (
-                SELECT check_clause
-                FROM information_schema.check_constraints
-                WHERE constraint_name = tc.constraint_name
-              ) || ')'
-              ELSE ''
-            END,
-            ', '
-          )
-          FROM information_schema.table_constraints tc
-          WHERE tc.table_schema = 'public'
-            AND tc.table_name = t.table_name
-            AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'CHECK')
-            AND tc.constraint_name NOT LIKE '%_not_null'
-            AND (
-              tc.constraint_type = 'CHECK'
-              OR EXISTS (
-                SELECT 1 FROM information_schema.key_column_usage kcu
-                JOIN information_schema.columns c
-                  ON c.table_schema = 'public'
-                  AND c.table_name = t.table_name
-                  AND c.column_name = kcu.column_name
-                WHERE kcu.constraint_name = tc.constraint_name
-                HAVING COUNT(*) = (
-                  SELECT COUNT(*) FROM information_schema.key_column_usage
+          SELECT string_agg(constraint_def, ', ')
+          FROM (
+            SELECT
+              tc.constraint_name,
+              'CONSTRAINT "' || tc.constraint_name || '" ' ||
+              CASE tc.constraint_type
+                WHEN 'PRIMARY KEY' THEN 'PRIMARY KEY (' || (
+                  SELECT string_agg('"' || kcu.column_name || '"', ', ' ORDER BY kcu.ordinal_position)
+                  FROM information_schema.key_column_usage kcu
+                  WHERE kcu.constraint_name = tc.constraint_name
+                ) || ')'
+                WHEN 'UNIQUE' THEN 'UNIQUE (' || (
+                  SELECT string_agg('"' || kcu.column_name || '"', ', ' ORDER BY kcu.ordinal_position)
+                  FROM information_schema.key_column_usage kcu
+                  WHERE kcu.constraint_name = tc.constraint_name
+                ) || ')'
+                WHEN 'CHECK' THEN 'CHECK (' || (
+                  SELECT check_clause
+                  FROM information_schema.check_constraints
                   WHERE constraint_name = tc.constraint_name
+                ) || ')'
+              END as constraint_def
+            FROM information_schema.table_constraints tc
+            WHERE tc.table_schema = 'public'
+              AND tc.table_name = t.table_name
+              AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'CHECK')
+              AND tc.constraint_name NOT LIKE '%_not_null'
+              AND (
+                tc.constraint_type = 'CHECK'
+                OR NOT EXISTS (
+                  SELECT 1
+                  FROM information_schema.key_column_usage kcu
+                  WHERE kcu.constraint_name = tc.constraint_name
+                    AND NOT EXISTS (
+                      SELECT 1 FROM information_schema.columns c
+                      WHERE c.table_schema = 'public'
+                        AND c.table_name = t.table_name
+                        AND c.column_name = kcu.column_name
+                    )
                 )
               )
-            )
+          ) constraints_sub
         ) as constraints
       FROM information_schema.tables t
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
