@@ -16673,7 +16673,7 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
         table_name,
         (
           SELECT string_agg(
-            column_name || ' ' ||
+            '"' || column_name || '" ' ||
             CASE
               WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
               WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
@@ -16694,12 +16694,12 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
             'CONSTRAINT "' || constraint_name || '" ' ||
             CASE constraint_type
               WHEN 'PRIMARY KEY' THEN 'PRIMARY KEY (' || (
-                SELECT string_agg(column_name, ', ' ORDER BY ordinal_position)
+                SELECT string_agg('"' || column_name || '"', ', ' ORDER BY ordinal_position)
                 FROM information_schema.key_column_usage
                 WHERE constraint_name = tc.constraint_name
               ) || ')'
               WHEN 'UNIQUE' THEN 'UNIQUE (' || (
-                SELECT string_agg(column_name, ', ' ORDER BY ordinal_position)
+                SELECT string_agg('"' || column_name || '"', ', ' ORDER BY ordinal_position)
                 FROM information_schema.key_column_usage
                 WHERE constraint_name = tc.constraint_name
               ) || ')'
@@ -16756,7 +16756,7 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
     // Step 4: Create all tables (without foreign keys)
     for (const table of tables.rows) {
       const createSQL = `
-        CREATE TABLE ${table.table_name} (
+        CREATE TABLE "${table.table_name}" (
           ${table.columns}
           ${table.constraints ? ', ' + table.constraints : ''}
         )
@@ -16789,10 +16789,10 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 
     for (const [, fk] of fkMap) {
       const alterSQL = `
-        ALTER TABLE ${fk.table}
+        ALTER TABLE "${fk.table}"
         ADD CONSTRAINT "${fk.name}"
-        FOREIGN KEY (${fk.columns.join(', ')})
-        REFERENCES ${fk.foreignTable} (${fk.foreignColumns.join(', ')})
+        FOREIGN KEY ("${fk.columns.join('", "')}")
+        REFERENCES "${fk.foreignTable}" ("${fk.foreignColumns.join('", "')}")
         ON UPDATE ${fk.onUpdate}
         ON DELETE ${fk.onDelete}
       `;
