@@ -16822,8 +16822,14 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 
     console.log(`📦 Creating ${tables.rows.length} tables...`);
 
-    // Step 4: Create all tables (without foreign keys)
+    // Step 6: Create all tables (without foreign keys)
     for (const table of tables.rows) {
+      // Skip tables with no columns (schema inconsistency)
+      if (!table.columns || table.columns.trim() === '') {
+        console.log(`  ⚠️  Skipped table ${table.table_name}: no columns found`);
+        continue;
+      }
+
       const createSQL = `
         CREATE TABLE "${table.table_name}" (
           ${table.columns}
@@ -16834,8 +16840,24 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
       console.log(`  📝 Creating table ${table.table_name}:`);
       console.log(createSQL);
 
-      await testPool.query(createSQL);
-      console.log(`  ✓ Created table: ${table.table_name}`);
+      try {
+        await testPool.query(createSQL);
+        console.log(`  ✓ Created table: ${table.table_name}`);
+      } catch (error) {
+        // If constraint references non-existent column, recreate without constraints
+        if (error.code === '42703' && error.message.includes('named in key does not exist')) {
+          console.log(`  ⚠️  Retrying ${table.table_name} without constraints...`);
+          const createSQLNoConstraints = `
+            CREATE TABLE "${table.table_name}" (
+              ${table.columns}
+            )
+          `;
+          await testPool.query(createSQLNoConstraints);
+          console.log(`  ✓ Created table: ${table.table_name} (without constraints)`);
+        } else {
+          throw error;
+        }
+      }
     }
 
     console.log(`🔗 Adding ${foreignKeys.rows.length} foreign keys...`);
