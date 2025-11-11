@@ -17255,6 +17255,42 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
   }
 });
 
+// DEBUG: Check what schema copy query returns for specific tables
+app.get('/api/admin/test-db/debug-schema', async (req, res) => {
+  try {
+    const tables = await pool.query(`
+      SELECT
+        table_name,
+        (
+          SELECT string_agg(
+            '"' || column_name || '" ' ||
+            CASE
+              WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
+              WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
+              WHEN data_type = 'ARRAY' THEN udt_name
+              WHEN data_type = 'USER-DEFINED' THEN udt_name
+              ELSE UPPER(data_type)
+            END ||
+            CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
+            CASE WHEN column_default IS NOT NULL THEN ' DEFAULT ' || column_default ELSE '' END,
+            ', '
+            ORDER BY ordinal_position
+          )
+          FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = t.table_name
+        ) as columns
+      FROM information_schema.tables t
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        AND table_name IN ('password_reset_tokens', 'session', 'user_sessions')
+      ORDER BY table_name
+    `);
+
+    res.json({ tables: tables.rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 5. List test database users
 app.get('/api/admin/test-db/users', requireAdmin, async (req, res) => {
   if (!testPool) {
