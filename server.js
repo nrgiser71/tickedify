@@ -16831,8 +16831,14 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
         ON DELETE ${fk.onDelete}
       `;
 
-      await testPool.query(alterSQL);
-      console.log(`  ✓ Added FK: ${fk.table} → ${fk.foreignTable}`);
+      try {
+        await testPool.query(alterSQL);
+        console.log(`  ✓ Added FK: ${fk.table}.${fk.columns} → ${fk.foreignTable}.${fk.foreignColumns}`);
+      } catch (error) {
+        console.error(`  ✗ Failed FK: ${fk.table}.${fk.columns} → ${fk.foreignTable}.${fk.foreignColumns}`);
+        console.error(`  SQL: ${alterSQL}`);
+        throw error;
+      }
     }
 
     // Step 6: Get final table count
