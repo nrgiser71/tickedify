@@ -16721,8 +16721,8 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 app.get('/api/admin/production-users', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, username, email
-      FROM users
+      SELECT id, email, naam as username
+      FROM gebruikers
       ORDER BY id
     `);
 
@@ -16758,7 +16758,7 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     const startTime = Date.now();
 
     // Get user from production
-    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    const userResult = await pool.query('SELECT * FROM gebruikers WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({
         error: 'UserNotFound',
@@ -16769,7 +16769,7 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     const user = userResult.rows[0];
 
     // Check for duplicate in test
-    const testUserCheck = await testPool.query('SELECT id FROM users WHERE email = $1', [user.email]);
+    const testUserCheck = await testPool.query('SELECT id FROM gebruikers WHERE email = $1', [user.email]);
     if (testUserCheck.rows.length > 0) {
       return res.status(409).json({
         error: 'UserAlreadyExists',
@@ -16783,11 +16783,14 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // Copy user
+      // Copy user (gebruikers table has different schema than old 'users' table)
       await client.query(`
-        INSERT INTO users (id, username, password_hash, email, email_import_code)
-        VALUES ($1, $2, $3, $4, $5)
-      `, [user.id, user.username, user.password_hash, user.email, user.email_import_code]);
+        INSERT INTO gebruikers (id, naam, wachtwoord, email, email_import_code, created_at,
+                                account_type, subscription_status, trial_start_date, subscription_start_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [user.id, user.naam, user.wachtwoord, user.email, user.email_import_code,
+          user.created_at, user.account_type, user.subscription_status,
+          user.trial_start_date, user.subscription_start_date]);
 
       // Copy taken (tasks)
       const taken = await pool.query('SELECT * FROM taken WHERE user_id = $1', [userId]);
@@ -16903,15 +16906,15 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
 });
 
 // 5. List test database users
-app.get('/api/admin/test-users', requireAdmin, async (req, res) => {
+app.get('/api/admin/test-db/users', requireAdmin, async (req, res) => {
   if (!testPool) {
     return res.json({ users: [] });
   }
 
   try {
     const result = await testPool.query(`
-      SELECT id, username, email
-      FROM users
+      SELECT id, email, naam as username
+      FROM gebruikers
       ORDER BY id
     `);
 
@@ -16938,7 +16941,7 @@ app.delete('/api/admin/test-db/user/:userId', requireAdmin, async (req, res) => 
 
   try {
     // Check if user exists
-    const userCheck = await testPool.query('SELECT id FROM users WHERE id = $1', [userId]);
+    const userCheck = await testPool.query('SELECT id FROM gebruikers WHERE id = $1', [userId]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({
         error: 'UserNotFound',
@@ -16948,6 +16951,8 @@ app.delete('/api/admin/test-db/user/:userId', requireAdmin, async (req, res) => 
 
     // Count related data before delete
     const taskCount = await testPool.query('SELECT COUNT(*) FROM taken WHERE user_id = $1', [userId]);
+    const attachmentCount = await testPool.query('SELECT COUNT(*) FROM bijlagen WHERE user_id = $1', [userId]);
+    const feedbackCount = await testPool.query('SELECT COUNT(*) FROM feedback WHERE user_id = $1', [userId]);
 
     // Delete user (cascades via foreign keys where applicable)
     await testPool.query('DELETE FROM feedback WHERE user_id = $1', [userId]);
@@ -16958,11 +16963,13 @@ app.delete('/api/admin/test-db/user/:userId', requireAdmin, async (req, res) => 
       )
     `, [userId]);
     await testPool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
-    await testPool.query('DELETE FROM users WHERE id = $1', [userId]);
+    await testPool.query('DELETE FROM gebruikers WHERE id = $1', [userId]);
 
     res.json({
       success: true,
-      deletedTasks: parseInt(taskCount.rows[0].count)
+      deletedTasks: parseInt(taskCount.rows[0].count),
+      deletedAttachments: parseInt(attachmentCount.rows[0].count),
+      deletedFeedback: parseInt(feedbackCount.rows[0].count)
     });
 
   } catch (error) {
@@ -16997,7 +17004,7 @@ app.post('/api/admin/test-db/clear', requireAdmin, async (req, res) => {
       'bijlagen',
       'subtaken',
       'taken',
-      'users',
+      'gebruikers',
       'projecten',
       'contexten',
       'page_help',
