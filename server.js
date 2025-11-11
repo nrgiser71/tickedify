@@ -16703,11 +16703,11 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
                 FROM information_schema.key_column_usage
                 WHERE constraint_name = tc.constraint_name
               ) || ')'
-              WHEN 'CHECK' THEN (
+              WHEN 'CHECK' THEN 'CHECK (' || (
                 SELECT check_clause
                 FROM information_schema.check_constraints
                 WHERE constraint_name = tc.constraint_name
-              )
+              ) || ')'
               ELSE ''
             END,
             ', '
