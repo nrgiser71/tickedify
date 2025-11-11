@@ -16695,13 +16695,25 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
             CASE constraint_type
               WHEN 'PRIMARY KEY' THEN 'PRIMARY KEY (' || (
                 SELECT string_agg('"' || column_name || '"', ', ' ORDER BY ordinal_position)
-                FROM information_schema.key_column_usage
-                WHERE constraint_name = tc.constraint_name
+                FROM information_schema.key_column_usage kcu
+                WHERE kcu.constraint_name = tc.constraint_name
+                  AND EXISTS (
+                    SELECT 1 FROM information_schema.columns c
+                    WHERE c.table_schema = 'public'
+                      AND c.table_name = t.table_name
+                      AND c.column_name = kcu.column_name
+                  )
               ) || ')'
               WHEN 'UNIQUE' THEN 'UNIQUE (' || (
                 SELECT string_agg('"' || column_name || '"', ', ' ORDER BY ordinal_position)
-                FROM information_schema.key_column_usage
-                WHERE constraint_name = tc.constraint_name
+                FROM information_schema.key_column_usage kcu
+                WHERE kcu.constraint_name = tc.constraint_name
+                  AND EXISTS (
+                    SELECT 1 FROM information_schema.columns c
+                    WHERE c.table_schema = 'public'
+                      AND c.table_name = t.table_name
+                      AND c.column_name = kcu.column_name
+                  )
               ) || ')'
               WHEN 'CHECK' THEN 'CHECK (' || (
                 SELECT check_clause
@@ -16717,6 +16729,21 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
             AND tc.table_name = t.table_name
             AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'CHECK')
             AND tc.constraint_name NOT LIKE '%_not_null'
+            AND (
+              tc.constraint_type = 'CHECK'
+              OR EXISTS (
+                SELECT 1 FROM information_schema.key_column_usage kcu
+                JOIN information_schema.columns c
+                  ON c.table_schema = 'public'
+                  AND c.table_name = t.table_name
+                  AND c.column_name = kcu.column_name
+                WHERE kcu.constraint_name = tc.constraint_name
+                HAVING COUNT(*) = (
+                  SELECT COUNT(*) FROM information_schema.key_column_usage
+                  WHERE constraint_name = tc.constraint_name
+                )
+              )
+            )
         ) as constraints
       FROM information_schema.tables t
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
