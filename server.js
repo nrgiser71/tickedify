@@ -16722,7 +16722,7 @@ app.get('/api/admin/production-users', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, email, naam as username
-      FROM gebruikers
+      FROM users
       ORDER BY id
     `);
 
@@ -16758,7 +16758,7 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     const startTime = Date.now();
 
     // Get user from production
-    const userResult = await pool.query('SELECT * FROM gebruikers WHERE id = $1', [userId]);
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({
         error: 'UserNotFound',
@@ -16769,7 +16769,7 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     const user = userResult.rows[0];
 
     // Check for duplicate in test
-    const testUserCheck = await testPool.query('SELECT id FROM gebruikers WHERE email = $1', [user.email]);
+    const testUserCheck = await testPool.query('SELECT id FROM users WHERE email = $1', [user.email]);
     if (testUserCheck.rows.length > 0) {
       return res.status(409).json({
         error: 'UserAlreadyExists',
@@ -16783,14 +16783,14 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // Copy user (gebruikers table has different schema than old 'users' table)
+      // Copy user with all necessary columns
       await client.query(`
-        INSERT INTO gebruikers (id, naam, wachtwoord, email, email_import_code, created_at,
-                                account_type, subscription_status, trial_start_date, subscription_start_date)
+        INSERT INTO users (id, email, naam, wachtwoord_hash, email_import_code, aangemaakt,
+                           account_type, subscription_status, trial_start_date, trial_end_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      `, [user.id, user.naam, user.wachtwoord, user.email, user.email_import_code,
-          user.created_at, user.account_type, user.subscription_status,
-          user.trial_start_date, user.subscription_start_date]);
+      `, [user.id, user.email, user.naam, user.wachtwoord_hash, user.email_import_code,
+          user.aangemaakt, user.account_type, user.subscription_status,
+          user.trial_start_date, user.trial_end_date]);
 
       // Copy taken (tasks)
       const taken = await pool.query('SELECT * FROM taken WHERE user_id = $1', [userId]);
@@ -16914,13 +16914,17 @@ app.get('/api/admin/test-db/users', requireAdmin, async (req, res) => {
   try {
     const result = await testPool.query(`
       SELECT id, email, naam as username
-      FROM gebruikers
+      FROM users
       ORDER BY id
     `);
 
     res.json({ users: result.rows });
   } catch (error) {
     console.error('List test users error:', error);
+    // Don't return 500 if table doesn't exist yet - test DB might not have schema
+    if (error.message.includes('does not exist')) {
+      return res.json({ users: [], schemaNotInitialized: true });
+    }
     res.status(500).json({
       error: 'QueryFailed',
       message: error.message
@@ -16941,7 +16945,7 @@ app.delete('/api/admin/test-db/user/:userId', requireAdmin, async (req, res) => 
 
   try {
     // Check if user exists
-    const userCheck = await testPool.query('SELECT id FROM gebruikers WHERE id = $1', [userId]);
+    const userCheck = await testPool.query('SELECT id FROM users WHERE id = $1', [userId]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({
         error: 'UserNotFound',
@@ -16963,7 +16967,7 @@ app.delete('/api/admin/test-db/user/:userId', requireAdmin, async (req, res) => 
       )
     `, [userId]);
     await testPool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
-    await testPool.query('DELETE FROM gebruikers WHERE id = $1', [userId]);
+    await testPool.query('DELETE FROM users WHERE id = $1', [userId]);
 
     res.json({
       success: true,
@@ -17004,7 +17008,7 @@ app.post('/api/admin/test-db/clear', requireAdmin, async (req, res) => {
       'bijlagen',
       'subtaken',
       'taken',
-      'gebruikers',
+      'users',
       'projecten',
       'contexten',
       'page_help',

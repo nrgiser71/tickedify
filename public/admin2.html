@@ -3458,6 +3458,12 @@ Examples:
 
         // Initialize test environment when screen loads
         document.addEventListener('DOMContentLoaded', () => {
+            // Check if test-env screen is already active on page load
+            const testEnvScreen = document.getElementById('screen-test-env');
+            if (testEnvScreen && testEnvScreen.classList.contains('active')) {
+                initTestEnvironment();
+            }
+
             // Add screen change listener for test-env
             const testEnvLink = document.querySelector('a[data-screen="test-env"]');
             if (testEnvLink) {
@@ -3680,6 +3686,19 @@ Examples:
                 }
 
                 const data = await response.json();
+
+                // Check if schema is not initialized
+                if (data.schemaNotInitialized) {
+                    container.innerHTML = `
+                        <div style="padding: 40px; text-align: center; color: var(--macos-text-secondary);">
+                            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                            <h3 style="margin: 0 0 8px 0; color: var(--macos-text-primary);">Test Database Not Initialized</h3>
+                            <p style="margin: 0;">Click "Copy Schema" above to initialize the test database first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
                 renderTestUsers(data.users);
 
             } catch (error) {
