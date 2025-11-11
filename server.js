@@ -16716,6 +16716,7 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
           WHERE tc.table_schema = 'public'
             AND tc.table_name = t.table_name
             AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'CHECK')
+            AND tc.constraint_name NOT LIKE '%_not_null'
         ) as constraints
       FROM information_schema.tables t
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
