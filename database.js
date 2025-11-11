@@ -1,9 +1,27 @@
 const { Pool } = require('pg');
 const forensicLogger = require('./forensic-logger');
 
-// Production database connection
+// Determine which database URL to use based on environment
+function getDatabaseUrl() {
+  const gitBranch = process.env.VERCEL_GIT_COMMIT_REF;
+
+  // Staging branch uses test database
+  if (gitBranch === 'staging' && process.env.DATABASE_URL_TEST) {
+    console.log('🔧 Using TEST database for staging branch');
+    return process.env.DATABASE_URL_TEST;
+  }
+
+  // Production and other branches use production database
+  console.log('🔧 Using PRODUCTION database');
+  return process.env.DATABASE_URL ||
+         process.env.POSTGRES_URL ||
+         process.env.POSTGRES_PRISMA_URL ||
+         process.env.POSTGRES_URL_NON_POOLING;
+}
+
+// Production database connection (or test database for staging branch)
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING,
+  connectionString: getDatabaseUrl(),
   ssl: { rejectUnauthorized: false }
 });
 
