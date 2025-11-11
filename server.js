@@ -16675,7 +16675,10 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
           SELECT string_agg(
             '"' || column_name || '" ' ||
             CASE
-              WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
+              WHEN data_type = 'character varying' AND character_maximum_length IS NOT NULL
+                THEN 'VARCHAR(' || character_maximum_length || ')'
+              WHEN data_type = 'character varying' AND character_maximum_length IS NULL
+                THEN 'VARCHAR'
               WHEN data_type = 'numeric' THEN 'DECIMAL(' || numeric_precision || ',' || numeric_scale || ')'
               WHEN data_type = 'ARRAY' THEN udt_name
               WHEN data_type = 'USER-DEFINED' THEN udt_name
