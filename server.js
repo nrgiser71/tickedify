@@ -16895,9 +16895,14 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
         await testPool.query(alterSQL);
         console.log(`  ✓ Added FK: ${fk.table}.${fk.columns} → ${fk.foreignTable}.${fk.foreignColumns}`);
       } catch (error) {
-        console.error(`  ✗ Failed FK: ${fk.table}.${fk.columns} → ${fk.foreignTable}.${fk.foreignColumns}`);
-        console.error(`  SQL: ${alterSQL}`);
-        throw error;
+        // Skip FK if column doesn't exist (schema inconsistency)
+        if (error.code === '42703' && error.message.includes('does not exist')) {
+          console.log(`  ⚠️  Skipped FK: ${fk.table}.${fk.columns} → ${fk.foreignTable}.${fk.foreignColumns} (column missing)`);
+        } else {
+          console.error(`  ✗ Failed FK: ${fk.table}.${fk.columns} → ${fk.foreignTable}.${fk.foreignColumns}`);
+          console.error(`  SQL: ${alterSQL}`);
+          throw error;
+        }
       }
     }
 
