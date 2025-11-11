@@ -1793,6 +1793,18 @@ Examples:
                                 </button>
                             </div>
 
+                            <!-- Validate Schema Button -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: white; border-radius: var(--macos-radius-medium); border: 1px solid var(--macos-border);">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; margin-bottom: 4px;">🔍 Validate Schema Sync</div>
+                                    <div style="font-size: 12px; color: var(--macos-text-secondary);">Compare production and test database structures before copying users</div>
+                                    <div id="schema-validation-result" style="margin-top: 8px; font-size: 12px; display: none;"></div>
+                                </div>
+                                <button class="btn btn-secondary" onclick="validateSchema()" id="validate-schema-btn">
+                                    Validate
+                                </button>
+                            </div>
+
                             <!-- Clear Test Database Button -->
                             <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: white; border-radius: var(--macos-radius-medium); border: 1px solid var(--macos-border);">
                                 <div>
@@ -3582,6 +3594,62 @@ Examples:
             }
         }
 
+        // Validate schema sync between production and test
+        async function validateSchema() {
+            const btn = document.getElementById('validate-schema-btn');
+            const resultDiv = document.getElementById('schema-validation-result');
+            const originalText = btn.textContent;
+
+            btn.disabled = true;
+            btn.textContent = 'Validating...';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/admin/test-db/validate-schema', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `Schema validation failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                resultDiv.style.display = 'block';
+
+                if (result.schemasMatch) {
+                    resultDiv.innerHTML = '<span style="color: var(--macos-green);">✅ Schemas are in sync - safe to copy users</span>';
+                } else {
+                    const diff = result.differences;
+                    let details = [];
+
+                    if (diff.missingTablesInTest.length > 0) {
+                        details.push(`Missing tables in test: ${diff.missingTablesInTest.join(', ')}`);
+                    }
+                    if (diff.extraTablesInTest.length > 0) {
+                        details.push(`Extra tables in test: ${diff.extraTablesInTest.join(', ')}`);
+                    }
+                    if (diff.tableDifferences.length > 0) {
+                        const tableNames = diff.tableDifferences.map(t => t.table).join(', ');
+                        details.push(`Column differences in: ${tableNames}`);
+                    }
+
+                    resultDiv.innerHTML = `<span style="color: var(--macos-red);">⚠️ Schema mismatch detected</span><br><span style="color: var(--macos-text-secondary);">${details.join('<br>')}</span><br><strong>Recommendation:</strong> ${result.recommendation}`;
+                }
+
+            } catch (error) {
+                console.error('Schema validation error:', error);
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<span style="color: var(--macos-red);">❌ Validation failed: ${error.message}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
         // Clear test database
         async function clearTestDatabase() {
             const confirmed = confirm('⚠️ WARNING: This will delete ALL data from the test database.\n\nThe schema will be preserved, but all users, tasks, projects, etc. will be deleted.\n\nContinue?');
@@ -3760,7 +3828,23 @@ Examples:
                 }
 
                 const result = await response.json();
-                alert(`✅ User copied successfully!\n\nUser: ${result.userEmail}\nTasks: ${result.tasksCopied}\nProjects: ${result.projectsCopied}\nContexts: ${result.contextsCopied}\nAttachments: ${result.attachmentsCopied}\nDuration: ${(result.duration / 1000).toFixed(2)}s`);
+
+                let message = `✅ User copied successfully!\n\nUser: ${result.userEmail}\n`;
+                message += `Users: ${result.stats.users}\n`;
+                message += `Tasks: ${result.stats.taken}\n`;
+                message += `Projects: ${result.stats.projecten}\n`;
+                message += `Contexts: ${result.stats.contexten}\n`;
+                message += `Subtasks: ${result.stats.subtaken}\n`;
+                message += `Attachments: ${result.stats.bijlagen}\n`;
+                message += `Feedback: ${result.stats.feedback}\n`;
+                message += `Duration: ${(result.duration / 1000).toFixed(2)}s`;
+
+                if (result.hasErrors) {
+                    message += `\n\n⚠️ ${result.stats.errors.length} error(s) occurred during copy. Check console for details.`;
+                    console.error('Copy errors:', result.stats.errors);
+                }
+
+                alert(message);
 
                 // Refresh test users list
                 await loadTestUsers();

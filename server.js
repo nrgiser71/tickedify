@@ -16953,7 +16953,158 @@ app.get('/api/admin/production-users', requireAdmin, async (req, res) => {
   }
 });
 
-// 4. Copy user from production to test
+// 4. Validate schema differences between production and test
+app.post('/api/admin/test-db/validate-schema', requireAdmin, async (req, res) => {
+  if (!testPool) {
+    return res.status(500).json({
+      error: 'TestDatabaseNotConfigured',
+      message: 'DATABASE_URL_TEST not set'
+    });
+  }
+
+  try {
+    const startTime = Date.now();
+
+    // Get all tables and their columns from both databases
+    const prodSchema = await pool.query(`
+      SELECT
+        table_name,
+        column_name,
+        data_type,
+        is_nullable,
+        column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+      ORDER BY table_name, ordinal_position
+    `);
+
+    const testSchema = await testPool.query(`
+      SELECT
+        table_name,
+        column_name,
+        data_type,
+        is_nullable,
+        column_default
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+      ORDER BY table_name, ordinal_position
+    `);
+
+    // Build maps for comparison
+    const prodTables = {};
+    const testTables = {};
+
+    prodSchema.rows.forEach(col => {
+      if (!prodTables[col.table_name]) prodTables[col.table_name] = [];
+      prodTables[col.table_name].push(col);
+    });
+
+    testSchema.rows.forEach(col => {
+      if (!testTables[col.table_name]) testTables[col.table_name] = [];
+      testTables[col.table_name].push(col);
+    });
+
+    // Compare schemas
+    const differences = {
+      missingTablesInTest: [],
+      extraTablesInTest: [],
+      tableDifferences: []
+    };
+
+    // Check for missing tables in test
+    Object.keys(prodTables).forEach(tableName => {
+      if (!testTables[tableName]) {
+        differences.missingTablesInTest.push(tableName);
+      }
+    });
+
+    // Check for extra tables in test
+    Object.keys(testTables).forEach(tableName => {
+      if (!prodTables[tableName]) {
+        differences.extraTablesInTest.push(tableName);
+      }
+    });
+
+    // Compare columns for tables that exist in both
+    Object.keys(prodTables).forEach(tableName => {
+      if (!testTables[tableName]) return;
+
+      const prodCols = prodTables[tableName].map(c => c.column_name);
+      const testCols = testTables[tableName].map(c => c.column_name);
+
+      const missingCols = prodCols.filter(c => !testCols.includes(c));
+      const extraCols = testCols.filter(c => !prodCols.includes(c));
+
+      if (missingCols.length > 0 || extraCols.length > 0) {
+        differences.tableDifferences.push({
+          table: tableName,
+          missingColumns: missingCols,
+          extraColumns: extraCols
+        });
+      }
+    });
+
+    const duration = Date.now() - startTime;
+    const hasDifferences =
+      differences.missingTablesInTest.length > 0 ||
+      differences.extraTablesInTest.length > 0 ||
+      differences.tableDifferences.length > 0;
+
+    res.json({
+      success: true,
+      schemasMatch: !hasDifferences,
+      differences,
+      duration,
+      recommendation: hasDifferences
+        ? 'Run "Copy Schema" to sync test database with production'
+        : 'Schemas are in sync - safe to copy users'
+    });
+
+  } catch (error) {
+    console.error('Schema validation error:', error);
+    res.status(500).json({
+      error: 'ValidationFailed',
+      message: error.message
+    });
+  }
+});
+
+// Helper: Get common columns between production and test for a table
+async function getCommonColumns(tableName, prodPool, testPool) {
+  const prodCols = await prodPool.query(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = $1
+    ORDER BY ordinal_position
+  `, [tableName]);
+
+  const testCols = await testPool.query(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = $1
+    ORDER BY ordinal_position
+  `, [tableName]);
+
+  const prodColNames = prodCols.rows.map(r => r.column_name);
+  const testColNames = testCols.rows.map(r => r.column_name);
+
+  // Return columns that exist in BOTH databases
+  return prodColNames.filter(col => testColNames.includes(col));
+}
+
+// Helper: Build dynamic INSERT statement
+function buildInsertStatement(tableName, columns, row) {
+  const colList = columns.map(c => `"${c}"`).join(', ');
+  const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
+  const values = columns.map(c => row[c]);
+
+  return {
+    sql: `INSERT INTO "${tableName}" (${colList}) VALUES (${placeholders})`,
+    values
+  };
+}
+
+// 5. Copy user from production to test (DYNAMIC VERSION)
 app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
   const { userId, confirm } = req.body;
 
@@ -16973,6 +17124,16 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
 
   try {
     const startTime = Date.now();
+    const copyStats = {
+      users: 0,
+      taken: 0,
+      projecten: 0,
+      contexten: 0,
+      subtaken: 0,
+      bijlagen: 0,
+      feedback: 0,
+      errors: []
+    };
 
     // Get user from production
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
@@ -17000,97 +17161,71 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // Copy user with all necessary columns
-      await client.query(`
-        INSERT INTO users (id, email, naam, wachtwoord_hash, email_import_code, aangemaakt,
-                           account_type, subscription_status, trial_start_date, trial_end_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      `, [user.id, user.email, user.naam, user.wachtwoord_hash, user.email_import_code,
-          user.aangemaakt, user.account_type, user.subscription_status,
-          user.trial_start_date, user.trial_end_date]);
+      // Helper function to copy table rows dynamically
+      async function copyTableRows(tableName, rows) {
+        if (rows.length === 0) return 0;
 
-      // Copy taken (tasks)
+        const columns = await getCommonColumns(tableName, pool, testPool);
+        let copiedCount = 0;
+
+        for (const row of rows) {
+          try {
+            const { sql, values } = buildInsertStatement(tableName, columns, row);
+            await client.query(sql, values);
+            copiedCount++;
+          } catch (err) {
+            // Skip duplicate keys, report other errors
+            if (!err.message.includes('duplicate key')) {
+              copyStats.errors.push({
+                table: tableName,
+                error: err.message,
+                rowId: row.id || 'unknown'
+              });
+            }
+          }
+        }
+
+        return copiedCount;
+      }
+
+      // 1. Copy user
+      copyStats.users = await copyTableRows('users', [user]);
+
+      // 2. Copy taken (tasks)
       const taken = await pool.query('SELECT * FROM taken WHERE user_id = $1', [userId]);
-      for (const taak of taken.rows) {
-        await client.query(`
-          INSERT INTO taken (id, naam, lijst, status, datum, verschijndatum, project_id, context_id,
-                             duur, type, afgewerkt, user_id, herhaling_type, herhaling_waarde,
-                             herhaling_actief, opmerkingen, top_prioriteit, prioriteit_datum, prioriteit)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-        `, [taak.id, taak.naam, taak.lijst, taak.status, taak.datum, taak.verschijndatum,
-            taak.project_id, taak.context_id, taak.duur, taak.type, taak.afgewerkt, taak.user_id,
-            taak.herhaling_type, taak.herhaling_waarde, taak.herhaling_actief, taak.opmerkingen,
-            taak.top_prioriteit, taak.prioriteit_datum, taak.prioriteit]);
-      }
+      copyStats.taken = await copyTableRows('taken', taken.rows);
 
-      // Copy projecten
-      const projecten = await pool.query('SELECT * FROM projecten');
-      let projectsCopied = 0;
-      for (const project of projecten.rows) {
-        try {
-          await client.query(`
-            INSERT INTO projecten (id, naam, omschrijving, kleur, volgorde, archief, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-          `, [project.id, project.naam, project.omschrijving, project.kleur,
-              project.volgorde, project.archief, project.user_id]);
-          projectsCopied++;
-        } catch (err) {
-          // Skip if already exists
-          if (!err.message.includes('duplicate key')) throw err;
-        }
-      }
+      // 3. Copy projecten (only those used by this user's taken)
+      const projecten = await pool.query(`
+        SELECT DISTINCT p.* FROM projecten p
+        JOIN taken t ON t.project_id = p.id
+        WHERE t.user_id = $1
+      `, [userId]);
+      copyStats.projecten = await copyTableRows('projecten', projecten.rows);
 
-      // Copy contexten
-      const contexten = await pool.query('SELECT * FROM contexten');
-      let contextsCopied = 0;
-      for (const context of contexten.rows) {
-        try {
-          await client.query(`
-            INSERT INTO contexten (id, naam, volgorde, user_id)
-            VALUES ($1, $2, $3, $4)
-          `, [context.id, context.naam, context.volgorde, context.user_id]);
-          contextsCopied++;
-        } catch (err) {
-          if (!err.message.includes('duplicate key')) throw err;
-        }
-      }
+      // 4. Copy contexten (only those used by this user's taken)
+      const contexten = await pool.query(`
+        SELECT DISTINCT c.* FROM contexten c
+        JOIN taken t ON t.context_id = c.id
+        WHERE t.user_id = $1
+      `, [userId]);
+      copyStats.contexten = await copyTableRows('contexten', contexten.rows);
 
-      // Copy subtaken
+      // 5. Copy subtaken (only for this user's taken)
       const subtaken = await pool.query(`
         SELECT s.* FROM subtaken s
         JOIN taken t ON s.parent_taak_id = t.id
         WHERE t.user_id = $1
       `, [userId]);
-      for (const subtaak of subtaken.rows) {
-        await client.query(`
-          INSERT INTO subtaken (id, parent_taak_id, titel, voltooid, volgorde, created_at)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [subtaak.id, subtaak.parent_taak_id, subtaak.titel, subtaak.voltooid,
-            subtaak.volgorde, subtaak.created_at]);
-      }
+      copyStats.subtaken = await copyTableRows('subtaken', subtaken.rows);
 
-      // Copy bijlagen (attachments)
+      // 6. Copy bijlagen (attachments)
       const bijlagen = await pool.query('SELECT * FROM bijlagen WHERE user_id = $1', [userId]);
-      for (const bijlage of bijlagen.rows) {
-        await client.query(`
-          INSERT INTO bijlagen (id, taak_id, bestandsnaam, bestandsgrootte, mimetype,
-                                storage_type, storage_path, geupload, user_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, [bijlage.id, bijlage.taak_id, bijlage.bestandsnaam, bijlage.bestandsgrootte,
-            bijlage.mimetype, bijlage.storage_type, bijlage.storage_path,
-            bijlage.geupload, bijlage.user_id]);
-      }
+      copyStats.bijlagen = await copyTableRows('bijlagen', bijlagen.rows);
 
-      // Copy feedback
+      // 7. Copy feedback
       const feedback = await pool.query('SELECT * FROM feedback WHERE user_id = $1', [userId]);
-      for (const fb of feedback.rows) {
-        await client.query(`
-          INSERT INTO feedback (id, user_id, type, titel, beschrijving, stappen, status,
-                                prioriteit, context, aangemaakt, bijgewerkt)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        `, [fb.id, fb.user_id, fb.type, fb.titel, fb.beschrijving, fb.stappen,
-            fb.status, fb.prioriteit, fb.context, fb.aangemaakt, fb.bijgewerkt]);
-      }
+      copyStats.feedback = await copyTableRows('feedback', feedback.rows);
 
       await client.query('COMMIT');
 
@@ -17099,11 +17234,9 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
       res.json({
         success: true,
         userEmail: user.email,
-        tasksCopied: taken.rows.length,
-        projectsCopied,
-        contextsCopied,
-        attachmentsCopied: bijlagen.rows.length,
-        duration
+        stats: copyStats,
+        duration,
+        hasErrors: copyStats.errors.length > 0
       });
 
     } catch (error) {
