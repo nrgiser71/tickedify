@@ -924,7 +924,7 @@ EIGENSCHAPPEN:
 - duration: Duur in minuten (integer)
 - date: Verschijndatum YYYY-MM-DD formaat (bijv "2025-11-15")
 - notes: Notitie tekst (string)
-- subtiel: Boolean (true als gebruiker "subtiel" zegt)
+- subtaken: Boolean (true als taak subtaken heeft)
 
 LIJSTEN (voor set_list intent):
 - opvolgen
@@ -950,8 +950,8 @@ User: "Datum 15 november" of "Verschijndatum 2025-11-15"
 User: "Notitie: Eerst bellen voor afspraak"
 → intent: set_property, properties: {notes: "Eerst bellen voor afspraak"}
 
-User: "Dit is subtiel" of "Markeer als subtiel"
-→ intent: set_property, properties: {subtiel: true}
+User: "Dit heeft subtaken" of "Markeer met subtaken"
+→ intent: set_property, properties: {subtaken: true}
 
 User: "Doorsturen naar opvolgen" of "Naar opvolgen lijst"
 → intent: set_list, lijst: "opvolgen"
@@ -1022,12 +1022,12 @@ Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
                                         type: ["string", "null"],
                                         description: "Notitie tekst"
                                     },
-                                    subtiel: {
+                                    subtaken: {
                                         type: ["boolean", "null"],
-                                        description: "Of de taak subtiel is"
+                                        description: "Of de taak subtaken heeft"
                                     }
                                 },
-                                required: ["project", "context", "duration", "priority", "date", "notes", "subtiel"],
+                                required: ["project", "context", "duration", "priority", "date", "notes", "subtaken"],
                                 additionalProperties: false
                             },
                             lijst: {

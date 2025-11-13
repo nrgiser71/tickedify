@@ -498,8 +498,8 @@
                     <span class="property-value empty" id="propNotes">Niet ingesteld</span>
                 </div>
                 <div class="property">
-                    <span class="property-label">🔕 Subtiel</span>
-                    <span class="property-value empty" id="propSubtiel">Nee</span>
+                    <span class="property-label">📌 Subtaken</span>
+                    <span class="property-value empty" id="propSubtaken">Nee</span>
                 </div>
                 <div class="property">
                     <span class="property-label">📋 Lijst</span>
@@ -548,7 +548,7 @@
                         • <strong>Prioriteit:</strong> "prioriteit hoog"<br>
                         • <strong>Datum:</strong> "datum 15 november"<br>
                         • <strong>Notitie:</strong> "notitie eerst even bellen"<br>
-                        • <strong>Subtiel:</strong> "markeer als subtiel"
+                        • <strong>Subtaken:</strong> "dit heeft subtaken"
                     </div>
                 </div>
                 <div style="margin-top: 10px; padding-top: 10px; border-top: 2px solid #bbdefb;">
@@ -609,7 +609,7 @@
             priority: null,
             date: null,
             notes: null,
-            subtiel: false,
+            subtaken: false,
             lijst: 'acties' // Default lijst
         };
         let currentTaskTitle = null; // Track current task title for editing
@@ -997,9 +997,9 @@
                 updated = true;
             }
 
-            if (result.properties.subtiel !== null && result.properties.subtiel !== undefined) {
-                currentProperties.subtiel = result.properties.subtiel;
-                updatePropertyDisplay('subtiel', result.properties.subtiel ? 'Ja' : 'Nee');
+            if (result.properties.subtaken !== null && result.properties.subtaken !== undefined) {
+                currentProperties.subtaken = result.properties.subtaken;
+                updatePropertyDisplay('subtaken', result.properties.subtaken ? 'Ja' : 'Nee');
                 updated = true;
             }
 
@@ -1176,7 +1176,7 @@
                 priority: null,
                 date: null,
                 notes: null,
-                subtiel: false,
+                subtaken: false,
                 lijst: 'acties'
             };
             updatePropertyDisplay('project', null);
@@ -1185,7 +1185,7 @@
             updatePropertyDisplay('priority', null);
             updatePropertyDisplay('date', null);
             updatePropertyDisplay('notes', null);
-            updatePropertyDisplay('subtiel', 'Nee');
+            updatePropertyDisplay('subtaken', 'Nee');
             updatePropertyDisplay('lijst', 'Acties');
 
             nextAction();
@@ -1212,7 +1212,7 @@
                 priority: null,
                 date: null,
                 notes: null,
-                subtiel: false,
+                subtaken: false,
                 lijst: 'acties'
             };
             updatePropertyDisplay('project', null);
@@ -1221,7 +1221,7 @@
             updatePropertyDisplay('priority', null);
             updatePropertyDisplay('date', null);
             updatePropertyDisplay('notes', null);
-            updatePropertyDisplay('subtiel', 'Nee');
+            updatePropertyDisplay('subtaken', 'Nee');
             updatePropertyDisplay('lijst', 'Acties');
 
             nextAction();
@@ -1335,7 +1335,7 @@
                 priority: null,
                 date: null,
                 notes: null,
-                subtiel: false,
+                subtaken: false,
                 lijst: 'acties'
             };
             currentTaskTitle = null;
@@ -1357,7 +1357,7 @@
             updatePropertyDisplay('priority', null);
             updatePropertyDisplay('date', null);
             updatePropertyDisplay('notes', null);
-            updatePropertyDisplay('subtiel', 'Nee');
+            updatePropertyDisplay('subtaken', 'Nee');
             updatePropertyDisplay('lijst', 'Acties');
 
             showFeedback("Stem modus gestopt", "info");
