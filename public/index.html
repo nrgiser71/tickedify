@@ -171,6 +171,18 @@
                         <button id="toevoegBtn">Add</button>
                         <button id="testTakenBtn" class="test-button" style="display: none;">+ Test Tasks</button>
                         <!-- Delete all knop wordt dynamisch toegevoegd door JavaScript -->
+
+                        <!-- Voice Mode Toggle -->
+                        <div id="voice-mode-container" style="display: none;">
+                            <button id="voice-toggle-btn" class="voice-toggle-btn" title="Voice Mode - Process inbox with voice commands">
+                                <i class="fas fa-microphone"></i>
+                                <span class="voice-toggle-text">Voice</span>
+                            </button>
+                            <div class="voice-mode-indicator" id="voice-mode-indicator" style="display: none;">
+                                <div class="voice-listening-pulse"></div>
+                                <span class="voice-status-text">Listening...</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="taken-container">

@@ -1,4 +1,19 @@
 // Tickedify App v0.21.131 - Build timestamp: 2025-11-09T12:00:00Z
+
+// Voice Mode Whitelist Check
+// Bepaalt of voice mode beschikbaar is voor huidige gebruiker
+function shouldShowVoiceMode() {
+    const auth = window.auth;
+    if (!auth || !auth.isAuthenticated || !auth.currentUser) {
+        return false;
+    }
+
+    const email = auth.currentUser.email;
+    const whitelist = ['jan@buskens.be', 'info@baasoverjetijd.be'];
+
+    return whitelist.includes(email);
+}
+
 // Toast Notification System
 class ToastManager {
     constructor() {
