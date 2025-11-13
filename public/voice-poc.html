@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Mode POC - Tickedify</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .voice-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .voice-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .voice-button:active {
+            transform: translateY(0);
+        }
+
+        .voice-button.active {
+            animation: pulse 1.5s infinite;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .status-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 120px;
+        }
+
+        .status-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .current-action {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .transcript {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            color: #666;
+            font-style: italic;
+            min-height: 50px;
+        }
+
+        .properties {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .property {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .property-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .property-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .property-value.set {
+            color: #28a745;
+        }
+
+        .property-value.empty {
+            color: #999;
+        }
+
+        .commands-help {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .commands-help h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .command-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .command-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .command-word {
+            background: #1976d2;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        .progress {
+            text-align: center;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .listening-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 15px 0;
+        }
+
+        .listening-indicator.active {
+            display: flex;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: wave 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 60%, 100% { transform: scale(1); }
+            30% { transform: scale(1.5); }
+        }
+
+        .speech-feedback {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+            font-size: 14px;
+        }
+
+        .speech-feedback.show {
+            display: block;
+        }
+
+        .completed {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .completed h2 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Voice Mode POC</h1>
+            <p>Test voice-controlled inbox processing</p>
+        </div>
+
+        <div class="content">
+            <button class="voice-button" id="voiceBtn">
+                🎤 Start Voice Mode
+            </button>
+
+            <div class="speech-feedback" id="feedback"></div>
+
+            <div class="progress" id="progress">Ready to start</div>
+
+            <div class="listening-indicator" id="listeningIndicator">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="status-box">
+                <div class="status-title">Current Action</div>
+                <div class="current-action" id="currentAction">
+                    Click "Start Voice Mode" to begin
+                </div>
+                <div class="transcript" id="transcript">
+                    Your speech will appear here...
+                </div>
+            </div>
+
+            <div class="properties" id="properties">
+                <div class="property">
+                    <span class="property-label">📁 Project</span>
+                    <span class="property-value empty" id="propProject">Not set</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">🏷️ Context</span>
+                    <span class="property-value empty" id="propContext">Not set</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">⏱️ Duration</span>
+                    <span class="property-value empty" id="propDuration">Not set</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">⭐ Priority</span>
+                    <span class="property-value empty" id="propPriority">Not set</span>
+                </div>
+            </div>
+
+            <div class="commands-help">
+                <h3>Voice Commands</h3>
+                <div class="command-list">
+                    <div class="command-item">
+                        <span class="command-word">start</span>
+                        <span>Begin reading inbox actions</span>
+                    </div>
+                    <div class="command-item">
+                        <span class="command-word">next</span>
+                        <span>Skip to next action</span>
+                    </div>
+                    <div class="command-item">
+                        <span class="command-word">repeat</span>
+                        <span>Read current action again</span>
+                    </div>
+                    <div class="command-item">
+                        <span class="command-word">save</span>
+                        <span>Save and continue</span>
+                    </div>
+                    <div class="command-item">
+                        <span class="command-word">delete</span>
+                        <span>Delete current action</span>
+                    </div>
+                    <div class="command-item">
+                        <span class="command-word">stop</span>
+                        <span>Exit voice mode</span>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #bbdefb;">
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">Or say properties:</div>
+                    <div style="font-size: 13px; line-height: 1.8; color: #555;">
+                        "project renovation", "context work", "duration 30", "priority high"<br>
+                        Or combined: "project renovation, context work, 30 minutes, high"
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-button" onclick="handleCommand('next')">⏭️ Next</button>
+                <button class="action-button" onclick="handleCommand('repeat')">🔄 Repeat</button>
+                <button class="action-button" onclick="handleCommand('save')">💾 Save</button>
+                <button class="action-button" onclick="handleCommand('delete')">🗑️ Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock inbox data
+        const mockInbox = [
+            { id: 1, title: "Create quote for client X" },
+            { id: 2, title: "Do grocery shopping" },
+            { id: 3, title: "Reply to Marie's email" },
+            { id: 4, title: "Review monthly budget" },
+            { id: 5, title: "Schedule dentist appointment" }
+        ];
+
+        // State
+        let voiceActive = false;
+        let currentIndex = 0;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        let currentProperties = {
+            project: null,
+            context: null,
+            duration: null,
+            priority: null
+        };
+        let processedActions = [];
+        let stats = {
+            processed: 0,
+            skipped: 0,
+            deleted: 0
+        };
+
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!SpeechRecognition) {
+                showFeedback("⚠️ Speech recognition not supported in this browser. Try Chrome or Safari.", "error");
+                return null;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US'; // English for better command recognition
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                const last = event.results.length - 1;
+                const transcript = event.results[last][0].transcript.trim();
+                const isFinal = event.results[last].isFinal;
+
+                document.getElementById('transcript').textContent = transcript;
+
+                if (isFinal) {
+                    processCommand(transcript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech') {
+                    showFeedback("No speech detected. Try again.", "warning");
+                } else {
+                    showFeedback(`Recognition error: ${event.error}`, "error");
+                }
+            };
+
+            recognition.onend = () => {
+                if (voiceActive) {
+                    // Restart recognition if voice mode is still active
+                    setTimeout(() => recognition.start(), 100);
+                }
+            };
+
+            return recognition;
+        }
+
+        // Text-to-Speech
+        function speak(text) {
+            if (synthesis.speaking) {
+                synthesis.cancel();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+
+            synthesis.speak(utterance);
+
+            showFeedback(`🔊 "${text}"`, "info");
+        }
+
+        // Process voice commands
+        function processCommand(transcript) {
+            const lower = transcript.toLowerCase().trim();
+
+            // Check for trigger commands
+            if (lower.includes('start')) {
+                handleCommand('start');
+            } else if (lower.includes('next') || lower.includes('volgende')) {
+                handleCommand('next');
+            } else if (lower.includes('repeat') || lower.includes('herhaal')) {
+                handleCommand('repeat');
+            } else if (lower.includes('save') || lower.includes('opslaan')) {
+                handleCommand('save');
+            } else if (lower.includes('delete') || lower.includes('verwijderen')) {
+                handleCommand('delete');
+            } else if (lower.includes('stop')) {
+                handleCommand('stop');
+            } else {
+                // Parse properties
+                parseProperties(transcript);
+            }
+        }
+
+        // Parse properties from speech
+        function parseProperties(text) {
+            let updated = false;
+
+            // Project pattern: "project X" or "project: X"
+            const projectMatch = text.match(/project[:\s]+([^,]+?)(?=\s+context|\s+duration|\s+priority|,|$)/i);
+            if (projectMatch) {
+                currentProperties.project = projectMatch[1].trim();
+                updatePropertyDisplay('project', currentProperties.project);
+                updated = true;
+            }
+
+            // Context pattern: "context X" or "context: X"
+            const contextMatch = text.match(/context[:\s]+([^,]+?)(?=\s+duration|\s+priority|,|$)/i);
+            if (contextMatch) {
+                currentProperties.context = contextMatch[1].trim();
+                updatePropertyDisplay('context', currentProperties.context);
+                updated = true;
+            }
+
+            // Duration pattern: "30 minutes", "duration 30", "30"
+            const durationMatch = text.match(/(?:duration[:\s]+)?(\d+)\s*(?:minutes?|mins?)?/i);
+            if (durationMatch) {
+                currentProperties.duration = parseInt(durationMatch[1]);
+                updatePropertyDisplay('duration', `${currentProperties.duration} min`);
+                updated = true;
+            }
+
+            // Priority pattern: "high", "medium", "low", "priority high"
+            const priorityMatch = text.match(/(?:priority[:\s]+)?(high|medium|low|hoog|middel|laag)/i);
+            if (priorityMatch) {
+                const priority = priorityMatch[1].toLowerCase();
+                const priorityMap = {
+                    'high': 'high', 'hoog': 'high',
+                    'medium': 'medium', 'middel': 'medium',
+                    'low': 'low', 'laag': 'low'
+                };
+                currentProperties.priority = priorityMap[priority] || priority;
+                updatePropertyDisplay('priority', currentProperties.priority);
+                updated = true;
+            }
+
+            if (updated) {
+                showFeedback("✓ Properties updated", "success");
+            }
+        }
+
+        // Update property display
+        function updatePropertyDisplay(property, value) {
+            const element = document.getElementById(`prop${property.charAt(0).toUpperCase() + property.slice(1)}`);
+            if (value) {
+                element.textContent = value;
+                element.className = 'property-value set';
+            } else {
+                element.textContent = 'Not set';
+                element.className = 'property-value empty';
+            }
+        }
+
+        // Handle commands
+        function handleCommand(command) {
+            switch(command) {
+                case 'start':
+                    if (currentIndex < mockInbox.length) {
+                        readCurrentAction();
+                    } else {
+                        speak("Inbox is empty. There are no actions to process.");
+                    }
+                    break;
+
+                case 'next':
+                    stats.skipped++;
+                    nextAction();
+                    break;
+
+                case 'repeat':
+                    readCurrentAction();
+                    break;
+
+                case 'save':
+                    saveCurrentAction();
+                    break;
+
+                case 'delete':
+                    stats.deleted++;
+                    speak("Deleted.");
+                    nextAction();
+                    break;
+
+                case 'stop':
+                    stopVoiceMode();
+                    break;
+            }
+        }
+
+        // Read current action
+        function readCurrentAction() {
+            if (currentIndex >= mockInbox.length) {
+                showCompletion();
+                return;
+            }
+
+            const action = mockInbox[currentIndex];
+            document.getElementById('currentAction').textContent = action.title;
+            document.getElementById('progress').textContent = `Action ${currentIndex + 1} of ${mockInbox.length}`;
+
+            speak(`Action ${currentIndex + 1}: ${action.title}`);
+        }
+
+        // Save and move to next
+        function saveCurrentAction() {
+            const action = mockInbox[currentIndex];
+            processedActions.push({
+                ...action,
+                ...currentProperties
+            });
+
+            stats.processed++;
+
+            // Build confirmation message
+            let confirmation = "Saved";
+            if (currentProperties.project) confirmation += ` to project ${currentProperties.project}`;
+            if (currentProperties.context) confirmation += `, context ${currentProperties.context}`;
+            if (currentProperties.duration) confirmation += `, ${currentProperties.duration} minutes`;
+            if (currentProperties.priority) confirmation += `, priority ${currentProperties.priority}`;
+
+            speak(confirmation);
+
+            // Reset properties for next action
+            currentProperties = {
+                project: null,
+                context: null,
+                duration: null,
+                priority: null
+            };
+            updatePropertyDisplay('project', null);
+            updatePropertyDisplay('context', null);
+            updatePropertyDisplay('duration', null);
+            updatePropertyDisplay('priority', null);
+
+            nextAction();
+        }
+
+        // Move to next action
+        function nextAction() {
+            currentIndex++;
+
+            if (currentIndex >= mockInbox.length) {
+                showCompletion();
+            } else {
+                setTimeout(() => readCurrentAction(), 500);
+            }
+        }
+
+        // Show completion summary
+        function showCompletion() {
+            speak(`Inbox processing complete. ${stats.processed} actions processed, ${stats.skipped} skipped, ${stats.deleted} deleted.`);
+
+            document.getElementById('progress').textContent = 'Completed! 🎉';
+            document.getElementById('currentAction').textContent = 'All actions processed';
+            document.getElementById('transcript').innerHTML = `
+                <div class="summary">
+                    <div class="summary-item">
+                        <strong>Processed:</strong>
+                        <span>${stats.processed}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Skipped:</strong>
+                        <span>${stats.skipped}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Deleted:</strong>
+                        <span>${stats.deleted}</span>
+                    </div>
+                </div>
+            `;
+
+            showFeedback("Say 'stop' to exit or click the button to restart", "info");
+        }
+
+        // Show feedback message
+        function showFeedback(message, type = "info") {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `speech-feedback show ${type}`;
+
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 3000);
+        }
+
+        // Toggle voice mode
+        function toggleVoiceMode() {
+            if (voiceActive) {
+                stopVoiceMode();
+            } else {
+                startVoiceMode();
+            }
+        }
+
+        // Start voice mode
+        function startVoiceMode() {
+            if (!recognition) {
+                recognition = initSpeechRecognition();
+                if (!recognition) return;
+            }
+
+            voiceActive = true;
+            document.getElementById('voiceBtn').classList.add('active');
+            document.getElementById('voiceBtn').textContent = '🎤 Voice Mode Active - Say "start"';
+            document.getElementById('listeningIndicator').classList.add('active');
+
+            recognition.start();
+            speak("Voice mode active. Say 'start' to begin processing inbox actions.");
+
+            showFeedback("🎤 Listening... Say 'start' to begin", "info");
+        }
+
+        // Stop voice mode
+        function stopVoiceMode() {
+            voiceActive = false;
+
+            if (recognition) {
+                recognition.stop();
+            }
+
+            if (synthesis.speaking) {
+                synthesis.cancel();
+            }
+
+            document.getElementById('voiceBtn').classList.remove('active');
+            document.getElementById('voiceBtn').textContent = '🎤 Start Voice Mode';
+            document.getElementById('listeningIndicator').classList.remove('active');
+
+            // Reset state
+            currentIndex = 0;
+            currentProperties = {
+                project: null,
+                context: null,
+                duration: null,
+                priority: null
+            };
+            processedActions = [];
+            stats = {
+                processed: 0,
+                skipped: 0,
+                deleted: 0
+            };
+
+            document.getElementById('progress').textContent = 'Ready to start';
+            document.getElementById('currentAction').textContent = 'Click "Start Voice Mode" to begin';
+            document.getElementById('transcript').textContent = 'Your speech will appear here...';
+
+            updatePropertyDisplay('project', null);
+            updatePropertyDisplay('context', null);
+            updatePropertyDisplay('duration', null);
+            updatePropertyDisplay('priority', null);
+
+            showFeedback("Voice mode stopped", "info");
+        }
+
+        // Event listeners
+        document.getElementById('voiceBtn').addEventListener('click', toggleVoiceMode);
+
+        // Check browser compatibility on load
+        window.addEventListener('load', () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showFeedback("⚠️ Speech recognition not supported. Please use Chrome or Safari.", "error");
+                document.getElementById('voiceBtn').disabled = true;
+            } else {
+                showFeedback("✓ Speech recognition available. Click to start!", "success");
+            }
+        });
+    </script>
+</body>
+</html>
