@@ -507,7 +507,7 @@
                         <span>Read current action again</span>
                     </div>
                     <div class="command-item">
-                        <span class="command-word">save</span>
+                        <span class="command-word">done</span>
                         <span>Save and continue</span>
                     </div>
                     <div class="command-item">
@@ -531,7 +531,7 @@
             <div class="action-buttons">
                 <button class="action-button" onclick="handleCommand('next')">⏭️ Next</button>
                 <button class="action-button" onclick="handleCommand('repeat')">🔄 Repeat</button>
-                <button class="action-button" onclick="handleCommand('save')">💾 Save</button>
+                <button class="action-button" onclick="handleCommand('done')">✅ Done</button>
                 <button class="action-button" onclick="handleCommand('delete')">🗑️ Delete</button>
             </div>
         </div>
@@ -777,8 +777,8 @@
                 handleCommand('next');
             } else if (lower.includes('repeat') || lower.includes('herhaal')) {
                 handleCommand('repeat');
-            } else if (lower.includes('save') || lower.includes('opslaan')) {
-                handleCommand('save');
+            } else if (lower.includes('done') || lower.includes('klaar')) {
+                handleCommand('done');
             } else if (lower.includes('delete') || lower.includes('verwijderen')) {
                 handleCommand('delete');
             } else if (lower.includes('stop')) {
@@ -868,7 +868,7 @@
                     readCurrentAction();
                     break;
 
-                case 'save':
+                case 'done':
                     saveCurrentAction();
                     break;
 
