@@ -4,6 +4,7 @@ const fs = require('fs');
 const multer = require('multer');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const OpenAI = require('openai');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -818,6 +819,63 @@ app.get('/api/status', (req, res) => {
             has_postgres_url_non_pooling: !!process.env.POSTGRES_URL_NON_POOLING
         }
     });
+});
+
+// OpenAI TTS endpoint for voice mode
+app.post('/api/voice/synthesize', async (req, res) => {
+    try {
+        const { text, voice = 'alloy', speed = 1.0 } = req.body;
+
+        if (!text) {
+            return res.status(400).json({ error: 'Text parameter is required' });
+        }
+
+        // Check if OpenAI API key is configured
+        if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here') {
+            return res.status(503).json({
+                error: 'OpenAI API key not configured',
+                fallback: true,
+                message: 'Please add OPENAI_API_KEY to environment variables'
+            });
+        }
+
+        // Initialize OpenAI client
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
+        });
+
+        // Valid voices: alloy, echo, fable, onyx, nova, shimmer
+        const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+        const selectedVoice = validVoices.includes(voice) ? voice : 'alloy';
+
+        // Call OpenAI TTS API
+        const mp3Response = await openai.audio.speech.create({
+            model: 'tts-1', // Use tts-1-hd for higher quality (2x cost)
+            voice: selectedVoice,
+            input: text,
+            speed: Math.max(0.25, Math.min(4.0, speed)) // Clamp between 0.25 and 4.0
+        });
+
+        // Convert response to buffer
+        const buffer = Buffer.from(await mp3Response.arrayBuffer());
+
+        // Set headers for audio streaming
+        res.set({
+            'Content-Type': 'audio/mpeg',
+            'Content-Length': buffer.length,
+            'Cache-Control': 'public, max-age=86400' // Cache for 24 hours
+        });
+
+        res.send(buffer);
+
+    } catch (error) {
+        console.error('OpenAI TTS error:', error);
+        res.status(500).json({
+            error: 'Failed to synthesize speech',
+            message: error.message,
+            fallback: true
+        });
+    }
 });
 
 // Email import help page (styled HTML)

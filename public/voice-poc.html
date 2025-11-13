@@ -554,8 +554,10 @@
         let synthesis = window.speechSynthesis;
         let availableVoices = [];
         let selectedVoice = null;
+        let selectedVoiceType = 'openai'; // 'openai' or 'browser'
         let voiceRate = 1.0;
         let voicePitch = 1.0;
+        let audioElement = new Audio();
         let currentProperties = {
             project: null,
             context: null,
@@ -616,79 +618,137 @@
 
         // Load available voices
         function loadVoices() {
-            availableVoices = synthesis.getVoices();
-
             const voiceSelect = document.getElementById('voiceSelect');
             voiceSelect.innerHTML = '';
 
-            if (availableVoices.length === 0) {
-                voiceSelect.innerHTML = '<option value="">No voices available</option>';
-                return;
+            // Add OpenAI voices first (premium AI voices)
+            const openaiGroup = document.createElement('optgroup');
+            openaiGroup.label = '🌟 OpenAI Voices (Natural AI)';
+
+            const openaiVoices = [
+                { id: 'alloy', name: 'Alloy', description: 'Neutral, balanced' },
+                { id: 'echo', name: 'Echo', description: 'Male, warm' },
+                { id: 'fable', name: 'Fable', description: 'British, expressive' },
+                { id: 'onyx', name: 'Onyx', description: 'Male, deep' },
+                { id: 'nova', name: 'Nova', description: 'Female, bright' },
+                { id: 'shimmer', name: 'Shimmer', description: 'Female, soft' }
+            ];
+
+            openaiVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = `openai:${voice.id}`;
+                option.textContent = `${voice.name} - ${voice.description}`;
+                openaiGroup.appendChild(option);
+            });
+
+            voiceSelect.appendChild(openaiGroup);
+
+            // Add browser voices as fallback
+            availableVoices = synthesis.getVoices();
+
+            if (availableVoices.length > 0) {
+                const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
+                const otherVoices = availableVoices.filter(v => !v.lang.startsWith('en'));
+
+                // Add English browser voices
+                if (englishVoices.length > 0) {
+                    const browserGroup = document.createElement('optgroup');
+                    browserGroup.label = '🖥️ Browser Voices (Fallback)';
+                    englishVoices.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = `browser:${availableVoices.indexOf(voice)}`;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        browserGroup.appendChild(option);
+                    });
+                    voiceSelect.appendChild(browserGroup);
+                }
+
+                // Add other language browser voices
+                if (otherVoices.length > 0) {
+                    const otherGroup = document.createElement('optgroup');
+                    otherGroup.label = '🌍 Other Languages';
+                    otherVoices.forEach((voice, index) => {
+                        const option = document.createElement('option');
+                        option.value = `browser:${availableVoices.indexOf(voice)}`;
+                        option.textContent = `${voice.name} (${voice.lang})`;
+                        otherGroup.appendChild(option);
+                    });
+                    voiceSelect.appendChild(otherGroup);
+                }
             }
 
-            // Sort voices: English first, then by name
-            const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
-            const otherVoices = availableVoices.filter(v => !v.lang.startsWith('en'));
-
-            // Add English voices
-            if (englishVoices.length > 0) {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = 'English Voices';
-                englishVoices.forEach((voice, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = `${voice.name} (${voice.lang})`;
-                    optgroup.appendChild(option);
-                });
-                voiceSelect.appendChild(optgroup);
-            }
-
-            // Add other voices
-            if (otherVoices.length > 0) {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = 'Other Languages';
-                otherVoices.forEach((voice, index) => {
-                    const option = document.createElement('option');
-                    option.value = availableVoices.indexOf(voice);
-                    option.textContent = `${voice.name} (${voice.lang})`;
-                    optgroup.appendChild(option);
-                });
-                voiceSelect.appendChild(optgroup);
-            }
-
-            // Select a good default voice
-            // Priority: 1. Samantha (Mac), 2. Any premium female voice, 3. First English voice
-            let defaultIndex = 0;
-            const samantha = availableVoices.findIndex(v => v.name.includes('Samantha'));
-            const karen = availableVoices.findIndex(v => v.name.includes('Karen'));
-            const premiumFemale = availableVoices.findIndex(v =>
-                v.name.includes('Premium') && (v.name.includes('Female') || v.name.includes('Samantha'))
-            );
-
-            if (samantha !== -1) {
-                defaultIndex = samantha;
-            } else if (premiumFemale !== -1) {
-                defaultIndex = premiumFemale;
-            } else if (karen !== -1) {
-                defaultIndex = karen;
-            } else {
-                defaultIndex = englishVoices.length > 0 ?
-                    availableVoices.indexOf(englishVoices[0]) : 0;
-            }
-
-            voiceSelect.value = defaultIndex;
-            selectedVoice = availableVoices[defaultIndex];
+            // Select Nova as default (natural female voice)
+            voiceSelect.value = 'openai:nova';
+            selectedVoice = 'nova';
+            selectedVoiceType = 'openai';
         }
 
-        // Text-to-Speech
-        function speak(text) {
+        // Text-to-Speech with OpenAI support
+        async function speak(text) {
+            // Stop any currently playing audio
             if (synthesis.speaking) {
                 synthesis.cancel();
             }
+            if (!audioElement.paused) {
+                audioElement.pause();
+            }
 
+            showFeedback(`🔊 "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`, "info");
+
+            if (selectedVoiceType === 'openai') {
+                try {
+                    // Call OpenAI TTS API
+                    const response = await fetch('/api/voice/synthesize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            text: text,
+                            voice: selectedVoice,
+                            speed: voiceRate
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        if (error.fallback) {
+                            // OpenAI not available, fallback to browser voice
+                            console.log('OpenAI TTS not available, using browser voice:', error.message);
+                            showFeedback('⚠️ OpenAI voices not available, using browser voice', 'warning');
+                            return speakBrowser(text);
+                        }
+                        throw new Error(error.message || 'TTS API error');
+                    }
+
+                    // Get audio blob and play it
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
+                    audioElement.src = audioUrl;
+                    audioElement.play();
+
+                    // Clean up the blob URL after playing
+                    audioElement.onended = () => {
+                        URL.revokeObjectURL(audioUrl);
+                    };
+
+                } catch (error) {
+                    console.error('OpenAI TTS error:', error);
+                    showFeedback('⚠️ OpenAI TTS failed, using browser voice', 'warning');
+                    speakBrowser(text);
+                }
+            } else {
+                // Use browser voice
+                speakBrowser(text);
+            }
+        }
+
+        // Browser TTS fallback
+        function speakBrowser(text) {
             const utterance = new SpeechSynthesisUtterance(text);
 
-            if (selectedVoice) {
+            if (selectedVoice && typeof selectedVoice === 'object') {
                 utterance.voice = selectedVoice;
                 utterance.lang = selectedVoice.lang;
             } else {
@@ -699,8 +759,6 @@
             utterance.pitch = voicePitch;
 
             synthesis.speak(utterance);
-
-            showFeedback(`🔊 "${text}"`, "info");
         }
 
         // Test voice button
@@ -961,6 +1019,10 @@
                 synthesis.cancel();
             }
 
+            if (!audioElement.paused) {
+                audioElement.pause();
+            }
+
             document.getElementById('voiceBtn').classList.remove('active');
             document.getElementById('voiceBtn').textContent = '🎤 Start Voice Mode';
             document.getElementById('listeningIndicator').classList.remove('active');
@@ -998,8 +1060,17 @@
 
         // Voice selection
         document.getElementById('voiceSelect').addEventListener('change', (e) => {
-            const index = parseInt(e.target.value);
-            selectedVoice = availableVoices[index];
+            const value = e.target.value;
+            const [type, voiceId] = value.split(':');
+
+            selectedVoiceType = type;
+
+            if (type === 'openai') {
+                selectedVoice = voiceId;
+            } else if (type === 'browser') {
+                const index = parseInt(voiceId);
+                selectedVoice = availableVoices[index];
+            }
         });
 
         // Rate slider
