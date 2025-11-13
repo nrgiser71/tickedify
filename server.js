@@ -883,8 +883,12 @@ app.post('/api/voice/parse-command', async (req, res) => {
     try {
         const { transcript, conversationHistory = [], availableEntities = {} } = req.body;
 
-        if (!transcript) {
-            return res.status(400).json({ error: 'Transcript parameter is required' });
+        if (!transcript || transcript.trim().length === 0) {
+            return res.status(400).json({
+                error: 'Transcript parameter is required',
+                fallback: true,
+                message: 'Empty or missing transcript'
+            });
         }
 
         // Check if OpenAI API key is configured
@@ -1088,6 +1092,7 @@ Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
 
     } catch (error) {
         console.error('OpenAI parsing error:', error);
+        console.error('Transcript was:', req.body.transcript);
         res.status(500).json({
             success: false,
             error: 'Failed to parse command',

@@ -642,15 +642,21 @@
 
                 document.getElementById('transcript').textContent = transcript;
 
-                if (isFinal) {
+                if (isFinal && transcript.length >= 2) {
                     processCommand(transcript);
+                } else if (isFinal && transcript.length < 2) {
+                    console.log('Transcript too short, ignoring:', transcript);
                 }
             };
 
             recognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
                 if (event.error === 'no-speech') {
-                    showFeedback("Geen spraak gedetecteerd. Probeer opnieuw.", "warning");
+                    // Don't show feedback for no-speech, it's normal when quiet
+                    console.log('No speech detected (normal when quiet)');
+                } else if (event.error === 'aborted') {
+                    // Recognition was aborted, likely due to stopping
+                    console.log('Recognition aborted');
                 } else {
                     showFeedback(`Herkenningsfout: ${event.error}`, "error");
                 }
@@ -851,13 +857,25 @@
                 });
 
                 if (!response.ok) {
-                    const error = await response.json();
+                    let error;
+                    try {
+                        error = await response.json();
+                    } catch (e) {
+                        console.error('Failed to parse error response:', e);
+                        error = { message: `HTTP ${response.status}: ${response.statusText}` };
+                    }
+
+                    console.warn('AI parsing failed:', error);
+
                     if (error.fallback) {
                         // Fallback to regex parsing
-                        console.log('AI parsing not available, using regex fallback');
+                        console.log('Using regex fallback');
                         return parsePropertiesRegex(transcript);
                     }
-                    throw new Error(error.message || 'AI parsing failed');
+
+                    // Always try regex fallback on errors
+                    console.log('Attempting regex fallback for:', transcript);
+                    return parsePropertiesRegex(transcript);
                 }
 
                 const result = await response.json();
