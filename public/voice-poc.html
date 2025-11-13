@@ -489,41 +489,80 @@
                     <span class="property-label">⭐ Prioriteit</span>
                     <span class="property-value empty" id="propPriority">Niet ingesteld</span>
                 </div>
+                <div class="property">
+                    <span class="property-label">📅 Datum</span>
+                    <span class="property-value empty" id="propDate">Niet ingesteld</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">📝 Notitie</span>
+                    <span class="property-value empty" id="propNotes">Niet ingesteld</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">🔕 Subtiel</span>
+                    <span class="property-value empty" id="propSubtiel">Nee</span>
+                </div>
+                <div class="property">
+                    <span class="property-label">📋 Lijst</span>
+                    <span class="property-value empty" id="propLijst">Acties</span>
+                </div>
             </div>
 
             <div class="commands-help">
-                <h3>Stem Commando's</h3>
+                <h3>📢 Basis Commando's</h3>
                 <div class="command-list">
                     <div class="command-item">
                         <span class="command-word">start</span>
-                        <span>Begin inbox acties voor te lezen</span>
+                        <span>Begin inbox verwerking</span>
                     </div>
                     <div class="command-item">
                         <span class="command-word">volgende</span>
-                        <span>Ga naar volgende actie</span>
+                        <span>Spring naar volgende actie</span>
                     </div>
                     <div class="command-item">
                         <span class="command-word">herhaal</span>
-                        <span>Lees huidige actie opnieuw</span>
+                        <span>Lees actie opnieuw voor</span>
                     </div>
                     <div class="command-item">
-                        <span class="command-word">klaar</span>
-                        <span>Opslaan en doorgaan</span>
+                        <span class="command-word">klaar / opslaan</span>
+                        <span>Taak opslaan en doorgaan</span>
+                    </div>
+                    <div class="command-item">
+                        <span class="command-word">afvinken</span>
+                        <span>Taak als voltooid markeren</span>
                     </div>
                     <div class="command-item">
                         <span class="command-word">verwijder</span>
-                        <span>Verwijder huidige actie</span>
+                        <span>Taak verwijderen</span>
                     </div>
                     <div class="command-item">
                         <span class="command-word">stop</span>
-                        <span>Sluit stem modus</span>
+                        <span>Stem modus afsluiten</span>
                     </div>
                 </div>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #bbdefb;">
-                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">Of zeg eigenschappen:</div>
-                    <div style="font-size: 13px; line-height: 1.8; color: #555;">
-                        "project verbouwing", "context werk", "duur 30", "prioriteit hoog"<br>
-                        Of gecombineerd: "Het project mag je op verbouwing zetten, de context op werk, de duur op 30 minuten en de prio op hoog"
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">⚙️ Eigenschappen Instellen:</div>
+                    <div style="font-size: 12px; line-height: 1.6; color: #555;">
+                        • <strong>Project:</strong> "project verbouwing"<br>
+                        • <strong>Context:</strong> "context werk"<br>
+                        • <strong>Duur:</strong> "duur 30 minuten"<br>
+                        • <strong>Prioriteit:</strong> "prioriteit hoog"<br>
+                        • <strong>Datum:</strong> "datum 15 november"<br>
+                        • <strong>Notitie:</strong> "notitie eerst even bellen"<br>
+                        • <strong>Subtiel:</strong> "markeer als subtiel"
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 2px solid #bbdefb;">
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">📋 Lijsten:</div>
+                    <div style="font-size: 12px; line-height: 1.6; color: #555;">
+                        • "Doorsturen naar opvolgen"<br>
+                        • "Naar wekelijkse lijst"<br>
+                        • "Naar maandelijkse lijst"
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 2px solid #bbdefb;">
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">✏️ Naam Wijzigen:</div>
+                    <div style="font-size: 12px; line-height: 1.6; color: #555;">
+                        "De naam moet zijn: Nieuwe taaknaam hier"
                     </div>
                 </div>
             </div>
@@ -567,13 +606,19 @@
             project: null,
             context: null,
             duration: null,
-            priority: null
+            priority: null,
+            date: null,
+            notes: null,
+            subtiel: false,
+            lijst: 'acties' // Default lijst
         };
+        let currentTaskTitle = null; // Track current task title for editing
         let processedActions = [];
         let stats = {
             processed: 0,
             skipped: 0,
-            deleted: 0
+            deleted: 0,
+            completed: 0 // Track completed tasks
         };
 
         // Initialize Speech Recognition
@@ -829,19 +874,25 @@
                 // Handle different intent types
                 switch (result.intent) {
                     case 'set_property':
-                        handleSetProperty(result);
+                        await handleSetProperty(result);
+                        break;
+                    case 'set_list':
+                        await handleSetList(result);
+                        break;
+                    case 'edit_title':
+                        await handleEditTitle(result);
                         break;
                     case 'query':
                         await handleQuery(result);
                         break;
                     case 'action':
-                        handleActionCommand(result);
+                        await handleActionCommand(result);
                         break;
                     case 'create_entity':
                         await handleCreateEntity(result);
                         break;
                     default:
-                        speak(result.response_message);
+                        await speak(result.response_message);
                 }
 
             } catch (error) {
@@ -934,7 +985,45 @@
                 updated = true;
             }
 
+            if (result.properties.date) {
+                currentProperties.date = result.properties.date;
+                updatePropertyDisplay('date', result.properties.date);
+                updated = true;
+            }
+
+            if (result.properties.notes) {
+                currentProperties.notes = result.properties.notes;
+                updatePropertyDisplay('notes', result.properties.notes.substring(0, 30) + (result.properties.notes.length > 30 ? '...' : ''));
+                updated = true;
+            }
+
+            if (result.properties.subtiel !== null && result.properties.subtiel !== undefined) {
+                currentProperties.subtiel = result.properties.subtiel;
+                updatePropertyDisplay('subtiel', result.properties.subtiel ? 'Ja' : 'Nee');
+                updated = true;
+            }
+
             if (updated) {
+                await speak(result.response_message);
+            }
+        }
+
+        // Handle set_list intent (doorsturen naar lijst)
+        async function handleSetList(result) {
+            if (result.lijst) {
+                currentProperties.lijst = result.lijst;
+                updatePropertyDisplay('lijst', result.lijst);
+                await speak(result.response_message);
+            }
+        }
+
+        // Handle edit_title intent (taaknaam wijzigen)
+        async function handleEditTitle(result) {
+            if (result.new_title && currentIndex < mockInbox.length) {
+                const oldTitle = mockInbox[currentIndex].title;
+                mockInbox[currentIndex].title = result.new_title;
+                currentTaskTitle = result.new_title;
+                document.getElementById('currentAction').textContent = result.new_title;
                 await speak(result.response_message);
             }
         }
@@ -1025,7 +1114,12 @@
                     break;
 
                 case 'done':
+                case 'save': // Alias for done
                     await saveCurrentAction();
+                    break;
+
+                case 'complete': // Mark task as completed
+                    await completeCurrentAction();
                     break;
 
                 case 'delete':
@@ -1079,12 +1173,56 @@
                 project: null,
                 context: null,
                 duration: null,
-                priority: null
+                priority: null,
+                date: null,
+                notes: null,
+                subtiel: false,
+                lijst: 'acties'
             };
             updatePropertyDisplay('project', null);
             updatePropertyDisplay('context', null);
             updatePropertyDisplay('duration', null);
             updatePropertyDisplay('priority', null);
+            updatePropertyDisplay('date', null);
+            updatePropertyDisplay('notes', null);
+            updatePropertyDisplay('subtiel', 'Nee');
+            updatePropertyDisplay('lijst', 'Acties');
+
+            nextAction();
+        }
+
+        // Complete action (mark as done and move to next)
+        async function completeCurrentAction() {
+            const action = mockInbox[currentIndex];
+            processedActions.push({
+                ...action,
+                ...currentProperties,
+                completed: true
+            });
+
+            stats.completed++;
+
+            await speak("Taak afgevinkt als voltooid.");
+
+            // Reset properties for next action
+            currentProperties = {
+                project: null,
+                context: null,
+                duration: null,
+                priority: null,
+                date: null,
+                notes: null,
+                subtiel: false,
+                lijst: 'acties'
+            };
+            updatePropertyDisplay('project', null);
+            updatePropertyDisplay('context', null);
+            updatePropertyDisplay('duration', null);
+            updatePropertyDisplay('priority', null);
+            updatePropertyDisplay('date', null);
+            updatePropertyDisplay('notes', null);
+            updatePropertyDisplay('subtiel', 'Nee');
+            updatePropertyDisplay('lijst', 'Acties');
 
             nextAction();
         }
@@ -1102,15 +1240,19 @@
 
         // Show completion summary
         async function showCompletion() {
-            await speak(`Inbox verwerking voltooid. ${stats.processed} acties verwerkt, ${stats.skipped} overgeslagen, ${stats.deleted} verwijderd.`);
+            await speak(`Inbox verwerking voltooid. ${stats.processed} acties opgeslagen, ${stats.completed} afgevinkt, ${stats.skipped} overgeslagen, ${stats.deleted} verwijderd.`);
 
             document.getElementById('progress').textContent = 'Voltooid! 🎉';
             document.getElementById('currentAction').textContent = 'Alle acties verwerkt';
             document.getElementById('transcript').innerHTML = `
                 <div class="summary">
                     <div class="summary-item">
-                        <strong>Verwerkt:</strong>
+                        <strong>Opgeslagen:</strong>
                         <span>${stats.processed}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Afgevinkt:</strong>
+                        <span>${stats.completed}</span>
                     </div>
                     <div class="summary-item">
                         <strong>Overgeslagen:</strong>
@@ -1190,13 +1332,19 @@
                 project: null,
                 context: null,
                 duration: null,
-                priority: null
+                priority: null,
+                date: null,
+                notes: null,
+                subtiel: false,
+                lijst: 'acties'
             };
+            currentTaskTitle = null;
             processedActions = [];
             stats = {
                 processed: 0,
                 skipped: 0,
-                deleted: 0
+                deleted: 0,
+                completed: 0
             };
 
             document.getElementById('progress').textContent = 'Klaar om te starten';
@@ -1207,6 +1355,10 @@
             updatePropertyDisplay('context', null);
             updatePropertyDisplay('duration', null);
             updatePropertyDisplay('priority', null);
+            updatePropertyDisplay('date', null);
+            updatePropertyDisplay('notes', null);
+            updatePropertyDisplay('subtiel', 'Nee');
+            updatePropertyDisplay('lijst', 'Acties');
 
             showFeedback("Stem modus gestopt", "info");
         }

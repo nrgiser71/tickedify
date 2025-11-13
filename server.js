@@ -910,27 +910,63 @@ Projecten: ${(availableEntities.projects || []).join(', ') || 'Geen projecten be
 Contexten: ${(availableEntities.contexts || []).join(', ') || 'Geen contexten beschikbaar'}
 
 COMMANDO TYPES:
-1. set_property: Gebruiker stelt eigenschappen in (project, context, prioriteit, duur)
-2. query: Gebruiker vraagt om informatie (lijst van projecten, contexten)
-3. action: Gebruiker geeft een actie commando (volgende, herhalen, klaar, verwijderen)
-4. create_entity: Gebruiker wil een nieuw project of context aanmaken
+1. set_property: Eigenschappen instellen (project, context, prioriteit, duur, datum, notitie, subtiel)
+2. set_list: Taak doorsturen naar lijst (opvolgen, uitgesteld-wekelijks/maandelijks/etc)
+3. edit_title: Taaknaam wijzigen
+4. query: Informatie opvragen (lijst projecten/contexten)
+5. action: Actie commando (start, volgende, herhaal, opslaan, afvinken, verwijder, stop)
+6. create_entity: Nieuw project/context aanmaken
 
-PRIORITEITEN (alleen deze waarden):
-- hoog
-- gemiddeld
-- laag
+EIGENSCHAPPEN:
+- project: Project naam (string)
+- context: Context naam (string)
+- priority: hoog/gemiddeld/laag
+- duration: Duur in minuten (integer)
+- date: Verschijndatum YYYY-MM-DD formaat (bijv "2025-11-15")
+- notes: Notitie tekst (string)
+- subtiel: Boolean (true als gebruiker "subtiel" zegt)
 
-DUUR: Altijd in minuten (integer)
+LIJSTEN (voor set_list intent):
+- opvolgen
+- uitgesteld-wekelijks
+- uitgesteld-maandelijks
+- uitgesteld-3maandelijks
+- uitgesteld-6maandelijks
+- uitgesteld-jaarlijks
+
+ACTIES (voor action intent):
+- start: Start inbox verwerking
+- next/volgende: Volgende actie
+- repeat/herhaal: Herhaal huidige actie
+- save/opslaan/done/klaar: Taak opslaan
+- complete/afvinken/voltooid: Taak markeren als voltooid
+- delete/verwijder: Taak verwijderen
+- stop: Voice mode stoppen
 
 VOORBEELDEN:
-User: "Het project mag je op verbouwing zetten, de context op thuis, de prio op hoog en de duur op 15 minuten"
-→ intent: set_property, properties: {project: "verbouwing", context: "thuis", priority: "hoog", duration: 15}
+User: "Datum 15 november" of "Verschijndatum 2025-11-15"
+→ intent: set_property, properties: {date: "2025-11-15"}
 
-User: "Geef me de lijst van projecten"
-→ intent: query, query_type: "list_projects"
+User: "Notitie: Eerst bellen voor afspraak"
+→ intent: set_property, properties: {notes: "Eerst bellen voor afspraak"}
 
-User: "Dit mag aan een nieuw project toegekend worden, de naam is Tuinhuis schilderen"
-→ intent: create_entity, entities: {create_project: "Tuinhuis schilderen"}, properties: {project: "Tuinhuis schilderen"}
+User: "Dit is subtiel" of "Markeer als subtiel"
+→ intent: set_property, properties: {subtiel: true}
+
+User: "Doorsturen naar opvolgen" of "Naar opvolgen lijst"
+→ intent: set_list, lijst: "opvolgen"
+
+User: "Uitstellen tot wekelijks" of "Naar wekelijkse lijst"
+→ intent: set_list, lijst: "uitgesteld-wekelijks"
+
+User: "De naam moet zijn: Klant bellen over offerte"
+→ intent: edit_title, new_title: "Klant bellen over offerte"
+
+User: "Taak opslaan" of "Sla de taak op"
+→ intent: action, action_type: "save"
+
+User: "Taak afvinken" of "Markeer als voltooid"
+→ intent: action, action_type: "complete"
 
 Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
 
@@ -955,7 +991,7 @@ Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
                         properties: {
                             intent: {
                                 type: "string",
-                                enum: ["set_property", "query", "action", "create_entity"],
+                                enum: ["set_property", "set_list", "edit_title", "query", "action", "create_entity"],
                                 description: "Het type commando dat de gebruiker geeft"
                             },
                             properties: {
@@ -977,10 +1013,31 @@ Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
                                         type: ["string", "null"],
                                         enum: ["hoog", "gemiddeld", "laag", null],
                                         description: "Prioriteit niveau"
+                                    },
+                                    date: {
+                                        type: ["string", "null"],
+                                        description: "Verschijndatum in YYYY-MM-DD formaat"
+                                    },
+                                    notes: {
+                                        type: ["string", "null"],
+                                        description: "Notitie tekst"
+                                    },
+                                    subtiel: {
+                                        type: ["boolean", "null"],
+                                        description: "Of de taak subtiel is"
                                     }
                                 },
-                                required: ["project", "context", "duration", "priority"],
+                                required: ["project", "context", "duration", "priority", "date", "notes", "subtiel"],
                                 additionalProperties: false
+                            },
+                            lijst: {
+                                type: ["string", "null"],
+                                enum: ["opvolgen", "uitgesteld-wekelijks", "uitgesteld-maandelijks", "uitgesteld-3maandelijks", "uitgesteld-6maandelijks", "uitgesteld-jaarlijks", null],
+                                description: "Doellijst voor set_list intent"
+                            },
+                            new_title: {
+                                type: ["string", "null"],
+                                description: "Nieuwe taaknaam voor edit_title intent"
                             },
                             entities: {
                                 type: "object",
@@ -1004,7 +1061,7 @@ Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
                             },
                             action_type: {
                                 type: ["string", "null"],
-                                enum: ["next", "repeat", "done", "delete", "stop", null],
+                                enum: ["start", "next", "repeat", "save", "complete", "delete", "stop", null],
                                 description: "Type actie als intent=action"
                             },
                             response_message: {
@@ -1012,7 +1069,7 @@ Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
                                 description: "Nederlandse feedback bericht voor de gebruiker"
                             }
                         },
-                        required: ["intent", "properties", "entities", "query_type", "action_type", "response_message"],
+                        required: ["intent", "properties", "lijst", "new_title", "entities", "query_type", "action_type", "response_message"],
                         additionalProperties: false
                     }
                 }
