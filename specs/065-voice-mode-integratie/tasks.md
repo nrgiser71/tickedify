@@ -45,71 +45,71 @@ Tickedify uses simplified web structure (not standard Option 1/2/3):
 
 ## Phase 3.1: Setup & Preparation
 
-- [ ] **T001** [P] Add email whitelist check function in `public/app.js` - Create `shouldShowVoiceMode()` function that returns true only for 'jan@buskens.be' and 'info@baasoverjetijd.be', returns false otherwise
+- [x] **T001** [P] Add email whitelist check function in `public/app.js` - Create `shouldShowVoiceMode()` function that returns true only for 'jan@buskens.be' and 'info@baasoverjetijd.be', returns false otherwise
 
-- [ ] **T002** [P] Add voice mode toggle button HTML in `public/index.html` - Add toggle button after task filters in inbox screen section, wrap with `id="voice-mode-container"` for conditional visibility
+- [x] **T002** [P] Add voice mode toggle button HTML in `public/index.html` - Add toggle button after task filters in inbox screen section, wrap with `id="voice-mode-container"` for conditional visibility
 
-- [ ] **T003** [P] Add subtle voice mode CSS in `public/style.css` - Create `.voice-toggle-btn` and `.voice-toggle-btn.active` classes with subtle pulse animation (less prominent than POC), add `.voice-mode-indicator` for status display
+- [x] **T003** [P] Add subtle voice mode CSS in `public/style.css` - Create `.voice-toggle-btn` and `.voice-toggle-btn.active` classes with subtle pulse animation (less prominent than POC), add `.voice-mode-indicator` for status display
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 
 **CRITICAL: These tests verify existing endpoints work correctly for voice mode integration**
 
-- [ ] **T004** [P] Contract verification: POST /api/voice/parse-command - Write manual test script that sends Dutch voice commands and verifies structured output matches contract (property setting, list routing, queries, actions)
+- [x] **T004** [P] Contract verification: POST /api/voice/parse-command - Write manual test script that sends Dutch voice commands and verifies structured output matches contract (property setting, list routing, queries, actions)
 
-- [ ] **T005** [P] Contract verification: GET /api/lijst/inbox - Write manual test script that fetches inbox tasks and verifies all 8 voice-settable properties are included in response (titel, notities, project, context, duur, prioriteit, verschijndatum, subtaken)
+- [x] **T005** [P] Contract verification: GET /api/lijst/inbox - Write manual test script that fetches inbox tasks and verifies all 8 voice-settable properties are included in response (titel, notities, project, context, duur, prioriteit, verschijndatum, subtaken)
 
-- [ ] **T006** [P] Contract verification: PUT /api/taak/:id - Write manual test script that updates task properties and verifies partial updates work correctly (test each of 8 properties individually)
+- [x] **T006** [P] Contract verification: PUT /api/taak/:id - Write manual test script that updates task properties and verifies partial updates work correctly (test each of 8 properties individually)
 
-- [ ] **T007** [P] Integration test scenario: Email whitelist - Create test that verifies voice button visibility for authorized users (jan@buskens.be, info@baasoverjetijd.be) and hidden for non-authorized users
+- [x] **T007** [P] Integration test scenario: Email whitelist - Create test that verifies voice button visibility for authorized users (jan@buskens.be, info@baasoverjetijd.be) and hidden for non-authorized users
 
 ## Phase 3.3: Core Implementation (ONLY after tests are verified)
 
 ### Voice Mode State Management
 
-- [ ] **T008** Initialize voice mode state object in `public/app.js` - Add `voiceModeState` object with properties: active (boolean), currentTaskIndex (integer), pendingProperties (object with 8 properties), conversationHistory (array), recognition (SpeechRecognition instance), audioElement (HTMLAudioElement), stats (object)
+- [x] **T008** Initialize voice mode state object in `public/app.js` - Add `voiceModeState` object with properties: active (boolean), currentTaskIndex (integer), pendingProperties (object with 8 properties), conversationHistory (array), recognition (SpeechRecognition instance), audioElement (HTMLAudioElement), stats (object)
 
-- [ ] **T009** Add voice mode toggle event handlers in `public/app.js` - Wire toggle button click to activate/deactivate voice mode, update UI indicator, initialize/cleanup Web Speech API instances
+- [x] **T009** Add voice mode toggle event handlers in `public/app.js` - Wire toggle button click to activate/deactivate voice mode, update UI indicator, initialize/cleanup Web Speech API instances
 
 ### Voice Logic Extraction (from voice-poc.html)
 
-- [ ] **T010** Extract speech recognition setup from `public/voice-poc.html` (lines 620-680) into `public/app.js` - Copy recognition initialization, event handlers (onresult, onerror, onend), auto-restart logic, adapt for main app context
+- [x] **T010** Extract speech recognition setup from `public/voice-poc.html` (lines 620-680) into `public/app.js` - Copy recognition initialization, event handlers (onresult, onerror, onend), auto-restart logic, adapt for main app context
 
-- [ ] **T011** Extract speech synthesis integration from `public/voice-poc.html` (lines 755-820) into `public/app.js` - Copy OpenAI TTS API call function, browser TTS fallback, audio playback with Promise-based sequencing, adapt `speak()` function for main app
+- [x] **T011** Extract speech synthesis integration from `public/voice-poc.html` (lines 755-820) into `public/app.js` - Copy OpenAI TTS API call function, browser TTS fallback, audio playback with Promise-based sequencing, adapt `speak()` function for main app
 
-- [ ] **T012** Extract command processing from `public/voice-poc.html` (lines 850-920) into `public/app.js` - Copy AI parsing API call with conversation history, regex fallback logic, error handling with fallback flag, transcript filtering (>= 2 chars)
+- [x] **T012** Extract command processing from `public/voice-poc.html` (lines 850-920) into `public/app.js` - Copy AI parsing API call with conversation history, regex fallback logic, error handling with fallback flag, transcript filtering (>= 2 chars)
 
 ### Intent Handlers
 
-- [ ] **T013** Extract and adapt property setting handler from `public/voice-poc.html` (lines 940-1000) into `public/app.js` - Copy `handleSetProperty()` function, adapt to update `voiceModeState.pendingProperties` for all 8 properties (project, context, duration, priority, date, notes, subtaken, lijst)
+- [x] **T013** Extract and adapt property setting handler from `public/voice-poc.html` (lines 940-1000) into `public/app.js` - Copy `handleSetProperty()` function, adapt to update `voiceModeState.pendingProperties` for all 8 properties (project, context, duration, priority, date, notes, subtaken, lijst)
 
-- [ ] **T014** Extract and adapt list routing handler from `public/voice-poc.html` (lines 1000-1020) into `public/app.js` - Copy `handleSetList()` function, integrate with existing `updateTask()` API call, implement task removal from inbox array after routing
+- [x] **T014** Extract and adapt list routing handler from `public/voice-poc.html` (lines 1000-1020) into `public/app.js` - Copy `handleSetList()` function, integrate with existing `updateTask()` API call, implement task removal from inbox array after routing
 
-- [ ] **T015** Extract and adapt title editing handler from `public/voice-poc.html` (lines 1020-1040) into `public/app.js` - Copy `handleEditTitle()` function, update task title in currentTasks array and UI display
+- [x] **T015** Extract and adapt title editing handler from `public/voice-poc.html` (lines 1020-1040) into `public/app.js` - Copy `handleEditTitle()` function, update task title in currentTasks array and UI display
 
-- [ ] **T016** Extract and adapt query handler from `public/voice-poc.html` (lines 1040-1080) into `public/app.js` - Copy `handleQuery()` function, integrate with existing project/context API endpoints, implement counting logic, spoken feedback for query results
+- [x] **T016** Extract and adapt query handler from `public/voice-poc.html` (lines 1040-1080) into `public/app.js` - Copy `handleQuery()` function, integrate with existing project/context API endpoints, implement counting logic, spoken feedback for query results
 
 ### Action Handlers
 
-- [ ] **T017** Extract and adapt save action from `public/voice-poc.html` (lines 1150-1200) into `public/app.js` - Copy `saveCurrentAction()` function, merge pendingProperties with current task, resolve project/context names to IDs (find or create), call PUT /api/taak/:id, reset pendingProperties, advance to next task
+- [x] **T017** Extract and adapt save action from `public/voice-poc.html` (lines 1150-1200) into `public/app.js` - Copy `saveCurrentAction()` function, merge pendingProperties with current task, resolve project/context names to IDs (find or create), call PUT /api/taak/:id, reset pendingProperties, advance to next task
 
-- [ ] **T018** Extract and adapt complete action from `public/voice-poc.html` (lines 1200-1230) into `public/app.js` - Copy `completeCurrentAction()` function, call PUT /api/taak/:id with voltooid=true, remove from inbox array, update stats, advance to next task
+- [x] **T018** Extract and adapt complete action from `public/voice-poc.html` (lines 1200-1230) into `public/app.js` - Copy `completeCurrentAction()` function, call PUT /api/taak/:id with voltooid=true, remove from inbox array, update stats, advance to next task
 
-- [ ] **T019** Extract and adapt navigation functions from `public/voice-poc.html` (lines 1230-1280) into `public/app.js` - Copy `nextAction()`, `readCurrentAction()`, `repeatAction()` functions, integrate with existing inbox task array instead of mock data
+- [x] **T019** Extract and adapt navigation functions from `public/voice-poc.html` (lines 1230-1280) into `public/app.js` - Copy `nextAction()`, `readCurrentAction()`, `repeatAction()` functions, integrate with existing inbox task array instead of mock data
 
 ### Data Integration
 
-- [ ] **T020** Replace mock inbox data with real API integration in `public/app.js` - Remove references to mockInbox array, use existing `currentTasks` array from `loadInbox()` function, maintain task index for voice navigation, ensure voice mode works with live database data
+- [x] **T020** Replace mock inbox data with real API integration in `public/app.js` - Remove references to mockInbox array, use existing `currentTasks` array from `loadInbox()` function, maintain task index for voice navigation, ensure voice mode works with live database data
 
-- [ ] **T021** Implement project/context lookup and auto-creation in `public/app.js` - Add `findOrCreateProject(name)` and `findOrCreateContext(name)` functions that call GET /api/projecten or GET /api/contexten to find existing, or POST to create new entity, return ID for task update
+- [x] **T021** Implement project/context lookup and auto-creation in `public/app.js` - Add `findOrCreateProject(name)` and `findOrCreateContext(name)` functions that call GET /api/projecten or GET /api/contexten to find existing, or POST to create new entity, return ID for task update
 
 ## Phase 3.4: Integration & Error Handling
 
-- [ ] **T022** Implement AI parsing fallback to regex in `public/app.js` - Add `parsePropertiesRegex(transcript)` function with regex patterns for common commands (project, context, duration, priority, klaar, afvinken, doorsturen), ensure graceful degradation when AI API fails
+- [x] **T022** Implement AI parsing fallback to regex in `public/app.js` - Add `parsePropertiesRegex(transcript)` function with regex patterns for common commands (project, context, duration, priority, klaar, afvinken, doorsturen), ensure graceful degradation when AI API fails
 
-- [ ] **T023** Implement microphone permission error handling in `public/app.js` - Add error handler for navigator.mediaDevices.getUserMedia() rejection, display clear error message explaining microphone access required, keep voice button visible but non-functional
+- [x] **T023** Implement microphone permission error handling in `public/app.js` - Add error handler for navigator.mediaDevices.getUserMedia() rejection, display clear error message explaining microphone access required, keep voice button visible but non-functional
 
-- [ ] **T024** Implement non-persistence enforcement in `public/app.js` - Ensure voiceModeState.active starts as false on page load, no localStorage or sessionStorage usage, verify voice mode always inactive after page refresh
+- [x] **T024** Implement non-persistence enforcement in `public/app.js` - Ensure voiceModeState.active starts as false on page load, no localStorage or sessionStorage usage, verify voice mode always inactive after page refresh
 
 ## Phase 3.5: Polish & Testing
 

@@ -2199,6 +2199,9 @@ class Taakbeheer {
         */
         // END TEMPORARILY DISABLED - Feature 063
 
+        // Initialize voice mode visibility for whitelisted users
+        this.initializeVoiceMode();
+
         // Hide loading indicator after app is fully loaded
         if (window.loading) {
             loading.hideGlobal();
@@ -4109,6 +4112,25 @@ class Taakbeheer {
         });
 
         console.log('Mobile sidebar initialized');
+    }
+
+    // Voice mode initialization - Show voice button only for whitelisted users
+    initializeVoiceMode() {
+        const voiceContainer = document.getElementById('voice-mode-container');
+
+        if (!voiceContainer) {
+            console.warn('Voice mode container not found in DOM');
+            return;
+        }
+
+        // Check if current user is whitelisted for voice mode
+        if (shouldShowVoiceMode()) {
+            voiceContainer.style.display = 'block';
+            console.log('✅ Voice mode enabled for', window.auth.currentUser.email);
+        } else {
+            voiceContainer.style.display = 'none';
+            console.log('ℹ️ Voice mode disabled (user not whitelisted)');
+        }
     }
 
     // F-key shortcuts for planning popup
