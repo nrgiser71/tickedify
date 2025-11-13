@@ -286,6 +286,127 @@
         .summary-item:last-child {
             border-bottom: none;
         }
+
+        .voice-settings {
+            background: #f0f4ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .voice-settings h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: #764ba2;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #d3d3d3;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #764ba2;
+            transform: scale(1.2);
+        }
+
+        .slider-value {
+            min-width: 45px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .test-voice-btn {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .test-voice-btn:hover {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -299,6 +420,37 @@
             <button class="voice-button" id="voiceBtn">
                 🎤 Start Voice Mode
             </button>
+
+            <div class="voice-settings">
+                <h3>🎛️ Voice Settings</h3>
+
+                <div class="setting-group">
+                    <label class="setting-label">Voice</label>
+                    <select id="voiceSelect">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Speed</label>
+                    <div class="slider-container">
+                        <input type="range" id="rateSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <span class="slider-value" id="rateValue">1.0x</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">Pitch</label>
+                    <div class="slider-container">
+                        <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <span class="slider-value" id="pitchValue">1.0x</span>
+                    </div>
+                </div>
+
+                <button class="test-voice-btn" id="testVoiceBtn">
+                    🔊 Test Voice
+                </button>
+            </div>
 
             <div class="speech-feedback" id="feedback"></div>
 
@@ -400,6 +552,10 @@
         let currentIndex = 0;
         let recognition = null;
         let synthesis = window.speechSynthesis;
+        let availableVoices = [];
+        let selectedVoice = null;
+        let voiceRate = 1.0;
+        let voicePitch = 1.0;
         let currentProperties = {
             project: null,
             context: null,
@@ -458,6 +614,72 @@
             return recognition;
         }
 
+        // Load available voices
+        function loadVoices() {
+            availableVoices = synthesis.getVoices();
+
+            const voiceSelect = document.getElementById('voiceSelect');
+            voiceSelect.innerHTML = '';
+
+            if (availableVoices.length === 0) {
+                voiceSelect.innerHTML = '<option value="">No voices available</option>';
+                return;
+            }
+
+            // Sort voices: English first, then by name
+            const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
+            const otherVoices = availableVoices.filter(v => !v.lang.startsWith('en'));
+
+            // Add English voices
+            if (englishVoices.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = 'English Voices';
+                englishVoices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    optgroup.appendChild(option);
+                });
+                voiceSelect.appendChild(optgroup);
+            }
+
+            // Add other voices
+            if (otherVoices.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = 'Other Languages';
+                otherVoices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    option.value = availableVoices.indexOf(voice);
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    optgroup.appendChild(option);
+                });
+                voiceSelect.appendChild(optgroup);
+            }
+
+            // Select a good default voice
+            // Priority: 1. Samantha (Mac), 2. Any premium female voice, 3. First English voice
+            let defaultIndex = 0;
+            const samantha = availableVoices.findIndex(v => v.name.includes('Samantha'));
+            const karen = availableVoices.findIndex(v => v.name.includes('Karen'));
+            const premiumFemale = availableVoices.findIndex(v =>
+                v.name.includes('Premium') && (v.name.includes('Female') || v.name.includes('Samantha'))
+            );
+
+            if (samantha !== -1) {
+                defaultIndex = samantha;
+            } else if (premiumFemale !== -1) {
+                defaultIndex = premiumFemale;
+            } else if (karen !== -1) {
+                defaultIndex = karen;
+            } else {
+                defaultIndex = englishVoices.length > 0 ?
+                    availableVoices.indexOf(englishVoices[0]) : 0;
+            }
+
+            voiceSelect.value = defaultIndex;
+            selectedVoice = availableVoices[defaultIndex];
+        }
+
         // Text-to-Speech
         function speak(text) {
             if (synthesis.speaking) {
@@ -465,13 +687,25 @@
             }
 
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                utterance.lang = selectedVoice.lang;
+            } else {
+                utterance.lang = 'en-US';
+            }
+
+            utterance.rate = voiceRate;
+            utterance.pitch = voicePitch;
 
             synthesis.speak(utterance);
 
             showFeedback(`🔊 "${text}"`, "info");
+        }
+
+        // Test voice button
+        function testVoice() {
+            speak("Hello! This is how I will sound when reading your tasks. Action one: Create quote for client X.");
         }
 
         // Process voice commands
@@ -760,6 +994,30 @@
 
         // Event listeners
         document.getElementById('voiceBtn').addEventListener('click', toggleVoiceMode);
+        document.getElementById('testVoiceBtn').addEventListener('click', testVoice);
+
+        // Voice selection
+        document.getElementById('voiceSelect').addEventListener('change', (e) => {
+            const index = parseInt(e.target.value);
+            selectedVoice = availableVoices[index];
+        });
+
+        // Rate slider
+        document.getElementById('rateSlider').addEventListener('input', (e) => {
+            voiceRate = parseFloat(e.target.value);
+            document.getElementById('rateValue').textContent = voiceRate.toFixed(1) + 'x';
+        });
+
+        // Pitch slider
+        document.getElementById('pitchSlider').addEventListener('input', (e) => {
+            voicePitch = parseFloat(e.target.value);
+            document.getElementById('pitchValue').textContent = voicePitch.toFixed(1) + 'x';
+        });
+
+        // Load voices on page load and when voices change
+        if (synthesis.onvoiceschanged !== undefined) {
+            synthesis.onvoiceschanged = loadVoices;
+        }
 
         // Check browser compatibility on load
         window.addEventListener('load', () => {
@@ -770,6 +1028,10 @@
             } else {
                 showFeedback("✓ Speech recognition available. Click to start!", "success");
             }
+
+            // Load voices (might take a moment on some browsers)
+            loadVoices();
+            setTimeout(loadVoices, 100); // Fallback for slower browsers
         });
     </script>
 </body>
