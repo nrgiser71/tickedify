@@ -698,8 +698,9 @@ async function saveCurrentAction() {
         updateData.notities = voiceModeState.pendingProperties.notes;
     }
 
-    if (voiceModeState.pendingProperties.subtaken !== null) {
-        updateData.subtaken = voiceModeState.pendingProperties.subtaken;
+    // Only include subtaken if explicitly set to true (don't send default false)
+    if (voiceModeState.pendingProperties.subtaken === true) {
+        updateData.subtaken = true;
     }
 
     // Handle list routing
