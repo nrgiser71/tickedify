@@ -708,6 +708,10 @@ async function saveCurrentAction() {
         voiceModeState.stats.routed++;
     }
 
+    console.log('🔍 DEBUG saveCurrentAction - task.id:', task.id);
+    console.log('🔍 DEBUG saveCurrentAction - updateData:', updateData);
+    console.log('🔍 DEBUG saveCurrentAction - task object:', task);
+
     try {
         // Update task via API
         const response = await fetch(`/api/taak/${task.id}`, {
@@ -717,6 +721,14 @@ async function saveCurrentAction() {
             },
             body: JSON.stringify(updateData)
         });
+
+        console.log('🔍 DEBUG saveCurrentAction - response.status:', response.status);
+        console.log('🔍 DEBUG saveCurrentAction - response.ok:', response.ok);
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.log('🔍 DEBUG saveCurrentAction - error response:', errorBody);
+        }
 
         if (response.ok) {
             voiceModeState.stats.saved++;
