@@ -646,6 +646,10 @@ async function readCurrentAction() {
     }
 
     const task = app.taken[voiceModeState.currentTaskIndex];
+    console.log('🔍 DEBUG readCurrentAction - task object:', task);
+    console.log('🔍 DEBUG readCurrentAction - task.titel:', task.titel);
+    console.log('🔍 DEBUG readCurrentAction - task.tekst:', task.tekst);
+    console.log('🔍 DEBUG readCurrentAction - Object.keys:', Object.keys(task));
     await speak(`Actie ${voiceModeState.currentTaskIndex + 1} van ${app.taken.length}: ${task.titel}`);
 }
 
