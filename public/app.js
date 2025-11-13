@@ -15909,7 +15909,8 @@ const auth = new AuthManager();
 const app = new Taakbeheer();
 const updateManager = new UpdateManager();
 
-// Make app available globally for onclick handlers
+// Make auth and app available globally
+window.auth = auth;
 window.app = app;
 
 // Expose bulk functions to window
