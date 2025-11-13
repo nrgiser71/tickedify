@@ -5,13 +5,25 @@
 function shouldShowVoiceMode() {
     const auth = window.auth;
     if (!auth || !auth.isAuthenticated || !auth.currentUser) {
+        console.log('🔍 Voice whitelist check: No auth or user');
         return false;
     }
 
-    const email = auth.currentUser.email;
-    const whitelist = ['jan@buskens.be', 'info@baasoverjetijd.be'];
+    const rawEmail = auth.currentUser.email;
+    console.log('🔍 Voice whitelist check - Raw email:', rawEmail);
+    console.log('🔍 Voice whitelist check - Email type:', typeof rawEmail);
+    console.log('🔍 Voice whitelist check - Email length:', rawEmail?.length);
 
-    return whitelist.includes(email);
+    // Normalize email: trim whitespace and convert to lowercase for case-insensitive comparison
+    const email = rawEmail?.trim().toLowerCase();
+    console.log('🔍 Voice whitelist check - Normalized email:', email);
+
+    const whitelist = ['jan@buskens.be', 'info@baasoverjetijd.be'];
+    const isWhitelisted = whitelist.includes(email);
+
+    console.log('🔍 Voice whitelist check - Result:', isWhitelisted);
+
+    return isWhitelisted;
 }
 
 // ============================================================================
