@@ -671,14 +671,14 @@ async function saveCurrentAction() {
     if (voiceModeState.pendingProperties.project) {
         const projectId = await findOrCreateProject(voiceModeState.pendingProperties.project);
         if (projectId) {
-            updateData.project_id = projectId;
+            updateData.projectId = projectId;
         }
     }
 
     if (voiceModeState.pendingProperties.context) {
         const contextId = await findOrCreateContext(voiceModeState.pendingProperties.context);
         if (contextId) {
-            updateData.context_id = contextId;
+            updateData.contextId = contextId;
         }
     }
 
@@ -866,32 +866,39 @@ async function findOrCreateProject(name) {
 
     try {
         // First, try to find existing project
-        const response = await fetch('/api/projecten');
-        if (response.ok) {
-            const projects = await response.json();
-            const existing = projects.find(p => p.naam.toLowerCase() === name.toLowerCase());
-            if (existing) {
-                return existing.id;
-            }
+        const response = await fetch('/api/lijst/projecten-lijst');
+        if (!response.ok) {
+            console.error('Failed to fetch projects');
+            return null;
         }
 
-        // Project doesn't exist, create it
-        const createResponse = await fetch('/api/projecten', {
+        const projects = await response.json();
+        const existing = projects.find(p => p.naam.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            return existing.id;
+        }
+
+        // Project doesn't exist, create it by adding to the list
+        const newProject = {
+            id: 'project_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15),
+            naam: name
+        };
+
+        const updatedProjects = [...projects, newProject];
+
+        const saveResponse = await fetch('/api/lijst/projecten-lijst', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                naam: name
-            })
+            body: JSON.stringify(updatedProjects)
         });
 
-        if (createResponse.ok) {
-            const newProject = await createResponse.json();
-            console.log('Created new project:', name);
+        if (saveResponse.ok) {
+            console.log('✅ Created new project:', name);
             return newProject.id;
         } else {
-            console.error('Failed to create project:', name);
+            console.error('❌ Failed to save project:', name);
             return null;
         }
     } catch (error) {
@@ -906,32 +913,39 @@ async function findOrCreateContext(name) {
 
     try {
         // First, try to find existing context
-        const response = await fetch('/api/contexten');
-        if (response.ok) {
-            const contexts = await response.json();
-            const existing = contexts.find(c => c.naam.toLowerCase() === name.toLowerCase());
-            if (existing) {
-                return existing.id;
-            }
+        const response = await fetch('/api/lijst/contexten');
+        if (!response.ok) {
+            console.error('Failed to fetch contexts');
+            return null;
         }
 
-        // Context doesn't exist, create it
-        const createResponse = await fetch('/api/contexten', {
+        const contexts = await response.json();
+        const existing = contexts.find(c => c.naam.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            return existing.id;
+        }
+
+        // Context doesn't exist, create it by adding to the list
+        const newContext = {
+            id: 'context_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15),
+            naam: name
+        };
+
+        const updatedContexts = [...contexts, newContext];
+
+        const saveResponse = await fetch('/api/lijst/contexten', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                naam: name
-            })
+            body: JSON.stringify(updatedContexts)
         });
 
-        if (createResponse.ok) {
-            const newContext = await createResponse.json();
-            console.log('Created new context:', name);
+        if (saveResponse.ok) {
+            console.log('✅ Created new context:', name);
             return newContext.id;
         } else {
-            console.error('Failed to create context:', name);
+            console.error('❌ Failed to save context:', name);
             return null;
         }
     } catch (error) {
