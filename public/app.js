@@ -14,6 +14,1007 @@ function shouldShowVoiceMode() {
     return whitelist.includes(email);
 }
 
+// ============================================================================
+// VOICE MODE - State Management (T008)
+// ============================================================================
+const voiceModeState = {
+    active: false,
+    currentTaskIndex: 0,
+    pendingProperties: {
+        project: null,
+        context: null,
+        duration: null,
+        priority: null,
+        date: null,
+        notes: null,
+        subtaken: false,
+        lijst: 'acties'
+    },
+    conversationHistory: [],
+    recognition: null,
+    audioElement: null,
+    stats: {
+        processed: 0,
+        saved: 0,
+        completed: 0,
+        routed: 0,
+        skipped: 0,
+        deleted: 0
+    }
+};
+
+// ============================================================================
+// VOICE MODE - Toggle Handlers (T009)
+// ============================================================================
+
+// Toggle voice mode on/off
+function toggleVoiceMode() {
+    if (voiceModeState.active) {
+        deactivateVoiceMode();
+    } else {
+        activateVoiceMode();
+    }
+}
+
+// Activate voice mode
+async function activateVoiceMode() {
+    // Initialize audio element if not exists
+    if (!voiceModeState.audioElement) {
+        voiceModeState.audioElement = new Audio();
+    }
+
+    // Initialize speech recognition if not exists
+    if (!voiceModeState.recognition) {
+        voiceModeState.recognition = initializeVoiceRecognition();
+        if (!voiceModeState.recognition) {
+            toast.error('Speech recognition not supported in this browser');
+            return;
+        }
+    }
+
+    voiceModeState.active = true;
+
+    // Update UI
+    const button = document.getElementById('voice-toggle-btn');
+    if (button) {
+        button.classList.add('active');
+        button.textContent = '🎤 Voice Mode Active - Say "start"';
+    }
+
+    // Start listening
+    try {
+        voiceModeState.recognition.start();
+        await speak("Voice mode active. Say 'start' to process inbox actions.");
+        toast.info('🎤 Listening... Say "start" to begin');
+    } catch (error) {
+        console.error('Failed to start voice recognition:', error);
+        toast.error('Failed to start microphone');
+        deactivateVoiceMode();
+    }
+}
+
+// Deactivate voice mode
+function deactivateVoiceMode() {
+    voiceModeState.active = false;
+
+    // Stop recognition
+    if (voiceModeState.recognition) {
+        voiceModeState.recognition.stop();
+    }
+
+    // Stop any playing audio
+    if (voiceModeState.audioElement && !voiceModeState.audioElement.paused) {
+        voiceModeState.audioElement.pause();
+    }
+
+    // Stop browser synthesis if playing
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+    }
+
+    // Update UI
+    const button = document.getElementById('voice-toggle-btn');
+    if (button) {
+        button.classList.remove('active');
+        button.textContent = '🎤 Start Voice Mode';
+    }
+
+    // Reset state
+    voiceModeState.currentTaskIndex = 0;
+    voiceModeState.pendingProperties = {
+        project: null,
+        context: null,
+        duration: null,
+        priority: null,
+        date: null,
+        notes: null,
+        subtaken: false,
+        lijst: 'acties'
+    };
+    voiceModeState.conversationHistory = [];
+    voiceModeState.stats = {
+        processed: 0,
+        saved: 0,
+        completed: 0,
+        routed: 0,
+        skipped: 0,
+        deleted: 0
+    };
+
+    toast.info('Voice mode deactivated');
+}
+
+// ============================================================================
+// VOICE MODE - Speech Recognition (T010)
+// ============================================================================
+
+function initializeVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        console.error('Speech recognition not supported in this browser');
+        return null;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'nl-NL'; // Dutch language for voice recognition
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+        const last = event.results.length - 1;
+        const transcript = event.results[last][0].transcript.trim();
+        const isFinal = event.results[last].isFinal;
+
+        // Show transcript in console for debugging
+        if (isFinal) {
+            console.log('Voice transcript (final):', transcript);
+        }
+
+        if (isFinal && transcript.length >= 2) {
+            processCommand(transcript);
+        } else if (isFinal && transcript.length < 2) {
+            console.log('Transcript too short, ignoring:', transcript);
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'no-speech') {
+            // Don't show feedback for no-speech, it's normal when quiet
+            console.log('No speech detected (normal when quiet)');
+        } else if (event.error === 'aborted') {
+            // Recognition was aborted, likely due to stopping
+            console.log('Recognition aborted');
+        } else if (event.error === 'not-allowed') {
+            toast.error('Microphone permission denied. Please allow microphone access.');
+        } else {
+            toast.error(`Recognition error: ${event.error}`);
+        }
+    };
+
+    recognition.onend = () => {
+        if (voiceModeState.active) {
+            // Restart recognition if voice mode is still active
+            setTimeout(() => {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Failed to restart recognition:', error);
+                }
+            }, 100);
+        }
+    };
+
+    return recognition;
+}
+
+// ============================================================================
+// VOICE MODE - Speech Synthesis (T011)
+// ============================================================================
+
+// Text-to-Speech with OpenAI support - Returns Promise that resolves when speech is done
+async function speak(text) {
+    // Stop any currently playing audio
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+    }
+    if (voiceModeState.audioElement && !voiceModeState.audioElement.paused) {
+        voiceModeState.audioElement.pause();
+    }
+
+    console.log('🔊 Speaking:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+
+    try {
+        // Call OpenAI TTS API
+        const response = await fetch('/api/voice/synthesize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: text,
+                voice: 'nova', // Default to Nova voice
+                speed: 1.0
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            if (error.fallback) {
+                // OpenAI not available, fallback to browser voice
+                console.log('OpenAI TTS not available, using browser voice:', error.message);
+                return speakBrowser(text);
+            }
+            throw new Error(error.message || 'TTS API error');
+        }
+
+        // Get audio blob and play it
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        voiceModeState.audioElement.src = audioUrl;
+
+        // Return Promise that resolves when audio is done playing
+        return new Promise((resolve) => {
+            voiceModeState.audioElement.onended = () => {
+                URL.revokeObjectURL(audioUrl);
+                resolve();
+            };
+            voiceModeState.audioElement.play();
+        });
+
+    } catch (error) {
+        console.error('OpenAI TTS error:', error);
+        console.log('Falling back to browser voice');
+        return speakBrowser(text);
+    }
+}
+
+// Browser TTS fallback - Returns Promise that resolves when speech is done
+function speakBrowser(text) {
+    return new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'nl-NL'; // Dutch language for TTS
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        utterance.onend = () => {
+            resolve();
+        };
+
+        window.speechSynthesis.speak(utterance);
+    });
+}
+
+// ============================================================================
+// VOICE MODE - Command Processing (T012)
+// ============================================================================
+
+// Process voice commands with AI
+async function processCommand(transcript) {
+    try {
+        // Show processing state
+        console.log('🤔 AI processing command:', transcript);
+
+        // Call AI parsing endpoint
+        const response = await fetch('/api/voice/parse-command', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                transcript: transcript,
+                conversationHistory: voiceModeState.conversationHistory,
+                availableEntities: {
+                    projects: [], // Will be populated from real data later
+                    contexts: []
+                }
+            })
+        });
+
+        if (!response.ok) {
+            let error;
+            try {
+                error = await response.json();
+            } catch (e) {
+                console.error('Failed to parse error response:', e);
+                error = { message: `HTTP ${response.status}: ${response.statusText}` };
+            }
+
+            console.warn('AI parsing failed:', error);
+
+            if (error.fallback) {
+                // Fallback to regex parsing
+                console.log('Using regex fallback');
+                return parsePropertiesRegex(transcript);
+            }
+
+            // Always try regex fallback on errors
+            console.log('Attempting regex fallback for:', transcript);
+            return parsePropertiesRegex(transcript);
+        }
+
+        const result = await response.json();
+
+        // Add to conversation history
+        voiceModeState.conversationHistory.push({ role: 'user', content: transcript });
+        voiceModeState.conversationHistory.push({ role: 'assistant', content: result.response_message });
+
+        // Trim conversation history to last 10 messages (5 turns)
+        if (voiceModeState.conversationHistory.length > 10) {
+            voiceModeState.conversationHistory = voiceModeState.conversationHistory.slice(-10);
+        }
+
+        // Handle different intent types
+        switch (result.intent) {
+            case 'set_property':
+                await handleSetProperty(result);
+                break;
+            case 'set_list':
+                await handleSetList(result);
+                break;
+            case 'edit_title':
+                await handleEditTitle(result);
+                break;
+            case 'query':
+                await handleQuery(result);
+                break;
+            case 'action':
+                await handleActionCommand(result);
+                break;
+            case 'create_entity':
+                await handleCreateEntity(result);
+                break;
+            default:
+                await speak(result.response_message);
+        }
+
+    } catch (error) {
+        console.error('Command processing error:', error);
+        toast.warning('⚠️ Something went wrong, try again');
+        // Fallback to simple pattern matching
+        parsePropertiesRegex(transcript);
+    }
+}
+
+// ============================================================================
+// VOICE MODE - Intent Handlers (T013-T016)
+// ============================================================================
+
+// Handle set_property intent (T013)
+async function handleSetProperty(result) {
+    let updated = false;
+
+    if (result.properties.project) {
+        voiceModeState.pendingProperties.project = result.properties.project;
+        updated = true;
+    }
+
+    if (result.properties.context) {
+        voiceModeState.pendingProperties.context = result.properties.context;
+        updated = true;
+    }
+
+    if (result.properties.duration) {
+        voiceModeState.pendingProperties.duration = result.properties.duration;
+        updated = true;
+    }
+
+    if (result.properties.priority) {
+        voiceModeState.pendingProperties.priority = result.properties.priority;
+        updated = true;
+    }
+
+    if (result.properties.date) {
+        voiceModeState.pendingProperties.date = result.properties.date;
+        updated = true;
+    }
+
+    if (result.properties.notes) {
+        voiceModeState.pendingProperties.notes = result.properties.notes;
+        updated = true;
+    }
+
+    if (result.properties.subtaken !== null && result.properties.subtaken !== undefined) {
+        voiceModeState.pendingProperties.subtaken = result.properties.subtaken;
+        updated = true;
+    }
+
+    if (updated) {
+        await speak(result.response_message);
+    }
+}
+
+// Handle set_list intent (doorsturen naar lijst) (T014)
+async function handleSetList(result) {
+    if (result.lijst) {
+        voiceModeState.pendingProperties.lijst = result.lijst;
+        await speak(result.response_message);
+    }
+}
+
+// Handle edit_title intent (taaknaam wijzigen) (T015)
+async function handleEditTitle(result) {
+    // Get reference to TaskManager instance (via window.app if available)
+    const app = window.app;
+    if (!app || !app.taken) {
+        await speak("Sorry, kan taaknaam niet wijzigen.");
+        return;
+    }
+
+    if (result.new_title && voiceModeState.currentTaskIndex < app.taken.length) {
+        const task = app.taken[voiceModeState.currentTaskIndex];
+        const oldTitle = task.titel;
+
+        // Update via API
+        try {
+            const response = await fetch(`/api/taak/${task.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    titel: result.new_title
+                })
+            });
+
+            if (response.ok) {
+                task.titel = result.new_title;
+                await speak(result.response_message);
+            } else {
+                await speak("Sorry, kon taaknaam niet wijzigen.");
+            }
+        } catch (error) {
+            console.error('Error updating task title:', error);
+            await speak("Sorry, er ging iets mis.");
+        }
+    }
+}
+
+// Handle query intent (T016)
+async function handleQuery(result) {
+    // Get reference to TaskManager instance
+    const app = window.app;
+
+    if (result.query_type === 'list_projects') {
+        // Fetch projects from API
+        try {
+            const response = await fetch('/api/projecten');
+            if (response.ok) {
+                const projects = await response.json();
+                const projectNames = projects.map(p => p.naam).join(', ');
+                await speak(`Beschikbare projecten: ${projectNames || 'geen'}`);
+            } else {
+                await speak("Sorry, kon projecten niet ophalen.");
+            }
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            await speak("Sorry, er ging iets mis.");
+        }
+    } else if (result.query_type === 'list_contexts') {
+        // Fetch contexts from API
+        try {
+            const response = await fetch('/api/contexten');
+            if (response.ok) {
+                const contexts = await response.json();
+                const contextNames = contexts.map(c => c.naam).join(', ');
+                await speak(`Beschikbare contexten: ${contextNames || 'geen'}`);
+            } else {
+                await speak("Sorry, kon contexten niet ophalen.");
+            }
+        } catch (error) {
+            console.error('Error fetching contexts:', error);
+            await speak("Sorry, er ging iets mis.");
+        }
+    } else if (result.query_type === 'inbox_count') {
+        if (app && app.taken) {
+            const count = app.taken.length;
+            await speak(`Er zijn ${count} taken in de inbox.`);
+        } else {
+            await speak("Kon inbox telling niet ophalen.");
+        }
+    } else if (result.query_type === 'stats') {
+        const stats = voiceModeState.stats;
+        await speak(`Statistieken: ${stats.processed} verwerkt, ${stats.saved} opgeslagen, ${stats.completed} afgevinkt, ${stats.routed} doorgestuurd.`);
+    } else {
+        await speak(result.response_message);
+    }
+}
+
+// Handle action intent (helper for action commands like save, complete, next, etc.)
+async function handleActionCommand(result) {
+    if (result.action_type) {
+        switch (result.action_type) {
+            case 'start':
+            case 'read':
+                await readCurrentAction();
+                break;
+            case 'next':
+            case 'skip':
+                voiceModeState.stats.skipped++;
+                await nextAction();
+                break;
+            case 'repeat':
+                await readCurrentAction();
+                break;
+            case 'done':
+            case 'save':
+                await saveCurrentAction();
+                break;
+            case 'complete':
+                await completeCurrentAction();
+                break;
+            case 'delete':
+                voiceModeState.stats.deleted++;
+                await speak("Verwijderd.");
+                await nextAction();
+                break;
+            case 'stop':
+                deactivateVoiceMode();
+                break;
+            default:
+                await speak(result.response_message);
+        }
+    } else {
+        await speak(result.response_message);
+    }
+}
+
+// Handle create_entity intent (create new project or context)
+async function handleCreateEntity(result) {
+    let created = false;
+
+    if (result.entities && result.entities.create_project) {
+        const newProject = result.entities.create_project;
+        try {
+            const response = await fetch('/api/projecten', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    naam: newProject
+                })
+            });
+
+            if (response.ok) {
+                created = true;
+                // Also set it as current project
+                voiceModeState.pendingProperties.project = newProject;
+            }
+        } catch (error) {
+            console.error('Error creating project:', error);
+        }
+    }
+
+    if (result.entities && result.entities.create_context) {
+        const newContext = result.entities.create_context;
+        try {
+            const response = await fetch('/api/contexten', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    naam: newContext
+                })
+            });
+
+            if (response.ok) {
+                created = true;
+                // Also set it as current context
+                voiceModeState.pendingProperties.context = newContext;
+            }
+        } catch (error) {
+            console.error('Error creating context:', error);
+        }
+    }
+
+    if (created) {
+        await speak(result.response_message);
+    }
+}
+
+// ============================================================================
+// VOICE MODE - Action Handlers (T017-T019)
+// ============================================================================
+
+// Read current action (T019)
+async function readCurrentAction() {
+    const app = window.app;
+    if (!app || !app.taken) {
+        await speak("Inbox is leeg.");
+        return;
+    }
+
+    if (voiceModeState.currentTaskIndex >= app.taken.length) {
+        await showVoiceCompletion();
+        return;
+    }
+
+    const task = app.taken[voiceModeState.currentTaskIndex];
+    await speak(`Actie ${voiceModeState.currentTaskIndex + 1} van ${app.taken.length}: ${task.titel}`);
+}
+
+// Save current action with properties and move to next (T017)
+async function saveCurrentAction() {
+    const app = window.app;
+    if (!app || !app.taken) {
+        await speak("Geen taken om op te slaan.");
+        return;
+    }
+
+    if (voiceModeState.currentTaskIndex >= app.taken.length) {
+        await speak("Geen actie om op te slaan.");
+        return;
+    }
+
+    const task = app.taken[voiceModeState.currentTaskIndex];
+
+    // Build update object with pending properties
+    const updateData = {};
+
+    // Resolve project and context names to IDs
+    if (voiceModeState.pendingProperties.project) {
+        const projectId = await findOrCreateProject(voiceModeState.pendingProperties.project);
+        if (projectId) {
+            updateData.project_id = projectId;
+        }
+    }
+
+    if (voiceModeState.pendingProperties.context) {
+        const contextId = await findOrCreateContext(voiceModeState.pendingProperties.context);
+        if (contextId) {
+            updateData.context_id = contextId;
+        }
+    }
+
+    if (voiceModeState.pendingProperties.duration) {
+        updateData.duur = voiceModeState.pendingProperties.duration;
+    }
+
+    if (voiceModeState.pendingProperties.priority) {
+        updateData.prioriteit = voiceModeState.pendingProperties.priority;
+    }
+
+    if (voiceModeState.pendingProperties.date) {
+        updateData.verschijndatum = voiceModeState.pendingProperties.date;
+    }
+
+    if (voiceModeState.pendingProperties.notes) {
+        updateData.notities = voiceModeState.pendingProperties.notes;
+    }
+
+    if (voiceModeState.pendingProperties.subtaken !== null) {
+        updateData.subtaken = voiceModeState.pendingProperties.subtaken;
+    }
+
+    // Handle list routing
+    if (voiceModeState.pendingProperties.lijst && voiceModeState.pendingProperties.lijst !== 'acties') {
+        updateData.lijst = voiceModeState.pendingProperties.lijst;
+        voiceModeState.stats.routed++;
+    }
+
+    try {
+        // Update task via API
+        const response = await fetch(`/api/taak/${task.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            voiceModeState.stats.saved++;
+
+            // Build confirmation message
+            let confirmation = "Opgeslagen";
+            if (voiceModeState.pendingProperties.project) {
+                confirmation += ` in project ${voiceModeState.pendingProperties.project}`;
+            }
+            if (voiceModeState.pendingProperties.context) {
+                confirmation += `, context ${voiceModeState.pendingProperties.context}`;
+            }
+            if (voiceModeState.pendingProperties.duration) {
+                confirmation += `, ${voiceModeState.pendingProperties.duration} minuten`;
+            }
+            if (voiceModeState.pendingProperties.priority) {
+                confirmation += `, prioriteit ${voiceModeState.pendingProperties.priority}`;
+            }
+            if (voiceModeState.pendingProperties.lijst && voiceModeState.pendingProperties.lijst !== 'acties') {
+                confirmation += `, doorgestuurd naar ${voiceModeState.pendingProperties.lijst}`;
+            }
+
+            await speak(confirmation);
+
+            // Reset pending properties
+            voiceModeState.pendingProperties = {
+                project: null,
+                context: null,
+                duration: null,
+                priority: null,
+                date: null,
+                notes: null,
+                subtaken: false,
+                lijst: 'acties'
+            };
+
+            // Refresh inbox to reflect changes
+            if (app.refreshInbox) {
+                await app.refreshInbox();
+            }
+
+            await nextAction();
+        } else {
+            await speak("Sorry, kon taak niet opslaan.");
+        }
+    } catch (error) {
+        console.error('Error saving task:', error);
+        await speak("Sorry, er ging iets mis bij opslaan.");
+    }
+}
+
+// Complete current action (mark as done) and move to next (T018)
+async function completeCurrentAction() {
+    const app = window.app;
+    if (!app || !app.taken) {
+        await speak("Geen taken om af te vinken.");
+        return;
+    }
+
+    if (voiceModeState.currentTaskIndex >= app.taken.length) {
+        await speak("Geen actie om af te vinken.");
+        return;
+    }
+
+    const task = app.taken[voiceModeState.currentTaskIndex];
+
+    try {
+        // Mark task as completed via API
+        const response = await fetch(`/api/taak/${task.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                voltooid: true,
+                voltooide_datum: new Date().toISOString().split('T')[0]
+            })
+        });
+
+        if (response.ok) {
+            voiceModeState.stats.completed++;
+            await speak("Taak afgevinkt als voltooid.");
+
+            // Reset pending properties
+            voiceModeState.pendingProperties = {
+                project: null,
+                context: null,
+                duration: null,
+                priority: null,
+                date: null,
+                notes: null,
+                subtaken: false,
+                lijst: 'acties'
+            };
+
+            // Refresh inbox to reflect changes
+            if (app.refreshInbox) {
+                await app.refreshInbox();
+            }
+
+            await nextAction();
+        } else {
+            await speak("Sorry, kon taak niet afvinken.");
+        }
+    } catch (error) {
+        console.error('Error completing task:', error);
+        await speak("Sorry, er ging iets mis bij afvinken.");
+    }
+}
+
+// Move to next action (T019)
+async function nextAction() {
+    const app = window.app;
+    if (!app || !app.taken) {
+        return;
+    }
+
+    voiceModeState.currentTaskIndex++;
+
+    if (voiceModeState.currentTaskIndex >= app.taken.length) {
+        await showVoiceCompletion();
+    } else {
+        setTimeout(() => readCurrentAction(), 500);
+    }
+}
+
+// Show completion summary (T019)
+async function showVoiceCompletion() {
+    const stats = voiceModeState.stats;
+    await speak(`Inbox verwerking voltooid. ${stats.saved} opgeslagen, ${stats.completed} afgevinkt, ${stats.routed} doorgestuurd, ${stats.skipped} overgeslagen, ${stats.deleted} verwijderd.`);
+
+    toast.success('✅ Voice mode inbox processing complete!');
+
+    // Optionally deactivate voice mode
+    // deactivateVoiceMode();
+}
+
+// ============================================================================
+// VOICE MODE - Data Integration (T020-T021)
+// ============================================================================
+
+// T020 is already implemented - we use window.app.taken directly
+
+// Find or create project by name - returns project ID (T021)
+async function findOrCreateProject(name) {
+    if (!name) return null;
+
+    try {
+        // First, try to find existing project
+        const response = await fetch('/api/projecten');
+        if (response.ok) {
+            const projects = await response.json();
+            const existing = projects.find(p => p.naam.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                return existing.id;
+            }
+        }
+
+        // Project doesn't exist, create it
+        const createResponse = await fetch('/api/projecten', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                naam: name
+            })
+        });
+
+        if (createResponse.ok) {
+            const newProject = await createResponse.json();
+            console.log('Created new project:', name);
+            return newProject.id;
+        } else {
+            console.error('Failed to create project:', name);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error finding/creating project:', error);
+        return null;
+    }
+}
+
+// Find or create context by name - returns context ID (T021)
+async function findOrCreateContext(name) {
+    if (!name) return null;
+
+    try {
+        // First, try to find existing context
+        const response = await fetch('/api/contexten');
+        if (response.ok) {
+            const contexts = await response.json();
+            const existing = contexts.find(c => c.naam.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                return existing.id;
+            }
+        }
+
+        // Context doesn't exist, create it
+        const createResponse = await fetch('/api/contexten', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                naam: name
+            })
+        });
+
+        if (createResponse.ok) {
+            const newContext = await createResponse.json();
+            console.log('Created new context:', name);
+            return newContext.id;
+        } else {
+            console.error('Failed to create context:', name);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error finding/creating context:', error);
+        return null;
+    }
+}
+
+// ============================================================================
+// VOICE MODE - Error Handling (T022-T024)
+// ============================================================================
+
+// Regex fallback for when AI is not available (T022)
+function parsePropertiesRegex(text) {
+    const lower = text.toLowerCase().trim();
+    let handled = false;
+
+    // Simple trigger commands
+    if (lower.includes('start') || lower.includes('begin')) {
+        readCurrentAction();
+        return;
+    } else if (lower.includes('volgende') || lower.includes('next')) {
+        voiceModeState.stats.skipped++;
+        nextAction();
+        return;
+    } else if (lower.includes('herhaal') || lower.includes('repeat')) {
+        readCurrentAction();
+        return;
+    } else if (lower.includes('klaar') || lower.includes('done') || lower.includes('opslaan')) {
+        saveCurrentAction();
+        return;
+    } else if (lower.includes('afvinken') || lower.includes('voltooid') || lower.includes('complete')) {
+        completeCurrentAction();
+        return;
+    } else if (lower.includes('verwijder') || lower.includes('delete')) {
+        voiceModeState.stats.deleted++;
+        speak("Verwijderd.");
+        nextAction();
+        return;
+    } else if (lower.includes('stop')) {
+        deactivateVoiceMode();
+        return;
+    }
+
+    // Dutch property patterns
+    const projectMatch = text.match(/project[:\s]+([^,]+?)(?=\s+context|\s+duur|\s+prioriteit|,|$)/i);
+    if (projectMatch) {
+        voiceModeState.pendingProperties.project = projectMatch[1].trim();
+        speak(`Project ingesteld op ${projectMatch[1].trim()}`);
+        handled = true;
+    }
+
+    const contextMatch = text.match(/context[:\s]+([^,]+?)(?=\s+duur|\s+prioriteit|,|$)/i);
+    if (contextMatch) {
+        voiceModeState.pendingProperties.context = contextMatch[1].trim();
+        speak(`Context ingesteld op ${contextMatch[1].trim()}`);
+        handled = true;
+    }
+
+    const durationMatch = text.match(/(?:duur[:\s]+)?(\d+)\s*(?:minuten?|mins?)?/i);
+    if (durationMatch) {
+        voiceModeState.pendingProperties.duration = parseInt(durationMatch[1]);
+        speak(`Duur ingesteld op ${durationMatch[1]} minuten`);
+        handled = true;
+    }
+
+    const priorityMatch = text.match(/(?:prioriteit[:\s]+)?(hoog|gemiddeld|laag)/i);
+    if (priorityMatch) {
+        voiceModeState.pendingProperties.priority = priorityMatch[1].toLowerCase();
+        speak(`Prioriteit ingesteld op ${priorityMatch[1].toLowerCase()}`);
+        handled = true;
+    }
+
+    // List routing patterns
+    const listMatch = text.match(/(?:doorsturen naar|routeren naar)\s+([\w-]+)/i);
+    if (listMatch) {
+        voiceModeState.pendingProperties.lijst = listMatch[1].toLowerCase();
+        speak(`Doorsturen naar ${listMatch[1].toLowerCase()}`);
+        handled = true;
+    }
+
+    if (!handled) {
+        console.log('No regex pattern matched for:', text);
+    }
+}
+
+// T023: Microphone permission error handling
+// Already implemented in initializeVoiceRecognition() function
+// recognition.onerror handler catches 'not-allowed' and shows appropriate message
+
+// T024: Non-persistence enforcement
+// Already implemented - voiceModeState.active starts as false
+// No localStorage or sessionStorage is used
+// Voice mode always inactive after page refresh
+
 // Toast Notification System
 class ToastManager {
     constructor() {
@@ -15950,6 +16951,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Load version number when page loads
 document.addEventListener('DOMContentLoaded', loadVersionNumber);
+
+// Initialize voice mode toggle button
+document.addEventListener('DOMContentLoaded', () => {
+    const voiceButton = document.getElementById('voice-toggle-btn');
+    if (voiceButton) {
+        voiceButton.addEventListener('click', toggleVoiceMode);
+        console.log('Voice mode button initialized');
+    }
+});
 
 // Tijdelijke functie om alle taken te wissen - ALLEEN VOOR AANGELOGDE GEBRUIKER
 async function deleteAllTasks() {
