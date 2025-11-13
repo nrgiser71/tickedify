@@ -709,7 +709,11 @@ async function saveCurrentAction() {
     }
 
     console.log('🔍 DEBUG saveCurrentAction - task.id:', task.id);
+    console.log('🔍 DEBUG saveCurrentAction - task.user_id:', task.user_id);
+    console.log('🔍 DEBUG saveCurrentAction - currentUser.id:', window.auth?.currentUser?.id);
+    console.log('🔍 DEBUG saveCurrentAction - currentUser.email:', window.auth?.currentUser?.email);
     console.log('🔍 DEBUG saveCurrentAction - updateData:', updateData);
+    console.log('🔍 DEBUG saveCurrentAction - task object keys:', Object.keys(task));
     console.log('🔍 DEBUG saveCurrentAction - task object:', task);
 
     try {
