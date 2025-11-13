@@ -457,7 +457,7 @@ async function handleEditTitle(result) {
 
     if (result.new_title && voiceModeState.currentTaskIndex < app.taken.length) {
         const task = app.taken[voiceModeState.currentTaskIndex];
-        const oldTitle = task.titel;
+        const oldTitle = task.tekst;
 
         // Update via API
         try {
@@ -467,12 +467,12 @@ async function handleEditTitle(result) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    titel: result.new_title
+                    tekst: result.new_title
                 })
             });
 
             if (response.ok) {
-                task.titel = result.new_title;
+                task.tekst = result.new_title;
                 await speak(result.response_message);
             } else {
                 await speak("Sorry, kon taaknaam niet wijzigen.");
@@ -646,11 +646,7 @@ async function readCurrentAction() {
     }
 
     const task = app.taken[voiceModeState.currentTaskIndex];
-    console.log('🔍 DEBUG readCurrentAction - task object:', task);
-    console.log('🔍 DEBUG readCurrentAction - task.titel:', task.titel);
-    console.log('🔍 DEBUG readCurrentAction - task.tekst:', task.tekst);
-    console.log('🔍 DEBUG readCurrentAction - Object.keys:', Object.keys(task));
-    await speak(`Actie ${voiceModeState.currentTaskIndex + 1} van ${app.taken.length}: ${task.titel}`);
+    await speak(`Actie ${voiceModeState.currentTaskIndex + 1} van ${app.taken.length}: ${task.tekst}`);
 }
 
 // Save current action with properties and move to next (T017)
