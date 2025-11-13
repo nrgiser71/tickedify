@@ -529,10 +529,10 @@
             </div>
 
             <div class="action-buttons">
-                <button class="action-button" onclick="handleCommand('next')">⏭️ Volgende</button>
-                <button class="action-button" onclick="handleCommand('repeat')">🔄 Herhaal</button>
-                <button class="action-button" onclick="handleCommand('done')">✅ Klaar</button>
-                <button class="action-button" onclick="handleCommand('delete')">🗑️ Verwijder</button>
+                <button class="action-button" onclick="handleCommand('next').catch(e => console.error(e))">⏭️ Volgende</button>
+                <button class="action-button" onclick="handleCommand('repeat').catch(e => console.error(e))">🔄 Herhaal</button>
+                <button class="action-button" onclick="handleCommand('done').catch(e => console.error(e))">✅ Klaar</button>
+                <button class="action-button" onclick="handleCommand('delete').catch(e => console.error(e))">🗑️ Verwijder</button>
             </div>
         </div>
     </div>
@@ -688,7 +688,7 @@
             selectedVoiceType = 'openai';
         }
 
-        // Text-to-Speech with OpenAI support
+        // Text-to-Speech with OpenAI support - Returns Promise that resolves when speech is done
         async function speak(text) {
             // Stop any currently playing audio
             if (synthesis.speaking) {
@@ -731,39 +731,48 @@
                     const audioUrl = URL.createObjectURL(audioBlob);
 
                     audioElement.src = audioUrl;
-                    audioElement.play();
 
-                    // Clean up the blob URL after playing
-                    audioElement.onended = () => {
-                        URL.revokeObjectURL(audioUrl);
-                    };
+                    // Return Promise that resolves when audio is done playing
+                    return new Promise((resolve) => {
+                        audioElement.onended = () => {
+                            URL.revokeObjectURL(audioUrl);
+                            resolve();
+                        };
+                        audioElement.play();
+                    });
 
                 } catch (error) {
                     console.error('OpenAI TTS error:', error);
                     showFeedback('⚠️ OpenAI TTS failed, using browser voice', 'warning');
-                    speakBrowser(text);
+                    return speakBrowser(text);
                 }
             } else {
                 // Use browser voice
-                speakBrowser(text);
+                return speakBrowser(text);
             }
         }
 
-        // Browser TTS fallback
+        // Browser TTS fallback - Returns Promise that resolves when speech is done
         function speakBrowser(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(text);
 
-            if (selectedVoice && typeof selectedVoice === 'object') {
-                utterance.voice = selectedVoice;
-                utterance.lang = selectedVoice.lang;
-            } else {
-                utterance.lang = 'nl-NL'; // Dutch language for TTS
-            }
+                if (selectedVoice && typeof selectedVoice === 'object') {
+                    utterance.voice = selectedVoice;
+                    utterance.lang = selectedVoice.lang;
+                } else {
+                    utterance.lang = 'nl-NL'; // Dutch language for TTS
+                }
 
-            utterance.rate = voiceRate;
-            utterance.pitch = voicePitch;
+                utterance.rate = voiceRate;
+                utterance.pitch = voicePitch;
 
-            synthesis.speak(utterance);
+                utterance.onend = () => {
+                    resolve();
+                };
+
+                synthesis.speak(utterance);
+            });
         }
 
         // Test voice button
@@ -898,7 +907,7 @@
         }
 
         // Handle set_property intent
-        function handleSetProperty(result) {
+        async function handleSetProperty(result) {
             let updated = false;
 
             if (result.properties.project) {
@@ -926,7 +935,7 @@
             }
 
             if (updated) {
-                speak(result.response_message);
+                await speak(result.response_message);
             }
         }
 
@@ -934,21 +943,21 @@
         async function handleQuery(result) {
             if (result.query_type === 'list_projects') {
                 const projectsList = mockProjects.join(', ');
-                speak(`Beschikbare projecten: ${projectsList}`);
+                await speak(`Beschikbare projecten: ${projectsList}`);
             } else if (result.query_type === 'list_contexts') {
                 const contextsList = mockContexts.join(', ');
-                speak(`Beschikbare contexten: ${contextsList}`);
+                await speak(`Beschikbare contexten: ${contextsList}`);
             } else {
-                speak(result.response_message);
+                await speak(result.response_message);
             }
         }
 
         // Handle action intent
-        function handleActionCommand(result) {
+        async function handleActionCommand(result) {
             if (result.action_type) {
-                handleCommand(result.action_type);
+                await handleCommand(result.action_type);
             } else {
-                speak(result.response_message);
+                await speak(result.response_message);
             }
         }
 
@@ -979,7 +988,7 @@
             }
 
             if (created) {
-                speak(result.response_message);
+                await speak(result.response_message);
             }
         }
 
@@ -996,13 +1005,13 @@
         }
 
         // Handle commands
-        function handleCommand(command) {
+        async function handleCommand(command) {
             switch(command) {
                 case 'start':
                     if (currentIndex < mockInbox.length) {
-                        readCurrentAction();
+                        await readCurrentAction();
                     } else {
-                        speak("Inbox is leeg. Er zijn geen acties om te verwerken.");
+                        await speak("Inbox is leeg. Er zijn geen acties om te verwerken.");
                     }
                     break;
 
@@ -1012,16 +1021,16 @@
                     break;
 
                 case 'repeat':
-                    readCurrentAction();
+                    await readCurrentAction();
                     break;
 
                 case 'done':
-                    saveCurrentAction();
+                    await saveCurrentAction();
                     break;
 
                 case 'delete':
                     stats.deleted++;
-                    speak("Verwijderd.");
+                    await speak("Verwijderd.");
                     nextAction();
                     break;
 
@@ -1032,9 +1041,9 @@
         }
 
         // Read current action
-        function readCurrentAction() {
+        async function readCurrentAction() {
             if (currentIndex >= mockInbox.length) {
-                showCompletion();
+                await showCompletion();
                 return;
             }
 
@@ -1042,11 +1051,11 @@
             document.getElementById('currentAction').textContent = action.title;
             document.getElementById('progress').textContent = `Actie ${currentIndex + 1} van ${mockInbox.length}`;
 
-            speak(`Actie ${currentIndex + 1}: ${action.title}`);
+            await speak(`Actie ${currentIndex + 1}: ${action.title}`);
         }
 
         // Save and move to next
-        function saveCurrentAction() {
+        async function saveCurrentAction() {
             const action = mockInbox[currentIndex];
             processedActions.push({
                 ...action,
@@ -1062,7 +1071,8 @@
             if (currentProperties.duration) confirmation += `, ${currentProperties.duration} minuten`;
             if (currentProperties.priority) confirmation += `, prioriteit ${currentProperties.priority}`;
 
-            speak(confirmation);
+            // Wait for confirmation message to finish before moving to next action
+            await speak(confirmation);
 
             // Reset properties for next action
             currentProperties = {
@@ -1080,19 +1090,19 @@
         }
 
         // Move to next action
-        function nextAction() {
+        async function nextAction() {
             currentIndex++;
 
             if (currentIndex >= mockInbox.length) {
-                showCompletion();
+                await showCompletion();
             } else {
                 setTimeout(() => readCurrentAction(), 500);
             }
         }
 
         // Show completion summary
-        function showCompletion() {
-            speak(`Inbox verwerking voltooid. ${stats.processed} acties verwerkt, ${stats.skipped} overgeslagen, ${stats.deleted} verwijderd.`);
+        async function showCompletion() {
+            await speak(`Inbox verwerking voltooid. ${stats.processed} acties verwerkt, ${stats.skipped} overgeslagen, ${stats.deleted} verwijderd.`);
 
             document.getElementById('progress').textContent = 'Voltooid! 🎉';
             document.getElementById('currentAction').textContent = 'Alle acties verwerkt';
