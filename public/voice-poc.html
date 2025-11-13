@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Mode POC - Tickedify</title>
+    <title>Stem Modus POC - Tickedify</title>
     <style>
         * {
             margin: 0;
@@ -412,27 +412,27 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎤 Voice Mode POC</h1>
-            <p>Test voice-controlled inbox processing</p>
+            <h1>🎤 Stem Modus POC</h1>
+            <p>Test stemgestuurde inbox verwerking</p>
         </div>
 
         <div class="content">
             <button class="voice-button" id="voiceBtn">
-                🎤 Start Voice Mode
+                🎤 Start Stem Modus
             </button>
 
             <div class="voice-settings">
-                <h3>🎛️ Voice Settings</h3>
+                <h3>🎛️ Stem Instellingen</h3>
 
                 <div class="setting-group">
-                    <label class="setting-label">Voice</label>
+                    <label class="setting-label">Stem</label>
                     <select id="voiceSelect">
-                        <option value="">Loading voices...</option>
+                        <option value="">Stemmen laden...</option>
                     </select>
                 </div>
 
                 <div class="setting-group">
-                    <label class="setting-label">Speed</label>
+                    <label class="setting-label">Snelheid</label>
                     <div class="slider-container">
                         <input type="range" id="rateSlider" min="0.5" max="2.0" step="0.1" value="1.0">
                         <span class="slider-value" id="rateValue">1.0x</span>
@@ -440,7 +440,7 @@
                 </div>
 
                 <div class="setting-group">
-                    <label class="setting-label">Pitch</label>
+                    <label class="setting-label">Toonhoogte</label>
                     <div class="slider-container">
                         <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0">
                         <span class="slider-value" id="pitchValue">1.0x</span>
@@ -448,13 +448,13 @@
                 </div>
 
                 <button class="test-voice-btn" id="testVoiceBtn">
-                    🔊 Test Voice
+                    🔊 Test Stem
                 </button>
             </div>
 
             <div class="speech-feedback" id="feedback"></div>
 
-            <div class="progress" id="progress">Ready to start</div>
+            <div class="progress" id="progress">Klaar om te starten</div>
 
             <div class="listening-indicator" id="listeningIndicator">
                 <div class="dot"></div>
@@ -463,89 +463,93 @@
             </div>
 
             <div class="status-box">
-                <div class="status-title">Current Action</div>
+                <div class="status-title">Huidige Actie</div>
                 <div class="current-action" id="currentAction">
-                    Click "Start Voice Mode" to begin
+                    Klik "Start Stem Modus" om te beginnen
                 </div>
                 <div class="transcript" id="transcript">
-                    Your speech will appear here...
+                    Je spraak verschijnt hier...
                 </div>
             </div>
 
             <div class="properties" id="properties">
                 <div class="property">
                     <span class="property-label">📁 Project</span>
-                    <span class="property-value empty" id="propProject">Not set</span>
+                    <span class="property-value empty" id="propProject">Niet ingesteld</span>
                 </div>
                 <div class="property">
                     <span class="property-label">🏷️ Context</span>
-                    <span class="property-value empty" id="propContext">Not set</span>
+                    <span class="property-value empty" id="propContext">Niet ingesteld</span>
                 </div>
                 <div class="property">
-                    <span class="property-label">⏱️ Duration</span>
-                    <span class="property-value empty" id="propDuration">Not set</span>
+                    <span class="property-label">⏱️ Duur</span>
+                    <span class="property-value empty" id="propDuration">Niet ingesteld</span>
                 </div>
                 <div class="property">
-                    <span class="property-label">⭐ Priority</span>
-                    <span class="property-value empty" id="propPriority">Not set</span>
+                    <span class="property-label">⭐ Prioriteit</span>
+                    <span class="property-value empty" id="propPriority">Niet ingesteld</span>
                 </div>
             </div>
 
             <div class="commands-help">
-                <h3>Voice Commands</h3>
+                <h3>Stem Commando's</h3>
                 <div class="command-list">
                     <div class="command-item">
                         <span class="command-word">start</span>
-                        <span>Begin reading inbox actions</span>
+                        <span>Begin inbox acties voor te lezen</span>
                     </div>
                     <div class="command-item">
-                        <span class="command-word">next</span>
-                        <span>Skip to next action</span>
+                        <span class="command-word">volgende</span>
+                        <span>Ga naar volgende actie</span>
                     </div>
                     <div class="command-item">
-                        <span class="command-word">repeat</span>
-                        <span>Read current action again</span>
+                        <span class="command-word">herhaal</span>
+                        <span>Lees huidige actie opnieuw</span>
                     </div>
                     <div class="command-item">
-                        <span class="command-word">done</span>
-                        <span>Save and continue</span>
+                        <span class="command-word">klaar</span>
+                        <span>Opslaan en doorgaan</span>
                     </div>
                     <div class="command-item">
-                        <span class="command-word">delete</span>
-                        <span>Delete current action</span>
+                        <span class="command-word">verwijder</span>
+                        <span>Verwijder huidige actie</span>
                     </div>
                     <div class="command-item">
                         <span class="command-word">stop</span>
-                        <span>Exit voice mode</span>
+                        <span>Sluit stem modus</span>
                     </div>
                 </div>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #bbdefb;">
-                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">Or say properties:</div>
+                    <div style="font-weight: 600; margin-bottom: 8px; color: #1976d2;">Of zeg eigenschappen:</div>
                     <div style="font-size: 13px; line-height: 1.8; color: #555;">
-                        "project renovation", "context work", "duration 30", "priority high"<br>
-                        Or combined: "project renovation, context work, 30 minutes, high"
+                        "project verbouwing", "context werk", "duur 30", "prioriteit hoog"<br>
+                        Of gecombineerd: "Het project mag je op verbouwing zetten, de context op werk, de duur op 30 minuten en de prio op hoog"
                     </div>
                 </div>
             </div>
 
             <div class="action-buttons">
-                <button class="action-button" onclick="handleCommand('next')">⏭️ Next</button>
-                <button class="action-button" onclick="handleCommand('repeat')">🔄 Repeat</button>
-                <button class="action-button" onclick="handleCommand('done')">✅ Done</button>
-                <button class="action-button" onclick="handleCommand('delete')">🗑️ Delete</button>
+                <button class="action-button" onclick="handleCommand('next')">⏭️ Volgende</button>
+                <button class="action-button" onclick="handleCommand('repeat')">🔄 Herhaal</button>
+                <button class="action-button" onclick="handleCommand('done')">✅ Klaar</button>
+                <button class="action-button" onclick="handleCommand('delete')">🗑️ Verwijder</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Mock inbox data
+        // Mock inbox data (in Dutch)
         const mockInbox = [
-            { id: 1, title: "Create quote for client X" },
-            { id: 2, title: "Do grocery shopping" },
-            { id: 3, title: "Reply to Marie's email" },
-            { id: 4, title: "Review monthly budget" },
-            { id: 5, title: "Schedule dentist appointment" }
+            { id: 1, title: "Offerte maken voor klant X" },
+            { id: 2, title: "Boodschappen doen" },
+            { id: 3, title: "Email beantwoorden aan Marie" },
+            { id: 4, title: "Maandbudget controleren" },
+            { id: 5, title: "Tandarts afspraak inplannen" }
         ];
+
+        // Mock available entities (hardcoded for POC)
+        const mockProjects = ['Verbouwing', 'Website', 'Tuinhuis', 'Klant X offerte'];
+        const mockContexts = ['Werk', 'Thuis', 'Onderweg'];
 
         // State
         let voiceActive = false;
@@ -558,6 +562,7 @@
         let voiceRate = 1.0;
         let voicePitch = 1.0;
         let audioElement = new Audio();
+        let conversationHistory = []; // Track conversation for context-aware commands
         let currentProperties = {
             project: null,
             context: null,
@@ -581,7 +586,7 @@
             }
 
             recognition = new SpeechRecognition();
-            recognition.lang = 'en-US'; // English for better command recognition
+            recognition.lang = 'nl-NL'; // Dutch language for voice recognition
             recognition.continuous = true;
             recognition.interimResults = true;
 
@@ -600,9 +605,9 @@
             recognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
                 if (event.error === 'no-speech') {
-                    showFeedback("No speech detected. Try again.", "warning");
+                    showFeedback("Geen spraak gedetecteerd. Probeer opnieuw.", "warning");
                 } else {
-                    showFeedback(`Recognition error: ${event.error}`, "error");
+                    showFeedback(`Herkenningsfout: ${event.error}`, "error");
                 }
             };
 
@@ -623,15 +628,15 @@
 
             // Add OpenAI voices first (premium AI voices)
             const openaiGroup = document.createElement('optgroup');
-            openaiGroup.label = '🌟 OpenAI Voices (Natural AI)';
+            openaiGroup.label = '🌟 OpenAI Stemmen (Natuurlijke AI)';
 
             const openaiVoices = [
-                { id: 'alloy', name: 'Alloy', description: 'Neutral, balanced' },
-                { id: 'echo', name: 'Echo', description: 'Male, warm' },
-                { id: 'fable', name: 'Fable', description: 'British, expressive' },
-                { id: 'onyx', name: 'Onyx', description: 'Male, deep' },
-                { id: 'nova', name: 'Nova', description: 'Female, bright' },
-                { id: 'shimmer', name: 'Shimmer', description: 'Female, soft' }
+                { id: 'alloy', name: 'Alloy', description: 'Neutraal, gebalanceerd' },
+                { id: 'echo', name: 'Echo', description: 'Mannelijk, warm' },
+                { id: 'fable', name: 'Fable', description: 'Brits, expressief' },
+                { id: 'onyx', name: 'Onyx', description: 'Mannelijk, diep' },
+                { id: 'nova', name: 'Nova', description: 'Vrouwelijk, helder' },
+                { id: 'shimmer', name: 'Shimmer', description: 'Vrouwelijk, zacht' }
             ];
 
             openaiVoices.forEach(voice => {
@@ -653,7 +658,7 @@
                 // Add English browser voices
                 if (englishVoices.length > 0) {
                     const browserGroup = document.createElement('optgroup');
-                    browserGroup.label = '🖥️ Browser Voices (Fallback)';
+                    browserGroup.label = '🖥️ Browser Stemmen (Fallback)';
                     englishVoices.forEach((voice, index) => {
                         const option = document.createElement('option');
                         option.value = `browser:${availableVoices.indexOf(voice)}`;
@@ -666,7 +671,7 @@
                 // Add other language browser voices
                 if (otherVoices.length > 0) {
                     const otherGroup = document.createElement('optgroup');
-                    otherGroup.label = '🌍 Other Languages';
+                    otherGroup.label = '🌍 Andere Talen';
                     otherVoices.forEach((voice, index) => {
                         const option = document.createElement('option');
                         option.value = `browser:${availableVoices.indexOf(voice)}`;
@@ -752,7 +757,7 @@
                 utterance.voice = selectedVoice;
                 utterance.lang = selectedVoice.lang;
             } else {
-                utterance.lang = 'en-US';
+                utterance.lang = 'nl-NL'; // Dutch language for TTS
             }
 
             utterance.rate = voiceRate;
@@ -763,76 +768,218 @@
 
         // Test voice button
         function testVoice() {
-            speak("Hello! This is how I will sound when reading your tasks. Action one: Create quote for client X.");
+            speak("Hallo! Zo klink ik wanneer ik je taken voorlees. Actie één: Offerte maken voor klant X.");
         }
 
-        // Process voice commands
-        function processCommand(transcript) {
-            const lower = transcript.toLowerCase().trim();
+        // Process voice commands with AI
+        async function processCommand(transcript) {
+            try {
+                // Show processing state
+                showFeedback("🤔 AI verwerkt commando...", "info");
 
-            // Check for trigger commands
-            if (lower.includes('start')) {
-                handleCommand('start');
-            } else if (lower.includes('next') || lower.includes('volgende')) {
-                handleCommand('next');
-            } else if (lower.includes('repeat') || lower.includes('herhaal')) {
-                handleCommand('repeat');
-            } else if (lower.includes('done') || lower.includes('klaar')) {
-                handleCommand('done');
-            } else if (lower.includes('delete') || lower.includes('verwijderen')) {
-                handleCommand('delete');
-            } else if (lower.includes('stop')) {
-                handleCommand('stop');
-            } else {
-                // Parse properties
-                parseProperties(transcript);
+                // Add current action context to history if available
+                const currentAction = currentIndex < mockInbox.length ? mockInbox[currentIndex] : null;
+
+                // Call AI parsing endpoint
+                const response = await fetch('/api/voice/parse-command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        transcript: transcript,
+                        conversationHistory: conversationHistory,
+                        availableEntities: {
+                            projects: mockProjects,
+                            contexts: mockContexts
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    if (error.fallback) {
+                        // Fallback to regex parsing
+                        console.log('AI parsing not available, using regex fallback');
+                        return parsePropertiesRegex(transcript);
+                    }
+                    throw new Error(error.message || 'AI parsing failed');
+                }
+
+                const result = await response.json();
+
+                // Add to conversation history
+                conversationHistory.push({ role: 'user', content: transcript });
+                conversationHistory.push({ role: 'assistant', content: result.response_message });
+
+                // Trim conversation history to last 10 messages (5 turns)
+                if (conversationHistory.length > 10) {
+                    conversationHistory = conversationHistory.slice(-10);
+                }
+
+                // Handle different intent types
+                switch (result.intent) {
+                    case 'set_property':
+                        handleSetProperty(result);
+                        break;
+                    case 'query':
+                        await handleQuery(result);
+                        break;
+                    case 'action':
+                        handleActionCommand(result);
+                        break;
+                    case 'create_entity':
+                        await handleCreateEntity(result);
+                        break;
+                    default:
+                        speak(result.response_message);
+                }
+
+            } catch (error) {
+                console.error('Command processing error:', error);
+                showFeedback('⚠️ Er ging iets mis, probeer opnieuw', 'warning');
+                // Fallback to simple pattern matching
+                parsePropertiesRegex(transcript);
             }
         }
 
-        // Parse properties from speech
-        function parseProperties(text) {
+        // Regex fallback for when AI is not available
+        function parsePropertiesRegex(text) {
+            const lower = text.toLowerCase().trim();
             let updated = false;
 
-            // Project pattern: "project X" or "project: X"
-            const projectMatch = text.match(/project[:\s]+([^,]+?)(?=\s+context|\s+duration|\s+priority|,|$)/i);
+            // Simple trigger commands
+            if (lower.includes('start') || lower.includes('begin')) {
+                return handleCommand('start');
+            } else if (lower.includes('volgende') || lower.includes('next')) {
+                return handleCommand('next');
+            } else if (lower.includes('herhaal') || lower.includes('repeat')) {
+                return handleCommand('repeat');
+            } else if (lower.includes('klaar') || lower.includes('done')) {
+                return handleCommand('done');
+            } else if (lower.includes('verwijder') || lower.includes('delete')) {
+                return handleCommand('delete');
+            } else if (lower.includes('stop')) {
+                return handleCommand('stop');
+            }
+
+            // Dutch property patterns
+            const projectMatch = text.match(/project[:\s]+([^,]+?)(?=\s+context|\s+duur|\s+prioriteit|,|$)/i);
             if (projectMatch) {
                 currentProperties.project = projectMatch[1].trim();
                 updatePropertyDisplay('project', currentProperties.project);
                 updated = true;
             }
 
-            // Context pattern: "context X" or "context: X"
-            const contextMatch = text.match(/context[:\s]+([^,]+?)(?=\s+duration|\s+priority|,|$)/i);
+            const contextMatch = text.match(/context[:\s]+([^,]+?)(?=\s+duur|\s+prioriteit|,|$)/i);
             if (contextMatch) {
                 currentProperties.context = contextMatch[1].trim();
                 updatePropertyDisplay('context', currentProperties.context);
                 updated = true;
             }
 
-            // Duration pattern: "30 minutes", "duration 30", "30"
-            const durationMatch = text.match(/(?:duration[:\s]+)?(\d+)\s*(?:minutes?|mins?)?/i);
+            const durationMatch = text.match(/(?:duur[:\s]+)?(\d+)\s*(?:minuten?|mins?)?/i);
             if (durationMatch) {
                 currentProperties.duration = parseInt(durationMatch[1]);
                 updatePropertyDisplay('duration', `${currentProperties.duration} min`);
                 updated = true;
             }
 
-            // Priority pattern: "high", "medium", "low", "priority high"
-            const priorityMatch = text.match(/(?:priority[:\s]+)?(high|medium|low|hoog|middel|laag)/i);
+            const priorityMatch = text.match(/(?:prioriteit[:\s]+)?(hoog|gemiddeld|laag)/i);
             if (priorityMatch) {
-                const priority = priorityMatch[1].toLowerCase();
-                const priorityMap = {
-                    'high': 'high', 'hoog': 'high',
-                    'medium': 'medium', 'middel': 'medium',
-                    'low': 'low', 'laag': 'low'
-                };
-                currentProperties.priority = priorityMap[priority] || priority;
+                currentProperties.priority = priorityMatch[1].toLowerCase();
                 updatePropertyDisplay('priority', currentProperties.priority);
                 updated = true;
             }
 
             if (updated) {
-                showFeedback("✓ Properties updated", "success");
+                showFeedback("✓ Eigenschappen bijgewerkt", "success");
+            }
+        }
+
+        // Handle set_property intent
+        function handleSetProperty(result) {
+            let updated = false;
+
+            if (result.properties.project) {
+                currentProperties.project = result.properties.project;
+                updatePropertyDisplay('project', result.properties.project);
+                updated = true;
+            }
+
+            if (result.properties.context) {
+                currentProperties.context = result.properties.context;
+                updatePropertyDisplay('context', result.properties.context);
+                updated = true;
+            }
+
+            if (result.properties.duration) {
+                currentProperties.duration = result.properties.duration;
+                updatePropertyDisplay('duration', `${result.properties.duration} min`);
+                updated = true;
+            }
+
+            if (result.properties.priority) {
+                currentProperties.priority = result.properties.priority;
+                updatePropertyDisplay('priority', result.properties.priority);
+                updated = true;
+            }
+
+            if (updated) {
+                speak(result.response_message);
+            }
+        }
+
+        // Handle query intent
+        async function handleQuery(result) {
+            if (result.query_type === 'list_projects') {
+                const projectsList = mockProjects.join(', ');
+                speak(`Beschikbare projecten: ${projectsList}`);
+            } else if (result.query_type === 'list_contexts') {
+                const contextsList = mockContexts.join(', ');
+                speak(`Beschikbare contexten: ${contextsList}`);
+            } else {
+                speak(result.response_message);
+            }
+        }
+
+        // Handle action intent
+        function handleActionCommand(result) {
+            if (result.action_type) {
+                handleCommand(result.action_type);
+            } else {
+                speak(result.response_message);
+            }
+        }
+
+        // Handle create_entity intent
+        async function handleCreateEntity(result) {
+            let created = false;
+
+            if (result.entities.create_project) {
+                const newProject = result.entities.create_project;
+                if (!mockProjects.includes(newProject)) {
+                    mockProjects.push(newProject);
+                    created = true;
+                }
+                // Also set it as current project
+                currentProperties.project = newProject;
+                updatePropertyDisplay('project', newProject);
+            }
+
+            if (result.entities.create_context) {
+                const newContext = result.entities.create_context;
+                if (!mockContexts.includes(newContext)) {
+                    mockContexts.push(newContext);
+                    created = true;
+                }
+                // Also set it as current context
+                currentProperties.context = newContext;
+                updatePropertyDisplay('context', newContext);
+            }
+
+            if (created) {
+                speak(result.response_message);
             }
         }
 
@@ -843,7 +990,7 @@
                 element.textContent = value;
                 element.className = 'property-value set';
             } else {
-                element.textContent = 'Not set';
+                element.textContent = 'Niet ingesteld';
                 element.className = 'property-value empty';
             }
         }
@@ -855,7 +1002,7 @@
                     if (currentIndex < mockInbox.length) {
                         readCurrentAction();
                     } else {
-                        speak("Inbox is empty. There are no actions to process.");
+                        speak("Inbox is leeg. Er zijn geen acties om te verwerken.");
                     }
                     break;
 
@@ -874,7 +1021,7 @@
 
                 case 'delete':
                     stats.deleted++;
-                    speak("Deleted.");
+                    speak("Verwijderd.");
                     nextAction();
                     break;
 
@@ -893,9 +1040,9 @@
 
             const action = mockInbox[currentIndex];
             document.getElementById('currentAction').textContent = action.title;
-            document.getElementById('progress').textContent = `Action ${currentIndex + 1} of ${mockInbox.length}`;
+            document.getElementById('progress').textContent = `Actie ${currentIndex + 1} van ${mockInbox.length}`;
 
-            speak(`Action ${currentIndex + 1}: ${action.title}`);
+            speak(`Actie ${currentIndex + 1}: ${action.title}`);
         }
 
         // Save and move to next
@@ -909,11 +1056,11 @@
             stats.processed++;
 
             // Build confirmation message
-            let confirmation = "Saved";
-            if (currentProperties.project) confirmation += ` to project ${currentProperties.project}`;
+            let confirmation = "Opgeslagen";
+            if (currentProperties.project) confirmation += ` in project ${currentProperties.project}`;
             if (currentProperties.context) confirmation += `, context ${currentProperties.context}`;
-            if (currentProperties.duration) confirmation += `, ${currentProperties.duration} minutes`;
-            if (currentProperties.priority) confirmation += `, priority ${currentProperties.priority}`;
+            if (currentProperties.duration) confirmation += `, ${currentProperties.duration} minuten`;
+            if (currentProperties.priority) confirmation += `, prioriteit ${currentProperties.priority}`;
 
             speak(confirmation);
 
@@ -945,28 +1092,28 @@
 
         // Show completion summary
         function showCompletion() {
-            speak(`Inbox processing complete. ${stats.processed} actions processed, ${stats.skipped} skipped, ${stats.deleted} deleted.`);
+            speak(`Inbox verwerking voltooid. ${stats.processed} acties verwerkt, ${stats.skipped} overgeslagen, ${stats.deleted} verwijderd.`);
 
-            document.getElementById('progress').textContent = 'Completed! 🎉';
-            document.getElementById('currentAction').textContent = 'All actions processed';
+            document.getElementById('progress').textContent = 'Voltooid! 🎉';
+            document.getElementById('currentAction').textContent = 'Alle acties verwerkt';
             document.getElementById('transcript').innerHTML = `
                 <div class="summary">
                     <div class="summary-item">
-                        <strong>Processed:</strong>
+                        <strong>Verwerkt:</strong>
                         <span>${stats.processed}</span>
                     </div>
                     <div class="summary-item">
-                        <strong>Skipped:</strong>
+                        <strong>Overgeslagen:</strong>
                         <span>${stats.skipped}</span>
                     </div>
                     <div class="summary-item">
-                        <strong>Deleted:</strong>
+                        <strong>Verwijderd:</strong>
                         <span>${stats.deleted}</span>
                     </div>
                 </div>
             `;
 
-            showFeedback("Say 'stop' to exit or click the button to restart", "info");
+            showFeedback("Zeg 'stop' om af te sluiten of klik op de knop om opnieuw te starten", "info");
         }
 
         // Show feedback message
@@ -998,13 +1145,13 @@
 
             voiceActive = true;
             document.getElementById('voiceBtn').classList.add('active');
-            document.getElementById('voiceBtn').textContent = '🎤 Voice Mode Active - Say "start"';
+            document.getElementById('voiceBtn').textContent = '🎤 Stem Modus Actief - Zeg "start"';
             document.getElementById('listeningIndicator').classList.add('active');
 
             recognition.start();
-            speak("Voice mode active. Say 'start' to begin processing inbox actions.");
+            speak("Stem modus actief. Zeg 'start' om inbox acties te verwerken.");
 
-            showFeedback("🎤 Listening... Say 'start' to begin", "info");
+            showFeedback("🎤 Luisterend... Zeg 'start' om te beginnen", "info");
         }
 
         // Stop voice mode
@@ -1024,7 +1171,7 @@
             }
 
             document.getElementById('voiceBtn').classList.remove('active');
-            document.getElementById('voiceBtn').textContent = '🎤 Start Voice Mode';
+            document.getElementById('voiceBtn').textContent = '🎤 Start Stem Modus';
             document.getElementById('listeningIndicator').classList.remove('active');
 
             // Reset state
@@ -1042,16 +1189,16 @@
                 deleted: 0
             };
 
-            document.getElementById('progress').textContent = 'Ready to start';
-            document.getElementById('currentAction').textContent = 'Click "Start Voice Mode" to begin';
-            document.getElementById('transcript').textContent = 'Your speech will appear here...';
+            document.getElementById('progress').textContent = 'Klaar om te starten';
+            document.getElementById('currentAction').textContent = 'Klik "Start Stem Modus" om te beginnen';
+            document.getElementById('transcript').textContent = 'Je spraak verschijnt hier...';
 
             updatePropertyDisplay('project', null);
             updatePropertyDisplay('context', null);
             updatePropertyDisplay('duration', null);
             updatePropertyDisplay('priority', null);
 
-            showFeedback("Voice mode stopped", "info");
+            showFeedback("Stem modus gestopt", "info");
         }
 
         // Event listeners
@@ -1094,10 +1241,10 @@
         window.addEventListener('load', () => {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                showFeedback("⚠️ Speech recognition not supported. Please use Chrome or Safari.", "error");
+                showFeedback("⚠️ Spraakherkenning niet ondersteund. Gebruik Chrome of Safari.", "error");
                 document.getElementById('voiceBtn').disabled = true;
             } else {
-                showFeedback("✓ Speech recognition available. Click to start!", "success");
+                showFeedback("✓ Spraakherkenning beschikbaar. Klik om te starten!", "success");
             }
 
             // Load voices (might take a moment on some browsers)

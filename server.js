@@ -878,6 +878,168 @@ app.post('/api/voice/synthesize', async (req, res) => {
     }
 });
 
+// OpenAI Natural Language Parsing endpoint for Voice Mode POC
+app.post('/api/voice/parse-command', async (req, res) => {
+    try {
+        const { transcript, conversationHistory = [], availableEntities = {} } = req.body;
+
+        if (!transcript) {
+            return res.status(400).json({ error: 'Transcript parameter is required' });
+        }
+
+        // Check if OpenAI API key is configured
+        if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here') {
+            return res.status(503).json({
+                error: 'OpenAI API key not configured',
+                fallback: true,
+                message: 'Please add OPENAI_API_KEY to environment variables'
+            });
+        }
+
+        // Initialize OpenAI client
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
+        });
+
+        // Build system prompt in Dutch
+        const systemPrompt = `Je bent een Nederlandse spraakassistent voor Tickedify task management.
+Jouw taak is om Nederlandse gesproken commando's te begrijpen en de bedoeling van de gebruiker te extraheren.
+
+BESCHIKBARE ENTITEITEN:
+Projecten: ${(availableEntities.projects || []).join(', ') || 'Geen projecten beschikbaar'}
+Contexten: ${(availableEntities.contexts || []).join(', ') || 'Geen contexten beschikbaar'}
+
+COMMANDO TYPES:
+1. set_property: Gebruiker stelt eigenschappen in (project, context, prioriteit, duur)
+2. query: Gebruiker vraagt om informatie (lijst van projecten, contexten)
+3. action: Gebruiker geeft een actie commando (volgende, herhalen, klaar, verwijderen)
+4. create_entity: Gebruiker wil een nieuw project of context aanmaken
+
+PRIORITEITEN (alleen deze waarden):
+- hoog
+- gemiddeld
+- laag
+
+DUUR: Altijd in minuten (integer)
+
+VOORBEELDEN:
+User: "Het project mag je op verbouwing zetten, de context op thuis, de prio op hoog en de duur op 15 minuten"
+→ intent: set_property, properties: {project: "verbouwing", context: "thuis", priority: "hoog", duration: 15}
+
+User: "Geef me de lijst van projecten"
+→ intent: query, query_type: "list_projects"
+
+User: "Dit mag aan een nieuw project toegekend worden, de naam is Tuinhuis schilderen"
+→ intent: create_entity, entities: {create_project: "Tuinhuis schilderen"}, properties: {project: "Tuinhuis schilderen"}
+
+Antwoord ALTIJD in het Nederlands. Wees vriendelijk en bevestigend.`;
+
+        // Prepare messages array
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            ...conversationHistory,
+            { role: 'user', content: transcript }
+        ];
+
+        // Call GPT-4o-mini with structured outputs
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: messages,
+            response_format: {
+                type: "json_schema",
+                json_schema: {
+                    name: "voice_command_response",
+                    strict: true,
+                    schema: {
+                        type: "object",
+                        properties: {
+                            intent: {
+                                type: "string",
+                                enum: ["set_property", "query", "action", "create_entity"],
+                                description: "Het type commando dat de gebruiker geeft"
+                            },
+                            properties: {
+                                type: "object",
+                                properties: {
+                                    project: {
+                                        type: ["string", "null"],
+                                        description: "Project naam"
+                                    },
+                                    context: {
+                                        type: ["string", "null"],
+                                        description: "Context naam"
+                                    },
+                                    duration: {
+                                        type: ["number", "null"],
+                                        description: "Duur in minuten"
+                                    },
+                                    priority: {
+                                        type: ["string", "null"],
+                                        enum: ["hoog", "gemiddeld", "laag", null],
+                                        description: "Prioriteit niveau"
+                                    }
+                                },
+                                required: ["project", "context", "duration", "priority"],
+                                additionalProperties: false
+                            },
+                            entities: {
+                                type: "object",
+                                properties: {
+                                    create_project: {
+                                        type: ["string", "null"],
+                                        description: "Naam van nieuw aan te maken project"
+                                    },
+                                    create_context: {
+                                        type: ["string", "null"],
+                                        description: "Naam van nieuw aan te maken context"
+                                    }
+                                },
+                                required: ["create_project", "create_context"],
+                                additionalProperties: false
+                            },
+                            query_type: {
+                                type: ["string", "null"],
+                                enum: ["list_projects", "list_contexts", null],
+                                description: "Type query als intent=query"
+                            },
+                            action_type: {
+                                type: ["string", "null"],
+                                enum: ["next", "repeat", "done", "delete", "stop", null],
+                                description: "Type actie als intent=action"
+                            },
+                            response_message: {
+                                type: "string",
+                                description: "Nederlandse feedback bericht voor de gebruiker"
+                            }
+                        },
+                        required: ["intent", "properties", "entities", "query_type", "action_type", "response_message"],
+                        additionalProperties: false
+                    }
+                }
+            },
+            temperature: 0.3 // Lower temperature for more consistent parsing
+        });
+
+        // Parse the response
+        const parsed = JSON.parse(response.choices[0].message.content);
+
+        // Return structured response
+        res.json({
+            success: true,
+            ...parsed
+        });
+
+    } catch (error) {
+        console.error('OpenAI parsing error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to parse command',
+            message: error.message,
+            fallback: true
+        });
+    }
+});
+
 // Email import help page (styled HTML)
 app.get('/email-import-help', (req, res) => {
     const markdownPath = path.join(__dirname, 'public', 'email-import-help.md');
