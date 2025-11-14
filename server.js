@@ -13302,10 +13302,22 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         await pool.query('BEGIN');
 
         // Delete user's sessions manually (sessions table has JSON data, no FK constraint)
-        await pool.query(
-            "DELETE FROM sessions WHERE sess::text LIKE $1",
-            [`%"userId":"${userId}"%`]
-        );
+        // Skip if sessions table doesn't exist
+        try {
+            await pool.query(
+                "DELETE FROM sessions WHERE sess::text LIKE $1",
+                [`%"userId":"${userId}"%`]
+            );
+            console.log(`✅ Deleted ${sessionsCount} sessions for user ${userId}`);
+        } catch (sessionError) {
+            if (sessionError.code === '42P01') {
+                // Table doesn't exist - not a problem, continue
+                console.log('⚠️ Sessions table does not exist, skipping session cleanup');
+            } else {
+                // Other error - rethrow
+                throw sessionError;
+            }
+        }
 
         // Delete user (cascades to tasks, email_imports via foreign keys)
         await pool.query('DELETE FROM users WHERE id = $1', [userId]);
