@@ -221,6 +221,26 @@ function initializeVoiceRecognition() {
     return recognition;
 }
 
+// Update voice mode status indicator with visual feedback
+function updateVoiceStatus(message, state) {
+    const indicator = document.getElementById('voice-mode-indicator');
+    if (!indicator || indicator.style.display === 'none') return;
+
+    const statusText = indicator.querySelector('.voice-status-text');
+    const pulse = indicator.querySelector('.voice-listening-pulse');
+
+    if (statusText) {
+        statusText.textContent = message;
+    }
+
+    if (pulse) {
+        // Remove all state classes
+        pulse.classList.remove('listening', 'thinking', 'processing', 'playing');
+        // Add new state class
+        pulse.classList.add(state);
+    }
+}
+
 // ============================================================================
 // VOICE MODE - Speech Synthesis (T011)
 // ============================================================================
@@ -236,6 +256,9 @@ async function speak(text) {
     }
 
     console.log('🔊 Speaking:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
+
+    // Update status: generating speech
+    updateVoiceStatus('Generating speech...', 'processing');
 
     try {
         // Call OpenAI TTS API
@@ -256,6 +279,7 @@ async function speak(text) {
             if (error.fallback) {
                 // OpenAI not available, fallback to browser voice
                 console.log('OpenAI TTS not available, using browser voice:', error.message);
+                updateVoiceStatus('Playing response...', 'playing');
                 return speakBrowser(text);
             }
             throw new Error(error.message || 'TTS API error');
@@ -267,10 +291,15 @@ async function speak(text) {
 
         voiceModeState.audioElement.src = audioUrl;
 
+        // Update status: playing audio
+        updateVoiceStatus('Playing response...', 'playing');
+
         // Return Promise that resolves when audio is done playing
         return new Promise((resolve) => {
             voiceModeState.audioElement.onended = () => {
                 URL.revokeObjectURL(audioUrl);
+                // Reset status to listening
+                updateVoiceStatus('Listening...', 'listening');
                 resolve();
             };
             voiceModeState.audioElement.play();
@@ -279,6 +308,7 @@ async function speak(text) {
     } catch (error) {
         console.error('OpenAI TTS error:', error);
         console.log('Falling back to browser voice');
+        updateVoiceStatus('Playing response...', 'playing');
         return speakBrowser(text);
     }
 }
@@ -292,6 +322,8 @@ function speakBrowser(text) {
         utterance.pitch = 1.0;
 
         utterance.onend = () => {
+            // Reset status to listening
+            updateVoiceStatus('Listening...', 'listening');
             resolve();
         };
 
@@ -308,6 +340,7 @@ async function processCommand(transcript) {
     try {
         // Show processing state
         console.log('🤔 AI processing command:', transcript);
+        updateVoiceStatus('Processing command...', 'thinking');
 
         // Call AI parsing endpoint
         const response = await fetch('/api/voice/parse-command', {
@@ -384,6 +417,7 @@ async function processCommand(transcript) {
 
     } catch (error) {
         console.error('Command processing error:', error);
+        updateVoiceStatus('Listening...', 'listening');
         toast.warning('⚠️ Something went wrong, try again');
         // Fallback to simple pattern matching
         parsePropertiesRegex(transcript);
