@@ -17424,8 +17424,8 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
       errors: []
     };
 
-    // Get user from production
-    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    // Get user from production (always use productionPool, not pool which points to test on staging)
+    const userResult = await productionPool.query('SELECT * FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({
         error: 'UserNotFound',
@@ -17454,7 +17454,7 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
       async function copyTableRows(tableName, rows) {
         if (rows.length === 0) return 0;
 
-        const columns = await getCommonColumns(tableName, pool, testPool);
+        const columns = await getCommonColumns(tableName, productionPool, testPool);
         let copiedCount = 0;
 
         for (const row of rows) {
@@ -17480,40 +17480,40 @@ app.post('/api/admin/test-db/copy-user', requireAdmin, async (req, res) => {
       // 1. Copy user
       copyStats.users = await copyTableRows('users', [user]);
 
-      // 2. Copy taken (tasks)
-      const taken = await pool.query('SELECT * FROM taken WHERE user_id = $1', [userId]);
+      // 2. Copy taken (tasks) - from production
+      const taken = await productionPool.query('SELECT * FROM taken WHERE user_id = $1', [userId]);
       copyStats.taken = await copyTableRows('taken', taken.rows);
 
-      // 3. Copy projecten (only those used by this user's taken)
-      const projecten = await pool.query(`
+      // 3. Copy projecten (only those used by this user's taken) - from production
+      const projecten = await productionPool.query(`
         SELECT DISTINCT p.* FROM projecten p
         JOIN taken t ON t.project_id = p.id
         WHERE t.user_id = $1
       `, [userId]);
       copyStats.projecten = await copyTableRows('projecten', projecten.rows);
 
-      // 4. Copy contexten (only those used by this user's taken)
-      const contexten = await pool.query(`
+      // 4. Copy contexten (only those used by this user's taken) - from production
+      const contexten = await productionPool.query(`
         SELECT DISTINCT c.* FROM contexten c
         JOIN taken t ON t.context_id = c.id
         WHERE t.user_id = $1
       `, [userId]);
       copyStats.contexten = await copyTableRows('contexten', contexten.rows);
 
-      // 5. Copy subtaken (only for this user's taken)
-      const subtaken = await pool.query(`
+      // 5. Copy subtaken (only for this user's taken) - from production
+      const subtaken = await productionPool.query(`
         SELECT s.* FROM subtaken s
         JOIN taken t ON s.parent_taak_id = t.id
         WHERE t.user_id = $1
       `, [userId]);
       copyStats.subtaken = await copyTableRows('subtaken', subtaken.rows);
 
-      // 6. Copy bijlagen (attachments)
-      const bijlagen = await pool.query('SELECT * FROM bijlagen WHERE user_id = $1', [userId]);
+      // 6. Copy bijlagen (attachments) - from production
+      const bijlagen = await productionPool.query('SELECT * FROM bijlagen WHERE user_id = $1', [userId]);
       copyStats.bijlagen = await copyTableRows('bijlagen', bijlagen.rows);
 
-      // 7. Copy feedback
-      const feedback = await pool.query('SELECT * FROM feedback WHERE user_id = $1', [userId]);
+      // 7. Copy feedback - from production
+      const feedback = await productionPool.query('SELECT * FROM feedback WHERE user_id = $1', [userId]);
       copyStats.feedback = await copyTableRows('feedback', feedback.rows);
 
       await client.query('COMMIT');
