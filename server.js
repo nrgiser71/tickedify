@@ -12628,7 +12628,7 @@ app.get('/api/admin2/revenue/history', requireAdmin, async (req, res) => {
         // Generate date series
         const dataPoints = [];
         const endDate = new Date();
-        endDate.setHours(0, 0, 0, 0); // Start of today
+        endDate.setHours(23, 59, 59, 999); // End of today to include all payments today
 
         if (interval === 'weekly') {
             // Weekly data for year view (52 weeks)
