@@ -969,25 +969,6 @@ const Screens = {
                         <div class="stat-subtext">Paying customers</div>
                     </div>
                 </div>
-
-                <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--macos-text-primary);">Revenue by Tier</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">🆓 Free Tier Revenue</div>
-                        <div class="stat-value" id="revenue-free">€0</div>
-                        <div class="stat-subtext">No revenue from free</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">⭐ Premium Revenue</div>
-                        <div class="stat-value" id="revenue-premium">${formatEUR(standardMonthly.revenue + noLimitMonthly.revenue)}</div>
-                        <div class="stat-subtext">Monthly plans (€7 + €8)</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">💎 Enterprise Revenue</div>
-                        <div class="stat-value" id="revenue-enterprise">${formatEUR(standardYearly.revenue + noLimitYearly.revenue)}</div>
-                        <div class="stat-subtext">Yearly plans (€70 + €80)</div>
-                    </div>
-                </div>
             `;
 
             // Store revenue stats globally for MRR detail modal
