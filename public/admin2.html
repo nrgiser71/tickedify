@@ -3893,8 +3893,8 @@ Examples:
             const confirmed = confirm(`Copy user "${userEmail}" to test database?\n\nThis will copy all their tasks, projects, contexts, attachments, and feedback.`);
             if (!confirmed) return;
 
-            // Show loading indicator
-            showToast('📋 Copying user to test database...', 'info', 0);
+            // Show loading indicator (save reference to dismiss later)
+            const loadingToast = showToast('📋 Copying user to test database...', 'info', 0);
 
             try {
                 const response = await fetch('/api/admin/test-db/copy-user', {
@@ -3907,6 +3907,9 @@ Examples:
                 if (!response.ok) {
                     const error = await response.json();
 
+                    // Dismiss loading toast
+                    toast.dismiss(loadingToast);
+
                     if (response.status === 409) {
                         alert(`⚠️ User already exists in test database.\n\n${error.message}\n\nDelete the existing test user first before copying again.`);
                         return;
@@ -3917,6 +3920,9 @@ Examples:
 
                 const result = await response.json();
 
+                // Dismiss loading toast
+                toast.dismiss(loadingToast);
+
                 // Show success toast
                 showToast(`✅ User copied successfully! (${result.stats.taken} tasks, ${result.stats.projecten} projects, ${result.stats.contexten} contexts)`, 'success', 5000);
 
@@ -3925,6 +3931,8 @@ Examples:
 
             } catch (error) {
                 console.error('Copy user error:', error);
+                // Dismiss loading toast
+                toast.dismiss(loadingToast);
                 showToast(`❌ Copy user failed: ${error.message}`, 'error', 5000);
             }
         }
@@ -3934,8 +3942,8 @@ Examples:
             const confirmed = confirm(`⚠️ Delete user "${userEmail}" from test database?\n\nThis will delete the user and all their related data (tasks, attachments, feedback, etc.).\n\nThis action cannot be undone.`);
             if (!confirmed) return;
 
-            // Show loading indicator
-            showToast('🗑️ Deleting user from test database...', 'info', 0);
+            // Show loading indicator (save reference to dismiss later)
+            const loadingToast = showToast('🗑️ Deleting user from test database...', 'info', 0);
 
             try {
                 const response = await fetch(`/api/admin/test-db/user/${userId}`, {
@@ -3945,10 +3953,15 @@ Examples:
 
                 if (!response.ok) {
                     const error = await response.json();
+                    // Dismiss loading toast
+                    toast.dismiss(loadingToast);
                     throw new Error(error.message || `Delete user failed: ${response.status}`);
                 }
 
                 const result = await response.json();
+
+                // Dismiss loading toast
+                toast.dismiss(loadingToast);
 
                 // Show success toast
                 showToast(`✅ User deleted from test database! (${result.deletedTasks} tasks, ${result.deletedAttachments} attachments, ${result.deletedFeedback} feedback)`, 'success', 5000);
@@ -3958,6 +3971,8 @@ Examples:
 
             } catch (error) {
                 console.error('Delete user error:', error);
+                // Dismiss loading toast
+                toast.dismiss(loadingToast);
                 showToast(`❌ Delete user failed: ${error.message}`, 'error', 5000);
             }
         }
