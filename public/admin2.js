@@ -989,7 +989,7 @@ const Screens = {
             }
 
             // Render sparkline charts after DOM update
-            await renderRevenueSparklines();
+            await window.renderRevenueSparklines();
 
         } catch (error) {
             ScreenManager.showError('revenue-content', 'Failed to load revenue dashboard', error);
@@ -2429,6 +2429,195 @@ function emailFeedbackUser() {
     // Open mailto link
     window.location.href = mailtoLink;
 }
+
+// ============================================================================
+// Revenue Chart Functions
+// ============================================================================
+
+// Render revenue sparkline charts (30 days)
+window.renderRevenueSparklines = async function() {
+    try {
+        const response = await fetch('/api/admin2/revenue/history?days=30&interval=daily');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const historyData = await response.json();
+        const data = historyData.data || [];
+
+        // Extract labels and datasets
+        const labels = data.map(d => d.date);
+        const mrrData = data.map(d => d.mrr);
+        const arrData = data.map(d => d.arr);
+        const activeData = data.map(d => d.active_subscriptions);
+
+        // Common sparkline config
+        const sparklineConfig = {
+            type: 'line',
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                },
+                elements: {
+                    point: { radius: 0 },
+                    line: {
+                        borderWidth: 2,
+                        tension: 0.4
+                    }
+                }
+            }
+        };
+
+        // MRR Sparkline
+        const mrrCtx = document.getElementById('sparkline-mrr');
+        if (mrrCtx) {
+            new Chart(mrrCtx, {
+                ...sparklineConfig,
+                data: {
+                    labels,
+                    datasets: [{
+                        data: mrrData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true
+                    }]
+                }
+            });
+        }
+
+        // ARR Sparkline
+        const arrCtx = document.getElementById('sparkline-arr');
+        if (arrCtx) {
+            new Chart(arrCtx, {
+                ...sparklineConfig,
+                data: {
+                    labels,
+                    datasets: [{
+                        data: arrData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true
+                    }]
+                }
+            });
+        }
+
+        // Active Subscriptions Sparkline
+        const activeCtx = document.getElementById('sparkline-active');
+        if (activeCtx) {
+            new Chart(activeCtx, {
+                ...sparklineConfig,
+                data: {
+                    labels,
+                    datasets: [{
+                        data: activeData,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true
+                    }]
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('Failed to render sparklines:', error);
+    }
+};
+
+// Render year chart for detail modals (52 weeks)
+window.renderYearChart = async function(metric) {
+    try {
+        const response = await fetch('/api/admin2/revenue/history?days=365&interval=weekly');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const historyData = await response.json();
+        const data = historyData.data || [];
+
+        // Extract labels and dataset based on metric
+        const labels = data.map(d => {
+            const date = new Date(d.date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+
+        let chartData, borderColor, backgroundColor, label;
+        if (metric === 'mrr') {
+            chartData = data.map(d => d.mrr);
+            borderColor = '#3b82f6';
+            backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            label = 'MRR (€)';
+        } else if (metric === 'arr') {
+            chartData = data.map(d => d.arr);
+            borderColor = '#10b981';
+            backgroundColor = 'rgba(16, 185, 129, 0.1)';
+            label = 'ARR (€)';
+        } else {
+            chartData = data.map(d => d.active_subscriptions);
+            borderColor = '#f59e0b';
+            backgroundColor = 'rgba(245, 158, 11, 0.1)';
+            label = 'Active Subscriptions';
+        }
+
+        const canvasId = `year-chart-${metric}`;
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label,
+                    data: chartData,
+                    borderColor,
+                    backgroundColor,
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            maxTicksLimit: 12
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#e5e7eb' },
+                        ticks: {
+                            callback: function(value) {
+                                return metric === 'active' ? value : '€' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error(`Failed to render ${metric} year chart:`, error);
+    }
+};
 
 // ============================================================================
 // Initialize Application
