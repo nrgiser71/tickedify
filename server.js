@@ -13273,121 +13273,83 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             }
         }
 
-        // Count cascade deletions before deletion (for audit log and response)
-        const tasksCountResult = await pool.query(
-            'SELECT COUNT(*) as count FROM taken WHERE user_id = $1',
-            [userId]
-        );
-        const tasksCount = parseInt(tasksCountResult.rows[0].count);
+        // No need to count - we'll delete systematically and log results
 
-        const emailsCountResult = await pool.query(
-            'SELECT COUNT(*) as count FROM email_imports WHERE user_id = $1',
-            [userId]
-        );
-        const emailsCount = parseInt(emailsCountResult.rows[0].count);
-
-        // Count other related data
-        let settingsCount = 0;
-        let subscriptionRequestsCount = 0;
-        try {
-            const settingsResult = await pool.query(
-                'SELECT COUNT(*) as count FROM user_settings WHERE user_id = $1',
-                [userId]
-            );
-            settingsCount = parseInt(settingsResult.rows[0].count);
-
-            const subscriptionResult = await pool.query(
-                'SELECT COUNT(*) as count FROM subscription_change_requests WHERE user_id = $1',
-                [userId]
-            );
-            subscriptionRequestsCount = parseInt(subscriptionResult.rows[0].count);
-        } catch (err) {
-            // Tables might not exist in all environments
-            console.log('⚠️ Could not count user_settings or subscription_change_requests:', err.message);
-        }
-
-        // Count sessions (skip if table doesn't exist)
-        let sessionsCount = 0;
-        try {
-            const sessionsCountResult = await pool.query(
-                "SELECT COUNT(*) as count FROM sessions WHERE sess::text LIKE $1",
-                [`%"userId":"${userId}"%`]
-            );
-            sessionsCount = parseInt(sessionsCountResult.rows[0].count);
-        } catch (sessionCountError) {
-            if (sessionCountError.code === '42P01') {
-                // Sessions table doesn't exist - that's fine
-                console.log('⚠️ Sessions table does not exist, will skip session cleanup');
-            } else {
-                // Other error - rethrow
-                throw sessionCountError;
-            }
-        }
-
-        // Perform cascade deletion (delete all user data before deleting user)
-        // Database foreign key constraints are NOT cascade, so we manually delete related data
+        // COMPLETE CASCADE DELETION - Delete ALL related user data systematically
+        // Based on database schema analysis via information_schema
+        // Delete in correct order: child tables first, parent tables last
 
         await pool.query('BEGIN');
 
-        // Delete user's sessions manually (sessions table has JSON data, no FK constraint)
-        // Skip if sessions table doesn't exist
+        const deleteResults = [];
+
+        // Helper function to delete and log
+        const deleteFrom = async (tableName, columnName = 'user_id') => {
+            try {
+                const result = await pool.query(
+                    `DELETE FROM ${tableName} WHERE ${columnName} = $1`,
+                    [userId]
+                );
+                if (result.rowCount > 0) {
+                    deleteResults.push(`${tableName}: ${result.rowCount}`);
+                    console.log(`✅ Deleted ${result.rowCount} rows from ${tableName}`);
+                }
+            } catch (err) {
+                if (err.code === '42P01') {
+                    // Table doesn't exist - not a problem
+                    console.log(`⚠️ Table ${tableName} does not exist, skipping`);
+                } else {
+                    console.log(`⚠️ Error deleting from ${tableName}:`, err.message);
+                }
+            }
+        };
+
+        // 1. Sessions (no FK constraint, JSON-based)
         try {
-            await pool.query(
+            const result = await pool.query(
                 "DELETE FROM sessions WHERE sess::text LIKE $1",
                 [`%"userId":"${userId}"%`]
             );
-            console.log(`✅ Deleted ${sessionsCount} sessions for user ${userId}`);
-        } catch (sessionError) {
-            if (sessionError.code === '42P01') {
-                // Table doesn't exist - not a problem, continue
-                console.log('⚠️ Sessions table does not exist, skipping session cleanup');
-            } else {
-                // Other error - rethrow
-                throw sessionError;
+            if (result.rowCount > 0) {
+                deleteResults.push(`sessions: ${result.rowCount}`);
+                console.log(`✅ Deleted ${result.rowCount} sessions`);
+            }
+        } catch (err) {
+            if (err.code !== '42P01') {
+                console.log(`⚠️ Error deleting sessions:`, err.message);
             }
         }
 
-        // Delete all related user data in the correct order (respecting foreign keys)
+        // 2. Child tables (have FKs to other user tables like taken, projecten, contexten)
+        await deleteFrom('bijlagen');  // NO ACTION
+        await deleteFrom('dagelijkse_planning');  // NO ACTION
 
-        // 1. Delete user's tasks manually (foreign key constraint is NOT cascade)
-        if (tasksCount > 0) {
-            await pool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
-            console.log(`✅ Deleted ${tasksCount} tasks for user ${userId}`);
-        }
+        // 3. Main content tables (have FKs to projecten/contexten)
+        await deleteFrom('taken');  // NO ACTION - tasks
 
-        // 2. Delete user's email imports (some schemas have CASCADE, some don't)
-        if (emailsCount > 0) {
-            try {
-                await pool.query('DELETE FROM email_imports WHERE user_id = $1', [userId]);
-                console.log(`✅ Deleted ${emailsCount} email imports for user ${userId}`);
-            } catch (err) {
-                // May have been cascade deleted already
-                console.log('⚠️ Email imports deletion:', err.message);
-            }
-        }
+        // 4. Reference tables (no children)
+        await deleteFrom('feedback');  // NO ACTION
+        await deleteFrom('contexten');  // NO ACTION
+        await deleteFrom('projecten');  // NO ACTION
 
-        // 3. Delete user settings (has CASCADE in newer schemas, but delete manually for safety)
-        if (settingsCount > 0) {
-            try {
-                await pool.query('DELETE FROM user_settings WHERE user_id = $1', [userId]);
-                console.log(`✅ Deleted ${settingsCount} user settings for user ${userId}`);
-            } catch (err) {
-                console.log('⚠️ User settings deletion:', err.message);
-            }
-        }
+        // 5. Storage and settings
+        await deleteFrom('user_storage_usage');  // NO ACTION
+        await deleteFrom('system_settings', 'updated_by');  // NO ACTION
 
-        // 4. Delete subscription change requests (has CASCADE in newer schemas, but delete manually for safety)
-        if (subscriptionRequestsCount > 0) {
-            try {
-                await pool.query('DELETE FROM subscription_change_requests WHERE user_id = $1', [userId]);
-                console.log(`✅ Deleted ${subscriptionRequestsCount} subscription requests for user ${userId}`);
-            } catch (err) {
-                console.log('⚠️ Subscription requests deletion:', err.message);
-            }
-        }
+        // 6. Tables with CASCADE (will be auto-deleted, but we delete manually for logging)
+        await deleteFrom('email_imports');  // CASCADE
+        await deleteFrom('message_interactions');  // CASCADE
+        await deleteFrom('mind_dump_preferences');  // CASCADE
+        await deleteFrom('password_reset_tokens');  // CASCADE
+        await deleteFrom('subscription_change_requests');  // CASCADE
+        await deleteFrom('subscription_history');  // CASCADE
+        await deleteFrom('subscriptions');  // CASCADE
+        await deleteFrom('user_page_visits');  // CASCADE
+        await deleteFrom('user_settings');  // CASCADE
 
-        // 5. Delete user record (last, after all related data is gone)
+        // 7. Finally, delete the user record itself
         await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+        console.log(`✅ Deleted user record: ${userId}`);
 
         await pool.query('COMMIT');
 
@@ -13411,13 +13373,7 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
                 'USER_DELETE',
                 userId,
                 targetUser.email,
-                JSON.stringify({
-                    tasks: tasksCount,
-                    email_imports: emailsCount,
-                    sessions: sessionsCount,
-                    settings: settingsCount,
-                    subscription_requests: subscriptionRequestsCount
-                }),
+                JSON.stringify({ deleted_records: deleteResults }),
                 deletedAt,
                 req.ip || req.connection.remoteAddress,
                 req.headers['user-agent'] || 'Unknown'
@@ -13428,6 +13384,7 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         } else {
             // Password-based admin auth - log to console instead
             console.log(`✅ User deleted by password-based admin: ${targetUser.email} (${userId}) at ${deletedAt}`);
+            console.log(`   Deleted records: ${deleteResults.join(', ')}`);
         }
 
 
@@ -13436,13 +13393,7 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             user_id: targetUser.id,
             email: targetUser.email,
             deleted_at: deletedAt,
-            cascade_deleted: {
-                tasks: tasksCount,
-                email_imports: emailsCount,
-                sessions: sessionsCount,
-                settings: settingsCount,
-                subscription_requests: subscriptionRequestsCount
-            }
+            deleted_records: deleteResults
         });
 
     } catch (error) {
