@@ -4359,6 +4359,7 @@ Examples:
             // Set title based on card type
             const titles = {
                 'mrr': 'Monthly Recurring Revenue Details',
+                'arr': 'Annual Recurring Revenue Details',
                 'active': 'Active Subscriptions Details',
                 'premium': 'Premium Revenue Details',
                 'enterprise': 'Enterprise Revenue Details',
@@ -4373,6 +4374,9 @@ Examples:
                 if (cardType === 'mrr') {
                     // MRR fetches revenue stats from API
                     await renderMRRDetails();
+                } else if (cardType === 'arr') {
+                    // ARR fetches revenue stats from API
+                    await renderARRDetails();
                 } else if (cardType === 'active' || cardType === 'premium' || cardType === 'enterprise') {
                     // Fetch active subscriptions data
                     const response = await fetch('/api/admin2/revenue/active-subscriptions?sort=revenue');
@@ -4470,6 +4474,81 @@ Examples:
             } catch (error) {
                 console.error('Error fetching MRR details:', error);
                 showRevenueError('Failed to load MRR details. Please try again.');
+            }
+        }
+
+        // Render ARR breakdown (fetches revenue stats from API)
+        async function renderARRDetails() {
+            try {
+                const response = await fetch('/api/admin2/stats/revenue');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+
+                const byTier = data.by_tier || [];
+                const totalARR = data.arr || 0;
+
+                // Filter only yearly plans
+                const yearlyPlans = byTier.filter(tier => tier.interval === 'yearly');
+
+                if (yearlyPlans.length === 0) {
+                    showRevenueEmpty('No annual subscriptions yet.', '📅');
+                    return;
+                }
+
+                let html = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                            <th style="padding: 12px; font-weight: 600;">Plan Type</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Users</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Price/Year</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+                yearlyPlans.forEach(tier => {
+                    const yearlyRevenue = tier.user_count * tier.price;
+                    html += `
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                        <td style="padding: 12px;">${tier.tier}</td>
+                        <td style="padding: 12px; text-align: right;">${tier.user_count}</td>
+                        <td style="padding: 12px; text-align: right;">€${tier.price.toFixed(2)}</td>
+                        <td style="padding: 12px; text-align: right; font-weight: 600;">€${yearlyRevenue.toFixed(2)}</td>
+                    </tr>
+                `;
+                });
+
+                html += `
+                    </tbody>
+                    <tfoot>
+                        <tr style="border-top: 2px solid #e5e7eb; font-weight: 600;">
+                            <td style="padding: 12px;">Total ARR</td>
+                            <td style="padding: 12px;"></td>
+                            <td style="padding: 12px;"></td>
+                            <td style="padding: 12px; text-align: right;">€${totalARR.toFixed(2)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="margin-top: 40px;">
+                    <h3 style="margin-bottom: 20px; color: #111827;">ARR Trend - Last 52 Weeks</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="year-chart-arr"></canvas>
+                    </div>
+                </div>
+            `;
+
+                document.getElementById('revenue-modal-body').innerHTML = html;
+
+                // Render year chart after DOM update
+                await window.renderYearChart('arr');
+            } catch (error) {
+                console.error('Error fetching ARR details:', error);
+                showRevenueError('Failed to load ARR details. Please try again.');
             }
         }
 
