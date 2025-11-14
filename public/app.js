@@ -356,14 +356,46 @@ async function processCommand(transcript) {
         console.log('🤔 AI processing command:', transcript);
         updateVoiceStatus('Processing command...', 'thinking');
 
-        // Call AI parsing endpoint
+        // Pre-process natural date expressions before sending to AI
+        let processedTranscript = transcript;
+
+        // Detecteer datum expressies en vervang met ISO format
+        const datePatterns = [
+            /\b(vandaag|morgen|overmorgen)\b/gi,
+            /\b(?:binnen|over)\s+\d+\s+dag(?:en)?\b/gi,
+            /\bvolgende\s+week\s+(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\b/gi,
+            /\b(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\b/gi
+        ];
+
+        for (const pattern of datePatterns) {
+            const matches = processedTranscript.match(pattern);
+            if (matches) {
+                for (const match of matches) {
+                    const parsedDate = parseNaturalDate(match);
+                    if (parsedDate) {
+                        console.log(`📅 Date pre-processing: "${match}" → ${parsedDate}`);
+                        // Vervang natuurlijke expressie met ISO datum
+                        processedTranscript = processedTranscript.replace(
+                            new RegExp(match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+                            parsedDate
+                        );
+                    }
+                }
+            }
+        }
+
+        if (processedTranscript !== transcript) {
+            console.log(`✨ Transcript transformed:\n  Original: "${transcript}"\n  Processed: "${processedTranscript}"`);
+        }
+
+        // Call AI parsing endpoint (met verwerkte transcript)
         const response = await fetch('/api/voice/parse-command', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                transcript: transcript,
+                transcript: processedTranscript,
                 conversationHistory: voiceModeState.conversationHistory,
                 availableEntities: {
                     projects: [], // Will be populated from real data later
@@ -1100,6 +1132,86 @@ function parsePropertiesRegex(text) {
     if (!handled) {
         console.log('No regex pattern matched for:', text);
     }
+}
+
+// Natural language date parsing for Dutch expressions
+// Converts expressions like "morgen", "donderdag", "binnen 5 dagen" to ISO dates
+function parseNaturalDate(text) {
+    const lower = text.toLowerCase().trim();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Basis expressies: vandaag, morgen, overmorgen
+    if (lower === 'vandaag') {
+        return today.toISOString().split('T')[0];
+    }
+
+    if (lower === 'morgen') {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+    }
+
+    if (lower === 'overmorgen') {
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+        return dayAfterTomorrow.toISOString().split('T')[0];
+    }
+
+    // Relatieve expressies: "binnen X dagen", "over X dagen"
+    const relativeMatch = text.match(/(?:binnen|over)\s+(\d+)\s+dag(?:en)?/i);
+    if (relativeMatch) {
+        const days = parseInt(relativeMatch[1]);
+        const targetDate = new Date(today);
+        targetDate.setDate(targetDate.getDate() + days);
+        return targetDate.toISOString().split('T')[0];
+    }
+
+    // Weekdagen mapping
+    const weekdayMap = {
+        'maandag': 1,
+        'dinsdag': 2,
+        'woensdag': 3,
+        'donderdag': 4,
+        'vrijdag': 5,
+        'zaterdag': 6,
+        'zondag': 0
+    };
+
+    // Check voor "volgende week WEEKDAG"
+    const nextWeekMatch = text.match(/volgende\s+week\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)/i);
+    if (nextWeekMatch) {
+        const targetDay = weekdayMap[nextWeekMatch[1].toLowerCase()];
+        const result = new Date(today);
+        const currentDay = today.getDay();
+        let daysToAdd = targetDay - currentDay;
+        if (daysToAdd <= 0) daysToAdd += 7;
+        daysToAdd += 7; // Extra week voor "volgende week"
+        result.setDate(result.getDate() + daysToAdd);
+        return result.toISOString().split('T')[0];
+    }
+
+    // Check voor alleen weekdag (zonder "volgende week")
+    for (const [dag, dayNum] of Object.entries(weekdayMap)) {
+        // Match alleen als het de volledige weekdag is (niet deel van "volgende week dinsdag")
+        const dagRegex = new RegExp(`^${dag}$|\\b${dag}\\b(?!.*week)`, 'i');
+        if (dagRegex.test(lower)) {
+            const result = new Date(today);
+            const currentDay = today.getDay();
+            let daysToAdd = dayNum - currentDay;
+
+            // Als de dag al geweest is deze week → volgende week
+            if (daysToAdd <= 0) {
+                daysToAdd += 7;
+            }
+
+            result.setDate(result.getDate() + daysToAdd);
+            return result.toISOString().split('T')[0];
+        }
+    }
+
+    // Geen match gevonden - return null voor fallback naar OpenAI
+    return null;
 }
 
 // T023: Microphone permission error handling
