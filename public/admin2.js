@@ -2635,6 +2635,34 @@ window.renderYearChart = async function(metric) {
     }
 };
 
+// Attach click handlers to revenue cards
+window.attachRevenueClickHandlers = function() {
+    const cards = [
+        { id: 'revenue-mrr', type: 'mrr' },
+        { id: 'revenue-arr', type: 'arr' },
+        { id: 'revenue-active', type: 'active' }
+    ];
+
+    cards.forEach(card => {
+        const element = document.getElementById(card.id);
+        if (element) {
+            const cardContainer = element.closest('.stat-card');
+            if (cardContainer) {
+                cardContainer.style.cursor = 'pointer';
+                // Remove existing listener to avoid duplicates
+                cardContainer.onclick = function() {
+                    // showRevenueDetails is defined in admin2.html
+                    if (typeof showRevenueDetails === 'function') {
+                        showRevenueDetails(card.type);
+                    } else {
+                        console.error('showRevenueDetails function not found');
+                    }
+                };
+            }
+        }
+    });
+};
+
 // ============================================================================
 // Initialize Application
 // ============================================================================
