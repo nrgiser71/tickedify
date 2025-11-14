@@ -1134,6 +1134,15 @@ function parsePropertiesRegex(text) {
     }
 }
 
+// Helper function: Convert Date to local ISO date string (timezone-safe)
+// Avoids UTC conversion that causes off-by-one errors in positive UTC offset timezones
+function toLocalISODate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Natural language date parsing for Dutch expressions
 // Converts expressions like "morgen", "donderdag", "binnen 5 dagen" to ISO dates
 function parseNaturalDate(text) {
@@ -1143,19 +1152,19 @@ function parseNaturalDate(text) {
 
     // Basis expressies: vandaag, morgen, overmorgen
     if (lower === 'vandaag') {
-        return today.toISOString().split('T')[0];
+        return toLocalISODate(today);
     }
 
     if (lower === 'morgen') {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+        return toLocalISODate(tomorrow);
     }
 
     if (lower === 'overmorgen') {
         const dayAfterTomorrow = new Date(today);
         dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-        return dayAfterTomorrow.toISOString().split('T')[0];
+        return toLocalISODate(dayAfterTomorrow);
     }
 
     // Relatieve expressies: "binnen X dagen", "over X dagen"
@@ -1164,7 +1173,7 @@ function parseNaturalDate(text) {
         const days = parseInt(relativeMatch[1]);
         const targetDate = new Date(today);
         targetDate.setDate(targetDate.getDate() + days);
-        return targetDate.toISOString().split('T')[0];
+        return toLocalISODate(targetDate);
     }
 
     // Weekdagen mapping
@@ -1188,7 +1197,7 @@ function parseNaturalDate(text) {
         if (daysToAdd <= 0) daysToAdd += 7;
         daysToAdd += 7; // Extra week voor "volgende week"
         result.setDate(result.getDate() + daysToAdd);
-        return result.toISOString().split('T')[0];
+        return toLocalISODate(result);
     }
 
     // Check voor alleen weekdag (zonder "volgende week")
@@ -1206,7 +1215,7 @@ function parseNaturalDate(text) {
             }
 
             result.setDate(result.getDate() + daysToAdd);
-            return result.toISOString().split('T')[0];
+            return toLocalISODate(result);
         }
     }
 
