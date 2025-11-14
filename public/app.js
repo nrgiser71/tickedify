@@ -93,6 +93,14 @@ async function activateVoiceMode() {
         button.textContent = '🎤 Voice Mode Active - Say "start"';
     }
 
+    // Show voice mode indicator
+    const indicator = document.getElementById('voice-mode-indicator');
+    if (indicator) {
+        indicator.style.display = 'flex';
+        // Initialize with listening state
+        updateVoiceStatus('Listening...', 'listening');
+    }
+
     // Start listening
     try {
         voiceModeState.recognition.start();
@@ -129,6 +137,12 @@ function deactivateVoiceMode() {
     if (button) {
         button.classList.remove('active');
         button.textContent = '🎤 Start Voice Mode';
+    }
+
+    // Hide voice mode indicator
+    const indicator = document.getElementById('voice-mode-indicator');
+    if (indicator) {
+        indicator.style.display = 'none';
     }
 
     // Reset state
