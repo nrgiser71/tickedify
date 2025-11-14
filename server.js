@@ -13286,11 +13286,23 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         );
         const emailsCount = parseInt(emailsCountResult.rows[0].count);
 
-        const sessionsCountResult = await pool.query(
-            "SELECT COUNT(*) as count FROM sessions WHERE sess::text LIKE $1",
-            [`%"userId":"${userId}"%`]
-        );
-        const sessionsCount = parseInt(sessionsCountResult.rows[0].count);
+        // Count sessions (skip if table doesn't exist)
+        let sessionsCount = 0;
+        try {
+            const sessionsCountResult = await pool.query(
+                "SELECT COUNT(*) as count FROM sessions WHERE sess::text LIKE $1",
+                [`%"userId":"${userId}"%`]
+            );
+            sessionsCount = parseInt(sessionsCountResult.rows[0].count);
+        } catch (sessionCountError) {
+            if (sessionCountError.code === '42P01') {
+                // Sessions table doesn't exist - that's fine
+                console.log('⚠️ Sessions table does not exist, will skip session cleanup');
+            } else {
+                // Other error - rethrow
+                throw sessionCountError;
+            }
+        }
 
 
         // Perform deletion (cascades handled by database foreign keys)
