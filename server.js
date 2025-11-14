@@ -13314,34 +13314,40 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
 
         const deletedAt = new Date().toISOString();
 
-        // Log audit trail
-        await pool.query(`
-            INSERT INTO admin_audit_log (
-                admin_user_id,
-                action,
-                target_user_id,
-                old_value,
-                new_value,
-                timestamp,
-                ip_address,
-                user_agent
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [
-            req.session.userId,
-            'USER_DELETE',
-            userId,
-            targetUser.email,
-            JSON.stringify({
-                tasks: tasksCount,
-                email_imports: emailsCount,
-                sessions: sessionsCount
-            }),
-            deletedAt,
-            req.ip || req.connection.remoteAddress,
-            req.headers['user-agent'] || 'Unknown'
-        ]).catch(err => {
-            // If audit log table doesn't exist yet, log to console but don't fail the request
-        });
+        // Log audit trail (only if admin_audit_log table exists and userId is available)
+        if (req.session.userId) {
+            await pool.query(`
+                INSERT INTO admin_audit_log (
+                    admin_user_id,
+                    action,
+                    target_user_id,
+                    old_value,
+                    new_value,
+                    timestamp,
+                    ip_address,
+                    user_agent
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                req.session.userId,
+                'USER_DELETE',
+                userId,
+                targetUser.email,
+                JSON.stringify({
+                    tasks: tasksCount,
+                    email_imports: emailsCount,
+                    sessions: sessionsCount
+                }),
+                deletedAt,
+                req.ip || req.connection.remoteAddress,
+                req.headers['user-agent'] || 'Unknown'
+            ]).catch(err => {
+                // If audit log table doesn't exist yet, log to console but don't fail the request
+                console.log('⚠️ Could not write to audit log (table may not exist):', err.message);
+            });
+        } else {
+            // Password-based admin auth - log to console instead
+            console.log(`✅ User deleted by password-based admin: ${targetUser.email} (${userId}) at ${deletedAt}`);
+        }
 
 
         res.json({
