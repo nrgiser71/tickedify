@@ -2661,6 +2661,161 @@ window.attachRevenueClickHandlers = function() {
 };
 
 // ============================================================================
+// Revenue Modal Functions
+// ============================================================================
+
+// Show loading spinner
+function showRevenueLoading() {
+    document.getElementById('revenue-modal-body').innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <p style="margin-top: 20px; color: #6b7280;">Loading details...</p>
+        </div>
+    `;
+}
+
+// Show error message
+function showRevenueError(message) {
+    document.getElementById('revenue-modal-body').innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+            <h3 style="color: #ef4444; margin-bottom: 10px;">Error</h3>
+            <p style="color: #6b7280;">${message}</p>
+            <button onclick="closeRevenueModal()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
+        </div>
+    `;
+}
+
+// Show empty state
+function showRevenueEmpty(message, icon = '🚫') {
+    document.getElementById('revenue-modal-body').innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
+            <p style="color: #6b7280; font-size: 16px;">${message}</p>
+        </div>
+    `;
+}
+
+// Main function to show revenue details based on card type
+window.showRevenueDetails = async function(cardType) {
+    const modal = document.getElementById('revenue-detail-modal');
+    const titleEl = document.getElementById('revenue-modal-title');
+
+    // Show modal
+    modal.style.display = 'flex';
+
+    // Set title based on card type
+    const titles = {
+        'mrr': 'Monthly Recurring Revenue Details',
+        'arr': 'Annual Recurring Revenue Details',
+        'active': 'Active Subscriptions Details'
+    };
+    titleEl.textContent = titles[cardType] || 'Revenue Details';
+
+    // Show loading
+    showRevenueLoading();
+
+    try {
+        if (cardType === 'mrr') {
+            await renderMRRDetails();
+        } else if (cardType === 'arr') {
+            await renderARRDetails();
+        } else if (cardType === 'active') {
+            const response = await fetch('/api/admin2/revenue/active-subscriptions?sort=revenue');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            renderActiveSubscriptions(data);
+        }
+    } catch (error) {
+        console.error('Error fetching revenue details:', error);
+        showRevenueError('Failed to load revenue details. Please try again.');
+    }
+};
+
+// Render MRR breakdown
+async function renderMRRDetails() {
+    try {
+        const response = await fetch('/api/admin2/stats/revenue');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const byTier = data.by_tier || [];
+        const totalMRR = data.mrr || 0;
+
+        if (byTier.length === 0) {
+            showRevenueEmpty('No active subscriptions yet.', '📊');
+            return;
+        }
+
+        let html = `<table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #e5e7eb; text-align: left;"><th style="padding: 12px; font-weight: 600;">Plan Type</th><th style="padding: 12px; font-weight: 600; text-align: right;">Users</th><th style="padding: 12px; font-weight: 600; text-align: right;">Price/Month</th><th style="padding: 12px; font-weight: 600; text-align: right;">Revenue</th></tr></thead><tbody>`;
+
+        byTier.forEach(tier => {
+            html += `<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px;">${tier.tier}</td><td style="padding: 12px; text-align: right;">${tier.user_count}</td><td style="padding: 12px; text-align: right;">€${tier.price_monthly.toFixed(2)}</td><td style="padding: 12px; text-align: right; font-weight: 600;">€${tier.revenue.toFixed(2)}</td></tr>`;
+        });
+
+        html += `</tbody><tfoot><tr style="border-top: 2px solid #e5e7eb; font-weight: 600;"><td colspan="3" style="padding: 12px;">Total MRR</td><td style="padding: 12px; text-align: right; color: #10b981; font-size: 18px;">€${totalMRR.toFixed(2)}</td></tr></tfoot></table><div style="margin-top: 40px;"><h3 style="margin-bottom: 20px; color: #111827;">MRR Trend - Last 52 Weeks</h3><div style="position: relative; height: 300px;"><canvas id="year-chart-mrr"></canvas></div></div>`;
+
+        document.getElementById('revenue-modal-body').innerHTML = html;
+        await window.renderYearChart('mrr');
+    } catch (error) {
+        console.error('Error fetching MRR details:', error);
+        showRevenueError('Failed to load MRR details.');
+    }
+}
+
+// Render ARR breakdown
+async function renderARRDetails() {
+    try {
+        const response = await fetch('/api/admin2/stats/revenue');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const byTier = data.by_tier || [];
+        const totalARR = data.arr || 0;
+        const yearlyPlans = byTier.filter(tier => tier.interval === 'yearly');
+
+        if (yearlyPlans.length === 0) {
+            showRevenueEmpty('No annual subscriptions yet.', '📅');
+            return;
+        }
+
+        let html = `<table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #e5e7eb; text-align: left;"><th style="padding: 12px; font-weight: 600;">Plan Type</th><th style="padding: 12px; font-weight: 600; text-align: right;">Users</th><th style="padding: 12px; font-weight: 600; text-align: right;">Price/Year</th><th style="padding: 12px; font-weight: 600; text-align: right;">Revenue</th></tr></thead><tbody>`;
+
+        yearlyPlans.forEach(tier => {
+            const yearlyRevenue = tier.user_count * tier.price;
+            html += `<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px;">${tier.tier}</td><td style="padding: 12px; text-align: right;">${tier.user_count}</td><td style="padding: 12px; text-align: right;">€${tier.price.toFixed(2)}</td><td style="padding: 12px; text-align: right; font-weight: 600;">€${yearlyRevenue.toFixed(2)}</td></tr>`;
+        });
+
+        html += `</tbody><tfoot><tr style="border-top: 2px solid #e5e7eb; font-weight: 600;"><td style="padding: 12px;">Total ARR</td><td style="padding: 12px;"></td><td style="padding: 12px;"></td><td style="padding: 12px; text-align: right;">€${totalARR.toFixed(2)}</td></tr></tfoot></table><div style="margin-top: 40px;"><h3 style="margin-bottom: 20px; color: #111827;">ARR Trend - Last 52 Weeks</h3><div style="position: relative; height: 300px;"><canvas id="year-chart-arr"></canvas></div></div>`;
+
+        document.getElementById('revenue-modal-body').innerHTML = html;
+        await window.renderYearChart('arr');
+    } catch (error) {
+        console.error('Error fetching ARR details:', error);
+        showRevenueError('Failed to load ARR details.');
+    }
+}
+
+// Render active subscriptions list
+async function renderActiveSubscriptions(data) {
+    if (data.subscriptions.length === 0) {
+        showRevenueEmpty('No paying customers yet.', '👥');
+        return;
+    }
+
+    let html = `<div style="margin-bottom: 20px;"><p style="color: #6b7280; margin: 0;">Total: ${data.total_count} active subscriptions</p></div><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #e5e7eb; text-align: left;"><th style="padding: 12px; font-weight: 600;">Email</th><th style="padding: 12px; font-weight: 600;">Name</th><th style="padding: 12px; font-weight: 600;">Plan</th><th style="padding: 12px; font-weight: 600; text-align: right;">Amount/Month</th><th style="padding: 12px; font-weight: 600;">Started</th></tr></thead><tbody>`;
+
+    data.subscriptions.forEach(sub => {
+        const createdDate = new Date(sub.created_at).toLocaleDateString('nl-NL');
+        const naam = sub.naam || sub.email.split('@')[0];
+        html += `<tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 12px;">${sub.email}</td><td style="padding: 12px;">${naam}</td><td style="padding: 12px;"><span style="background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${sub.selected_plan}</span></td><td style="padding: 12px; text-align: right; font-weight: 600;">€${sub.monthly_amount.toFixed(2)}</td><td style="padding: 12px; color: #6b7280;">${createdDate}</td></tr>`;
+    });
+
+    html += `</tbody></table><div style="margin-top: 40px;"><h3 style="margin-bottom: 20px; color: #111827;">Active Subscriptions Trend - Last 52 Weeks</h3><div style="position: relative; height: 300px;"><canvas id="year-chart-active"></canvas></div></div>`;
+
+    document.getElementById('revenue-modal-body').innerHTML = html;
+    await window.renderYearChart('active');
+}
+
+// ============================================================================
 // Initialize Application
 // ============================================================================
 
