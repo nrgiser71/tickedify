@@ -13286,6 +13286,26 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         );
         const emailsCount = parseInt(emailsCountResult.rows[0].count);
 
+        // Count other related data
+        let settingsCount = 0;
+        let subscriptionRequestsCount = 0;
+        try {
+            const settingsResult = await pool.query(
+                'SELECT COUNT(*) as count FROM user_settings WHERE user_id = $1',
+                [userId]
+            );
+            settingsCount = parseInt(settingsResult.rows[0].count);
+
+            const subscriptionResult = await pool.query(
+                'SELECT COUNT(*) as count FROM subscription_change_requests WHERE user_id = $1',
+                [userId]
+            );
+            subscriptionRequestsCount = parseInt(subscriptionResult.rows[0].count);
+        } catch (err) {
+            // Tables might not exist in all environments
+            console.log('⚠️ Could not count user_settings or subscription_change_requests:', err.message);
+        }
+
         // Count sessions (skip if table doesn't exist)
         let sessionsCount = 0;
         try {
@@ -13304,12 +13324,8 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             }
         }
 
-
-        // Perform deletion (cascades handled by database foreign keys)
-        // Database schema has ON DELETE CASCADE for:
-        // - taken.gebruiker_id -> users.id
-        // - email_imports.user_id -> users.id
-        // Sessions need manual cleanup (JSON column, no foreign key)
+        // Perform cascade deletion (delete all user data before deleting user)
+        // Database foreign key constraints are NOT cascade, so we manually delete related data
 
         await pool.query('BEGIN');
 
@@ -13331,7 +13347,46 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             }
         }
 
-        // Delete user (cascades to tasks, email_imports via foreign keys)
+        // Delete all related user data in the correct order (respecting foreign keys)
+
+        // 1. Delete user's tasks manually (foreign key constraint is NOT cascade)
+        if (tasksCount > 0) {
+            await pool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
+            console.log(`✅ Deleted ${tasksCount} tasks for user ${userId}`);
+        }
+
+        // 2. Delete user's email imports (some schemas have CASCADE, some don't)
+        if (emailsCount > 0) {
+            try {
+                await pool.query('DELETE FROM email_imports WHERE user_id = $1', [userId]);
+                console.log(`✅ Deleted ${emailsCount} email imports for user ${userId}`);
+            } catch (err) {
+                // May have been cascade deleted already
+                console.log('⚠️ Email imports deletion:', err.message);
+            }
+        }
+
+        // 3. Delete user settings (has CASCADE in newer schemas, but delete manually for safety)
+        if (settingsCount > 0) {
+            try {
+                await pool.query('DELETE FROM user_settings WHERE user_id = $1', [userId]);
+                console.log(`✅ Deleted ${settingsCount} user settings for user ${userId}`);
+            } catch (err) {
+                console.log('⚠️ User settings deletion:', err.message);
+            }
+        }
+
+        // 4. Delete subscription change requests (has CASCADE in newer schemas, but delete manually for safety)
+        if (subscriptionRequestsCount > 0) {
+            try {
+                await pool.query('DELETE FROM subscription_change_requests WHERE user_id = $1', [userId]);
+                console.log(`✅ Deleted ${subscriptionRequestsCount} subscription requests for user ${userId}`);
+            } catch (err) {
+                console.log('⚠️ Subscription requests deletion:', err.message);
+            }
+        }
+
+        // 5. Delete user record (last, after all related data is gone)
         await pool.query('DELETE FROM users WHERE id = $1', [userId]);
 
         await pool.query('COMMIT');
@@ -13359,7 +13414,9 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
                 JSON.stringify({
                     tasks: tasksCount,
                     email_imports: emailsCount,
-                    sessions: sessionsCount
+                    sessions: sessionsCount,
+                    settings: settingsCount,
+                    subscription_requests: subscriptionRequestsCount
                 }),
                 deletedAt,
                 req.ip || req.connection.remoteAddress,
@@ -13382,7 +13439,9 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
             cascade_deleted: {
                 tasks: tasksCount,
                 email_imports: emailsCount,
-                sessions: sessionsCount
+                sessions: sessionsCount,
+                settings: settingsCount,
+                subscription_requests: subscriptionRequestsCount
             }
         });
 
