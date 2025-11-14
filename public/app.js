@@ -752,9 +752,12 @@ async function saveCurrentAction() {
     }
 
     // Handle list routing
-    if (voiceModeState.pendingProperties.lijst && voiceModeState.pendingProperties.lijst !== 'acties') {
+    if (voiceModeState.pendingProperties.lijst) {
         updateData.lijst = voiceModeState.pendingProperties.lijst;
-        voiceModeState.stats.routed++;
+        // Only count as "routed" if moved to defer list (not acties or inbox)
+        if (voiceModeState.pendingProperties.lijst !== 'acties' && voiceModeState.pendingProperties.lijst !== 'inbox') {
+            voiceModeState.stats.routed++;
+        }
     }
 
     console.log('🔍 DEBUG saveCurrentAction - task.id:', task.id);
