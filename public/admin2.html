@@ -1296,7 +1296,7 @@
                         <!-- Modal Header -->
                         <div style="padding: 20px 30px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
                             <h2 id="revenue-modal-title" style="margin: 0; font-size: 20px; font-weight: 600;">Revenue Details</h2>
-                            <button onclick="closeRevenueModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 0; width: 30px; height: 30px;">&times;</button>
+                            <button onclick="window.closeRevenueModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 0; width: 30px; height: 30px;">&times;</button>
                         </div>
 
                         <!-- Modal Body -->
@@ -4334,7 +4334,7 @@ Examples:
                     <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
                     <h3 style="color: #ef4444; margin-bottom: 10px;">Error</h3>
                     <p style="color: #6b7280;">${message}</p>
-                    <button onclick="closeRevenueModal()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
+                    <button onclick="window.closeRevenueModal()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
                 </div>
             `;
         }

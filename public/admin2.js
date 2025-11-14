@@ -2681,7 +2681,7 @@ function showRevenueError(message) {
             <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
             <h3 style="color: #ef4444; margin-bottom: 10px;">Error</h3>
             <p style="color: #6b7280;">${message}</p>
-            <button onclick="closeRevenueModal()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
+            <button onclick="window.closeRevenueModal()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
         </div>
     `;
 }
