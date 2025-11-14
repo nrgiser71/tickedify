@@ -4908,7 +4908,7 @@ app.post('/api/webhooks/plugandpay', express.urlencoded({ extended: true }), asy
     if (webhookData.billing_cycle === 'monthly') {
       selectedPlan = 'monthly_7';
     } else if (webhookData.billing_cycle === 'yearly') {
-      selectedPlan = 'yearly_70';
+      selectedPlan = 'yearly_80';
     }
 
     const subscriptionId = webhookData.contract_id || null; // Plug&Pay uses contract_id as subscription ID
