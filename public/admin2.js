@@ -2652,11 +2652,8 @@ window.attachRevenueClickHandlers = function() {
                 // Remove existing listener to avoid duplicates
                 cardContainer.onclick = function() {
                     // showRevenueDetails is defined in admin2.html as window function
-                    if (typeof window.showRevenueDetails === 'function') {
-                        window.showRevenueDetails(card.type);
-                    } else {
-                        console.error('showRevenueDetails function not found');
-                    }
+                    // By the time user clicks, page is fully loaded and function exists
+                    window.showRevenueDetails(card.type);
                 };
             }
         }
