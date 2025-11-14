@@ -12394,32 +12394,27 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
             const userCount = parseInt(row.user_count);
             const planInfo = pricing[tier] || { price: 0, interval: 'monthly' };
 
-            // Convert to monthly recurring revenue (MRR)
-            const priceMonthly = planInfo.interval === 'yearly'
-                ? planInfo.price / 12
-                : planInfo.price;
-
-            const mrr = userCount * priceMonthly;
-
-            // Calculate annual recurring revenue (ARR) per tier
-            const priceYearly = planInfo.interval === 'yearly'
-                ? planInfo.price
-                : planInfo.price * 12;
-
-            const arr = userCount * priceYearly;
-
             return {
                 tier,
                 user_count: userCount,
-                price_monthly: priceMonthly,
-                revenue: mrr,
-                arr: arr
+                interval: planInfo.interval,
+                price: planInfo.price,
+                // For MRR detail modal compatibility
+                price_monthly: planInfo.interval === 'monthly' ? planInfo.price : 0,
+                revenue: planInfo.interval === 'monthly' ? userCount * planInfo.price : 0
             };
         });
 
         // Calculate totals
-        const totalMrr = byTier.reduce((sum, tier) => sum + tier.revenue, 0);
-        const totalArr = byTier.reduce((sum, tier) => sum + tier.arr, 0);
+        // MRR = only monthly subscriptions (monthly_7, monthly_8)
+        const totalMrr = byTier
+            .filter(tier => tier.interval === 'monthly')
+            .reduce((sum, tier) => sum + tier.revenue, 0);
+
+        // ARR = only yearly subscriptions (yearly_70, yearly_80)
+        const totalArr = byTier
+            .filter(tier => tier.interval === 'yearly')
+            .reduce((sum, tier) => sum + (tier.user_count * tier.price), 0);
 
         // Get payment configurations (simplified - no pricing data)
         const configsQuery = await pool.query(`
