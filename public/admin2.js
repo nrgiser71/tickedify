@@ -993,6 +993,11 @@ const Screens = {
             // Store revenue stats globally for MRR detail modal
             window.currentRevenueStats = data;
 
+            // Attach click handlers to revenue cards (must be done after innerHTML update)
+            if (typeof window.attachRevenueClickHandlers === 'function') {
+                window.attachRevenueClickHandlers();
+            }
+
         } catch (error) {
             ScreenManager.showError('revenue-content', 'Failed to load revenue dashboard', error);
         }

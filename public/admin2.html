@@ -4680,9 +4680,9 @@ Examples:
             }
         }
 
-        // Add click handlers to revenue stat cards
-        document.addEventListener('DOMContentLoaded', function() {
-            // Find all revenue stat cards and make them clickable
+        // Function to attach click handlers to revenue stat cards
+        // Called both on DOMContentLoaded and after dynamic content load
+        window.attachRevenueClickHandlers = function() {
             const cards = [
                 { id: 'revenue-mrr', type: 'mrr' },
                 { id: 'revenue-active', type: 'active' },
@@ -4697,12 +4697,18 @@ Examples:
                     const cardContainer = element.closest('.stat-card');
                     if (cardContainer) {
                         cardContainer.style.cursor = 'pointer';
-                        cardContainer.addEventListener('click', function() {
+                        // Remove existing listener to avoid duplicates
+                        cardContainer.onclick = function() {
                             showRevenueDetails(card.type);
-                        });
+                        };
                     }
                 }
             });
+        };
+
+        // Attach handlers on initial page load
+        document.addEventListener('DOMContentLoaded', function() {
+            window.attachRevenueClickHandlers();
         });
 
     </script>
