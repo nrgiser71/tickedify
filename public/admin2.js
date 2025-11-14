@@ -963,7 +963,7 @@ const Screens = {
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">📅 ARR</div>
-                        <div class="stat-value">${formatEUR(data.arr)}</div>
+                        <div class="stat-value" id="revenue-arr">${formatEUR(data.arr)}</div>
                         <div class="stat-subtext">Annual Recurring Revenue</div>
                         <div class="sparkline-container">
                             <canvas id="sparkline-arr"></canvas>
@@ -2461,7 +2461,10 @@ window.renderRevenueSparklines = async function() {
                 },
                 scales: {
                     x: { display: false },
-                    y: { display: false }
+                    y: {
+                        display: false,
+                        beginAtZero: false
+                    }
                 },
                 elements: {
                     point: { radius: 0 },
@@ -2602,7 +2605,7 @@ window.renderYearChart = async function(metric) {
                         }
                     },
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: false,
                         grid: { color: '#e5e7eb' },
                         ticks: {
                             callback: function(value) {
