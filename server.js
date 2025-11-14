@@ -13373,7 +13373,9 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
         console.error('❌ Error deleting user:', error);
         res.status(500).json({
             error: 'Server error',
-            message: 'Failed to delete user'
+            message: 'Failed to delete user',
+            details: error.message,
+            code: error.code
         });
     }
 });
