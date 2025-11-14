@@ -4794,34 +4794,8 @@ Examples:
             }
         }
 
-        // Function to attach click handlers to revenue stat cards
-        // Called both on DOMContentLoaded and after dynamic content load
-        window.attachRevenueClickHandlers = function() {
-            const cards = [
-                { id: 'revenue-mrr', type: 'mrr' },
-                { id: 'revenue-arr', type: 'arr' },
-                { id: 'revenue-active', type: 'active' }
-            ];
-
-            cards.forEach(card => {
-                const element = document.getElementById(card.id);
-                if (element) {
-                    const cardContainer = element.closest('.stat-card');
-                    if (cardContainer) {
-                        cardContainer.style.cursor = 'pointer';
-                        // Remove existing listener to avoid duplicates
-                        cardContainer.onclick = function() {
-                            showRevenueDetails(card.type);
-                        };
-                    }
-                }
-            });
-        };
-
-        // Attach handlers on initial page load
-        document.addEventListener('DOMContentLoaded', function() {
-            window.attachRevenueClickHandlers();
-        });
+        // NOTE: attachRevenueClickHandlers is now defined in admin2.js
+        // This ensures it's available early and calls window.showRevenueDetails correctly
 
     </script>
 
