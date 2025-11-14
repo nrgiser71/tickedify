@@ -12368,11 +12368,11 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
 
         // Hardcoded pricing (TODO: migrate to payment_configurations table with pricing)
         const pricing = {
-            'monthly_7': 7.00,
-            'yearly_70': 70.00,
-            'monthly_8': 8.00,
-            'yearly_80': 80.00,
-            'free': 0
+            'monthly_7': { price: 7.00, interval: 'monthly' },
+            'yearly_70': { price: 70.00, interval: 'yearly' },
+            'monthly_8': { price: 8.00, interval: 'monthly' },
+            'yearly_80': { price: 80.00, interval: 'yearly' },
+            'free': { price: 0, interval: 'monthly' }
         };
 
         // Calculate MRR (Monthly Recurring Revenue) by tier with hardcoded pricing
@@ -12392,19 +12392,34 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
         const byTier = mrrQuery.rows.map(row => {
             const tier = row.tier;
             const userCount = parseInt(row.user_count);
-            const priceMonthly = pricing[tier] || 0;
-            const revenue = userCount * priceMonthly;
+            const planInfo = pricing[tier] || { price: 0, interval: 'monthly' };
+
+            // Convert to monthly recurring revenue (MRR)
+            const priceMonthly = planInfo.interval === 'yearly'
+                ? planInfo.price / 12
+                : planInfo.price;
+
+            const mrr = userCount * priceMonthly;
+
+            // Calculate annual recurring revenue (ARR) per tier
+            const priceYearly = planInfo.interval === 'yearly'
+                ? planInfo.price
+                : planInfo.price * 12;
+
+            const arr = userCount * priceYearly;
 
             return {
                 tier,
                 user_count: userCount,
                 price_monthly: priceMonthly,
-                revenue
+                revenue: mrr,
+                arr: arr
             };
         });
 
-        // Calculate total MRR
+        // Calculate totals
         const totalMrr = byTier.reduce((sum, tier) => sum + tier.revenue, 0);
+        const totalArr = byTier.reduce((sum, tier) => sum + tier.arr, 0);
 
         // Get payment configurations (simplified - no pricing data)
         const configsQuery = await pool.query(`
@@ -12428,7 +12443,7 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
 
         res.json({
             mrr: totalMrr,
-            arr: totalMrr * 12,  // Annual Recurring Revenue
+            arr: totalArr,
             by_tier: byTier,
             payment_configs: paymentConfigs
         });
