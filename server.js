@@ -12597,6 +12597,115 @@ app.get('/api/admin2/revenue/free-tier', requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin2/revenue/history - Get historical revenue data for charts
+app.get('/api/admin2/revenue/history', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const days = parseInt(req.query.days) || 30;
+        const interval = req.query.interval || 'daily'; // daily or weekly
+
+        // Pricing configuration
+        const pricing = {
+            'monthly_7': { price: 7.00, interval: 'monthly' },
+            'yearly_70': { price: 70.00, interval: 'yearly' },
+            'monthly_8': { price: 8.00, interval: 'monthly' },
+            'yearly_80': { price: 80.00, interval: 'yearly' }
+        };
+
+        // Generate date series
+        const dataPoints = [];
+        const endDate = new Date();
+        endDate.setHours(0, 0, 0, 0); // Start of today
+
+        if (interval === 'weekly') {
+            // Weekly data for year view (52 weeks)
+            const weeks = Math.ceil(days / 7);
+            for (let i = weeks - 1; i >= 0; i--) {
+                const date = new Date(endDate);
+                date.setDate(date.getDate() - (i * 7));
+
+                // Calculate revenue for this week
+                const weekData = await calculateRevenueForDate(date, pricing);
+                dataPoints.push({
+                    date: date.toISOString().split('T')[0],
+                    ...weekData
+                });
+            }
+        } else {
+            // Daily data for 30-day view
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(endDate);
+                date.setDate(date.getDate() - i);
+
+                // Calculate revenue for this day
+                const dayData = await calculateRevenueForDate(date, pricing);
+                dataPoints.push({
+                    date: date.toISOString().split('T')[0],
+                    ...dayData
+                });
+            }
+        }
+
+        res.json({
+            interval,
+            days,
+            data: dataPoints
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching revenue history:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch revenue history'
+        });
+    }
+
+    // Helper function to calculate revenue for a specific date
+    async function calculateRevenueForDate(date, pricing) {
+        // Get all subscriptions that were active on this date
+        // Active means: payment_confirmed_at <= date AND subscription_status = 'active'
+        const subsQuery = await pool.query(`
+            SELECT
+                selected_plan,
+                COUNT(*) as count
+            FROM users
+            WHERE payment_confirmed_at <= $1
+              AND subscription_status = 'active'
+              AND selected_plan IS NOT NULL
+            GROUP BY selected_plan
+        `, [date]);
+
+        let mrr = 0;
+        let arr = 0;
+        let activeSubscriptions = 0;
+
+        subsQuery.rows.forEach(row => {
+            const plan = row.selected_plan;
+            const count = parseInt(row.count);
+            const planInfo = pricing[plan];
+
+            if (planInfo) {
+                activeSubscriptions += count;
+
+                if (planInfo.interval === 'monthly') {
+                    mrr += count * planInfo.price;
+                } else if (planInfo.interval === 'yearly') {
+                    arr += count * planInfo.price;
+                }
+            }
+        });
+
+        return {
+            mrr: parseFloat(mrr.toFixed(2)),
+            arr: parseFloat(arr.toFixed(2)),
+            active_subscriptions: activeSubscriptions
+        };
+    }
+});
+
 // ===== Admin Dashboard v2 User Management Endpoints =====
 
 // GET /api/admin2/users/search - Search for users by email, name, or ID

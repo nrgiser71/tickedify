@@ -957,16 +957,25 @@ const Screens = {
                         <div class="stat-label">💰 MRR</div>
                         <div class="stat-value" id="revenue-mrr">${formatEUR(data.mrr)}</div>
                         <div class="stat-subtext">Monthly Recurring Revenue</div>
+                        <div class="sparkline-container">
+                            <canvas id="sparkline-mrr"></canvas>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">📅 ARR</div>
                         <div class="stat-value">${formatEUR(data.arr)}</div>
                         <div class="stat-subtext">Annual Recurring Revenue</div>
+                        <div class="sparkline-container">
+                            <canvas id="sparkline-arr"></canvas>
+                        </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">👥 Active Subscriptions</div>
                         <div class="stat-value" id="revenue-active">${Helpers.formatNumber(totalSubscriptions)}</div>
                         <div class="stat-subtext">Paying customers</div>
+                        <div class="sparkline-container">
+                            <canvas id="sparkline-active"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -997,6 +1006,9 @@ const Screens = {
             if (typeof window.attachRevenueClickHandlers === 'function') {
                 window.attachRevenueClickHandlers();
             }
+
+            // Render sparkline charts after DOM update
+            await renderRevenueSparklines();
 
         } catch (error) {
             ScreenManager.showError('revenue-content', 'Failed to load revenue dashboard', error);
