@@ -2651,9 +2651,9 @@ window.attachRevenueClickHandlers = function() {
                 cardContainer.style.cursor = 'pointer';
                 // Remove existing listener to avoid duplicates
                 cardContainer.onclick = function() {
-                    // showRevenueDetails is defined in admin2.html
-                    if (typeof showRevenueDetails === 'function') {
-                        showRevenueDetails(card.type);
+                    // showRevenueDetails is defined in admin2.html as window function
+                    if (typeof window.showRevenueDetails === 'function') {
+                        window.showRevenueDetails(card.type);
                     } else {
                         console.error('showRevenueDetails function not found');
                     }

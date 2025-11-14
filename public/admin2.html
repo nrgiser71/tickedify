@@ -4350,7 +4350,7 @@ Examples:
         }
 
         // Main function to show revenue details based on card type
-        async function showRevenueDetails(cardType) {
+        window.showRevenueDetails = async function(cardType) {
             const modal = document.getElementById('revenue-detail-modal');
             const titleEl = document.getElementById('revenue-modal-title');
 
