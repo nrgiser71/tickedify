@@ -955,7 +955,7 @@ const Screens = {
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">💰 MRR</div>
-                        <div class="stat-value">${formatEUR(data.mrr)}</div>
+                        <div class="stat-value" id="revenue-mrr">${formatEUR(data.mrr)}</div>
                         <div class="stat-subtext">Monthly Recurring Revenue</div>
                     </div>
                     <div class="stat-card">
@@ -965,7 +965,7 @@ const Screens = {
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">👥 Active Subscriptions</div>
-                        <div class="stat-value">${Helpers.formatNumber(totalSubscriptions)}</div>
+                        <div class="stat-value" id="revenue-active">${Helpers.formatNumber(totalSubscriptions)}</div>
                         <div class="stat-subtext">Paying customers</div>
                     </div>
                 </div>
@@ -973,27 +973,25 @@ const Screens = {
                 <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--macos-text-primary);">Revenue by Tier</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-label">⭐ Standard Maandelijks</div>
-                        <div class="stat-value">${formatEUR(standardMonthly.revenue)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage(stdMonthlyPct)} of MRR • ${standardMonthly.user_count} users @ €${standardMonthly.price_monthly}/mo</div>
+                        <div class="stat-label">🆓 Free Tier Revenue</div>
+                        <div class="stat-value" id="revenue-free">€0</div>
+                        <div class="stat-subtext">No revenue from free</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">⭐ Standard Jaarlijks</div>
-                        <div class="stat-value">${formatEUR(standardYearly.revenue)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage(stdYearlyPct)} of MRR • ${standardYearly.user_count} users @ €${standardYearly.price_monthly}/yr</div>
+                        <div class="stat-label">⭐ Premium Revenue</div>
+                        <div class="stat-value" id="revenue-premium">${formatEUR(standardMonthly.revenue + noLimitMonthly.revenue)}</div>
+                        <div class="stat-subtext">Monthly plans (€7 + €8)</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">🏢 No Limit Maandelijks</div>
-                        <div class="stat-value">${formatEUR(noLimitMonthly.revenue)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage(noLimitMonthlyPct)} of MRR • ${noLimitMonthly.user_count} users @ €${noLimitMonthly.price_monthly}/mo</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">🏢 No Limit Jaarlijks</div>
-                        <div class="stat-value">${formatEUR(noLimitYearly.revenue)}</div>
-                        <div class="stat-subtext">${Helpers.formatPercentage(noLimitYearlyPct)} of MRR • ${noLimitYearly.user_count} users @ €${noLimitYearly.price_monthly}/yr</div>
+                        <div class="stat-label">💎 Enterprise Revenue</div>
+                        <div class="stat-value" id="revenue-enterprise">${formatEUR(standardYearly.revenue + noLimitYearly.revenue)}</div>
+                        <div class="stat-subtext">Yearly plans (€70 + €80)</div>
                     </div>
                 </div>
             `;
+
+            // Store revenue stats globally for MRR detail modal
+            window.currentRevenueStats = data;
 
         } catch (error) {
             ScreenManager.showError('revenue-content', 'Failed to load revenue dashboard', error);
