@@ -542,7 +542,7 @@ async function handleQuery(result) {
     if (result.query_type === 'list_projects') {
         // Fetch projects from API
         try {
-            const response = await fetch('/api/projecten');
+            const response = await fetch('/api/lijst/projecten-lijst');
             if (response.ok) {
                 const projects = await response.json();
                 const projectNames = projects.map(p => p.naam).join(', ');
@@ -557,7 +557,7 @@ async function handleQuery(result) {
     } else if (result.query_type === 'list_contexts') {
         // Fetch contexts from API
         try {
-            const response = await fetch('/api/contexten');
+            const response = await fetch('/api/lijst/contexten');
             if (response.ok) {
                 const contexts = await response.json();
                 const contextNames = contexts.map(c => c.naam).join(', ');
