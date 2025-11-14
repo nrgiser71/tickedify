@@ -25,6 +25,17 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Separate production pool that ALWAYS points to production database
+// (used for admin panel to show production users even on staging)
+const productionPool = new Pool({
+  connectionString: process.env.DATABASE_URL ||
+                   process.env.POSTGRES_URL ||
+                   process.env.POSTGRES_PRISMA_URL ||
+                   process.env.POSTGRES_URL_NON_POOLING,
+  max: 5, // Smaller pool since only used for admin queries
+  ssl: { rejectUnauthorized: false }
+});
+
 // Test database connection (only if DATABASE_URL_TEST exists)
 let testPool = null;
 if (process.env.DATABASE_URL_TEST) {
@@ -2533,6 +2544,7 @@ module.exports = {
   initDatabase,
   db,
   pool,
+  productionPool,
   testPool,
   getPool,
   getEnvironment,

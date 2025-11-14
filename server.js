@@ -1208,6 +1208,7 @@ app.get('/api/email-import-help', (req, res) => {
 // Try to import and initialize database
 let db = null;
 let pool = null;
+let productionPool = null;
 let testPool = null;
 let getPool = null;
 let useTestDatabase = null;
@@ -1218,6 +1219,7 @@ try {
     const dbModule = require('./database');
     db = dbModule.db;
     pool = dbModule.pool;
+    productionPool = dbModule.productionPool;
     testPool = dbModule.testPool;
     getPool = dbModule.getPool;
     useTestDatabase = dbModule.useTestDatabase;
@@ -17222,7 +17224,9 @@ app.post('/api/admin/test-db/copy-schema', requireAdmin, async (req, res) => {
 // 3. List production users
 app.get('/api/admin/production-users', requireAdmin, async (req, res) => {
   try {
-    const result = await pool.query(`
+    // Always use productionPool to ensure we query PRODUCTION database
+    // even when running on staging environment
+    const result = await productionPool.query(`
       SELECT id, email, naam as username
       FROM users
       ORDER BY id
