@@ -13275,7 +13275,7 @@ app.delete('/api/admin2/users/:id', requireAdmin, async (req, res) => {
 
         // Count cascade deletions before deletion (for audit log and response)
         const tasksCountResult = await pool.query(
-            'SELECT COUNT(*) as count FROM taken WHERE gebruiker_id = $1',
+            'SELECT COUNT(*) as count FROM taken WHERE user_id = $1',
             [userId]
         );
         const tasksCount = parseInt(tasksCountResult.rows[0].count);
