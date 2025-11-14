@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Revenue Dashboard - Active Subscriptions Detail API
+  version: 1.0.0
+  description: |
+    Returns detailed list of all active paying subscriptions with user information.
+    Used by Admin2 Revenue Dashboard when clicking "Active Subscriptions" card.
+
+paths:
+  /api/admin2/revenue/active-subscriptions:
+    get:
+      summary: Get active subscription details
+      description: |
+        Fetches all users with active paid subscriptions (excludes free and trial users).
+        Returns user details with subscription plan, revenue contribution, and order information.
+
+      security:
+        - AdminAuth: []
+
+      parameters:
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [revenue, email, date]
+            default: revenue
+          description: Sort order for results
+
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+          description: Maximum number of results (future pagination support)
+
+      responses:
+        '200':
+          description: Successfully retrieved active subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - subscriptions
+                  - total_count
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveSubscription'
+                  total_count:
+                    type: integer
+                    example: 12
+                    description: Total number of active paid subscriptions
+
+              examples:
+                success:
+                  value:
+                    subscriptions:
+                      - user_id: "user_1762076473858_abc123"
+                        email: "jan@buskens.be"
+                        naam: "Jan Buskens"
+                        selected_plan: "yearly_80"
+                        monthly_amount: 6.67
+                        created_at: "2025-10-15T10:30:00.000Z"
+                        plugandpay_order_id: "b0825d0d-9648-42b4-8fd0-d920b328ecfa"
+                      - user_id: "user_1762076473858_def456"
+                        email: "test@example.com"
+                        naam: "Test User"
+                        selected_plan: "monthly_7"
+                        monthly_amount: 7.00
+                        created_at: "2025-11-01T08:15:00.000Z"
+                        plugandpay_order_id: "c1234567-89ab-cdef-0123-456789abcdef"
+                    total_count: 2
+
+                empty:
+                  value:
+                    subscriptions: []
+                    total_count: 0
+
+        '401':
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+                message: "Admin authentication required"
+
+        '500':
+          description: Database or server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Database error"
+                message: "Failed to fetch subscriptions"
+
+components:
+  schemas:
+    ActiveSubscription:
+      type: object
+      required:
+        - user_id
+        - email
+        - naam
+        - selected_plan
+        - monthly_amount
+        - created_at
+      properties:
+        user_id:
+          type: string
+          description: Unique user identifier
+          example: "user_1762076473858_abc123"
+
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "jan@buskens.be"
+
+        naam:
+          type: string
+          nullable: true
+          description: User full name (nullable)
+          example: "Jan Buskens"
+
+        selected_plan:
+          type: string
+          enum:
+            - monthly_7
+            - monthly_8
+            - yearly_70
+            - yearly_80
+          description: Current subscription plan
+          example: "yearly_80"
+
+        monthly_amount:
+          type: number
+          format: float
+          description: Monthly revenue contribution (yearly plans normalized)
+          example: 6.67
+
+        created_at:
+          type: string
+          format: date-time
+          description: User account creation timestamp (used as subscription start date)
+          example: "2025-10-15T10:30:00.000Z"
+
+        plugandpay_order_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Plug&Pay order ID (nullable for legacy/manual subscriptions)
+          example: "b0825d0d-9648-42b4-8fd0-d920b328ecfa"
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+
+  securitySchemes:
+    AdminAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Admin session cookie (requireAdmin middleware)

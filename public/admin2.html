@@ -1274,6 +1274,22 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Revenue Detail Modal -->
+                <div id="revenue-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 12px; max-width: 900px; max-height: 80vh; width: 90%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                        <!-- Modal Header -->
+                        <div style="padding: 20px 30px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 id="revenue-modal-title" style="margin: 0; font-size: 20px; font-weight: 600;">Revenue Details</h2>
+                            <button onclick="closeRevenueModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 0; width: 30px; height: 30px;">&times;</button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div id="revenue-modal-body" style="padding: 30px; overflow-y: auto; max-height: calc(80vh - 80px);">
+                            <!-- Content will be injected here via JavaScript -->
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- User Management Screen -->
@@ -4257,6 +4273,437 @@ Examples:
             }
             loadPageHelpContent(currentPageId);
         }
+
+        // ===== Revenue Detail Modal Functions =====
+
+        // Global variable to store fetched revenue data
+        let revenueDetailData = null;
+
+        // Close revenue modal
+        function closeRevenueModal() {
+            document.getElementById('revenue-detail-modal').style.display = 'none';
+            document.getElementById('revenue-modal-body').innerHTML = '';
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('revenue-detail-modal');
+                if (modal && modal.style.display !== 'none') {
+                    closeRevenueModal();
+                }
+            }
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('revenue-detail-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRevenueModal();
+            }
+        });
+
+        // Show loading spinner
+        function showRevenueLoading() {
+            document.getElementById('revenue-modal-body').innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 20px; color: #6b7280;">Loading details...</p>
+                </div>
+            `;
+        }
+
+        // Show error message
+        function showRevenueError(message) {
+            document.getElementById('revenue-modal-body').innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h3 style="color: #ef4444; margin-bottom: 10px;">Error</h3>
+                    <p style="color: #6b7280;">${message}</p>
+                    <button onclick="closeRevenueModal()" style="margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
+                </div>
+            `;
+        }
+
+        // Show empty state
+        function showRevenueEmpty(message, icon = '🚫') {
+            document.getElementById('revenue-modal-body').innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
+                    <p style="color: #6b7280; font-size: 16px;">${message}</p>
+                </div>
+            `;
+        }
+
+        // Main function to show revenue details based on card type
+        async function showRevenueDetails(cardType) {
+            const modal = document.getElementById('revenue-detail-modal');
+            const titleEl = document.getElementById('revenue-modal-title');
+
+            // Show modal
+            modal.style.display = 'flex';
+
+            // Set title based on card type
+            const titles = {
+                'mrr': 'Monthly Recurring Revenue Details',
+                'active': 'Active Subscriptions Details',
+                'premium': 'Premium Revenue Details',
+                'enterprise': 'Enterprise Revenue Details',
+                'free': 'Free Tier Details'
+            };
+            titleEl.textContent = titles[cardType] || 'Revenue Details';
+
+            // Show loading
+            showRevenueLoading();
+
+            try {
+                if (cardType === 'mrr') {
+                    // MRR fetches revenue stats from API
+                    await renderMRRDetails();
+                } else if (cardType === 'active' || cardType === 'premium' || cardType === 'enterprise') {
+                    // Fetch active subscriptions data
+                    const response = await fetch('/api/admin2/revenue/active-subscriptions?sort=revenue');
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    const data = await response.json();
+                    revenueDetailData = data;
+
+                    if (cardType === 'active') {
+                        renderActiveSubscriptions(data);
+                    } else if (cardType === 'premium') {
+                        renderPremiumRevenue(data);
+                    } else if (cardType === 'enterprise') {
+                        renderEnterpriseRevenue(data);
+                    }
+                } else if (cardType === 'free') {
+                    // Fetch free tier stats
+                    const response = await fetch('/api/admin2/revenue/free-tier');
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    const data = await response.json();
+                    renderFreeTierStats(data);
+                }
+            } catch (error) {
+                console.error('Error fetching revenue details:', error);
+                showRevenueError('Failed to load revenue details. Please try again.');
+            }
+        }
+
+        // Render MRR breakdown (fetches revenue stats from API)
+        async function renderMRRDetails() {
+            try {
+                const response = await fetch('/api/admin2/stats/revenue');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+
+                const byTier = data.by_tier || [];
+                const totalMRR = data.mrr || 0;
+
+            if (byTier.length === 0) {
+                showRevenueEmpty('No active subscriptions yet.', '📊');
+                return;
+            }
+
+            let html = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                            <th style="padding: 12px; font-weight: 600;">Plan Type</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Users</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Price/Month</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            byTier.forEach(tier => {
+                html += `
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                        <td style="padding: 12px;">${tier.tier}</td>
+                        <td style="padding: 12px; text-align: right;">${tier.user_count}</td>
+                        <td style="padding: 12px; text-align: right;">€${tier.price_monthly.toFixed(2)}</td>
+                        <td style="padding: 12px; text-align: right; font-weight: 600;">€${tier.revenue.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr style="border-top: 2px solid #e5e7eb; font-weight: 600;">
+                            <td colspan="3" style="padding: 12px;">Total MRR</td>
+                            <td style="padding: 12px; text-align: right; color: #10b981; font-size: 18px;">€${totalMRR.toFixed(2)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+
+                document.getElementById('revenue-modal-body').innerHTML = html;
+            } catch (error) {
+                console.error('Error fetching MRR details:', error);
+                showRevenueError('Failed to load MRR details. Please try again.');
+            }
+        }
+
+        // Render active subscriptions list
+        function renderActiveSubscriptions(data) {
+            if (data.subscriptions.length === 0) {
+                showRevenueEmpty('No paying customers yet.', '👥');
+                return;
+            }
+
+            let html = `
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <p style="color: #6b7280; margin: 0;">Total: ${data.total_count} active subscriptions</p>
+                    <select id="revenue-sort" onchange="changeSortOrder()" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer;">
+                        <option value="revenue">Sort by Revenue</option>
+                        <option value="email">Sort by Email</option>
+                        <option value="date">Sort by Date</option>
+                    </select>
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                            <th style="padding: 12px; font-weight: 600;">Email</th>
+                            <th style="padding: 12px; font-weight: 600;">Name</th>
+                            <th style="padding: 12px; font-weight: 600;">Plan</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Amount/Month</th>
+                            <th style="padding: 12px; font-weight: 600;">Started</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.subscriptions.forEach(sub => {
+                const createdDate = new Date(sub.created_at).toLocaleDateString('nl-NL');
+                const naam = sub.naam || sub.email.split('@')[0];
+                html += `
+                    <tr onclick="openUserDetail('${sub.user_id}')" style="border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <td style="padding: 12px;">${sub.email}</td>
+                        <td style="padding: 12px;">${naam}</td>
+                        <td style="padding: 12px;"><span style="background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${sub.selected_plan}</span></td>
+                        <td style="padding: 12px; text-align: right; font-weight: 600;">€${sub.monthly_amount.toFixed(2)}</td>
+                        <td style="padding: 12px; color: #6b7280;">${createdDate}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('revenue-modal-body').innerHTML = html;
+        }
+
+        // Render premium revenue (filtered monthly plans)
+        function renderPremiumRevenue(data) {
+            const premiumSubs = data.subscriptions.filter(s =>
+                s.selected_plan === 'monthly_7' || s.selected_plan === 'monthly_8'
+            );
+
+            if (premiumSubs.length === 0) {
+                showRevenueEmpty('No monthly subscriptions yet.', '⭐');
+                return;
+            }
+
+            const monthly7Count = premiumSubs.filter(s => s.selected_plan === 'monthly_7').length;
+            const monthly8Count = premiumSubs.filter(s => s.selected_plan === 'monthly_8').length;
+
+            let html = `
+                <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #374151;">Premium Breakdown</h3>
+                    <p style="margin: 0; color: #6b7280;">${monthly7Count} users on €7/mo, ${monthly8Count} users on €8/mo</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                            <th style="padding: 12px; font-weight: 600;">Email</th>
+                            <th style="padding: 12px; font-weight: 600;">Name</th>
+                            <th style="padding: 12px; font-weight: 600;">Plan</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Amount/Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            premiumSubs.forEach(sub => {
+                const naam = sub.naam || sub.email.split('@')[0];
+                html += `
+                    <tr onclick="openUserDetail('${sub.user_id}')" style="border-bottom: 1px solid #f3f4f6; cursor: pointer;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <td style="padding: 12px;">${sub.email}</td>
+                        <td style="padding: 12px;">${naam}</td>
+                        <td style="padding: 12px;"><span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${sub.selected_plan}</span></td>
+                        <td style="padding: 12px; text-align: right; font-weight: 600;">€${sub.monthly_amount.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('revenue-modal-body').innerHTML = html;
+        }
+
+        // Render enterprise revenue (filtered yearly plans)
+        function renderEnterpriseRevenue(data) {
+            const enterpriseSubs = data.subscriptions.filter(s =>
+                s.selected_plan === 'yearly_70' || s.selected_plan === 'yearly_80'
+            );
+
+            if (enterpriseSubs.length === 0) {
+                showRevenueEmpty('No yearly subscriptions yet.', '💎');
+                return;
+            }
+
+            const yearly70Count = enterpriseSubs.filter(s => s.selected_plan === 'yearly_70').length;
+            const yearly80Count = enterpriseSubs.filter(s => s.selected_plan === 'yearly_80').length;
+
+            let html = `
+                <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #374151;">Enterprise Breakdown</h3>
+                    <p style="margin: 0; color: #6b7280;">${yearly70Count} users on €70/year, ${yearly80Count} users on €80/year</p>
+                    <p style="margin: 5px 0 0 0; color: #9ca3af; font-size: 14px;">Monthly amounts shown below are normalized (yearly/12)</p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                            <th style="padding: 12px; font-weight: 600;">Email</th>
+                            <th style="padding: 12px; font-weight: 600;">Name</th>
+                            <th style="padding: 12px; font-weight: 600;">Plan</th>
+                            <th style="padding: 12px; font-weight: 600; text-align: right;">Amount/Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            enterpriseSubs.forEach(sub => {
+                const naam = sub.naam || sub.email.split('@')[0];
+                html += `
+                    <tr onclick="openUserDetail('${sub.user_id}')" style="border-bottom: 1px solid #f3f4f6; cursor: pointer;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <td style="padding: 12px;">${sub.email}</td>
+                        <td style="padding: 12px;">${naam}</td>
+                        <td style="padding: 12px;"><span style="background: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${sub.selected_plan}</span></td>
+                        <td style="padding: 12px; text-align: right; font-weight: 600;">€${sub.monthly_amount.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('revenue-modal-body').innerHTML = html;
+        }
+
+        // Render free tier statistics
+        function renderFreeTierStats(data) {
+            if (data.free_users === 0) {
+                showRevenueEmpty('No free users yet.', '🆓');
+                return;
+            }
+
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
+                    <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Free Users</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #374151;">${data.free_users}</div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Recent Signups (30d)</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #374151;">${data.recent_signups_30d}</div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Active Trials</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #374151;">${data.active_trials}</div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Conversion Opportunities</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #374151;">${data.conversion_opportunities}</div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">Free users with recent task activity</div>
+                    </div>
+                </div>
+                <div style="background: #fef3c7; padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; color: #92400e; font-size: 14px;"><strong>Note:</strong> Free tier generates no revenue</p>
+                </div>
+            `;
+
+            document.getElementById('revenue-modal-body').innerHTML = html;
+        }
+
+        // Change sort order (re-fetch with new sort parameter)
+        async function changeSortOrder() {
+            const sortValue = document.getElementById('revenue-sort').value;
+            showRevenueLoading();
+
+            try {
+                const response = await fetch(`/api/admin2/revenue/active-subscriptions?sort=${sortValue}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                revenueDetailData = data;
+
+                // Re-render with current card type (determined by modal title)
+                const title = document.getElementById('revenue-modal-title').textContent;
+                if (title.includes('Active Subscriptions')) {
+                    renderActiveSubscriptions(data);
+                } else if (title.includes('Premium')) {
+                    renderPremiumRevenue(data);
+                } else if (title.includes('Enterprise')) {
+                    renderEnterpriseRevenue(data);
+                }
+
+                // Set sort dropdown to correct value
+                document.getElementById('revenue-sort').value = sortValue;
+            } catch (error) {
+                console.error('Error changing sort:', error);
+                showRevenueError('Failed to sort data. Please try again.');
+            }
+        }
+
+        // Open user detail panel (click-through from revenue modal)
+        function openUserDetail(userId) {
+            closeRevenueModal();
+            // Use existing Screens.showUserDetails function if available
+            if (window.Screens && typeof Screens.showUserDetails === 'function') {
+                Screens.showUserDetails(userId);
+            } else {
+                console.warn('Screens.showUserDetails not available');
+            }
+        }
+
+        // Add click handlers to revenue stat cards
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find all revenue stat cards and make them clickable
+            const cards = [
+                { id: 'revenue-mrr', type: 'mrr' },
+                { id: 'revenue-active', type: 'active' },
+                { id: 'revenue-premium', type: 'premium' },
+                { id: 'revenue-enterprise', type: 'enterprise' },
+                { id: 'revenue-free', type: 'free' }
+            ];
+
+            cards.forEach(card => {
+                const element = document.getElementById(card.id);
+                if (element) {
+                    const cardContainer = element.closest('.stat-card');
+                    if (cardContainer) {
+                        cardContainer.style.cursor = 'pointer';
+                        cardContainer.addEventListener('click', function() {
+                            showRevenueDetails(card.type);
+                        });
+                    }
+                }
+            });
+        });
 
     </script>
 

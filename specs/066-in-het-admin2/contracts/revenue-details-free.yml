@@ -1,0 +1,117 @@
+openapi: 3.0.3
+info:
+  title: Revenue Dashboard - Free Tier Detail API
+  version: 1.0.0
+  description: |
+    Returns statistics about free users, recent signups, and conversion opportunities.
+    Used by Admin2 Revenue Dashboard when clicking "Free Tier Revenue" card.
+
+paths:
+  /api/admin2/revenue/free-tier:
+    get:
+      summary: Get free tier statistics
+      description: |
+        Fetches aggregated statistics about free users including total count,
+        recent signups, active trials, and conversion opportunities.
+
+      security:
+        - AdminAuth: []
+
+      responses:
+        '200':
+          description: Successfully retrieved free tier statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeTierStats'
+
+              examples:
+                with_data:
+                  value:
+                    free_users: 42
+                    recent_signups_30d: 8
+                    active_trials: 3
+                    conversion_opportunities: 5
+
+                empty:
+                  value:
+                    free_users: 0
+                    recent_signups_30d: 0
+                    active_trials: 0
+                    conversion_opportunities: 0
+
+        '401':
+          description: Not authenticated as admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Unauthorized"
+                message: "Admin authentication required"
+
+        '500':
+          description: Database or server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Database error"
+                message: "Failed to fetch free tier statistics"
+
+components:
+  schemas:
+    FreeTierStats:
+      type: object
+      required:
+        - free_users
+        - recent_signups_30d
+        - active_trials
+        - conversion_opportunities
+      properties:
+        free_users:
+          type: integer
+          description: Total count of users with free plan
+          example: 42
+          minimum: 0
+
+        recent_signups_30d:
+          type: integer
+          description: Free users who signed up in last 30 days
+          example: 8
+          minimum: 0
+
+        active_trials:
+          type: integer
+          description: Users currently in trial period (trial_end_date in future)
+          example: 3
+          minimum: 0
+
+        conversion_opportunities:
+          type: integer
+          description: |
+            Free users with active task usage but no subscription
+            (users who created tasks in last 7 days)
+          example: 5
+          minimum: 0
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+
+  securitySchemes:
+    AdminAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Admin session cookie (requireAdmin middleware)

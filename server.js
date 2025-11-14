@@ -12442,6 +12442,161 @@ app.get('/api/admin2/stats/revenue', requireAdmin, async (req, res) => {
     }
 });
 
+// ===== Admin Dashboard v2 Revenue Detail Endpoints =====
+
+// GET /api/admin2/revenue/active-subscriptions - Get active subscription details
+app.get('/api/admin2/revenue/active-subscriptions', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Get sort parameter (default: revenue)
+        const sortParam = req.query.sort || 'revenue';
+        const validSorts = ['revenue', 'email', 'date'];
+
+        if (!validSorts.includes(sortParam)) {
+            return res.status(400).json({
+                error: 'Invalid sort parameter',
+                message: 'Sort must be one of: revenue, email, date'
+            });
+        }
+
+        // Hardcoded pricing (matches existing revenue endpoint)
+        const pricing = {
+            'monthly_7': 7.00,
+            'monthly_8': 8.00,
+            'yearly_70': 70.00,
+            'yearly_80': 80.00,
+            'free': 0
+        };
+
+        // Query active paid subscriptions
+        const query = await pool.query(`
+            SELECT
+                id as user_id,
+                email,
+                naam,
+                selected_plan,
+                created_at,
+                plugandpay_order_id
+            FROM users
+            WHERE subscription_status = 'active'
+              AND selected_plan IS NOT NULL
+              AND selected_plan != 'free'
+            ORDER BY email ASC
+        `);
+
+        // Calculate monthly_amount and prepare subscriptions array
+        const subscriptions = query.rows.map(row => {
+            const plan = row.selected_plan;
+            let monthlyAmount = 0;
+
+            if (plan && pricing[plan]) {
+                if (plan.startsWith('yearly')) {
+                    // Yearly plans: divide by 12 for monthly equivalent
+                    monthlyAmount = pricing[plan] / 12;
+                } else if (plan.startsWith('monthly')) {
+                    // Monthly plans: use price as-is
+                    monthlyAmount = pricing[plan];
+                }
+            }
+
+            return {
+                user_id: row.user_id,
+                email: row.email,
+                naam: row.naam,
+                selected_plan: row.selected_plan,
+                monthly_amount: parseFloat(monthlyAmount.toFixed(2)),
+                created_at: row.created_at,
+                plugandpay_order_id: row.plugandpay_order_id
+            };
+        });
+
+        // Apply sorting
+        if (sortParam === 'revenue') {
+            subscriptions.sort((a, b) => b.monthly_amount - a.monthly_amount);
+        } else if (sortParam === 'email') {
+            subscriptions.sort((a, b) => a.email.localeCompare(b.email));
+        } else if (sortParam === 'date') {
+            subscriptions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+
+        res.json({
+            subscriptions: subscriptions,
+            total_count: subscriptions.length
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching active subscriptions:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch subscriptions'
+        });
+    }
+});
+
+// GET /api/admin2/revenue/free-tier - Get free tier statistics
+app.get('/api/admin2/revenue/free-tier', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // Query 1: Total free users
+        const freeUsersQuery = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE selected_plan = 'free' OR selected_plan IS NULL
+        `);
+        const freeUsers = parseInt(freeUsersQuery.rows[0].count);
+
+        // Query 2: Recent signups (last 30 days)
+        const recentSignupsQuery = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE (selected_plan = 'free' OR selected_plan IS NULL)
+              AND created_at > NOW() - INTERVAL '30 days'
+        `);
+        const recentSignups = parseInt(recentSignupsQuery.rows[0].count);
+
+        // Query 3: Active trials (trial_end_date in future)
+        const activeTrialsQuery = await pool.query(`
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE trial_end_date IS NOT NULL
+              AND trial_end_date > NOW()
+        `);
+        const activeTrials = parseInt(activeTrialsQuery.rows[0].count);
+
+        // Query 4: Conversion opportunities (free users with recent task activity)
+        const conversionQuery = await pool.query(`
+            SELECT COUNT(DISTINCT user_id) as count
+            FROM taken
+            WHERE user_id IN (
+                SELECT id FROM users
+                WHERE selected_plan = 'free' OR selected_plan IS NULL
+            )
+            AND aangemaakt > NOW() - INTERVAL '7 days'
+        `);
+        const conversionOpportunities = parseInt(conversionQuery.rows[0].count);
+
+        res.json({
+            free_users: freeUsers,
+            recent_signups_30d: recentSignups,
+            active_trials: activeTrials,
+            conversion_opportunities: conversionOpportunities
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching free tier statistics:', error);
+        res.status(500).json({
+            error: 'Database error',
+            message: 'Failed to fetch free tier statistics'
+        });
+    }
+});
+
 // ===== Admin Dashboard v2 User Management Endpoints =====
 
 // GET /api/admin2/users/search - Search for users by email, name, or ID
