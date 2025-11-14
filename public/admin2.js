@@ -2437,6 +2437,12 @@ function emailFeedbackUser() {
 // Render revenue sparkline charts (30 days)
 window.renderRevenueSparklines = async function() {
     try {
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded - sparklines cannot render');
+            return;
+        }
+
         const response = await fetch('/api/admin2/revenue/history?days=30&interval=daily');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -2529,6 +2535,13 @@ window.renderRevenueSparklines = async function() {
 
     } catch (error) {
         console.error('Failed to render sparklines:', error);
+        // Show placeholder in sparkline containers
+        ['sparkline-mrr', 'sparkline-arr', 'sparkline-active'].forEach(id => {
+            const canvas = document.getElementById(id);
+            if (canvas && canvas.parentElement) {
+                canvas.parentElement.innerHTML = '<div style="color: #9ca3af; font-size: 11px; text-align: center; padding-top: 12px;">Chart unavailable</div>';
+            }
+        });
     }
 };
 
