@@ -2815,6 +2815,31 @@ async function renderActiveSubscriptions(data) {
     await window.renderYearChart('active');
 }
 
+// Close revenue modal
+window.closeRevenueModal = function() {
+    document.getElementById('revenue-detail-modal').style.display = 'none';
+    document.getElementById('revenue-modal-body').innerHTML = '';
+};
+
+// Close modal on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('revenue-detail-modal');
+        if (modal && modal.style.display !== 'none') {
+            window.closeRevenueModal();
+        }
+    }
+});
+
+// Close modal on backdrop click
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('revenue-detail-modal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            window.closeRevenueModal();
+        }
+    });
+});
+
 // ============================================================================
 // Initialize Application
 // ============================================================================
