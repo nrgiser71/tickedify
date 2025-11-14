@@ -947,21 +947,27 @@ ACTIES (voor action intent):
 - delete/verwijder: Taak verwijderen
 - stop: Voice mode stoppen
 
+RESPONSE MESSAGE RICHTLIJNEN:
+- Voor set_property: Bevestig de wijziging en herinner aan "Zeg 'opslaan' om wijzigingen door te voeren."
+- Voor set_list: Bevestig de verplaatsing (wordt automatisch opgeslagen)
+- Voor action: Bevestig de actie die uitgevoerd wordt
+- Voor edit_title: Bevestig de nieuwe naam
+
 VOORBEELDEN:
 User: "Datum 15 november" of "Verschijndatum 2025-11-15"
-→ intent: set_property, properties: {date: "2025-11-15"}
+→ intent: set_property, properties: {date: "2025-11-15"}, response_message: "Datum ingesteld op 15 november. Zeg 'opslaan' om de wijziging door te voeren."
 
 User: "Notitie: Eerst bellen voor afspraak"
-→ intent: set_property, properties: {notes: "Eerst bellen voor afspraak"}
+→ intent: set_property, properties: {notes: "Eerst bellen voor afspraak"}, response_message: "Notitie toegevoegd. Zeg 'opslaan' om de wijziging door te voeren."
 
 User: "Dit heeft subtaken" of "Markeer met subtaken"
-→ intent: set_property, properties: {subtaken: true}
+→ intent: set_property, properties: {subtaken: true}, response_message: "Subtaken gemarkeerd. Zeg 'opslaan' om de wijziging door te voeren."
 
 User: "Doorsturen naar opvolgen" of "Naar opvolgen lijst"
-→ intent: set_list, lijst: "opvolgen"
+→ intent: set_list, lijst: "opvolgen", response_message: "Taak verplaatst naar opvolgen lijst."
 
 User: "Uitstellen tot wekelijks" of "Naar wekelijkse lijst"
-→ intent: set_list, lijst: "uitgesteld-wekelijks"
+→ intent: set_list, lijst: "uitgesteld-wekelijks", response_message: "Taak verplaatst naar wekelijkse lijst."
 
 User: "De naam moet zijn: Klant bellen over offerte"
 → intent: edit_title, new_title: "Klant bellen over offerte"

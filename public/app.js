@@ -491,6 +491,8 @@ async function handleSetList(result) {
     if (result.lijst) {
         voiceModeState.pendingProperties.lijst = result.lijst;
         await speak(result.response_message);
+        // Auto-save after list routing - "move to list" is a completing action
+        await saveCurrentAction();
     }
 }
 
