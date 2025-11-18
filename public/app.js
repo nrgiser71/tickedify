@@ -13452,6 +13452,7 @@ class Taakbeheer {
                 }));
                 e.dataTransfer.effectAllowed = 'move';
                 li.style.opacity = '0.5';
+                li.style.pointerEvents = 'none'; // Prevent dragged item from triggering events
 
                 // Show floating drop panel
                 this.showFloatingDropPanel();
@@ -13460,6 +13461,7 @@ class Taakbeheer {
             handle.addEventListener('dragend', (e) => {
                 console.log('[POSTPONED DEBUG] Drag ended for task:', taak.id);
                 li.style.opacity = '1';
+                li.style.pointerEvents = ''; // Reset pointer events
 
                 // Hide floating drop panel
                 this.hideFloatingDropPanel();
@@ -13510,8 +13512,10 @@ class Taakbeheer {
         });
 
         element.addEventListener('dragleave', (e) => {
-            // Remove visual feedback
-            element.classList.remove('drop-target-header', 'drop-target-content');
+            // Only remove feedback if actually leaving dropzone (not hovering over child elements)
+            if (!element.contains(e.relatedTarget)) {
+                element.classList.remove('drop-target-header', 'drop-target-content');
+            }
         });
 
         element.addEventListener('drop', async (e) => {
