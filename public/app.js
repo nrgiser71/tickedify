@@ -13382,8 +13382,11 @@ class Taakbeheer {
             
             li.draggable = true;
             li.innerHTML = `
-                <div class="taak-content">
-                    <span class="taak-tekst" title="${tooltipContent}">${taak.tekst}${recurringIndicator}</span>
+                <div class="taak-content"
+                     onclick="app.bewerkActieWrapper('${taak.id}')"
+                     style="cursor: pointer;"
+                     title="${tooltipContent || 'Click to edit'}">
+                    <span class="taak-tekst">${taak.tekst}${recurringIndicator}</span>
                 </div>
                 <div class="taak-acties">
                     <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">×</button>
