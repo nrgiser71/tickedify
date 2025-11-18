@@ -13374,71 +13374,28 @@ class Taakbeheer {
 
         taken.forEach(taak => {
             const li = document.createElement('li');
-            li.className = 'taak-item uitgesteld-taak-item';
+            li.className = 'uitgesteld-taak-item';
             li.dataset.id = taak.id;
 
-            const projectNaam = this.getProjectNaam(taak.projectId);
-            const contextNaam = this.getContextNaam(taak.contextId);
-            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
-            const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
-
-            // Datum status indicator
-            const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
-            let datumIndicator = '';
-            let extraClass = '';
-
-            if (datumStatus === 'verleden') {
-                datumIndicator = '<i class="ti ti-alert-triangle"></i>';
-                extraClass = ' overdue';
-            } else if (datumStatus === 'vandaag') {
-                datumIndicator = '<i class="ti ti-calendar"></i>';
-                extraClass = ' today';
-            } else if (datumStatus === 'toekomst') {
-                datumIndicator = '🔮';
-                extraClass = ' future';
-            }
-
-            li.className += extraClass;
-
-            // Build extra info line
-            let extraInfo = [];
-            if (projectNaam) extraInfo.push(`<i class="ti ti-folder"></i> ${projectNaam}`);
-            if (contextNaam) extraInfo.push(`🏷️ ${contextNaam}`);
-            if (datum) extraInfo.push(`${datumIndicator} ${datum}`);
-            if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
-            if (taak.bijlagenCount && taak.bijlagenCount > 0) {
-                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} bijlage${taak.bijlagenCount > 1 ? 'n' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
-            }
-
-            const extraInfoHtml = extraInfo.length > 0 ?
-                `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';
-
-            li.draggable = true;
+            // Minimal HTML structure - only text, handle, and delete button
             li.innerHTML = `
                 <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">
                     <div class="drag-dots">⋮⋮</div>
                 </div>
                 <div class="taak-content"
-                     data-taak-id="${taak.id}"
                      onclick="app.bewerkActieWrapper('${taak.id}')"
-                     style="cursor: pointer;"
-                     title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">
-                    <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
-                    ${extraInfoHtml}
+                     style="cursor: pointer;">
+                    <span class="taak-tekst">${taak.tekst}</span>
                 </div>
                 <div class="taak-acties">
                     <button onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" class="delete-btn-small" title="Taak verwijderen">×</button>
                 </div>
             `;
 
-            // Add drag event listeners
-            li.addEventListener('dragstart', (e) => {
-                // FIX: Only allow drag from handle
-                if (!e.target.closest('.drag-handle')) {
-                    e.preventDefault();
-                    return;
-                }
+            // Add drag event listeners to HANDLE only (not to li)
+            const handle = li.querySelector('.drag-handle');
 
+            handle.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     type: 'uitgesteld-taak',
                     taakId: taak.id,
@@ -13452,7 +13409,7 @@ class Taakbeheer {
                 this.showFloatingDropPanel();
             });
 
-            li.addEventListener('dragend', (e) => {
+            handle.addEventListener('dragend', (e) => {
                 li.style.opacity = '1';
 
                 // Hide floating drop panel
