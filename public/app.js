@@ -13383,7 +13383,7 @@ class Taakbeheer {
             li.draggable = true;
             li.innerHTML = `
                 <div class="taak-content"
-                     onclick="app.bewerkActieWrapper('${taak.id}')"
+                     data-taak-id="${taak.id}"
                      style="cursor: pointer;"
                      title="${tooltipContent || 'Click to edit'}">
                     <span class="taak-tekst">${taak.tekst}${recurringIndicator}</span>
@@ -13392,7 +13392,7 @@ class Taakbeheer {
                     <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">×</button>
                 </div>
             `;
-            
+
             // Add drag event listeners
             li.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', JSON.stringify({
@@ -13403,17 +13403,26 @@ class Taakbeheer {
                 }));
                 e.dataTransfer.effectAllowed = 'move';
                 li.style.opacity = '0.5';
-                
+
                 // Show floating drop panel
                 this.showFloatingDropPanel();
             });
-            
+
             li.addEventListener('dragend', (e) => {
                 li.style.opacity = '1';
-                
+
                 // Hide floating drop panel
                 this.hideFloatingDropPanel();
             });
+
+            // Add click handler for opening task details (after drag listeners to prevent conflicts)
+            const taakContent = li.querySelector('.taak-content');
+            if (taakContent) {
+                taakContent.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent drag interference
+                    this.bewerkActieWrapper(taak.id);
+                });
+            }
 
             lijst.appendChild(li);
         });
