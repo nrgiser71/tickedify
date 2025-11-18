@@ -13374,22 +13374,60 @@ class Taakbeheer {
 
         taken.forEach(taak => {
             const li = document.createElement('li');
-            li.className = 'uitgesteld-taak-item';
+            li.className = 'taak-item uitgesteld-taak-item';
             li.dataset.id = taak.id;
-            
+
+            const projectNaam = this.getProjectNaam(taak.projectId);
+            const contextNaam = this.getContextNaam(taak.contextId);
+            const datum = taak.verschijndatum ? new Date(taak.verschijndatum).toLocaleDateString('nl-NL') : '';
             const recurringIndicator = taak.herhalingActief ? ' <span class="recurring-indicator" title="Herhalende taak"><i class="fas fa-redo"></i></span>' : '';
-            const tooltipContent = taak.opmerkingen ? taak.opmerkingen.replace(/'/g, '&apos;') : '';
-            
+
+            // Datum status indicator
+            const datumStatus = this.getTaakDatumStatus(taak.verschijndatum);
+            let datumIndicator = '';
+            let extraClass = '';
+
+            if (datumStatus === 'verleden') {
+                datumIndicator = '<i class="ti ti-alert-triangle"></i>';
+                extraClass = ' overdue';
+            } else if (datumStatus === 'vandaag') {
+                datumIndicator = '<i class="ti ti-calendar"></i>';
+                extraClass = ' today';
+            } else if (datumStatus === 'toekomst') {
+                datumIndicator = '🔮';
+                extraClass = ' future';
+            }
+
+            li.className += extraClass;
+
+            // Build extra info line
+            let extraInfo = [];
+            if (projectNaam) extraInfo.push(`<i class="ti ti-folder"></i> ${projectNaam}`);
+            if (contextNaam) extraInfo.push(`🏷️ ${contextNaam}`);
+            if (datum) extraInfo.push(`${datumIndicator} ${datum}`);
+            if (taak.duur) extraInfo.push(`⏱️ ${taak.duur} min`);
+            if (taak.bijlagenCount && taak.bijlagenCount > 0) {
+                extraInfo.push(`<span class="bijlagen-indicator" title="${taak.bijlagenCount} bijlage${taak.bijlagenCount > 1 ? 'n' : ''}"><i class="fas fa-paperclip"></i> ${taak.bijlagenCount}</span>`);
+            }
+
+            const extraInfoHtml = extraInfo.length > 0 ?
+                `<div class="taak-extra-info">${extraInfo.join(' • ')}</div>` : '';
+
             li.draggable = true;
             li.innerHTML = `
+                <div class="drag-handle" draggable="true" title="Sleep om te verplaatsen">
+                    <div class="drag-dots">⋮⋮</div>
+                </div>
                 <div class="taak-content"
                      data-taak-id="${taak.id}"
+                     onclick="app.bewerkActieWrapper('${taak.id}')"
                      style="cursor: pointer;"
-                     title="${tooltipContent || 'Click to edit'}">
-                    <span class="taak-tekst">${taak.tekst}${recurringIndicator}</span>
+                     title="${taak.opmerkingen ? this.escapeHtml(taak.opmerkingen) : 'Click to edit'}">
+                    <div class="taak-titel">${this.getPrioriteitIndicator(taak.prioriteit)}${taak.tekst}${recurringIndicator}</div>
+                    ${extraInfoHtml}
                 </div>
                 <div class="taak-acties">
-                    <button class="delete-btn-small" onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" title="Taak verwijderen">×</button>
+                    <button onclick="app.verwijderTaak('${taak.id}', '${categoryKey}')" class="delete-btn-small" title="Taak verwijderen">×</button>
                 </div>
             `;
 
@@ -13414,15 +13452,6 @@ class Taakbeheer {
                 // Hide floating drop panel
                 this.hideFloatingDropPanel();
             });
-
-            // Add click handler for opening task details (after drag listeners to prevent conflicts)
-            const taakContent = li.querySelector('.taak-content');
-            if (taakContent) {
-                taakContent.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent drag interference
-                    this.bewerkActieWrapper(taak.id);
-                });
-            }
 
             lijst.appendChild(li);
         });
