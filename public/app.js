@@ -4003,10 +4003,14 @@ class Taakbeheer {
 
     // Wrapper functie voor onclick handlers - zorg dat async werkt
     bewerkActieWrapper(id) {
+        console.log('[POSTPONED DEBUG] bewerkActieWrapper called with ID:', id, 'type:', typeof id);
         // Use setTimeout to avoid blocking UI and allow async to work
         setTimeout(async () => {
+            console.log('[POSTPONED DEBUG] setTimeout callback executing, calling bewerkActie with ID:', id);
             await this.bewerkActie(id);
+            console.log('[POSTPONED DEBUG] bewerkActie completed for ID:', id);
         }, 0);
+        console.log('[POSTPONED DEBUG] bewerkActieWrapper completed (async scheduled)');
     }
 
     // Wrapper functie voor planTaak async calls
@@ -8123,8 +8127,11 @@ class Taakbeheer {
     }
 
     async bewerkActie(id) {
+        console.log('[POSTPONED DEBUG] bewerkActie called with ID:', id, 'type:', typeof id);
         const actie = this.taken.find(t => t.id === id);
+        console.log('[POSTPONED DEBUG] Found actie:', actie ? 'YES' : 'NO', actie ? `(id: ${actie.id})` : '');
         if (actie) {
+            console.log('[POSTPONED DEBUG] Setting huidigeTaakId to:', id);
             this.huidigeTaakId = id;
             this.touchedFields.clear();
             
@@ -8200,10 +8207,16 @@ class Taakbeheer {
             // Set button text - if in inbox, this is making a new action, otherwise editing existing
             const isInboxAction = this.huidigeLijst === 'inbox';
             this.setActionButtonText(isInboxAction);
-            
+
             this.updateButtonState();
-            document.getElementById('planningPopup').style.display = 'flex';
+            console.log('[POSTPONED DEBUG] Opening modal - setting planningPopup display to flex');
+            const modal = document.getElementById('planningPopup');
+            console.log('[POSTPONED DEBUG] Modal element:', modal);
+            modal.style.display = 'flex';
+            console.log('[POSTPONED DEBUG] Modal display after set:', modal.style.display);
+            console.log('[POSTPONED DEBUG] Modal computed display:', window.getComputedStyle(modal).display);
             document.getElementById('taakNaamInput').focus();
+            console.log('[POSTPONED DEBUG] Modal opened and focus set');
             
             // Load subtaken for tasks - always try to load subtaken regardless of lijst
             // This handles unarchived tasks that were restored to inbox but have subtaken
@@ -13367,12 +13380,19 @@ class Taakbeheer {
     }
 
     renderUitgesteldSectieRows(categoryKey, taken) {
+        console.log('[POSTPONED DEBUG] renderUitgesteldSectieRows called for category:', categoryKey, 'with', taken.length, 'tasks');
+
         const lijst = document.getElementById(`lijst-${categoryKey}`);
-        if (!lijst) return;
+        if (!lijst) {
+            console.log('[POSTPONED DEBUG] WARNING: lijst element not found for:', categoryKey);
+            return;
+        }
 
         lijst.innerHTML = '';
 
         taken.forEach(taak => {
+            console.log('[POSTPONED DEBUG] Creating li for task:', taak.id, '-', taak.tekst.substring(0, 30));
+
             const li = document.createElement('li');
             li.className = 'uitgesteld-taak-item';
             li.dataset.id = taak.id;
@@ -13383,7 +13403,7 @@ class Taakbeheer {
                     <div class="drag-dots">⋮⋮</div>
                 </div>
                 <div class="taak-content"
-                     onclick="app.bewerkActieWrapper('${taak.id}')"
+                     onclick="console.log('[POSTPONED DEBUG] Inline onclick fired for task:', '${taak.id}'); app.bewerkActieWrapper('${taak.id}')"
                      style="cursor: pointer;">
                     <span class="taak-tekst">${taak.tekst}</span>
                 </div>
@@ -13392,10 +13412,19 @@ class Taakbeheer {
                 </div>
             `;
 
+            console.log('[POSTPONED DEBUG] HTML set for task:', taak.id);
+            const taakContent = li.querySelector('.taak-content');
+            console.log('[POSTPONED DEBUG] taak-content onclick attribute:', taakContent.getAttribute('onclick'));
+            console.log('[POSTPONED DEBUG] taak-content element:', taakContent);
+
             // Add drag event listeners to HANDLE only (not to li)
             const handle = li.querySelector('.drag-handle');
+            console.log('[POSTPONED DEBUG] Drag handle element:', handle);
+            console.log('[POSTPONED DEBUG] Li element draggable attribute:', li.draggable);
+            console.log('[POSTPONED DEBUG] Handle element draggable attribute:', handle.draggable);
 
             handle.addEventListener('dragstart', (e) => {
+                console.log('[POSTPONED DEBUG] Drag started for task:', taak.id);
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     type: 'uitgesteld-taak',
                     taakId: taak.id,
@@ -13410,6 +13439,7 @@ class Taakbeheer {
             });
 
             handle.addEventListener('dragend', (e) => {
+                console.log('[POSTPONED DEBUG] Drag ended for task:', taak.id);
                 li.style.opacity = '1';
 
                 // Hide floating drop panel
@@ -13417,7 +13447,10 @@ class Taakbeheer {
             });
 
             lijst.appendChild(li);
+            console.log('[POSTPONED DEBUG] Task appended to lijst:', taak.id);
         });
+
+        console.log('[POSTPONED DEBUG] renderUitgesteldSectieRows complete for:', categoryKey);
     }
 
     setupUitgesteldDropZones() {
