@@ -8128,8 +8128,27 @@ class Taakbeheer {
 
     async bewerkActie(id) {
         console.log('[POSTPONED DEBUG] bewerkActie called with ID:', id, 'type:', typeof id);
-        const actie = this.taken.find(t => t.id === id);
-        console.log('[POSTPONED DEBUG] Found actie:', actie ? 'YES' : 'NO', actie ? `(id: ${actie.id})` : '');
+
+        // Try to find in this.taken first
+        let actie = this.taken.find(t => t.id === id);
+        console.log('[POSTPONED DEBUG] Found in this.taken:', actie ? 'YES' : 'NO', actie ? `(id: ${actie.id})` : '');
+
+        // If not found (e.g. postponed tasks not in this.taken), load from API
+        if (!actie) {
+            console.log('[POSTPONED DEBUG] Not in this.taken, loading from API...');
+            try {
+                const response = await fetch(`/api/taak/${id}`);
+                if (response.ok) {
+                    actie = await response.json();
+                    console.log('[POSTPONED DEBUG] Loaded from API:', actie ? 'YES' : 'NO', actie ? `(id: ${actie.id})` : '');
+                } else {
+                    console.log('[POSTPONED DEBUG] API returned error:', response.status);
+                }
+            } catch (error) {
+                console.error('[POSTPONED DEBUG] Failed to load from API:', error);
+            }
+        }
+
         if (actie) {
             console.log('[POSTPONED DEBUG] Setting huidigeTaakId to:', id);
             this.huidigeTaakId = id;
