@@ -13433,6 +13433,12 @@ class Taakbeheer {
 
             // Add drag event listeners
             li.addEventListener('dragstart', (e) => {
+                // FIX: Only allow drag from handle
+                if (!e.target.closest('.drag-handle')) {
+                    e.preventDefault();
+                    return;
+                }
+
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     type: 'uitgesteld-taak',
                     taakId: taak.id,
@@ -13791,9 +13797,15 @@ class Taakbeheer {
             li.draggable = true;
             
             li.addEventListener('dragstart', (e) => {
+                // FIX: Only allow drag from handle
+                if (!e.target.closest('.drag-handle')) {
+                    e.preventDefault();
+                    return;
+                }
+
                 const taakId = li.dataset.id;
                 const taakTekst = li.querySelector('.taak-titel').textContent;
-                
+
                 // Stel drag data in (exact zoals uitgesteld)
                 const dragData = {
                     type: 'actie-taak',
