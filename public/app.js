@@ -13452,7 +13452,6 @@ class Taakbeheer {
                 }));
                 e.dataTransfer.effectAllowed = 'move';
                 li.style.opacity = '0.5';
-                li.style.pointerEvents = 'none'; // Prevent dragged item from triggering events
 
                 // Show floating drop panel
                 this.showFloatingDropPanel();
@@ -13461,7 +13460,6 @@ class Taakbeheer {
             handle.addEventListener('dragend', (e) => {
                 console.log('[POSTPONED DEBUG] Drag ended for task:', taak.id);
                 li.style.opacity = '1';
-                li.style.pointerEvents = ''; // Reset pointer events
 
                 // Hide floating drop panel
                 this.hideFloatingDropPanel();
