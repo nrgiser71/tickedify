@@ -6845,14 +6845,15 @@ class Taakbeheer {
                 }
             } else if (this.isPostponedLijst(this.huidigeLijst)) {
                 // PATH 2: Bewerk postponed taak (niet in this.taken array)
+                // Convert empty strings to null for database compatibility
                 const updateData = {
                     tekst: taakNaam,
-                    projectId: projectId,
-                    verschijndatum: verschijndatum,
-                    contextId: contextId,
+                    projectId: projectId || null,
+                    verschijndatum: verschijndatum || null,
+                    contextId: contextId || null,
                     duur: duur,
                     opmerkingen: opmerkingen,
-                    herhalingType: herhalingType,
+                    herhalingType: herhalingType || null,
                     herhalingActief: !!herhalingType,
                     prioriteit: prioriteit
                 };
