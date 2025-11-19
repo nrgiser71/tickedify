@@ -6843,8 +6843,45 @@ class Taakbeheer {
                         toast.error('Error editing action');
                     }
                 }
+            } else if (this.isPostponedLijst(this.huidigeLijst)) {
+                // PATH 2: Bewerk postponed taak (niet in this.taken array)
+                const updateData = {
+                    tekst: taakNaam,
+                    projectId: projectId,
+                    verschijndatum: verschijndatum,
+                    contextId: contextId,
+                    duur: duur,
+                    opmerkingen: opmerkingen,
+                    herhalingType: herhalingType,
+                    herhalingActief: !!herhalingType,
+                    prioriteit: prioriteit
+                };
+
+                const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    // Save subtaken if any
+                    if (typeof subtakenManager !== 'undefined' && subtakenManager) {
+                        await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                    }
+
+                    // Refresh lijst
+                    await this.laadHuidigeLijst();
+
+                    // Close modal
+                    this.sluitPopup();
+
+                    // Success feedback
+                    toast.success('Postponed task updated');
+                } else {
+                    toast.error('Error updating postponed task');
+                }
             } else {
-                // Maak nieuwe actie van inbox taak
+                // PATH 3: Maak nieuwe actie van inbox taak
                 const taak = this.taken.find(t => t.id === this.huidigeTaakId);
                 if (!taak) return;
 
