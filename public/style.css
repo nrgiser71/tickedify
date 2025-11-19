@@ -171,8 +171,8 @@ body {
 /* Search Block - bovenaan sidebar */
 .sidebar-search-block {
     padding: 12px 20px;
-    background: linear-gradient(135deg, #E5F4FF 0%, #D6EBFF 100%);
-    /* Subtiel branded blauw gradient - geen border */
+    background: var(--macos-blue);
+    /* Donker blauw van buttons voor meer contrast */
 }
 
 .sidebar-search-input {
@@ -188,8 +188,8 @@ body {
 }
 
 .sidebar-search-input::placeholder {
-    color: var(--macos-gray-1);
-    opacity: 0.6;
+    color: var(--macos-gray-2);
+    opacity: 0.9;
 }
 
 .sidebar-search-input:focus {
