@@ -6884,11 +6884,11 @@ class Taakbeheer {
                         await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
                     }
 
-                    // Refresh lijst
-                    await this.laadHuidigeLijst();
-
-                    // Close modal
+                    // Close modal first
                     this.sluitPopup();
+
+                    // Refresh to consolidated Postponed view (accordion)
+                    await this.navigeerNaarLijst('uitgesteld');
 
                     // Success feedback
                     toast.success('Postponed task updated');
