@@ -6678,6 +6678,23 @@ class Taakbeheer {
             }
         });
 
+        // RESET REQUIRED FIELDS: Restore default state for next modal open
+        const requiredFields = [
+            { fieldId: 'verschijndatum', labelSelector: 'label[for="verschijndatum"] .required, .form-groep:has(#verschijndatum) label .required' },
+            { fieldId: 'contextSelect', labelSelector: '.form-groep:has(#contextSelect) label .required' },
+            { fieldId: 'duur', labelSelector: 'label[for="duur"] .required, .form-groep:has(#duur) label .required' }
+        ];
+
+        requiredFields.forEach(({ fieldId, labelSelector }) => {
+            const field = document.getElementById(fieldId);
+            const requiredSpans = document.querySelectorAll(labelSelector);
+
+            // Restore required attribute
+            if (field) field.setAttribute('required', 'required');
+            // Show red asterisks
+            requiredSpans.forEach(span => span.style.display = '');
+        });
+
         // Reset bijlagen lijst
         const bijlagenLijst = document.getElementById('bijlagen-lijst');
         if (bijlagenLijst) {
@@ -7251,6 +7268,17 @@ class Taakbeheer {
     updateFieldStyle(fieldId, isValid) {
         const field = document.getElementById(fieldId);
         if (field) {
+            // CONDITIONAL VALIDATION: Skip red indicators for optional fields in postponed tasks
+            const isPostponed = this.isEditingPostponedTask();
+            const postponedOptionalFields = ['verschijndatum', 'contextSelect', 'duur'];
+
+            if (isPostponed && postponedOptionalFields.includes(fieldId)) {
+                // For postponed tasks: these fields are optional, never show as invalid
+                field.classList.remove('invalid');
+                return;
+            }
+
+            // Normal validation for all other cases
             if (isValid) {
                 field.classList.remove('invalid');
             } else {
@@ -8420,7 +8448,7 @@ class Taakbeheer {
             }
 
             this.touchedFields.clear();
-            
+
             // Remove alle invalid classes en touched state
             ['taakNaamInput', 'projectSelect', 'verschijndatum', 'contextSelect', 'duur', 'opmerkingen'].forEach(fieldId => {
                 const field = document.getElementById(fieldId);
@@ -8429,7 +8457,32 @@ class Taakbeheer {
                     field.removeAttribute('data-touched');
                 }
             });
-            
+
+            // CONDITIONAL REQUIRED FIELDS: Configure based on task type
+            const isPostponed = this.isPostponedLijst(actie.lijst);
+            const optionalFieldsForPostponed = [
+                { fieldId: 'verschijndatum', labelSelector: 'label[for="verschijndatum"] .required, .form-groep:has(#verschijndatum) label .required' },
+                { fieldId: 'contextSelect', labelSelector: '.form-groep:has(#contextSelect) label .required' },
+                { fieldId: 'duur', labelSelector: 'label[for="duur"] .required, .form-groep:has(#duur) label .required' }
+            ];
+
+            optionalFieldsForPostponed.forEach(({ fieldId, labelSelector }) => {
+                const field = document.getElementById(fieldId);
+                const requiredSpans = document.querySelectorAll(labelSelector);
+
+                if (isPostponed) {
+                    // For postponed: remove required attribute and hide red asterisks
+                    if (field) field.removeAttribute('required');
+                    requiredSpans.forEach(span => span.style.display = 'none');
+                } else {
+                    // For active tasks: ensure required attribute and show red asterisks
+                    if (field) field.setAttribute('required', 'required');
+                    requiredSpans.forEach(span => span.style.display = '');
+                }
+            });
+
+            console.log('[REQUIRED FIELDS] Configured for', isPostponed ? 'POSTPONED' : 'ACTIVE', 'task');
+
             // Zorg ervoor dat projecten en contexten geladen zijn
             await this.laadProjecten();
             await this.laadContexten();
