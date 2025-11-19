@@ -16092,7 +16092,7 @@ class AuthManager {
         // Get app content elements
         const sidebarContent = document.querySelector('.sidebar-content');
         const mainContent = document.querySelector('.main-content');
-        const sidebarSearch = document.querySelector('.sidebar-search');
+        const sidebarSearch = document.querySelector('.sidebar-search-block');
         const welcomeMessage = document.getElementById('welcome-message');
 
         if (this.isAuthenticated && this.currentUser) {
