@@ -2149,6 +2149,30 @@ button:focus {
     box-shadow: none;
 }
 
+/* Create Action button - primary blue style */
+.create-action-btn {
+    background: var(--macos-blue) !important;
+    font-weight: 500;
+}
+
+.create-action-btn:hover:not(:disabled) {
+    background: var(--macos-blue-hover) !important;
+}
+
+.create-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Ensure buttons in popup-acties are properly spaced */
+#planningPopup .popup-acties button {
+    margin-left: 8px;
+}
+
+#planningPopup .popup-acties button:first-child {
+    margin-left: 0;
+}
+
 .verplaats-knoppen {
     display: flex;
     flex-direction: column;

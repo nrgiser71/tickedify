@@ -2883,6 +2883,10 @@ class Taakbeheer {
             this.maakActie();
         });
 
+        document.getElementById('createActionBtn').addEventListener('click', () => {
+            this.createActionFromPostponed();
+        });
+
         // Form validation
         const verplichteVelden = ['taakNaamInput', 'verschijndatum', 'contextSelect', 'duur'];
         verplichteVelden.forEach(fieldId => {
@@ -4925,6 +4929,32 @@ class Taakbeheer {
         return lijst && lijst.startsWith('uitgesteld-');
     }
 
+    // Check if lijst is a postponed lijst (including 'opvolgen')
+    isPostponedLijst(lijst) {
+        const POSTPONED_LIJSTEN = [
+            'opvolgen',
+            'uitgesteld-wekelijks',
+            'uitgesteld-maandelijks',
+            'uitgesteld-3maandelijks',
+            'uitgesteld-6maandelijks',
+            'uitgesteld-jaarlijks'
+        ];
+        return POSTPONED_LIJSTEN.includes(lijst);
+    }
+
+    // Get lijst van huidige taak in edit mode
+    getCurrentTaakLijst() {
+        if (!this.huidigeTaakId) return null;
+        const taak = this.taken.find(t => t.id === this.huidigeTaakId);
+        return taak ? taak.lijst : null;
+    }
+
+    // Check if currently editing a postponed task
+    isEditingPostponedTask() {
+        const lijst = this.getCurrentTaakLijst();
+        return this.isPostponedLijst(lijst);
+    }
+
     renderUitgesteldLijst(container) {
         if (!container) {
             console.error('renderUitgesteldLijst: container is null');
@@ -6717,9 +6747,23 @@ class Taakbeheer {
         console.log('maakActie - herhalingActief:', !!herhalingType);
         console.log('maakActie - prioriteit:', prioriteit, 'isInboxTaak:', isInboxTaak);
 
-        if (!taakNaam || !verschijndatum || !contextId || !duur) {
-            toast.warning('All fields except project are required!');
+        // CONDITIONAL VALIDATIE: Postponed taken hebben alleen naam verplicht
+        const isPostponed = this.isEditingPostponedTask();
+
+        // Basis validatie (altijd verplicht)
+        if (!taakNaam) {
+            toast.warning('Task name is required!');
             return;
+        }
+
+        // Conditional validatie voor niet-postponed taken
+        if (!isPostponed) {
+            if (!verschijndatum || !contextId || !duur) {
+                toast.warning('All fields except project are required!');
+                return;
+            }
+        } else {
+            console.log('Postponed task: skipping required field validation');
         }
 
         // BUGFIX #038: If checkbox is checked, archive task instead of saving
@@ -6887,8 +6931,121 @@ class Taakbeheer {
         }
     }
 
+    async createActionFromPostponed() {
+        if (!this.huidigeTaakId) return;
+
+        // Verify this is a postponed task
+        const isPostponed = this.isEditingPostponedTask();
+        if (!isPostponed) {
+            console.error('createActionFromPostponed called for non-postponed task');
+            return;
+        }
+
+        // Get current taak object
+        const taak = this.taken.find(t => t.id === this.huidigeTaakId);
+        if (!taak) {
+            toast.error('Task not found');
+            return;
+        }
+
+        // Collect form data
+        const taakNaam = document.getElementById('taakNaamInput').value.trim();
+        const projectId = document.getElementById('projectSelect').value;
+        const verschijndatum = document.getElementById('verschijndatum').value;
+        const contextId = document.getElementById('contextSelect').value;
+        const duur = parseInt(document.getElementById('duur').value) || 0;
+        const opmerkingen = document.getElementById('opmerkingen').value.trim();
+        const prioriteit = document.getElementById('prioriteitSelect').value || 'gemiddeld';
+        const herhalingType = document.getElementById('herhalingSelect').value;
+
+        // Validate required fields
+        if (!taakNaam || !verschijndatum || !contextId || !duur) {
+            toast.warning('All required fields must be filled');
+            return;
+        }
+
+        const createActionBtn = document.getElementById('createActionBtn');
+
+        return await loading.withLoading(async () => {
+            // Step 1: Save current changes to postponed task
+            const updateData = {
+                tekst: taakNaam,
+                projectId: projectId,
+                verschijndatum: verschijndatum,
+                contextId: contextId,
+                duur: duur,
+                opmerkingen: opmerkingen,
+                prioriteit: prioriteit,
+                herhalingType: herhalingType,
+                herhalingActief: !!herhalingType
+            };
+
+            const saveResponse = await fetch(`/api/taak/${this.huidigeTaakId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!saveResponse.ok) {
+                toast.error('Error saving task changes');
+                return;
+            }
+
+            // Save subtaken if any
+            if (typeof subtakenManager !== 'undefined' && subtakenManager) {
+                await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+            }
+
+            // Step 2: Move task to acties lijst
+            const moveSuccess = await this.verplaatsTaakNaarLijst(taak, 'acties');
+
+            if (moveSuccess) {
+                toast.success('Task moved to actions');
+
+                // Remove from current postponed lijst
+                this.taken = this.taken.filter(t => t.id !== this.huidigeTaakId);
+
+                // Close popup
+                this.sluitPopup();
+
+                // Refresh current lijst to reflect removal
+                await this.laadHuidigeLijst();
+
+                // Update counters
+                this.updateSidebarCounters();
+            } else {
+                toast.error('Error moving task to actions');
+            }
+        }, {
+            operationId: 'create-action-from-postponed',
+            button: createActionBtn,
+            message: 'Moving task to actions...'
+        });
+    }
+
     async verplaatsTaakNaarLijst(taak, lijstNaam) {
         try {
+            // PRE-MOVE VALIDATIE: Check of incomplete postponed taak naar actieve lijst verplaatst wordt
+            const isMovingToActive = (lijstNaam === 'acties' || lijstNaam === 'inbox');
+            const isCurrentlyPostponed = this.isPostponedLijst(taak.lijst);
+
+            if (isMovingToActive && isCurrentlyPostponed) {
+                // Valideer dat alle verplichte velden compleet zijn
+                const missingFields = [];
+                if (!taak.verschijndatum) missingFields.push('date');
+                if (!taak.contextId) missingFields.push('context');
+                if (!taak.duur) missingFields.push('duration');
+
+                if (missingFields.length > 0) {
+                    toast.error(`Cannot move to active list: Missing required fields: ${missingFields.join(', ')}`);
+
+                    // Open edit modal zodat gebruiker velden kan invullen
+                    await this.bewerkActie(taak.id);
+                    toast.info('Please complete all required fields first');
+                    return false;
+                }
+            }
+
             // Prepare update data
             const updateData = {
                 lijst: lijstNaam,
@@ -6972,13 +7129,23 @@ class Taakbeheer {
         const contextId = document.getElementById('contextSelect').value;
         const duur = parseInt(document.getElementById('duur').value) || 0;
 
-        const alleVeldenIngevuld = taakNaam && verschijndatum && contextId && duur;
-        
+        // CONDITIONAL VALIDATIE: Postponed taken hebben alleen naam verplicht
+        const isPostponed = this.isEditingPostponedTask();
+
+        let alleVeldenIngevuld;
+        if (isPostponed) {
+            // Postponed: alleen naam verplicht
+            alleVeldenIngevuld = !!taakNaam;
+        } else {
+            // Actieve taken: alle velden verplicht
+            alleVeldenIngevuld = taakNaam && verschijndatum && contextId && duur;
+        }
+
         const button = document.getElementById('maakActieBtn');
         if (button) {
             button.disabled = !alleVeldenIngevuld;
         }
-        
+
         // Update field styles alleen voor velden die al geïnteracteerd zijn
         const fieldValues = {
             'taakNaamInput': taakNaam,
@@ -6986,12 +7153,33 @@ class Taakbeheer {
             'contextSelect': contextId,
             'duur': duur
         };
-        
+
         Object.keys(fieldValues).forEach(fieldId => {
             if (this.touchedFields.has(fieldId)) {
                 this.updateFieldStyle(fieldId, fieldValues[fieldId]);
             }
         });
+
+        // Update Create Action button visibility (if exists)
+        this.updateCreateActionButtonVisibility();
+    }
+
+    updateCreateActionButtonVisibility() {
+        // Check if editing a postponed task
+        const isPostponed = this.isEditingPostponedTask();
+
+        // Check if all required fields are complete
+        const taakNaam = document.getElementById('taakNaamInput')?.value.trim();
+        const verschijndatum = document.getElementById('verschijndatum')?.value;
+        const contextId = document.getElementById('contextSelect')?.value;
+        const duur = parseInt(document.getElementById('duur')?.value) || 0;
+        const allFieldsComplete = taakNaam && verschijndatum && contextId && duur;
+
+        // Show button only if postponed AND all fields complete
+        const createActionBtn = document.getElementById('createActionBtn');
+        if (createActionBtn) {
+            createActionBtn.style.display = (isPostponed && allFieldsComplete) ? 'inline-block' : 'none';
+        }
     }
 
     updateFieldStyle(fieldId, isValid) {
