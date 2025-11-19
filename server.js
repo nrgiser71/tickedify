@@ -2133,7 +2133,7 @@ function parseKeyValue(segment) {
     }
 
     if (key === 'd') {
-        // Due date: must match ISO format YYYY-MM-DD
+        // Appear date: must match ISO format YYYY-MM-DD
         if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
         return { key, value };
     }
@@ -2234,7 +2234,7 @@ function findMatchingAttachment(files, searchTerm) {
  * @t Instruction Codes:
  * - p: Project name (auto-creates if not exists)
  * - c: Context name (auto-creates if not exists)
- * - d: Due date (ISO format YYYY-MM-DD)
+ * - d: Appear date (ISO format YYYY-MM-DD)
  * - t: Duration in minutes (positive integer)
  * - p0-p9: Priority (p0/p1→hoog, p2→gemiddeld, p3+→laag)
  * - df/dw/dm/d3m/d6m/dy: Defer codes (ABSOLUTE PRIORITY - ignores all other codes)
@@ -2831,7 +2831,7 @@ This is your active work list - tasks that have a clear next action and don't de
 - **Review daily** - Start each day by reviewing your Acties
 - **Prioritize** - Use priority levels (High/Medium/Low) to focus on what matters
 - **Add context** - Tag tasks with contexts (@email, @phone, @computer) for batch processing
-- **Set deadlines** - Add due dates to time-sensitive tasks
+- **Set appear dates** - Add dates to schedule when tasks should appear on your daily planning
 
 ## Filters & Organization
 - Filter by **Project** to focus on specific initiatives
@@ -3059,7 +3059,7 @@ Email signature (ignored)
 ### Supported Codes
 - **p:** Project name (auto-creates if needed)
 - **c:** Context name (auto-creates if needed)
-- **d:** Due date (YYYY-MM-DD format)
+- **d:** Appear date (YYYY-MM-DD format)
 - **t:** Duration in minutes
 - **p0-p9:** Priority (p0/p1=high, p2=medium, p3+=low)
 - **df/dw/dm/d3m/d6m/dy:** Defer to follow-up/weekly/monthly/quarterly/bi-annual/yearly
