@@ -2838,6 +2838,43 @@ class Taakbeheer {
             }
         });
 
+        // Sidebar search input handlers
+        const sidebarSearchInput = document.getElementById('sidebar-search-input');
+        if (sidebarSearchInput) {
+            // Open search interface on focus
+            sidebarSearchInput.addEventListener('focus', () => {
+                this.openTool('zoeken');
+                // Pre-fill search term if user typed something
+                const searchTerm = sidebarSearchInput.value.trim();
+                if (searchTerm) {
+                    setTimeout(() => {
+                        const mainSearchInput = document.getElementById('zoek-input');
+                        if (mainSearchInput) {
+                            mainSearchInput.value = searchTerm;
+                            mainSearchInput.focus();
+                        }
+                    }, 100);
+                }
+            });
+
+            // Handle Enter key - pre-fill and trigger search
+            sidebarSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const searchTerm = sidebarSearchInput.value.trim();
+                    this.openTool('zoeken');
+
+                    // Pre-fill and trigger search after interface loads
+                    setTimeout(() => {
+                        const mainSearchInput = document.getElementById('zoek-input');
+                        if (mainSearchInput && searchTerm) {
+                            mainSearchInput.value = searchTerm;
+                            this.performSearch();
+                        }
+                    }, 150);
+                }
+            });
+        }
+
         // Taak toevoegen (alleen voor inbox) - Use dedicated function
         this.bindInboxEvents();
 

@@ -168,6 +168,36 @@ body {
     color: white;
 }
 
+/* Search Block - bovenaan sidebar */
+.sidebar-search-block {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #E5F4FF 0%, #D6EBFF 100%);
+    /* Subtiel branded blauw gradient - geen border */
+}
+
+.sidebar-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--macos-text-primary);
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.sidebar-search-input::placeholder {
+    color: var(--macos-gray-1);
+    opacity: 0.6;
+}
+
+.sidebar-search-input:focus {
+    outline: none;
+    border-color: var(--macos-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
 
 .sidebar-content {
     flex: 1;
