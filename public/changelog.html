@@ -161,15 +161,15 @@ margin-bottom: 12px;
 <div class="category-title">✨ Features</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Postponed tasks editing - Full edit support with conditional validation (only task name required for postponed tasks)</span>
+<span class="change-text">Postponed tasks can now be fully edited with flexible validation - Only task name is required, all other fields are optional</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Postponed tasks UI - Smart accordion state restoration and conditional required field indicators</span>
+<span class="change-text">Improved postponed tasks interface - Automatically returns to the section you were working in after saving changes</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Postponed tasks workflow - Added 'Create Action' button to move completed postponed tasks to actions list</span>
+<span class="change-text">Added quick action button - Complete postponed tasks and move them to your action list in one click</span>
 </div>
 </div>
 
@@ -177,11 +177,11 @@ margin-bottom: 12px;
 <div class="category-title">🔧 Fixes</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Fixed postponed task save handling to correctly process optional fields</span>
+<span class="change-text">Fixed saving of postponed tasks with optional fields</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Fixed accordion navigation after editing postponed tasks</span>
+<span class="change-text">Fixed navigation after editing postponed tasks</span>
 </div>
 </div>
 
@@ -200,7 +200,7 @@ margin-bottom: 12px;
 <div class="category-title">✨ Features</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Made tasks in postponed screen clickable to open task details for editing - Tasks can now be clicked to view and modify all properties</span>
+<span class="change-text">Postponed tasks can now be clicked to view and edit all task details</span>
 </div>
 </div>
 
@@ -208,15 +208,15 @@ margin-bottom: 12px;
 <div class="category-title">🎯 Improvements</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Postponed tasks now use drag handle pattern (⋮⋮ icon) - Click and drag functions are completely separated for reliable interaction</span>
+<span class="change-text">Improved drag and drop reliability with dedicated drag handles</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Postponed tasks now display rich info - Shows project, context, due date, duration, and attachment count in each task row</span>
+<span class="change-text">Postponed tasks now show more information - Project, context, due date, duration, and attachments</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Postponed tasks show date status indicators - Visual indicators for overdue (⚠️), today (📅), and future (🔮) tasks</span>
+<span class="change-text">Added visual indicators for task urgency - See at a glance which tasks are overdue, due today, or upcoming</span>
 </div>
 </div>
 
@@ -224,19 +224,19 @@ margin-bottom: 12px;
 <div class="category-title">🔧 Fixes</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Fixed drag & drop completely broken in postponed screen - Removed pointer-events manipulation that blocked browser's drag detection</span>
+<span class="change-text">Fixed drag and drop functionality in postponed tasks screen</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Fixed flickering during drag operation in postponed screen - Applied proper pointer-events handling with relatedTarget checks</span>
+<span class="change-text">Fixed visual feedback during drag operations</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Fixed scroll indicators appearing over modal - Increased modal z-index from 1000 to 2000</span>
+<span class="change-text">Fixed task modal appearing behind other interface elements</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Fixed postponed tasks modal not opening - bewerkActie now loads task from API when not found in array</span>
+<span class="change-text">Fixed issue where postponed task details couldn't be opened</span>
 </div>
 </div>
 
@@ -255,15 +255,15 @@ margin-bottom: 12px;
 <div class="category-title">✨ Features</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Admin2 Revenue Dashboard - Interactive detail views for all revenue cards with click-through to user details</span>
+<span class="change-text">Admin Revenue Dashboard - Detailed subscription views with user information and sorting options</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Admin2 Revenue Dashboard - Sortable subscription lists by revenue, email, or date with free tier statistics</span>
+<span class="change-text">Admin Revenue Dashboard - Free tier conversion tracking and trial monitoring</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Natural language date parsing (vandaag, morgen, donderdag, binnen 5 dagen)</span>
+<span class="change-text">Voice Mode - Natural language date input (today, tomorrow, Thursday, in 5 days)</span>
 </div>
 </div>
 
@@ -271,11 +271,11 @@ margin-bottom: 12px;
 <div class="category-title">🔧 Fixes</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Fixed timezone bug causing dates to be off by one day in CET timezone</span>
+<span class="change-text">Voice Mode - Fixed date calculation issues for European timezone</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Payment System - Fixed webhook mapping for yearly subscriptions and confirmation email amounts</span>
+<span class="change-text">Payment System - Fixed yearly subscription pricing and confirmation emails</span>
 </div>
 </div>
 
@@ -294,23 +294,23 @@ margin-bottom: 12px;
 <div class="category-title">✨ Features</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Complete implementation with speech recognition (Dutch), OpenAI TTS synthesis, and AI command parsing</span>
+<span class="change-text">Voice Mode - Complete hands-free task management with Dutch speech recognition and natural voice responses</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - All intent handlers for property setting (project, context, duration, priority, date, notes, subtasks)</span>
+<span class="change-text">Voice Mode - Set all task properties using voice commands (project, context, duration, priority, date, notes, subtasks)</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Action handlers: Read, save, complete, next, skip with full API integration and real-time inbox updates</span>
+<span class="change-text">Voice Mode - Manage tasks with voice: Read, save, complete, skip to next task</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Auto-create projects and contexts via voice commands with seamless entity resolution</span>
+<span class="change-text">Voice Mode - Automatically creates new projects and contexts when mentioned in voice commands</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Email whitelist check with toggle button and subtle macOS-inspired design</span>
+<span class="change-text">Voice Mode - Elegant interface with visual feedback when listening and speaking</span>
 </div>
 </div>
 
@@ -318,15 +318,15 @@ margin-bottom: 12px;
 <div class="category-title">🔧 Fixes</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Fixed API endpoints to use correct Tickedify list-based architecture</span>
+<span class="change-text">Voice Mode - Fixed task saving and synchronization</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Fixed property names to use camelCase and correct 'tekst' property</span>
+<span class="change-text">Voice Mode - Fixed task title display and editing</span>
 </div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Voice Mode - Fixed authentication bug where window.auth was never exposed globally</span>
+<span class="change-text">Voice Mode - Fixed access control for authorized users</span>
 </div>
 </div>
 
@@ -345,7 +345,7 @@ margin-bottom: 12px;
 <div class="category-title">🔒 Security</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Admin Dashboard - Restored admin authentication for page help PUT/DELETE endpoints while fixing compatibility with password-based admin login</span>
+<span class="change-text">Admin Dashboard - Improved security for help content management</span>
 </div>
 </div>
 
@@ -353,7 +353,7 @@ margin-bottom: 12px;
 <div class="category-title">🔧 Fixes</div>
 <div class="change-item">
 <span class="change-bullet">•</span>
-<span class="change-text">Admin Dashboard - Fixed 500 error when saving page help content and 401 authentication error when loading page help content</span>
+<span class="change-text">Admin Dashboard - Fixed saving and loading of help content</span>
 </div>
 </div>
 
