@@ -2198,6 +2198,7 @@ class Taakbeheer {
         this.geselecteerdeTaken = new Set(); // Geselecteerde taken in bulk modus
         this.prevInboxCount = -1; // Track previous inbox count for celebration detection
         this.lastActionWasPlanning = false; // Track if last action was planning a task (for popup trigger)
+        this.laatstGeopendePostponedSectie = null; // Track which postponed accordion section was last opened
 
         // Ctrl-toets tracking voor derde week toggle
         this.ctrlKeyPressed = false;
@@ -8410,6 +8411,12 @@ class Taakbeheer {
             if (actie.lijst) {
                 this.huidigeLijst = actie.lijst;
                 console.log('[POSTPONED DEBUG] Set huidigeLijst to:', actie.lijst);
+
+                // Remember which postponed section was opened for accordion state restoration
+                if (this.isPostponedLijst(actie.lijst)) {
+                    this.laatstGeopendePostponedSectie = actie.lijst;
+                    console.log('[ACCORDION STATE] Remembered opened section:', actie.lijst);
+                }
             }
 
             this.touchedFields.clear();
@@ -13573,9 +13580,20 @@ class Taakbeheer {
 
         // Reinitialize mobile menu for the new header
         this.initializeMobileSidebar();
-        
+
         // Setup drop zones for drag & drop between lists
         this.setupUitgesteldDropZones();
+
+        // Auto-open last opened section for smooth user experience after save
+        if (this.laatstGeopendePostponedSectie) {
+            console.log('[ACCORDION STATE] Auto-opening section:', this.laatstGeopendePostponedSectie);
+            // Use setTimeout to ensure DOM is fully ready
+            setTimeout(() => {
+                this.toggleUitgesteldSectie(this.laatstGeopendePostponedSectie);
+                // Clear state after restoration
+                this.laatstGeopendePostponedSectie = null;
+            }, 0);
+        }
     }
 
     async toggleUitgesteldSectie(categoryKey) {
@@ -13592,12 +13610,22 @@ class Taakbeheer {
             content.style.display = 'none';
             chevron.classList.remove('fa-chevron-down');
             chevron.classList.add('fa-chevron-right');
+
+            // Clear state when section is closed
+            if (this.laatstGeopendePostponedSectie === categoryKey) {
+                this.laatstGeopendePostponedSectie = null;
+                console.log('[ACCORDION STATE] Cleared state (section closed)');
+            }
         } else {
             // Open section and load data if needed
             content.style.display = 'block';
             chevron.classList.remove('fa-chevron-right');
             chevron.classList.add('fa-chevron-down');
-            
+
+            // Remember which section is now open
+            this.laatstGeopendePostponedSectie = categoryKey;
+            console.log('[ACCORDION STATE] Remembered opened section:', categoryKey);
+
             // Load data if not already loaded
             if (content.querySelector('.loading-placeholder')) {
                 await this.loadUitgesteldSectieData(categoryKey);
