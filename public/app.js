@@ -4945,8 +4945,21 @@ class Taakbeheer {
     // Get lijst van huidige taak in edit mode
     getCurrentTaakLijst() {
         if (!this.huidigeTaakId) return null;
+
+        // First try to find in this.taken (for acties/inbox tasks)
         const taak = this.taken.find(t => t.id === this.huidigeTaakId);
-        return taak ? taak.lijst : null;
+        if (taak && taak.lijst) {
+            return taak.lijst;
+        }
+
+        // For postponed tasks (not in this.taken), get lijst from form context
+        // The lijst is stored in the loaded actie object during bewerkActie()
+        // We can also check the huidigeLijst if it's a postponed lijst
+        if (this.huidigeLijst && this.isPostponedLijst(this.huidigeLijst)) {
+            return this.huidigeLijst;
+        }
+
+        return null;
     }
 
     // Check if currently editing a postponed task
@@ -8340,6 +8353,13 @@ class Taakbeheer {
         if (actie) {
             console.log('[POSTPONED DEBUG] Setting huidigeTaakId to:', id);
             this.huidigeTaakId = id;
+
+            // BUGFIX: Set huidigeLijst from the loaded task for correct conditional validation
+            if (actie.lijst) {
+                this.huidigeLijst = actie.lijst;
+                console.log('[POSTPONED DEBUG] Set huidigeLijst to:', actie.lijst);
+            }
+
             this.touchedFields.clear();
             
             // Remove alle invalid classes en touched state
