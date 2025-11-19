@@ -7024,13 +7024,6 @@ class Taakbeheer {
             return;
         }
 
-        // Get current taak object
-        const taak = this.taken.find(t => t.id === this.huidigeTaakId);
-        if (!taak) {
-            toast.error('Task not found');
-            return;
-        }
-
         // Collect form data
         const taakNaam = document.getElementById('taakNaamInput').value.trim();
         const projectId = document.getElementById('projectSelect').value;
@@ -7051,15 +7044,16 @@ class Taakbeheer {
 
         return await loading.withLoading(async () => {
             // Step 1: Save current changes to postponed task
+            // Convert empty strings to null for database compatibility (same as Save button)
             const updateData = {
                 tekst: taakNaam,
-                projectId: projectId,
-                verschijndatum: verschijndatum,
-                contextId: contextId,
+                projectId: projectId || null,
+                verschijndatum: verschijndatum || null,
+                contextId: contextId || null,
                 duur: duur,
                 opmerkingen: opmerkingen,
                 prioriteit: prioriteit,
-                herhalingType: herhalingType,
+                herhalingType: herhalingType || null,
                 herhalingActief: !!herhalingType
             };
 
@@ -7080,22 +7074,33 @@ class Taakbeheer {
             }
 
             // Step 2: Move task to acties lijst
-            const moveSuccess = await this.verplaatsTaakNaarLijst(taak, 'acties');
+            // Build taak object from form values (postponed tasks not in this.taken array)
+            const taakObject = {
+                id: this.huidigeTaakId,
+                lijst: this.huidigeLijst,  // current postponed lijst
+                tekst: taakNaam,
+                projectId: projectId || null,
+                verschijndatum: verschijndatum || null,
+                contextId: contextId || null,
+                duur: duur,
+                opmerkingen: opmerkingen,
+                herhalingType: herhalingType || null,
+                herhalingActief: !!herhalingType,
+                prioriteit: prioriteit,
+                type: 'postponed'
+            };
+
+            const moveSuccess = await this.verplaatsTaakNaarLijst(taakObject, 'acties');
 
             if (moveSuccess) {
-                toast.success('Task moved to actions');
-
-                // Remove from current postponed lijst
-                this.taken = this.taken.filter(t => t.id !== this.huidigeTaakId);
-
-                // Close popup
+                // Close popup first
                 this.sluitPopup();
 
-                // Refresh current lijst to reflect removal
-                await this.laadHuidigeLijst();
+                // Navigate back to uitgesteld accordion (consistent with Save button)
+                await this.navigeerNaarLijst('uitgesteld');
 
-                // Update counters
-                this.updateSidebarCounters();
+                // Success feedback
+                toast.success('Task moved to actions');
             } else {
                 toast.error('Error moving task to actions');
             }
