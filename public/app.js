@@ -6695,6 +6695,15 @@ class Taakbeheer {
             requiredSpans.forEach(span => span.style.display = '');
         });
 
+        // RESET DEFER BUTTONS: Show again for next modal open
+        const allOptieGroepen = document.querySelectorAll('.optie-groep');
+        const deferSection = Array.from(allOptieGroepen).find(el =>
+            el.querySelector('h4')?.textContent.includes('Or defer to')
+        );
+        if (deferSection) {
+            deferSection.style.display = '';
+        }
+
         // Reset bijlagen lijst
         const bijlagenLijst = document.getElementById('bijlagen-lijst');
         if (bijlagenLijst) {
@@ -8487,6 +8496,24 @@ class Taakbeheer {
             });
 
             console.log('[REQUIRED FIELDS] Configured for', isPostponed ? 'POSTPONED' : 'ACTIVE', 'task');
+
+            // CONDITIONAL DEFER BUTTONS: Hide for postponed tasks (already deferred!)
+            const allOptieGroepen = document.querySelectorAll('.optie-groep');
+            const deferSection = Array.from(allOptieGroepen).find(el =>
+                el.querySelector('h4')?.textContent.includes('Or defer to')
+            );
+
+            if (deferSection) {
+                if (isPostponed) {
+                    // For postponed: hide defer section (task already deferred)
+                    deferSection.style.display = 'none';
+                } else {
+                    // For active tasks: show defer section
+                    deferSection.style.display = '';
+                }
+            }
+
+            console.log('[DEFER BUTTONS]', isPostponed ? 'HIDDEN' : 'VISIBLE');
 
             // Zorg ervoor dat projecten en contexten geladen zijn
             await this.laadProjecten();
