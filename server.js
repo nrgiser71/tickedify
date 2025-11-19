@@ -7569,11 +7569,20 @@ app.put('/api/taak/:id', async (req, res) => {
             return res.json(response);
         } else {
             // Normal task update (existing functionality)
+            console.log('🔍 PUT /api/taak/:id DEBUG:');
+            console.log('  Task ID from URL:', id);
+            console.log('  Session User ID:', userId);
+            console.log('  Request Body:', JSON.stringify(req.body, null, 2));
+            console.log('  Request Body Keys:', Object.keys(req.body));
+
             const success = await db.updateTask(id, req.body, userId);
+
+            console.log('  UpdateTask Success:', success);
 
             if (success) {
                 res.json({ success: true });
             } else {
+                console.log('  ❌ UpdateTask FAILED - returning 404');
                 res.status(404).json({ error: 'Taak niet gevonden' });
             }
         }

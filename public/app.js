@@ -6857,11 +6857,25 @@ class Taakbeheer {
                     prioriteit: prioriteit
                 };
 
+                // DEBUG LOGGING
+                console.log('🔍 POSTPONED EDIT DEBUG:');
+                console.log('  Task ID:', this.huidigeTaakId);
+                console.log('  Huidige Lijst:', this.huidigeLijst);
+                console.log('  Update Data:', JSON.stringify(updateData, null, 2));
+                console.log('  API URL:', `/api/taak/${this.huidigeTaakId}`);
+
                 const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updateData)
                 });
+
+                console.log('  Response Status:', response.status);
+                console.log('  Response OK:', response.ok);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log('  Error Response:', errorText);
+                }
 
                 if (response.ok) {
                     // Save subtaken if any
