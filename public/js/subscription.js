@@ -430,19 +430,15 @@ async function confirmSelection() {
             if (response.trial) {
                 console.log('Trial activated until:', response.trialEndDate);
                 showSuccessModal(
-                    response.message || `Trial geactiveerd! Je hebt 14 dagen om Tickedify uit te proberen.`
+                    response.message || `Trial geactiveerd! Je wordt over 5 seconden doorgestuurd naar de app...`
                 );
 
-                // Store trial info with redirect target
-                sessionStorage.setItem('subscription_selection', JSON.stringify({
-                    planId: subscriptionState.selectedPlanId,
-                    trial: true,
-                    trialEndDate: response.trialEndDate,
-                    redirectTarget: '/app',
-                    timestamp: Date.now()
-                }));
+                // Auto-redirect to /app after 5 seconds
+                setTimeout(() => {
+                    window.location.href = '/app';
+                }, 5000);
 
-                return; // Exit, success modal will redirect
+                return; // Exit, auto-redirect will happen
             }
 
             // Fallback for other success responses
