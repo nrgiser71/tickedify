@@ -6605,11 +6605,11 @@ app.get('/api/auth/me', async (req, res) => {
         let requiresUpgrade = false;
         let expiryType = null;
 
-        // If beta period is not active and user is beta type
-        if (!betaConfig.beta_period_active && user.account_type === 'beta') {
-            // Check if trial is expired
-            const trialIsExpired = isTrialExpired(user);
+        // Check trial expiry for ALL users (beta and regular)
+        const trialIsExpired = isTrialExpired(user);
 
+        // Beta users check (original logic)
+        if (!betaConfig.beta_period_active && user.account_type === 'beta') {
             if (user.subscription_status !== 'paid' &&
                 user.subscription_status !== 'active' &&
                 (user.subscription_status !== 'trialing' || trialIsExpired)) {
@@ -6617,10 +6617,19 @@ app.get('/api/auth/me', async (req, res) => {
                 requiresUpgrade = true;
                 expiryType = trialIsExpired ? 'trial' : 'beta';
                 accessMessage = trialIsExpired
-                    ? 'Je gratis proefperiode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.'
-                    : 'De beta periode is afgelopen. Upgrade naar een betaald abonnement om door te gaan.';
-
+                    ? 'Your free trial has ended. Upgrade to a paid plan to continue.'
+                    : 'The beta period has ended. Upgrade to a paid plan to continue.';
             }
+        }
+
+        // Regular users trial expiry check (NEW - for post-beta registrations)
+        if (user.account_type === 'regular' &&
+            (user.subscription_status === 'trial_expired' ||
+             (user.subscription_status === 'trialing' && trialIsExpired))) {
+            hasAccess = false;
+            requiresUpgrade = true;
+            expiryType = 'trial';
+            accessMessage = 'Your free trial has ended. Upgrade to continue using Tickedify.';
         }
 
         res.json({
