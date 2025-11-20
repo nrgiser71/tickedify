@@ -51,7 +51,7 @@ function initConfirmPage() {
         // ⚠️ Validate redirectUrl exists and is valid
         if (!paymentData.redirectUrl || !paymentData.redirectUrl.startsWith('https://')) {
             console.error('❌ Invalid or missing redirectUrl:', paymentData.redirectUrl);
-            alert(`FOUT: Ongeldige betaallink gevonden!\n\nURL: ${paymentData.redirectUrl || 'GEEN URL'}\n\nNeem screenshot van deze melding en stuur naar support.`);
+            alert(`ERROR: Invalid payment link found!\n\nURL: ${paymentData.redirectUrl || 'NO URL'}\n\nPlease take a screenshot of this message and send it to support.`);
             sessionStorage.removeItem('payment_data');
             window.location.href = '/subscription.html';
             return;
@@ -100,12 +100,12 @@ async function copyEmailToClipboard() {
 
         // Visual feedback
         copyButton.classList.add('copied');
-        copyText.innerHTML = '<i class="fas fa-check"></i> Gekopieerd!';
+        copyText.innerHTML = '<i class="fas fa-check"></i> Copied!';
 
         // Reset after 2 seconds
         setTimeout(() => {
             copyButton.classList.remove('copied');
-            copyText.innerHTML = 'Kopieer emailadres';
+            copyText.innerHTML = 'Copy email address';
         }, 2000);
 
         console.log('Email copied to clipboard:', paymentData.email);
@@ -124,15 +124,15 @@ async function copyEmailToClipboard() {
         try {
             document.execCommand('copy');
             copyButton.classList.add('copied');
-            copyText.innerHTML = '<i class="fas fa-check"></i> Gekopieerd!';
+            copyText.innerHTML = '<i class="fas fa-check"></i> Copied!';
 
             setTimeout(() => {
                 copyButton.classList.remove('copied');
-                copyText.innerHTML = 'Kopieer emailadres';
+                copyText.innerHTML = 'Copy email address';
             }, 2000);
         } catch (fallbackError) {
             console.error('Fallback copy failed:', fallbackError);
-            copyText.innerHTML = 'Kopiëren mislukt';
+            copyText.innerHTML = 'Copy failed';
         }
 
         document.body.removeChild(textArea);
@@ -145,7 +145,7 @@ async function copyEmailToClipboard() {
 function proceedToPayment() {
     if (!paymentData || !paymentData.redirectUrl) {
         console.error('No redirect URL found');
-        showError('Geen betaallink gevonden. Probeer het opnieuw.');
+        showError('No payment link found. Please try again.');
         return;
     }
 
@@ -165,10 +165,10 @@ function proceedToPayment() {
     if (!isValidDomain) {
         console.error('⚠️ WARNING: Suspicious redirect URL detected!', paymentData.redirectUrl);
         const confirmRedirect = confirm(
-            `WAARSCHUWING: Ongeldige betaallink!\n\n` +
+            `WARNING: Invalid payment link!\n\n` +
             `URL: ${paymentData.redirectUrl}\n\n` +
-            `Deze URL lijkt niet juist. Wil je toch doorgaan?\n\n` +
-            `(Klik ANNULEREN om terug te gaan)`
+            `This URL doesn't look correct. Do you want to continue anyway?\n\n` +
+            `(Click CANCEL to go back)`
         );
 
         if (!confirmRedirect) {
@@ -182,7 +182,7 @@ function proceedToPayment() {
     // Show loading state on button
     const proceedButton = document.getElementById('proceed-button');
     proceedButton.disabled = true;
-    proceedButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Doorsturen naar betaling...';
+    proceedButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting to payment...';
 
     // Redirect to Plug&Pay after brief delay
     setTimeout(() => {

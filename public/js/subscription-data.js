@@ -9,48 +9,48 @@
 const SUBSCRIPTION_PLANS = [
     {
         id: 'trial_14_days',
-        name: '14 dagen gratis',
-        description: 'Probeer alle functies gratis uit',
+        name: '14 days free',
+        description: 'Try all features for free',
         price: 0,
         billing_cycle: 'trial',
         trial_days: 14,
-        features: ['Alle functies', 'Onbeperkte taken', 'Email import']
+        features: ['All features', 'Unlimited tasks', 'Email import']
     },
     {
         id: 'monthly_7',
-        name: 'Maandelijks',
-        description: 'Per maand, stop wanneer je wilt',
+        name: 'Monthly',
+        description: 'Per month, cancel anytime',
         price: 7,
         billing_cycle: 'monthly',
         trial_days: 0,
-        features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support']
+        features: ['All features', 'Unlimited tasks', 'Email import', 'Premium support']
     },
     {
         id: 'yearly_70',
-        name: 'Jaarlijks',
-        description: 'Bespaar €14 per jaar',
+        name: 'Yearly',
+        description: 'Save €14 per year',
         price: 70,
         billing_cycle: 'yearly',
         trial_days: 0,
-        features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', '2 maanden gratis']
+        features: ['All features', 'Unlimited tasks', 'Email import', 'Premium support', '2 months free']
     },
     {
         id: 'monthly_8',
-        name: 'No Limit Maandelijks',
-        description: 'Ongelimiteerde bijlages per maand',
+        name: 'No Limit Monthly',
+        description: 'Unlimited attachments per month',
         price: 8,
         billing_cycle: 'monthly',
         trial_days: 0,
-        features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte']
+        features: ['All features', 'Unlimited tasks', 'Email import', 'Premium support', 'Unlimited attachments', 'No file size limit']
     },
     {
         id: 'yearly_80',
-        name: 'No Limit Jaarlijks',
-        description: 'Ongelimiteerde bijlages - bespaar €16 per jaar',
+        name: 'No Limit Yearly',
+        description: 'Unlimited attachments - save €16 per year',
         price: 80,
         billing_cycle: 'yearly',
         trial_days: 0,
-        features: ['Alle functies', 'Onbeperkte taken', 'Email import', 'Premium support', 'Ongelimiteerde bijlages', 'Geen limiet op bestandsgrootte', '2 maanden gratis']
+        features: ['All features', 'Unlimited tasks', 'Email import', 'Premium support', 'Unlimited attachments', 'No file size limit', '2 months free']
     }
 ];
 
@@ -94,15 +94,15 @@ const SUBSCRIPTION_VALIDATION = {
         if (!plan) return '';
 
         if (plan.price === 0) {
-            return 'Gratis';
+            return 'Free';
         }
 
         if (plan.billing_cycle === 'monthly') {
-            return `€${plan.price}/maand`;
+            return `€${plan.price}/month`;
         }
 
         if (plan.billing_cycle === 'yearly') {
-            return `€${plan.price}/jaar`;
+            return `€${plan.price}/year`;
         }
 
         return `€${plan.price}`;
@@ -131,15 +131,15 @@ const SUBSCRIPTION_VALIDATION = {
 
         switch (planId) {
             case 'trial_14_days':
-                return 'Populaire keuze voor nieuwe gebruikers';
+                return 'Popular choice for new users';
             case 'monthly_7':
-                return 'Flexibel maandelijks abonnement';
+                return 'Flexible monthly subscription';
             case 'yearly_70':
-                return 'Beste waarde - bespaar €14 per jaar';
+                return 'Best value - save €14 per year';
             case 'monthly_8':
-                return 'No Limit - Ongelimiteerde opslag';
+                return 'No Limit - Unlimited storage';
             case 'yearly_80':
-                return 'No Limit - Beste waarde met ongelimiteerde opslag';
+                return 'No Limit - Best value with unlimited storage';
             default:
                 return '';
         }
@@ -224,7 +224,7 @@ const SubscriptionHelpers = {
      */
     showError: function(message) {
         // This can be enhanced with a proper toast/notification system
-        alert('Fout: ' + message);
+        alert('Error: ' + message);
     },
 
     /**
@@ -233,7 +233,7 @@ const SubscriptionHelpers = {
      */
     showSuccess: function(message) {
         // This can be enhanced with a proper toast/notification system
-        alert('Succes: ' + message);
+        alert('Success: ' + message);
     }
 };
 

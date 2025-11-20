@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Belangrijk - Gebruik het juiste emailadres - Tickedify</title>
+    <title>Important - Use the correct email address - Tickedify</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -243,45 +243,45 @@
 
         <div class="warning-header">
             <div class="warning-icon">⚠️</div>
-            <h1 class="warning-title">Belangrijk: Gebruik het juiste emailadres!</h1>
+            <h1 class="warning-title">Important: Use the correct email address!</h1>
         </div>
 
         <p class="main-message">
-            Je gaat zo naar de betaalpagina. Het is <strong>heel belangrijk</strong> dat je daar
-            exact dit emailadres gebruikt:
+            You're about to go to the payment page. It is <strong>very important</strong> that you use
+            exactly this email address:
         </p>
 
         <div class="email-section">
-            <div class="email-label">Gebruik dit emailadres bij de betaling:</div>
+            <div class="email-label">Use this email address for payment:</div>
             <div class="email-display" id="email-display">
-                <!-- Email wordt hier ingeladen via JavaScript -->
+                <!-- Email will be loaded here via JavaScript -->
             </div>
             <button class="copy-button" id="copy-button" onclick="copyEmailToClipboard()">
                 <i class="fas fa-copy"></i>
-                <span id="copy-text">Kopieer emailadres</span>
+                <span id="copy-text">Copy email address</span>
             </button>
         </div>
 
         <div class="explanation">
             <div class="explanation-title">
                 <i class="fas fa-info-circle"></i>
-                Waarom is dit zo belangrijk?
+                Why is this so important?
             </div>
             <p class="explanation-text">
-                Dit is het emailadres van je Tickedify account. Als je een ander emailadres gebruikt
-                bij de betaling, kunnen we je betaling niet automatisch koppelen aan je account.
-                Je krijgt dan <strong>geen toegang</strong> tot de app, ook al heb je wel betaald.
+                This is your Tickedify account email address. If you use a different email address
+                for payment, we cannot automatically link your payment to your account.
+                You will then have <strong>no access</strong> to the app, even though you have paid.
             </p>
         </div>
 
         <div class="action-buttons">
             <button class="btn-primary" id="proceed-button" onclick="proceedToPayment()">
                 <i class="fas fa-check-circle"></i>
-                Ik begrijp het, ga door naar betaling
+                I understand, proceed to payment
             </button>
             <button class="btn-secondary" onclick="goBack()">
                 <i class="fas fa-arrow-left"></i>
-                Terug naar abonnement kiezen
+                Back to plan selection
             </button>
         </div>
     </div>

@@ -22,7 +22,7 @@ async function initializeSubscriptionPage() {
         console.log('Initializing subscription page...');
 
         // Show loading state
-        showLoadingOverlay('Laden van abonnementsopties...');
+        showLoadingOverlay('Loading subscription options...');
 
         // Get selection source from URL parameters
         subscriptionState.selectionSource = SubscriptionHelpers.getUrlParameter('source') || 'upgrade';
@@ -47,7 +47,7 @@ async function initializeSubscriptionPage() {
     } catch (error) {
         console.error('Error initializing subscription page:', error);
         hideLoadingOverlay();
-        showErrorModal('Er is een fout opgetreden bij het laden van de pagina. Probeer het opnieuw.');
+        showErrorModal('An error occurred while loading the page. Please try again.');
     }
 }
 
@@ -159,7 +159,7 @@ function createPlanElement(plan, clickable = true) {
 
     // Determine button text and icon based on plan type
     const isTrial = plan.id === 'trial_14_days';
-    const buttonText = isTrial ? 'Start Gratis Proefperiode' : 'Kies dit plan';
+    const buttonText = isTrial ? 'Start Free Trial' : 'Choose this plan';
     const buttonIcon = isTrial ? 'fa-rocket' : 'fa-check';
 
     planDiv.innerHTML = `
@@ -188,7 +188,7 @@ function createPlanElement(plan, clickable = true) {
             <i class="fas ${buttonIcon}"></i>
             ${buttonText}
         </button>
-        ${isTrial ? '<small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;"><i class="fas fa-info-circle"></i> Probeer 14 dagen gratis alle functies - geen creditcard nodig bij aanmelding</small>' : ''}
+        ${isTrial ? '<small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;"><i class="fas fa-info-circle"></i> Try all features free for 14 days - no credit card required</small>' : ''}
     `;
 
     // Add click event listener to button only
@@ -219,19 +219,19 @@ function createCombinedStandardPlanElement(standardPlans) {
 
     planDiv.innerHTML = `
         <div class="plan-header">
-            <h3 class="plan-name">Standard Abonnement</h3>
-            <div class="plan-price">€7/maand of €70/jaar</div>
+            <h3 class="plan-name">Standard Plan</h3>
+            <div class="plan-price">€7/month or €70/year</div>
         </div>
-        <div class="plan-description">Kies bij het afrekenen tussen maandelijks of jaarlijks</div>
-        <div class="plan-highlight">💡 Bespaar €14 per jaar met het jaarlijkse abonnement</div>
+        <div class="plan-description">Choose between monthly or yearly at checkout</div>
+        <div class="plan-highlight">💡 Save €14 per year with the yearly plan</div>
         <ul class="plan-features">
-            <li><strong>Maandelijks:</strong> €7/maand - Stop wanneer je wilt</li>
-            <li><strong>Jaarlijks:</strong> €70/jaar - 2 maanden gratis</li>
-            <li>Alle functies</li>
-            <li>Onbeperkte taken</li>
+            <li><strong>Monthly:</strong> €7/month - Cancel anytime</li>
+            <li><strong>Yearly:</strong> €70/year - 2 months free</li>
+            <li>All features</li>
+            <li>Unlimited tasks</li>
             <li>Email import</li>
             <li>Premium support</li>
-            <li>100MB opslag, 4.5MB per bestand, 1 bijlage per taak</li>
+            <li>100MB storage, 4.5MB per file, 1 attachment per task</li>
         </ul>
         <button class="plan-action-button" id="select-standard-plan" style="
             width: 100%;
@@ -247,10 +247,10 @@ function createCombinedStandardPlanElement(standardPlans) {
         " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(102, 126, 234, 0.4)';"
            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
             <i class="fas fa-credit-card"></i>
-            Kies Standard Abonnement
+            Choose Standard Plan
         </button>
         <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
-            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina
+            <i class="fas fa-info-circle"></i> You'll make your final choice for monthly or yearly on the payment page
         </small>
     `;
 
@@ -281,21 +281,21 @@ function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
 
     planDiv.innerHTML = `
         <div class="plan-header">
-            <h3 class="plan-name">No Limit Abonnement</h3>
-            <div class="plan-price">€8/maand of €80/jaar</div>
+            <h3 class="plan-name">No Limit Plan</h3>
+            <div class="plan-price">€8/month or €80/year</div>
         </div>
-        <div class="plan-description">Ongelimiteerde bijlagen - kies bij het afrekenen tussen maandelijks of jaarlijks</div>
-        <div class="plan-highlight">⭐ Ongelimiteerde bijlagen - geen limieten op grootte of aantal!</div>
+        <div class="plan-description">Unlimited attachments - choose between monthly or yearly at checkout</div>
+        <div class="plan-highlight">⭐ Unlimited attachments - no limits on size or quantity!</div>
         <ul class="plan-features">
-            <li><strong>Maandelijks:</strong> €8/maand - Stop wanneer je wilt</li>
-            <li><strong>Jaarlijks:</strong> €80/jaar - 2 maanden gratis</li>
-            <li>Alle functies</li>
-            <li>Onbeperkte taken</li>
+            <li><strong>Monthly:</strong> €8/month - Cancel anytime</li>
+            <li><strong>Yearly:</strong> €80/year - 2 months free</li>
+            <li>All features</li>
+            <li>Unlimited tasks</li>
             <li>Email import</li>
             <li>Premium support</li>
-            <li><strong>Ongelimiteerde bijlagen</strong> - Upload zoveel als je wilt</li>
-            <li><strong>Geen limiet op bestandsgrootte</strong> - Ook grote bestanden</li>
-            <li><strong>Meerdere bijlagen per taak</strong> - Geen beperkingen</li>
+            <li><strong>Unlimited attachments</strong> - Upload as much as you want</li>
+            <li><strong>No file size limit</strong> - Even large files</li>
+            <li><strong>Multiple attachments per task</strong> - No restrictions</li>
         </ul>
         <button class="plan-action-button" id="select-premium-plus-plan" style="
             width: 100%;
@@ -311,10 +311,10 @@ function createCombinedPremiumPlusPlanElement(premiumPlusPlans) {
         " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245, 158, 11, 0.4)';"
            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
             <i class="fas fa-star"></i>
-            Kies No Limit
+            Choose No Limit
         </button>
         <small style="display: block; text-align: center; color: #6b7280; margin-top: 10px; font-size: 13px;">
-            <i class="fas fa-info-circle"></i> Je maakt je definitieve keuze voor maand- of jaarabonnement op de betaalpagina
+            <i class="fas fa-info-circle"></i> You'll make your final choice for monthly or yearly on the payment page
         </small>
     `;
 
@@ -415,7 +415,7 @@ async function confirmSelection() {
                 // Store payment data in session storage for confirmation page
                 sessionStorage.setItem('payment_data', JSON.stringify({
                     redirectUrl: response.redirectUrl,
-                    email: response.email || subscriptionState.userStatus?.email || 'onbekend@email.com',
+                    email: response.email || subscriptionState.userStatus?.email || 'unknown@email.com',
                     planId: subscriptionState.selectedPlanId,
                     timestamp: Date.now()
                 }));
@@ -430,7 +430,7 @@ async function confirmSelection() {
             if (response.trial) {
                 console.log('Trial activated until:', response.trialEndDate);
                 showSuccessModal(
-                    response.message || `Trial geactiveerd! Je wordt over 5 seconden doorgestuurd naar de app...`
+                    response.message || `Trial activated! You'll be redirected to the app in 5 seconds...`
                 );
 
                 // Auto-redirect to /app after 5 seconds
@@ -443,8 +443,8 @@ async function confirmSelection() {
 
             // Fallback for other success responses
             showSuccessModal(
-                `Je hebt succesvol het ${SUBSCRIPTION_VALIDATION.getPlanById(subscriptionState.selectedPlanId).name} abonnement geselecteerd. ` +
-                'Je selectie is opgeslagen en je kunt nu doorgaan met Tickedify.'
+                `You have successfully selected the ${SUBSCRIPTION_VALIDATION.getPlanById(subscriptionState.selectedPlanId).name} plan. ` +
+                'Your selection has been saved and you can now continue with Tickedify.'
             );
 
             // Store successful selection in session storage for immediate feedback
@@ -459,7 +459,7 @@ async function confirmSelection() {
 
     } catch (error) {
         console.error('Error confirming selection:', error);
-        showErrorModal('Er is een fout opgetreden bij het opslaan van je selectie. Probeer het opnieuw.');
+        showErrorModal('An error occurred while saving your selection. Please try again.');
     } finally {
         subscriptionState.isLoading = false;
 
@@ -467,7 +467,7 @@ async function confirmSelection() {
         const confirmButton = document.getElementById('confirm-selection');
         if (confirmButton) {
             SubscriptionHelpers.hideLoading(confirmButton);
-            confirmButton.innerHTML = '<i class="fas fa-check"></i> Bevestig selectie';
+            confirmButton.innerHTML = '<i class="fas fa-check"></i> Confirm selection';
         }
     }
 }
