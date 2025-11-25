@@ -202,7 +202,7 @@ No new files required. No database or API changes.
   - Use category: ( Features
   - English only per project conventions
 
-- [ ] **T016** Deploy to staging and verify
+- [x] **T016** Deploy to staging and verify
   - Merge feature branch to staging
   - Push to staging branch
   - Wait for Vercel deployment (~30 seconds)
