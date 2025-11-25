@@ -15259,10 +15259,9 @@ class Taakbeheer {
 
     // Feature 069: Toggle Select All - selecteert of deselecteert alle zichtbare taken
     toggleSelectAll() {
-        const checkbox = document.getElementById('bulk-select-all');
-        // Als checkbox checked is → deselecteer alles
-        // Bij unchecked of indeterminate → selecteer alles (standaard UX patroon)
-        if (checkbox && checkbox.checked) {
+        // Baseer op daadwerkelijke selectie, niet op checkbox state
+        // (checkbox state is al gewijzigd door browser voordat onclick wordt aangeroepen)
+        if (this.geselecteerdeTaken.size > 0) {
             this.deselecteerAlleTaken();
         } else {
             this.selecteerAlleTaken();
