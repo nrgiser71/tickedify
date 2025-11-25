@@ -15259,15 +15259,11 @@ class Taakbeheer {
 
     // Feature 069: Toggle Select All - selecteert of deselecteert alle zichtbare taken
     toggleSelectAll() {
-        console.log('[DEBUG] toggleSelectAll() method called');
-        console.log('[DEBUG] geselecteerdeTaken.size:', this.geselecteerdeTaken.size);
         // Baseer op daadwerkelijke selectie, niet op checkbox state
         // (checkbox state is al gewijzigd door browser voordat onclick wordt aangeroepen)
         if (this.geselecteerdeTaken.size > 0) {
-            console.log('[DEBUG] Calling deselecteerAlleTaken()');
             this.deselecteerAlleTaken();
         } else {
-            console.log('[DEBUG] Calling selecteerAlleTaken()');
             this.selecteerAlleTaken();
         }
     }
@@ -16666,14 +16662,8 @@ window.deselecteerAlleTaken = function() {
 
 // Feature 069: Toggle Select All checkbox
 window.toggleSelectAll = function() {
-    console.log('[DEBUG] window.toggleSelectAll called');
-    console.log('[DEBUG] app exists:', !!app);
-    console.log('[DEBUG] app.toggleSelectAll exists:', app && typeof app.toggleSelectAll);
     if (app && app.toggleSelectAll) {
-        console.log('[DEBUG] Calling app.toggleSelectAll()');
         app.toggleSelectAll();
-    } else {
-        console.log('[DEBUG] Cannot call - app or method missing');
     }
 };
 
