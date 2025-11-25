@@ -7384,6 +7384,21 @@ button:focus {
     background: #c82333;
 }
 
+/* Feature 069: Select All checkbox in bulk mode */
+.bulk-select-all-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: #007aff;
+    cursor: pointer;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
+.bulk-select-all-checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Bulk mode container styling */
 .main-content.bulk-modus {
     background-color: #f0f4ff;

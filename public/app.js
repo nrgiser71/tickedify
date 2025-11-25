@@ -5198,6 +5198,8 @@ class Taakbeheer {
                 </div>
             </div>
             <div class="bulk-controls-container">
+                <input type="checkbox" id="bulk-select-all" class="bulk-select-all-checkbox"
+                       style="display: none;" onclick="window.toggleSelectAll()">
                 <button id="bulk-mode-toggle" class="bulk-mode-toggle" onclick="window.toggleBulkModus()">
                     Bulk Edit
                 </button>
@@ -15115,7 +15117,13 @@ class Taakbeheer {
             toggleButton.textContent = 'Bulk Edit';
             toggleButton.classList.remove('active');
         }
-        
+
+        // Feature 069: Show/hide Select All checkbox
+        const selectAllCheckbox = document.getElementById('bulk-select-all');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.style.display = this.bulkModus ? 'inline-block' : 'none';
+        }
+
         this.renderActiesLijst();
     }
 
@@ -15249,6 +15257,53 @@ class Taakbeheer {
         this.updateBulkToolbar();
     }
 
+    // Feature 069: Toggle Select All - selecteert of deselecteert alle zichtbare taken
+    toggleSelectAll() {
+        const visibleTasks = document.querySelectorAll('.actie-item[data-id]');
+        let visibleCount = 0;
+        visibleTasks.forEach(item => {
+            if (item.style.display !== 'none') visibleCount++;
+        });
+
+        if (this.geselecteerdeTaken.size >= visibleCount && visibleCount > 0) {
+            this.deselecteerAlleTaken();
+        } else {
+            this.selecteerAlleTaken();
+        }
+    }
+
+    // Feature 069: Update Select All checkbox state (unchecked, checked, indeterminate)
+    updateSelectAllCheckbox() {
+        const checkbox = document.getElementById('bulk-select-all');
+        if (!checkbox) return;
+
+        const visibleTasks = document.querySelectorAll('.actie-item[data-id]');
+        let visibleCount = 0;
+        visibleTasks.forEach(item => {
+            if (item.style.display !== 'none') visibleCount++;
+        });
+
+        const selectedCount = this.geselecteerdeTaken.size;
+
+        if (visibleCount === 0) {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+            checkbox.disabled = true;
+        } else if (selectedCount === 0) {
+            checkbox.checked = false;
+            checkbox.indeterminate = false;
+            checkbox.disabled = false;
+        } else if (selectedCount >= visibleCount) {
+            checkbox.checked = true;
+            checkbox.indeterminate = false;
+            checkbox.disabled = false;
+        } else {
+            checkbox.checked = false;
+            checkbox.indeterminate = true;
+            checkbox.disabled = false;
+        }
+    }
+
     updateBulkToolbar() {
         const countElement = document.getElementById('bulk-selection-count');
         const actionButtons = document.querySelectorAll('#bulk-toolbar .bulk-action-btn');
@@ -15268,6 +15323,9 @@ class Taakbeheer {
         if (editButton) {
             editButton.disabled = this.geselecteerdeTaken.size < 2;
         }
+
+        // Feature 069: Update Select All checkbox state
+        this.updateSelectAllCheckbox();
     }
 
     async bulkDateAction(action) {
@@ -16603,6 +16661,13 @@ window.selecteerAlleTaken = function() {
 window.deselecteerAlleTaken = function() {
     if (app && app.deselecteerAlleTaken) {
         app.deselecteerAlleTaken();
+    }
+};
+
+// Feature 069: Toggle Select All checkbox
+window.toggleSelectAll = function() {
+    if (app && app.toggleSelectAll) {
+        app.toggleSelectAll();
     }
 };
 
