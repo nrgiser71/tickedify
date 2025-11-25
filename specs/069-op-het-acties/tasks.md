@@ -156,34 +156,34 @@ No new files required. No database or API changes.
 
 ## Phase 3.4: Testing & Validation
 
-- [ ] **T009** Manual testing: Basic visibility toggle (Scenario 1, 7)
+- [x] **T009** Manual testing: Basic visibility toggle (Scenario 1, 7)
   - Deploy to staging
   - Navigate to dev.tickedify.com/app � Acties
   - Verify: Click Bulk Edit � checkbox appears
   - Verify: Click Bulk Edit again � checkbox disappears
   - Verify: Checkbox position is left of Bulk Edit button
 
-- [ ] **T010** Manual testing: Select All / Deselect All (Scenario 2, 3)
+- [x] **T010** Manual testing: Select All / Deselect All (Scenario 2, 3)
   - Activate bulk mode with tasks visible
   - Click checkbox � all tasks selected, checkbox checked
   - Click checkbox again � all tasks deselected, checkbox unchecked
   - Verify selection count updates correctly
 
-- [ ] **T011** Manual testing: Indeterminate state (Scenario 4, 5)
+- [x] **T011** Manual testing: Indeterminate state (Scenario 4, 5)
   - Activate bulk mode
   - Click one individual task
   - Verify checkbox shows indeterminate state (horizontal line)
   - Click checkbox � all tasks selected
   - Verify checkbox now shows checked state
 
-- [ ] **T012** Manual testing: Filter integration (Scenario 6)
+- [x] **T012** Manual testing: Filter integration (Scenario 6)
   - Activate bulk mode
   - Apply project filter to show subset of tasks
   - Click Select All checkbox
   - Verify only visible (filtered) tasks are selected
   - Verify hidden tasks remain unselected
 
-- [ ] **T013** Manual testing: Edge cases (Scenario 8, 9)
+- [x] **T013** Manual testing: Edge cases (Scenario 8, 9)
   - Filter to show no tasks � checkbox should be disabled
   - Test keyboard: Tab to checkbox, press Space � should toggle
   - Verify no console errors in browser DevTools
@@ -209,7 +209,7 @@ No new files required. No database or API changes.
   - Verify version at dev.tickedify.com/api/version
   - Run through quickstart.md scenarios on staging
 
-- [ ] **T017** Update ARCHITECTURE.md with new function locations
+- [x] **T017** Update ARCHITECTURE.md with new function locations
   - File: `ARCHITECTURE.md`
   - Add entries for:
     - `toggleSelectAll()` method location

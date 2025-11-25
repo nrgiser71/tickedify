@@ -800,6 +800,33 @@ modified_by VARCHAR(50)
 - **Modal System**: Consistent styling met recurring/priority popups
 - **API Layer**: Hergebruikt existing PUT /api/taak/:id endpoint
 
+### Select All Checkbox (Feature 069)
+**Locatie**: public/app.js
+
+- **toggleSelectAll()** - regel 15261-15269
+  - Toggle tussen selecteren/deselecteren van alle zichtbare taken
+  - Baseerst op geselecteerdeTaken.size (niet checkbox state)
+  - Roept selecteerAlleTaken() of deselecteerAlleTaken() aan
+
+- **updateSelectAllCheckbox()** - regel 15271-15301
+  - Beheert tri-state checkbox (unchecked, checked, indeterminate)
+  - Automatisch aangeroepen door updateBulkToolbar()
+  - Disabled state wanneer geen taken zichtbaar
+
+- **window.toggleSelectAll()** - regel 16664-16668
+  - Window binding voor onclick handler
+  - Entry point vanuit HTML checkbox
+
+**HTML Element**:
+- **#bulk-select-all** - regel 5201-5202 in showActiesScherm() template
+  - Checkbox met onclick="window.toggleSelectAll()"
+  - Start hidden (display: none), visible in bulk mode
+
+**CSS Styling**:
+- **.bulk-select-all-checkbox** - public/style.css regel 7387-7400
+  - 20px size, accent-color #007aff
+  - Disabled state styling (opacity 0.5)
+
 ### Testing Scenarios (Quickstart)
 1. **Happy Path**: 3 taken, context + priority wijzigen
 2. **Multiple Properties**: Alle 5 eigenschappen tegelijk aanpassen
@@ -810,8 +837,9 @@ modified_by VARCHAR(50)
 
 ---
 
-**LAATSTE UPDATE**: Oktober 30, 2025 - Bulk Eigenschappen Bewerking (v0.20.22)
+**LAATSTE UPDATE**: November 25, 2025 - Select All Checkbox in Bulk Mode (v1.0.142)
 **BELANGRIJKSTE UPDATES**:
+- November 25: Select All Checkbox - Tri-state checkbox voor bulk selectie in Acties scherm (v1.0.142)
 - Oktober 18: Subscription Flow - Naadloze beta-naar-productie transitie met automatische redirect naar /app (v0.19.21-0.19.22)
 - Augustus 24: Tablet Resize Functionaliteit - Complete touch-friendly resize implementatie voor dagelijkse planning (v0.12.21-0.12.22)
 - Augustus 2: Uitklapbare Taken Fix - Hersteld expandable functionaliteit in dag-kalender planning
