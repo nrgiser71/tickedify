@@ -6,6 +6,13 @@
       "use": "@vercel/node"
     },
     {
+      "src": "website/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "../public/website"
+      }
+    },
+    {
       "src": "public/**",
       "use": "@vercel/static"
     }
@@ -52,24 +59,84 @@
       "dest": "/public/welcome.html"
     },
     {
+      "src": "/subscription",
+      "dest": "/public/subscription.html"
+    },
+    {
       "src": "/subscription-confirm",
       "dest": "/public/subscription-confirm.html"
+    },
+    {
+      "src": "/payment-success",
+      "dest": "/public/payment-success.html"
+    },
+    {
+      "src": "/payment-cancelled",
+      "dest": "/public/payment-cancelled.html"
     },
     {
       "src": "/beta-expired",
       "dest": "/public/beta-expired.html"
     },
     {
-      "src": "/register(.html)?",
-      "dest": "/public/waitlist.html"
+      "src": "/trial-expired",
+      "dest": "/public/trial-expired.html"
     },
     {
-      "src": "/(.*\\.(js|css|html|png|jpg|jpeg|gif|svg|ico))",
+      "src": "/changelog",
+      "dest": "/public/changelog.html"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/admin2.html",
+      "dest": "/public/admin2.html"
+    },
+    {
+      "src": "/csv-mapper",
+      "dest": "/public/csv-mapper.html"
+    },
+    {
+      "src": "/register(.html)?",
+      "dest": "/public/website/index.html"
+    },
+    {
+      "src": "/app\\.js",
+      "dest": "/public/app.js"
+    },
+    {
+      "src": "/style\\.css",
+      "dest": "/public/style.css"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/public/js/$1"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/public/css/$1"
+    },
+    {
+      "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|mp4|webp))",
       "dest": "/public/$1"
     },
     {
       "src": "/",
-      "dest": "/public/waitlist.html"
+      "dest": "/public/website/index.html"
+    },
+    {
+      "src": "/cms",
+      "dest": "/public/website/index.html"
+    },
+    {
+      "src": "/cms/(.*)",
+      "dest": "/public/website/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/website/index.html"
     }
   ]
 }

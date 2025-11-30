@@ -1,0 +1,170 @@
+{
+  "hero": {
+    "title": "The task manager that actually keeps you focused.",
+    "description": "Stop juggling tasks. Bring calm, order, and focus back to your workday.",
+    "primaryButton": "Start Free Trial",
+    "primaryButtonUrl": "https://www.tickedify.com/subscription.html",
+    "secondaryButton": "Watch Demo",
+    "image": "/src/assets/Main.png"
+  },
+  "video": {
+    "title": "See Tickedify in Action",
+    "description": "Watch how Tickedify helps you take control of your time in just a few minutes.",
+    "youtubeId": "dQw4w9WgXcQ"
+  },
+  "problemSection": {
+    "title": "Why",
+    "titleHighlight": "Tickedify",
+    "description": "Powerful features that work together seamlessly to make task management effortless.",
+    "features": [
+      {
+        "icon": "Zap",
+        "title": "Lightning Fast",
+        "description": "Plan your tasks lightning fast with drag and drop. Move tasks to another day or another list quickly.",
+        "video": "/src/assets/CleanShot_2025-10-31_at_10.32.14.mp4",
+        "image": "/src/assets/DragAndDrop.png"
+      },
+      {
+        "icon": "Target",
+        "title": "Visual Daily Planning",
+        "description": "Drag and drop your task to your calendar view to visualize your day. Tickedify will even tell you when you are too optimistic and think you can do 2 hours of work in 1 hour. ",
+        "video": "",
+        "image": "/src/assets/Plan.png"
+      },
+      {
+        "icon": "funnel",
+        "title": "Find your tasks quickly",
+        "description": "Filter your tasks by Description, Project, Context, Date and Priority to find what you're looking for as fast as possible.",
+        "video": "",
+        "image": "/src/assets/Filter.png"
+      },
+      {
+        "icon": "binoculars",
+        "title": "Search",
+        "description": "Still can't find your task? Search to the rescue. It will look for your tasks in every possible place. Even in your completed tasks if you want to.",
+        "video": "",
+        "image": "/src/assets/Search.png"
+      },
+      {
+        "icon": "repeat",
+        "title": "Recurring tasks",
+        "description": "Do you have recurring tasks? Of course you do. Who doesn't? Tickedify has got you covered. It has the most extensive recurrences you can imagine.",
+        "video": "",
+        "image": "/src/assets/Repeat.png"
+      },
+      {
+        "icon": "circle-plus",
+        "title": "Quick Capture",
+        "description": "Do you quickly want to add a new task from anywhere in the app? Just press SHIFT+F12. Just dump it and continue with your work.",
+        "video": "",
+        "image": "/src/assets/QuickCapture.png"
+      },
+      {
+        "icon": "mail-plus",
+        "title": "Email to task",
+        "description": "Oh yes... Tickedify can do that as well. Just forward any e-mail to your personal Tickedify email address and we'll translate it to a task. You can even add keywords to your email to assign it to a project or give it a date or a priority of a context. Very powerful !\nBut don't worry. Even if you don't use keywords or make mistakes, the task will be created anyway.",
+        "image": "/src/assets/Mail.png"
+      },
+      {
+        "icon": "folder-open",
+        "title": "Projects",
+        "description": "Of course, we also have the bases covered. You can assign tasks to projects. But you don't have to. Tickedify knows that you have a lot of one-off tasks. They don't need projects.",
+        "image": "/src/assets/Projects.png"
+      },
+      {
+        "icon": "list-tree",
+        "title": "Subtasks, notes and attachments",
+        "description": "Yep, Tickedify also supports subtasks, notes and attachments. We had some time left and decided to add that as well. 😀",
+        "image": "/src/assets/Properties.png"
+      },
+      {
+        "icon": "layout-list",
+        "title": "Bulk Edit",
+        "description": "Sometimes you need to set one or more properties of multiple tasks to the same value. That's why Tickedify supports bulk edit. We really want you to save as much time as possible.",
+        "image": "/src/assets/Bulk_Edit.png"
+      }
+    ]
+  },
+  "solutionSection": {
+    "title": "An environment for top productivity",
+    "description": "We've built Tickedify to have a feature rich application with as less overhead as possible. We are strong believers of the fact that a task manager should save you time, instead of cost you time.",
+    "features": [
+      "Fast capturing of new tasks with SHIFT+F12",
+      "Keyboard shortcuts to plan your tasks more quickly",
+      "Forward emails to your task manager",
+      "Drag and drop",
+      "Bulk operations",
+      "And so much more"
+    ],
+    "image": "/src/assets/hero-dashboard.png"
+  },
+  "testimonials": {
+    "title": "Loved by Teams Worldwide",
+    "description": "Join thousands of productive teams who've transformed their workflow with Tickedify.",
+    "items": [
+      {
+        "quote": "Tickedify transformed how our team works. We've increased our delivery speed by 40% in just two months.",
+        "author": "Sarah Chen",
+        "role": "Product Manager at TechCorp"
+      },
+      {
+        "quote": "The best task management tool I've used in 15 years. Intuitive, powerful, and actually enjoyable to use.",
+        "author": "Michael Rodriguez",
+        "role": "CEO at StartupX"
+      },
+      {
+        "quote": "We tried every tool out there. Tickedify is the only one that our entire team actually loves using daily.",
+        "author": "Emily Watson",
+        "role": "Engineering Lead at DataFlow"
+      }
+    ]
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "description": "Choose the plan that fits your needs. Start free, upgrade anytime.",
+    "plans": [
+      {
+        "name": "14 day free trial",
+        "icon": "gift",
+        "monthlyPrice": null,
+        "yearlyPrice": null,
+        "description": "Try all features free for 14 days. No credit card required.",
+        "highlighted": false,
+        "highlightLabel": ""
+      },
+      {
+        "name": "Standard Plan",
+        "icon": "star",
+        "monthlyPrice": "€7",
+        "yearlyPrice": "€70",
+        "description": "Perfect for most users.",
+        "highlighted": false,
+        "highlightLabel": "Meest gekozen"
+      },
+      {
+        "name": "No Limit Plan",
+        "icon": "spotlight",
+        "monthlyPrice": "€8",
+        "yearlyPrice": "€80",
+        "description": "Unlimited space for your attachments",
+        "highlighted": true,
+        "highlightLabel": "Most popular"
+      }
+    ],
+    "footer": "Cancel anytime. No questions asked.",
+    "buttonText": "Choose your plan",
+    "buttonUrl": "https://www.tickedify.com/subscription.html"
+  },
+  "cta": {
+    "title": "Get control of your workday.",
+    "description": "Join thousands of professionals who already switched to Tickedify.",
+    "button": "Start Free Trial",
+    "buttonUrl": "https://www.tickedify.com/subscription.html"
+  },
+  "footer": {
+    "title": "Tickedify",
+    "tagline": "Order from Chaos",
+    "email": "hello@tickedify.com",
+    "links": []
+  }
+}

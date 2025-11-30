@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 15% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 10%;
+
+    --primary: 183 80% 45%;
+    --primary-foreground: 0 0% 100%;
+    
+    --primary-glow: 183 85% 55%;
+
+    --secondary: 220 15% 96%;
+    --secondary-foreground: 220 15% 10%;
+
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 183 80% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 183 80% 45%;
+
+    --radius: 0.75rem;
+    
+    /* Custom design tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(183 80% 45%), hsl(200 85% 55%));
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%), hsl(183 80% 98%));
+    --shadow-elegant: 0 10px 40px -10px hsl(183 80% 45% / 0.2);
+    --shadow-glow: 0 0 60px hsl(183 85% 55% / 0.15);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 20% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 18% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 18% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 183 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    --primary-glow: 183 85% 65%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 183 80% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 183 80% 55%;
+    
+    /* Dark mode custom tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(183 80% 55%), hsl(200 85% 65%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 20% 8%), hsl(220 18% 12%));
+    --shadow-elegant: 0 10px 40px -10px hsl(183 80% 55% / 0.3);
+    --shadow-glow: 0 0 60px hsl(183 85% 65% / 0.2);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  
+  .animation-delay-600 {
+    animation-delay: 0.6s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
