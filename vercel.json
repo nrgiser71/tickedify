@@ -6,13 +6,6 @@
       "use": "@vercel/node"
     },
     {
-      "src": "website/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "../public/website"
-      }
-    },
-    {
       "src": "public/**",
       "use": "@vercel/static"
     }
@@ -99,10 +92,6 @@
       "dest": "/public/csv-mapper.html"
     },
     {
-      "src": "/register(.html)?",
-      "dest": "/public/website/index.html"
-    },
-    {
       "src": "/app\\.js",
       "dest": "/public/app.js"
     },
@@ -117,6 +106,10 @@
     {
       "src": "/css/(.*)",
       "dest": "/public/css/$1"
+    },
+    {
+      "src": "/website/assets/(.*)",
+      "dest": "/public/website/assets/$1"
     },
     {
       "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|mp4|webp))",

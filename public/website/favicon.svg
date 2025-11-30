@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Green circle background -->
+  <circle cx="16" cy="16" r="16" fill="hsl(183, 80%, 45%)"/>
+
+  <!-- White checkmark (Lucide Check icon) -->
+  <path
+    d="M24 10L13 21L8 16"
+    stroke="white"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+</svg>
