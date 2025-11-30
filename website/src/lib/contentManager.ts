@@ -1,6 +1,7 @@
 import defaultContent from '@/data/content.json';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+// CMS API disabled in production - using static content
+const API_BASE_URL = '';
 
 export interface ContentData {
   hero: {

@@ -3,6 +3,17 @@
 ## Taal Instructie voor Claude
 **BELANGRIJK**: Spreek altijd Nederlands in dit project. Alle communicatie met de gebruiker dient in het Nederlands te gebeuren.
 
+## IMPORTANT
+1. First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo.md.
+2. The plan should have a list of todo items that you can check off as you complete them.
+3. Before you begin working, check in with me and I will verify the plan.
+4. Then, begin working on the todo items, marking them as complete as you go.
+5. Please every step of the way just give me a high level explanation of what changes you made.
+6. Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
+7. Finally, add a review section to the todo.md file with a summary of the changes you made and any other relevant information.
+8. Do not be lazy. Never be lazy. If there is a bug find the root cause and fix it. No temporary fixes. You are a senior developer. Never be lazy.
+9. Make all fixes and code changes as simple as humanly possible. They should only impact necessary code relevant to the task and nothing else. It should impact as little code as possible. Your goal is to not introduce any bugs. It’s all about simplicity.
+
 ## 🌐 UI Language Policy
 **CRITICAL**: All user-facing UI text, buttons, messages, and tooltips MUST be in **English**.
 
@@ -385,180 +396,3 @@ When debugging or testing features in the future, remember that Claude can:
 - Keep normal email addresses on main domain (jan@tickedify.com, info@tickedify.com)
 - Fully automated user provisioning (no manual email setup)
 
-## Email Import @t Syntax Feature (Feature 048) - v0.21.6+
-
-**Feature Status**: ✅ **LIVE IN PRODUCTIE** (volledig getest en goedgekeurd door gebruiker)
-
-### Overview
-
-Email-to-task import ondersteunt nu een gestructureerde **@t instruction syntax** voor direct instellen van task properties via email. Dit is een uitbreiding op de bestaande email import functionaliteit en is 100% backwards compatible.
-
-### Syntax Format
-
-```
-@t p: Project Naam; c: Context Naam; d: 2025-11-03; p1; t: 30; df/dw/dm;
-
-Task beschrijving hier.
-Meerdere regels mogelijk.
-
---END--
-Handtekening (wordt niet opgenomen in task notes)
-```
-
-### Supported Codes
-
-| Code | Beschrijving | Voorbeeld | Validatie |
-|------|--------------|-----------|-----------|
-| `p:` | Project naam | `p: Klant X` | Elke tekst, auto-creates if not exists |
-| `c:` | Context naam | `c: Werk` | Elke tekst, auto-creates if not exists |
-| `d:` | Due date | `d: 2025-11-03` | ISO format YYYY-MM-DD alleen |
-| `t:` | Duration (minuten) | `t: 30` | Positive integer alleen |
-| `p0-p9` | Priority code | `p1` of `p2` | p0/p1→hoog, p2→gemiddeld, p3+→laag |
-| `df` | Defer to Follow-up | `df;` | Maps to `opvolgen` lijst |
-| `dw` | Defer to Weekly | `dw;` | Maps to `uitgesteld-wekelijks` lijst |
-| `dm` | Defer to Monthly | `dm;` | Maps to `uitgesteld-maandelijks` lijst |
-| `d3m` | Defer to Quarterly | `d3m;` | Maps to `uitgesteld-3maandelijks` lijst |
-| `d6m` | Defer to Bi-annual | `d6m;` | Maps to `uitgesteld-6maandelijks` lijst |
-| `dy` | Defer to Yearly | `dy;` | Maps to `uitgesteld-jaarlijks` lijst |
-
-### Special Features
-
-**1. Defer Absolute Priority**
-- Wanneer een defer code (df/dw/dm/d3m/d6m/dy) wordt gedetecteerd, worden **ALLE andere codes genegeerd**
-- Dit is by design: deferred taken hebben nog geen specifieke details nodig
-- Voorbeeld: `@t dm; p: Project X; c: Werk;` → Alleen `lijst: uitgesteld-maandelijks`, project en context worden genegeerd
-
-**2. --end-- Marker**
-- Truncates email body at `--end--` marker (case-insensitive: --END--, --End--, --end--)
-- Werkt **met én zonder @t syntax** (altijd toegepast)
-- Ideaal voor het verwijderen van email handtekeningen
-
-**3. Error Tolerance**
-- Ongeldige codes worden **silently ignored**
-- Task wordt toch aangemaakt met de codes die wél geldig zijn
-- Geen error emails naar gebruiker
-- Voorbeeld: `d: 03/11/2025` wordt genegeerd (invalid format), maar `c: Werk` werkt wel
-
-**4. Duplicate Handling**
-- Bij dubbele codes: **eerste telt**, rest wordt genegeerd
-- Voorbeeld: `p: Project A; p: Project B;` → Project A wordt gebruikt
-
-**5. Backwards Compatibility**
-- Emails **zonder @t** werken exact hetzelfde als voorheen
-- Bestaande syntax blijft 100% supported:
-  - Subject: `[Project] Task @context #tag`
-  - Body: `Project: X\nContext: Y\nDuur: 30`
-
-### Technical Implementation
-
-**Location**: `server.js` - `parseEmailToTask()` function (~line 1392)
-
-**Parser Helper Functions**:
-- `truncateAtEndMarker(body)` - Truncates at --end-- marker (line ~1313)
-- `parseDeferCode(segment)` - Parses defer codes df/dw/dm/etc (line ~1326)
-- `parsePriorityCode(segment)` - Normalizes p0-p9 to hoog/gemiddeld/laag (line ~1345)
-- `parseKeyValue(segment)` - Parses p:, c:, d:, t: codes with validation (line ~1361)
-
-**Database Mapping**:
-- Project → `projecten` table (auto-creates via `findOrCreateProject()`)
-- Context → `contexten` table (auto-creates via `findOrCreateContext()`)
-- Due date → `taken.verschijndatum` column
-- Duration → `taken.duur` column (integer minutes)
-- Priority → `taken.prioriteit` column (lowercase Dutch: hoog/gemiddeld/laag)
-- Defer lijst → `taken.lijst` column (Dutch prefixed names)
-
-**Validation Rules**:
-- Date: Must match `/^\d{4}-\d{2}-\d{2}$/` (ISO format only)
-- Duration: Must match `/^\d+$/` (positive integer only)
-- Priority: Must match `/^p(\d+)$/i` (p followed by digits)
-- Defer: Must match `/^(df|dw|dm|d3m|d6m|dy)$/i` (exact match, case-insensitive)
-
-### Bug Fix History
-
-**v0.21.9** - Windows Line Endings Fix
-- **Problem**: Mailgun sends emails with `\r\n` line endings, causing @t regex to fail
-- **Fix**: Added `trim()` to firstLine before regex test to remove `\r` characters
-- **Impact**: Critical - @t detection completely broken without this fix
-
-**v0.21.10** - Defer List Names Fix
-- **Problem**: Parser used English names (`weekly`, `monthly`) but UI expects Dutch (`uitgesteld-wekelijks`, `uitgesteld-maandelijks`)
-- **Fix**: Updated `parseDeferCode()` mapping to use correct Dutch lijst names
-- **Impact**: High - Deferred tasks invisible in UI
-
-**v0.21.11** - Priority Database Constraint Fix
-- **Problem**: Parser returned English capitalized values (`High`, `Medium`, `Low`) but database CHECK constraint expects lowercase Dutch (`hoog`, `gemiddeld`, `laag`)
-- **Fix**: Updated `parsePriorityCode()` to return lowercase Dutch values
-- **Impact**: Critical - Database constraint violation prevented task creation
-
-**v0.21.12** - Debug Logging Cleanup
-- Removed all debug `console.log()` statements after successful testing
-- Kept error logging for future troubleshooting
-
-### User Documentation
-
-**Helpfile Location**: `/email-import-help` route (served from `public/email-import-help.md`)
-- 310 lines comprehensive guide
-- Syntax reference, 10+ voorbeelden, FAQ, troubleshooting
-- Accessible via web browser (no authentication required)
-
-### Testing Status
-
-✅ **All 10 test scenarios completed and approved by user** (Production testing v0.21.6 - v0.21.12)
-- Basic @t parsing with all codes
-- Backwards compatibility without @t
-- Defer absolute priority logic
-- Priority normalisatie (p0-p9)
-- Entity auto-creation (projects/contexts)
-- --end-- marker truncation
-- Error tolerance with invalid codes
-- Duplicate code handling
-- All defer codes mapping (df/dw/dm/d3m/d6m/dy)
-
-**User Feedback**: "Alles getest en alles goedgekeurd" ✅
-
-### Development Notes
-
-- Feature spec: `/specs/048-email-import-syntax/`
-- Tasks document: `tasks.md` (31 tasks, all completed)
-- API contract: `contracts/email-import-api.yml`
-- Data model: `data-model.md` (runtime only, no DB changes)
-- Quickstart guide: `quickstart.md` (10 test scenarios)
-
-## Herhalingsfunctionaliteit - Technische Details
-
-### Database Schema
-```sql
--- Toegevoegde velden aan 'taken' tabel:
-herhaling_type VARCHAR(50),        -- Type herhaling (bijv. 'monthly-weekday-first-workday-1')
-herhaling_waarde INTEGER,          -- Waarde voor herhaling (momenteel niet gebruikt, legacy field)
-herhaling_actief BOOLEAN DEFAULT FALSE  -- Of de herhaling actief is
-```
-
-### Herhalingsformaten
-- **Dagelijks**: `'dagelijks'` of `'daily-N'` (elke N dagen)
-- **Werkdagen**: `'werkdagen'`
-- **Wekelijks**: `'weekly-interval-dagen'` (bijv. `'weekly-1-1,3,5'` = elke week op ma/wo/vr)
-- **Maandelijks**: `'monthly-day-dag-interval'` (bijv. `'monthly-day-15-2'` = dag 15 van elke 2 maanden)
-- **Maandelijks weekdag**: `'monthly-weekday-positie-dag-interval'` (bijv. `'monthly-weekday-first-1-1'` = eerste maandag van elke maand)
-- **Jaarlijks**: `'yearly-dag-maand-interval'` (bijv. `'yearly-6-8-1'` = 6 augustus van elk jaar)
-- **Jaarlijks speciaal**: `'yearly-special-type-interval'` (bijv. `'yearly-special-first-workday-1'`)
-- **Gebeurtenis-gebaseerd**: `'event-dagen-richting-eventnaam'` (bijv. `'event-10-before-webinar'`)
-
-### User Experience
-- **Popup interface** met radio buttons voor intuïtieve selectie
-- **Live text generation** toont herhaling in leesbare vorm (bijv. "Elke 2 weken op maandag, woensdag")
-- **🔄 Indicator** bij herhalende taken in alle lijstweergaven
-- **Event popup** vraagt naar volgende event datum bij gebeurtenis-gebaseerde herhalingen
-- **Keyboard support**: Tab navigatie, Enter/Escape shortcuts
-
-### Unieke Features
-- **Gebeurtenis-gebaseerde herhaling**: Eerste task management app met deze functionaliteit
-- **Werkdag ondersteuning**: Automatische berekening van eerste/laatste werkdag van maand/jaar
-- **Complexe weekdag patronen**: "Laatste vrijdag van de maand" etc.
-- **Automatische instantie creatie**: Nieuwe taken worden automatisch aangemaakt bij completion
-
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

@@ -81,7 +81,7 @@ const CmsDashboard = () => {
 
   const loadAvailableImages = async (section: 'hero' | 'solution' | 'problem', featureIndex?: number) => {
     try {
-      const response = await fetch('http://localhost:3001/api/images');
+      const response = await fetch('/api/cms/images');
       if (!response.ok) throw new Error('Failed to fetch images');
 
       const data = await response.json();
@@ -148,7 +148,7 @@ const CmsDashboard = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:3001/api/upload', {
+      const response = await fetch('/api/cms/upload', {
         method: 'POST',
         body: formData,
       });
@@ -208,7 +208,7 @@ const CmsDashboard = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:3001/api/upload', {
+      const response = await fetch('/api/cms/upload', {
         method: 'POST',
         body: formData,
       });
