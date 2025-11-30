@@ -2862,8 +2862,8 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         ];
         for (const task of inboxTasks) {
             await pool.query(
-                'INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'inbox', 'actief', userId]
+                'INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'inbox', userId]
             );
         }
 
@@ -2887,9 +2887,9 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
             const taskId = generateId();
             actionTaskIds.push({ id: taskId, tekst: task.naam });
             await pool.query(
-                `INSERT INTO taken (id, tekst, lijst, status, project_id, context_id, prioriteit, duur, verschijndatum, user_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-                [taskId, task.naam, 'acties', 'actief', projectIds[task.project], contextIds[task.context], task.prioriteit, task.duur, today, userId]
+                `INSERT INTO taken (id, tekst, lijst, project_id, context_id, prioriteit, duur, verschijndatum, user_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [taskId, task.naam, 'acties', projectIds[task.project], contextIds[task.context], task.prioriteit, task.duur, today, userId]
             );
         }
 
@@ -2906,8 +2906,8 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         ];
         for (const task of followUpTasks) {
             await pool.query(
-                'INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'opvolgen', 'actief', userId]
+                'INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'opvolgen', userId]
             );
         }
 
@@ -2918,20 +2918,20 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         const postponedYearly = ['Renew professional memberships', 'Review insurance policies'];
 
         for (const task of postponedWeekly) {
-            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'uitgesteld-wekelijks', 'uitgesteld', userId]);
+            await pool.query('INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'uitgesteld-wekelijks', userId]);
         }
         for (const task of postponedMonthly) {
-            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'uitgesteld-maandelijks', 'uitgesteld', userId]);
+            await pool.query('INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'uitgesteld-maandelijks', userId]);
         }
         for (const task of postponedQuarterly) {
-            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'uitgesteld-3maandelijks', 'uitgesteld', userId]);
+            await pool.query('INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'uitgesteld-3maandelijks', userId]);
         }
         for (const task of postponedYearly) {
-            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'uitgesteld-jaarlijks', 'uitgesteld', userId]);
+            await pool.query('INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'uitgesteld-jaarlijks', userId]);
         }
 
         // Step 8: COMPLETED tasks (8)
@@ -2947,16 +2947,16 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         ];
         for (const task of completedTasks) {
             await pool.query(
-                `INSERT INTO taken (id, tekst, lijst, status, afgewerkt, user_id) VALUES ($1, $2, $3, $4, NOW(), $5)`,
-                [generateId(), task, 'afgewerkt', 'afgewerkt', userId]
+                `INSERT INTO taken (id, tekst, lijst, afgewerkt, user_id) VALUES ($1, $2, $3, NOW(), $4)`,
+                [generateId(), task, 'afgewerkt', userId]
             );
         }
 
         // Step 9: TRASH tasks (3)
         const trashTasks = ['Old meeting notes - outdated', 'Cancelled project research', 'Duplicate task entry'];
         for (const task of trashTasks) {
-            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
-                [generateId(), task, 'prullenbak', 'actief', userId]);
+            await pool.query('INSERT INTO taken (id, tekst, lijst, user_id) VALUES ($1, $2, $3, $4)',
+                [generateId(), task, 'prullenbak', userId]);
         }
 
         // Step 10: Daily Planning (9 tasks) with Top 3 priorities
@@ -2981,8 +2981,8 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
                 // Create task if not exists
                 taskId = generateId();
                 await pool.query(
-                    `INSERT INTO taken (id, tekst, lijst, status, duur, datum, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                    [taskId, item.naam, 'acties', 'actief', item.duur, today, userId]
+                    `INSERT INTO taken (id, tekst, lijst, duur, verschijndatum, user_id) VALUES ($1, $2, $3, $4, $5, $6)`,
+                    [taskId, item.naam, 'acties', item.duur, today, userId]
                 );
             }
 
