@@ -2862,7 +2862,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         ];
         for (const task of inboxTasks) {
             await pool.query(
-                'INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                'INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'inbox', 'actief', userId]
             );
         }
@@ -2885,9 +2885,9 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         const actionTaskIds = [];
         for (const task of actionsTasks) {
             const taskId = generateId();
-            actionTaskIds.push({ id: taskId, naam: task.naam });
+            actionTaskIds.push({ id: taskId, tekst: task.naam });
             await pool.query(
-                `INSERT INTO taken (id, naam, lijst, status, project_id, context_id, prioriteit, duur, verschijndatum, user_id)
+                `INSERT INTO taken (id, tekst, lijst, status, project_id, context_id, prioriteit, duur, verschijndatum, user_id)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
                 [taskId, task.naam, 'acties', 'actief', projectIds[task.project], contextIds[task.context], task.prioriteit, task.duur, today, userId]
             );
@@ -2906,7 +2906,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         ];
         for (const task of followUpTasks) {
             await pool.query(
-                'INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                'INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'opvolgen', 'actief', userId]
             );
         }
@@ -2918,19 +2918,19 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         const postponedYearly = ['Renew professional memberships', 'Review insurance policies'];
 
         for (const task of postponedWeekly) {
-            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'uitgesteld-wekelijks', 'uitgesteld', userId]);
         }
         for (const task of postponedMonthly) {
-            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'uitgesteld-maandelijks', 'uitgesteld', userId]);
         }
         for (const task of postponedQuarterly) {
-            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'uitgesteld-3maandelijks', 'uitgesteld', userId]);
         }
         for (const task of postponedYearly) {
-            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'uitgesteld-jaarlijks', 'uitgesteld', userId]);
         }
 
@@ -2947,7 +2947,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         ];
         for (const task of completedTasks) {
             await pool.query(
-                `INSERT INTO taken (id, naam, lijst, status, afgewerkt, user_id) VALUES ($1, $2, $3, $4, NOW(), $5)`,
+                `INSERT INTO taken (id, tekst, lijst, status, afgewerkt, user_id) VALUES ($1, $2, $3, $4, NOW(), $5)`,
                 [generateId(), task, 'afgewerkt', 'afgewerkt', userId]
             );
         }
@@ -2955,7 +2955,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         // Step 9: TRASH tasks (3)
         const trashTasks = ['Old meeting notes - outdated', 'Cancelled project research', 'Duplicate task entry'];
         for (const task of trashTasks) {
-            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+            await pool.query('INSERT INTO taken (id, tekst, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
                 [generateId(), task, 'prullenbak', 'actief', userId]);
         }
 
@@ -2975,13 +2975,13 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         for (let i = 0; i < planningSchedule.length; i++) {
             const item = planningSchedule[i];
             // Find matching action task or create new one
-            let taskId = actionTaskIds.find(t => t.naam === item.naam)?.id;
+            let taskId = actionTaskIds.find(t => t.tekst === item.naam)?.id;
 
             if (!taskId) {
                 // Create task if not exists
                 taskId = generateId();
                 await pool.query(
-                    `INSERT INTO taken (id, naam, lijst, status, duur, datum, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    `INSERT INTO taken (id, tekst, lijst, status, duur, datum, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
                     [taskId, item.naam, 'acties', 'actief', item.duur, today, userId]
                 );
             }
@@ -3004,7 +3004,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         }
 
         // Step 11: Add subtasks to "Prepare investor pitch deck"
-        const pitchDeckTask = actionTaskIds.find(t => t.naam === 'Prepare investor pitch deck');
+        const pitchDeckTask = actionTaskIds.find(t => t.tekst === 'Prepare investor pitch deck');
         if (pitchDeckTask) {
             const pitchSubtasks = [
                 { titel: 'Research market size data', voltooid: false },
@@ -3022,7 +3022,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         }
 
         // Add subtasks to "Measure kitchen cabinets"
-        const cabinetTask = actionTaskIds.find(t => t.naam === 'Measure kitchen cabinets');
+        const cabinetTask = actionTaskIds.find(t => t.tekst === 'Measure kitchen cabinets');
         if (cabinetTask) {
             const cabinetSubtasks = [
                 { titel: 'Measure upper cabinets', voltooid: false },
