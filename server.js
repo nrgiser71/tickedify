@@ -2820,26 +2820,28 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
         await pool.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM contexten WHERE user_id = $1', [userId]);
 
-        // Step 2: Create Projects
+        // Step 2: Create Projects (VARCHAR IDs required)
         const projects = ['Product Launch', 'Client Work', 'Home Renovation', 'Health & Fitness', 'Learning', 'Admin'];
         const projectIds = {};
         for (const project of projects) {
-            const result = await pool.query(
-                'INSERT INTO projecten (naam, user_id) VALUES ($1, $2) RETURNING id',
-                [project, userId]
+            const projectId = `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await pool.query(
+                'INSERT INTO projecten (id, naam, user_id) VALUES ($1, $2, $3)',
+                [projectId, project, userId]
             );
-            projectIds[project] = result.rows[0].id;
+            projectIds[project] = projectId;
         }
 
-        // Step 3: Create Contexts
+        // Step 3: Create Contexts (VARCHAR IDs required)
         const contexts = ['@computer', '@office', '@phone', '@errands', '@home'];
         const contextIds = {};
         for (const context of contexts) {
-            const result = await pool.query(
-                'INSERT INTO contexten (naam, user_id) VALUES ($1, $2) RETURNING id',
-                [context, userId]
+            const contextId = `context_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await pool.query(
+                'INSERT INTO contexten (id, naam, user_id) VALUES ($1, $2, $3)',
+                [contextId, context, userId]
             );
-            contextIds[context] = result.rows[0].id;
+            contextIds[context] = contextId;
         }
 
         const today = new Date().toISOString().split('T')[0];
