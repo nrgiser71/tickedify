@@ -2794,6 +2794,274 @@ app.get('/api/debug/fix-subscription-plan', async (req, res) => {
 });
 
 // ========================================
+// SEED TEST DATA ENDPOINT - For Screenshots
+// ========================================
+
+app.post('/api/debug/seed-test-data', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const targetEmail = 'jan@buskens.be';
+
+        // Get user ID
+        const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [targetEmail]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const userId = userResult.rows[0].id;
+
+        // Step 1: Delete existing data
+        await pool.query('DELETE FROM subtaken WHERE parent_taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
+        await pool.query('DELETE FROM planning WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM bijlagen WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM contexten WHERE user_id = $1', [userId]);
+
+        // Step 2: Create Projects
+        const projects = ['Product Launch', 'Client Work', 'Home Renovation', 'Health & Fitness', 'Learning', 'Admin'];
+        const projectIds = {};
+        for (const project of projects) {
+            const result = await pool.query(
+                'INSERT INTO projecten (naam, user_id) VALUES ($1, $2) RETURNING id',
+                [project, userId]
+            );
+            projectIds[project] = result.rows[0].id;
+        }
+
+        // Step 3: Create Contexts
+        const contexts = ['@computer', '@office', '@phone', '@errands', '@home'];
+        const contextIds = {};
+        for (const context of contexts) {
+            const result = await pool.query(
+                'INSERT INTO contexten (naam, user_id) VALUES ($1, $2) RETURNING id',
+                [context, userId]
+            );
+            contextIds[context] = result.rows[0].id;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const generateId = () => `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        // Step 4: INBOX tasks (10)
+        const inboxTasks = [
+            'Research competitor pricing strategies',
+            'Book dentist appointment',
+            'Reply to Sarah\'s email about project timeline',
+            'Find new podcast editing software',
+            'Order birthday gift for Mom',
+            'Check insurance renewal options',
+            'Download tax documents for 2024',
+            'Look into standing desk options',
+            'Schedule car maintenance',
+            'Review subscription costs'
+        ];
+        for (const task of inboxTasks) {
+            await pool.query(
+                'INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'inbox', 'actief', userId]
+            );
+        }
+
+        // Step 5: ACTIONS tasks (12) - with project, context, priority, duration
+        const actionsTasks = [
+            { naam: 'Finalize landing page copy', project: 'Product Launch', context: '@computer', prioriteit: 'hoog', duur: 60 },
+            { naam: 'Call supplier for quote', project: 'Home Renovation', context: '@phone', prioriteit: 'hoog', duur: 30 },
+            { naam: 'Review client contract', project: 'Client Work', context: '@office', prioriteit: 'hoog', duur: 45 },
+            { naam: 'Update portfolio website', project: 'Client Work', context: '@computer', prioriteit: 'gemiddeld', duur: 90 },
+            { naam: 'Prepare investor pitch deck', project: 'Product Launch', context: '@computer', prioriteit: 'hoog', duur: 120 },
+            { naam: 'Order gym equipment', project: 'Health & Fitness', context: '@computer', prioriteit: 'laag', duur: 15 },
+            { naam: 'Complete Python course module 5', project: 'Learning', context: '@computer', prioriteit: 'gemiddeld', duur: 60 },
+            { naam: 'File quarterly taxes', project: 'Admin', context: '@office', prioriteit: 'hoog', duur: 90 },
+            { naam: 'Measure kitchen cabinets', project: 'Home Renovation', context: '@home', prioriteit: 'gemiddeld', duur: 30 },
+            { naam: 'Write blog post about productivity', project: 'Product Launch', context: '@computer', prioriteit: 'gemiddeld', duur: 60 },
+            { naam: 'Send weekly newsletter', project: 'Client Work', context: '@computer', prioriteit: 'gemiddeld', duur: 45 },
+            { naam: 'Plan team offsite agenda', project: 'Client Work', context: '@office', prioriteit: 'gemiddeld', duur: 60 }
+        ];
+        const actionTaskIds = [];
+        for (const task of actionsTasks) {
+            const taskId = generateId();
+            actionTaskIds.push({ id: taskId, naam: task.naam });
+            await pool.query(
+                `INSERT INTO taken (id, naam, lijst, status, project_id, context_id, prioriteit, duur, verschijndatum, user_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [taskId, task.naam, 'acties', 'actief', projectIds[task.project], contextIds[task.context], task.prioriteit, task.duur, today, userId]
+            );
+        }
+
+        // Step 6: FOLLOW-UP tasks (8)
+        const followUpTasks = [
+            'Waiting for contractor estimate',
+            'Follow up with bank on loan application',
+            'Pending feedback from design team',
+            'Awaiting client approval on mockups',
+            'Waiting for venue confirmation',
+            'Follow up on job referral',
+            'Pending insurance claim response',
+            'Waiting for course certificate'
+        ];
+        for (const task of followUpTasks) {
+            await pool.query(
+                'INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'opvolgen', 'actief', userId]
+            );
+        }
+
+        // Step 7: POSTPONED tasks (10 total across categories)
+        const postponedWeekly = ['Review weekly goals and progress', 'Check industry news and trends', 'Update expense tracker'];
+        const postponedMonthly = ['Review and pay utility bills', 'Check credit card statements', 'Backup important files'];
+        const postponedQuarterly = ['Review investment portfolio', 'Update emergency contacts'];
+        const postponedYearly = ['Renew professional memberships', 'Review insurance policies'];
+
+        for (const task of postponedWeekly) {
+            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'uitgesteld-wekelijks', 'uitgesteld', userId]);
+        }
+        for (const task of postponedMonthly) {
+            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'uitgesteld-maandelijks', 'uitgesteld', userId]);
+        }
+        for (const task of postponedQuarterly) {
+            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'uitgesteld-3maandelijks', 'uitgesteld', userId]);
+        }
+        for (const task of postponedYearly) {
+            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'uitgesteld-jaarlijks', 'uitgesteld', userId]);
+        }
+
+        // Step 8: COMPLETED tasks (8)
+        const completedTasks = [
+            'Set up email marketing automation',
+            'Complete website redesign',
+            'Negotiate vendor contract',
+            'Attend webinar on AI tools',
+            'Organize home office',
+            'Create social media calendar',
+            'Update LinkedIn profile',
+            'Fix leaking faucet'
+        ];
+        for (const task of completedTasks) {
+            await pool.query(
+                `INSERT INTO taken (id, naam, lijst, status, afgewerkt, user_id) VALUES ($1, $2, $3, $4, NOW(), $5)`,
+                [generateId(), task, 'afgewerkt', 'afgewerkt', userId]
+            );
+        }
+
+        // Step 9: TRASH tasks (3)
+        const trashTasks = ['Old meeting notes - outdated', 'Cancelled project research', 'Duplicate task entry'];
+        for (const task of trashTasks) {
+            await pool.query('INSERT INTO taken (id, naam, lijst, status, user_id) VALUES ($1, $2, $3, $4, $5)',
+                [generateId(), task, 'prullenbak', 'actief', userId]);
+        }
+
+        // Step 10: Daily Planning (9 tasks) with Top 3 priorities
+        const planningSchedule = [
+            { naam: 'Morning review and email triage', uur: 8, minuut: 0, duur: 30, topPrio: null },
+            { naam: 'Finalize landing page copy', uur: 9, minuut: 0, duur: 60, topPrio: 1 },
+            { naam: 'Review client contract', uur: 10, minuut: 0, duur: 45, topPrio: 2 },
+            { naam: 'Team standup call', uur: 11, minuut: 0, duur: 30, topPrio: null },
+            { naam: 'Complete Python course module 5', uur: 11, minuut: 30, duur: 60, topPrio: null },
+            { naam: 'Prepare investor pitch deck', uur: 13, minuut: 0, duur: 120, topPrio: 3 },
+            { naam: 'Call supplier for quote', uur: 15, minuut: 0, duur: 30, topPrio: null },
+            { naam: 'Write blog post about productivity', uur: 15, minuut: 30, duur: 60, topPrio: null },
+            { naam: 'End of day review', uur: 17, minuut: 0, duur: 15, topPrio: null }
+        ];
+
+        for (let i = 0; i < planningSchedule.length; i++) {
+            const item = planningSchedule[i];
+            // Find matching action task or create new one
+            let taskId = actionTaskIds.find(t => t.naam === item.naam)?.id;
+
+            if (!taskId) {
+                // Create task if not exists
+                taskId = generateId();
+                await pool.query(
+                    `INSERT INTO taken (id, naam, lijst, status, duur, datum, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [taskId, item.naam, 'acties', 'actief', item.duur, today, userId]
+                );
+            }
+
+            // Add to planning
+            const planningId = `planning-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            await pool.query(
+                `INSERT INTO planning (id, taak_id, datum, uur, minuut, volgorde, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [planningId, taskId, today, item.uur, item.minuut, i, userId]
+            );
+
+            // Set top priority if applicable
+            if (item.topPrio) {
+                await pool.query(
+                    `UPDATE taken SET top_prioriteit = $1, prioriteit_datum = $2 WHERE id = $3`,
+                    [item.topPrio, today, taskId]
+                );
+            }
+        }
+
+        // Step 11: Add subtasks to "Prepare investor pitch deck"
+        const pitchDeckTask = actionTaskIds.find(t => t.naam === 'Prepare investor pitch deck');
+        if (pitchDeckTask) {
+            const pitchSubtasks = [
+                { titel: 'Research market size data', voltooid: false },
+                { titel: 'Create financial projections', voltooid: false },
+                { titel: 'Design slide template', voltooid: true },
+                { titel: 'Write executive summary', voltooid: false },
+                { titel: 'Add team bios', voltooid: false }
+            ];
+            for (let i = 0; i < pitchSubtasks.length; i++) {
+                await pool.query(
+                    `INSERT INTO subtaken (parent_taak_id, titel, voltooid, volgorde) VALUES ($1, $2, $3, $4)`,
+                    [pitchDeckTask.id, pitchSubtasks[i].titel, pitchSubtasks[i].voltooid, i]
+                );
+            }
+        }
+
+        // Add subtasks to "Measure kitchen cabinets"
+        const cabinetTask = actionTaskIds.find(t => t.naam === 'Measure kitchen cabinets');
+        if (cabinetTask) {
+            const cabinetSubtasks = [
+                { titel: 'Measure upper cabinets', voltooid: false },
+                { titel: 'Measure lower cabinets', voltooid: false },
+                { titel: 'Note electrical outlets', voltooid: false },
+                { titel: 'Take photos for reference', voltooid: false }
+            ];
+            for (let i = 0; i < cabinetSubtasks.length; i++) {
+                await pool.query(
+                    `INSERT INTO subtaken (parent_taak_id, titel, voltooid, volgorde) VALUES ($1, $2, $3, $4)`,
+                    [cabinetTask.id, cabinetSubtasks[i].titel, cabinetSubtasks[i].voltooid, i]
+                );
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Test data seeded for ${targetEmail}`,
+            summary: {
+                projects: projects.length,
+                contexts: contexts.length,
+                inbox: inboxTasks.length,
+                actions: actionsTasks.length,
+                followUp: followUpTasks.length,
+                postponed: postponedWeekly.length + postponedMonthly.length + postponedQuarterly.length + postponedYearly.length,
+                completed: completedTasks.length,
+                trash: trashTasks.length,
+                planning: planningSchedule.length,
+                subtasks: 9
+            }
+        });
+
+    } catch (error) {
+        console.error('Seed test data error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ========================================
 // PAGE HELP API - Feature 062
 // ========================================
 
