@@ -2814,7 +2814,7 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
 
         // Step 1: Delete existing data
         await pool.query('DELETE FROM subtaken WHERE parent_taak_id IN (SELECT id FROM taken WHERE user_id = $1)', [userId]);
-        await pool.query('DELETE FROM planning WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM dagelijkse_planning WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM bijlagen WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM taken WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM projecten WHERE user_id = $1', [userId]);
@@ -2984,11 +2984,12 @@ app.get('/api/debug/seed-test-data', async (req, res) => {
                 );
             }
 
-            // Add to planning
+            // Add to planning (dagelijkse_planning table)
             const planningId = `planning-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             await pool.query(
-                `INSERT INTO planning (id, taak_id, datum, uur, minuut, volgorde, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [planningId, taskId, today, item.uur, item.minuut, i, userId]
+                `INSERT INTO dagelijkse_planning (id, actie_id, datum, uur, positie, type, naam, duur_minuten, user_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [planningId, taskId, today, item.uur, i, 'taak', item.naam, item.duur, userId]
             );
 
             // Set top priority if applicable
