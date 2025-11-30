@@ -2797,7 +2797,7 @@ app.get('/api/debug/fix-subscription-plan', async (req, res) => {
 // SEED TEST DATA ENDPOINT - For Screenshots
 // ========================================
 
-app.post('/api/debug/seed-test-data', async (req, res) => {
+app.get('/api/debug/seed-test-data', async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
