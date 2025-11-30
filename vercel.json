@@ -108,7 +108,7 @@
       "dest": "/public/css/$1"
     },
     {
-      "src": "/website/assets/(.*)",
+      "src": "/assets/(.*)",
       "dest": "/public/website/assets/$1"
     },
     {
