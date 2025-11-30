@@ -5,7 +5,7 @@
     "primaryButton": "Start Free Trial",
     "primaryButtonUrl": "https://www.tickedify.com/subscription.html",
     "secondaryButton": "Watch Demo",
-    "image": "/src/assets/Main.png"
+    "image": "/assets/Main.png"
   },
   "video": {
     "title": "See Tickedify in Action",
@@ -21,67 +21,67 @@
         "icon": "Zap",
         "title": "Lightning Fast",
         "description": "Plan your tasks lightning fast with drag and drop. Move tasks to another day or another list quickly.",
-        "video": "/src/assets/CleanShot_2025-10-31_at_10.32.14.mp4",
-        "image": "/src/assets/DragAndDrop.png"
+        "video": "/assets/CleanShot_2025-10-31_at_10.32.14.mp4",
+        "image": "/assets/DragAndDrop.png"
       },
       {
         "icon": "Target",
         "title": "Visual Daily Planning",
         "description": "Drag and drop your task to your calendar view to visualize your day. Tickedify will even tell you when you are too optimistic and think you can do 2 hours of work in 1 hour. ",
         "video": "",
-        "image": "/src/assets/Plan.png"
+        "image": "/assets/Plan.png"
       },
       {
         "icon": "funnel",
         "title": "Find your tasks quickly",
         "description": "Filter your tasks by Description, Project, Context, Date and Priority to find what you're looking for as fast as possible.",
         "video": "",
-        "image": "/src/assets/Filter.png"
+        "image": "/assets/Filter.png"
       },
       {
         "icon": "binoculars",
         "title": "Search",
         "description": "Still can't find your task? Search to the rescue. It will look for your tasks in every possible place. Even in your completed tasks if you want to.",
         "video": "",
-        "image": "/src/assets/Search.png"
+        "image": "/assets/Search.png"
       },
       {
         "icon": "repeat",
         "title": "Recurring tasks",
         "description": "Do you have recurring tasks? Of course you do. Who doesn't? Tickedify has got you covered. It has the most extensive recurrences you can imagine.",
         "video": "",
-        "image": "/src/assets/Repeat.png"
+        "image": "/assets/Repeat.png"
       },
       {
         "icon": "circle-plus",
         "title": "Quick Capture",
         "description": "Do you quickly want to add a new task from anywhere in the app? Just press SHIFT+F12. Just dump it and continue with your work.",
         "video": "",
-        "image": "/src/assets/QuickCapture.png"
+        "image": "/assets/QuickCapture.png"
       },
       {
         "icon": "mail-plus",
         "title": "Email to task",
         "description": "Oh yes... Tickedify can do that as well. Just forward any e-mail to your personal Tickedify email address and we'll translate it to a task. You can even add keywords to your email to assign it to a project or give it a date or a priority of a context. Very powerful !\nBut don't worry. Even if you don't use keywords or make mistakes, the task will be created anyway.",
-        "image": "/src/assets/Mail.png"
+        "image": "/assets/Mail.png"
       },
       {
         "icon": "folder-open",
         "title": "Projects",
         "description": "Of course, we also have the bases covered. You can assign tasks to projects. But you don't have to. Tickedify knows that you have a lot of one-off tasks. They don't need projects.",
-        "image": "/src/assets/Projects.png"
+        "image": "/assets/Projects.png"
       },
       {
         "icon": "list-tree",
         "title": "Subtasks, notes and attachments",
         "description": "Yep, Tickedify also supports subtasks, notes and attachments. We had some time left and decided to add that as well. 😀",
-        "image": "/src/assets/Properties.png"
+        "image": "/assets/Properties.png"
       },
       {
         "icon": "layout-list",
         "title": "Bulk Edit",
         "description": "Sometimes you need to set one or more properties of multiple tasks to the same value. That's why Tickedify supports bulk edit. We really want you to save as much time as possible.",
-        "image": "/src/assets/Bulk_Edit.png"
+        "image": "/assets/Bulk_Edit.png"
       }
     ]
   },
@@ -96,7 +96,7 @@
       "Bulk operations",
       "And so much more"
     ],
-    "image": "/src/assets/hero-dashboard.png"
+    "image": "/assets/hero-dashboard.png"
   },
   "testimonials": {
     "title": "Loved by Teams Worldwide",
