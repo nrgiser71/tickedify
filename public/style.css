@@ -7349,7 +7349,7 @@ button:focus {
 /* Bulk Controls Container */
 .bulk-controls-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
@@ -7357,6 +7357,7 @@ button:focus {
     background: var(--macos-gray-6);
     border-radius: var(--macos-radius-medium);
     border: 1px solid var(--macos-gray-5);
+    position: relative;
 }
 
 /* Bulk Mode Styles */
@@ -7390,7 +7391,8 @@ button:focus {
     height: 20px;
     accent-color: #007aff;
     cursor: pointer;
-    margin-left: 24px; /* Align with task checkboxes (drag-handle width + gap) */
+    position: absolute;
+    left: 40px;
     vertical-align: middle;
 }
 
