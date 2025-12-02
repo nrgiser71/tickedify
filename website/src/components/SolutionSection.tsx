@@ -46,11 +46,22 @@ const SolutionSection = () => {
 
           <div className="relative">
             <div className="rounded-xl overflow-hidden">
-              <img
-                src={content.image}
-                alt="Tickedify workspace interface"
-                className="w-full h-auto"
-              />
+              {content.video ? (
+                <video
+                  src={content.video}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-auto"
+                />
+              ) : (
+                <img
+                  src={content.image}
+                  alt="Tickedify workspace interface"
+                  className="w-full h-auto"
+                />
+              )}
             </div>
           </div>
         </div>
