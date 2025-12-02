@@ -30,6 +30,7 @@ export interface ContentData {
     title: string;
     description: string;
     features: string[];
+    video?: string;
     image: string;
   };
   testimonials: {

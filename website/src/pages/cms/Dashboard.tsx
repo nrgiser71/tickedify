@@ -178,6 +178,66 @@ const CmsDashboard = () => {
     }
   };
 
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>, section: 'solution') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Valideer bestandstype
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Ongeldig bestand",
+        description: "Selecteer een video (MP4, WebM, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Valideer bestandsgrootte (max 50MB voor video)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "Bestand te groot",
+        description: "Maximale bestandsgrootte is 50MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file); // API gebruikt 'image' veldnaam voor alle uploads
+
+      const response = await fetch('/api/cms/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+
+      // Update content met nieuwe video path
+      if (section === 'solution') {
+        setContent({...content, solutionSection: {...content.solutionSection, video: data.path}});
+      }
+
+      toast({
+        title: "Video geüpload",
+        description: `${file.name} is succesvol geüpload. Vergeet niet op te slaan!`,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload mislukt",
+        description: "Er ging iets mis bij het uploaden van de video",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, section: 'hero' | 'solution') => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -653,6 +713,56 @@ const CmsDashboard = () => {
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Video (optioneel - vervangt afbeelding)</label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Als een video is ingesteld, wordt deze getoond in plaats van de afbeelding. Laat leeg om de afbeelding te tonen.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        value={content.solutionSection.video || ''}
+                        onChange={(e) => setContent({...content, solutionSection: {...content.solutionSection, video: e.target.value}})}
+                        placeholder="/assets/video.mp4"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploading}
+                        onClick={() => document.getElementById('solution-video-upload')?.click()}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {uploading ? 'Uploaden...' : 'Upload Video'}
+                      </Button>
+                      {content.solutionSection.video && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setContent({...content, solutionSection: {...content.solutionSection, video: ''}})}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <input
+                        id="solution-video-upload"
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => handleVideoUpload(e, 'solution')}
+                      />
+                    </div>
+                    {content.solutionSection.video && (
+                      <div className="border rounded-lg p-4 bg-accent/5">
+                        <video
+                          src={content.solutionSection.video}
+                          controls
+                          className="w-full max-h-[300px] rounded"
                         />
                       </div>
                     )}
