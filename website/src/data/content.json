@@ -3,7 +3,7 @@
     "title": "The task manager that actually keeps you focused.",
     "description": "Stop juggling tasks. Bring calm, order, and focus back to your workday.",
     "primaryButton": "Start Free Trial",
-    "primaryButtonUrl": "https://www.tickedify.com/subscription.html",
+    "primaryButtonUrl": "https://www.tickedify.com/subscription",
     "secondaryButton": "Watch Demo",
     "image": "/assets/Main.png"
   },
@@ -154,13 +154,13 @@
     ],
     "footer": "Cancel anytime. No questions asked.",
     "buttonText": "Choose your plan",
-    "buttonUrl": "https://www.tickedify.com/subscription.html"
+    "buttonUrl": "https://www.tickedify.com/subscription"
   },
   "cta": {
     "title": "Get control of your workday.",
     "description": "Join thousands of professionals who already switched to Tickedify.",
     "button": "Start Free Trial",
-    "buttonUrl": "https://www.tickedify.com/subscription.html"
+    "buttonUrl": "https://www.tickedify.com/subscription"
   },
   "footer": {
     "title": "Tickedify",
