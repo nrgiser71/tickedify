@@ -7349,7 +7349,7 @@ button:focus {
 /* Bulk Controls Container */
 .bulk-controls-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
@@ -7390,7 +7390,7 @@ button:focus {
     height: 20px;
     accent-color: #007aff;
     cursor: pointer;
-    margin-right: 12px;
+    margin-left: 24px; /* Align with task checkboxes (drag-handle width + gap) */
     vertical-align: middle;
 }
 
