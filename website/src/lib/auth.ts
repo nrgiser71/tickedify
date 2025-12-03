@@ -1,6 +1,6 @@
 const AUTH_KEY = 'tickedify_admin_auth';
 const SESSION_KEY = 'tickedify_admin_session';
-const DEFAULT_PASSWORD = 'admin123'; // Default wachtwoord - MOET gewijzigd worden!
+const DEFAULT_PASSWORD = 'ft6Js0Wzb!3^a86@!P7aie9&5G_Mvl^^PwXP';
 
 // Check of er een wachtwoord is ingesteld
 export const hasPassword = (): boolean => {
