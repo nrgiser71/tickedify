@@ -4553,7 +4553,7 @@ Examples:
         }
 
         // Render active subscriptions list
-        function renderActiveSubscriptions(data) {
+        async function renderActiveSubscriptions(data) {
             if (data.subscriptions.length === 0) {
                 showRevenueEmpty('No paying customers yet.', '👥');
                 return;

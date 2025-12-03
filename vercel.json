@@ -96,6 +96,10 @@
       "dest": "/public/app.js"
     },
     {
+      "src": "/admin2\\.js",
+      "dest": "/public/admin2.js"
+    },
+    {
       "src": "/style\\.css",
       "dest": "/public/style.css"
     },
