@@ -334,20 +334,23 @@ class BackupManager {
 
         for (const tx of txResult.rows) {
           try {
-            if (tx.operation === 'INSERT' && tx.new_data) {
-              const columns = Object.keys(tx.new_data);
-              const values = Object.values(tx.new_data);
+            // Parse JSON string if needed (data may be stored as string or object)
+            const newData = typeof tx.new_data === 'string' ? JSON.parse(tx.new_data) : tx.new_data;
+
+            if (tx.operation === 'INSERT' && newData) {
+              const columns = Object.keys(newData);
+              const values = Object.values(newData);
               const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
               await client.query(
                 `INSERT INTO ${tx.table_name} (${columns.join(', ')}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
                 values
               );
-            } else if (tx.operation === 'UPDATE' && tx.new_data) {
-              const setClauses = Object.keys(tx.new_data)
+            } else if (tx.operation === 'UPDATE' && newData) {
+              const setClauses = Object.keys(newData)
                 .filter(k => k !== 'id')
                 .map((k, i) => `${k} = $${i + 2}`)
                 .join(', ');
-              const values = [tx.record_id, ...Object.values(tx.new_data).filter((_, i) => Object.keys(tx.new_data)[i] !== 'id')];
+              const values = [tx.record_id, ...Object.values(newData).filter((_, i) => Object.keys(newData)[i] !== 'id')];
               await client.query(
                 `UPDATE ${tx.table_name} SET ${setClauses} WHERE id = $1`,
                 values
