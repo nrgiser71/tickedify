@@ -14,30 +14,36 @@ const CmsLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      const success = login(password);
+    try {
+      const success = await login(password);
 
       if (success) {
         toast({
-          title: "Succesvol ingelogd",
-          description: "Welkom in het CMS dashboard",
+          title: "Successfully logged in",
+          description: "Welcome to the CMS dashboard",
         });
         navigate("/cms/dashboard");
       } else {
         toast({
-          title: "Inloggen mislukt",
-          description: "Onjuist wachtwoord. Probeer opnieuw.",
+          title: "Login failed",
+          description: "Incorrect password. Please try again.",
           variant: "destructive",
         });
       }
-
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
       setPassword("");
-    }, 500);
+    }
   };
 
   return (

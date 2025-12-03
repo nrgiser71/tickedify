@@ -1,23 +1,6 @@
-const AUTH_KEY = 'tickedify_admin_auth';
-const SESSION_KEY = 'tickedify_admin_session';
-const DEFAULT_PASSWORD = 'ft6Js0Wzb!3^a86@!P7aie9&5G_Mvl^^PwXP';
+const SESSION_KEY = 'tickedify_cms_session';
 
-// Check of er een wachtwoord is ingesteld
-export const hasPassword = (): boolean => {
-  return localStorage.getItem(AUTH_KEY) !== null;
-};
-
-// Haal het opgeslagen wachtwoord op
-const getStoredPassword = (): string => {
-  return localStorage.getItem(AUTH_KEY) || DEFAULT_PASSWORD;
-};
-
-// Stel een nieuw wachtwoord in
-export const setPassword = (newPassword: string): void => {
-  localStorage.setItem(AUTH_KEY, newPassword);
-};
-
-// Controleer of gebruiker is ingelogd
+// Check of gebruiker is ingelogd (client-side cache)
 export const isAuthenticated = (): boolean => {
   const session = localStorage.getItem(SESSION_KEY);
   if (!session) return false;
@@ -33,20 +16,46 @@ export const isAuthenticated = (): boolean => {
   }
 };
 
-// Login met wachtwoord
-export const login = (password: string): boolean => {
-  const storedPassword = getStoredPassword();
-
-  if (password === storedPassword) {
-    const session = {
-      timestamp: Date.now(),
-      authenticated: true
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return true;
+// Check sessie bij server
+export const checkSession = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('/api/cms/session', {
+      credentials: 'include'
+    });
+    const data = await response.json();
+    return data.authenticated === true;
+  } catch {
+    return false;
   }
+};
 
-  return false;
+// Login met wachtwoord via server API
+export const login = async (password: string): Promise<boolean> => {
+  try {
+    const response = await fetch('/api/cms/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ password })
+    });
+
+    if (response.ok) {
+      // Store local session cache
+      const session = {
+        timestamp: Date.now(),
+        authenticated: true
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Login error:', error);
+    return false;
+  }
 };
 
 // Logout
@@ -63,9 +72,4 @@ export const refreshSession = (): void => {
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
-};
-
-// Get het huidige wachtwoord (voor admin om te tonen)
-export const getCurrentPassword = (): string => {
-  return getStoredPassword();
 };

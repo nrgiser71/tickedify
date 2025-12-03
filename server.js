@@ -11674,6 +11674,47 @@ app.post('/api/admin/auth', async (req, res) => {
     }
 });
 
+// CMS Authentication Endpoint (for website CMS)
+app.post('/api/cms/auth', async (req, res) => {
+    try {
+        const { password } = req.body;
+        const cmsPassword = process.env.CMS_PASSWORD;
+
+        if (!cmsPassword) {
+            console.error('CMS_PASSWORD environment variable not set');
+            return res.status(500).json({ error: 'CMS not configured' });
+        }
+
+        if (!password) {
+            return res.status(400).json({ error: 'Password is required' });
+        }
+
+        if (password === cmsPassword) {
+            req.session.isCmsAdmin = true;
+            req.session.cmsLoginTime = new Date().toISOString();
+
+            res.json({
+                success: true,
+                message: 'CMS authentication successful'
+            });
+        } else {
+            res.status(401).json({ error: 'Invalid password' });
+        }
+    } catch (error) {
+        console.error('CMS auth error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+    }
+});
+
+// CMS Session Check Endpoint
+app.get('/api/cms/session', (req, res) => {
+    if (req.session && req.session.isCmsAdmin) {
+        res.json({ authenticated: true });
+    } else {
+        res.json({ authenticated: false });
+    }
+});
+
 // Admin Session Check Endpoint
 app.get('/api/admin/session', (req, res) => {
     if (req.session && req.session.isAdmin) {
