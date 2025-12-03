@@ -3058,6 +3058,34 @@ const BackupManager = {
     },
 
     /**
+     * Show/hide restore loading overlay
+     */
+    showRestoreOverlay(message) {
+        // Remove existing overlay
+        const existing = document.getElementById('restore-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'restore-overlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; font-size: 18px;
+        `;
+        overlay.innerHTML = `
+            <div class="loading-spinner" style="width: 50px; height: 50px; border-width: 4px;"></div>
+            <p style="margin-top: 20px;">${message}</p>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    hideRestoreOverlay() {
+        const overlay = document.getElementById('restore-overlay');
+        if (overlay) overlay.remove();
+    },
+
+    /**
      * Restore from backup
      */
     async restoreBackup(id) {
@@ -3081,6 +3109,11 @@ const BackupManager = {
             return;
         }
 
+        // Show loading overlay
+        this.showRestoreOverlay(replayTransactions
+            ? '🔄 Restoring database and replaying transactions...'
+            : '🔄 Restoring database...');
+
         try {
             const response = await fetch(`/api/admin/backups/${id}/restore`, {
                 method: 'POST',
@@ -3088,18 +3121,21 @@ const BackupManager = {
                 body: JSON.stringify({ replayTransactions })
             });
 
+            this.hideRestoreOverlay();
+
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || 'Restore failed');
             }
 
             const result = await response.json();
-            alert(`Restore completed!\n\nTables restored: ${result.tablesRestored}\nTransactions replayed: ${result.transactionsReplayed}`);
+            alert(`✅ Restore completed!\n\nTables restored: ${result.tablesRestored}\nTransactions replayed: ${result.transactionsReplayed}`);
             this.loadBackups();
             this.loadTransactionLog();
         } catch (error) {
+            this.hideRestoreOverlay();
             console.error('Error restoring backup:', error);
-            alert('Restore failed: ' + error.message);
+            alert('❌ Restore failed: ' + error.message);
         }
     },
 
