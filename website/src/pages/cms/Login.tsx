@@ -69,9 +69,6 @@ const CmsLogin = () => {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Inloggen..." : "Inloggen"}
             </Button>
-            <p className="text-sm text-muted-foreground text-center mt-4">
-              Standaard wachtwoord: <code className="bg-accent/20 px-2 py-1 rounded">admin123</code>
-            </p>
           </form>
         </CardContent>
       </Card>
