@@ -5,8 +5,18 @@ const multer = require('multer');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const OpenAI = require('openai');
+const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Rate limiter for authentication endpoints - prevent brute force attacks
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Max 5 attempts per window
+    message: { error: 'Too many authentication attempts, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 // Import PostgreSQL session store
 const pgSession = require('connect-pg-simple')(session);
@@ -1285,6 +1295,34 @@ try {
     console.log('⚠️ Using fallback memory session store');
 }
 
+// ============================================================
+// SECURITY MIDDLEWARE - Protect admin and debug endpoints
+// ============================================================
+app.use('/api/admin', (req, res, next) => {
+    // Allow authentication endpoints without prior auth
+    const publicPaths = ['/auth', '/session'];
+    if (publicPaths.some(path => req.path === path)) {
+        return next();
+    }
+
+    // Require admin session for all other admin endpoints
+    if (!req.session || (!req.session.isAdmin && !req.session.adminAuthenticated)) {
+        return res.status(401).json({ error: 'Admin authentication required' });
+    }
+    next();
+});
+
+app.use('/api/debug', (req, res, next) => {
+    // Block debug endpoints in production unless admin authenticated
+    if (process.env.NODE_ENV === 'production') {
+        if (!req.session || (!req.session.isAdmin && !req.session.adminAuthenticated)) {
+            return res.status(403).json({ error: 'Debug endpoints not available in production' });
+        }
+    }
+    next();
+});
+// ============================================================
+
 app.get('/api/db-test', async (req, res) => {
     try {
         if (!db) {
@@ -1566,8 +1604,19 @@ app.post('/api/admin/make-jan-admin', async (req, res) => {
 });
 
 // Database reset endpoint - DANGER: Deletes ALL data
+// SECURITY: Requires admin authentication and blocks in production
 app.post('/api/admin/reset-database', async (req, res) => {
     try {
+        // SECURITY: Block in production environment
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(403).json({ error: 'Database reset is not available in production' });
+        }
+
+        // SECURITY: Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
         }
@@ -4879,7 +4928,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
     try {
         const { email, wachtwoord } = req.body;
 
@@ -11645,25 +11694,38 @@ app.post('/api/admin/maintenance', async (req, res) => {
 });
 
 // Admin Authentication Endpoint
-app.post('/api/admin/auth', async (req, res) => {
+app.post('/api/admin/auth', authLimiter, async (req, res) => {
     try {
         const { password } = req.body;
-        const adminPassword = process.env.ADMIN_PASSWORD || 'tefhi5-kudgIr-girjot'; // fallback to current password
-        
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!adminPassword) {
+            console.error('ADMIN_PASSWORD environment variable not set');
+            return res.status(500).json({ error: 'Admin authentication not configured' });
+        }
+
         if (!password) {
             return res.status(400).json({ error: 'Password is required' });
         }
-        
+
         if (password === adminPassword) {
-            // Set admin session flag
-            req.session.isAdmin = true;
-            req.session.adminAuthenticated = true; // Also set this for consistency
-            req.session.adminLoginTime = new Date().toISOString();
-            
-            res.json({ 
-                success: true, 
-                message: 'Admin authentication successful',
-                loginTime: req.session.adminLoginTime
+            // SECURITY: Regenerate session to prevent session fixation attacks
+            req.session.regenerate((err) => {
+                if (err) {
+                    console.error('Session regeneration error:', err);
+                    return res.status(500).json({ error: 'Session error' });
+                }
+
+                // Set admin session flag
+                req.session.isAdmin = true;
+                req.session.adminAuthenticated = true;
+                req.session.adminLoginTime = new Date().toISOString();
+
+                res.json({
+                    success: true,
+                    message: 'Admin authentication successful',
+                    loginTime: req.session.adminLoginTime
+                });
             });
         } else {
             res.status(401).json({ error: 'Invalid admin password' });
@@ -11675,7 +11737,7 @@ app.post('/api/admin/auth', async (req, res) => {
 });
 
 // CMS Authentication Endpoint (for website CMS)
-app.post('/api/cms/auth', async (req, res) => {
+app.post('/api/cms/auth', authLimiter, async (req, res) => {
     try {
         const { password } = req.body;
         const cmsPassword = process.env.CMS_PASSWORD;
@@ -11690,12 +11752,20 @@ app.post('/api/cms/auth', async (req, res) => {
         }
 
         if (password === cmsPassword) {
-            req.session.isCmsAdmin = true;
-            req.session.cmsLoginTime = new Date().toISOString();
+            // SECURITY: Regenerate session to prevent session fixation attacks
+            req.session.regenerate((err) => {
+                if (err) {
+                    console.error('Session regeneration error:', err);
+                    return res.status(500).json({ error: 'Session error' });
+                }
 
-            res.json({
-                success: true,
-                message: 'CMS authentication successful'
+                req.session.isCmsAdmin = true;
+                req.session.cmsLoginTime = new Date().toISOString();
+
+                res.json({
+                    success: true,
+                    message: 'CMS authentication successful'
+                });
             });
         } else {
             res.status(401).json({ error: 'Invalid password' });
