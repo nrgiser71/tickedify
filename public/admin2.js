@@ -3061,14 +3061,31 @@ const BackupManager = {
      * Restore from backup
      */
     async restoreBackup(id) {
-        if (!confirm('WARNING: This will restore the database from this backup!\n\nAll data created after this backup will be lost.\n\nAre you absolutely sure?')) return;
-        if (!confirm('FINAL CONFIRMATION: Proceed with database restore?')) return;
+        // First: choose restore mode
+        const restoreOnly = confirm(
+            'RESTORE OPTIONS:\n\n' +
+            '• Click OK for RESTORE ONLY (no transaction replay)\n' +
+            '  → Database returns to exact backup state\n\n' +
+            '• Click CANCEL for RESTORE + REPLAY transactions\n' +
+            '  → Database restored, then recent changes re-applied\n\n' +
+            'Which option do you want?'
+        );
+
+        const replayTransactions = !restoreOnly;
+        const modeText = replayTransactions
+            ? 'RESTORE + REPLAY (transactions will be re-applied)'
+            : 'RESTORE ONLY (data after backup will be lost)';
+
+        // Final confirmation
+        if (!confirm(`FINAL CONFIRMATION\n\nMode: ${modeText}\n\nProceed with database restore?`)) {
+            return;
+        }
 
         try {
             const response = await fetch(`/api/admin/backups/${id}/restore`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ replayTransactions: true })
+                body: JSON.stringify({ replayTransactions })
             });
 
             if (!response.ok) {
@@ -3077,7 +3094,7 @@ const BackupManager = {
             }
 
             const result = await response.json();
-            alert(`Restore completed!\nTables restored: ${result.tablesRestored}\nTransactions replayed: ${result.transactionsReplayed}`);
+            alert(`Restore completed!\n\nTables restored: ${result.tablesRestored}\nTransactions replayed: ${result.transactionsReplayed}`);
             this.loadBackups();
             this.loadTransactionLog();
         } catch (error) {
