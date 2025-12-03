@@ -7967,7 +7967,7 @@ app.post('/api/taak/add-to-inbox', async (req, res) => {
                 tableName: 'taken',
                 recordId: newTask.id,
                 oldData: null,
-                newData: { id: newTask.id, tekst: newTask.tekst, lijst: 'inbox', aangemaakt: newTask.aangemaakt },
+                newData: { id: newTask.id, tekst: newTask.tekst, lijst: 'inbox', aangemaakt: newTask.aangemaakt, user_id: userId },
                 requestPath: req.path
             });
             res.json({ success: true, taskId: newTask.id });
