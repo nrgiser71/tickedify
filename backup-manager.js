@@ -113,9 +113,12 @@ class BackupManager {
 
       console.log(`  📦 Compressed size: ${(sizeBytes / 1024).toFixed(2)} KB`);
 
-      // Upload to B2
-      if (this.storageManager && this.storageManager.b2Client) {
+      // Upload to B2 - initialize first, then check
+      if (this.storageManager) {
         await this.storageManager.initialize();
+      }
+
+      if (this.storageManager && this.storageManager.b2Client) {
 
         // Get upload URL
         const uploadUrlResponse = await this.storageManager.b2Client.getUploadUrl({
@@ -232,12 +235,16 @@ class BackupManager {
       throw new Error('Backup is not available for download');
     }
 
-    // Download from B2
-    if (!this.storageManager || !this.storageManager.b2Client) {
+    // Download from B2 - initialize first, then check
+    if (!this.storageManager) {
       throw new Error('B2 storage not available');
     }
 
     await this.storageManager.initialize();
+
+    if (!this.storageManager.b2Client) {
+      throw new Error('B2 storage not available - initialization failed');
+    }
 
     const downloadResponse = await this.storageManager.b2Client.downloadFileByName({
       bucketName: process.env.B2_BUCKET_NAME || 'tickedify-attachments',
