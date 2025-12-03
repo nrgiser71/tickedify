@@ -192,7 +192,8 @@ const ScreenManager = {
             'system': '⚙️ System Settings',
             'dbtools': '🔧 Database Tools',
             'debug': '🔍 Debug Tools',
-            'security': '🔒 Security'
+            'security': '🔒 Security',
+            'backups': '💾 Backups'
         };
 
         const breadcrumbText = document.getElementById('breadcrumb-text');
@@ -3124,9 +3125,9 @@ const BackupManager = {
 };
 
 // Hook into screen manager to load backups when screen is shown
-const originalShowScreen = ScreenManager.showScreen;
-ScreenManager.showScreen = function(screenName) {
-    originalShowScreen.call(this, screenName);
+const originalShow = ScreenManager.show;
+ScreenManager.show = function(screenName) {
+    originalShow.call(this, screenName);
     if (screenName === 'backups') {
         BackupManager.init();
     }
