@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="js/message-modal.js"></script>
     <style>
         /* Admin Dashboard v2 Specific Styles */
         .admin-layout {
@@ -1028,12 +1027,6 @@
                         <span>Test Environment</span>
                     </a>
                 </li>
-                <li class="admin-nav-item">
-                    <a href="#backups" class="admin-nav-link" data-screen="backups">
-                        <span class="admin-nav-icon">💾</span>
-                        <span>Backups</span>
-                    </a>
-                </li>
             </ul>
         </nav>
 
@@ -1945,81 +1938,6 @@ Examples:
                     <h3 style="margin-bottom: 15px;">📋 Alle Feedback</h3>
                     <div id="feedbackTable">
                         <div class="loading">Laden...</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Backups Screen (Feature 071) -->
-            <section id="screen-backups" class="admin-screen" data-screen="backups">
-                <div class="admin-header">
-                    <h1 class="admin-header-title">💾 Backup Management</h1>
-                    <p class="admin-header-subtitle">Manage database backups and transaction logs</p>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Last Backup</div>
-                        <div class="stat-value" id="backupLastTime">-</div>
-                        <div class="stat-subtitle">Most recent backup</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Backups</div>
-                        <div class="stat-value" id="backupTotal">-</div>
-                        <div class="stat-subtitle">Available backups</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Transactions</div>
-                        <div class="stat-value" id="transactionTotal">-</div>
-                        <div class="stat-subtitle">Last 24 hours</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Status</div>
-                        <div class="stat-value" id="backupStatus">-</div>
-                        <div class="stat-subtitle">System health</div>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="admin-table" style="margin-bottom: 20px;">
-                    <h3 style="margin-bottom: 15px;">🔧 Actions</h3>
-                    <button class="btn btn-primary" onclick="BackupManager.createBackup()" id="createBackupBtn">
-                        Create Manual Backup
-                    </button>
-                    <button class="btn btn-secondary" onclick="BackupManager.loadBackups()" style="margin-left: 10px;">
-                        Refresh
-                    </button>
-                </div>
-
-                <!-- Backups Table -->
-                <div class="admin-table" style="margin-bottom: 20px;">
-                    <h3 style="margin-bottom: 15px;">📋 Available Backups</h3>
-                    <div id="backupsTable">
-                        <div class="loading">Loading backups...</div>
-                    </div>
-                </div>
-
-                <!-- Transaction Log -->
-                <div class="admin-table">
-                    <h3 style="margin-bottom: 15px;">📝 Transaction Log (Last 24 Hours)</h3>
-                    <div style="margin-bottom: 15px;">
-                        <select id="txLogTableFilter" onchange="BackupManager.loadTransactionLog()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                            <option value="">All Tables</option>
-                            <option value="taken">Tasks (taken)</option>
-                            <option value="dagelijkse_planning">Daily Planning</option>
-                            <option value="projecten">Projects</option>
-                            <option value="contexten">Contexts</option>
-                            <option value="subtaken">Subtasks</option>
-                        </select>
-                        <select id="txLogOperationFilter" onchange="BackupManager.loadTransactionLog()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-left: 10px;">
-                            <option value="">All Operations</option>
-                            <option value="INSERT">INSERT</option>
-                            <option value="UPDATE">UPDATE</option>
-                            <option value="DELETE">DELETE</option>
-                        </select>
-                    </div>
-                    <div id="transactionLogTable">
-                        <div class="loading">Loading transaction log...</div>
                     </div>
                 </div>
             </section>
