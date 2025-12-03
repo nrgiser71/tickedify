@@ -1010,6 +1010,12 @@
                     </a>
                 </li>
                 <li class="admin-nav-item">
+                    <a href="#backups" class="admin-nav-link" data-screen="backups">
+                        <span class="admin-nav-icon">💾</span>
+                        <span>Backups</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
                     <a href="#messages" class="admin-nav-link" data-screen="messages">
                         <span class="admin-nav-icon">📢</span>
                         <span>Berichten</span>
@@ -1612,6 +1618,78 @@
                                 <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Backups Screen -->
+            <section id="screen-backups" class="admin-screen" data-screen="backups">
+                <div class="admin-header">
+                    <h1 class="admin-header-title">💾 Backup Management</h1>
+                    <p class="admin-header-subtitle">Database backups and transaction history</p>
+                </div>
+
+                <!-- Backup Stats Cards -->
+                <div class="admin-stats-grid" style="margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-label">📦 Total Backups</div>
+                        <div class="stat-value" id="backupTotal">--</div>
+                        <div class="stat-sublabel">All stored backups</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">🕐 Last Backup</div>
+                        <div class="stat-value" id="backupLastTime" style="font-size: 16px;">--</div>
+                        <div class="stat-sublabel">Most recent backup time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">✅ Status</div>
+                        <div class="stat-value" id="backupStatus">--</div>
+                        <div class="stat-sublabel">Last backup status</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">📝 Transactions (3d)</div>
+                        <div class="stat-value" id="transactionTotal">--</div>
+                        <div class="stat-sublabel">Last 3 days of logs</div>
+                    </div>
+                </div>
+
+                <!-- Create Backup Button -->
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" id="createBackupBtn" onclick="BackupManager.createBackup()" style="font-size: 14px;">
+                        ➕ Create Manual Backup
+                    </button>
+                </div>
+
+                <!-- Backups Table -->
+                <div class="admin-table">
+                    <h3 style="margin-bottom: 15px;">📦 Recent Backups</h3>
+                    <div id="backupsTable">
+                        <div style="color: #666;">Loading backups...</div>
+                    </div>
+                </div>
+
+                <!-- Transaction Log -->
+                <div class="admin-table" style="margin-top: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3>📜 Transaction Log (Last 3 Days)</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="txLogTableFilter" onchange="BackupManager.loadTransactionLog()" style="padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px;">
+                                <option value="">All Tables</option>
+                                <option value="acties">acties</option>
+                                <option value="daily_planning">daily_planning</option>
+                                <option value="projecten">projecten</option>
+                                <option value="users">users</option>
+                            </select>
+                            <select id="txLogOperationFilter" onchange="BackupManager.loadTransactionLog()" style="padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px;">
+                                <option value="">All Operations</option>
+                                <option value="INSERT">INSERT</option>
+                                <option value="UPDATE">UPDATE</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="transactionLogTable">
+                        <div style="color: #666;">Loading transaction log...</div>
                     </div>
                 </div>
             </section>

@@ -135,5 +135,11 @@
       "src": "/(.*)",
       "dest": "/public/website/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/backup",
+      "schedule": "0 3 * * *"
+    }
   ]
 }

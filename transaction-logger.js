@@ -22,8 +22,8 @@ class TransactionLogger {
       'subtaken'
     ];
 
-    // Retention period in hours
-    this.RETENTION_HOURS = 24;
+    // Retention period in hours (3 days = 72 hours)
+    this.RETENTION_HOURS = 72;
   }
 
   /**
