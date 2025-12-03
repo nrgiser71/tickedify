@@ -390,6 +390,42 @@ When debugging or testing features in the future, remember that Claude can:
 - Hosting: Vercel
 - Domain: tickedify.com (DNS via Vimexx)
 
+## 🌐 Website Build Process (Landing Page & CMS)
+
+**BELANGRIJK**: De marketing website en CMS (`/website` folder) is een aparte React/Vite app die apart gebouwd moet worden.
+
+**Locaties:**
+- **Broncode**: `/website/src/` (React componenten, inclusief CMS in `/website/src/pages/cms/`)
+- **Build output**: `/website/dist/`
+- **Productie locatie**: `/public/website/` (hier serveert Vercel de website vanuit)
+
+**Build & Deploy Workflow:**
+```bash
+# 1. Ga naar website folder en bouw de app
+cd website
+npm run build
+
+# 2. Kopieer build output naar public/website
+cd ..
+rm -rf public/website/*
+cp -r website/dist/* public/website/
+
+# 3. Commit en push naar staging
+git add -A
+git commit -m "🔧 Rebuild website: [beschrijving van wijziging]"
+git push origin staging
+```
+
+**Routes (zie vercel.json):**
+- `/` → Landing page (`/public/website/index.html`)
+- `/cms` → CMS login (`/public/website/index.html` - React router)
+- `/cms/dashboard` → CMS dashboard
+
+**Let op:**
+- Wijzigingen in `/website/src/` worden NIET automatisch gedeployed
+- Je MOET altijd `npm run build` uitvoeren en de output naar `/public/website/` kopiëren
+- Vergeet niet te committen EN pushen na het kopiëren van de build
+
 ## Important Decisions Made
 
 - Use separate subdomain for email-to-task (mg.tickedify.com)
