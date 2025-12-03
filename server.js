@@ -1683,6 +1683,236 @@ app.post('/api/admin/reset-database', async (req, res) => {
     }
 });
 
+// ============================================================
+// BACKUP MANAGEMENT ENDPOINTS - Feature 071
+// ============================================================
+
+// Initialize backup manager and transaction logger
+let backupManager = null;
+let transactionLogger = null;
+
+async function initBackupModules() {
+    if (!backupManager || !transactionLogger) {
+        const { pool } = require('./database');
+        const BackupManager = require('./backup-manager');
+        const TransactionLogger = require('./transaction-logger');
+
+        backupManager = new BackupManager(pool, storageManager);
+        transactionLogger = new TransactionLogger(pool);
+    }
+    return { backupManager, transactionLogger };
+}
+
+// Helper function for transaction logging - non-blocking, won't fail main operation
+async function logTransaction(params) {
+    try {
+        const { transactionLogger } = await initBackupModules();
+        if (transactionLogger && transactionLogger.isTrackedTable(params.tableName)) {
+            await transactionLogger.log(params);
+        }
+    } catch (err) {
+        // Log error but don't fail the main operation
+        console.error('⚠️ Transaction logging failed (non-blocking):', err.message);
+    }
+}
+
+// GET /api/admin/backups - List all backups
+app.get('/api/admin/backups', async (req, res) => {
+    try {
+        // Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
+        const { backupManager } = await initBackupModules();
+        const { limit = 20, status } = req.query;
+
+        const result = await backupManager.listBackups({
+            limit: parseInt(limit),
+            status
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error listing backups:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/admin/backups/create - Create manual backup
+app.post('/api/admin/backups/create', async (req, res) => {
+    try {
+        // Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
+        const { backupManager } = await initBackupModules();
+
+        // Check if backup already in progress
+        const { backups } = await backupManager.listBackups({ status: 'in_progress', limit: 1 });
+        if (backups.length > 0) {
+            return res.status(503).json({
+                error: 'Backup already in progress',
+                existingBackup: backups[0]
+            });
+        }
+
+        const backup = await backupManager.createBackup('manual');
+        res.status(201).json(backup);
+    } catch (error) {
+        console.error('❌ Error creating backup:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/admin/backups/:id - Download a backup
+app.get('/api/admin/backups/:id', async (req, res) => {
+    try {
+        // Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
+        const { backupManager } = await initBackupModules();
+        const { id } = req.params;
+
+        const buffer = await backupManager.downloadBackup(id);
+
+        res.setHeader('Content-Type', 'application/gzip');
+        res.setHeader('Content-Disposition', `attachment; filename="${id}.json.gz"`);
+        res.send(buffer);
+    } catch (error) {
+        console.error('❌ Error downloading backup:', error);
+        if (error.message === 'Backup not found') {
+            return res.status(404).json({ error: 'Backup not found' });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/admin/backups/:id/restore - Restore from backup
+app.post('/api/admin/backups/:id/restore', async (req, res) => {
+    try {
+        // Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
+        const { backupManager } = await initBackupModules();
+        const { id } = req.params;
+        const { replayTransactions = true } = req.body;
+
+        const result = await backupManager.restoreBackup(id, replayTransactions);
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error restoring backup:', error);
+        if (error.message === 'Backup not found') {
+            return res.status(404).json({ error: 'Backup not found' });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/admin/transaction-log - Query transaction log
+app.get('/api/admin/transaction-log', async (req, res) => {
+    try {
+        // Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
+        const { transactionLogger } = await initBackupModules();
+        const { since, until, userId, tableName, operation, limit = 100 } = req.query;
+
+        const result = await transactionLogger.getLogSince({
+            since,
+            until,
+            userId,
+            tableName,
+            operation,
+            limit: parseInt(limit)
+        });
+
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error querying transaction log:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/admin/transaction-log/:id/undo - Undo a specific operation
+app.post('/api/admin/transaction-log/:id/undo', async (req, res) => {
+    try {
+        // Require admin authentication
+        if (!req.session || !req.session.isAdmin) {
+            return res.status(401).json({ error: 'Admin authentication required' });
+        }
+
+        const { transactionLogger } = await initBackupModules();
+        const { id } = req.params;
+
+        const result = await transactionLogger.undoOperation(parseInt(id));
+        res.json(result);
+    } catch (error) {
+        console.error('❌ Error undoing operation:', error);
+        if (error.message === 'Transaction log entry not found') {
+            return res.status(404).json({ error: 'Transaction log entry not found' });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/cron/backup - Scheduled backup endpoint (called by Vercel Cron)
+app.get('/api/cron/backup', async (req, res) => {
+    try {
+        // Verify cron secret
+        const cronSecret = process.env.CRON_SECRET;
+        const authHeader = req.headers.authorization;
+
+        if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+            console.warn('⚠️ Unauthorized cron backup attempt');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { backupManager, transactionLogger } = await initBackupModules();
+
+        console.log('🔄 Starting scheduled backup...');
+
+        // Create backup
+        const backup = await backupManager.createBackup('scheduled');
+
+        // Cleanup expired backups
+        const expiredBackupsDeleted = await backupManager.cleanupExpired();
+
+        // Cleanup old transaction logs
+        const oldLogsDeleted = await transactionLogger.cleanup();
+
+        console.log('✅ Scheduled backup completed');
+
+        res.json({
+            success: true,
+            backupId: backup.backup_id,
+            cleanedUp: {
+                expiredBackups: expiredBackupsDeleted,
+                oldTransactionLogs: oldLogsDeleted
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Scheduled backup failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// ============================================================
+// END BACKUP MANAGEMENT ENDPOINTS
+// ============================================================
+
 // Get user's email import code
 app.get('/api/user/email-import-code', (req, res) => {
     try {
@@ -7728,8 +7958,18 @@ app.post('/api/taak/add-to-inbox', async (req, res) => {
         
         // Save updated inbox
         const success = await db.saveList('inbox', updatedInbox, userId);
-        
+
         if (success) {
+            // Feature 071: Log the INSERT transaction
+            logTransaction({
+                userId,
+                operation: 'INSERT',
+                tableName: 'taken',
+                recordId: newTask.id,
+                oldData: null,
+                newData: { id: newTask.id, tekst: newTask.tekst, lijst: 'inbox', aangemaakt: newTask.aangemaakt },
+                requestPath: req.path
+            });
             res.json({ success: true, taskId: newTask.id });
         } else {
             console.error('❌ SERVER: Failed to save updated inbox');
@@ -7904,11 +8144,27 @@ app.put('/api/taak/:id', async (req, res) => {
             console.log('  Request Body:', JSON.stringify(req.body, null, 2));
             console.log('  Request Body Keys:', Object.keys(req.body));
 
+            // Feature 071: Fetch old data for transaction logging
+            const oldTask = await db.getTask(id, userId);
+
             const success = await db.updateTask(id, req.body, userId);
 
             console.log('  UpdateTask Success:', success);
 
             if (success) {
+                // Feature 071: Log the UPDATE transaction
+                if (oldTask) {
+                    const updatedTask = await db.getTask(id, userId);
+                    logTransaction({
+                        userId,
+                        operation: 'UPDATE',
+                        tableName: 'taken',
+                        recordId: id,
+                        oldData: oldTask,
+                        newData: updatedTask,
+                        requestPath: req.path
+                    });
+                }
                 res.json({ success: true });
             } else {
                 console.log('  ❌ UpdateTask FAILED - returning 404');
@@ -8067,19 +8323,35 @@ app.delete('/api/taak/:id', async (req, res) => {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
         }
-        
+
         const { id } = req.params;
         const userId = getCurrentUserId(req);
-        
+
+        // Feature 071: Fetch old data for transaction logging BEFORE delete
+        const oldTask = await db.getTask(id, userId);
+
         // Eerst bijlagen ophalen voor B2 cleanup (voor CASCADE ze verwijdert)
         const bijlagen = await db.getBijlagenForTaak(id);
         if (bijlagen && bijlagen.length > 0) {
         }
-        
+
         const result = await pool.query(
             'DELETE FROM taken WHERE id = $1 AND user_id = $2 RETURNING id',
             [id, userId]
         );
+
+        // Feature 071: Log the DELETE transaction
+        if (result.rows.length > 0 && oldTask) {
+            logTransaction({
+                userId,
+                operation: 'DELETE',
+                tableName: 'taken',
+                recordId: id,
+                oldData: oldTask,
+                newData: null,
+                requestPath: req.path
+            });
+        }
         
         if (result.rows.length > 0) {
             
@@ -8974,7 +9246,18 @@ app.post('/api/dagelijkse-planning', async (req, res) => {
         });
         
         const planningId = await db.addToDagelijksePlanning(req.body, userId);
-        
+
+        // Feature 071: Log the INSERT transaction for dagelijkse_planning
+        logTransaction({
+            userId,
+            operation: 'INSERT',
+            tableName: 'dagelijkse_planning',
+            recordId: planningId,
+            oldData: null,
+            newData: { id: planningId, ...req.body },
+            requestPath: req.path
+        });
+
         // Log successful response
         await forensicLogger.log('PLANNING', 'API_ADD_PLANNING_SUCCESS', {
             planningId: planningId,
@@ -8984,7 +9267,7 @@ app.post('/api/dagelijkse-planning', async (req, res) => {
             responseTimestamp: new Date().toISOString(),
             triggeredBy: 'api_call'
         });
-        
+
         res.json({ success: true, id: planningId });
     } catch (error) {
         console.error('Error adding to dagelijkse planning:', error);
@@ -9069,10 +9352,31 @@ app.delete('/api/dagelijkse-planning/:id', async (req, res) => {
             triggeredBy: 'api_call',
             severity: 'CRITICAL' // Mark as critical for forensic analysis
         });
-        
+
+        // Feature 071: Fetch old data for transaction logging BEFORE delete
+        const { pool } = require('./database');
+        const oldPlanningResult = await pool.query(
+            'SELECT * FROM dagelijkse_planning WHERE id = $1 AND user_id = $2',
+            [id, userId]
+        );
+        const oldPlanning = oldPlanningResult.rows[0];
+
         const success = await db.deleteDagelijksePlanning(id, userId);
-        
+
         if (success) {
+            // Feature 071: Log the DELETE transaction
+            if (oldPlanning) {
+                logTransaction({
+                    userId,
+                    operation: 'DELETE',
+                    tableName: 'dagelijkse_planning',
+                    recordId: id,
+                    oldData: oldPlanning,
+                    newData: null,
+                    requestPath: req.path
+                });
+            }
+
             // Log successful deletion
             await forensicLogger.log('PLANNING', 'API_DELETE_PLANNING_SUCCESS', {
                 planningId: id,

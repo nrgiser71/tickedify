@@ -1,0 +1,319 @@
+openapi: 3.0.3
+info:
+  title: Tickedify Backup API
+  version: 1.0.0
+  description: API endpoints for backup management
+
+servers:
+  - url: /api/admin
+    description: Admin API (requires authentication)
+  - url: /api/cron
+    description: Cron API (requires CRON_SECRET)
+
+paths:
+  /backups:
+    get:
+      summary: List all backups
+      operationId: listBackups
+      tags: [Backups]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [completed, failed, in_progress]
+      responses:
+        '200':
+          description: List of backups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  backups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Backup'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /backups/create:
+    post:
+      summary: Create manual backup
+      operationId: createBackup
+      tags: [Backups]
+      responses:
+        '201':
+          description: Backup created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Backup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          description: Backup already in progress
+
+  /backups/{backupId}:
+    get:
+      summary: Download backup
+      operationId: downloadBackup
+      tags: [Backups]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup file
+          content:
+            application/gzip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Backup not found
+
+  /backups/{backupId}/restore:
+    post:
+      summary: Restore from backup
+      operationId: restoreBackup
+      tags: [Backups]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                replayTransactions:
+                  type: boolean
+                  default: true
+                  description: Replay transaction log after restore
+      responses:
+        '200':
+          description: Restore completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  tablesRestored: { type: integer }
+                  transactionsReplayed: { type: integer }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Backup not found
+        '500':
+          description: Restore failed
+
+  /transaction-log:
+    get:
+      summary: Query transaction log
+      operationId: getTransactionLog
+      tags: [Transaction Log]
+      parameters:
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: tableName
+          in: query
+          schema:
+            type: string
+        - name: operation
+          in: query
+          schema:
+            type: string
+            enum: [INSERT, UPDATE, DELETE]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Transaction log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionLogEntry'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /transaction-log/{entryId}/undo:
+    post:
+      summary: Undo a specific operation
+      operationId: undoTransaction
+      tags: [Transaction Log]
+      parameters:
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Operation undone
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  affectedRecord: { type: string }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Entry not found
+        '409':
+          description: Cannot undo - record has been modified since
+
+  /cron/backup:
+    get:
+      summary: Scheduled backup endpoint
+      operationId: cronBackup
+      tags: [Cron]
+      security:
+        - cronSecret: []
+      responses:
+        '200':
+          description: Backup completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  backupId: { type: string }
+                  cleanedUp: { type: integer }
+        '401':
+          description: Invalid cron secret
+        '500':
+          description: Backup failed
+
+components:
+  schemas:
+    Backup:
+      type: object
+      required:
+        - id
+        - backup_id
+        - created_at
+        - backup_type
+        - status
+      properties:
+        id:
+          type: string
+        backup_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        backup_type:
+          type: string
+          enum: [scheduled, manual]
+        storage_path:
+          type: string
+        size_bytes:
+          type: integer
+        record_counts:
+          type: object
+          additionalProperties:
+            type: integer
+        status:
+          type: string
+          enum: [in_progress, completed, failed]
+        error_message:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    TransactionLogEntry:
+      type: object
+      required:
+        - id
+        - timestamp
+        - operation
+        - table_name
+        - record_id
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+        operation:
+          type: string
+          enum: [INSERT, UPDATE, DELETE]
+        table_name:
+          type: string
+        record_id:
+          type: string
+        old_data:
+          type: object
+        new_data:
+          type: object
+        request_path:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: Admin authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Admin authentication required
+
+  securitySchemes:
+    adminSession:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+    cronSecret:
+      type: apiKey
+      in: header
+      name: Authorization

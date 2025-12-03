@@ -619,6 +619,54 @@ const initDatabase = async () => {
       console.log('⚠️ price_monthly column might already exist:', error.message);
     }
 
+    // Feature 071: Create backup_metadata table for backup tracking
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS backup_metadata (
+        id VARCHAR(50) PRIMARY KEY,
+        backup_id VARCHAR(50) UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        backup_type VARCHAR(20) NOT NULL CHECK (backup_type IN ('scheduled', 'manual')),
+        storage_path VARCHAR(500) UNIQUE NOT NULL,
+        size_bytes BIGINT,
+        record_counts JSONB,
+        status VARCHAR(20) DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'failed')),
+        error_message TEXT,
+        expires_at TIMESTAMPTZ NOT NULL
+      )
+    `);
+    console.log('✅ Feature 071: backup_metadata table created');
+
+    // Feature 071: Create transaction_log table for audit trail
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS transaction_log (
+        id SERIAL PRIMARY KEY,
+        timestamp TIMESTAMPTZ DEFAULT NOW(),
+        user_id VARCHAR(50) REFERENCES users(id) ON DELETE SET NULL,
+        operation VARCHAR(20) NOT NULL CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')),
+        table_name VARCHAR(50) NOT NULL,
+        record_id VARCHAR(50) NOT NULL,
+        old_data JSONB,
+        new_data JSONB,
+        request_path VARCHAR(255)
+      )
+    `);
+    console.log('✅ Feature 071: transaction_log table created');
+
+    // Feature 071: Add indexes for backup tables
+    try {
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_backup_created ON backup_metadata(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_backup_expires ON backup_metadata(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_backup_status ON backup_metadata(status);
+        CREATE INDEX IF NOT EXISTS idx_txlog_timestamp ON transaction_log(timestamp DESC);
+        CREATE INDEX IF NOT EXISTS idx_txlog_table_record ON transaction_log(table_name, record_id);
+        CREATE INDEX IF NOT EXISTS idx_txlog_user ON transaction_log(user_id, timestamp DESC);
+      `);
+      console.log('✅ Feature 071: Backup system indexes created');
+    } catch (indexError) {
+      console.log('⚠️ Could not create backup indexes:', indexError.message);
+    }
+
     // Create indexes for performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_taken_lijst ON taken(lijst);

@@ -2841,6 +2841,298 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================================
+// Backup Manager (Feature 071)
+// ============================================================================
+
+const BackupManager = {
+    /**
+     * Load backups and update stats
+     */
+    async loadBackups() {
+        try {
+            const response = await fetch('/api/admin/backups?limit=20');
+            if (!response.ok) {
+                throw new Error('Failed to load backups');
+            }
+            const data = await response.json();
+
+            // Update stats
+            document.getElementById('backupTotal').textContent = data.total;
+
+            if (data.backups && data.backups.length > 0) {
+                const lastBackup = data.backups[0];
+                const lastTime = new Date(lastBackup.created_at);
+                document.getElementById('backupLastTime').textContent = lastTime.toLocaleString('nl-NL');
+                document.getElementById('backupStatus').textContent = lastBackup.status === 'completed' ? '✅ OK' : '⚠️ ' + lastBackup.status;
+            } else {
+                document.getElementById('backupLastTime').textContent = 'No backups';
+                document.getElementById('backupStatus').textContent = '⚠️ None';
+            }
+
+            // Render backups table
+            this.renderBackupsTable(data.backups);
+        } catch (error) {
+            console.error('Error loading backups:', error);
+            document.getElementById('backupsTable').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+        }
+    },
+
+    /**
+     * Render backups table
+     */
+    renderBackupsTable(backups) {
+        if (!backups || backups.length === 0) {
+            document.getElementById('backupsTable').innerHTML = '<div style="color: #666;">No backups available yet.</div>';
+            return;
+        }
+
+        let html = `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                        <th style="padding: 12px;">ID</th>
+                        <th style="padding: 12px;">Created</th>
+                        <th style="padding: 12px;">Type</th>
+                        <th style="padding: 12px;">Size</th>
+                        <th style="padding: 12px;">Status</th>
+                        <th style="padding: 12px;">Expires</th>
+                        <th style="padding: 12px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        backups.forEach(backup => {
+            const created = new Date(backup.created_at).toLocaleString('nl-NL');
+            const expires = backup.expires_at ? new Date(backup.expires_at).toLocaleString('nl-NL') : '-';
+            const sizeKB = backup.size_bytes ? (backup.size_bytes / 1024).toFixed(1) + ' KB' : '-';
+            const statusBadge = backup.status === 'completed'
+                ? '<span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px;">✓ Completed</span>'
+                : backup.status === 'in_progress'
+                    ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px;">⏳ In Progress</span>'
+                    : '<span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px;">✗ Failed</span>';
+
+            html += `
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px; font-family: monospace; font-size: 12px;">${backup.backup_id}</td>
+                    <td style="padding: 12px;">${created}</td>
+                    <td style="padding: 12px;">${backup.backup_type}</td>
+                    <td style="padding: 12px;">${sizeKB}</td>
+                    <td style="padding: 12px;">${statusBadge}</td>
+                    <td style="padding: 12px; color: #666;">${expires}</td>
+                    <td style="padding: 12px;">
+                        ${backup.status === 'completed' ? `
+                            <button class="btn btn-sm" onclick="BackupManager.downloadBackup('${backup.id}')" title="Download">⬇️</button>
+                            <button class="btn btn-sm btn-danger" onclick="BackupManager.restoreBackup('${backup.id}')" title="Restore">🔄</button>
+                        ` : '-'}
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('backupsTable').innerHTML = html;
+    },
+
+    /**
+     * Load transaction log
+     */
+    async loadTransactionLog() {
+        try {
+            const tableFilter = document.getElementById('txLogTableFilter')?.value || '';
+            const operationFilter = document.getElementById('txLogOperationFilter')?.value || '';
+
+            const params = new URLSearchParams({ limit: 50 });
+            if (tableFilter) params.append('tableName', tableFilter);
+            if (operationFilter) params.append('operation', operationFilter);
+
+            const response = await fetch(`/api/admin/transaction-log?${params}`);
+            if (!response.ok) {
+                throw new Error('Failed to load transaction log');
+            }
+            const data = await response.json();
+
+            // Update stats
+            document.getElementById('transactionTotal').textContent = data.total;
+
+            // Render transaction log table
+            this.renderTransactionLogTable(data.entries);
+        } catch (error) {
+            console.error('Error loading transaction log:', error);
+            document.getElementById('transactionLogTable').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+        }
+    },
+
+    /**
+     * Render transaction log table
+     */
+    renderTransactionLogTable(entries) {
+        if (!entries || entries.length === 0) {
+            document.getElementById('transactionLogTable').innerHTML = '<div style="color: #666;">No transactions logged yet.</div>';
+            return;
+        }
+
+        let html = `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e5e7eb; text-align: left;">
+                        <th style="padding: 12px;">Time</th>
+                        <th style="padding: 12px;">Operation</th>
+                        <th style="padding: 12px;">Table</th>
+                        <th style="padding: 12px;">Record ID</th>
+                        <th style="padding: 12px;">User</th>
+                        <th style="padding: 12px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        entries.forEach(entry => {
+            const timestamp = new Date(entry.timestamp).toLocaleString('nl-NL');
+            const opColor = entry.operation === 'INSERT' ? '#065f46'
+                : entry.operation === 'UPDATE' ? '#1e40af'
+                : '#991b1b';
+            const opBg = entry.operation === 'INSERT' ? '#d1fae5'
+                : entry.operation === 'UPDATE' ? '#dbeafe'
+                : '#fee2e2';
+
+            html += `
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px; font-size: 12px;">${timestamp}</td>
+                    <td style="padding: 12px;">
+                        <span style="background: ${opBg}; color: ${opColor}; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${entry.operation}</span>
+                    </td>
+                    <td style="padding: 12px;">${entry.table_name}</td>
+                    <td style="padding: 12px; font-family: monospace; font-size: 11px;">${entry.record_id?.substring(0, 16) || '-'}...</td>
+                    <td style="padding: 12px; font-size: 12px;">${entry.user_id?.substring(0, 8) || 'system'}...</td>
+                    <td style="padding: 12px;">
+                        <button class="btn btn-sm" onclick="BackupManager.showDetails(${entry.id})" title="Details">📋</button>
+                        ${entry.operation !== 'INSERT' ? `
+                            <button class="btn btn-sm btn-danger" onclick="BackupManager.undoOperation(${entry.id})" title="Undo">↩️</button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('transactionLogTable').innerHTML = html;
+    },
+
+    /**
+     * Create manual backup
+     */
+    async createBackup() {
+        if (!confirm('Create a new manual backup now?')) return;
+
+        const btn = document.getElementById('createBackupBtn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Creating...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/admin/backups/create', { method: 'POST' });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to create backup');
+            }
+
+            const backup = await response.json();
+            alert(`Backup created successfully!\nID: ${backup.backup_id}`);
+            this.loadBackups();
+        } catch (error) {
+            console.error('Error creating backup:', error);
+            alert('Failed to create backup: ' + error.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    },
+
+    /**
+     * Download a backup
+     */
+    downloadBackup(id) {
+        window.location.href = `/api/admin/backups/${id}`;
+    },
+
+    /**
+     * Restore from backup
+     */
+    async restoreBackup(id) {
+        if (!confirm('WARNING: This will restore the database from this backup!\n\nAll data created after this backup will be lost.\n\nAre you absolutely sure?')) return;
+        if (!confirm('FINAL CONFIRMATION: Proceed with database restore?')) return;
+
+        try {
+            const response = await fetch(`/api/admin/backups/${id}/restore`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ replayTransactions: true })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Restore failed');
+            }
+
+            const result = await response.json();
+            alert(`Restore completed!\nTables restored: ${result.tablesRestored}\nTransactions replayed: ${result.transactionsReplayed}`);
+            this.loadBackups();
+            this.loadTransactionLog();
+        } catch (error) {
+            console.error('Error restoring backup:', error);
+            alert('Restore failed: ' + error.message);
+        }
+    },
+
+    /**
+     * Undo a transaction
+     */
+    async undoOperation(id) {
+        if (!confirm('Undo this operation? This will revert the change.')) return;
+
+        try {
+            const response = await fetch(`/api/admin/transaction-log/${id}/undo`, { method: 'POST' });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Undo failed');
+            }
+
+            const result = await response.json();
+            alert(`Operation undone!\n${result.message}`);
+            this.loadTransactionLog();
+        } catch (error) {
+            console.error('Error undoing operation:', error);
+            alert('Undo failed: ' + error.message);
+        }
+    },
+
+    /**
+     * Show transaction details
+     */
+    showDetails(id) {
+        alert('Transaction details viewer coming soon.\n\nCheck the transaction_log table directly for now.');
+    },
+
+    /**
+     * Initialize when backups screen is shown
+     */
+    init() {
+        this.loadBackups();
+        this.loadTransactionLog();
+    }
+};
+
+// Hook into screen manager to load backups when screen is shown
+const originalShowScreen = ScreenManager.showScreen;
+ScreenManager.showScreen = function(screenName) {
+    originalShowScreen.call(this, screenName);
+    if (screenName === 'backups') {
+        BackupManager.init();
+    }
+};
+
+// ============================================================================
 // Initialize Application
 // ============================================================================
 
