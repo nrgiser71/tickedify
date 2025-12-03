@@ -2409,13 +2409,13 @@ Examples:
 
                 if (!data.authenticated || !data.isAdmin) {
                     // Not authenticated - redirect to login
-                    window.location.href = '/admin2-login.html';
+                    window.location.href = '/admin2/login';
                 }
                 // If authenticated, continue loading the page
             } catch (error) {
                 // Error checking session - redirect to login for safety
                 console.error('Session check failed:', error);
-                window.location.href = '/admin2-login.html';
+                window.location.href = '/admin2/login';
             }
         })();
     </script>
