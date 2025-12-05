@@ -32,8 +32,8 @@ class BackupManager {
       'feedback'
     ];
 
-    // Retention period in hours
-    this.RETENTION_HOURS = 24;
+    // Retention period in hours (7 days = 168 hours)
+    this.RETENTION_HOURS = 168;
 
     // B2 folder for backups
     this.B2_FOLDER = 'database-backups';
