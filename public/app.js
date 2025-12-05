@@ -6972,7 +6972,7 @@ class Taakbeheer {
                 };
 
                 // Save the new action via direct single action API (bypasses list corruption issues)
-                const response = await fetch('/api/debug/add-single-action', {
+                const response = await fetch('/api/taak/add-single-action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(actie)
@@ -13602,7 +13602,7 @@ class Taakbeheer {
                     opmerkingen: 'Test taak - gegenereerd door test knop'
                 };
 
-                const response = await fetch('/api/debug/add-single-action', {
+                const response = await fetch('/api/taak/add-single-action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(taskData)

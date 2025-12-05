@@ -9930,7 +9930,7 @@ app.post('/api/debug/test-save-recurring', async (req, res) => {
 });
 
 // Alternative: Add single action without loading existing list
-app.post('/api/debug/add-single-action', requireAuth, async (req, res) => {
+app.post('/api/taak/add-single-action', requireAuth, async (req, res) => {
     try {
         if (!db) {
             return res.json({ error: 'Database not available', success: false });
