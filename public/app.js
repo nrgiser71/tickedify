@@ -16172,10 +16172,12 @@ class AuthManager {
         window.fetch = async function(...args) {
             const response = await originalFetch.apply(this, args);
 
-            // Only intercept 401 for API calls
+            // Only intercept 401 for API calls when user WAS authenticated
+            // This prevents redirect loops for users who aren't logged in yet
             const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
             if (response.status === 401 &&
                 url.startsWith('/api/') &&
+                authManager.isAuthenticated &&  // Only if previously logged in
                 !authManager.isRedirecting) {
                 authManager.handleSessionExpired();
             }
