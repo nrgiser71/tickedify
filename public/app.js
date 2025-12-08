@@ -15755,8 +15755,12 @@ class AuthManager {
     constructor() {
         this.currentUser = null;
         this.isAuthenticated = false;
-        this.betaCheckInterval = null;
+        // Session expiration handling (Feature 072)
+        this.isRedirecting = false;
+        this.sessionCheckInterval = null;
+        this.lastSessionCheck = null;
         this.setupEventListeners();
+        this.setupGlobalFetchInterceptor(); // Setup 401 detection early
         this.checkAuthStatus();
     }
 
@@ -15992,8 +15996,8 @@ class AuthManager {
                 this.currentUser = null;
                 this.isAuthenticated = false;
                 
-                // Stop beta check interval to prevent memory leaks
-                this.stopBetaCheckInterval();
+                // Stop session check interval to prevent memory leaks
+                this.stopSessionCheckInterval();
                 
                 this.updateUI();
                 
@@ -16020,8 +16024,26 @@ class AuthManager {
         try {
             const response = await fetch('/api/auth/me');
 
+            // Feature 072: Handle 401 specifically for session expiration
+            if (response.status === 401) {
+                // Only redirect if we were previously authenticated (session expired)
+                if (this.isAuthenticated) {
+                    this.handleSessionExpired();
+                    return;
+                }
+                // Not authenticated and not previously authenticated - normal state
+                this.currentUser = null;
+                this.isAuthenticated = false;
+                this.updateUI();
+                return;
+            }
+
             if (response.ok) {
                 const data = await response.json();
+
+                // Update last session check timestamp (Feature 072)
+                this.lastSessionCheck = new Date();
+                console.log('🕐 Session check: valid');
 
                 // Check if upgrade is required (beta/trial period ended)
                 if (data.requiresUpgrade) {
@@ -16055,7 +16077,7 @@ class AuthManager {
                     this.updateUI();
                     return;
                 }
-                
+
                 // Load user-specific data
                 if (window.app) {
                     await window.app.loadUserData();
@@ -16063,35 +16085,35 @@ class AuthManager {
             } else {
                 this.currentUser = null;
                 this.isAuthenticated = false;
-                
+
                 // Clear data for unauthenticated state
                 if (window.app) {
                     window.app.taken = [];
                     window.app.renderTaken();
-                    
+
                     // Load basic UI for mobile devices without authentication
                     if (window.app.isMobileDevice()) {
                         window.app.loadBasicMobileUI();
                     }
                 }
-                
+
                 // Hide loading indicator for unauthenticated users
                 if (window.loading) {
                     loading.hideGlobal();
                 }
             }
-            
+
             this.updateUI();
         } catch (error) {
             console.error('Auth check error:', error);
             this.currentUser = null;
             this.isAuthenticated = false;
-            
+
             // Hide loading indicator on error
             if (window.loading) {
                 loading.hideGlobal();
             }
-            
+
             this.updateUI();
         }
     }
@@ -16111,27 +16133,76 @@ class AuthManager {
         }, 2000); // 2 second delay to show the message first
     }
 
-    startBetaCheckInterval() {
+    startSessionCheckInterval() {
         // Clear any existing interval first
-        this.stopBetaCheckInterval();
-        
-        // Check elke 60 minuten (3600000 ms)
-        this.betaCheckInterval = setInterval(() => {
+        this.stopSessionCheckInterval();
+
+        // Check every 60 seconds for session validity (Feature 072)
+        this.sessionCheckInterval = setInterval(() => {
             if (this.isAuthenticated) {
-                console.log('🕐 Periodieke beta controle uitgevoerd');
                 this.checkAuthStatus();
             }
-        }, 3600000); // 1 hour
-        
-        console.log('✅ Beta controle interval gestart (elk uur)');
+        }, 60000); // 60 seconds
+
+        console.log('✅ Session check interval started (every 60 seconds)');
     }
 
-    stopBetaCheckInterval() {
-        if (this.betaCheckInterval) {
-            clearInterval(this.betaCheckInterval);
-            this.betaCheckInterval = null;
-            console.log('⏹️ Beta controle interval gestopt');
+    stopSessionCheckInterval() {
+        if (this.sessionCheckInterval) {
+            clearInterval(this.sessionCheckInterval);
+            this.sessionCheckInterval = null;
+            console.log('⏹️ Session check interval stopped');
         }
+    }
+
+    // Feature 072: Session Expiration Handling
+    handleSessionExpired() {
+        // Prevent multiple redirects
+        if (this.isRedirecting) return;
+        this.isRedirecting = true;
+
+        console.log('⚠️ Session expired - redirecting to login');
+        window.location.href = '/login';
+    }
+
+    setupGlobalFetchInterceptor() {
+        const originalFetch = window.fetch;
+        const authManager = this;
+
+        window.fetch = async function(...args) {
+            const response = await originalFetch.apply(this, args);
+
+            // Only intercept 401 for API calls
+            const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+            if (response.status === 401 &&
+                url.startsWith('/api/') &&
+                !authManager.isRedirecting) {
+                authManager.handleSessionExpired();
+            }
+
+            return response;
+        };
+
+        console.log('🔒 Global fetch interceptor installed for session detection');
+    }
+
+    setupVisibilityListener() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && this.isAuthenticated) {
+                // Check if last session check was more than 5 seconds ago
+                const now = new Date();
+                const timeSinceLastCheck = this.lastSessionCheck
+                    ? (now - this.lastSessionCheck) / 1000
+                    : Infinity;
+
+                if (timeSinceLastCheck > 5) {
+                    console.log('🔄 Tab visible - checking session');
+                    this.checkAuthStatus();
+                }
+            }
+        });
+
+        console.log('👁️ Visibility listener installed for session detection');
     }
 
     async updateUI() {
@@ -16151,8 +16222,9 @@ class AuthManager {
 
         if (this.isAuthenticated && this.currentUser) {
             // Authenticated state - show full app
-            this.startBetaCheckInterval();
-            
+            this.startSessionCheckInterval();
+            this.setupVisibilityListener(); // Feature 072: Tab focus session check
+
             if (authButtons) authButtons.style.display = 'none';
             if (userInfo) userInfo.style.display = 'flex';
             if (userName) userName.textContent = this.currentUser.naam;
@@ -16178,7 +16250,7 @@ class AuthManager {
             
         } else {
             // Unauthenticated state - show welcome message and login/register
-            this.stopBetaCheckInterval();
+            this.stopSessionCheckInterval();
             
             if (authButtons) authButtons.style.display = 'flex';
             if (userInfo) userInfo.style.display = 'none';
