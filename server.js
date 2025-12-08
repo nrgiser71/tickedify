@@ -1253,7 +1253,7 @@ try {
         cookie: {
             secure: 'auto', // Let express-session auto-detect HTTPS
             httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours (FR-006 requirement)
+            maxAge: 5 * 60 * 1000, // 5 minutes (TEMPORARY for testing Feature 072)
             sameSite: 'lax' // Better compatibility with modern browsers
         },
         name: 'tickedify.sid' // Custom session name for better identification
@@ -1286,7 +1286,7 @@ try {
         cookie: {
             secure: 'auto',
             httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours (FR-006 requirement)
+            maxAge: 5 * 60 * 1000, // 5 minutes (TEMPORARY for testing Feature 072)
             sameSite: 'lax'
         },
         name: 'tickedify.sid'
