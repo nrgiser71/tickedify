@@ -16162,7 +16162,7 @@ class AuthManager {
         this.isRedirecting = true;
 
         console.log('⚠️ Session expired - redirecting to login');
-        window.location.href = '/login';
+        window.location.href = '/app';
     }
 
     setupGlobalFetchInterceptor() {
