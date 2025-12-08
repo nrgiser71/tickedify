@@ -16034,6 +16034,12 @@ class AuthManager {
                 // Not authenticated and not previously authenticated - normal state
                 this.currentUser = null;
                 this.isAuthenticated = false;
+
+                // Hide loading indicator for unauthenticated users
+                if (window.loading) {
+                    loading.hideGlobal();
+                }
+
                 this.updateUI();
                 return;
             }
