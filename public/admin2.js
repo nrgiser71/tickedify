@@ -1369,6 +1369,66 @@ const Screens = {
                     </div>
                 </div>
 
+                <!-- Task Activity Chart (Feature 073) -->
+                <div class="task-activity-section" style="margin: 30px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">📊 Task Activity</h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="activity-period-selector" class="form-select" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--macos-border);">
+                                <option value="week" selected>This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="quarter">This Quarter</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Custom Date Range (hidden by default) -->
+                    <div id="custom-date-range" style="display: none; margin-bottom: 15px; padding: 15px; background: var(--macos-background); border-radius: 8px; border: 1px solid var(--macos-border);">
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 12px; color: var(--macos-text-secondary);">Start Date</label>
+                                <input type="date" id="activity-start-date" class="form-input" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--macos-border);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 12px; color: var(--macos-text-secondary);">End Date</label>
+                                <input type="date" id="activity-end-date" class="form-input" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--macos-border);">
+                            </div>
+                            <button id="apply-custom-dates" class="btn btn-primary" style="align-self: flex-end;">Apply</button>
+                        </div>
+                        <div id="date-range-error" style="display: none; color: #dc3545; font-size: 12px; margin-top: 10px;"></div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div style="background: white; border-radius: 8px; padding: 20px; border: 1px solid var(--macos-border);">
+                        <div id="activity-chart-loading" style="text-align: center; padding: 40px; color: var(--macos-text-secondary);">
+                            Loading chart...
+                        </div>
+                        <canvas id="task-activity-chart" style="display: none; max-height: 300px;"></canvas>
+                    </div>
+
+                    <!-- Activity Statistics -->
+                    <div class="stats-grid" style="margin-top: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-label">📈 Total Tasks</div>
+                            <div class="stat-value" id="activity-stat-total">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">📊 Average/Day</div>
+                            <div class="stat-value" id="activity-stat-average">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">🏆 Peak Day</div>
+                            <div class="stat-value" id="activity-stat-peak">--</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">📉 Trend</div>
+                            <div class="stat-value" id="activity-stat-trend">--</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Email Summary -->
                 <div class="stats-grid">
                     <div class="stat-card">
