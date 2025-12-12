@@ -13715,6 +13715,154 @@ app.get('/api/admin2/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin2/users/:id/task-activity - Get task creation activity for a user
+app.get('/api/admin2/users/:id/task-activity', requireAdmin, async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const userId = req.params.id;
+        const { start_date, end_date } = req.query;
+
+        // Validate date format (YYYY-MM-DD)
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!start_date || !end_date || !dateRegex.test(start_date) || !dateRegex.test(end_date)) {
+            return res.status(400).json({
+                error: 'Invalid date format',
+                message: 'start_date and end_date must be in YYYY-MM-DD format'
+            });
+        }
+
+        // Parse dates
+        const startDate = new Date(start_date);
+        const endDate = new Date(end_date);
+
+        // Validate dates are valid
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            return res.status(400).json({
+                error: 'Invalid date format',
+                message: 'start_date and end_date must be valid dates'
+            });
+        }
+
+        // Validate end_date >= start_date
+        if (endDate < startDate) {
+            return res.status(400).json({
+                error: 'Invalid date range',
+                message: 'end_date must be on or after start_date'
+            });
+        }
+
+        // Validate range not too large (max 366 days)
+        const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        if (daysDiff > 366) {
+            return res.status(400).json({
+                error: 'Date range too large',
+                message: 'Maximum date range is 366 days'
+            });
+        }
+
+        // Check if user exists
+        const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: `No user with ID ${userId}`
+            });
+        }
+
+        // Query task counts by day
+        const activityQuery = await pool.query(`
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM taken
+            WHERE user_id = $1
+              AND created_at >= $2::date
+              AND created_at < ($3::date + interval '1 day')
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        `, [userId, start_date, end_date]);
+
+        // Create a map of existing counts
+        const countsMap = new Map();
+        activityQuery.rows.forEach(row => {
+            const dateStr = row.date.toISOString().split('T')[0];
+            countsMap.set(dateStr, parseInt(row.count));
+        });
+
+        // Fill in all dates in range with 0 for missing days
+        const activity = [];
+        const currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            activity.push({
+                date: dateStr,
+                count: countsMap.get(dateStr) || 0
+            });
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Calculate statistics
+        const total = activity.reduce((sum, d) => sum + d.count, 0);
+        const days = activity.length;
+        const average = days > 0 ? parseFloat((total / days).toFixed(2)) : 0;
+
+        // Find peak day
+        let peakDate = null;
+        let peakCount = 0;
+        activity.forEach(d => {
+            if (d.count > peakCount) {
+                peakCount = d.count;
+                peakDate = d.date;
+            }
+        });
+
+        // Calculate trend (compare first half to second half)
+        const midpoint = Math.floor(days / 2);
+        const firstHalf = activity.slice(0, midpoint);
+        const secondHalf = activity.slice(midpoint);
+
+        const firstHalfAvg = firstHalf.length > 0
+            ? firstHalf.reduce((sum, d) => sum + d.count, 0) / firstHalf.length
+            : 0;
+        const secondHalfAvg = secondHalf.length > 0
+            ? secondHalf.reduce((sum, d) => sum + d.count, 0) / secondHalf.length
+            : 0;
+
+        let trend = 'stable';
+        if (firstHalfAvg > 0) {
+            const change = (secondHalfAvg - firstHalfAvg) / firstHalfAvg;
+            if (change > 0.1) trend = 'up';
+            else if (change < -0.1) trend = 'down';
+        } else if (secondHalfAvg > 0) {
+            trend = 'up';
+        }
+
+        res.json({
+            activity,
+            statistics: {
+                total,
+                average,
+                peak_date: peakDate,
+                peak_count: peakCount,
+                trend
+            },
+            period: {
+                start_date,
+                end_date,
+                days
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting task activity:', error);
+        res.status(500).json({
+            error: 'Server error',
+            message: 'Failed to get task activity'
+        });
+    }
+});
+
 // PUT /api/admin2/users/:id/tier - Change user's subscription tier
 app.put('/api/admin2/users/:id/tier', requireAdmin, async (req, res) => {
     try {

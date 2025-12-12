@@ -65,7 +65,10 @@ const API = {
         }),
         forceLogout: (id) => API.request(`/users/${id}/logout`, { method: 'POST' }),
         deleteUser: (id) => API.request(`/users/${id}`, { method: 'DELETE' }),
-        resetPassword: (id) => API.request(`/users/${id}/reset-password`, { method: 'POST' })
+        resetPassword: (id) => API.request(`/users/${id}/reset-password`, { method: 'POST' }),
+        getTaskActivity: (id, startDate, endDate) => API.request(
+            `/users/${id}/task-activity?start_date=${startDate}&end_date=${endDate}`
+        )
     },
 
     // System configuration endpoints
@@ -107,6 +110,287 @@ const API = {
         }).then(r => r.json())
     }
 };
+
+// ============================================================================
+// Task Activity Chart (Feature 073)
+// ============================================================================
+
+let taskActivityChart = null;
+
+/**
+ * Calculate date range for a given period type
+ */
+function calculatePeriodDates(periodType) {
+    const now = new Date();
+    let startDate, endDate;
+
+    switch (periodType) {
+        case 'week':
+            // This week (Monday to Sunday)
+            const dayOfWeek = now.getDay();
+            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - daysToMonday);
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            break;
+        case 'month':
+            // This month
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            break;
+        case 'quarter':
+            // This quarter
+            const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+            startDate = new Date(now.getFullYear(), quarterMonth, 1);
+            endDate = new Date(now.getFullYear(), quarterMonth + 3, 0);
+            break;
+        case 'year':
+            // This year
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31);
+            break;
+        default:
+            // Default to this week
+            return calculatePeriodDates('week');
+    }
+
+    // Format as YYYY-MM-DD
+    const formatDate = (d) => d.toISOString().split('T')[0];
+    return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate)
+    };
+}
+
+/**
+ * Load task activity data and render chart
+ */
+async function loadTaskActivity(userId, startDate, endDate) {
+    const loadingEl = document.getElementById('activity-chart-loading');
+    const chartCanvas = document.getElementById('task-activity-chart');
+
+    try {
+        // Show loading
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (chartCanvas) chartCanvas.style.display = 'none';
+
+        // Fetch data
+        const data = await API.users.getTaskActivity(userId, startDate, endDate);
+
+        // Render chart
+        renderTaskActivityChart(data);
+
+        // Render statistics
+        renderActivityStatistics(data.statistics);
+
+    } catch (error) {
+        console.error('Failed to load task activity:', error);
+        if (loadingEl) {
+            loadingEl.textContent = 'Failed to load chart data';
+            loadingEl.style.color = '#dc3545';
+        }
+    }
+}
+
+/**
+ * Render the task activity bar chart
+ */
+function renderTaskActivityChart(data) {
+    const loadingEl = document.getElementById('activity-chart-loading');
+    const chartCanvas = document.getElementById('task-activity-chart');
+
+    if (!chartCanvas) return;
+
+    // Hide loading, show canvas
+    if (loadingEl) loadingEl.style.display = 'none';
+    chartCanvas.style.display = 'block';
+
+    // Destroy existing chart
+    if (taskActivityChart) {
+        taskActivityChart.destroy();
+        taskActivityChart = null;
+    }
+
+    // Prepare data
+    const labels = data.activity.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    const counts = data.activity.map(d => d.count);
+
+    // Create chart
+    const ctx = chartCanvas.getContext('2d');
+    taskActivityChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tasks Created',
+                data: counts,
+                backgroundColor: 'rgba(0, 122, 255, 0.7)',
+                borderColor: 'rgba(0, 122, 255, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: (items) => {
+                            if (items.length > 0) {
+                                const idx = items[0].dataIndex;
+                                return data.activity[idx].date;
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: 'Tasks'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Render activity statistics
+ */
+function renderActivityStatistics(statistics) {
+    const totalEl = document.getElementById('activity-stat-total');
+    const averageEl = document.getElementById('activity-stat-average');
+    const peakEl = document.getElementById('activity-stat-peak');
+    const trendEl = document.getElementById('activity-stat-trend');
+
+    if (totalEl) totalEl.textContent = statistics.total.toLocaleString();
+    if (averageEl) averageEl.textContent = statistics.average.toFixed(1);
+
+    if (peakEl) {
+        if (statistics.peak_date && statistics.peak_count > 0) {
+            const peakDate = new Date(statistics.peak_date);
+            const formatted = peakDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            peakEl.textContent = `${formatted} (${statistics.peak_count})`;
+        } else {
+            peakEl.textContent = 'N/A';
+        }
+    }
+
+    if (trendEl) {
+        const trendIcons = {
+            up: '📈 Up',
+            down: '📉 Down',
+            stable: '➡️ Stable'
+        };
+        const trendColors = {
+            up: '#28a745',
+            down: '#dc3545',
+            stable: '#6c757d'
+        };
+        trendEl.textContent = trendIcons[statistics.trend] || 'N/A';
+        trendEl.style.color = trendColors[statistics.trend] || 'inherit';
+    }
+}
+
+/**
+ * Initialize task activity event handlers
+ */
+function initTaskActivityHandlers() {
+    const periodSelector = document.getElementById('activity-period-selector');
+    const customDateRange = document.getElementById('custom-date-range');
+    const startDateInput = document.getElementById('activity-start-date');
+    const endDateInput = document.getElementById('activity-end-date');
+    const applyBtn = document.getElementById('apply-custom-dates');
+    const errorEl = document.getElementById('date-range-error');
+
+    if (periodSelector) {
+        periodSelector.addEventListener('change', () => {
+            const period = periodSelector.value;
+
+            if (period === 'custom') {
+                // Show custom date range inputs
+                if (customDateRange) customDateRange.style.display = 'block';
+            } else {
+                // Hide custom date range
+                if (customDateRange) customDateRange.style.display = 'none';
+                if (errorEl) errorEl.style.display = 'none';
+
+                // Calculate dates and load
+                const { startDate, endDate } = calculatePeriodDates(period);
+                if (window.currentUserId) {
+                    loadTaskActivity(window.currentUserId, startDate, endDate);
+                }
+            }
+        });
+    }
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            const startDate = startDateInput?.value;
+            const endDate = endDateInput?.value;
+
+            // Validate
+            if (!startDate || !endDate) {
+                if (errorEl) {
+                    errorEl.textContent = 'Please select both start and end dates';
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (endDate < startDate) {
+                if (errorEl) {
+                    errorEl.textContent = 'End date must be on or after start date';
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            // Check date range not too large
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            if (daysDiff > 366) {
+                if (errorEl) {
+                    errorEl.textContent = 'Maximum date range is 366 days';
+                    errorEl.style.display = 'block';
+                }
+                return;
+            }
+
+            // Hide error and load
+            if (errorEl) errorEl.style.display = 'none';
+            if (window.currentUserId) {
+                loadTaskActivity(window.currentUserId, startDate, endDate);
+            }
+        });
+    }
+}
+
+// Initialize handlers when DOM is ready
+document.addEventListener('DOMContentLoaded', initTaskActivityHandlers);
 
 // ============================================================================
 // Screen Manager
@@ -1261,6 +1545,14 @@ const Screens = {
 
             window.currentUserId = userId;
             window.currentUserData = data;
+
+            // Load task activity chart with default period (this week)
+            const periodSelector = document.getElementById('activity-period-selector');
+            if (periodSelector) periodSelector.value = 'week';
+            const customDateRange = document.getElementById('custom-date-range');
+            if (customDateRange) customDateRange.style.display = 'none';
+            const { startDate, endDate } = calculatePeriodDates('week');
+            loadTaskActivity(userId, startDate, endDate);
         } catch (error) {
             console.error('Failed to load user details:', error);
 
