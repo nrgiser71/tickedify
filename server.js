@@ -13773,13 +13773,14 @@ app.get('/api/admin2/users/:id/task-activity', requireAdmin, async (req, res) =>
         }
 
         // Query task counts by day
+        // Note: 'aangemaakt' is the Dutch column name for 'created_at' in the taken table
         const activityQuery = await pool.query(`
-            SELECT DATE(created_at) as date, COUNT(*) as count
+            SELECT DATE(aangemaakt) as date, COUNT(*) as count
             FROM taken
             WHERE user_id = $1
-              AND created_at >= $2::date
-              AND created_at < ($3::date + interval '1 day')
-            GROUP BY DATE(created_at)
+              AND aangemaakt >= $2::date
+              AND aangemaakt < ($3::date + interval '1 day')
+            GROUP BY DATE(aangemaakt)
             ORDER BY date ASC
         `, [userId, start_date, end_date]);
 
