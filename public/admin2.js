@@ -316,35 +316,49 @@ function renderActivityStatistics(statistics) {
 
 /**
  * Initialize task activity event handlers
+ * This function is idempotent - safe to call multiple times
  */
 function initTaskActivityHandlers() {
-    const periodSelector = document.getElementById('activity-period-selector');
+    let periodSelector = document.getElementById('activity-period-selector');
     const customDateRange = document.getElementById('custom-date-range');
     const startDateInput = document.getElementById('activity-start-date');
     const endDateInput = document.getElementById('activity-end-date');
-    const applyBtn = document.getElementById('apply-custom-dates');
+    let applyBtn = document.getElementById('apply-custom-dates');
     const errorEl = document.getElementById('date-range-error');
 
-    if (periodSelector) {
-        periodSelector.addEventListener('change', () => {
-            const period = periodSelector.value;
+    // Skip if elements don't exist yet (dynamically loaded HTML)
+    if (!periodSelector) return;
 
-            if (period === 'custom') {
-                // Show custom date range inputs
-                if (customDateRange) customDateRange.style.display = 'block';
-            } else {
-                // Hide custom date range
-                if (customDateRange) customDateRange.style.display = 'none';
-                if (errorEl) errorEl.style.display = 'none';
+    // Remove old event listeners by cloning the elements (idempotent approach)
+    const newPeriodSelector = periodSelector.cloneNode(true);
+    periodSelector.parentNode.replaceChild(newPeriodSelector, periodSelector);
+    periodSelector = newPeriodSelector;
 
-                // Calculate dates and load
-                const { startDate, endDate } = calculatePeriodDates(period);
-                if (window.currentUserId) {
-                    loadTaskActivity(window.currentUserId, startDate, endDate);
-                }
-            }
-        });
+    if (applyBtn) {
+        const newApplyBtn = applyBtn.cloneNode(true);
+        applyBtn.parentNode.replaceChild(newApplyBtn, applyBtn);
+        applyBtn = newApplyBtn;
     }
+
+    // Attach fresh event listener for period selector
+    periodSelector.addEventListener('change', () => {
+        const period = periodSelector.value;
+
+        if (period === 'custom') {
+            // Show custom date range inputs
+            if (customDateRange) customDateRange.style.display = 'block';
+        } else {
+            // Hide custom date range
+            if (customDateRange) customDateRange.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'none';
+
+            // Calculate dates and load
+            const { startDate, endDate } = calculatePeriodDates(period);
+            if (window.currentUserId) {
+                loadTaskActivity(window.currentUserId, startDate, endDate);
+            }
+        }
+    });
 
     if (applyBtn) {
         applyBtn.addEventListener('click', () => {
@@ -1613,6 +1627,9 @@ const Screens = {
             if (customDateRange) customDateRange.style.display = 'none';
             const { startDate, endDate } = calculatePeriodDates('week');
             loadTaskActivity(userId, startDate, endDate);
+
+            // Initialize event handlers now that the HTML elements exist
+            initTaskActivityHandlers();
         } catch (error) {
             console.error('Failed to load user details:', error);
 
