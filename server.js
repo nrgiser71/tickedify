@@ -7603,6 +7603,7 @@ app.get('/api/counts/sidebar', async (req, res) => {
         // Two separate sequential queries (simplest approach)
 
         // Query 1: Taken counts
+        // FIX: Added verwijderd_op IS NULL to exclude soft-deleted tasks (trash) from counts
         const takenResult = await pool.query(`
             SELECT
                 COUNT(CASE WHEN lijst = 'inbox' AND afgewerkt IS NULL THEN 1 END) as inbox,
@@ -7611,7 +7612,7 @@ app.get('/api/counts/sidebar', async (req, res) => {
                 COUNT(CASE WHEN lijst = 'opvolgen' AND afgewerkt IS NULL THEN 1 END) as opvolgen,
                 COUNT(CASE WHEN lijst LIKE 'uitgesteld-%' AND afgewerkt IS NULL THEN 1 END) as uitgesteld
             FROM taken
-            WHERE user_id = $1
+            WHERE user_id = $1 AND verwijderd_op IS NULL
         `, [userId]);
 
         // Query 2: Projecten count
