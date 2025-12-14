@@ -15759,6 +15759,8 @@ class AuthManager {
         this.isRedirecting = false;
         this.sessionCheckInterval = null;
         this.lastSessionCheck = null;
+        // FIX: Track if initial data has been loaded to prevent full UI reload on periodic session checks
+        this.initialDataLoaded = false;
         this.setupEventListeners();
         this.setupGlobalFetchInterceptor(); // Setup 401 detection early
         this.checkAuthStatus();
@@ -15995,10 +15997,12 @@ class AuthManager {
             if (response.ok) {
                 this.currentUser = null;
                 this.isAuthenticated = false;
-                
+                // Reset initial data loaded flag so next login reloads data
+                this.initialDataLoaded = false;
+
                 // Stop session check interval to prevent memory leaks
                 this.stopSessionCheckInterval();
-                
+
                 this.updateUI();
                 
                 toast.info('You are logged out.');
@@ -16084,13 +16088,20 @@ class AuthManager {
                     return;
                 }
 
-                // Load user-specific data
-                if (window.app) {
+                // Load user-specific data - ONLY on first authentication, not on periodic session checks
+                // FIX: This prevents full UI reload every 60 seconds
+                if (window.app && !this.initialDataLoaded) {
+                    console.log('🔄 Initial data load - first authentication');
                     await window.app.loadUserData();
+                    this.initialDataLoaded = true;
+                } else if (this.initialDataLoaded) {
+                    console.log('🕐 Session check: valid (skipping UI reload)');
                 }
             } else {
                 this.currentUser = null;
                 this.isAuthenticated = false;
+                // Reset flag when user becomes unauthenticated
+                this.initialDataLoaded = false;
 
                 // Clear data for unauthenticated state
                 if (window.app) {
