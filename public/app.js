@@ -16324,8 +16324,11 @@ class AuthManager {
         const pageTitle = document.getElementById('page-title');
         
         if (isAuthenticated) {
-            // Show task input container for authenticated users
-            if (taakInputContainer) taakInputContainer.style.display = 'flex';
+            // Show task input container ONLY for inbox - other lists don't need it
+            if (taakInputContainer) {
+                const currentList = this.huidigeLijst || 'inbox';
+                taakInputContainer.style.display = (currentList === 'inbox') ? 'flex' : 'none';
+            }
             
             // Show page title for authenticated users
             if (pageTitle) {
