@@ -16325,8 +16325,9 @@ class AuthManager {
         
         if (isAuthenticated) {
             // Show task input container ONLY for inbox - other lists don't need it
+            // Use window.app.huidigeLijst since this is AuthManager, not the app
             if (taakInputContainer) {
-                const currentList = this.huidigeLijst || 'inbox';
+                const currentList = window.app?.huidigeLijst || 'inbox';
                 taakInputContainer.style.display = (currentList === 'inbox') ? 'flex' : 'none';
             }
             
