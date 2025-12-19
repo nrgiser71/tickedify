@@ -15907,6 +15907,14 @@ class AuthManager {
                 if (this.isAuthenticated && app) {
                     await app.loadUserData();
                 }
+
+                // Check for redirect parameter (e.g., from subscription page)
+                const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+                if (redirectUrl && redirectUrl.startsWith('/')) {
+                    console.log('🔄 Redirecting to:', redirectUrl);
+                    window.location.href = redirectUrl;
+                    return;
+                }
             } else {
                 toast.error(data.error || 'Login failed. Check your credentials.');
             }
@@ -16045,6 +16053,13 @@ class AuthManager {
                 }
 
                 this.updateUI();
+
+                // Auto-show login modal if there's a redirect parameter (e.g., from subscription page)
+                const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+                if (redirectUrl && redirectUrl.startsWith('/')) {
+                    console.log('🔐 Showing login modal for redirect to:', redirectUrl);
+                    this.showLoginModal();
+                }
                 return;
             }
 
