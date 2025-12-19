@@ -15,32 +15,32 @@
 ---
 
 ## Phase 3.1: Setup
-- [ ] T001 Bump version in package.json (patch increment)
-- [ ] T002 Create feature branch from staging if not already done
+- [x] T001 Bump version in package.json (patch increment)
+- [x] T002 Create feature branch from staging if not already done
 
 ## Phase 3.2: Pending Selection Storage Utilities
 *Add sessionStorage utilities for pending subscription selection*
 
-- [ ] T003 Add `savePendingSelection(planId, source)` function in `public/js/subscription.js`
+- [x] T003 Add `savePendingSelection(planId, source)` function in `public/js/subscription.js`
   - Key: `tickedify_pending_subscription`
   - Store: `{planId, source, timestamp: Date.now(), returnUrl: '/subscription'}`
 
-- [ ] T004 Add `getPendingSelection()` function in `public/js/subscription.js`
+- [x] T004 Add `getPendingSelection()` function in `public/js/subscription.js`
   - Return parsed object or null if not exists
   - Check timestamp < 30 minutes old (stale check)
   - Return null if stale
 
-- [ ] T005 Add `clearPendingSelection()` function in `public/js/subscription.js`
+- [x] T005 Add `clearPendingSelection()` function in `public/js/subscription.js`
   - Remove `tickedify_pending_subscription` from sessionStorage
 
 ## Phase 3.3: Authentication State Tracking
 *Ensure auth state is properly tracked*
 
-- [ ] T006 Add `isAuthenticated` property to `subscriptionState` object in `public/js/subscription.js`
+- [x] T006 Add `isAuthenticated` property to `subscriptionState` object in `public/js/subscription.js`
   - Initialize as `false`
   - Set based on `loadUserSubscriptionStatus()` response
 
-- [ ] T007 Update `loadUserSubscriptionStatus()` to set `subscriptionState.isAuthenticated` flag
+- [x] T007 Update `loadUserSubscriptionStatus()` to set `subscriptionState.isAuthenticated` flag
   - If response.success && response.authenticated: set true
   - Otherwise: set false
   - Handle 401 gracefully (not an error, just means not logged in)
@@ -48,7 +48,7 @@
 ## Phase 3.4: Core Fix - confirmSelection Modification
 *The main fix: check auth before API call*
 
-- [ ] T008 Modify `confirmSelection()` in `public/js/subscription.js`
+- [x] T008 Modify `confirmSelection()` in `public/js/subscription.js`
   - At start: check `subscriptionState.isAuthenticated`
   - If not authenticated:
     1. Call `savePendingSelection(planId, source)`
@@ -60,7 +60,7 @@
 ## Phase 3.5: Post-Login Auto-Confirm
 *Automatically confirm pending selection after login*
 
-- [ ] T009 Add `checkAndProcessPendingSelection()` function in `public/js/subscription.js`
+- [x] T009 Add `checkAndProcessPendingSelection()` function in `public/js/subscription.js`
   - Call `getPendingSelection()`
   - If valid pending selection exists AND user is now authenticated:
     1. Call `selectPlan(pending.planId)`
@@ -68,28 +68,28 @@
     3. Call `clearPendingSelection()`
   - If stale or invalid: call `clearPendingSelection()` silently
 
-- [ ] T010 Update `initializeSubscriptionPage()` to call `checkAndProcessPendingSelection()`
+- [x] T010 Update `initializeSubscriptionPage()` to call `checkAndProcessPendingSelection()`
   - Call AFTER `loadUserSubscriptionStatus()` completes
   - Only process if user is authenticated (came back from login)
 
 ## Phase 3.6: Error Message English Translation
 *Ensure all error messages are in English*
 
-- [ ] T011 [P] Update error messages in `public/js/subscription.js` to English
+- [x] T011 [P] Update error messages in `public/js/subscription.js` to English
   - "Selecteer eerst een abonnement" → "Please select a plan first"
   - "Bezig met opslaan..." → "Saving..."
   - Any other Dutch text → English
 
-- [ ] T012 [P] Update error messages in `public/js/subscription-api.js` to English
+- [x] T012 [P] Update error messages in `public/js/subscription-api.js` to English
   - Review `formatErrorMessage()` translations
   - "Niet ingelogd" should be caught by frontend, but ensure fallback is English
 
 ## Phase 3.7: Validation & Deployment
 *Deploy and test on staging*
 
-- [ ] T013 Update changelog with fix description
-- [ ] T014 Commit all changes with descriptive message
-- [ ] T015 Push to staging branch and verify deployment via `/api/version`
+- [x] T013 Update changelog with fix description
+- [x] T014 Commit all changes with descriptive message
+- [x] T015 Push to staging branch and verify deployment via `/api/version`
 - [ ] T016 Test on dev.tickedify.com: Unauthenticated user → Free Trial flow
 - [ ] T017 Test on dev.tickedify.com: Authenticated user → Free Trial flow
 - [ ] T018 Test on dev.tickedify.com: Stale pending selection handling
