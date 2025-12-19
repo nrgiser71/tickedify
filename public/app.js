@@ -15986,6 +15986,14 @@ class AuthManager {
                 // Load user-specific data (only if still authenticated after checkAuthStatus)
                 if (this.isAuthenticated && app) {
                     await app.loadUserData();
+
+                    // Check for redirect parameter (e.g., from subscription page)
+                    const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+                    if (redirectUrl && redirectUrl.startsWith('/')) {
+                        console.log('🔄 Redirecting after registration to:', redirectUrl);
+                        window.location.href = redirectUrl;
+                        return;
+                    }
                 }
             } else {
                 toast.error(data.error || 'Registration failed. Please try again.');
@@ -16054,11 +16062,18 @@ class AuthManager {
 
                 this.updateUI();
 
-                // Auto-show login modal if there's a redirect parameter (e.g., from subscription page)
-                const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+                // Auto-show login/register modal if there's a redirect parameter (e.g., from subscription page)
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectUrl = urlParams.get('redirect');
+                const action = urlParams.get('action');
                 if (redirectUrl && redirectUrl.startsWith('/')) {
-                    console.log('🔐 Showing login modal for redirect to:', redirectUrl);
-                    this.showLoginModal();
+                    if (action === 'register') {
+                        console.log('📝 Showing register modal for redirect to:', redirectUrl);
+                        this.showRegisterModal();
+                    } else {
+                        console.log('🔐 Showing login modal for redirect to:', redirectUrl);
+                        this.showLoginModal();
+                    }
                 }
                 return;
             }

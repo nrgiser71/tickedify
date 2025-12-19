@@ -84,9 +84,9 @@
     <input type="hidden" id="selection-source" value="">
 
     <!-- Scripts (Cache busting via version parameter) -->
-    <script src="js/subscription-data.js?v=1.0.191"></script>
-    <script src="js/subscription-api.js?v=1.0.191"></script>
-    <script src="js/subscription.js?v=1.0.191"></script>
+    <script src="js/subscription-data.js?v=1.0.192"></script>
+    <script src="js/subscription-api.js?v=1.0.192"></script>
+    <script src="js/subscription.js?v=1.0.192"></script>
 
     <!-- Template for Plan Option (used by JavaScript) -->
     <template id="plan-option-template">
@@ -152,23 +152,24 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>
-                    <i class="fas fa-user-lock"></i>
-                    Login Required
+                    <i class="fas fa-user-plus"></i>
+                    Account Required
                 </h3>
                 <button type="button" class="modal-close" onclick="closeLoginRequiredModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p id="login-required-message">Please log in or create an account to start your free trial.</p>
+                <p id="login-required-message">Create a free account to start your 14-day trial.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeLoginRequiredModal()">
-                    Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="redirectToLogin()">
+            <div class="modal-footer" style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="redirectToLogin()">
                     <i class="fas fa-sign-in-alt"></i>
                     Log in
+                </button>
+                <button type="button" class="btn btn-primary" onclick="redirectToRegister()">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
                 </button>
             </div>
         </div>
@@ -206,7 +207,12 @@
 
         function redirectToLogin() {
             // Redirect to app page (which has login form) with return URL to come back to subscription
-            window.location.href = '/app?redirect=/subscription';
+            window.location.href = '/app?redirect=/subscription&action=login';
+        }
+
+        function redirectToRegister() {
+            // Redirect to app page (which has register form) with return URL to come back to subscription
+            window.location.href = '/app?redirect=/subscription&action=register';
         }
 
         // Initialize page when DOM is loaded
