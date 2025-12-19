@@ -80,11 +80,11 @@ const SubscriptionAPI = {
             console.error(`API Error for ${endpoint}:`, error);
 
             if (error.name === 'AbortError') {
-                throw new Error('Request timeout - probeer het opnieuw');
+                throw new Error('Request timeout - please try again');
             }
 
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                throw new Error('Netwerkfout - controleer je internetverbinding');
+                throw new Error('Network error - please check your internet connection');
             }
 
             throw error;
@@ -161,7 +161,7 @@ const SubscriptionAPI = {
                     success: true,
                     trial: true,
                     trialEndDate: response.trialEndDate,
-                    message: response.message || 'Trial geactiveerd!',
+                    message: response.message || 'Trial activated!',
                     plan_id: planId
                 };
             } else if (response.paid && response.redirectUrl) {
@@ -172,7 +172,7 @@ const SubscriptionAPI = {
                     paid: true,
                     redirectUrl: response.redirectUrl,
                     email: response.email,
-                    message: 'Doorsturen naar betaling...',
+                    message: 'Redirecting to payment...',
                     plan_id: planId
                 };
             }
@@ -240,14 +240,14 @@ const SubscriptionAPI = {
         if (!planId) {
             return {
                 valid: false,
-                error: 'Selecteer een abonnement'
+                error: 'Please select a plan'
             };
         }
 
         if (!validPlans.includes(planId)) {
             return {
                 valid: false,
-                error: 'Ongeldig abonnement geselecteerd'
+                error: 'Invalid plan selected'
             };
         }
 
@@ -267,13 +267,13 @@ const SubscriptionAPI = {
 
         // Common error patterns and their user-friendly versions
         const errorMappings = {
-            'timeout': 'De server reageert niet. Probeer het opnieuw.',
-            'network': 'Controleer je internetverbinding en probeer opnieuw.',
-            'unauthorized': 'Je bent niet ingelogd. Log opnieuw in.',
-            'forbidden': 'Je hebt geen toegang tot deze functie.',
-            'not found': 'De gevraagde pagina bestaat niet.',
-            'server error': 'Er is een probleem met de server. Probeer het later opnieuw.',
-            'bad request': 'Er is iets mis met je aanvraag. Probeer opnieuw.'
+            'timeout': 'The server is not responding. Please try again.',
+            'network': 'Please check your internet connection and try again.',
+            'unauthorized': 'You are not logged in. Please log in again.',
+            'forbidden': 'You do not have access to this feature.',
+            'not found': 'The requested page does not exist.',
+            'server error': 'There is a problem with the server. Please try again later.',
+            'bad request': 'There was a problem with your request. Please try again.'
         };
 
         // Check for pattern matches
@@ -333,7 +333,7 @@ const SubscriptionErrorHandler = {
     handleNetworkError(error) {
         console.error('Network error in subscription API:', error);
 
-        const message = 'Netwerkfout - controleer je internetverbinding en probeer opnieuw.';
+        const message = 'Network error - please check your internet connection and try again.';
 
         if (typeof showErrorModal === 'function') {
             showErrorModal(message);
@@ -349,7 +349,7 @@ const SubscriptionErrorHandler = {
     handleAuthError(error) {
         console.error('Authentication error in subscription API:', error);
 
-        const message = 'Je sessie is verlopen. Log opnieuw in om door te gaan.';
+        const message = 'Your session has expired. Please log in again to continue.';
 
         if (typeof showErrorModal === 'function') {
             showErrorModal(message);

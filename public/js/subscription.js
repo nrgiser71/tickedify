@@ -11,8 +11,112 @@ let subscriptionState = {
     selectionSource: null,
     plans: [],
     userStatus: null,
-    isLoading: false
+    isLoading: false,
+    isAuthenticated: false
 };
+
+// Pending selection storage key
+const PENDING_SUBSCRIPTION_KEY = 'tickedify_pending_subscription';
+const PENDING_SELECTION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Save pending subscription selection to sessionStorage
+ * Used when user is not authenticated and needs to log in first
+ * @param {string} planId - Selected plan ID
+ * @param {string} source - Selection source
+ */
+function savePendingSelection(planId, source) {
+    const pendingSelection = {
+        planId: planId,
+        source: source || 'upgrade',
+        timestamp: Date.now(),
+        returnUrl: '/subscription'
+    };
+    sessionStorage.setItem(PENDING_SUBSCRIPTION_KEY, JSON.stringify(pendingSelection));
+    console.log('📦 Saved pending selection:', pendingSelection);
+}
+
+/**
+ * Get pending subscription selection from sessionStorage
+ * Returns null if not exists or if stale (> 30 minutes old)
+ * @returns {object|null} - Pending selection or null
+ */
+function getPendingSelection() {
+    try {
+        const stored = sessionStorage.getItem(PENDING_SUBSCRIPTION_KEY);
+        if (!stored) return null;
+
+        const selection = JSON.parse(stored);
+
+        // Check if selection is stale (> 30 minutes)
+        if (Date.now() - selection.timestamp > PENDING_SELECTION_TIMEOUT_MS) {
+            console.log('⏰ Pending selection is stale, discarding');
+            clearPendingSelection();
+            return null;
+        }
+
+        // Validate planId
+        const validPlanIds = ['trial_14_days', 'monthly_7', 'yearly_70', 'monthly_8', 'yearly_80'];
+        if (!validPlanIds.includes(selection.planId)) {
+            console.log('❌ Invalid planId in pending selection, discarding');
+            clearPendingSelection();
+            return null;
+        }
+
+        console.log('📦 Retrieved pending selection:', selection);
+        return selection;
+    } catch (error) {
+        console.error('Error reading pending selection:', error);
+        clearPendingSelection();
+        return null;
+    }
+}
+
+/**
+ * Clear pending subscription selection from sessionStorage
+ */
+function clearPendingSelection() {
+    sessionStorage.removeItem(PENDING_SUBSCRIPTION_KEY);
+    console.log('🧹 Cleared pending selection');
+}
+
+/**
+ * Check for pending subscription selection and auto-confirm if user is now authenticated
+ * Called after login when user returns to subscription page
+ */
+async function checkAndProcessPendingSelection() {
+    // Only process if user is authenticated
+    if (!subscriptionState.isAuthenticated) {
+        console.log('🔐 User not authenticated, skipping pending selection check');
+        return;
+    }
+
+    const pending = getPendingSelection();
+    if (!pending) {
+        console.log('📦 No pending selection found');
+        return;
+    }
+
+    console.log('🚀 Found pending selection, auto-confirming:', pending);
+
+    try {
+        // Select the pending plan
+        selectPlan(pending.planId);
+
+        // Clear the pending selection BEFORE confirming to prevent loops
+        clearPendingSelection();
+
+        // Auto-confirm the selection
+        await confirmSelection();
+
+        console.log('✅ Pending selection auto-confirmed successfully');
+    } catch (error) {
+        console.error('❌ Error auto-confirming pending selection:', error);
+        // Clear pending selection to prevent infinite loops
+        clearPendingSelection();
+        showErrorModal('There was an error processing your selection. Please try again.');
+    }
+}
 
 /**
  * Initialize the subscription page
@@ -32,6 +136,10 @@ async function initializeSubscriptionPage() {
 
         // Load user subscription status
         await loadUserSubscriptionStatus();
+
+        // Check for pending selection (user returning from login)
+        // This must be called AFTER loadUserSubscriptionStatus to know auth state
+        await checkAndProcessPendingSelection();
 
         // Render plans UI
         renderSubscriptionPlans();
@@ -82,12 +190,18 @@ async function loadUserSubscriptionStatus() {
         if (response.success) {
             subscriptionState.userStatus = response;
             subscriptionState.selectedPlanId = response.selected_plan;
-            console.log('User subscription status loaded:', response);
+            // User is authenticated if we got a successful response
+            subscriptionState.isAuthenticated = true;
+            console.log('✅ User authenticated, subscription status loaded:', response);
         } else {
-            console.log('User not authenticated or status unavailable');
+            // Not authenticated - this is normal for new visitors
+            subscriptionState.isAuthenticated = false;
+            console.log('👤 User not authenticated (normal for new visitors)');
         }
     } catch (error) {
-        console.error('Error loading user status:', error);
+        // Handle 401 gracefully - just means user is not logged in
+        subscriptionState.isAuthenticated = false;
+        console.log('👤 User not authenticated:', error.message);
         // Continue without user status - user might not be authenticated
     }
 }
@@ -378,11 +492,23 @@ function updateSelectionUI() {
  */
 async function confirmSelection() {
     if (!subscriptionState.selectedPlanId) {
-        showErrorModal('Selecteer eerst een abonnement.');
+        showErrorModal('Please select a plan first.');
         return;
     }
 
     if (subscriptionState.isLoading) return;
+
+    // Check if user is authenticated BEFORE making API call
+    if (!subscriptionState.isAuthenticated) {
+        console.log('🔐 User not authenticated, saving selection and redirecting to login');
+
+        // Save the selection for after login
+        savePendingSelection(subscriptionState.selectedPlanId, subscriptionState.selectionSource);
+
+        // Show friendly modal with login redirect
+        showLoginRequiredModal();
+        return;
+    }
 
     try {
         subscriptionState.isLoading = true;
@@ -396,7 +522,7 @@ async function confirmSelection() {
         const confirmButton = document.getElementById('confirm-selection');
         if (confirmButton) {
             SubscriptionHelpers.showLoading(confirmButton);
-            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bezig met opslaan...';
+            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         }
 
         // Send selection to API
