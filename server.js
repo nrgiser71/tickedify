@@ -3023,8 +3023,11 @@ app.delete('/api/temp-delete-test-users', async (req, res) => {
         // Delete related data first (foreign key constraints)
         const userIds = findResult.rows.map(u => u.id);
 
-        // Delete from acties (tasks)
-        await pool.query(`DELETE FROM acties WHERE user_id = ANY($1)`, [userIds]);
+        // Delete from taken (tasks)
+        await pool.query(`DELETE FROM taken WHERE user_id = ANY($1)`, [userIds]);
+
+        // Delete from dagelijkse_planning
+        await pool.query(`DELETE FROM dagelijkse_planning WHERE user_id = ANY($1)`, [userIds]);
 
         // Delete from projecten
         await pool.query(`DELETE FROM projecten WHERE user_id = ANY($1)`, [userIds]);
