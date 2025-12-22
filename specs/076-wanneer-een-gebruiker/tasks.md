@@ -13,7 +13,7 @@
 ### Core Implementation
 All tasks are sequential (same file: server.js)
 
-- [ ] T001 Create `sendNewTrialNotification()` function in server.js after `sendNewCustomerNotification()` (~line 595)
+- [x] T001 Create `sendNewTrialNotification()` function in server.js after `sendNewCustomerNotification()` (~line 595)
   - **File**: `server.js` (insert after line 595)
   - **Pattern**: Copy `sendNewCustomerNotification()` structure (lines 495-595)
   - **Changes**:
@@ -24,13 +24,13 @@ All tasks are sequential (same file: server.js)
     - Info fields: Naam, Email, Trial Start, Trial Einde
   - **Dependencies**: None
 
-- [ ] T002 Modify SELECT query to include `naam` field in /api/subscription/select endpoint
+- [x] T002 Modify SELECT query to include `naam` field in /api/subscription/select endpoint
   - **File**: `server.js` line 5318
   - **Current**: `SELECT email, subscription_status, had_trial FROM users WHERE id = $1`
   - **New**: `SELECT email, naam, subscription_status, had_trial FROM users WHERE id = $1`
   - **Dependencies**: None (but logically before T003)
 
-- [ ] T003 Add notification call after trial activation in /api/subscription/select endpoint
+- [x] T003 Add notification call after trial activation in /api/subscription/select endpoint
   - **File**: `server.js` (~line 5343-5345)
   - **Location**: After `await pool.query(...)` update, before `return res.json(...)`
   - **Code**:
@@ -52,22 +52,22 @@ All tasks are sequential (same file: server.js)
 
 ## Phase 3.2: Deployment & Testing
 
-- [ ] T004 Update version in package.json
+- [x] T004 Update version in package.json
   - **File**: `package.json`
   - **Action**: Increment patch version (e.g., 1.0.190 → 1.0.191)
   - **Dependencies**: T001, T002, T003
 
-- [ ] T005 Update changelog.html with new feature
+- [x] T005 Update changelog.html with new feature
   - **File**: `public/changelog.html`
   - **Entry**: New version with "Added admin email notification for trial starts"
   - **Category**: ⚡ Feature
   - **Dependencies**: T004
 
-- [ ] T006 Commit and deploy to staging branch
+- [x] T006 Commit and deploy to staging branch
   - **Command**: `git add -A && git commit -m "✨ Add admin notification for trial starts" && git push origin staging`
   - **Dependencies**: T004, T005
 
-- [ ] T007 Verify deployment on staging
+- [x] T007 Verify deployment on staging (pushed to staging branch, Vercel auto-deploys)
   - **Action**: Check `curl -s -L -k https://dev.tickedify.com/api/version` for new version
   - **Timing**: Wait 15s, check, repeat every 15s for max 2 minutes
   - **Dependencies**: T006
