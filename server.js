@@ -594,6 +594,123 @@ Tickedify Admin Notificatie
   }
 }
 
+// Send admin notification email when new user starts a trial
+// Feature: 076-wanneer-een-gebruiker
+async function sendNewTrialNotification(customerEmail, customerName, trialStartDate, trialEndDate) {
+  try {
+    // Check if Mailgun is configured
+    if (!process.env.MAILGUN_API_KEY) {
+      console.error('❌ Mailgun not configured - cannot send trial notification');
+      throw new Error('Email service not configured');
+    }
+
+    const formData = require('form-data');
+    const Mailgun = require('mailgun.js');
+    const mailgun = new Mailgun(formData);
+
+    const mg = mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY,
+      url: 'https://api.eu.mailgun.net' // EU region endpoint
+    });
+
+    // Format dates for display
+    const startDateStr = trialStartDate instanceof Date
+      ? trialStartDate.toISOString().split('T')[0]
+      : trialStartDate;
+    const endDateStr = trialEndDate instanceof Date
+      ? trialEndDate.toISOString().split('T')[0]
+      : trialEndDate;
+
+    // HTML email template
+    const htmlBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #007aff 0%, #00b4d8 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; }
+          .info-box { background: #f8f9fa; border-left: 4px solid #ff9500; padding: 16px; margin: 20px 0; }
+          .info-row { margin: 8px 0; }
+          .info-label { font-weight: 600; color: #666; display: inline-block; min-width: 120px; }
+          .info-value { color: #333; }
+          .footer { color: #666; font-size: 14px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+          .trial-badge { background: #ff9500; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0;">🚀 Nieuwe Trial Gebruiker!</h1>
+          </div>
+          <div class="content">
+            <p><span class="trial-badge">TRIAL GESTART</span></p>
+            <p>Er heeft zich zojuist een nieuwe gebruiker geregistreerd voor een 14-daagse trial op Tickedify.</p>
+
+            <div class="info-box">
+              <div class="info-row">
+                <span class="info-label">Naam:</span>
+                <span class="info-value">${customerName}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">${customerEmail}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Trial Start:</span>
+                <span class="info-value">${startDateStr}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Trial Einde:</span>
+                <span class="info-value"><strong>${endDateStr}</strong></span>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p style="color: #999; font-size: 12px;">Tickedify Admin Notificatie</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Plain text fallback
+    const textBody = `
+NIEUWE TRIAL GEBRUIKER VOOR TICKEDIFY
+=====================================
+
+Er heeft zich zojuist een nieuwe gebruiker geregistreerd voor een trial.
+
+Gebruiker gegevens:
+- Naam: ${customerName}
+- Email: ${customerEmail}
+- Trial Start: ${startDateStr}
+- Trial Einde: ${endDateStr}
+
+Tickedify Admin Notificatie
+    `.trim();
+
+    const messageData = {
+      from: 'Tickedify <noreply@mg.tickedify.com>',
+      to: 'support@tickedify.com',
+      subject: 'Nieuwe Trial Gebruiker voor Tickedify',
+      text: textBody,
+      html: htmlBody
+    };
+
+    const result = await mg.messages.create('mg.tickedify.com', messageData);
+    console.log(`✅ Trial notification sent to support@tickedify.com (User: ${customerEmail}, ID: ${result.id})`);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to send trial notification:', error);
+    throw new Error('Failed to send trial notification');
+  }
+}
+
 // ========================================
 // PLUG&PAY SUBSCRIPTION HELPER FUNCTIONS
 // Feature: 057-dan-gaan-we
@@ -5315,7 +5432,7 @@ app.post('/api/subscription/select', async (req, res) => {
     }
 
     // Get user info (including email for confirmation page)
-    const userResult = await pool.query('SELECT email, subscription_status, had_trial FROM users WHERE id = $1', [userId]);
+    const userResult = await pool.query('SELECT email, naam, subscription_status, had_trial FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: 'Gebruiker niet gevonden' });
     }
@@ -5342,6 +5459,19 @@ app.post('/api/subscription/select', async (req, res) => {
         [SUBSCRIPTION_STATES.TRIALING, trialEndDate, userId]
       );
 
+      // Send admin notification (non-blocking)
+      // Feature: 076-wanneer-een-gebruiker
+      try {
+        await sendNewTrialNotification(
+          user.email,
+          user.naam || 'Naam onbekend',
+          new Date(),
+          trialEndDate
+        );
+      } catch (notificationError) {
+        console.error('⚠️ Failed to send trial notification:', notificationError);
+        // Continue - don't fail the trial activation
+      }
 
       return res.json({
         success: true,
