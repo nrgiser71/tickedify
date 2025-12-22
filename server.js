@@ -3003,6 +3003,49 @@ app.get('/api/debug/payment-configs', async (req, res) => {
     }
 });
 
+// TEMPORARY: Debug endpoint to delete test users (will be removed after use)
+app.delete('/api/debug/delete-test-users', async (req, res) => {
+    try {
+        if (!pool) {
+            return res.status(503).json({ error: 'Database not available' });
+        }
+
+        // First, find the users to delete
+        const findResult = await pool.query(
+            `SELECT id, email, naam, created_at FROM users WHERE email LIKE '%jbs.jan.buskens+testfreetrial%'`
+        );
+
+        if (findResult.rows.length === 0) {
+            return res.json({ success: true, message: 'No test users found', deleted: 0 });
+        }
+
+        // Delete related data first (foreign key constraints)
+        const userIds = findResult.rows.map(u => u.id);
+
+        // Delete from acties (tasks)
+        await pool.query(`DELETE FROM acties WHERE user_id = ANY($1)`, [userIds]);
+
+        // Delete from projecten
+        await pool.query(`DELETE FROM projecten WHERE user_id = ANY($1)`, [userIds]);
+
+        // Delete the users
+        const deleteResult = await pool.query(
+            `DELETE FROM users WHERE email LIKE '%jbs.jan.buskens+testfreetrial%' RETURNING id, email`
+        );
+
+        res.json({
+            success: true,
+            message: `Deleted ${deleteResult.rows.length} test users`,
+            deleted: deleteResult.rows.length,
+            users: deleteResult.rows
+        });
+
+    } catch (error) {
+        console.error('Delete test users error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Debug endpoint to activate all payment configurations
 // Debug endpoint to reset user subscription status (for testing)
 // Debug endpoint to check beta config and user status
