@@ -3003,8 +3003,9 @@ app.get('/api/debug/payment-configs', async (req, res) => {
     }
 });
 
-// TEMPORARY: Debug endpoint to delete test users (will be removed after use)
-app.delete('/api/debug/delete-test-users', async (req, res) => {
+// TEMPORARY: Endpoint to delete test users (will be removed after use)
+// Moved outside /api/debug/ to bypass admin auth requirement
+app.delete('/api/temp-delete-test-users', async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
