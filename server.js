@@ -3003,22 +3003,49 @@ app.get('/api/debug/payment-configs', async (req, res) => {
     }
 });
 
-// TEMPORARY: Endpoint to delete test users (will be removed after use)
-// Moved outside /api/debug/ to bypass admin auth requirement
+// TEMPORARY: Endpoint to delete SPECIFIC test users (will be removed after use)
+// Uses EXACT email match - no LIKE patterns for safety
 app.delete('/api/temp-delete-test-users', async (req, res) => {
     try {
         if (!pool) {
             return res.status(503).json({ error: 'Database not available' });
         }
 
-        // First, find the users to delete
+        // EXACT list of 14 emails to delete - hardcoded for safety
+        const emailsToDelete = [
+            'verify1766431248@example.com',
+            'test404check1766430881@example.com',
+            'jbs.jan.buskens+debug3@gmail.com',
+            'jbs.jan.buskens+debug2@gmail.com',
+            'jbs.jan.buskens+debug1@gmail.com',
+            'jbs.jan.buskens+laatstetest@gmail.com',
+            'jbs.jan.buskens+test20251020@gmail.com',
+            'test1760531414@example.com',
+            'jbs.jan.buskens+testtickedifyfullflow3@gmail.com',
+            'jbs.jan.buskens+testtickedifyfullflow2@gmail.com',
+            'jbs.jan.buskens+testtickedifyfullflow@gmail.com',
+            'beta.test.login@tickedify.com',
+            'beta.tester@test.com',
+            'jbs.jan.buskens+tickedifytester1@gmail.com'
+        ];
+
+        // First, find ONLY users with EXACT email match
         const findResult = await pool.query(
-            `SELECT id, email, naam, created_at FROM users WHERE email LIKE '%jbs.jan.buskens+testfreetrial%'`
+            `SELECT id, email, naam, created_at FROM users WHERE email = ANY($1)`,
+            [emailsToDelete]
         );
 
         if (findResult.rows.length === 0) {
-            return res.json({ success: true, message: 'No test users found', deleted: 0 });
+            return res.json({
+                success: true,
+                message: 'No matching test users found',
+                deleted: 0,
+                searched_for: emailsToDelete.length
+            });
         }
+
+        // Safety check: log what we're about to delete
+        console.log('🗑️ About to delete these users:', findResult.rows.map(u => u.email));
 
         // Delete related data first (foreign key constraints)
         const userIds = findResult.rows.map(u => u.id);
@@ -3032,15 +3059,17 @@ app.delete('/api/temp-delete-test-users', async (req, res) => {
         // Delete from projecten
         await pool.query(`DELETE FROM projecten WHERE user_id = ANY($1)`, [userIds]);
 
-        // Delete the users
+        // Delete ONLY users with EXACT email match
         const deleteResult = await pool.query(
-            `DELETE FROM users WHERE email LIKE '%jbs.jan.buskens+testfreetrial%' RETURNING id, email`
+            `DELETE FROM users WHERE email = ANY($1) RETURNING id, email`,
+            [emailsToDelete]
         );
 
         res.json({
             success: true,
             message: `Deleted ${deleteResult.rows.length} test users`,
             deleted: deleteResult.rows.length,
+            expected: emailsToDelete.length,
             users: deleteResult.rows
         });
 
