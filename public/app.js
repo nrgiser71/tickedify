@@ -15967,7 +15967,7 @@ class AuthManager {
 
                     // Redirect to subscription page after short delay
                     setTimeout(() => {
-                        window.location.href = data.redirect || '/subscription.html';
+                        window.location.href = data.redirect || '/subscription';
                     }, 1500);
                     return;
                 }
@@ -16176,7 +16176,7 @@ class AuthManager {
         // Redirect to subscription page with beta source parameter
         console.log('Redirecting to subscription page due to beta expiry');
         setTimeout(() => {
-            window.location.href = '/subscription.html?source=beta';
+            window.location.href = '/subscription?source=beta';
         }, 2000); // 2 second delay to show the message first
     }
 

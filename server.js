@@ -5102,7 +5102,7 @@ app.post('/api/auth/register', async (req, res) => {
                     success: true,
                     requiresPayment: true,
                     message: 'Account aangemaakt. Betaling vereist voor toegang.',
-                    redirect: '/subscription.html',
+                    redirect: '/subscription',
                     user: {
                         id: userId,
                         email,
@@ -5639,7 +5639,7 @@ app.get('/api/payment/cancelled', async (req, res) => {
 
     if (userId) {
       // Logged in - redirect to subscription page
-      res.redirect('/subscription.html?cancelled=true');
+      res.redirect('/subscription?cancelled=true');
     } else {
       // Not logged in - redirect to generic cancelled page
       res.redirect('/payment-cancelled.html');

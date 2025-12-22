@@ -21,7 +21,7 @@ function initConfirmPage() {
     if (!paymentDataStr) {
         console.error('No payment data found in session storage');
         // Redirect back to subscription page
-        window.location.href = '/subscription.html';
+        window.location.href = '/subscription';
         return;
     }
 
@@ -44,7 +44,7 @@ function initConfirmPage() {
         if (dataAgeMs > maxAgeMs) {
             console.error('❌ Payment data expired (older than 5 minutes) - clearing and redirecting');
             sessionStorage.removeItem('payment_data');
-            window.location.href = '/subscription.html';
+            window.location.href = '/subscription';
             return;
         }
 
@@ -53,7 +53,7 @@ function initConfirmPage() {
             console.error('❌ Invalid or missing redirectUrl:', paymentData.redirectUrl);
             alert(`ERROR: Invalid payment link found!\n\nURL: ${paymentData.redirectUrl || 'NO URL'}\n\nPlease take a screenshot of this message and send it to support.`);
             sessionStorage.removeItem('payment_data');
-            window.location.href = '/subscription.html';
+            window.location.href = '/subscription';
             return;
         }
 
@@ -68,7 +68,7 @@ function initConfirmPage() {
     } catch (error) {
         console.error('Error parsing payment data:', error);
         sessionStorage.removeItem('payment_data');
-        window.location.href = '/subscription.html';
+        window.location.href = '/subscription';
     }
 }
 
@@ -174,7 +174,7 @@ function proceedToPayment() {
         if (!confirmRedirect) {
             console.log('User cancelled suspicious redirect');
             sessionStorage.removeItem('payment_data');
-            window.location.href = '/subscription.html';
+            window.location.href = '/subscription';
             return;
         }
     }
@@ -199,7 +199,7 @@ function goBack() {
     sessionStorage.removeItem('payment_data');
 
     // Go back to subscription page
-    window.location.href = '/subscription.html';
+    window.location.href = '/subscription';
 }
 
 /**
