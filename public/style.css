@@ -3877,7 +3877,7 @@ button:focus {
 
 .task-checkbox {
     margin-right: 8px;
-    transform: scale(1.1);
+    transform: scale(1.65);
     cursor: pointer;
 }
 
