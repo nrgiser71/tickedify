@@ -9471,16 +9471,18 @@ class Taakbeheer {
         // Bind events
         this.bindZoekEvents();
 
-        // Hide initial loading indicator - search is ready
-        const initialLoading = document.getElementById('search-initial-loading');
-        if (initialLoading) {
-            initialLoading.remove();
-            // Hide results container if empty (no search performed yet)
-            const resultatenContainer = document.getElementById('zoek-resultaten');
-            if (resultatenContainer) {
-                resultatenContainer.style.display = 'none';
+        // Hide initial loading indicator after brief delay so user sees it
+        setTimeout(() => {
+            const initialLoading = document.getElementById('search-initial-loading');
+            if (initialLoading) {
+                initialLoading.remove();
+                // Hide results container if empty (no search performed yet)
+                const resultatenContainer = document.getElementById('zoek-resultaten');
+                if (resultatenContainer) {
+                    resultatenContainer.style.display = 'none';
+                }
             }
-        }
+        }, 400);
     }
 
     bindZoekEvents() {
