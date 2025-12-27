@@ -9455,9 +9455,14 @@ class Taakbeheer {
                         </div>
                     </div>
                     
-                    <div class="zoek-resultaten" id="zoek-resultaten" style="display: none;">
+                    <div class="zoek-resultaten" id="zoek-resultaten" style="display: block;">
                         <h3>Search Results</h3>
-                        <div id="resultaten-lijst"></div>
+                        <div id="resultaten-lijst">
+                            <div class="loading-inline" id="search-initial-loading">
+                                <div class="loading-spinner-small"></div>
+                                <span>Preparing search...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -9465,6 +9470,17 @@ class Taakbeheer {
 
         // Bind events
         this.bindZoekEvents();
+
+        // Hide initial loading indicator - search is ready
+        const initialLoading = document.getElementById('search-initial-loading');
+        if (initialLoading) {
+            initialLoading.remove();
+            // Hide results container if empty (no search performed yet)
+            const resultatenContainer = document.getElementById('zoek-resultaten');
+            if (resultatenContainer) {
+                resultatenContainer.style.display = 'none';
+            }
+        }
     }
 
     bindZoekEvents() {
