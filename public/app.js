@@ -9510,8 +9510,8 @@ class Taakbeheer {
         };
 
         try {
-            // Show loading with spinner
-            resultatenLijst.innerHTML = '<div class="loading-inline"><div class="loading-spinner-small"></div><span>Searching...</span></div>';
+            // Show loading with spinner (centered, larger)
+            resultatenLijst.innerHTML = '<div class="search-loading"><div class="loading-spinner"></div><span>Searching...</span></div>';
             resultatenContainer.style.display = 'block';
 
             // Get all tasks from selected lists
