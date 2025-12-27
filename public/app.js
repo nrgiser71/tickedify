@@ -2878,6 +2878,13 @@ class Taakbeheer {
             this.sluitPopup();
         });
 
+        // Click outside to close planning popup
+        document.getElementById('planningPopup').addEventListener('click', (e) => {
+            if (e.target.id === 'planningPopup') {
+                this.sluitPopup();
+            }
+        });
+
         // Herhaling popup events
         document.getElementById('sluitHerhalingPopupBtn').addEventListener('click', () => {
             this.sluitHerhalingPopup();
