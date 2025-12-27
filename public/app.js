@@ -11268,8 +11268,8 @@ class Taakbeheer {
             const contextNaam = this.getContextNaam(actie.contextId);
             
             // Format date for display
-            const datumString = actie.verschijndatum ? 
-                new Date(actie.verschijndatum).toLocaleDateString('en-US') : 'No date';
+            const datumString = actie.verschijndatum ?
+                new Date(actie.verschijndatum).toLocaleDateString('en-GB') : 'No date';
             
             // Datum status indicator
             const datumStatus = this.getTaakDatumStatus(actie.verschijndatum);
