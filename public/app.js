@@ -9455,14 +9455,9 @@ class Taakbeheer {
                         </div>
                     </div>
                     
-                    <div class="zoek-resultaten" id="zoek-resultaten" style="display: block;">
+                    <div class="zoek-resultaten" id="zoek-resultaten" style="display: none;">
                         <h3>Search Results</h3>
-                        <div id="resultaten-lijst">
-                            <div class="loading-inline" id="search-initial-loading">
-                                <div class="loading-spinner-small"></div>
-                                <span>Preparing search...</span>
-                            </div>
-                        </div>
+                        <div id="resultaten-lijst"></div>
                     </div>
                 </div>
             </div>
@@ -9470,19 +9465,6 @@ class Taakbeheer {
 
         // Bind events
         this.bindZoekEvents();
-
-        // Hide initial loading indicator after brief delay so user sees it
-        setTimeout(() => {
-            const initialLoading = document.getElementById('search-initial-loading');
-            if (initialLoading) {
-                initialLoading.remove();
-                // Hide results container if empty (no search performed yet)
-                const resultatenContainer = document.getElementById('zoek-resultaten');
-                if (resultatenContainer) {
-                    resultatenContainer.style.display = 'none';
-                }
-            }
-        }, 400);
     }
 
     bindZoekEvents() {
@@ -9528,8 +9510,8 @@ class Taakbeheer {
         };
 
         try {
-            // Show loading
-            resultatenLijst.innerHTML = '<div class="loading">Zoeken...</div>';
+            // Show loading with spinner
+            resultatenLijst.innerHTML = '<div class="loading-inline"><div class="loading-spinner-small"></div><span>Searching...</span></div>';
             resultatenContainer.style.display = 'block';
 
             // Get all tasks from selected lists
