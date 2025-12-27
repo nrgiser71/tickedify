@@ -13365,9 +13365,9 @@ class Taakbeheer {
                         console.log('🎯 Kalender container found:', !!kalenderContainer);
                         
                         if (kalenderContainer) {
-                            // Get current time range preferences
-                            const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '8');
-                            const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '18');
+                            // Get current time range preferences (defaults: 05:00-22:00)
+                            const startUur = parseInt(localStorage.getItem('dagplanning-start-uur') || '5');
+                            const eindUur = parseInt(localStorage.getItem('dagplanning-eind-uur') || '22');
                             console.log('⏰ Time range:', startUur, 'to', eindUur);
                             
                             const newHTML = this.renderKalenderGrid(startUur, eindUur, updatedPlanning);
