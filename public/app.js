@@ -6928,8 +6928,12 @@ class Taakbeheer {
                         }
                         this.sluitPopup();
                         // Refresh Daily Planning view if we're there
-                        if (document.querySelector('.dagelijkse-planning-layout')) {
-                            await this.toonDagelijksePlanning();
+                        const planningLayout = document.querySelector('.dagelijkse-planning-layout');
+                        if (planningLayout) {
+                            const mainContainer = document.querySelector('.main-content');
+                            if (mainContainer) {
+                                await this.renderDagelijksePlanning(mainContainer);
+                            }
                         }
                     } else {
                         toast.error('Error editing action');
@@ -8070,7 +8074,13 @@ class Taakbeheer {
                 }
 
                 // Reload planning view to show updated star states
-                await this.toonDagelijksePlanning();
+                const planningLayout1 = document.querySelector('.dagelijkse-planning-layout');
+                if (planningLayout1) {
+                    const mainContainer1 = document.querySelector('.main-content');
+                    if (mainContainer1) {
+                        await this.renderDagelijksePlanning(mainContainer1);
+                    }
+                }
                 toast.success('Top priority set');
             } else {
                 // Remove priority
@@ -8088,7 +8098,13 @@ class Taakbeheer {
                 }
 
                 // Reload planning view to show updated star states
-                await this.toonDagelijksePlanning();
+                const planningLayout2 = document.querySelector('.dagelijkse-planning-layout');
+                if (planningLayout2) {
+                    const mainContainer2 = document.querySelector('.main-content');
+                    if (mainContainer2) {
+                        await this.renderDagelijksePlanning(mainContainer2);
+                    }
+                }
                 toast.success('Top priority removed');
             }
         }, {

@@ -4753,10 +4753,12 @@ button:focus {
     margin-right: 4px;
 }
 
-.actie-edit .edit-button {
+.actie-edit .edit-button,
+.actie-edit button.edit-button {
     -webkit-appearance: none;
     appearance: none;
-    background: transparent;
+    background: transparent !important;
+    background-color: transparent !important;
     border: none;
     cursor: pointer;
     font-size: 16px;
