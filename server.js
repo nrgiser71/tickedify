@@ -65,16 +65,23 @@ const forensicLogger = require('./forensic-logger');
 // Import storage manager for attachments
 const { storageManager, STORAGE_CONFIG } = require('./storage-manager');
 
+/* ========== GO HIGH LEVEL - UITGESCHAKELD ==========
+   Reden: Abonnement opgezegd
+   Datum: 2025-12-27
+
+   Om later een andere CRM/marketing tool te integreren,
+   vervang deze functie met de nieuwe integratie.
+
 // GHL Helper Function
 async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
     if (!process.env.GHL_API_KEY) {
         console.log('⚠️ GHL not configured, skipping contact sync');
         return null;
     }
-    
+
     try {
         const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
-        
+
         // Search for existing contact
         const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
             method: 'GET',
@@ -84,14 +91,14 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
                 'Version': '2021-07-28'
             }
         });
-        
+
         let contactId = null;
-        
+
         if (searchResponse.ok) {
             const searchData = await searchResponse.json();
             if (searchData.contact && searchData.contact.id) {
                 contactId = searchData.contact.id;
-                
+
                 // Update existing contact with new tags
                 const tagResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/tags`, {
                     method: 'POST',
@@ -102,14 +109,14 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
                     },
                     body: JSON.stringify({ tags })
                 });
-                
+
                 if (tagResponse.ok) {
                 } else {
                     console.error(`⚠️ GHL: Failed to add tags to existing contact ${contactId}`);
                 }
             }
         }
-        
+
         if (!contactId) {
             // Create new contact
             const createResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
@@ -129,7 +136,7 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
                     source: 'tickedify-registration'
                 })
             });
-            
+
             if (createResponse.ok) {
                 const createData = await createResponse.json();
                 contactId = createData.contact?.id;
@@ -138,13 +145,21 @@ async function addContactToGHL(email, name, tags = ['tickedify-beta-tester']) {
                 console.error(`⚠️ GHL: Failed to create contact: ${createResponse.status} - ${errorText}`);
             }
         }
-        
+
         return contactId;
-        
+
     } catch (error) {
         console.error('⚠️ GHL integration error:', error.message);
         return null;
     }
+}
+
+========== EINDE GO HIGH LEVEL ========== */
+
+// Placeholder functie - retourneert altijd null (GHL uitgeschakeld)
+async function addContactToGHL(email, name, tags = []) {
+    console.log('ℹ️ GHL integration disabled - skipping contact sync');
+    return null;
 }
 
 // ========================================
@@ -6359,11 +6374,15 @@ app.post('/api/waitlist/signup', async (req, res) => {
         );
         
         
+        /* ========== GO HIGH LEVEL - UITGESCHAKELD ==========
+           Reden: Abonnement opgezegd
+           Datum: 2025-12-27
+
         // Add to GoHighLevel if API key is configured
         if (process.env.GHL_API_KEY) {
             try {
                 const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
-                
+
                 // First, search for existing contact by email
                 const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
                     method: 'GET',
@@ -6397,7 +6416,7 @@ app.post('/api/waitlist/signup', async (req, res) => {
                         body: JSON.stringify({
                             email: email.toLowerCase().trim(),
                             firstName: firstname || (name ? name.split(' ')[0] : 'Waitlist'),
-                            lastName: lastname || (name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User'), 
+                            lastName: lastname || (name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User'),
                             name: (firstname && lastname) ? `${firstname} ${lastname}` : (name || 'Waitlist User'),
                             locationId: locationId,
                             tags: ['tickedify-waitlist-signup'],
@@ -6444,6 +6463,8 @@ app.post('/api/waitlist/signup', async (req, res) => {
                 // Don't fail the whole signup if GHL fails
             }
         }
+
+        ========== EINDE GO HIGH LEVEL ========== */
         
         // Get total waitlist count
         const countResult = await pool.query('SELECT COUNT(*) as total FROM waitlist');
@@ -7134,11 +7155,15 @@ app.get('/api/debug/waitlist-preview', async (req, res) => {
     }
 });
 
+/* ========== GO HIGH LEVEL - UITGESCHAKELD ==========
+   Reden: Abonnement opgezegd
+   Datum: 2025-12-27
+
 // Test endpoint for GoHighLevel tag functionality
 app.post('/api/test/ghl-tag', async (req, res) => {
     try {
         const { email, name } = req.body;
-        
+
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });
         }
@@ -7148,8 +7173,8 @@ app.post('/api/test/ghl-tag', async (req, res) => {
         }
 
         const locationId = process.env.GHL_LOCATION_ID || 'FLRLwGihIMJsxbRS39Kt';
-        
-        
+
+
         // First, search for existing contact by email
         const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email.toLowerCase().trim())}`, {
             method: 'GET',
@@ -7190,7 +7215,7 @@ app.post('/api/test/ghl-tag', async (req, res) => {
                 body: JSON.stringify({
                     email: email.toLowerCase().trim(),
                     firstName: name ? name.split(' ')[0] : 'Test',
-                    lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User', 
+                    lastName: name ? (name.split(' ').slice(1).join(' ') || 'User') : 'User',
                     name: name || 'Test User',
                     locationId: locationId,
                     tags: ['tickedify-waitlist-signup'],
@@ -7233,16 +7258,26 @@ app.post('/api/test/ghl-tag', async (req, res) => {
         result.success = true;
         result.contactId = contactId;
         result.email = email;
-        
+
         res.json(result);
 
     } catch (error) {
         console.error('🧪 GHL test error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: error.message,
-            success: false 
+            success: false
         });
     }
+});
+
+========== EINDE GO HIGH LEVEL ========== */
+
+// Placeholder endpoint - retourneert uitgeschakeld bericht
+app.post('/api/test/ghl-tag', async (req, res) => {
+    res.status(503).json({
+        error: 'GoHighLevel integration disabled',
+        message: 'GHL abonnement opgezegd - integratie uitgeschakeld op 2025-12-27'
+    });
 });
 
 app.get('/api/auth/me', async (req, res) => {
