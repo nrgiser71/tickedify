@@ -11254,6 +11254,9 @@ class Taakbeheer {
                                    title="Top prioriteit">
                             <label class="star-label">⭐</label>
                         </div>
+                        <div class="actie-edit">
+                            <button class="edit-button" onclick="app.bewerkActie('${actie.id}')" title="Edit task">✏️</button>
+                        </div>
                         <div class="actie-tekst">${prioriteitIndicator}${datumIndicator}${actie.tekst}${herhalingIndicator}</div>
                         <div class="actie-meta">
                             ${projectNaam && projectNaam !== 'Geen project' ? `<span class="meta-project">${projectNaam}</span>` : ''}
@@ -11437,6 +11440,7 @@ class Taakbeheer {
                     ${priorityIcon}
                     ${normalPriorityIcon}
                     ${naamElement}
+                    ${planningItem.type === 'taak' && planningItem.actieId ? `<button class="edit-planning" onclick="app.bewerkActie('${planningItem.actieId}'); event.stopPropagation();" title="Edit task">✏️</button>` : ''}
                     <button class="delete-planning" onclick="app.deletePlanningItem('${planningItem.id}', event)">×</button>
                 </div>
                 ${detailsHtml}

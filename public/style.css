@@ -4746,6 +4746,50 @@ button:focus {
     transform: scale(1.15);
 }
 
+/* Edit icon in Actions sidebar (Daily Planning) */
+.actie-edit {
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+}
+
+.actie-edit .edit-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.actie-edit .edit-button:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Edit button in Calendar view (Daily Planning) */
+.edit-planning {
+    background: transparent;
+    color: var(--macos-text-secondary);
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--macos-radius-small);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.edit-planning:hover {
+    background: var(--macos-gray-5);
+    color: var(--macos-blue);
+    transform: scale(1.1);
+}
+
 /* Actions section - takes remaining space */
 .acties-sectie {
     background: white;
