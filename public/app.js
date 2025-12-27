@@ -6895,10 +6895,42 @@ class Taakbeheer {
                         if (subtakenManager) {
                             await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
                         }
-                        
+
                         // Refresh list from server to ensure consistency
                         await this.preserveActionsFilters(() => this.laadHuidigeLijst());
                         this.sluitPopup();
+                    } else {
+                        toast.error('Error editing action');
+                    }
+                } else if (this.huidigeTaakId) {
+                    // Fallback: taak niet in this.taken (bijv. vanuit Daily Planning edit icon)
+                    const updateData = {
+                        tekst: taakNaam,
+                        projectId: projectId,
+                        verschijndatum: verschijndatum,
+                        contextId: contextId,
+                        duur: duur,
+                        opmerkingen: opmerkingen,
+                        herhalingType: herhalingType,
+                        herhalingActief: !!herhalingType,
+                        prioriteit: prioriteit
+                    };
+
+                    const response = await fetch(`/api/taak/${this.huidigeTaakId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updateData)
+                    });
+
+                    if (response.ok) {
+                        if (subtakenManager) {
+                            await subtakenManager.saveAllSubtaken(this.huidigeTaakId);
+                        }
+                        this.sluitPopup();
+                        // Refresh Daily Planning view if we're there
+                        if (document.querySelector('.dagelijkse-planning-layout')) {
+                            await this.toonDagelijksePlanning();
+                        }
                     } else {
                         toast.error('Error editing action');
                     }

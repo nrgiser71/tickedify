@@ -38,20 +38,20 @@ Add edit icons (✏️) to tasks in the Daily Planning screen:
 
 ## Phase 3.2: Version & Deploy
 
-- [ ] T004 Update version number in `package.json`
+- [x] T004 Update version number in `package.json`
   - Increment patch version (e.g., 1.0.x → 1.0.x+1)
 
-- [ ] T005 Update changelog in `public/changelog.html`
+- [x] T005 Update changelog in `public/changelog.html`
   - Add new entry with version, date, description
   - Category: 🎯 Improvements
   - Description: "Added edit icons to Daily Planning for quick task editing"
 
-- [ ] T006 Commit and push to staging
+- [x] T006 Commit and push to staging
   - `git add -A`
   - `git commit -m "🎯 Add edit icons to Daily Planning"`
   - `git push origin staging`
 
-- [ ] T007 Verify deployment on staging
+- [ ] T007 Verify deployment on staging (USER TESTING)
   - Wait 15-30 seconds for Vercel deployment
   - Check `curl -s -L -k https://dev.tickedify.com/api/version`
   - Confirm version matches package.json

@@ -4712,7 +4712,7 @@ button:focus {
 .actie-star {
     display: flex;
     align-items: center;
-    margin-right: 8px;
+    margin-right: 4px;
     position: relative;
 }
 
@@ -4750,10 +4750,12 @@ button:focus {
 .actie-edit {
     display: flex;
     align-items: center;
-    margin-right: 8px;
+    margin-right: 4px;
 }
 
 .actie-edit .edit-button {
+    -webkit-appearance: none;
+    appearance: none;
     background: transparent;
     border: none;
     cursor: pointer;
