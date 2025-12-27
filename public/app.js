@@ -11355,7 +11355,10 @@ class Taakbeheer {
             'pauze': '☕'
         }[planningItem.type] || '<i class="fas fa-ellipsis-v"></i>';
         
-        const basisNaam = planningItem.naam || planningItem.actieTekst || 'Onbekend';
+        // Voor taken: gebruik altijd de actuele tekst uit de taken tabel
+        const basisNaam = (planningItem.type === 'taak' && planningItem.actieTekst)
+            ? planningItem.actieTekst
+            : (planningItem.naam || 'Onbekend');
         const naam = `${basisNaam} (${planningItem.duurMinuten} min)`;
         
         // Get task details and priority for all tasks (expandable or not)
