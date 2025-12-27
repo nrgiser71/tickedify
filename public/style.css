@@ -3566,7 +3566,7 @@ button:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 0;
 }
 
 .planning-actie-item .actie-checkbox {
