@@ -2098,6 +2098,19 @@ button:focus {
     box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
 }
 
+#validationMessage {
+    width: 100%;
+    text-align: right;
+    font-size: 11px;
+    color: var(--macos-red);
+    min-height: 0;
+    margin-top: 2px;
+}
+
+#validationMessage:empty {
+    display: none;
+}
+
 /* Focus state heeft altijd prioriteit over invalid state */
 .form-groep input:focus,
 .form-groep select:focus,

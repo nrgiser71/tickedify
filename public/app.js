@@ -7326,6 +7326,23 @@ class Taakbeheer {
             }
         });
 
+        // Update validation message onder de knop
+        const validationMsg = document.getElementById('validationMessage');
+        if (validationMsg) {
+            if (alleVeldenIngevuld) {
+                validationMsg.textContent = '';
+            } else {
+                const missing = [];
+                if (!taakNaam) missing.push('Task name');
+                if (!isPostponed) {
+                    if (!verschijndatum) missing.push('Appear date');
+                    if (!contextId) missing.push('Context');
+                    if (!duur) missing.push('Duration');
+                }
+                validationMsg.textContent = missing.length ? 'Missing: ' + missing.join(', ') : '';
+            }
+        }
+
         // Update Create Action button visibility (if exists)
         this.updateCreateActionButtonVisibility();
     }
