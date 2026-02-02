@@ -15966,8 +15966,8 @@ class AuthManager {
                 if (data.requiresUpgrade) {
                     // Redirect based on expiry type
                     const redirectPage = data.expiryType === 'trial'
-                        ? '/trial-expired.html'
-                        : '/beta-expired.html';
+                        ? '/trial-expired'
+                        : '/beta-expired';
                     window.location.href = redirectPage;
                     return;
                 }
@@ -16168,8 +16168,8 @@ class AuthManager {
                 if (data.requiresUpgrade) {
                     // Redirect based on expiry type
                     const redirectPage = data.expiryType === 'trial'
-                        ? '/trial-expired.html'
-                        : '/beta-expired.html';
+                        ? '/trial-expired'
+                        : '/beta-expired';
                     window.location.href = redirectPage;
                     return;
                 }
