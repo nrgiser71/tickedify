@@ -1,5 +1,47 @@
 // Tickedify App v0.21.131 - Build timestamp: 2025-11-09T12:00:00Z
 
+// ============================================================================
+// USER INTERACTION TRACKER - Intelligent Polling (v1.1.27)
+// ============================================================================
+// Tracks user activity to prevent polling when user is idle (even if tab visible)
+// This solves the issue where visibilityState doesn't detect when browser is
+// visible but another OS application has focus.
+
+class InteractionTracker {
+    constructor(idleThreshold = 30000) { // 30 seconds default
+        this.lastInteraction = Date.now();
+        this.idleThreshold = idleThreshold;
+        this.setupListeners();
+        console.log(`👆 InteractionTracker initialized (idle threshold: ${idleThreshold/1000}s)`);
+    }
+
+    setupListeners() {
+        const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+        events.forEach(event => {
+            document.addEventListener(event, () => {
+                this.lastInteraction = Date.now();
+            }, { passive: true });
+        });
+    }
+
+    isUserActive() {
+        return (Date.now() - this.lastInteraction) < this.idleThreshold;
+    }
+
+    shouldPoll() {
+        const isVisible = document.visibilityState === 'visible';
+        const isActive = this.isUserActive();
+        return isVisible && isActive;
+    }
+
+    getIdleTime() {
+        return Math.round((Date.now() - this.lastInteraction) / 1000);
+    }
+}
+
+// Global instance - available to all polling functions
+window.interactionTracker = new InteractionTracker();
+
 // Voice Mode Whitelist Check
 // Bepaalt of voice mode beschikbaar is voor huidige gebruiker
 function shouldShowVoiceMode() {
@@ -4627,9 +4669,15 @@ class Taakbeheer {
             console.log('🔄 Setting up autorefresh for inbox (15 second interval)');
             // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
             this.autoRefreshInterval = setInterval(() => {
-                console.log('<i class="fas fa-redo"></i> Auto-refreshing inbox...');
-                this.refreshInbox();
-            }, 15000); // 15 seconds
+                const shouldPoll = window.interactionTracker?.shouldPoll();
+                const idleTime = window.interactionTracker?.getIdleTime() || 0;
+                console.log(`🔍 Inbox poll: shouldPoll=${shouldPoll}, idle=${idleTime}s`);
+                // Only refresh when tab is visible AND user recently active (v1.1.27)
+                if (shouldPoll) {
+                    console.log('🔄 Auto-refreshing inbox...');
+                    this.refreshInbox();
+                }
+            }, 15000); // 15 seconds - only when tab visible and user active
         } else {
             console.log('🔄 Not setting up autorefresh - not on inbox list');
         }
@@ -15840,6 +15888,7 @@ class AuthManager {
         this.lastSessionCheck = null;
         // FIX: Track if initial data has been loaded to prevent full UI reload on periodic session checks
         this.initialDataLoaded = false;
+
         this.setupEventListeners();
         this.setupGlobalFetchInterceptor(); // Setup 401 detection early
         this.checkAuthStatus();
@@ -16265,7 +16314,11 @@ class AuthManager {
 
         // Check every 60 seconds for session validity (Feature 072)
         this.sessionCheckInterval = setInterval(() => {
-            if (this.isAuthenticated) {
+            const shouldPoll = window.interactionTracker?.shouldPoll();
+            const idleTime = window.interactionTracker?.getIdleTime() || 0;
+            console.log(`🔍 Session poll: shouldPoll=${shouldPoll}, idle=${idleTime}s, auth=${this.isAuthenticated}`);
+            // Only check when tab is visible AND user recently active (v1.1.27)
+            if (this.isAuthenticated && shouldPoll) {
                 this.checkAuthStatus();
             }
         }, 60000); // 60 seconds
@@ -16640,13 +16693,19 @@ class UpdateManager {
     
     startVersionPolling() {
         if (this.isPolling) return;
-        
+
         this.isPolling = true;
         this.pollInterval = setInterval(async () => {
-            await this.checkForUpdates();
-        }, 30000); // Check every 30 seconds
-        
-        console.log('Update polling started');
+            const shouldPoll = window.interactionTracker?.shouldPoll();
+            const idleTime = window.interactionTracker?.getIdleTime() || 0;
+            console.log(`🔍 Version poll: shouldPoll=${shouldPoll}, idle=${idleTime}s`);
+            // Only check when tab is visible AND user recently active (v1.1.27)
+            if (shouldPoll) {
+                await this.checkForUpdates();
+            }
+        }, 900000); // Check every 15 minutes
+
+        console.log('Update polling started (15 min interval)');
     }
     
     stopVersionPolling() {
