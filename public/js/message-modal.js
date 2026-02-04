@@ -110,9 +110,12 @@ function startPolling() {
   }
 
   pollingInterval = setInterval(async () => {
-    // Only check if tab is visible
-    if (document.visibilityState !== 'visible') {
-      console.log('📢 Tab not visible - skipping poll');
+    // Only check if tab is visible AND user recently active (v1.1.27)
+    const shouldPoll = window.interactionTracker?.shouldPoll();
+    const idleTime = window.interactionTracker?.getIdleTime() || 0;
+
+    if (!shouldPoll) {
+      console.log(`📢 Skipping message poll: idle=${idleTime}s`);
       return;
     }
 
