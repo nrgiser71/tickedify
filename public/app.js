@@ -4627,8 +4627,9 @@ class Taakbeheer {
             console.log('🔄 Setting up autorefresh for inbox (15 second interval)');
             // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
             this.autoRefreshInterval = setInterval(() => {
-                // Only refresh if tab is visible AND has focus (prevents background tab polling)
-                if (document.visibilityState === 'visible' && document.hasFocus()) {
+                // Only refresh if tab is visible AND window has focus (prevents background tab polling)
+                // Using authManager.windowFocused instead of hasFocus() which is unreliable (v1.1.24)
+                if (document.visibilityState === 'visible' && window.authManager?.windowFocused !== false) {
                     console.log('🔄 Auto-refreshing inbox...');
                     this.refreshInbox();
                 }
@@ -15843,6 +15844,19 @@ class AuthManager {
         this.lastSessionCheck = null;
         // FIX: Track if initial data has been loaded to prevent full UI reload on periodic session checks
         this.initialDataLoaded = false;
+
+        // Window focus tracking for polling optimization (v1.1.24)
+        // Using event listeners instead of hasFocus() which is unreliable
+        this.windowFocused = true; // Assume focused on load
+        window.addEventListener('focus', () => {
+            this.windowFocused = true;
+            console.log('🔵 Window focused - polling resumed');
+        });
+        window.addEventListener('blur', () => {
+            this.windowFocused = false;
+            console.log('⚫ Window blurred - polling paused');
+        });
+
         this.setupEventListeners();
         this.setupGlobalFetchInterceptor(); // Setup 401 detection early
         this.checkAuthStatus();
@@ -16268,8 +16282,9 @@ class AuthManager {
 
         // Check every 60 seconds for session validity (Feature 072)
         this.sessionCheckInterval = setInterval(() => {
-            // Only check if tab is visible AND has focus (prevents background tab polling)
-            if (this.isAuthenticated && document.visibilityState === 'visible' && document.hasFocus()) {
+            // Only check if tab is visible AND window has focus (prevents background tab polling)
+            // Using this.windowFocused instead of hasFocus() which is unreliable (v1.1.24)
+            if (this.isAuthenticated && document.visibilityState === 'visible' && this.windowFocused) {
                 this.checkAuthStatus();
             }
         }, 60000); // 60 seconds
@@ -16647,8 +16662,9 @@ class UpdateManager {
 
         this.isPolling = true;
         this.pollInterval = setInterval(async () => {
-            // Only check if tab is visible AND has focus (prevents background tab polling)
-            if (document.visibilityState === 'visible' && document.hasFocus()) {
+            // Only check if tab is visible AND window has focus (prevents background tab polling)
+            // Using authManager.windowFocused instead of hasFocus() which is unreliable (v1.1.24)
+            if (document.visibilityState === 'visible' && window.authManager?.windowFocused !== false) {
                 await this.checkForUpdates();
             }
         }, 900000); // Check every 15 minutes (was 30 seconds)

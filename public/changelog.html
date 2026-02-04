@@ -149,10 +149,29 @@ margin-bottom: 12px;
 <h1 class="changelog-title">Tickedify Changelog</h1>
 <p class="changelog-subtitle">All new features, improvements, and bug fixes</p>
 </div>
+<!-- Version v1.1.24 - February 4, 2026 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-latest">v1.1.24</span>
+<span class="version-date">February 4, 2026</span>
+</div>
+<div class="changes-list">
+<div class="change-category">
+<h3>🎯 Improvements</h3>
+<ul>
+<li>Fixed unreliable polling pause behavior - replaced <code>document.hasFocus()</code> with event-based window focus tracking</li>
+<li>Polling now correctly pauses when browser window loses focus and resumes when regained</li>
+<li>Added console logging for focus state changes: <code>🔵 Window focused</code> / <code>⚫ Window blurred</code></li>
+<li>Expected savings: ~75-80% reduction in Vercel function calls on background tabs</li>
+</ul>
+</div>
+</div>
+</div>
+
 <!-- Version v1.1.23 - February 4, 2026 -->
 <div class="version-block">
 <div class="version-header">
-<span class="version-badge badge-latest">v1.1.23</span>
+<span class="version-badge badge-feature">v1.1.23</span>
 <span class="version-date">February 4, 2026</span>
 </div>
 <div class="changes-list">
