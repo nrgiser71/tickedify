@@ -16268,7 +16268,8 @@ class AuthManager {
 
         // Check every 60 seconds for session validity (Feature 072)
         this.sessionCheckInterval = setInterval(() => {
-            if (this.isAuthenticated) {
+            // Only check if tab is visible AND has focus (prevents background tab polling)
+            if (this.isAuthenticated && document.visibilityState === 'visible' && document.hasFocus()) {
                 this.checkAuthStatus();
             }
         }, 60000); // 60 seconds
