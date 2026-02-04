@@ -4627,9 +4627,12 @@ class Taakbeheer {
             console.log('🔄 Setting up autorefresh for inbox (15 second interval)');
             // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
             this.autoRefreshInterval = setInterval(() => {
-                console.log('<i class="fas fa-redo"></i> Auto-refreshing inbox...');
-                this.refreshInbox();
-            }, 15000); // 15 seconds
+                // Only refresh if tab is visible
+                if (document.visibilityState === 'visible') {
+                    console.log('🔄 Auto-refreshing inbox...');
+                    this.refreshInbox();
+                }
+            }, 15000); // 15 seconds - only when tab visible
         } else {
             console.log('🔄 Not setting up autorefresh - not on inbox list');
         }
@@ -16640,13 +16643,16 @@ class UpdateManager {
     
     startVersionPolling() {
         if (this.isPolling) return;
-        
+
         this.isPolling = true;
         this.pollInterval = setInterval(async () => {
-            await this.checkForUpdates();
-        }, 30000); // Check every 30 seconds
-        
-        console.log('Update polling started');
+            // Only check if tab is visible
+            if (document.visibilityState === 'visible') {
+                await this.checkForUpdates();
+            }
+        }, 900000); // Check every 15 minutes (was 30 seconds)
+
+        console.log('Update polling started (15 min interval)');
     }
     
     stopVersionPolling() {
