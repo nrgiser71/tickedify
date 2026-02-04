@@ -4627,8 +4627,10 @@ class Taakbeheer {
             console.log('🔄 Setting up autorefresh for inbox (15 second interval)');
             // Initial load happens in laadHuidigeLijst, so start interval for subsequent refreshes
             this.autoRefreshInterval = setInterval(() => {
+                const isVisible = document.visibilityState === 'visible';
+                console.log(`🔍 Inbox poll: visible=${isVisible}`);
                 // Only refresh when tab is visible (v1.1.25)
-                if (document.visibilityState === 'visible') {
+                if (isVisible) {
                     console.log('🔄 Auto-refreshing inbox...');
                     this.refreshInbox();
                 }
@@ -16269,8 +16271,10 @@ class AuthManager {
 
         // Check every 60 seconds for session validity (Feature 072)
         this.sessionCheckInterval = setInterval(() => {
+            const isVisible = document.visibilityState === 'visible';
+            console.log(`🔍 Session poll: visible=${isVisible}, auth=${this.isAuthenticated}`);
             // Only check when tab is visible (v1.1.25)
-            if (this.isAuthenticated && document.visibilityState === 'visible') {
+            if (this.isAuthenticated && isVisible) {
                 this.checkAuthStatus();
             }
         }, 60000); // 60 seconds
@@ -16648,8 +16652,10 @@ class UpdateManager {
 
         this.isPolling = true;
         this.pollInterval = setInterval(async () => {
+            const isVisible = document.visibilityState === 'visible';
+            console.log(`🔍 Version poll: visible=${isVisible}`);
             // Only check when tab is visible (v1.1.25)
-            if (document.visibilityState === 'visible') {
+            if (isVisible) {
                 await this.checkForUpdates();
             }
         }, 900000); // Check every 15 minutes (was 30 seconds)
