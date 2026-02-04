@@ -149,10 +149,29 @@ margin-bottom: 12px;
 <h1 class="changelog-title">Tickedify Changelog</h1>
 <p class="changelog-subtitle">All new features, improvements, and bug fixes</p>
 </div>
+<!-- Version v1.1.25 - February 4, 2026 -->
+<div class="version-block">
+<div class="version-header">
+<span class="version-badge badge-latest">v1.1.25</span>
+<span class="version-date">February 4, 2026</span>
+</div>
+<div class="changes-list">
+<div class="change-category">
+<h3>🔧 Fixes</h3>
+<ul>
+<li>Fixed false "window blurred" events when clicking DevTools, address bar, or other browser UI</li>
+<li>Simplified polling focus detection - now uses only <code>visibilityState</code> instead of window focus events</li>
+<li>Removed unreliable window blur/focus tracking that triggered on every browser UI interaction</li>
+<li>Polling now only pauses on actual tab switch or browser minimize (not DevTools clicks)</li>
+</ul>
+</div>
+</div>
+</div>
+
 <!-- Version v1.1.24 - February 4, 2026 -->
 <div class="version-block">
 <div class="version-header">
-<span class="version-badge badge-latest">v1.1.24</span>
+<span class="version-badge badge-fix">v1.1.24</span>
 <span class="version-date">February 4, 2026</span>
 </div>
 <div class="changes-list">
