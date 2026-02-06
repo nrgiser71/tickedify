@@ -30,6 +30,27 @@ app.use((req, res, next) => {
     next();
 });
 
+// CORS middleware for Flutter app (web)
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://localhost:5000',
+    'http://localhost:49430',
+];
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    }
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    next();
+});
+
 // Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add URL-encoded parsing for Mailgun
@@ -7866,6 +7887,39 @@ app.get('/api/counts/sidebar', async (req, res) => {
                 dbExists: !!db
             }
         });
+    }
+});
+
+// Public demo endpoint for Flutter app (no auth required)
+app.get('/api/demo/data', async (req, res) => {
+    try {
+        if (!pool) return res.status(503).json({ error: 'Database not available' });
+
+        // Find main user (most tasks)
+        const userResult = await pool.query(
+            `SELECT user_id, COUNT(*) as cnt FROM taken GROUP BY user_id ORDER BY cnt DESC LIMIT 1`
+        );
+        if (userResult.rows.length === 0) return res.json({ acties: [], projecten: [], contexten: [] });
+        const userId = userResult.rows[0].user_id;
+
+        // Fetch acties, projecten, contexten in parallel
+        const [acties, projecten, contexten] = await Promise.all([
+            db.getList('acties', userId),
+            db.getList('projecten-lijst', userId),
+            db.getList('contexten', userId),
+        ]);
+
+        // Add bijlagen counts
+        const taakIds = acties.map(t => t.id).filter(id => id);
+        if (taakIds.length > 0) {
+            const bijlagenCounts = await db.getBijlagenCountsForTaken(taakIds);
+            acties.forEach(t => { t.bijlagenCount = bijlagenCounts[t.id] || 0; });
+        }
+
+        res.json({ acties, projecten, contexten });
+    } catch (error) {
+        console.error('Demo data error:', error);
+        res.status(500).json({ error: 'Failed to load demo data' });
     }
 });
 
