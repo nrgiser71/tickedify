@@ -5424,19 +5424,16 @@ app.post('/api/auth/logout', (req, res) => {
     });
 });
 
-// Auto-login via persistent token (bookmark URL)
-app.get('/api/auth/auto-login', async (req, res) => {
-    const { token } = req.query;
-    if (!token) {
-        return res.status(400).send('Token required');
-    }
+// Auto-login via persistent token (bookmark URL: /al/TOKEN)
+app.get('/al/:token', async (req, res) => {
+    const { token } = req.params;
     try {
         const result = await pool.query(
             'SELECT id, email, naam FROM users WHERE persistent_login_token = $1 AND actief = TRUE',
             [token]
         );
         if (result.rows.length === 0) {
-            return res.status(401).send('Invalid token');
+            return res.redirect('/app');
         }
         const user = result.rows[0];
         req.session.userId = user.id;
@@ -5445,13 +5442,13 @@ app.get('/api/auth/auto-login', async (req, res) => {
         req.session.save((err) => {
             if (err) {
                 console.error('Auto-login session save error:', err);
-                return res.status(500).send('Session error');
+                return res.redirect('/app');
             }
             res.redirect('/app');
         });
     } catch (error) {
         console.error('Auto-login error:', error);
-        res.status(500).send('Server error');
+        res.redirect('/app');
     }
 });
 
@@ -5467,7 +5464,7 @@ app.get('/api/auth/generate-persistent-token', requireAuth, async (req, res) => 
         res.json({
             success: true,
             token: token,
-            url: `${baseUrl}/api/auth/auto-login?token=${token}`
+            url: `${baseUrl}/al/${token}`
         });
     } catch (error) {
         console.error('Generate persistent token error:', error);
