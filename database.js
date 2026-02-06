@@ -491,7 +491,8 @@ const initDatabase = async () => {
         ADD COLUMN IF NOT EXISTS amount_paid_cents INTEGER,
         ADD COLUMN IF NOT EXISTS login_token VARCHAR(255),
         ADD COLUMN IF NOT EXISTS login_token_expires TIMESTAMP,
-        ADD COLUMN IF NOT EXISTS login_token_used BOOLEAN DEFAULT FALSE
+        ADD COLUMN IF NOT EXISTS login_token_used BOOLEAN DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS persistent_login_token VARCHAR(255)
       `);
       console.log('✅ Feature 011: Payment tracking columns added to users table');
     } catch (paymentMigrateError) {
@@ -505,7 +506,8 @@ const initDatabase = async () => {
         { name: 'amount_paid_cents', type: 'INTEGER' },
         { name: 'login_token', type: 'VARCHAR(255)' },
         { name: 'login_token_expires', type: 'TIMESTAMP' },
-        { name: 'login_token_used', type: 'BOOLEAN DEFAULT FALSE' }
+        { name: 'login_token_used', type: 'BOOLEAN DEFAULT FALSE' },
+        { name: 'persistent_login_token', type: 'VARCHAR(255)' }
       ];
 
       for (const col of paymentColumns) {
@@ -570,6 +572,7 @@ const initDatabase = async () => {
         CREATE INDEX IF NOT EXISTS idx_users_subscription_status ON users(subscription_status);
         CREATE INDEX IF NOT EXISTS idx_users_plugandpay_order_id ON users(plugandpay_order_id);
         CREATE INDEX IF NOT EXISTS idx_users_login_token ON users(login_token) WHERE login_token_used = FALSE;
+        CREATE INDEX IF NOT EXISTS idx_users_persistent_login_token ON users(persistent_login_token) WHERE persistent_login_token IS NOT NULL;
         CREATE INDEX IF NOT EXISTS idx_users_trial_end_date ON users(trial_end_date) WHERE subscription_status = 'trialing';
         CREATE INDEX IF NOT EXISTS idx_payment_configs_plan_id ON payment_configurations(plan_id);
         CREATE INDEX IF NOT EXISTS idx_payment_configs_active ON payment_configurations(is_active);
