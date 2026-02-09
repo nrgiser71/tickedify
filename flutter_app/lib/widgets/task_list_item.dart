@@ -17,24 +17,25 @@ class TaskListItem extends StatelessWidget {
 
   Color get _borderColor {
     switch (task.datumStatus) {
-      case 'overdue':
+      case DateStatus.overdue:
         return AppColors.red;
-      case 'today':
+      case DateStatus.today:
         return AppColors.blue;
-      case 'future':
+      case DateStatus.future:
         return AppColors.gray2;
-      default:
+      case DateStatus.noDate:
         return Colors.transparent;
     }
   }
 
   Color? get _bgColor {
     switch (task.datumStatus) {
-      case 'overdue':
+      case DateStatus.overdue:
         return AppColors.red.withValues(alpha: 0.05);
-      case 'today':
+      case DateStatus.today:
         return AppColors.blue.withValues(alpha: 0.05);
-      default:
+      case DateStatus.future:
+      case DateStatus.noDate:
         return null;
     }
   }
@@ -80,9 +81,9 @@ class TaskListItem extends StatelessWidget {
     }
     if (task.verschijndatum != null && task.verschijndatum!.isNotEmpty) {
       IconData dateIcon;
-      if (task.datumStatus == 'overdue') {
+      if (task.datumStatus == DateStatus.overdue) {
         dateIcon = Icons.warning_amber_rounded;
-      } else if (task.datumStatus == 'today') {
+      } else if (task.datumStatus == DateStatus.today) {
         dateIcon = Icons.calendar_today;
       } else {
         dateIcon = Icons.event;

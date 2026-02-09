@@ -20,13 +20,13 @@ class DataService {
     final data = response.data as Map<String, dynamic>;
 
     return DemoData(
-      tasks: (data['acties'] as List)
+      tasks: (data['acties'] as List? ?? [])
           .map((j) => Task.fromJson(j as Map<String, dynamic>))
           .toList(),
-      projects: (data['projecten'] as List)
+      projects: (data['projecten'] as List? ?? [])
           .map((j) => Project.fromJson(j as Map<String, dynamic>))
           .toList(),
-      contexts: (data['contexten'] as List)
+      contexts: (data['contexten'] as List? ?? [])
           .map((j) => TaskContext.fromJson(j as Map<String, dynamic>))
           .toList(),
     );

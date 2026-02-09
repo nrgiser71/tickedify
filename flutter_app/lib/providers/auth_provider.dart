@@ -11,8 +11,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Auto-login with demo credentials
   Future<void> autoLogin() async {
     final result = await _authService.login(
-      'jan@buskens.be',
-      'qyqhut-muDvop-fadki9',
+      'demo@example.com',
+      'demo-password',
     );
     state = result['success'] == true
         ? AuthState.authenticated

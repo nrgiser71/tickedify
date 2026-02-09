@@ -1,65 +1,43 @@
-# Flutter App - Tickedify Acties Scherm (Read-Only)
+# Flutter App Klaarmaken voor Delen met Bedrijf
 
-## Taken
+## Todo
 
-- [x] 1. CORS middleware toevoegen aan server.js
-- [x] 2. Flutter project aanmaken (`flutter create`)
-- [x] 3. pubspec.yaml dependencies toevoegen
-- [x] 4. Config bestanden (app_config.dart, theme.dart)
-- [x] 5. Data modellen (task.dart, project.dart, context_model.dart)
-- [x] 6. API service layer (api_service.dart, auth_service.dart, data_service.dart)
-- [x] 7. State management providers (auth, task, filter)
-- [x] 8. Login scherm
-- [x] 9. Actions scherm + widgets (filter_bar, task_list_item)
-- [x] 10. main.dart entry point met routing
-- [x] 11. Test flutter build (web) - BUILD SUCCESVOL
+- [x] Stap 1: Fix `dynamic` types → `int?` in Task model + TaskProvider
+- [x] Stap 2: Voeg `DateStatus` enum toe + update TaskListItem
+- [x] Stap 3: Fix untyped `List` parameter in ActionsScreen
+- [x] Stap 4: Voeg null guards toe in DataService
+- [x] Stap 5: Verwijder onnodige debug logging in AuthService
+- [x] Stap 6: Flutter analyze → 0 issues (twee keer gecontroleerd)
+- [x] Stap 7: Security placeholders (credentials + URLs)
 
 ## Review
 
 ### Samenvatting wijzigingen
 
-**1. Backend (server.js)**
-- CORS middleware toegevoegd na security headers (regel 32-48)
-- Alleen specifieke localhost origins toegestaan voor Flutter dev
-- OPTIONS preflight afhandeling
+**1. `lib/models/task.dart`** - Type safety + enum
+- `dynamic projectId/contextId` → `int?` met proper `int.tryParse` in `fromJson`
+- Nieuw `DateStatus` enum (`overdue`, `today`, `future`, `noDate`)
+- `String get datumStatus` → `DateStatus get datumStatus`
 
-**2. Flutter project structuur (`flutter_app/`)**
+**2. `lib/providers/task_provider.dart`** - Getypte parameters
+- `getProjectName(dynamic)` → `getProjectName(int?)`
+- `getContextName(dynamic)` → `getContextName(int?)`
 
-```
-lib/
-  main.dart                      - Entry point, ProviderScope, auth routing
-  config/
-    app_config.dart              - Base URL (staging/productie switch)
-    theme.dart                   - macOS design tokens uit style.css
-  models/
-    task.dart                    - Task model met fromJson + datumStatus helper
-    project.dart                 - Project model (id, naam)
-    context_model.dart           - Context model (id, naam)
-  services/
-    api_service.dart             - Singleton Dio + 401 interceptor
-    api_service_native.dart      - PersistCookieJar voor iOS/Android
-    api_service_web.dart         - withCredentials voor Flutter Web
-    auth_service.dart            - Login/logout/session check
-    data_service.dart            - GET acties, projecten, contexten
-  providers/
-    auth_provider.dart           - Login state (Riverpod StateNotifier)
-    task_provider.dart           - Tasks + filtered/sorted provider
-    filter_provider.dart         - 6 filters als StateNotifier
-  screens/
-    login_screen.dart            - Email + wachtwoord login
-    actions_screen.dart          - Hoofdscherm met filters + takenlijst
-  widgets/
-    filter_bar.dart              - 6 filter controls (zoek, project, context, datum, prioriteit, toekomstig)
-    task_list_item.dart          - Visueel identiek aan web (border kleuren, prioriteit dots, info chips)
-```
+**3. `lib/screens/actions_screen.dart`** - Getypte lijst
+- `List filteredTasks` → `List<Task> filteredTasks`
+- `Task` import toegevoegd
 
-**3. Key design decisions:**
-- Conditionele imports (`api_service_native.dart` / `api_service_web.dart`) voor platform-specifieke cookie handling
-- Filter logica 1-op-1 geport van app.js:8868-8927
-- Sort logica 1-op-1 geport van app.js:5302-5318
-- Prioriteit kleuren exact overgenomen: hoog=#FF4444, gemiddeld=#FF9500, laag=#8E8E93
-- Overdue/today/future border kleuren exact als CSS (rood/blauw/grijs)
+**4. `lib/services/data_service.dart`** - Null safety
+- `data['acties'] as List` → `data['acties'] as List? ?? []` (alle 3 lijsten)
 
-**4. Build resultaat:**
-- `flutter analyze` - 0 issues
-- `flutter build web` - SUCCESS
+**5. `lib/services/auth_service.dart`** - Debug logging opgeschoond
+- Verwijderd: `dev.log('AUTH: Response data: ${e.response?.data}')` (logt volledige response)
+
+**6. `lib/providers/auth_provider.dart`** - Security
+- Credentials → `demo@example.com` / `demo-password`
+
+**7. `lib/config/app_config.dart`** - Security
+- URLs → `https://api.example.com` / `https://dev.example.com`
+
+### Verificatie
+- `flutter analyze` → 0 issues (gecontroleerd na stap 5 en na stap 7)

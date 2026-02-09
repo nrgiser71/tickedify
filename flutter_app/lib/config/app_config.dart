@@ -3,5 +3,5 @@ class AppConfig {
   static const bool useStaging = false;
 
   static String get baseUrl =>
-      useStaging ? 'https://dev.tickedify.com' : 'https://tickedify.com';
+      useStaging ? 'https://dev.example.com' : 'https://api.example.com';
 }

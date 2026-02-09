@@ -1,8 +1,10 @@
+enum DateStatus { overdue, today, future, noDate }
+
 class Task {
   final String id;
   final String tekst;
-  final dynamic projectId;
-  final dynamic contextId;
+  final int? projectId;
+  final int? contextId;
   final String? verschijndatum;
   final int? duur;
   final String prioriteit;
@@ -27,8 +29,12 @@ class Task {
     return Task(
       id: json['id']?.toString() ?? '',
       tekst: json['tekst']?.toString() ?? '',
-      projectId: json['projectId'],
-      contextId: json['contextId'],
+      projectId: json['projectId'] is int
+          ? json['projectId']
+          : int.tryParse(json['projectId']?.toString() ?? ''),
+      contextId: json['contextId'] is int
+          ? json['contextId']
+          : int.tryParse(json['contextId']?.toString() ?? ''),
       verschijndatum: json['verschijndatum']?.toString(),
       duur: json['duur'] is int
           ? json['duur']
@@ -42,10 +48,11 @@ class Task {
     );
   }
 
-  /// Returns 'overdue', 'today', 'future', or 'no-date'
   /// Ported from app.js getTaakDatumStatus
-  String get datumStatus {
-    if (verschijndatum == null || verschijndatum!.isEmpty) return 'no-date';
+  DateStatus get datumStatus {
+    if (verschijndatum == null || verschijndatum!.isEmpty) {
+      return DateStatus.noDate;
+    }
 
     final now = DateTime.now();
     final today =
@@ -54,9 +61,9 @@ class Task {
         ? verschijndatum!.split('T')[0]
         : verschijndatum!;
 
-    if (taskDate.compareTo(today) < 0) return 'overdue';
-    if (taskDate.compareTo(today) > 0) return 'future';
-    return 'today';
+    if (taskDate.compareTo(today) < 0) return DateStatus.overdue;
+    if (taskDate.compareTo(today) > 0) return DateStatus.future;
+    return DateStatus.today;
   }
 
   String get normalizedDate {

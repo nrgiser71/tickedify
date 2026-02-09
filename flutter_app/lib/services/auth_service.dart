@@ -27,7 +27,6 @@ class AuthService {
     } on DioException catch (e) {
       dev.log('AUTH: Login error: ${e.type} - ${e.message}');
       dev.log('AUTH: Response status: ${e.response?.statusCode}');
-      dev.log('AUTH: Response data: ${e.response?.data}');
       final msg = e.response?.data is Map
           ? (e.response!.data as Map)['error']?.toString() ?? 'Login failed'
           : 'Login failed';

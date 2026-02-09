@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/theme.dart';
+import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../widgets/filter_bar.dart';
 import '../widgets/task_list_item.dart';
@@ -59,7 +60,7 @@ class _ActionsScreenState extends ConsumerState<ActionsScreen> {
   }
 
   Widget _buildContent(
-      TaskData data, List filteredTasks, TaskNotifier taskNotifier) {
+      TaskData data, List<Task> filteredTasks, TaskNotifier taskNotifier) {
     if (data.isLoading && data.tasks.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
