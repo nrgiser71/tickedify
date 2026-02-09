@@ -3,8 +3,8 @@ enum DateStatus { overdue, today, future, noDate }
 class Task {
   final String id;
   final String tekst;
-  final int? projectId;
-  final int? contextId;
+  final String? projectId;
+  final String? contextId;
   final String? verschijndatum;
   final int? duur;
   final String prioriteit;
@@ -29,12 +29,8 @@ class Task {
     return Task(
       id: json['id']?.toString() ?? '',
       tekst: json['tekst']?.toString() ?? '',
-      projectId: json['projectId'] is int
-          ? json['projectId']
-          : int.tryParse(json['projectId']?.toString() ?? ''),
-      contextId: json['contextId'] is int
-          ? json['contextId']
-          : int.tryParse(json['contextId']?.toString() ?? ''),
+      projectId: json['projectId']?.toString(),
+      contextId: json['contextId']?.toString(),
       verschijndatum: json['verschijndatum']?.toString(),
       duur: json['duur'] is int
           ? json['duur']

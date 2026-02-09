@@ -60,18 +60,18 @@ class TaskNotifier extends StateNotifier<TaskData> {
     }
   }
 
-  String getProjectName(int? projectId) {
-    if (projectId == null) return '';
+  String getProjectName(String? projectId) {
+    if (projectId == null || projectId.isEmpty) return '';
     final p = state.projects
-        .where((p) => p.id == projectId.toString())
+        .where((p) => p.id == projectId)
         .firstOrNull;
     return p?.naam ?? '';
   }
 
-  String getContextName(int? contextId) {
-    if (contextId == null) return '';
+  String getContextName(String? contextId) {
+    if (contextId == null || contextId.isEmpty) return '';
     final c = state.contexts
-        .where((c) => c.id == contextId.toString())
+        .where((c) => c.id == contextId)
         .firstOrNull;
     return c?.naam ?? '';
   }
